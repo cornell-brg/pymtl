@@ -6,42 +6,51 @@ def write_n(s):
   sys.stdout.write( line )
 o = write_n
 
-def port(porttype, name, width=1):
-  if width > 1:
-    return '%s [%d-1:0] %s' % (porttype, width, name)
+def port(porttype, name, size=None):
+  if size:
+    return '%s [%s-1:0] %s' % (porttype, size, name)
   else:
     return '%s %s' % (porttype, name)
 
-def iport(name, width=1):
-  return port('input ', name, width)
+def iport(name, size=1):
+  return port('input ', name, size)
 
-def oport(name, width=1):
-  return port('output', name, width)
+def oport(name, size=1):
+  return port('output', name, size)
 
-def ivalrdy(pfx, width=1):
+def ivalrdy(pfx, size=1):
   ports = [
       iport(pfx + '_val'),
       oport(pfx + '_rdy'),
-      iport(pfx + '_msg', width),
+      iport(pfx + '_msg', size),
     ]
   return ports
 
-def ovalrdy(pfx, width=1):
+def ovalrdy(pfx, size=1):
   ports = [
       oport(pfx + '_val'),
       iport(pfx + '_rdy'),
-      oport(pfx + '_msg', width),
+      oport(pfx + '_msg', size),
+    ]
+  return ports
+
+def cvalrdy(pfx):
+  ports = [
+      pfx + '_val',
+      pfx + '_rdy',
+      pfx + '_msg'
     ]
   return ports
 
 def param_list(params):
   o('#(')
-  for p in params[:-1]:
-    if not isinstance(p, str):
-      print "ERROR: param type is not a string"
-      sys.exit(-1)
-    o('  parameter %s,' % p)
-  o('  %s' % params[-1])
+  for p,v in params[:-1]:
+    #if not isinstance(p, str):
+    #  print "ERROR: param type is not a string"
+    #  sys.exit(-1)
+    o('  parameter %s = %s,' % (p,v))
+  p,v = params[-1]
+  o('  parameter %s = %s' % (p,v))
   o(')')
 
 def port_list(ports):
