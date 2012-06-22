@@ -37,17 +37,17 @@ class RippleCarryAdder (foo):
 """
 
 class InPort(VerilogPort):
-  def __init__(self, width=None, name=None):
-    super(InPort, self).__init__('input', width, name)
+  def __init__(self, width=None):
+    super(InPort, self).__init__('input', width)
 
 class OutPort(VerilogPort):
-  def __init__(self, width=None, name=None):
-    super(OutPort, self).__init__('output', width, name)
+  def __init__(self, width=None):
+    super(OutPort, self).__init__('output', width)
 
 class FullAdder(ToVerilog):
   def __init__(self):
-    # Can't find a way to make the name the instance name...
-    self.name = 'FA_instance_name'
+    # Can't set the instance name during init, but can during elaboration
+    # by walking the Top-Level Module's __dict__ and checking types
     self.in0  = InPort (1)
     self.in1  = InPort (1)
     self.cin  = InPort (1)
@@ -55,29 +55,28 @@ class FullAdder(ToVerilog):
     self.cout = OutPort(1)
 
 class RippleCarryAdder(ToVerilog):
-  def __init__(self):
-    self.name = 'RCA_instance_name'
-    self.in0 = InPort (4)
-    self.in1 = InPort (4)
-    self.out = OutPort(4)
+  def __init__(self, bits):
+    # TODO: figure out a way to set the name?
+    self.name = 'RippleCarryAdder_FIXME'
+    self.in0 = InPort (bits)
+    self.in1 = InPort (bits)
+    self.sum = OutPort(bits)
 
-    self.adders = [ FullAdder() for i in xrange(4) ]
+    self.adders = [ FullAdder() for i in xrange(bits) ]
 
-    for i in xrange(4):
-      #self.adders[i].in0 <> self.in0[i]
-      #self.adders[i].in1 <> self.in1[i]
-      #self.adders[i].out <> self.out[i]
-      print '@ ', self.in0.connection
+    for i in xrange(bits):
       self.adders[i].in0 <> self.in0[i]
       self.adders[i].in1 <> self.in1[i]
-      #self.adders[i].sum <> self.out
-      self.out <> self.adders[i].sum
-      #print type(self.adders[i].in0), self.adders[i].in0
-      #print self.in0[i]
+      self.adders[i].sum <> self.sum[i]
+
+    # TODO: does not create intermediate wires! Fix!
+    for i in xrange(bits-1):
+      self.adders[i+1].cin <> self.adders[i].cout
 
 
+#TODO: run pychecker?
 #one_bit = FullAdder()
 #one_bit.generate_new(sys.stdout)
-four_bit = RippleCarryAdder()
+four_bit = RippleCarryAdder(4)
 four_bit.elaborate()
 four_bit.generate(sys.stdout)

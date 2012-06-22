@@ -1,16 +1,6 @@
 import sys
 
 
-class Net(object):
-  def __init__(self, id, addr):
-    self.id = id
-    self.addr = addr
-    if addr:
-      self.sufx = '[%d]' % addr
-    else:
-      self.sufx = ''
-    print self.id, self.sufx
-
 # TODO: subclass ports or wires?
 class VerilogSlice(object):
   def __init__(self, parent, width, addr):
@@ -18,19 +8,19 @@ class VerilogSlice(object):
     self.width      = width
     self.addr       = addr
     self.connection = parent.connection
-    self.connection += [ Net(VerilogPort.connect_id, addr) ]
-    VerilogPort.connect_id += 1
-    # TODO: suffix
+
+  @property
+  def name(self):
+    suffix = '[%d]' % self.addr
+    return self.parent.name + suffix
 
 class VerilogPort(object):
 
-  connect_id = 0
-
-  def __init__(self, type=None, width=None, name=None, str=None):
+  def __init__(self, type=None, width=None, name='???', str=None):
     self.type  = type
     self.width = width
     self.name  = name
-    self.connection = []
+    self.connection = None
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
@@ -57,22 +47,14 @@ class VerilogPort(object):
   def connect(self, target):
     # TODO: throw an exception if the other object is not a VerilogPort
     # TODO: support wires?
-    # TODO: throw error if widths don't match!
-    print self.width, target.width
-    # TODO: insert function pointers here?
-    # TODO: check if self or target pointers have been set yet
-    #if self.connection is None and target.connection is None
-    if self.connection and target.connection:
-      print "ERROR!!! Can't resolve connection ID!"
-      sys.exit(-1)
-    elif self.connection:
-      target.connection += [ self.connection[0] ]
-    elif target.connection:
-      self.connection   += [ target.connection[0] ]
-    else:
-      self.connection   += [ Net(VerilogPort.connect_id, None) ]
-      target.connection += [ Net(VerilogPort.connect_id, None) ]
-      VerilogPort.connect_id += 1
+    # TODO: do we want to use an assert here
+    assert self.width == target.width
+    # InPort  -> InPort : no wire
+    # OutPort -> OutPort: no wire
+    # InPort  -> OutPort: wire
+    # OutPort -> InPort:  wire
+    self.connection    = target
+    target.connection  = self
 
   def parse(self, line):
     tokens = line.strip().strip(',').split()
@@ -204,18 +186,7 @@ class ToVerilog(object):
     #   a wire.
 
     # PORTS
-    nets = []
-    for port in self.ports:
-      for connection in port.connection:
-        nets.insert(connection.id, port.name+connection.sufx)
     # MODULES
-    print nets
-    for module in self.submodules:
-      print module.name
-      for port in module.ports:
-        if port.connection: #TODO: temporary
-          print port.connection[0].id
-          port.connection = nets[port.connection[0].id]
     # WIRES
 
   def generate(self, o):
@@ -261,9 +232,11 @@ class ToVerilog(object):
 
   def gen_port_insts(self, ports, o):
     for p in ports[:-1]:
-      print >> o , '    .%s (%s),' % (p.name, p.connection)
+      name = p.connection.name if p.connection else ' '
+      print >> o , '    .%s (%s),' % (p.name, name)
     p = ports[-1]
-    print >> o, '    .%s (%s)' % (p.name, p.connection)
+    name = p.connection.name if p.connection else ' '
+    print >> o, '    .%s (%s)' % (p.name, name)
 
 
 req_resp_port = FromVerilog("vgen-TestMemReqRespPort.v")
