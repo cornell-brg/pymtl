@@ -38,28 +38,46 @@ class RippleCarryAdder (foo):
 
 class InPort(VerilogPort):
   def __init__(self, width=None, name=None):
-    self.type  = 'input'
-    self.width = width
-    self.name  = name
+    super(InPort, self).__init__('input', width, name)
 
 class OutPort(VerilogPort):
   def __init__(self, width=None, name=None):
-    self.type  = 'output'
-    self.width = width
-    self.name  = name
+    super(OutPort, self).__init__('output', width, name)
 
 class FullAdder(ToVerilog):
   def __init__(self):
-    self.name = 'FullAdder'
-    self.in0  = InPort (1, 'in0')
-    self.in1  = InPort (1, 'in1')
-    self.cin  = InPort (1, 'cin')
-    self.sum  = OutPort(1, 'sum')
-    self.cout = OutPort(1, 'cout')
-    self.ports = [self.in0, self.in1, self.cin, self.sum, self.cout]
-    self.wires = None
-    self.submodules = None
+    # Can't find a way to make the name the instance name...
+    self.name = 'FA_instance_name'
+    self.in0  = InPort (1)
+    self.in1  = InPort (1)
+    self.cin  = InPort (1)
+    self.sum  = OutPort(1)
+    self.cout = OutPort(1)
+
+class RippleCarryAdder(ToVerilog):
+  def __init__(self):
+    self.name = 'RCA_instance_name'
+    self.in0 = InPort (4)
+    self.in1 = InPort (4)
+    self.out = OutPort(4)
+
+    self.adders = [ FullAdder() for i in xrange(4) ]
+
+    for i in xrange(4):
+      #self.adders[i].in0 <> self.in0[i]
+      #self.adders[i].in1 <> self.in1[i]
+      #self.adders[i].out <> self.out[i]
+      print '@ ', self.in0.connection
+      self.adders[i].in0 <> self.in0[i]
+      self.adders[i].in1 <> self.in1[i]
+      #self.adders[i].sum <> self.out
+      self.out <> self.adders[i].sum
+      #print type(self.adders[i].in0), self.adders[i].in0
+      #print self.in0[i]
 
 
-one_bit = FullAdder()
-one_bit.generate(sys.stdout)
+#one_bit = FullAdder()
+#one_bit.generate_new(sys.stdout)
+four_bit = RippleCarryAdder()
+four_bit.elaborate()
+four_bit.generate(sys.stdout)

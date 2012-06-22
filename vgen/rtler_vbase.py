@@ -1,10 +1,36 @@
+import sys
+
+
+class Net(object):
+  def __init__(self, id, addr):
+    self.id = id
+    self.addr = addr
+    if addr:
+      self.sufx = '[%d]' % addr
+    else:
+      self.sufx = ''
+    print self.id, self.sufx
+
+# TODO: subclass ports or wires?
+class VerilogSlice(object):
+  def __init__(self, parent, width, addr):
+    self.parent     = parent
+    self.width      = width
+    self.addr       = addr
+    self.connection = parent.connection
+    self.connection += [ Net(VerilogPort.connect_id, addr) ]
+    VerilogPort.connect_id += 1
+    # TODO: suffix
 
 class VerilogPort(object):
+
+  connect_id = 0
 
   def __init__(self, type=None, width=None, name=None, str=None):
     self.type  = type
     self.width = width
     self.name  = name
+    self.connection = []
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
@@ -19,6 +45,34 @@ class VerilogPort(object):
         return "%s %s" % (self.type, self.name)
       else :
         return "%s [%d:0] %s" % (self.type, self.width-1, self.name)
+
+  def __ne__(self, target):
+    self.connect(target)
+
+  def __getitem__(self, addr):
+    #print "@__getitem__", type(addr), addr, str(addr)
+    # TODO: handle slices here or in Slice type?
+    return VerilogSlice(self, 1, addr)
+
+  def connect(self, target):
+    # TODO: throw an exception if the other object is not a VerilogPort
+    # TODO: support wires?
+    # TODO: throw error if widths don't match!
+    print self.width, target.width
+    # TODO: insert function pointers here?
+    # TODO: check if self or target pointers have been set yet
+    #if self.connection is None and target.connection is None
+    if self.connection and target.connection:
+      print "ERROR!!! Can't resolve connection ID!"
+      sys.exit(-1)
+    elif self.connection:
+      target.connection += [ self.connection[0] ]
+    elif target.connection:
+      self.connection   += [ target.connection[0] ]
+    else:
+      self.connection   += [ Net(VerilogPort.connect_id, None) ]
+      target.connection += [ Net(VerilogPort.connect_id, None) ]
+      VerilogPort.connect_id += 1
 
   def parse(self, line):
     tokens = line.strip().strip(',').split()
@@ -110,6 +164,59 @@ class FromVerilog(object):
 
 
 class ToVerilog(object):
+
+  def check_type(self, name, obj):
+    if isinstance(obj, VerilogPort):
+      obj.name = name
+      self.ports += [obj]
+    elif isinstance(obj, ToVerilog):
+      obj.name = name
+      # TODO: better way to do this?
+      obj.type = obj.__class__.__name__
+      # TODO: hack, passing None necessary since generate_new also does
+      #       refactor to make this unnecessary.  Although... this does
+      #       Potentially handle generating class .v files on demand...
+      #obj.generate_new(None)
+      obj.elaborate()
+      self.submodules += [obj]
+    elif isinstance(obj, list):
+      for i, item in enumerate(obj):
+        item_name = "%s_%d" % (name, i)
+        self.check_type(item_name, item)
+
+  def elaborate(self):
+    self.wires = []
+    self.ports = []
+    self.submodules = []
+    # TODO: do all ports first?
+    # Get the names of all ports and submodules
+    for name, obj in self.__dict__.items():
+      # TODO: make ports, submodules, wires _ports, _submodules, _wires
+      if (name is not 'ports' and name is not 'submodules'):
+        self.check_type(name, obj)
+    # Verify connections.
+    # * All nets that include an input port as a node will use the
+    #   the input port as the net name.
+    # * All nets that connect a module to an output port will use the
+    #   output port as the net name.
+    #   Note: is this more complicated than just creating a wire?
+    # * All nets that wire two submodule ports together need to create
+    #   a wire.
+
+    # PORTS
+    nets = []
+    for port in self.ports:
+      for connection in port.connection:
+        nets.insert(connection.id, port.name+connection.sufx)
+    # MODULES
+    print nets
+    for module in self.submodules:
+      print module.name
+      for port in module.ports:
+        if port.connection: #TODO: temporary
+          print port.connection[0].id
+          port.connection = nets[port.connection[0].id]
+    # WIRES
 
   def generate(self, o):
     print >> o, 'module %s' % self.name
