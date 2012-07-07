@@ -2,39 +2,37 @@ import sys
 
 from rtler_vbase import *
 
-"""
-Target:
+#  Target:
+#
+#  class FullAdder (foo):
+#
+#   def __init__(self):
+#     self.in0  = InputPort(1)
+#     self.in1  = InputPort(1)
+#     self.cin  = InputPort(1)
+#     self.sum  = OutputPort(1)
+#     self.cout = OutputPort(1)
+#
+#  class RippleCarryAdder (foo):
+#
+#   def __init__(self):
+#     self.in0  = InputPort(32)
+#     self.in1  = InputPort(32)
+#     self.sum  = OutputPort(32)
+#
+#   def elaborate(self):
+#
+#     self.adders = [ FullAdder() for i in xrange(32) ]
+#
+#     for i in xrange(32):
+#       self.adders[i].in0 <> self.in0[i]
+#       self.adders[i].in1 <> self.in1[i]
+#       self.adders[i].out <> self.out[i]
+#
+#     self.adders[0].cin.wr(0)
+#     for i in xrange(31):
+#       self.adders[i+1].cin <> self.adders[i].cout
 
-class FullAdder (foo):
-
- def __init__(self):
-   self.in0  = InputPort(1)
-   self.in1  = InputPort(1)
-   self.cin  = InputPort(1)
-   self.sum  = OutputPort(1)
-   self.cout = OutputPort(1)
-
-class RippleCarryAdder (foo):
-
- def __init__(self):
-   self.in0  = InputPort(32)
-   self.in1  = InputPort(32)
-   self.sum  = OutputPort(32)
-
- def elaborate(self):
-
-   self.adders = [ FullAdder() for i in xrange(32) ]
-
-   for i in xrange(32):
-     self.adders[i].in0 <> self.in0[i]
-     self.adders[i].in1 <> self.in1[i]
-     self.adders[i].out <> self.out[i]
-
-   self.adders[0].cin.wr(0)
-   for i in xrange(31):
-     self.adders[i+1].cin <> self.adders[i].cout
-
-"""
 
 class InPort(VerilogPort):
   def __init__(self, width=None):
@@ -70,6 +68,7 @@ class RippleCarryAdder(ToVerilog):
     # TODO: does not create intermediate wires! Fix!
     for i in xrange(bits-1):
       self.adders[i+1].cin <> self.adders[i].cout
+    self.adders[0].cin <> 0
 
 
 #TODO: run pychecker?

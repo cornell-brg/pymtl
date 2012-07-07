@@ -14,6 +14,10 @@ class VerilogSlice(object):
     suffix = '[%d]' % self.addr
     return self.parent.name + suffix
 
+  @property
+  def type(self):
+    return self.parent.type
+
 class VerilogPort(object):
 
   def __init__(self, type=None, width=None, name='???', str=None):
@@ -48,13 +52,14 @@ class VerilogPort(object):
     # TODO: throw an exception if the other object is not a VerilogPort
     # TODO: support wires?
     # TODO: do we want to use an assert here
-    assert self.width == target.width
-    # InPort  -> InPort : no wire
-    # OutPort -> OutPort: no wire
-    # InPort  -> OutPort: wire
-    # OutPort -> InPort:  wire
-    self.connection    = target
-    target.connection  = self
+    if isinstance(target, int):
+      self.connection = VerilogConstant(target, self.width)
+    else:
+      #if isinstance(target, VerilogPort)
+      # or isinstance(target,VerilogSlice):
+      assert self.width == target.width
+      self.connection    = target
+      target.connection  = self
 
   def parse(self, line):
     tokens = line.strip().strip(',').split()
@@ -68,16 +73,29 @@ class VerilogPort(object):
     return type, width, name
 
 
+class VerilogConstant(object):
+  def __init__(self, value, width):
+    self.value = value
+    self.width = width
+    self.type  = 'constant'
+    self.name  = "%d'd%d" % (self.width, self.value)
+  def __repr__(self):
+    return "Constant(%s, %s)" % (self.value, self.width)
+  def __str__(self):
+    return self.name
+
 class VerilogWire(object):
 
   def __init__(self, name, width):
     self.name  = name
     self.width = width
+    self.type  = "wire"
 
   def __repr__(self):
     return "Wire(%s, %s)" % (self.name, self.width)
 
   def __str__(self):
+    # TODO: this seems weird.
     if isinstance(self.width, str):
       return "wire %s %s;" % (self.width, self.name)
     elif isinstance(self.width, int):
@@ -148,9 +166,11 @@ class FromVerilog(object):
 class ToVerilog(object):
 
   def check_type(self, name, obj):
+    # If object is a port, add it to our ports list
     if isinstance(obj, VerilogPort):
       obj.name = name
       self.ports += [obj]
+    # If object is a submodule, add it to our submodules list
     elif isinstance(obj, ToVerilog):
       obj.name = name
       # TODO: better way to do this?
@@ -161,6 +181,8 @@ class ToVerilog(object):
       #obj.generate_new(None)
       obj.elaborate()
       self.submodules += [obj]
+    # If object is a list, iterate through items and recursively call
+    # check_type()
     elif isinstance(obj, list):
       for i, item in enumerate(obj):
         item_name = "%s_%d" % (name, i)
@@ -198,7 +220,8 @@ class ToVerilog(object):
     # Declare Ports
     if self.ports: self.gen_port_decls( self.ports, o )
     # Wires & Instantiations
-    if self.wires: self.gen_wire_decls( self.wires, o )
+    self.gen_impl_wires( o )
+    #if self.wires: self.gen_wire_decls( self.wires, o )
     if self.submodules: self.gen_module_insts( self.submodules, o )
     #if logic:  print logic.getvalue(),
     # End module
@@ -219,6 +242,19 @@ class ToVerilog(object):
     p = params[-1]
     print >> o, '  %s' % p
     print >> o, ')'
+
+  def gen_impl_wires(self, o):
+    for s in self.submodules:
+      for p in s.ports:
+        if (p.connection and p.connection.type != 'wire'
+        and p.connection.type != 'constant'
+        and p.type != p.connection.type):
+            wire_name = s.name + '_' + p.name + '_' + p.connection.name
+            wire = VerilogWire(wire_name, p.width)
+            p.connection.connection = wire
+            p.connection = wire
+            print >> o, '  %s' % wire
+    print
 
   def gen_wire_decls(self, wires, o):
     for w in wires.values():
