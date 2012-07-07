@@ -167,6 +167,8 @@ class ToVerilog(object):
         self.check_type(item_name, item)
 
   def elaborate(self):
+    # TODO: better way to set the name?
+    self.type = self.__class__.__name__
     self.wires = []
     self.ports = []
     self.submodules = []
@@ -190,7 +192,7 @@ class ToVerilog(object):
     # WIRES
 
   def generate(self, o):
-    print >> o, 'module %s' % self.name
+    print >> o, 'module %s' % self.type
     # Declare Params
     #if self.params: self.gen_param_decls( self.params, o )
     # Declare Ports

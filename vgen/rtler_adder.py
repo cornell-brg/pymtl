@@ -56,8 +56,6 @@ class FullAdder(ToVerilog):
 
 class RippleCarryAdder(ToVerilog):
   def __init__(self, bits):
-    # TODO: figure out a way to set the name?
-    self.name = 'RippleCarryAdder_FIXME'
     self.in0 = InPort (bits)
     self.in1 = InPort (bits)
     self.sum = OutPort(bits)
