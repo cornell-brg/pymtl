@@ -73,6 +73,15 @@ class VerilogPort(object):
     return type, width, name
 
 
+class InPort(VerilogPort):
+  def __init__(self, width=None):
+    super(InPort, self).__init__('input', width)
+
+class OutPort(VerilogPort):
+  def __init__(self, width=None):
+    super(OutPort, self).__init__('output', width)
+
+
 class VerilogConstant(object):
   def __init__(self, value, width):
     self.value = value
@@ -233,7 +242,7 @@ class ToVerilog(object):
       print >> o , '  %s,' % p
     p = ports[-1]
     print >> o, '  %s' % p
-    print >> o, ');'
+    print >> o, ');\n'
 
   def gen_param_decls(self, params, o):
     print >> o, '#('
@@ -247,13 +256,15 @@ class ToVerilog(object):
     for s in self.submodules:
       for p in s.ports:
         if (p.connection and p.connection.type != 'wire'
-        and p.connection.type != 'constant'
-        and p.type != p.connection.type):
-            wire_name = s.name + '_' + p.name + '_' + p.connection.name
-            wire = VerilogWire(wire_name, p.width)
-            p.connection.connection = wire
-            p.connection = wire
-            print >> o, '  %s' % wire
+            and p.connection.type != 'constant'
+            and p.type != p.connection.type):
+          # TODO: figure out a way to get connection submodule name...
+          wire_name = '{0}_{1}_TO_{2}'.format(s.name, p.name,
+                                              p.connection.name)
+          wire = VerilogWire(wire_name, p.width)
+          p.connection.connection = wire
+          p.connection = wire
+          print >> o, '  %s' % wire
     print
 
   def gen_wire_decls(self, wires, o):
@@ -266,7 +277,7 @@ class ToVerilog(object):
       # TODO: add params
       print >> o, '  ('
       self.gen_port_insts(s.ports, o)
-      print >> o, '  );'
+      print >> o, '  );\n'
 
   def gen_port_insts(self, ports, o):
     for p in ports[:-1]:

@@ -34,14 +34,6 @@ from rtler_vbase import *
 #       self.adders[i+1].cin <> self.adders[i].cout
 
 
-class InPort(VerilogPort):
-  def __init__(self, width=None):
-    super(InPort, self).__init__('input', width)
-
-class OutPort(VerilogPort):
-  def __init__(self, width=None):
-    super(OutPort, self).__init__('output', width)
-
 class FullAdder(ToVerilog):
   def __init__(self):
     # Can't set the instance name during init, but can during elaboration
@@ -51,6 +43,11 @@ class FullAdder(ToVerilog):
     self.cin  = InPort (1)
     self.sum  = OutPort(1)
     self.cout = OutPort(1)
+
+  #@always_comb
+  #def logic():
+  #  sum  <= (in0 ^ in1) ^ cin
+  #  cout <= (in0 & in1) | (in0 & cin) | (in1 & cin)
 
 class RippleCarryAdder(ToVerilog):
   def __init__(self, bits):
@@ -65,7 +62,6 @@ class RippleCarryAdder(ToVerilog):
       self.adders[i].in1 <> self.in1[i]
       self.adders[i].sum <> self.sum[i]
 
-    # TODO: does not create intermediate wires! Fix!
     for i in xrange(bits-1):
       self.adders[i+1].cin <> self.adders[i].cout
     self.adders[0].cin <> 0
