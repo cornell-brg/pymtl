@@ -34,7 +34,7 @@ from rtler_vbase import *
 #       self.adders[i+1].cin <> self.adders[i].cout
 
 
-class FullAdder(ToVerilog):
+class FullAdder(Synthesizable):
   def __init__(self):
     # Can't set the instance name during init, but can during elaboration
     # by walking the Top-Level Module's __dict__ and checking types
@@ -49,7 +49,7 @@ class FullAdder(ToVerilog):
   #  sum  <= (in0 ^ in1) ^ cin
   #  cout <= (in0 & in1) | (in0 & cin) | (in1 & cin)
 
-class RippleCarryAdder(ToVerilog):
+class RippleCarryAdder(Synthesizable):
   def __init__(self, bits):
     self.in0 = InPort (bits)
     self.in1 = InPort (bits)
@@ -69,7 +69,8 @@ class RippleCarryAdder(ToVerilog):
 
 #TODO: run pychecker?
 #one_bit = FullAdder()
-#one_bit.generate_new(sys.stdout)
+
 four_bit = RippleCarryAdder(4)
-four_bit.elaborate()
-four_bit.generate(sys.stdout)
+v = ToVerilog()
+v.elaborate( four_bit )
+v.generate( four_bit, sys.stdout )

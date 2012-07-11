@@ -172,15 +172,21 @@ class FromVerilog(object):
         in_module = False
 
 
+class Synthesizable(object):
+  pass
+
+
 class ToVerilog(object):
 
-  def check_type(self, name, obj):
+  def check_type(self, target, name, obj):
     # If object is a port, add it to our ports list
     if isinstance(obj, VerilogPort):
       obj.name = name
-      self.ports += [obj]
+      target.ports += [obj]
     # If object is a submodule, add it to our submodules list
-    elif isinstance(obj, ToVerilog):
+    # TODO: change to be a special subclass?
+    #elif isinstance(obj, ToVerilog):
+    elif isinstance(obj, Synthesizable):
       obj.name = name
       # TODO: better way to do this?
       obj.type = obj.__class__.__name__
@@ -188,27 +194,27 @@ class ToVerilog(object):
       #       refactor to make this unnecessary.  Although... this does
       #       Potentially handle generating class .v files on demand...
       #obj.generate_new(None)
-      obj.elaborate()
-      self.submodules += [obj]
+      self.elaborate( obj )
+      target.submodules += [obj]
     # If object is a list, iterate through items and recursively call
     # check_type()
     elif isinstance(obj, list):
       for i, item in enumerate(obj):
         item_name = "%s_%d" % (name, i)
-        self.check_type(item_name, item)
+        self.check_type(target, item_name, item)
 
-  def elaborate(self):
+  def elaborate(self, target):
     # TODO: better way to set the name?
-    self.type = self.__class__.__name__
-    self.wires = []
-    self.ports = []
-    self.submodules = []
+    target.type = target.__class__.__name__
+    target.wires = []
+    target.ports = []
+    target.submodules = []
     # TODO: do all ports first?
     # Get the names of all ports and submodules
-    for name, obj in self.__dict__.items():
+    for name, obj in target.__dict__.items():
       # TODO: make ports, submodules, wires _ports, _submodules, _wires
       if (name is not 'ports' and name is not 'submodules'):
-        self.check_type(name, obj)
+        self.check_type(target, name, obj)
     # Verify connections.
     # * All nets that include an input port as a node will use the
     #   the input port as the net name.
@@ -222,16 +228,16 @@ class ToVerilog(object):
     # MODULES
     # WIRES
 
-  def generate(self, o):
-    print >> o, 'module %s' % self.type
+  def generate(self, target, o):
+    print >> o, 'module %s' % target.type
     # Declare Params
     #if self.params: self.gen_param_decls( self.params, o )
     # Declare Ports
-    if self.ports: self.gen_port_decls( self.ports, o )
+    if target.ports: self.gen_port_decls( target.ports, o )
     # Wires & Instantiations
-    self.gen_impl_wires( o )
+    self.gen_impl_wires( target, o )
     #if self.wires: self.gen_wire_decls( self.wires, o )
-    if self.submodules: self.gen_module_insts( self.submodules, o )
+    if target.submodules: self.gen_module_insts( target.submodules, o )
     #if logic:  print logic.getvalue(),
     # End module
     print >> o, 'endmodule'
@@ -252,8 +258,8 @@ class ToVerilog(object):
     print >> o, '  %s' % p
     print >> o, ')'
 
-  def gen_impl_wires(self, o):
-    for s in self.submodules:
+  def gen_impl_wires(self, target, o):
+    for s in target.submodules:
       for p in s.ports:
         if (p.connection and p.connection.type != 'wire'
             and p.connection.type != 'constant'
@@ -288,4 +294,4 @@ class ToVerilog(object):
     print >> o, '    .%s (%s)' % (p.name, name)
 
 
-req_resp_port = FromVerilog("vgen-TestMemReqRespPort.v")
+#req_resp_port = FromVerilog("vgen-TestMemReqRespPort.v")
