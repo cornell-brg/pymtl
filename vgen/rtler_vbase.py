@@ -1,5 +1,6 @@
 import sys
 import ast
+from rtler_vast import PyToVerilogVisitor
 
 
 # TODO: subclass ports or wires?
@@ -240,7 +241,7 @@ class ToVerilog(object):
     #if self.wires: self.gen_wire_decls( self.wires, o )
     if target.submodules: self.gen_module_insts( target.submodules, o )
     # Logic
-    self.gen_ast( target )
+    self.gen_ast( target, o )
     # End module
     print >> o, '\nendmodule\n'
 
@@ -309,65 +310,8 @@ class ToVerilog(object):
       #print ast.parse( src )
       print
 
-  def gen_ast(self, v):
+  def gen_ast(self, v, o):
     import inspect
-    opmap = {
-        ast.Add      : '+',
-        ast.Sub      : '-',
-        ast.Mult     : '*',
-        ast.Div      : '/',
-        ast.Mod      : '%',
-        ast.Pow      : '**',
-        ast.LShift   : '<<',
-        ast.RShift   : '>>>',
-        ast.BitOr    : '|',
-        ast.BitAnd   : '&',
-        ast.BitXor   : '^',
-        ast.FloorDiv : '/',
-        ast.Invert   : '~',
-        ast.Not      : '!',
-        ast.UAdd     : '+',
-        ast.USub     : '-',
-        ast.Eq       : '==',
-        ast.Gt       : '>',
-        ast.GtE      : '>=',
-        ast.Lt       : '<',
-        ast.LtE      : '<=',
-        ast.NotEq    : '!=',
-        ast.And      : '&&',
-        ast.Or       : '||',
-    }
-    class MyVisitor(ast.NodeVisitor):
-      def __init__(self):
-        self.write_names = False
-      def visit_BinOp(self, node):
-        print "(",
-        self.visit(node.left)
-        print opmap[type(node.op)],
-        self.visit(node.right)
-        print ")",
-      def visit_BoolOp(self, node):
-        print 'Found BoolOp "%s"' % node.op
-      def visit_UnaryOp(self, node):
-        print 'Found UnaryOp "%s"' % node.op
-      def visit_Compare(self, node):
-      #def visit_LtE(self, node):
-        print "  assign", node.left.id, "=",
-        self.visit(node.comparators[0])
-        print ";"
-      #def visit_Num(self, node):
-      #  print 'Found Num', node.n
-      def visit_Name(self, node):
-        if self.write_names: print node.id,
-      def visit_FunctionDef(self, node):
-        #print node.name, node.decorator_list
-        if not node.decorator_list:
-          return
-        if node.decorator_list[0].id == 'always_comb':
-          self.write_names = True
-          for x in node.body:
-            self.visit(x)
-          self.write_names = False
 
       #def visit_Attribute(self, node):
       #  print 'Found Attribute "%s"' % node.s
@@ -376,7 +320,7 @@ class ToVerilog(object):
     for x,y in inspect.getmembers(v, inspect.isclass):
       src = inspect.getsource( y )
       tree = ast.parse( src )
-      MyVisitor().visit(tree)
+      PyToVerilogVisitor( o ).visit(tree)
       #for z in ast.walk(tree):
       #  print z, type(z)
 
