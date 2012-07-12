@@ -33,6 +33,10 @@ from rtler_vbase import *
 #     for i in xrange(31):
 #       self.adders[i+1].cin <> self.adders[i].cout
 
+def always_comb(fn):
+  def wrapped():
+    return fn()
+  return wrapped
 
 class FullAdder(Synthesizable):
   def __init__(self):
@@ -44,10 +48,10 @@ class FullAdder(Synthesizable):
     self.sum  = OutPort(1)
     self.cout = OutPort(1)
 
-  #@always_comb
-  #def logic():
-  #  sum  <= (in0 ^ in1) ^ cin
-  #  cout <= (in0 & in1) | (in0 & cin) | (in1 & cin)
+  @always_comb
+  def logic(self):
+    sum  <= (in0 ^ in1) ^ cin
+    cout <= (in0 & in1) | (in0 & cin) | (in1 & cin)
 
 class RippleCarryAdder(Synthesizable):
   def __init__(self, bits):
@@ -67,10 +71,13 @@ class RippleCarryAdder(Synthesizable):
     self.adders[0].cin <> 0
 
 
+v = ToVerilog()
 #TODO: run pychecker?
-#one_bit = FullAdder()
+one_bit = FullAdder()
+#v.gen_ast( one_bit )
+v.elaborate( one_bit )
+v.generate( one_bit, sys.stdout )
 
 four_bit = RippleCarryAdder(4)
-v = ToVerilog()
 v.elaborate( four_bit )
 v.generate( four_bit, sys.stdout )

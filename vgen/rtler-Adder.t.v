@@ -1,17 +1,17 @@
 `include "rtler-Adder.v"
 `include "vc-Test.v"
 
-module FullAdder
-(
-  output sum,
-  input  in0,
-  input  in1,
-  input  cin,
-  output cout
-);
-  assign sum = (in0 ^ in1) ^ cin;
-  assign cout = (in0 && in1) || (in0 && cin) || (in1 && cin);
-endmodule
+//module FullAdder
+//(
+//  output sum,
+//  input  in0,
+//  input  in1,
+//  input  cin,
+//  output cout
+//);
+//  assign sum = (in0 ^ in1) ^ cin;
+//  assign cout = (in0 && in1) || (in0 && cin) || (in1 && cin);
+//endmodule
 
 
 module tester;

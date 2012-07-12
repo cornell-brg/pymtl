@@ -1,4 +1,5 @@
 import sys
+import ast
 
 
 # TODO: subclass ports or wires?
@@ -238,9 +239,10 @@ class ToVerilog(object):
     self.gen_impl_wires( target, o )
     #if self.wires: self.gen_wire_decls( self.wires, o )
     if target.submodules: self.gen_module_insts( target.submodules, o )
-    #if logic:  print logic.getvalue(),
+    # Logic
+    self.gen_ast( target )
     # End module
-    print >> o, 'endmodule'
+    print >> o, '\nendmodule\n'
 
   def gen_port_decls(self, ports, o):
     print >> o, '('
@@ -271,7 +273,7 @@ class ToVerilog(object):
           p.connection.connection = wire
           p.connection = wire
           print >> o, '  %s' % wire
-    print
+    #print
 
   def gen_wire_decls(self, wires, o):
     for w in wires.values():
@@ -279,11 +281,12 @@ class ToVerilog(object):
 
   def gen_module_insts(self, submodules, o):
     for s in submodules:
+      print >> o, ''
       print >> o, '  %s %s' % (s.type, s.name)
       # TODO: add params
       print >> o, '  ('
       self.gen_port_insts(s.ports, o)
-      print >> o, '  );\n'
+      print >> o, '  );'
 
   def gen_port_insts(self, ports, o):
     for p in ports[:-1]:
@@ -293,5 +296,88 @@ class ToVerilog(object):
     name = p.connection.name if p.connection else ' '
     print >> o, '    .%s (%s)' % (p.name, name)
 
+  def test_mod(self, v):
+    import inspect
+    for x,y in inspect.getmembers(v, inspect.ismethod):
+      print "Class: ", y.im_class.__name__
+      print "Func:  ", y.im_func.__name__
+      print y.func_code.co_varnames
+      print y.func_globals
+      print y.func_globals
+      #src = inspect.getsource( y.im_func )
+      #print src
+      #print ast.parse( src )
+      print
+
+  def gen_ast(self, v):
+    import inspect
+    opmap = {
+        ast.Add      : '+',
+        ast.Sub      : '-',
+        ast.Mult     : '*',
+        ast.Div      : '/',
+        ast.Mod      : '%',
+        ast.Pow      : '**',
+        ast.LShift   : '<<',
+        ast.RShift   : '>>>',
+        ast.BitOr    : '|',
+        ast.BitAnd   : '&',
+        ast.BitXor   : '^',
+        ast.FloorDiv : '/',
+        ast.Invert   : '~',
+        ast.Not      : '!',
+        ast.UAdd     : '+',
+        ast.USub     : '-',
+        ast.Eq       : '==',
+        ast.Gt       : '>',
+        ast.GtE      : '>=',
+        ast.Lt       : '<',
+        ast.LtE      : '<=',
+        ast.NotEq    : '!=',
+        ast.And      : '&&',
+        ast.Or       : '||',
+    }
+    class MyVisitor(ast.NodeVisitor):
+      def __init__(self):
+        self.write_names = False
+      def visit_BinOp(self, node):
+        print "(",
+        self.visit(node.left)
+        print opmap[type(node.op)],
+        self.visit(node.right)
+        print ")",
+      def visit_BoolOp(self, node):
+        print 'Found BoolOp "%s"' % node.op
+      def visit_UnaryOp(self, node):
+        print 'Found UnaryOp "%s"' % node.op
+      def visit_Compare(self, node):
+      #def visit_LtE(self, node):
+        print "  assign", node.left.id, "=",
+        self.visit(node.comparators[0])
+        print ";"
+      #def visit_Num(self, node):
+      #  print 'Found Num', node.n
+      def visit_Name(self, node):
+        if self.write_names: print node.id,
+      def visit_FunctionDef(self, node):
+        #print node.name, node.decorator_list
+        if not node.decorator_list:
+          return
+        if node.decorator_list[0].id == 'always_comb':
+          self.write_names = True
+          for x in node.body:
+            self.visit(x)
+          self.write_names = False
+
+      #def visit_Attribute(self, node):
+      #  print 'Found Attribute "%s"' % node.s
+
+    #print inspect.getsource( v )  # Doesn't work? Wtf...
+    for x,y in inspect.getmembers(v, inspect.isclass):
+      src = inspect.getsource( y )
+      tree = ast.parse( src )
+      MyVisitor().visit(tree)
+      #for z in ast.walk(tree):
+      #  print z, type(z)
 
 #req_resp_port = FromVerilog("vgen-TestMemReqRespPort.v")
