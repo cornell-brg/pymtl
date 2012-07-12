@@ -27,6 +27,7 @@ class VerilogPort(object):
     self.width = width
     self.name  = name
     self.connection = None
+    self.value      = None
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
@@ -44,6 +45,28 @@ class VerilogPort(object):
 
   def __ne__(self, target):
     self.connect(target)
+
+  def __xor__(self, target):
+    # TODO: super hacky!!!!
+    temp = VerilogPort()
+    temp.value = self.value ^ target.value
+    return temp
+
+  def __and__(self, target):
+    # TODO: super hacky!!!!
+    temp = VerilogPort()
+    temp.value = self.value & target.value
+    return temp
+
+  def __or__(self, target):
+    # TODO: super hacky!!!!
+    temp = VerilogPort()
+    temp.value = self.value | target.value
+    return temp
+
+  def __ilshift__(self, target):
+    self.value = target.value
+    return self
 
   def __getitem__(self, addr):
     #print "@__getitem__", type(addr), addr, str(addr)

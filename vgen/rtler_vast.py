@@ -61,13 +61,22 @@ class PyToVerilogVisitor(ast.NodeVisitor):
   #def visit_Num(self, node):
   #  print 'Found Num', node.n
 
-  #def visit_LtE(self, node):
-  def visit_Compare(self, node):
-    """ Turn <= symbols into assign statements. """
+  def visit_AugAssign(self, node):
+    """ Turn <<= symbols into assign statements. """
     # TODO: this turns all comparisons into assign statements! Fix!
-    print >> self.o, '  assign', node.left.id, '=',
-    self.visit(node.comparators[0])
+    self.write_names = True
+    print >> self.o, '  assign', node.target.id, '=',
+    self.visit(node.value)
     print >> self.o, ';'
+    self.write_names = False
+
+  #def visit_LtE(self, node):
+  #def visit_Compare(self, node):
+  #  """ Turn <= symbols into assign statements. """
+  #  # TODO: this turns all comparisons into assign statements! Fix!
+  #  print >> self.o, '  assign', node.left.id, '=',
+  #  self.visit(node.comparators[0])
+  #  print >> self.o, ';'
 
   def visit_Name(self, node):
     if self.write_names: print >> self.o, node.id,
