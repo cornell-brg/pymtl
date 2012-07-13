@@ -1,7 +1,9 @@
 import sys
 import ast
 from rtler_vast import PyToVerilogVisitor
+from rtler_sim import LogicSim
 
+sim = LogicSim()
 
 # TODO: subclass ports or wires?
 class VerilogSlice(object):
@@ -27,7 +29,7 @@ class VerilogPort(object):
     self.width = width
     self.name  = name
     self.connection = None
-    self.value      = None
+    self._value     = None
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
@@ -49,19 +51,19 @@ class VerilogPort(object):
   def __xor__(self, target):
     # TODO: super hacky!!!!
     temp = VerilogPort()
-    temp.value = self.value ^ target.value
+    temp._value = self.value ^ target.value
     return temp
 
   def __and__(self, target):
     # TODO: super hacky!!!!
     temp = VerilogPort()
-    temp.value = self.value & target.value
+    temp._value = self.value & target.value
     return temp
 
   def __or__(self, target):
     # TODO: super hacky!!!!
     temp = VerilogPort()
-    temp.value = self.value | target.value
+    temp._value = self.value | target.value
     return temp
 
   def __ilshift__(self, target):
@@ -79,6 +81,7 @@ class VerilogPort(object):
     # TODO: do we want to use an assert here
     if isinstance(target, int):
       self.connection = VerilogConstant(target, self.width)
+      self._value     = target
     else:
       #if isinstance(target, VerilogPort)
       # or isinstance(target,VerilogSlice):
@@ -96,6 +99,24 @@ class VerilogPort(object):
       name = tokens[2]
       width = tokens[1]
     return type, width, name
+
+  @property
+  def value(self):
+    return self._value
+  @value.setter
+  def value(self, value):
+    #print "PORT:", self.name,
+    if self.connection:
+      #print self.connection._value,
+      self.connection._value = value
+      #print self.connection._value,
+    #print self.value,
+    self._value = value
+    #print self.value
+    sim.add_event(self, self.connection)
+  @value.deleter
+  def value(self):
+    del self._value
 
 
 class InPort(VerilogPort):
