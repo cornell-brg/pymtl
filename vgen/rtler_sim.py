@@ -17,15 +17,16 @@ class LogicSim():
   def add_callback(self, port, func):
     self.port_callbacks[port] = func
 
-  def add_event(self, port1, port2):
-    if port1 in self.port_callbacks:
-      func1 = self.port_callbacks[port1]
-      if not self.event_queue or func1 != self.event_queue[-1]:
-        self.event_queue.appendleft(func1)
-    if port2 in self.port_callbacks:
-      func2 = self.port_callbacks[port2]
-      if not self.event_queue or func2 != self.event_queue[-1]:
-        self.event_queue.appendleft(func2)
+  def add_event(self, port, connections):
+    if port in self.port_callbacks:
+      func = self.port_callbacks[port]
+      if not self.event_queue or func != self.event_queue[-1]:
+        self.event_queue.appendleft(func)
+    for x in connections:
+      if x in self.port_callbacks:
+        func = self.port_callbacks[x]
+        if not self.event_queue or func != self.event_queue[-1]:
+          self.event_queue.appendleft(func)
 
 
 

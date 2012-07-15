@@ -126,20 +126,30 @@ v = ToVerilog()
 #v.elaborate( one_bit )
 #v.generate( one_bit, sys.stdout )
 
-print "// Simulate AdderChain:"
-two_test = AdderChain( 1 )
-v.elaborate( two_test )
-two_test.in0.value = 1
-two_test.in1.value = 1
-sim.cycle()
-print "// Result:", two_test.sum.value
-#v.generate( two_test, sys.stdout )
-
-#print "// Simulate RippleCarryAdder:"
-#four_bit = RippleCarryAdder(4)
-#v.elaborate( four_bit )
-#four_bit.in0.value = 5
-#four_bit.in1.value = 8
+#print "// Simulate AdderChain:"
+#two_test = AdderChain( 1 )
+#v.elaborate( two_test )
+#two_test.in0.value = 1
+#two_test.in1.value = 1
 #sim.cycle()
-#print "// Result:", four_bit.sum.value
+#print "// Result:", two_test.sum.value
+#v.generate( two_test, sys.stdout )
+def port_walk(tgt, spaces=0):
+  for x in tgt.ports:
+    print spaces*' ', x.parent, x
+    for y in x.connection:
+      print spaces*' ', type(y), y.parent, y.name
+  print
+  for x in tgt.submodules:
+    print spaces*' ', x.name
+    port_walk(x, spaces+3)
+
+print "// Simulate RippleCarryAdder:"
+four_bit = RippleCarryAdder(4)
+v.elaborate( four_bit )
+four_bit.in0.value = 21
+four_bit.in1.value = 1
+port_walk(four_bit)
+sim.cycle()
+print "// Result:", four_bit.sum.value
 #v.generate( four_bit, sys.stdout )

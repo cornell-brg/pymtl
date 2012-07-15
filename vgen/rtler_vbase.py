@@ -5,22 +5,54 @@ from rtler_sim import LogicSim
 
 sim = LogicSim()
 
-# TODO: subclass ports or wires?
+#class ValueNode(object):
+#  def __init__(self, width, value='X'):
+#    self.width = width
+#    self.value = value
+#  @property
+#  def value(self):
+#    return self._value
+#  @value.setter
+#  def value(self, value):
+#    sim.add_event(self, self.connection)
+#  @value.deleter
+#  def value(self):
+#    del self._value
+
 class VerilogSlice(object):
-  def __init__(self, parent, width, addr):
-    self.parent     = parent
+  def __init__(self, parent_ptr, width, addr):
+    self.parent_ptr = parent_ptr
     self.width      = width
     self.addr       = addr
-    self.connection = parent.connection
+
+  @property
+  def parent(self):
+    return self.parent_ptr.name
 
   @property
   def name(self):
     suffix = '[%d]' % self.addr
-    return self.parent.name + suffix
+    return self.parent_ptr.name + suffix
 
   @property
   def type(self):
-    return self.parent.type
+    return self.parent_ptr.type
+
+  @property
+  def connection(self):
+    return self.parent_ptr.connection
+  @connection.setter
+  def connection(self, target):
+    self.parent_ptr.connection += [target]
+
+  @property
+  def _value(self):
+    print "read", self.addr
+    return self.parent_ptr._value
+  @_value.setter
+  def _value(self, value):
+    print "write", self.addr
+    self.parent_ptr._value = value
 
 class VerilogPort(object):
 
@@ -28,8 +60,9 @@ class VerilogPort(object):
     self.type  = type
     self.width = width
     self.name  = name
-    self.connection = None
-    self._value     = None
+    self.parent = '???'
+    self.connection = []
+    self._value     = -1
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
@@ -50,24 +83,31 @@ class VerilogPort(object):
 
   def __xor__(self, target):
     # TODO: super hacky!!!!
-    temp = VerilogPort()
+    temp = VerilogPort(name='xor_temp')
+    print type(self), self.parent+'.'+self.name, self.value, 'xor',
+    print type(target), target.parent+'.'+target.name, target.value
     temp._value = self.value ^ target.value
     return temp
 
   def __and__(self, target):
     # TODO: super hacky!!!!
-    temp = VerilogPort()
+    temp = VerilogPort(name='and_temp')
+    print type(self), self.parent+'.'+self.name, self.value, 'and',
+    print type(target), target.parent+'.'+target.name, target.value
     temp._value = self.value & target.value
     return temp
 
   def __or__(self, target):
     # TODO: super hacky!!!!
-    temp = VerilogPort()
+    temp = VerilogPort(name='or_temp')
+    print type(self), self.parent+'.'+self.name, self.value, 'or',
+    print type(target), target.parent+'.'+target.name, target.value
     temp._value = self.value | target.value
     return temp
 
   def __ilshift__(self, target):
     self.value = target.value
+    print type(self), self.parent+'.'+self.name, self.value
     return self
 
   def __getitem__(self, addr):
@@ -80,14 +120,16 @@ class VerilogPort(object):
     # TODO: support wires?
     # TODO: do we want to use an assert here
     if isinstance(target, int):
-      self.connection = VerilogConstant(target, self.width)
+      self.connection += [VerilogConstant(target, self.width)]
       self._value     = target
-    else:
-      #if isinstance(target, VerilogPort)
-      # or isinstance(target,VerilogSlice):
+    elif isinstance(target, VerilogSlice):
       assert self.width == target.width
-      self.connection    = target
-      target.connection  = self
+      self.connection.append(   target )
+      target.connection.append( self   )
+    else:
+      assert self.width == target.width
+      self.connection.append(   target )
+      target.connection.append( self   )
 
   def parse(self, line):
     tokens = line.strip().strip(',').split()
@@ -105,14 +147,22 @@ class VerilogPort(object):
     return self._value
   @value.setter
   def value(self, value):
-    #print "PORT:", self.name,
-    if self.connection:
-      #print self.connection._value,
-      self.connection._value = value
-      #print self.connection._value,
-    #print self.value,
+    #print "PORT:", self.parent+'.'+self.name
+    #if isinstance(self, VerilogSlice):
+    #  print "  writing", 'SLICE.'+self.name, ':   ', self.value,
+    #else:
+    #  print "  writing", self.parent+'.'+self.name, ':   ', self.value,
     self._value = value
-    #print self.value
+    #print '->', value
+    if self.connection:
+      #print " ", self.connection
+      for x in self.connection:
+        #if isinstance(x, VerilogSlice):
+        #  print "  writing", 'SLICE.'+x.name, ':   ', x._value,
+        #else:
+        #  print "  writing", x.parent+'.'+x.name, ':   ', x._value,
+        x._value = value
+        #print '->', value
     sim.add_event(self, self.connection)
   @value.deleter
   def value(self):
@@ -134,6 +184,7 @@ class VerilogConstant(object):
     self.width = width
     self.type  = 'constant'
     self.name  = "%d'd%d" % (self.width, self.value)
+    self.parent = ''
   def __repr__(self):
     return "Constant(%s, %s)" % (self.value, self.width)
   def __str__(self):
@@ -228,19 +279,20 @@ class ToVerilog(object):
     # If object is a port, add it to our ports list
     if isinstance(obj, VerilogPort):
       obj.name = name
+      obj.parent = target.name
       target.ports += [obj]
     # If object is a submodule, add it to our submodules list
     # TODO: change to be a special subclass?
     #elif isinstance(obj, ToVerilog):
     elif isinstance(obj, Synthesizable):
-      obj.name = name
+      #obj.name = name
       # TODO: better way to do this?
       obj.type = obj.__class__.__name__
       # TODO: hack, passing None necessary since generate_new also does
       #       refactor to make this unnecessary.  Although... this does
       #       Potentially handle generating class .v files on demand...
       #obj.generate_new(None)
-      self.elaborate( obj )
+      self.elaborate( obj, name )
       target.submodules += [obj]
     # If object is a list, iterate through items and recursively call
     # check_type()
@@ -249,9 +301,10 @@ class ToVerilog(object):
         item_name = "%s_%d" % (name, i)
         self.check_type(target, item_name, item)
 
-  def elaborate(self, target):
+  def elaborate(self, target, iname='toplevel'):
     # TODO: better way to set the name?
     target.type = target.__class__.__name__
+    target.name = iname
     target.wires = []
     target.ports = []
     target.submodules = []
@@ -306,18 +359,21 @@ class ToVerilog(object):
     print >> o, ')'
 
   def gen_impl_wires(self, target, o):
-    for s in target.submodules:
-      for p in s.ports:
-        if (p.connection and p.connection.type != 'wire'
-            and p.connection.type != 'constant'
-            and p.type != p.connection.type):
-          # TODO: figure out a way to get connection submodule name...
-          wire_name = '{0}_{1}_TO_{2}'.format(s.name, p.name,
-                                              p.connection.name)
-          wire = VerilogWire(wire_name, p.width)
-          p.connection.connection = wire
-          p.connection = wire
-          print >> o, '  %s' % wire
+    for submodule in target.submodules:
+      for port in submodule.ports:
+        if isinstance(port.connection, VerilogWire):
+          break
+        for c in port.connection:
+          if (    c.type != 'wire'
+              and c.type != 'constant'
+              and c.type != port.type):
+            # TODO: figure out a way to get connection submodule name...
+            wire_name = '{0}_{1}_TO_{2}_{3}'.format(submodule.name, port.name,
+                                                    c.parent, c.name)
+            wire = VerilogWire(wire_name, port.width)
+            c.connection = [wire]
+            port.connection = [wire]
+            print >> o, '  %s' % wire
     #print
 
   def gen_wire_decls(self, wires, o):
@@ -334,11 +390,14 @@ class ToVerilog(object):
       print >> o, '  );'
 
   def gen_port_insts(self, ports, o):
+    # TODO: hacky! fix p.connection
     for p in ports[:-1]:
-      name = p.connection.name if p.connection else ' '
+      assert len(p.connection) <= 1
+      name = p.connection[0].name if p.connection else ' '
       print >> o , '    .%s (%s),' % (p.name, name)
     p = ports[-1]
-    name = p.connection.name if p.connection else ' '
+    assert len(p.connection) <= 1
+    name = p.connection[0].name if p.connection else ' '
     print >> o, '    .%s (%s)' % (p.name, name)
 
   def test_mod(self, v):
