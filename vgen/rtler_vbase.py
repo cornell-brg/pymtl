@@ -4,20 +4,14 @@ from rtler_vast import PyToVerilogVisitor
 from rtler_sim import LogicSim
 
 sim = LogicSim()
+debug = False
 
-#class ValueNode(object):
-#  def __init__(self, width, value='X'):
-#    self.width = width
-#    self.value = value
-#  @property
-#  def value(self):
-#    return self._value
-#  @value.setter
-#  def value(self, value):
-#    sim.add_event(self, self.connection)
-#  @value.deleter
-#  def value(self):
-#    del self._value
+class ValueNode(object):
+  #def __init__(self, width, value='X'):
+  def __init__(self, width, value=0):
+    self.width = width
+    self.value = value
+    self.funcs = set()
 
 class VerilogSlice(object):
   def __init__(self, parent_ptr, width, addr):
@@ -27,13 +21,14 @@ class VerilogSlice(object):
 
   @property
   def parent(self):
-    return self.parent_ptr.name
+    return self.parent_ptr.parent
 
   @property
   def name(self):
     suffix = '[%d]' % self.addr
     return self.parent_ptr.name + suffix
 
+  #TODO: hacky...
   @property
   def type(self):
     return self.parent_ptr.type
@@ -46,12 +41,31 @@ class VerilogSlice(object):
     self.parent_ptr.connection += [target]
 
   @property
+  def funcs(self):
+    return self.parent_ptr.funcs
+  #@funcs.setter
+  #def funcs(self, value):
+  #  self.parent_ptr.funcs = value
+
+  @property
+  def value(self):
+    if self.parent_ptr.value != 'X':
+      temp = ((self.parent_ptr.value) & (1 << self.addr)) >> self.addr
+      return temp
+    else:
+      return self.parent_ptr.value
+  @value.setter
+  def value(self, value):
+    if self.parent_ptr.value != 'X':
+      self.parent_ptr.value |= (value << self.addr)
+    else:
+      self.parent_ptr.value = value
+
+  @property
   def _value(self):
-    print "read", self.addr
     return self.parent_ptr._value
   @_value.setter
   def _value(self, value):
-    print "write", self.addr
     self.parent_ptr._value = value
 
 class VerilogPort(object):
@@ -62,7 +76,8 @@ class VerilogPort(object):
     self.name  = name
     self.parent = '???'
     self.connection = []
-    self._value     = -1
+    self._value     = None
+    self.funcs      = set()
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
@@ -83,31 +98,45 @@ class VerilogPort(object):
 
   def __xor__(self, target):
     # TODO: super hacky!!!!
-    temp = VerilogPort(name='xor_temp')
-    print type(self), self.parent+'.'+self.name, self.value, 'xor',
-    print type(target), target.parent+'.'+target.name, target.value
-    temp._value = self.value ^ target.value
+    #temp = VerilogPort(name='xor_temp')
+    #print type(self), self.parent+'.'+self.name, self.value, 'xor',
+    #print type(target), target.parent+'.'+target.name, target.value
+    #temp.value = self.value ^ target.value
+    temp = self.value ^ target.value
+    return temp
+
+  def __rxor__(self, target):
+    #print type(self), self.parent+'.'+self.name, self.value, 'rxor',
+    #print type(target), target
+    temp = self.value ^ target
     return temp
 
   def __and__(self, target):
     # TODO: super hacky!!!!
-    temp = VerilogPort(name='and_temp')
-    print type(self), self.parent+'.'+self.name, self.value, 'and',
-    print type(target), target.parent+'.'+target.name, target.value
-    temp._value = self.value & target.value
+    #temp = VerilogPort(name='and_temp')
+    #print type(self), self.parent+'.'+self.name, self.value, 'and',
+    #print type(target), target.parent+'.'+target.name, target.value
+    #temp.value = self.value & target.value
+    temp = self.value & target.value
     return temp
 
   def __or__(self, target):
     # TODO: super hacky!!!!
-    temp = VerilogPort(name='or_temp')
-    print type(self), self.parent+'.'+self.name, self.value, 'or',
-    print type(target), target.parent+'.'+target.name, target.value
-    temp._value = self.value | target.value
+    #temp = VerilogPort(name='or_temp')
+    #print type(self), self.parent+'.'+self.name, self.value, 'or',
+    #print type(target), target.parent+'.'+target.name, target.value
+    #temp.value = self.value | target.value
+    temp = self.value | target.value
     return temp
 
   def __ilshift__(self, target):
-    self.value = target.value
-    print type(self), self.parent+'.'+self.name, self.value
+    if debug: print type(self), self.parent+'.'+self.name, self.value, '<<=',
+    if not isinstance(target, int):
+      if debug: print target.value
+      self.value = target.value
+    else:
+      if debug: print target
+      self.value = target
     return self
 
   def __getitem__(self, addr):
@@ -121,15 +150,33 @@ class VerilogPort(object):
     # TODO: do we want to use an assert here
     if isinstance(target, int):
       self.connection += [VerilogConstant(target, self.width)]
-      self._value     = target
+      self._value     = ValueNode(self.width, target)
     elif isinstance(target, VerilogSlice):
       assert self.width == target.width
       self.connection.append(   target )
       target.connection.append( self   )
+      if target._value:
+        self._value = target
+      else:
+        self._value = target
+        target._value = ValueNode(target.parent_ptr.width)
+        # Add the target callbacks
+        target._value.funcs.update( target.funcs )
+      # Add our callbacks
+      target._value.funcs.update( self.funcs )
     else:
       assert self.width == target.width
       self.connection.append(   target )
       target.connection.append( self   )
+      if target._value:
+        self._value = target._value
+      else:
+        self._value = ValueNode(self.width)
+        target._value = self._value
+        # Add the target callbacks
+        self._value.funcs.update( target.funcs )
+      # Add the target callbacks
+      self._value.funcs.update( self.funcs )
 
   def parse(self, line):
     tokens = line.strip().strip(',').split()
@@ -144,7 +191,10 @@ class VerilogPort(object):
 
   @property
   def value(self):
-    return self._value
+    if self._value:
+      return self._value.value
+    else:
+      return self._value
   @value.setter
   def value(self, value):
     #print "PORT:", self.parent+'.'+self.name
@@ -152,22 +202,13 @@ class VerilogPort(object):
     #  print "  writing", 'SLICE.'+self.name, ':   ', self.value,
     #else:
     #  print "  writing", self.parent+'.'+self.name, ':   ', self.value,
-    self._value = value
-    #print '->', value
-    if self.connection:
-      #print " ", self.connection
-      for x in self.connection:
-        #if isinstance(x, VerilogSlice):
-        #  print "  writing", 'SLICE.'+x.name, ':   ', x._value,
-        #else:
-        #  print "  writing", x.parent+'.'+x.name, ':   ', x._value,
-        x._value = value
-        #print '->', value
-    sim.add_event(self, self.connection)
-  @value.deleter
-  def value(self):
-    del self._value
-
+    if not self._value:
+      print "// WARNING: writing to unconnected node {0}.{1}!".format(
+            self.parent, self.name)
+      self._value = ValueNode(self.width, value)
+    else:
+      self._value.value = value
+      sim.add_event(self, self.connection)
 
 class InPort(VerilogPort):
   def __init__(self, width=None):

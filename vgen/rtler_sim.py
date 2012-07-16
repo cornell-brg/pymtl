@@ -15,18 +15,19 @@ class LogicSim():
       func()
 
   def add_callback(self, port, func):
-    self.port_callbacks[port] = func
+    # TODO: doesnt' work in __init__ because ValueNodes are not
+    #       created until elaborate!
+    #node = port._value
+    #print "ADDCALLBACK:", port.name, node
+    ## TODO: might need to support multiple funcs?
+    #self.port_callbacks[node] = func
+    port.funcs.add( func )
 
   def add_event(self, port, connections):
-    if port in self.port_callbacks:
-      func = self.port_callbacks[port]
-      if not self.event_queue or func != self.event_queue[-1]:
+    node = port._value
+    for func in node.funcs:
+      if func not in self.event_queue:
+        #print "ADDEVENT:", port.parent, port.name, port.value, func
         self.event_queue.appendleft(func)
-    for x in connections:
-      if x in self.port_callbacks:
-        func = self.port_callbacks[x]
-        if not self.event_queue or func != self.event_queue[-1]:
-          self.event_queue.appendleft(func)
-
 
 

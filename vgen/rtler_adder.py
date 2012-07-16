@@ -120,22 +120,23 @@ def port_walk(tgt, spaces=0):
 
 #print "// Simulate FullAdder:"
 #TODO: run pychecker?
-#one_bit = FullAdder()
-#import itertools
-#for x,y,z in itertools.product([0,1], [0,1], [0,1]):
-#  one_bit.in0.value = x
-#  one_bit.in1.value = y
-#  one_bit.cin.value = z
-#  one_bit.logic()
-#  print "// Inputs:",
-#  print one_bit.in0.value,
-#  print one_bit.in1.value,
-#  print one_bit.cin.value
-#  print "// Outputs:",
-#  print "sum:",  one_bit.sum.value,
-#  print "cout:", one_bit.cout.value
-#v.elaborate( one_bit )
-#v.generate( one_bit, sys.stdout )
+one_bit = FullAdder()
+import itertools
+v.elaborate( one_bit )
+for x,y,z in itertools.product([0,1], [0,1], [0,1]):
+  one_bit.in0.value = x
+  one_bit.in1.value = y
+  one_bit.cin.value = z
+  one_bit.logic()
+  #sim.cycle()  # TODO: DOESN'T WORK!
+  print "// Inputs:",
+  print one_bit.in0.value,
+  print one_bit.in1.value,
+  print one_bit.cin.value
+  print "// Outputs:",
+  print "sum:",  one_bit.sum.value,
+  print "cout:", one_bit.cout.value
+v.generate( one_bit, sys.stdout )
 
 #print "// Simulate AdderChain:"
 #two_test = AdderChain( 1 )
