@@ -1,10 +1,10 @@
 import sys
 import ast
-from rtler_vast import PyToVerilogVisitor
-from rtler_sim import LogicSim
+from rtler_simulate import LogicSim
 
 sim = LogicSim()
 debug = False
+
 
 class ValueNode(object):
   #def __init__(self, width, value='X'):
@@ -67,6 +67,7 @@ class VerilogSlice(object):
   @_value.setter
   def _value(self, value):
     self.parent_ptr._value = value
+
 
 class VerilogPort(object):
 
@@ -231,6 +232,7 @@ class VerilogConstant(object):
   def __str__(self):
     return self.name
 
+
 class VerilogWire(object):
 
   def __init__(self, name, width):
@@ -271,201 +273,7 @@ class VerilogParam(object):
     return name, value
 
 
-class FromVerilog(object):
-
-  def __init__(self, filename):
-    fd = open( filename )
-    self.params = []
-    self.ports  = []
-    self.parse_file( fd )
-    # TODO: do the same for params?
-    for port in self.ports:
-      self.__dict__[port.name] = port
-
-  def __repr__(self):
-    return "Module(%s)" % self.name
-
-  def parse_file(self, fd):
-    start_token = "module"
-    end_token   = ");"
-
-    in_module = False
-    for line in fd.readlines():
-      # Find the beginning of the module definition
-      if not in_module and line.startswith( start_token ):
-        in_module = True
-        self.type = line.split()[1]
-        self.name = None
-      # Parse parameters
-      if in_module and 'parameter' in line:
-        self.params += [ VerilogParam( line ) ]
-      # Parse inputs
-      elif in_module and 'input' in line:
-        self.ports += [ VerilogPort( str=line ) ]
-      # Parse outputs
-      elif in_module and 'output' in line:
-        self.ports += [ VerilogPort( str=line ) ]
-      # End module definition
-      elif in_module and end_token in line:
-        in_module = False
-
-
 class Synthesizable(object):
   pass
 
 
-class ToVerilog(object):
-
-  def check_type(self, target, name, obj):
-    # If object is a port, add it to our ports list
-    if isinstance(obj, VerilogPort):
-      obj.name = name
-      obj.parent = target.name
-      target.ports += [obj]
-    # If object is a submodule, add it to our submodules list
-    # TODO: change to be a special subclass?
-    #elif isinstance(obj, ToVerilog):
-    elif isinstance(obj, Synthesizable):
-      #obj.name = name
-      # TODO: better way to do this?
-      obj.type = obj.__class__.__name__
-      # TODO: hack, passing None necessary since generate_new also does
-      #       refactor to make this unnecessary.  Although... this does
-      #       Potentially handle generating class .v files on demand...
-      #obj.generate_new(None)
-      self.elaborate( obj, name )
-      target.submodules += [obj]
-    # If object is a list, iterate through items and recursively call
-    # check_type()
-    elif isinstance(obj, list):
-      for i, item in enumerate(obj):
-        item_name = "%s_%d" % (name, i)
-        self.check_type(target, item_name, item)
-
-  def elaborate(self, target, iname='toplevel'):
-    # TODO: better way to set the name?
-    target.type = target.__class__.__name__
-    target.name = iname
-    target.wires = []
-    target.ports = []
-    target.submodules = []
-    # TODO: do all ports first?
-    # Get the names of all ports and submodules
-    for name, obj in target.__dict__.items():
-      # TODO: make ports, submodules, wires _ports, _submodules, _wires
-      if (name is not 'ports' and name is not 'submodules'):
-        self.check_type(target, name, obj)
-    # Verify connections.
-    # * All nets that include an input port as a node will use the
-    #   the input port as the net name.
-    # * All nets that connect a module to an output port will use the
-    #   output port as the net name.
-    #   Note: is this more complicated than just creating a wire?
-    # * All nets that wire two submodule ports together need to create
-    #   a wire.
-
-    # PORTS
-    # MODULES
-    # WIRES
-
-  def generate(self, target, o):
-    print >> o, 'module %s' % target.type
-    # Declare Params
-    #if self.params: self.gen_param_decls( self.params, o )
-    # Declare Ports
-    if target.ports: self.gen_port_decls( target.ports, o )
-    # Wires & Instantiations
-    self.gen_impl_wires( target, o )
-    #if self.wires: self.gen_wire_decls( self.wires, o )
-    if target.submodules: self.gen_module_insts( target.submodules, o )
-    # Logic
-    self.gen_ast( target, o )
-    # End module
-    print >> o, '\nendmodule\n'
-
-  def gen_port_decls(self, ports, o):
-    print >> o, '('
-    for p in ports[:-1]:
-      print >> o , '  %s,' % p
-    p = ports[-1]
-    print >> o, '  %s' % p
-    print >> o, ');\n'
-
-  def gen_param_decls(self, params, o):
-    print >> o, '#('
-    for p in params[:-1]:
-      print >> o, '  %s,' % p
-    p = params[-1]
-    print >> o, '  %s' % p
-    print >> o, ')'
-
-  def gen_impl_wires(self, target, o):
-    for submodule in target.submodules:
-      for port in submodule.ports:
-        if isinstance(port.connection, VerilogWire):
-          break
-        for c in port.connection:
-          if (    c.type != 'wire'
-              and c.type != 'constant'
-              and c.type != port.type):
-            # TODO: figure out a way to get connection submodule name...
-            wire_name = '{0}_{1}_TO_{2}_{3}'.format(submodule.name, port.name,
-                                                    c.parent, c.name)
-            wire = VerilogWire(wire_name, port.width)
-            c.connection = [wire]
-            port.connection = [wire]
-            print >> o, '  %s' % wire
-    #print
-
-  def gen_wire_decls(self, wires, o):
-    for w in wires.values():
-      print >> o, '  %s' % w
-
-  def gen_module_insts(self, submodules, o):
-    for s in submodules:
-      print >> o, ''
-      print >> o, '  %s %s' % (s.type, s.name)
-      # TODO: add params
-      print >> o, '  ('
-      self.gen_port_insts(s.ports, o)
-      print >> o, '  );'
-
-  def gen_port_insts(self, ports, o):
-    # TODO: hacky! fix p.connection
-    for p in ports[:-1]:
-      assert len(p.connection) <= 1
-      name = p.connection[0].name if p.connection else ' '
-      print >> o , '    .%s (%s),' % (p.name, name)
-    p = ports[-1]
-    assert len(p.connection) <= 1
-    name = p.connection[0].name if p.connection else ' '
-    print >> o, '    .%s (%s)' % (p.name, name)
-
-  def test_mod(self, v):
-    import inspect
-    for x,y in inspect.getmembers(v, inspect.ismethod):
-      print "Class: ", y.im_class.__name__
-      print "Func:  ", y.im_func.__name__
-      print y.func_code.co_varnames
-      print y.func_globals
-      print y.func_globals
-      #src = inspect.getsource( y.im_func )
-      #print src
-      #print ast.parse( src )
-      print
-
-  def gen_ast(self, v, o):
-    import inspect
-
-      #def visit_Attribute(self, node):
-      #  print 'Found Attribute "%s"' % node.s
-
-    #print inspect.getsource( v )  # Doesn't work? Wtf...
-    for x,y in inspect.getmembers(v, inspect.isclass):
-      src = inspect.getsource( y )
-      tree = ast.parse( src )
-      PyToVerilogVisitor( o ).visit(tree)
-      #for z in ast.walk(tree):
-      #  print z, type(z)
-
-#req_resp_port = FromVerilog("vgen-TestMemReqRespPort.v")

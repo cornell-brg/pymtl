@@ -1,6 +1,7 @@
 import sys
 
 from rtler_vbase import *
+from rtler_translate import ToVerilog
 
 #  Target:
 #
