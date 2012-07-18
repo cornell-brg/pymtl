@@ -3,58 +3,6 @@ import ast
 
 class ToVerilog(object):
 
-  def check_type(self, target, name, obj):
-    # If object is a port, add it to our ports list
-    if isinstance(obj, VerilogPort):
-      obj.name = name
-      obj.parent = target.name
-      target.ports += [obj]
-    # If object is a submodule, add it to our submodules list
-    # TODO: change to be a special subclass?
-    #elif isinstance(obj, ToVerilog):
-    elif isinstance(obj, Synthesizable):
-      #obj.name = name
-      # TODO: better way to do this?
-      obj.type = obj.__class__.__name__
-      # TODO: hack, passing None necessary since generate_new also does
-      #       refactor to make this unnecessary.  Although... this does
-      #       Potentially handle generating class .v files on demand...
-      #obj.generate_new(None)
-      self.elaborate( obj, name )
-      target.submodules += [obj]
-    # If object is a list, iterate through items and recursively call
-    # check_type()
-    elif isinstance(obj, list):
-      for i, item in enumerate(obj):
-        item_name = "%s_%d" % (name, i)
-        self.check_type(target, item_name, item)
-
-  def elaborate(self, target, iname='toplevel'):
-    # TODO: better way to set the name?
-    target.class_name = target.__class__.__name__
-    target.name = iname
-    target.wires = []
-    target.ports = []
-    target.submodules = []
-    # TODO: do all ports first?
-    # Get the names of all ports and submodules
-    for name, obj in target.__dict__.items():
-      # TODO: make ports, submodules, wires _ports, _submodules, _wires
-      if (name is not 'ports' and name is not 'submodules'):
-        self.check_type(target, name, obj)
-    # Verify connections.
-    # * All nets that include an input port as a node will use the
-    #   the input port as the net name.
-    # * All nets that connect a module to an output port will use the
-    #   output port as the net name.
-    #   Note: is this more complicated than just creating a wire?
-    # * All nets that wire two submodule ports together need to create
-    #   a wire.
-
-    # PORTS
-    # MODULES
-    # WIRES
-
   def generate(self, target, o):
     print >> o, 'module %s' % target.class_name
     # Declare Params
@@ -128,19 +76,6 @@ class ToVerilog(object):
     name = p.connection[0].name if p.connection else ' '
     print >> o, '    .%s (%s)' % (p.name, name)
 
-  def test_mod(self, v):
-    import inspect
-    for x,y in inspect.getmembers(v, inspect.ismethod):
-      print "Class: ", y.im_class.__name__
-      print "Func:  ", y.im_func.__name__
-      print y.func_code.co_varnames
-      print y.func_globals
-      print y.func_globals
-      #src = inspect.getsource( y.im_func )
-      #print src
-      #print ast.parse( src )
-      print
-
   def gen_ast(self, v, o):
     import inspect
 
@@ -148,6 +83,7 @@ class ToVerilog(object):
       #  print 'Found Attribute "%s"' % node.s
 
     #print inspect.getsource( v )  # Doesn't work? Wtf...
+    #for x,y in inspect.getmembers(v, inspect.ismethod):
     for x,y in inspect.getmembers(v, inspect.isclass):
       src = inspect.getsource( y )
       tree = ast.parse( src )

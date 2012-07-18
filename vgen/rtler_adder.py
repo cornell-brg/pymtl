@@ -35,7 +35,7 @@ from rtler_simulate import *
 #       self.adders[i+1].cin <> self.adders[i].cout
 
 
-class FullAdder(Synthesizable):
+class FullAdder(VerilogModule):
   def __init__(self):
     # Can't set the instance name during init, but can during elaboration
     # by walking the Top-Level Module's __dict__ and checking types
@@ -61,7 +61,7 @@ class FullAdder(Synthesizable):
     #print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
 
 
-class AdderChain(Synthesizable):
+class AdderChain(VerilogModule):
   def __init__(self, depth):
     # Can't set the instance name during init, but can during elaboration
     # by walking the Top-Level Module's __dict__ and checking types
@@ -82,7 +82,7 @@ class AdderChain(Synthesizable):
     self.sum <> self.adders[-1].sum
 
 
-class RippleCarryAdder(Synthesizable):
+class RippleCarryAdder(VerilogModule):
   def __init__(self, bits):
     self.in0 = InPort (bits)
     self.in1 = InPort (bits)
@@ -100,16 +100,9 @@ class RippleCarryAdder(Synthesizable):
     self.adders[0].cin <> 0
 
 
-x = FullAdder()
-
-src = inspect.getsource( FullAdder )
-tree = ast.parse( src )
-SensitivityListVisitor().visit( tree )
-print registry
-
-#pprint.pprint( dir(x) )
-#x.in0 = 1
-#x.in1 = 0
-#x.cin = 1
-#x.logic()
-#print x.sum, x.cout
+#x = FullAdder()
+#
+#src = inspect.getsource( FullAdder )
+#tree = ast.parse( src )
+#SensitivityListVisitor().visit( tree )
+#print registry

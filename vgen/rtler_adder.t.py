@@ -1,24 +1,22 @@
 from rtler_translate import ToVerilog
 from rtler_adder import *
 
+#TODO: run pychecker?
+# Instantiate ToVerilog translator
 v = ToVerilog()
 
-def port_walk(tgt, spaces=0):
-  for x in tgt.ports:
-    print spaces*' ', x.parent, x
-    for y in x.connection:
-      print spaces*' ', '   knctn:', type(y), y.parent, y.name
-    print spaces*' ', '   value:', x._value, x.value
-  print
-  for x in tgt.submodules:
-    print spaces*' ', x.name
-    port_walk(x, spaces+3)
 
-#print "// Simulate FullAdder:"
-#TODO: run pychecker?
+########################################################################
+# FullAdder
+########################################################################
+
+# Instantiate and Elaborate the FullAdder Module
+print "// Simulate FullAdder:"
 one_bit = FullAdder()
+one_bit.elaborate()
+
+# Test the FullAdder Module
 import itertools
-v.elaborate( one_bit )
 for x,y,z in itertools.product([0,1], [0,1], [0,1]):
   one_bit.in0.value = x
   one_bit.in1.value = y
@@ -32,24 +30,46 @@ for x,y,z in itertools.product([0,1], [0,1], [0,1]):
   print "// Outputs:",
   print "sum:",  one_bit.sum.value,
   print "cout:", one_bit.cout.value
+
+# Generate Verilog for the FullAdder Module
 v.generate( one_bit, sys.stdout )
 
+########################################################################
+# RippleCarryAdder
+########################################################################
+
+# Instantiate and Elaborate the RippleCarryAdder Module
+print "// Simulate RippleCarryAdder:"
+four_bit = RippleCarryAdder(4)
+four_bit.elaborate()
+
+# Test the RippleCarryAdder Module
+#port_walk(four_bit)
+four_bit.in0.value =11
+four_bit.in1.value = 4
+sim.cycle()
+print "// Result:", four_bit.sum.value
+
+# Generate Verilog for the RippleCarryAdder Module
+v.generate( four_bit, sys.stdout )
+
+
+########################################################################
+# AdderChain: Debugging
+########################################################################
+
+# Instantiate and Elaborate the AdderChain Module
 #print "// Simulate AdderChain:"
 #two_test = AdderChain( 1 )
-#v.elaborate( two_test )
+#two_test.elaborate()
+
+# Test the AdderChain Module
 #port_walk(two_test)
 #two_test.in0.value = 1
 #two_test.in1.value = 1
 #sim.cycle()
 #print "// Result:", two_test.sum.value
+
+# Generate Verilog for the AdderChain Module
 #v.generate( two_test, sys.stdout )
 
-print "// Simulate RippleCarryAdder:"
-four_bit = RippleCarryAdder(4)
-v.elaborate( four_bit )
-#port_walk(four_bit)
-four_bit.in0.value = 9
-four_bit.in1.value = 1
-sim.cycle()
-print "// Result:", four_bit.sum.value
-v.generate( four_bit, sys.stdout )
