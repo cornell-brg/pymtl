@@ -100,9 +100,8 @@ class RippleCarryAdder(VerilogModule):
     self.adders[0].cin <> 0
 
 
-#x = FullAdder()
-#
-#src = inspect.getsource( FullAdder )
-#tree = ast.parse( src )
-#SensitivityListVisitor().visit( tree )
-#print registry
+#model     = FullAdder()
+model     = RippleCarryAdder(4)
+simulator = LogicSim()
+model.elaborate()
+simulator.generate( model )

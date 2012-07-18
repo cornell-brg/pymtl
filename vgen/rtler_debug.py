@@ -1,18 +1,19 @@
 import pprint
+import inspect
 
-def print_members(object):
+def print_members(module):
   print "ALL MEMBERS"
   print "==========="
   print "{0:20}  {1}".format("Type", "Object")
   print "{0:20}  {1}".format("----", "------")
-  for m_type, m_object in inspect.getmembers(object):
+  for m_type, m_object in inspect.getmembers(module):
     print "{0:20}  {1}".format(m_type, m_object)
   print
   print "CLASSES"
   print "======="
   print "{0:20}  {1}".format("Type", "Object")
   print "{0:20}  {1}".format("----", "------")
-  for m_type, m_object in inspect.getmembers(object, inspect.isclass):
+  for m_type, m_object in inspect.getmembers(module, inspect.isclass):
     print "{0:20}  {1}".format(m_type, m_object)
 
 def port_walk(tgt, spaces=0):

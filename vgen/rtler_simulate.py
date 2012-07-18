@@ -1,5 +1,6 @@
 from collections import deque
 import ast, _ast
+import pprint
 
 class LogicSim():
 
@@ -30,13 +31,47 @@ class LogicSim():
         #print "ADDEVENT:", port.parent, port.name, port.value, func
         self.event_queue.appendleft(func)
 
+  def generate(self, model):
+    #print "Model:", model
+    #print "Submodules:"
+    #pprint.pprint( model.submodules )
 
-registry = set()
+    self.infer_sensitivity_list( model )
+
+    for m in model.submodules:
+      # TODO: make recursive
+      #self.generate( m )
+      self.infer_sensitivity_list( m )
+
+
+  def infer_sensitivity_list(self, model):
+
+    # Create an AST Tree
+    model_class = model.__class__
+    src = inspect.getsource( model_class )
+    tree = ast.parse( src )
+    temp_registry = set()
+
+    # Walk the tree to inspect a given modules combinational blocks and
+    # build a sensitivity list from it
+    SensitivityListVisitor( temp_registry ).visit( tree )
+
+    # TODO: only gives us function names... still need function pointers
+    print temp_registry
+    for port_name, func_name in temp_registry:
+      port_ptr = model.__getattribute__(port_name)
+      func_ptr = model.__getattribute__(func_name)
+      self.port_callbacks[port_ptr] = func_ptr
+      #print port_ptr, func_ptr
+    pprint.pprint( self.port_callbacks )
+
+
 
 class SensitivityListVisitor(ast.NodeVisitor):
   # http://docs.python.org/library/ast.html#abstract-grammar
-  def __init__(self):
+  def __init__(self, registry):
     self.current_fn = None
+    self.registry   = registry
 
   def visit_FunctionDef(self, node):
     """ Only parse functions that have the @... decorator! """
@@ -61,7 +96,7 @@ class SensitivityListVisitor(ast.NodeVisitor):
       return
     if isinstance( node.ctx, _ast.Load ) and node.id != "self":
       #print node.id, type( node.ctx )
-      registry.add( (node.id, self.current_fn) )
+      self.registry.add( (node.id, self.current_fn) )
 
 
 
@@ -70,7 +105,6 @@ class SensitivityListVisitor(ast.NodeVisitor):
 def combinational(func):
   # normally a decorator returns a wrapped function,
   # but here we return func unmodified, after registering it
-  sim.port_callback[port] = func
   return func
 
 import inspect
