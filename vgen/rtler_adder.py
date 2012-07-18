@@ -1,7 +1,7 @@
 import sys
 
 from rtler_vbase import *
-from rtler_translate import ToVerilog
+import ast, _ast
 
 #  Target:
 #
@@ -42,6 +42,52 @@ def always_comb(fn):
     return fn(self)
   return wrapped
 
+registry = set()
+class SensitivityListVisitor(ast.NodeVisitor):
+  # http://docs.python.org/library/ast.html#abstract-grammar
+  def __init__(self):
+    self.current_fn = None
+
+  def visit_FunctionDef(self, node):
+    """ Only parse functions that have the @... decorator! """
+    #pprint.pprint( dir(node) )
+    #print "Function Name:", node.name
+    if not node.decorator_list:
+      return
+    decorator_names = [x.id for x in node.decorator_list]
+    if 'tdec' in decorator_names:
+      # Visit each line in the function, translate one at a time.
+      for x in node.body:
+        self.current_fn = node.name
+        self.visit(x)
+        self.current_fn = None
+
+  # All attributes... only want names?
+  #def visit_Attribute(self, node):
+  def visit_Name(self, node):
+    #pprint.pprint( dir(node.ctx) )
+    #print node.id, type( node.ctx )
+    if not self.current_fn:
+      return
+    if isinstance( node.ctx, _ast.Load ) and node.id != "self":
+      print node.id, type( node.ctx )
+      registry.add( (node.id, self.current_fn) )
+
+import pprint
+def tdec(fn):
+  #pprint.pprint(vars(fn))
+  #pprint.pprint(locals())
+  #pprint.pprint(globals())
+  #pprint.pprint(dir(fn))
+  #pprint.pprint(dir(fn.func_code))
+  #pprint.pprint(inspect.getmembers(fn, inspect.isdatadescriptor))
+  print fn.func_code.co_varnames
+  print fn.func_code.co_names
+  print fn.func_code.co_freevars
+  #print fn.im_class  # Only works if you call on instance! Boo.
+  return fn
+
+
 class FullAdder(Synthesizable):
   def __init__(self):
     # Can't set the instance name during init, but can during elaboration
@@ -56,15 +102,17 @@ class FullAdder(Synthesizable):
     sim.add_callback(self.cin, self.logic)
 
   @always_comb
+  @tdec
   def logic(self):
     in0 = self.in0
     in1 = self.in1
     cin = self.cin
     sum = self.sum
     cout = self.cout
-    #print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
+    ##print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
     sum  <<= (in0 ^ in1) ^ cin
     cout <<= (in0 & in1) | (in0 & cin) | (in1 & cin)
+    #print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
 
 
 class AdderChain(Synthesizable):
@@ -106,55 +154,31 @@ class RippleCarryAdder(Synthesizable):
     self.adders[0].cin <> 0
 
 
-v = ToVerilog()
+x = FullAdder()
+#def print_members(object):
+#  print "ALL MEMBERS"
+#  print "==========="
+#  print "{0:20}  {1}".format("Type", "Object")
+#  print "{0:20}  {1}".format("----", "------")
+#  for m_type, m_object in inspect.getmembers(object):
+#    print "{0:20}  {1}".format(m_type, m_object)
+#  print
+#  print "CLASSES"
+#  print "======="
+#  print "{0:20}  {1}".format("Type", "Object")
+#  print "{0:20}  {1}".format("----", "------")
+#  for m_type, m_object in inspect.getmembers(object, inspect.isclass):
+#    print "{0:20}  {1}".format(m_type, m_object)
+#print_members(x)
 
-def port_walk(tgt, spaces=0):
-  for x in tgt.ports:
-    print spaces*' ', x.parent, x
-    for y in x.connection:
-      print spaces*' ', '   knctn:', type(y), y.parent, y.name
-    print spaces*' ', '   value:', x._value, x.value
-  print
-  for x in tgt.submodules:
-    print spaces*' ', x.name
-    port_walk(x, spaces+3)
+src = inspect.getsource( FullAdder )
+tree = ast.parse( src )
+SensitivityListVisitor().visit( tree )
+print registry
 
-#print "// Simulate FullAdder:"
-#TODO: run pychecker?
-one_bit = FullAdder()
-import itertools
-v.elaborate( one_bit )
-for x,y,z in itertools.product([0,1], [0,1], [0,1]):
-  one_bit.in0.value = x
-  one_bit.in1.value = y
-  one_bit.cin.value = z
-  one_bit.logic()
-  #sim.cycle()  # TODO: DOESN'T WORK!
-  print "// Inputs:",
-  print one_bit.in0.value,
-  print one_bit.in1.value,
-  print one_bit.cin.value
-  print "// Outputs:",
-  print "sum:",  one_bit.sum.value,
-  print "cout:", one_bit.cout.value
-v.generate( one_bit, sys.stdout )
-
-#print "// Simulate AdderChain:"
-#two_test = AdderChain( 1 )
-#v.elaborate( two_test )
-#port_walk(two_test)
-#two_test.in0.value = 1
-#two_test.in1.value = 1
-#sim.cycle()
-#print "// Result:", two_test.sum.value
-#v.generate( two_test, sys.stdout )
-
-print "// Simulate RippleCarryAdder:"
-four_bit = RippleCarryAdder(4)
-v.elaborate( four_bit )
-#port_walk(four_bit)
-four_bit.in0.value = 9
-four_bit.in1.value = 1
-sim.cycle()
-print "// Result:", four_bit.sum.value
-v.generate( four_bit, sys.stdout )
+#pprint.pprint( dir(x) )
+#x.in0 = 1
+#x.in1 = 0
+#x.cin = 1
+#x.logic()
+#print x.sum, x.cout
