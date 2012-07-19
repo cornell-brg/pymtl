@@ -1,13 +1,12 @@
 import sys
 import ast
-from rtler_simulate import LogicSim
-
-sim = LogicSim()
 
 class ValueNode(object):
   # TODO: handle X values
+  # TODO: add sim
   #def __init__(self, width, value='X'):
   def __init__(self, width, value=0):
+    self.sim = None
     self.width = width
     self._value = value
 
@@ -18,7 +17,9 @@ class ValueNode(object):
   def value(self, value):
     # TODO: debug_reg_eventqueue
     #print "    VALUE:", self, bin(value)
-    sim.add_event(self)
+    # TODO: nodes not in the vnode_callback list dont have a sim object! Fix!
+    if self.sim: self.sim.add_event(self)
+    else:        print "// warning: writing a node with no simulator pointer!"
     self._value = value
 
 class VerilogSlice(object):
@@ -134,6 +135,7 @@ class VerilogPort(object):
     if isinstance(target, int):
       self.connection += [VerilogConstant(target, self.width)]
       self._value     = ValueNode(self.width, target)
+      #print "CreateConstValueNode:", self.parent, self.name, self._value
     elif isinstance(target, VerilogSlice):
       assert self.width == target.width
       self.connection.append(   target )
@@ -143,6 +145,7 @@ class VerilogPort(object):
       else:
         self._value = target
         target._value = ValueNode(target.parent_ptr.width)
+        #print "CreateValueNode:", self.parent, self.name, target._value
     else:
       assert self.width == target.width
       self.connection.append(   target )
@@ -151,6 +154,7 @@ class VerilogPort(object):
         self._value = target._value
       else:
         self._value = ValueNode(self.width)
+        #print "CreateValueNode:", self.parent, self.name, self._value
         target._value = self._value
 
   def parse(self, line):

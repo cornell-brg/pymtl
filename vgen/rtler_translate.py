@@ -3,7 +3,11 @@ import ast
 
 class ToVerilog(object):
 
-  def generate(self, target, o):
+  def __init__(self, model):
+    self.model = model
+
+  def generate(self, o):
+    target = self.model
     print >> o, 'module %s' % target.class_name
     # Declare Params
     #if self.params: self.gen_param_decls( self.params, o )

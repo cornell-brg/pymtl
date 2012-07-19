@@ -7,7 +7,8 @@ import rtler_vbase
 
 class LogicSim():
 
-  def __init__(self):
+  def __init__(self, model):
+    self.model = model
     self.num_cycles     = 0
     self.vnode_callbacks = {}
     self.event_queue    = deque()
@@ -28,7 +29,8 @@ class LogicSim():
         if func not in self.event_queue:
           self.event_queue.appendleft(func)
 
-  def generate(self, model):
+  def generate(self):
+    model = self.model
     #print "Model:", model
     #print "Submodules:"
     #pprint.pprint( model.submodules )
@@ -70,6 +72,8 @@ class LogicSim():
       if value_ptr in self.vnode_callbacks:
         self.vnode_callbacks[value_ptr] += [func_ptr]
       else:
+        #TODO: hacky! Adding simulator instance to Nodes here...
+        value_ptr.sim = self
         self.vnode_callbacks[value_ptr] = [func_ptr]
 
 
