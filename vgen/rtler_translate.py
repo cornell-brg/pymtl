@@ -168,7 +168,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     #print node.name, node.decorator_list
     if not node.decorator_list:
       return
-    if node.decorator_list[0].id == 'always_comb':
+    if node.decorator_list[0].id == 'combinational':
       # Visit each line in the function, translate one at a time.
       for x in node.body:
         self.visit(x)

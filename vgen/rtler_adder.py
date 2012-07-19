@@ -37,34 +37,31 @@ from rtler_simulate import *
 
 class FullAdder(VerilogModule):
   def __init__(self):
-    # Can't set the instance name during init, but can during elaboration
-    # by walking the Top-Level Module's __dict__ and checking types
+    # Can't set the instance name of each port during init, but can during
+    # elaboration by walking the Top-Level Module's __dict__ and checking types.
     self.in0  = InPort (1)
     self.in1  = InPort (1)
     self.cin  = InPort (1)
     self.sum  = OutPort(1)
     self.cout = OutPort(1)
-    #sim.add_callback(self.in0, self.logic)
-    #sim.add_callback(self.in1, self.logic)
-    #sim.add_callback(self.cin, self.logic)
 
-  @always_comb
+  @combinational
   def logic(self):
     in0 = self.in0
     in1 = self.in1
     cin = self.cin
     sum = self.sum
     cout = self.cout
-    #print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
     sum  <<= (in0 ^ in1) ^ cin
     cout <<= (in0 & in1) | (in0 & cin) | (in1 & cin)
-    #print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
 
 
 class AdderChain(VerilogModule):
   def __init__(self, depth):
-    # Can't set the instance name during init, but can during elaboration
-    # by walking the Top-Level Module's __dict__ and checking types
+    # Can't set the instance name of each port during init, but can during
+    # elaboration by walking the Top-Level Module's __dict__ and checking types.
+    # This might be an argument for moving the connectivity stuff below into a
+    # separate elaborate() function, instead of in the constructor?
     self.in0  = InPort (1)
     self.in1  = InPort (1)
     self.sum  = OutPort(1)
@@ -84,6 +81,8 @@ class AdderChain(VerilogModule):
 
 class RippleCarryAdder(VerilogModule):
   def __init__(self, bits):
+    # Can't set the instance name during init, but can during elaboration
+    # by walking the Top-Level Module's __dict__ and checking types
     self.in0 = InPort (bits)
     self.in1 = InPort (bits)
     self.sum = OutPort(bits)
@@ -99,9 +98,3 @@ class RippleCarryAdder(VerilogModule):
       self.adders[i+1].cin <> self.adders[i].cout
     self.adders[0].cin <> 0
 
-
-#model     = FullAdder()
-#model     = RippleCarryAdder(4)
-#simulator = LogicSim()
-#model.elaborate()
-#simulator.generate( model )

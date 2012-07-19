@@ -1,5 +1,6 @@
 from collections import deque
 import ast, _ast
+import inspect
 import pprint
 # TODO: cyclic dependency...
 import rtler_vbase
@@ -8,49 +9,24 @@ class LogicSim():
 
   def __init__(self):
     self.num_cycles     = 0
-    self.port_callbacks = {}
+    self.vnode_callbacks = {}
     self.event_queue    = deque()
-    self.TESTevent_queue= deque()
 
   def cycle(self):
     self.num_cycles += 1
 
-    while self.TESTevent_queue:
-      func = self.TESTevent_queue.pop()
+    while self.event_queue:
+      func = self.event_queue.pop()
       func()
 
-    #while self.event_queue:
-    #  func = self.event_queue.pop()
-    #  func()
-
-  def add_callback(self, port, func):
-    # TODO: doesnt' work in __init__ because ValueNodes are not
-    #       created until elaborate!
-    #node = port._value
-    #print "ADDCALLBACK:", port.name, node
-    ## TODO: might need to support multiple funcs?
-    #self.port_callbacks[node] = func
-    port.funcs.add( func )
-
-  def add_event(self, port, connections):
-    node = port._value
-    for func in node.funcs:
-      if func not in self.event_queue:
-        #print "#ADDEVENT:", port.parent, port.name, port.value, func
-        self.event_queue.appendleft(func)
-
-  def TESTadd_event(self, value_node):
-    # ALTERNATE
-    print "    ADDEVENT: VALUE", value_node, value_node.value, value_node in self.port_callbacks
-    if value_node in self.port_callbacks:
-      funcs = self.port_callbacks[value_node]
+  def add_event(self, value_node):
+    # TODO: debug_event
+    #print "    ADDEVENT: VALUE", value_node, value_node.value, value_node in self.vnode_callbacks
+    if value_node in self.vnode_callbacks:
+      funcs = self.vnode_callbacks[value_node]
       for func in funcs:
-        if func not in self.TESTevent_queue:
-          self.TESTevent_queue.appendleft(func)
-      #if funcs not in self.TESTevent_queue:
-      #  self.TESTevent_queue.appendleft(funcs)
-
-
+        if func not in self.event_queue:
+          self.event_queue.appendleft(func)
 
   def generate(self, model):
     #print "Model:", model
@@ -63,8 +39,9 @@ class LogicSim():
       # TODO: make recursive
       #self.generate( m )
       self.infer_sensitivity_list( m )
-    print "PORTCALLBACKS"
-    pprint.pprint( self.port_callbacks )
+    # TODO: debug_sensitivity_list
+    #print "VALUE NODE CALLBACKS"
+    #pprint.pprint( self.vnode_callbacks )
 
 
   def infer_sensitivity_list(self, model):
@@ -81,21 +58,19 @@ class LogicSim():
     SensitivityListVisitor( temp_registry ).visit( tree )
 
     # Get the function pointers here
-    #print temp_registry
+    # TODO: debug_sensitivity_list
     for port_name, func_name in temp_registry:
       port_ptr = model.__getattribute__(port_name)
       func_ptr = model.__getattribute__(func_name)
       value_ptr = port_ptr._value
       if isinstance(value_ptr, rtler_vbase.VerilogSlice):
         value_ptr = value_ptr._value
-      print value_ptr
-      if value_ptr in self.port_callbacks:
-        self.port_callbacks[value_ptr] += [func_ptr]
+      #print value_ptr
+      # TODO: use a defaultdict here?
+      if value_ptr in self.vnode_callbacks:
+        self.vnode_callbacks[value_ptr] += [func_ptr]
       else:
-        self.port_callbacks[value_ptr] = [func_ptr]
-      #for connected_port in port_ptr.connection:
-      #  self.port_callbacks[connected_port] = func_ptr
-      #print port_ptr, func_ptr
+        self.vnode_callbacks[value_ptr] = [func_ptr]
 
 
 class SensitivityListVisitor(ast.NodeVisitor):
@@ -111,7 +86,7 @@ class SensitivityListVisitor(ast.NodeVisitor):
     if not node.decorator_list:
       return
     decorator_names = [x.id for x in node.decorator_list]
-    if 'always_comb' in decorator_names:
+    if 'combinational' in decorator_names:
       # Visit each line in the function, translate one at a time.
       for x in node.body:
         self.current_fn = node.name
@@ -134,15 +109,8 @@ class SensitivityListVisitor(ast.NodeVisitor):
 # Decorators
 
 def combinational(func):
-  # normally a decorator returns a wrapped function,
-  # but here we return func unmodified, after registering it
+  # Normally a decorator returns a wrapped function, but here we return
+  # func unmodified.  We only use the decorator as a flag for the ast
+  # parsers.
   return func
-
-import inspect
-def always_comb(fn):
-  def wrapped(self):
-    #for x,y in inspect.getmembers(fn, inspect.isdatadescriptor):
-    #  print x,y
-    return fn(self)
-  return wrapped
 
