@@ -1,5 +1,6 @@
 from rtler_translate import ToVerilog
 from rtler_adder import *
+import rtler_debug
 
 #TODO: run pychecker?
 # Instantiate ToVerilog translator
@@ -42,10 +43,11 @@ v.generate( one_bit, sys.stdout )
 print "// Simulate RippleCarryAdder:"
 four_bit = RippleCarryAdder(4)
 four_bit.elaborate()
+sim.generate( four_bit )
 
 # Test the RippleCarryAdder Module
-#port_walk(four_bit)
-four_bit.in0.value =11
+#rtler_debug.port_walk(four_bit)
+four_bit.in0.value = 11
 four_bit.in1.value = 4
 sim.cycle()
 print "// Result:", four_bit.sum.value
@@ -58,18 +60,19 @@ v.generate( four_bit, sys.stdout )
 # AdderChain: Debugging
 ########################################################################
 
-# Instantiate and Elaborate the AdderChain Module
+## Instantiate and Elaborate the AdderChain Module
 #print "// Simulate AdderChain:"
-#two_test = AdderChain( 1 )
+#two_test = AdderChain( 5 )
 #two_test.elaborate()
-
-# Test the AdderChain Module
-#port_walk(two_test)
+#
+## Test the AdderChain Module
+##rtler_debug.port_walk(two_test)
+#sim.generate( two_test )
 #two_test.in0.value = 1
-#two_test.in1.value = 1
+#two_test.in1.value = 0
 #sim.cycle()
 #print "// Result:", two_test.sum.value
-
-# Generate Verilog for the AdderChain Module
+#
+## Generate Verilog for the AdderChain Module
 #v.generate( two_test, sys.stdout )
 

@@ -44,9 +44,9 @@ class FullAdder(VerilogModule):
     self.cin  = InPort (1)
     self.sum  = OutPort(1)
     self.cout = OutPort(1)
-    sim.add_callback(self.in0, self.logic)
-    sim.add_callback(self.in1, self.logic)
-    sim.add_callback(self.cin, self.logic)
+    #sim.add_callback(self.in0, self.logic)
+    #sim.add_callback(self.in1, self.logic)
+    #sim.add_callback(self.cin, self.logic)
 
   @always_comb
   def logic(self):
@@ -55,7 +55,7 @@ class FullAdder(VerilogModule):
     cin = self.cin
     sum = self.sum
     cout = self.cout
-    ##print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
+    #print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
     sum  <<= (in0 ^ in1) ^ cin
     cout <<= (in0 & in1) | (in0 & cin) | (in1 & cin)
     #print "FUNC", "in0", in0.value, "in1", in1.value, "cin", cin.value
@@ -101,7 +101,7 @@ class RippleCarryAdder(VerilogModule):
 
 
 #model     = FullAdder()
-model     = RippleCarryAdder(4)
-simulator = LogicSim()
-model.elaborate()
-simulator.generate( model )
+#model     = RippleCarryAdder(4)
+#simulator = LogicSim()
+#model.elaborate()
+#simulator.generate( model )

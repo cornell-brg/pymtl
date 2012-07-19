@@ -1,6 +1,8 @@
 from collections import deque
 import ast, _ast
 import pprint
+# TODO: cyclic dependency...
+import rtler_vbase
 
 class LogicSim():
 
@@ -8,12 +10,18 @@ class LogicSim():
     self.num_cycles     = 0
     self.port_callbacks = {}
     self.event_queue    = deque()
+    self.TESTevent_queue= deque()
 
   def cycle(self):
     self.num_cycles += 1
-    while self.event_queue:
-      func = self.event_queue.pop()
+
+    while self.TESTevent_queue:
+      func = self.TESTevent_queue.pop()
       func()
+
+    #while self.event_queue:
+    #  func = self.event_queue.pop()
+    #  func()
 
   def add_callback(self, port, func):
     # TODO: doesnt' work in __init__ because ValueNodes are not
@@ -28,8 +36,21 @@ class LogicSim():
     node = port._value
     for func in node.funcs:
       if func not in self.event_queue:
-        #print "ADDEVENT:", port.parent, port.name, port.value, func
+        #print "#ADDEVENT:", port.parent, port.name, port.value, func
         self.event_queue.appendleft(func)
+
+  def TESTadd_event(self, value_node):
+    # ALTERNATE
+    print "    ADDEVENT: VALUE", value_node, value_node.value, value_node in self.port_callbacks
+    if value_node in self.port_callbacks:
+      funcs = self.port_callbacks[value_node]
+      for func in funcs:
+        if func not in self.TESTevent_queue:
+          self.TESTevent_queue.appendleft(func)
+      #if funcs not in self.TESTevent_queue:
+      #  self.TESTevent_queue.appendleft(funcs)
+
+
 
   def generate(self, model):
     #print "Model:", model
@@ -42,6 +63,8 @@ class LogicSim():
       # TODO: make recursive
       #self.generate( m )
       self.infer_sensitivity_list( m )
+    print "PORTCALLBACKS"
+    pprint.pprint( self.port_callbacks )
 
 
   def infer_sensitivity_list(self, model):
@@ -53,18 +76,26 @@ class LogicSim():
     temp_registry = set()
 
     # Walk the tree to inspect a given modules combinational blocks and
-    # build a sensitivity list from it
+    # build a sensitivity list from it,
+    # only gives us function names... still need function pointers
     SensitivityListVisitor( temp_registry ).visit( tree )
 
-    # TODO: only gives us function names... still need function pointers
-    print temp_registry
+    # Get the function pointers here
+    #print temp_registry
     for port_name, func_name in temp_registry:
       port_ptr = model.__getattribute__(port_name)
       func_ptr = model.__getattribute__(func_name)
-      self.port_callbacks[port_ptr] = func_ptr
+      value_ptr = port_ptr._value
+      if isinstance(value_ptr, rtler_vbase.VerilogSlice):
+        value_ptr = value_ptr._value
+      print value_ptr
+      if value_ptr in self.port_callbacks:
+        self.port_callbacks[value_ptr] += [func_ptr]
+      else:
+        self.port_callbacks[value_ptr] = [func_ptr]
+      #for connected_port in port_ptr.connection:
+      #  self.port_callbacks[connected_port] = func_ptr
       #print port_ptr, func_ptr
-    pprint.pprint( self.port_callbacks )
-
 
 
 class SensitivityListVisitor(ast.NodeVisitor):

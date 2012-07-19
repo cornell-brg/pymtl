@@ -10,8 +10,18 @@ class ValueNode(object):
   #def __init__(self, width, value='X'):
   def __init__(self, width, value=0):
     self.width = width
-    self.value = value
+    self._value = value
+    #self.value = value
     self.funcs = set()
+
+  @property
+  def value(self):
+    return self._value
+  @value.setter
+  def value(self, value):
+    print "    VALUE:", self, bin(value)
+    sim.TESTadd_event(self)
+    self._value = value
 
 class VerilogSlice(object):
   def __init__(self, parent_ptr, width, addr):
@@ -82,8 +92,8 @@ class VerilogPort(object):
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
-  def __repr__(self):
-    return "Port(%s, %s, %s)" % (self.type, self.width, self.name)
+  #def __repr__(self):
+  #  return "Port(%s, %s, %s)" % (self.type, self.width, self.name)
 
   def __str__(self):
     if isinstance(self.width, str):
@@ -199,10 +209,10 @@ class VerilogPort(object):
   @value.setter
   def value(self, value):
     #print "PORT:", self.parent+'.'+self.name
-    #if isinstance(self, VerilogSlice):
-    #  print "  writing", 'SLICE.'+self.name, ':   ', self.value,
-    #else:
-    #  print "  writing", self.parent+'.'+self.name, ':   ', self.value,
+    if isinstance(self, VerilogSlice):
+      print "  writing", 'SLICE.'+self.name, ':   ', self.value
+    else:
+      print "  writing", self.parent+'.'+self.name, ':   ', self.value
     if not self._value:
       print "// WARNING: writing to unconnected node {0}.{1}!".format(
             self.parent, self.name)
