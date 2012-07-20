@@ -1,29 +1,62 @@
+"""Tool for simulating MTL models.
+
+This module contains classes which construct a simulator given a MTL model
+for execution in the python interpreter.
+"""
+
 from collections import deque
 import ast, _ast
 import inspect
 import pprint
-# TODO: cyclic dependency...
-import rtler_vbase
+from rtler_vbase import VerilogSlice
 
 # TODO: make commandline parameter
 debug_hierarchy = True
 
 class LogicSim():
 
+  """User visible class implementing a tool for simulating MTL models.
+
+  This class takes a MTL model instance and creates a simulator for execution
+  in the python interpreter (once the generate() function is called).
+  """
+
   def __init__(self, model):
+    """Construct a simulator from a MTL model.
+
+    Parameters
+    ----------
+    model: an instantiated MTL model (VerilogModule).
+    """
     self.model = model
     self.num_cycles     = 0
     self.vnode_callbacks = {}
     self.event_queue    = deque()
 
   def cycle(self):
-    self.num_cycles += 1
+    """Execute a single cycle in the simulator.
 
+    Executes any functions in the event queue and increments the num_cycles
+    count.
+
+    TODO: execute all @posedge, @negedge decorated functions.
+    """
     while self.event_queue:
       func = self.event_queue.pop()
       func()
+    self.num_cycles += 1
 
   def add_event(self, value_node):
+    """Add an event to the simulator event queue for later execution.
+
+    This function will check if the written ValueNode instance has any
+    registered events (functions decorated with @combinational), and if so, adds
+    them to the event queue.
+
+    Parameters
+    ----------
+    value_node: the ValueNode instance which was written and called add_event().
+    """
     # TODO: debug_event
     #print "    ADDEVENT: VALUE", value_node, value_node.value, value_node in self.vnode_callbacks
     if value_node in self.vnode_callbacks:
@@ -33,6 +66,15 @@ class LogicSim():
           self.event_queue.appendleft(func)
 
   def generate(self, model=None):
+    """Construct a simulator for the provided model by adding necessary hooks.
+
+    Parameters
+    ----------
+    model: the MTL model (VerilogModule) to add simulator hooks to. If None is
+           provided, the model provided in the LogicSim constructor is used
+           (toplevel).
+    """
+    #TODO: hacky... first call to generate should use toplevel model
     model = model if model else self.model
     if debug_hierarchy:
       print 70*'-'
@@ -45,15 +87,24 @@ class LogicSim():
     self.infer_sensitivity_list( model )
 
     for m in model.submodules:
-      # TODO: make recursive
       self.generate( m )
-      #self.infer_sensitivity_list( m )
+
     # TODO: debug_sensitivity_list
     #print "VALUE NODE CALLBACKS"
     #pprint.pprint( self.vnode_callbacks )
 
-
   def infer_sensitivity_list(self, model):
+    """Utility method which detects the sensitivity list of annotated functions.
+
+    This method uses the SensitivityListVisitor class to walk the AST of the
+    provided model and register any functions annotated with the @combinational
+    decorator. The SensitivityListVisitor attempts to construct a signal
+    sensitivity list based on accesses in the annotated function.
+
+    Parameters
+    ----------
+    model: a VerilogModel instance
+    """
 
     # Create an AST Tree
     model_class = model.__class__
@@ -72,7 +123,7 @@ class LogicSim():
       port_ptr = model.__getattribute__(port_name)
       func_ptr = model.__getattribute__(func_name)
       value_ptr = port_ptr._value
-      if isinstance(value_ptr, rtler_vbase.VerilogSlice):
+      if isinstance(value_ptr, VerilogSlice):
         value_ptr = value_ptr._value
       #print value_ptr
       # TODO: use a defaultdict here?
@@ -85,13 +136,25 @@ class LogicSim():
 
 
 class SensitivityListVisitor(ast.NodeVisitor):
+  """Hidden class for building a sensitivity list from the AST of a MTL model.
+
+  This class takes the AST tree of a VerilogModule class and looks for any
+  functions annotated with the @combinational decorator. Variables that perform
+  loads in these functions are added to the sensitivity list (registry).
+  """
   # http://docs.python.org/library/ast.html#abstract-grammar
   def __init__(self, registry):
+    """Construct a new SensitivityListVisitor.
+
+    Parameters
+    ----------
+    registry: a set() object with which to add variable names to.
+    """
     self.current_fn = None
     self.registry   = registry
 
   def visit_FunctionDef(self, node):
-    """ Only parse functions that have the @... decorator! """
+    """Visit all functions, but only parse those with special decorators."""
     #pprint.pprint( dir(node) )
     #print "Function Name:", node.name
     if not node.decorator_list:
@@ -107,6 +170,7 @@ class SensitivityListVisitor(ast.NodeVisitor):
   # All attributes... only want names?
   #def visit_Attribute(self, node):
   def visit_Name(self, node):
+    """Visit all variables, add those that perform loads to the registry."""
     #pprint.pprint( dir(node.ctx) )
     #print node.id, type( node.ctx )
     if not self.current_fn:
