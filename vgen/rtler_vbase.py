@@ -43,11 +43,11 @@ class VerilogSlice(object):
     return self.parent_ptr.type
 
   @property
-  def connection(self):
-    return self.parent_ptr.connection
-  @connection.setter
-  def connection(self, target):
-    self.parent_ptr.connection += [target]
+  def connections(self):
+    return self.parent_ptr.connections
+  @connections.setter
+  def connections(self, target):
+    self.parent_ptr.connections += [target]
 
   @property
   def value(self):
@@ -71,8 +71,8 @@ class VerilogPort(object):
     self.type  = type
     self.width = width
     self.name  = name
-    self.parent = '???'
-    self.connection = []
+    self.parent = None
+    self.connections = []
     self._value     = None
     if str:
       self.type, self.width, self.name  = self.parse( str )
@@ -133,13 +133,13 @@ class VerilogPort(object):
     # TODO: support wires?
     # TODO: do we want to use an assert here
     if isinstance(target, int):
-      self.connection += [VerilogConstant(target, self.width)]
+      self.connections += [VerilogConstant(target, self.width)]
       self._value     = ValueNode(self.width, target)
       #print "CreateConstValueNode:", self.parent, self.name, self._value
     elif isinstance(target, VerilogSlice):
       assert self.width == target.width
-      self.connection.append(   target )
-      target.connection.append( self   )
+      self.connections.append(   target )
+      target.connections.append( self   )
       if target._value:
         self._value = target
       else:
@@ -148,8 +148,8 @@ class VerilogPort(object):
         #print "CreateValueNode:", self.parent, self.name, target._value
     else:
       assert self.width == target.width
-      self.connection.append(   target )
-      target.connection.append( self   )
+      self.connections.append(   target )
+      target.connections.append( self   )
       if target._value:
         self._value = target._value
       else:
@@ -206,7 +206,7 @@ class VerilogConstant(object):
     self.width = width
     self.type  = 'constant'
     self.name  = "%d'd%d" % (self.width, self.value)
-    self.parent = ''
+    self.parent = None
   def __repr__(self):
     return "Constant(%s, %s)" % (self.value, self.width)
   def __str__(self):
@@ -259,21 +259,14 @@ class VerilogModule(object):
     # If object is a port, add it to our ports list
     if isinstance(obj, VerilogPort):
       obj.name = name
-      obj.parent = target.name
+      obj.parent = target
       target.ports += [obj]
     # If object is a submodule, add it to our submodules list
-    # TODO: change to be a special subclass?
-    #elif isinstance(obj, ToVerilog):
     elif isinstance(obj, VerilogModule):
-      #obj.name = name
-      # TODO: better way to do this?
+      # TODO: change type to inst_type?
       obj.type = obj.__class__.__name__
-      # TODO: hack, passing None necessary since generate_new also does
-      #       refactor to make this unnecessary.  Although... this does
-      #       Potentially handle generating class .v files on demand...
-      #obj.generate_new(None)
-      #self.elaborate( obj, name )
       obj.elaborate( name )
+      obj.parent = target
       target.submodules += [obj]
     # If object is a list, iterate through items and recursively call
     # check_type()
@@ -286,6 +279,7 @@ class VerilogModule(object):
     target = self
     # TODO: better way to set the name?
     target.class_name = target.__class__.__name__
+    target.parent = None
     target.name = iname
     target.wires = []
     target.ports = []

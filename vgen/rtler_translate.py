@@ -41,18 +41,18 @@ class ToVerilog(object):
   def gen_impl_wires(self, target, o):
     for submodule in target.submodules:
       for port in submodule.ports:
-        if isinstance(port.connection, VerilogWire):
+        if isinstance(port.connections, VerilogWire):
           break
-        for c in port.connection:
+        for c in port.connections:
           if (    c.type != 'wire'
               and c.type != 'constant'
               and c.type != port.type):
             # TODO: figure out a way to get connection submodule name...
             wire_name = '{0}_{1}_TO_{2}_{3}'.format(submodule.name, port.name,
-                                                    c.parent, c.name)
+                                                    c.parent.name, c.name)
             wire = VerilogWire(wire_name, port.width)
-            c.connection = [wire]
-            port.connection = [wire]
+            c.connections = [wire]
+            port.connections = [wire]
             print >> o, '  %s' % wire
     #print
 
@@ -72,13 +72,26 @@ class ToVerilog(object):
   def gen_port_insts(self, ports, o):
     # TODO: hacky! fix p.connection
     for p in ports[:-1]:
-      assert len(p.connection) <= 1
-      name = p.connection[0].name if p.connection else ' '
+      name = self.get_parent_connection(p)
+      #assert len(p.connections) <= 1
+      #name = p.connections[0].name if p.connections else ' '
       print >> o , '    .%s (%s),' % (p.name, name)
     p = ports[-1]
-    assert len(p.connection) <= 1
-    name = p.connection[0].name if p.connection else ' '
+    name = self.get_parent_connection(p)
+    #assert len(p.connections) <= 1
+    #name = p.connections[0].name if p.connections else ' '
     print >> o, '    .%s (%s)' % (p.name, name)
+
+  # TODO: separate connections into inst_cxt and impl_cxn
+  def get_parent_connection(self, port):
+    if not port.connections:
+      return ''
+    if len(port.connections) == 1:
+      return port.connections[0].name
+    for connection in port.connections:
+      if port.parent.parent == connection.parent:
+        return connection.name
+
 
   def gen_ast(self, v, o):
     import inspect

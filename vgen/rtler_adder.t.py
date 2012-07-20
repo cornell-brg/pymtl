@@ -79,9 +79,10 @@ sim.generate()
 
 # Test ManyAdders
 #rtler_debug.port_walk(four_bit)
+many.in0 = 5
 for i in range(NUM_ADDERS):
-  many.in0[i].value = (i+1)*2
-  many.in1[i].value = (i+1)*3
+  # TODO: a way to check for slice access vs. array? Could be confusing
+  many.in1[i].value = (i+1)*2
 sim.cycle()
 for i in range(NUM_ADDERS):
   print "// Result:", many.sum[i].value
