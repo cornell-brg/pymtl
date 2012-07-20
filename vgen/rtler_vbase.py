@@ -7,9 +7,10 @@ a number of tools for various purposes (simulation, translation into HDLs, etc).
 
 class ValueNode(object):
 
-  """Hidden class implementing a node storing value (similar to a net in
-     Verilog). Connected ports and wires have a pointer to the same ValueNode
-     instance, such that reads and writes remain consistent.
+  """Hidden class implementing a node storing value (like a net in Verilog).
+
+  Connected ports and wires have a pointer to the same ValueNode
+  instance, such that reads and writes remain consistent.
   """
 
   # TODO: move ValueNode to rtler_simulate.py?
@@ -44,13 +45,12 @@ class ValueNode(object):
 
 class VerilogSlice(object):
 
-  """Hidden class implementing a port/wire slice, ie. the ability to access
-     specific bits of a wire or port. This class automatically handles reading
-     and writing the correct subset of bits in a ValueNode.
+  """Hidden class implementing the ability to access sub-bits of a wire/port.
 
-     The VerilogSlice has been designed to be as transparent as possible so
-     that logic generally does not have to behave differently when accessing a
-     VerilogSlice vs. a Verilog Port.
+  This class automatically handles reading and writing the correct subset of
+  bits in a ValueNode.  The VerilogSlice has been designed to be as
+  transparent as possible so that logic generally does not have to behave
+  differently when accessing a VerilogSlice vs. a Verilog Port.
   """
 
   def __init__(self, parent_ptr, width, addr):
@@ -410,7 +410,7 @@ class VerilogModule(object):
         self.check_type(target, name, obj)
 
   def check_type(self, target, name, obj):
-    """Utility class to specialize elaboration actions based on object type."""
+    """Utility method to specialize elaboration actions based on object type."""
     # If object is a port, add it to our ports list
     if isinstance(obj, VerilogPort):
       obj.name = name
