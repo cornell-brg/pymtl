@@ -5,6 +5,9 @@ import pprint
 # TODO: cyclic dependency...
 import rtler_vbase
 
+# TODO: make commandline parameter
+debug_hierarchy = True
+
 class LogicSim():
 
   def __init__(self, model):
@@ -29,18 +32,22 @@ class LogicSim():
         if func not in self.event_queue:
           self.event_queue.appendleft(func)
 
-  def generate(self):
-    model = self.model
-    #print "Model:", model
-    #print "Submodules:"
-    #pprint.pprint( model.submodules )
+  def generate(self, model=None):
+    model = model if model else self.model
+    if debug_hierarchy:
+      print 70*'-'
+      print "Model:", model
+      print "Ports:"
+      pprint.pprint( model.ports, indent=3 )
+      print "Submodules:"
+      pprint.pprint( model.submodules, indent=3 )
 
     self.infer_sensitivity_list( model )
 
     for m in model.submodules:
       # TODO: make recursive
-      #self.generate( m )
-      self.infer_sensitivity_list( m )
+      self.generate( m )
+      #self.infer_sensitivity_list( m )
     # TODO: debug_sensitivity_list
     #print "VALUE NODE CALLBACKS"
     #pprint.pprint( self.vnode_callbacks )

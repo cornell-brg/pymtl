@@ -98,3 +98,18 @@ class RippleCarryAdder(VerilogModule):
       self.adders[i+1].cin <> self.adders[i].cout
     self.adders[0].cin <> 0
 
+
+class ManyAdders(VerilogModule):
+  def __init__(self, bits, num_adders):
+    self.in0 = [ InPort ( bits ) for i in xrange( num_adders ) ]
+    self.in1 = [ InPort ( bits ) for i in xrange( num_adders ) ]
+    self.sum = [ OutPort( bits ) for i in xrange( num_adders ) ]
+
+    self.rc_adders = [ RippleCarryAdder( bits ) for i in xrange( num_adders ) ]
+
+    for i in xrange( num_adders ):
+      self.rc_adders[i].in0 <> self.in0[i]
+      self.rc_adders[i].in1 <> self.in1[i]
+      self.rc_adders[i].sum <> self.sum[i]
+
+

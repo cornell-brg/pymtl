@@ -34,32 +34,60 @@ one_bit.elaborate()
 #  print "sum:",  one_bit.sum.value,
 #  print "cout:", one_bit.cout.value
 
-# Generate Verilog for the FullAdder Module
-v = ToVerilog( one_bit )
-v.generate( sys.stdout )
+## Generate Verilog for the FullAdder Module
+#v = ToVerilog( one_bit )
+#v.generate( sys.stdout )
 
 ########################################################################
 # RippleCarryAdder
 ########################################################################
 
-# Instantiate and Elaborate the RippleCarryAdder Module
-print "// Simulate RippleCarryAdder:"
-four_bit = RippleCarryAdder(4)
-four_bit.elaborate()
+## Instantiate and Elaborate the RippleCarryAdder Module
+#print "// Simulate RippleCarryAdder:"
+#four_bit = RippleCarryAdder(4)
+#four_bit.elaborate()
+#
+## Generate a simulator for the Ripple Carry Adder
+#sim = LogicSim( four_bit )
+#sim.generate()
+#
+## Test the RippleCarryAdder Module
+##rtler_debug.port_walk(four_bit)
+#four_bit.in0.value = 11
+#four_bit.in1.value = 4
+#sim.cycle()
+#print "// Result:", four_bit.sum.value
+#
+## Generate Verilog for the RippleCarryAdder Module
+#v = ToVerilog( four_bit )
+#v.generate( sys.stdout )
 
-# Generate a simulator for the Ripple Carry Adder
-sim = LogicSim( four_bit )
+########################################################################
+# ManyAdders
+########################################################################
+
+# Instantiate and Elaborate ManyAdders
+NUM_BITS   = 8
+NUM_ADDERS = 3
+print "// Simulate ManyAdders:"
+many = ManyAdders(NUM_BITS, NUM_ADDERS)
+many.elaborate()
+
+# Generate a simulator for ManyAdders
+sim = LogicSim( many )
 sim.generate()
 
-# Test the RippleCarryAdder Module
+# Test ManyAdders
 #rtler_debug.port_walk(four_bit)
-four_bit.in0.value = 11
-four_bit.in1.value = 4
+for i in range(NUM_ADDERS):
+  many.in0[i].value = (i+1)*2
+  many.in1[i].value = (i+1)*3
 sim.cycle()
-print "// Result:", four_bit.sum.value
+for i in range(NUM_ADDERS):
+  print "// Result:", many.sum[i].value
 
-# Generate Verilog for the RippleCarryAdder Module
-v = ToVerilog( four_bit )
+# Generate Verilog for ManyAdders
+v = ToVerilog( many )
 v.generate( sys.stdout )
 
 
@@ -67,23 +95,23 @@ v.generate( sys.stdout )
 # AdderChain: Debugging
 ########################################################################
 
-# Instantiate and Elaborate the AdderChain Module
-print "// Simulate AdderChain:"
-two_test = AdderChain( 5 )
-two_test.elaborate()
-#rtler_debug.port_walk(two_test)
-
-# Generate a simulator for the AdderChain
-sim = LogicSim( two_test )
-sim.generate()
-
-# Test the AdderChain Module
-two_test.in0.value = 1
-two_test.in1.value = 0
-sim.cycle()
-print "// Result:", two_test.sum.value
-
-# Generate Verilog for the AdderChain Module
-v = ToVerilog( two_test )
-v.generate( sys.stdout )
+## Instantiate and Elaborate the AdderChain Module
+#print "// Simulate AdderChain:"
+#two_test = AdderChain( 5 )
+#two_test.elaborate()
+##rtler_debug.port_walk(two_test)
+#
+## Generate a simulator for the AdderChain
+#sim = LogicSim( two_test )
+#sim.generate()
+#
+## Test the AdderChain Module
+#two_test.in0.value = 1
+#two_test.in1.value = 0
+#sim.cycle()
+#print "// Result:", two_test.sum.value
+#
+## Generate Verilog for the AdderChain Module
+#v = ToVerilog( two_test )
+#v.generate( sys.stdout )
 
