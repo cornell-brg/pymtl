@@ -23,7 +23,7 @@ class ValueNode(object):
     ----------
     width: bitwidth of the node.
     value: initial value of the node. Only set by Constant objects.
-    sim: simulation object to register events with on write. (TODO)
+    sim: simulation object to register events with on write.
     """
     self.sim = sim
     self.width = width
@@ -42,6 +42,39 @@ class ValueNode(object):
     else:        print "// warning: writing a node with no simulator pointer!"
     self._value = value
 
+class RegisterNode(object):
+
+  """Hidden class implementing a node with register semantics.
+
+  Connected ports and wires have a pointer to the same RegisterNode
+  instance, such that reads and writes remain consistent.
+  """
+
+  def __init__(self, width, sim=None):
+    """Constructor for a ValueNode object.
+
+    Parameters
+    ----------
+    width: bitwidth of the node.
+    sim: simulation object to register events with on write.
+    """
+    self.sim = sim
+    self.width = width
+    # TODO: handle X values
+    self._value = 0
+    self.next   = 0
+
+  @property
+  def value(self):
+    """Value stored by node. Writes are stored as next until updated by sim."""
+    return self._value
+  @value.setter
+  def value(self, value):
+    self.next = value
+
+  def clock(self):
+    """Update value to store contents of next. Should only be called by sim."""
+    self._value = self.next
 
 class VerilogSlice(object):
 

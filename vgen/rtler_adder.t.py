@@ -76,7 +76,7 @@ many.elaborate()
 # Generate a simulator for ManyAdders
 sim = LogicSim( many )
 sim.generate()
-sim.dump_graphviz()
+#sim.dump_graphviz()
 
 # Test ManyAdders
 #rtler_debug.port_walk(four_bit)

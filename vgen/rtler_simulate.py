@@ -90,14 +90,11 @@ class LogicSim():
 
     # Walk ports to add value nodes.  Do leaves or toplevel first?
     self.add_value_nodes(model)
-
     # DEBUGGING: creates a graphviz graph
-    self.graphviz(model)
-
+    #self.graphviz(model)
     # Recursively call on all submodules
     for m in model.submodules:
       self.generate( m )
-
     # All value nodes have been added, create the sensitivity list.
     self.infer_sensitivity_list( model )
 
