@@ -94,29 +94,41 @@ class LogicSim():
 
       port_name = "{0}.{1}".format( port.parent.name, port.name )
       print port_name, port.connections
-      # We don't have a ValueNode yet, create one
-      # Do any of our connections have values?
       has_vnodes = any(cxn._value for cxn in port.connections)
       if port._value:
-        print "HAS VAL", port._value
+        #print "HAS VAL", port._value
+        pass
+      # We don't have a ValueNode yet, and none of our connections do either,
+      # create a new value
       elif not port._value and not has_vnodes:
         widths = [port.width]
         widths += [cxn.width for cxn in port.connections]
         max_width = max(widths)
         port._value = ValueNode(max_width, sim=self)
-        print "CREATE:", port._value
+        #print "CREATE:", port._value
+      # We don't have a ValueNode yet, but at least one of our connections does,
+      # attach to his connection.  This is pretty fragile...
+      # TODO: fix
       else:
-        assert len(port.connections) == 1
-        cxn = port.connections[0]
+        widths = [cxn.width for cxn in port.connections]
+        idx = widths.index( max(widths) )
+        cxn = port.connections[idx]
         assert port.width == cxn.width
         port._value = cxn._value
-        print "CONNECT:", port._value
+        #print "CONNECT:", port._value
 
-      # Print Debug
-      #print pname
-      #print "    ", p.width, p.connections
-      #print "    ", p._value
+    self.graphviz(model)
 
+    for m in model.submodules:
+      self.generate( m )
+
+    self.infer_sensitivity_list( model )
+
+    # TODO: debug_sensitivity_list
+    #print "VALUE NODE CALLBACKS"
+    #pprint.pprint( self.vnode_callbacks )
+
+  def graphviz(self, model):
     print "\n### VERIFY NODES"
     # DAG Debug
     for port in model.ports:
@@ -148,22 +160,12 @@ class LogicSim():
       #        xname = x.name
       #      dag.add_edge( cname, xname )
 
-    for m in model.submodules:
-      self.generate( m )
 
-    self.infer_sensitivity_list( model )
-
-
-    # TODO: debug_sensitivity_list
-    #print "VALUE NODE CALLBACKS"
-    #pprint.pprint( self.vnode_callbacks )
   def dump(self):
     #print dag.string()
     dag.layout(prog='dot')
     # layout types: neato dot twopi circo fdp nop
     dag.draw('test.png')
-
-
 
 
   def infer_sensitivity_list(self, model):
