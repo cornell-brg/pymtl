@@ -63,6 +63,7 @@ class VerilogSlice(object):
     addr: address range of bits we are slicing, either an int or slice object.
     """
     self.parent_ptr = parent_ptr
+    self.connections = []
     # TODO: add asserts that check the parent width, range, etc
     if isinstance(addr, slice):
       assert not addr.step  # We dont support steps!
@@ -82,7 +83,10 @@ class VerilogSlice(object):
   @property
   def name(self):
     """Return the name and bitrange of the port/wire we are slicing."""
-    suffix = '[%d]' % self.addr
+    if self.width == 1:
+      suffix = '[{0}]'.format(self.addr)
+    else:
+      suffix = '[{0}:{1}]'.format(self.addr+self.width-1, self.addr)
     return self.parent_ptr.name + suffix
 
   #TODO: hacky...
@@ -91,13 +95,13 @@ class VerilogSlice(object):
     """Return the type of object we are slicing."""
     return self.parent_ptr.type
 
-  @property
-  def connections(self):
-    """The list of connections attached to the port/wire we are slicing."""
-    return self.parent_ptr.connections
-  @connections.setter
-  def connections(self, target):
-    self.parent_ptr.connections += [target]
+  #@property
+  #def connections(self):
+  #  """The list of connections attached to the port/wire we are slicing."""
+  #  return self.parent_ptr.connections
+  #@connections.setter
+  #def connections(self, target):
+  #  self.parent_ptr.connections += [target]
 
   @property
   def value(self):
@@ -223,8 +227,9 @@ class VerilogPort(object):
       #print "CreateConstValueNode:", self.parent, self.name, self._value
     elif isinstance(target, VerilogSlice):
       assert self.width == target.width
-      self.connections.append(   target )
-      target.connections.append( self   )
+      self.connections.append( target )
+      target.parent_ptr.connections.append( target )
+      target.connections.append( self )
       if target._value:
         self._value = target
       else:

@@ -43,6 +43,8 @@ class ToVerilog(object):
     if target.submodules: self.gen_module_insts( target.submodules, o )
     # Logic
     self.gen_ast( target, o )
+    # Port assignments
+    self.gen_port_assigns( target, o )
     # End module
     print >> o, '\nendmodule\n'
 
@@ -106,7 +108,6 @@ class ToVerilog(object):
             c.connections = [wire]
             port.connections = [wire]
             print >> o, '  %s' % wire
-    #print
 
   def gen_wire_decls(self, wires, o):
     """Generate Verilog source for wire declarations.
@@ -118,6 +119,35 @@ class ToVerilog(object):
     """
     for w in wires.values():
       print >> o, '  %s' % w
+
+  def gen_port_assigns(self, target, o):
+    """Generate Verilog source for port assignments.
+
+    Infers which output ports require assign statements based on connectivity,
+    then generates source as necessary.
+
+    Parameters
+    ----------
+    target: a VerilogModule instance.
+    o: the output object to write Verilog source to (ie. sys.stdout).
+    """
+    # Utility function
+    def needs_assign(port, connection):
+      return port.parent == connection.parent
+    # Get all output ports
+    output_ports = [x for x in target.ports if isinstance(x,OutPort)]
+    for port in output_ports:
+      output_assigns = [x for x in port.connections if needs_assign(port, x)]
+      for assign in output_assigns:
+        # Handle the case where we are assigning to an output slice...
+        if assign.type == 'output':
+          assert len(assign.connections) == 1
+          left  = assign.name
+          right = assign.connections[0].name
+        else:
+          left  = port.name
+          right = assign.name
+        print "  assign {0} = {1};".format(left, right)
 
   def gen_module_insts(self, submodules, o):
     """Generate Verilog source for instantiated submodules.

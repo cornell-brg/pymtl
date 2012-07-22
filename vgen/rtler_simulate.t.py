@@ -1,6 +1,17 @@
 import unittest
 from rtler_vbase import *
 from rtler_simulate import *
+from rtler_translate import *
+import sys
+
+class Rotator(VerilogModule):
+  def __init__(self, bits):
+    self.inp = [ InPort(1)  for x in xrange(bits) ]
+    self.out = [ OutPort(1) for x in xrange(bits) ]
+
+    for i in xrange(bits - 1):
+      self.inp[i] <> self.out[i+1]
+    self.inp[-1] <> self.out[0]
 
 class SimpleSplitter(VerilogModule):
   def __init__(self, bits):
@@ -39,7 +50,7 @@ class ComplexMerger(VerilogModule):
       inport_num += 1
 
 
-class TestSlices(unittest.TestCase):
+class TestSlicesSim(unittest.TestCase):
 
   # Splitters
 
@@ -141,6 +152,31 @@ class TestSlices(unittest.TestCase):
     model, sim = self.setup_merger(8, 8)
     self.set_ports( model.inp, 0b11110000 )
     self.assertEqual( model.out.value, 0b11110000 )
+
+class TestSlicesVerilog(unittest.TestCase):
+
+  def translate(self, model):
+    model.elaborate()
+    #import rtler_debug
+    #rtler_debug.port_walk(model)
+    code = ToVerilog(model)
+    code.generate( sys.stdout )
+
+  #TODO: how do we test this?!
+  def test_zero(self):
+    self.translate( Rotator(8) )
+
+  def test_one(self):
+    self.translate( SimpleSplitter(8) )
+
+  def test_two(self):
+    self.translate( SimpleMerger(8) )
+
+  def test_three(self):
+    self.translate( ComplexSplitter(16, 4) )
+
+  def test_four(self):
+    self.translate( ComplexMerger(16, 4) )
 
 if __name__ == '__main__':
   unittest.main()
