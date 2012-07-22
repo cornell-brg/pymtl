@@ -53,7 +53,7 @@ class VerilogSlice(object):
   differently when accessing a VerilogSlice vs. a Verilog Port.
   """
 
-  def __init__(self, parent_ptr, width, addr):
+  def __init__(self, parent_ptr, addr):
     """Constructor for a VerilogSlice object.
 
     Parameters
@@ -63,8 +63,16 @@ class VerilogSlice(object):
     addr: address range of bits we are slicing, either an int or slice object.
     """
     self.parent_ptr = parent_ptr
-    self.width      = width
-    self.addr       = addr
+    # TODO: add asserts that check the parent width, range, etc
+    if isinstance(addr, slice):
+      assert not addr.step  # We dont support steps!
+      self.addr     = addr.start
+      self.width    = addr.stop - addr.start
+    else:
+      self.addr     = addr
+      self.width    = 1
+    self.wmask = (1 << self.width) - 1
+    self.pmask = self.wmask << self.addr
 
   @property
   def parent(self):
@@ -94,10 +102,13 @@ class VerilogSlice(object):
   @property
   def value(self):
     """Value of the bits we are slicing."""
-    temp = ((self.parent_ptr.value) & (1 << self.addr)) >> self.addr
+    temp = (self.parent_ptr.value & self.pmask) >> self.addr
     return temp
   @value.setter
   def value(self, value):
+    self.parent_ptr.value &= ~(self.pmask)
+    # TODO: mask off upper bits of provided value?
+    #temp = value & self.wmask
     self.parent_ptr.value |= (value << self.addr)
 
   @property
@@ -191,8 +202,12 @@ class VerilogPort(object):
     TODO: only works for connectivity, not logic?
     """
     #print "@__getitem__", type(addr), addr, str(addr)
-    # TODO: handle slices here or in Slice type?
-    return VerilogSlice(self, 1, addr)
+    if isinstance(addr, int):
+      assert addr < self.width
+    elif isinstance(addr, slice):
+      assert addr.start < addr.stop
+      assert addr.stop <= self.width
+    return VerilogSlice(self, addr)
 
   def connect(self, target):
     """Creates a connection with a VerilogPort or VerilogSlice.
@@ -245,18 +260,16 @@ class VerilogPort(object):
   @property
   def value(self):
     """Value on the port."""
-    if self._value:
-      return self._value.value
-    else:
-      return self._value
+    if self._value: return self._value.value
+    else:           return self._value
   @value.setter
   def value(self, value):
-    #print "PORT:", self.parent+'.'+self.name
     # TODO: add as debug?
+    #print "PORT:", self.parent.name+'.'+self.name
     #if isinstance(self, VerilogSlice):
-    #  print "  writing", 'SLICE.'+self.name, ':   ', self.value
+    #  print "  writing", 'SLICE.'+self.name, ':   ', value
     #else:
-    #  print "  writing", self.parent+'.'+self.name, ':   ', self.value
+    #  print "  writing", self.parent.name+'.'+self.name, ':   ', value
     # TODO: change how ValueNode instantiation occurs
     if not self._value:
       print "// WARNING: writing to unconnected node {0}.{1}!".format(
@@ -264,7 +277,6 @@ class VerilogPort(object):
       self._value = ValueNode(self.width, value)
     else:
       self._value.value = value
-      #sim.add_event(self, self.connection)
 
 
 class InPort(VerilogPort):
