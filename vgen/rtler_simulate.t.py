@@ -130,7 +130,6 @@ class TestSlicesSim(unittest.TestCase):
     self.set_ports( model.inp, 0b11110000 )
     self.assertEqual( model.out.value, 0b11110000 )
     self.set_ports( model.inp, 0b1111000011001010 )
-    print bin(model.out.value)
     self.assertEqual( model.out.value, 0b1111000011001010 )
 
   def test_8x1_to_8_complexmerger(self):

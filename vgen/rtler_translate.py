@@ -121,7 +121,7 @@ class ToVerilog(object):
       print >> o, '  %s' % w
 
   def gen_port_assigns(self, target, o):
-    """Generate Verilog source for port assignments.
+    """Generate Verilog source for assigning values to output ports.
 
     Infers which output ports require assign statements based on connectivity,
     then generates source as necessary.
@@ -133,7 +133,10 @@ class ToVerilog(object):
     """
     # Utility function
     def needs_assign(port, connection):
-      return port.parent == connection.parent
+      if isinstance(connection, VerilogSlice):
+        return port.parent == connection.connections[0].parent
+      else:
+        return port.parent == connection.parent
     # Get all output ports
     output_ports = [x for x in target.ports if isinstance(x,OutPort)]
     for port in output_ports:
@@ -147,7 +150,7 @@ class ToVerilog(object):
         else:
           left  = port.name
           right = assign.name
-        print "  assign {0} = {1};".format(left, right)
+        print  >> o, "  assign {0} = {1};".format(left, right)
 
   def gen_module_insts(self, submodules, o):
     """Generate Verilog source for instantiated submodules.
