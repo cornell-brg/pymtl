@@ -20,8 +20,10 @@ def port_walk(tgt, spaces=0):
   for x in tgt.ports:
     print spaces*' ', x.parent.name, x
     for y in x.connections:
-      print spaces*' ', '   knctn: {0} {1}.{2}'.format(type(y), y.parent.name,
-                                                       y.name)
+      fullname = y.name
+      if y.parent:
+        fullname = y.parent.name+'.'+fullname
+      print spaces*' ', '   knctn: {0} {1}'.format(type(y), fullname)
     print spaces*' ', '   value:', x._value, x.value
   print
   for x in tgt.submodules:
