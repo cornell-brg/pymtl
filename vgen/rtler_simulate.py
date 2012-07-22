@@ -8,7 +8,7 @@ from collections import deque
 import ast, _ast
 import inspect
 import pprint
-from rtler_vbase import VerilogSlice, ValueNode, VerilogConstant
+from rtler_vbase import VerilogSlice, ValueNode, VerilogConstant, RegisterNode
 import pygraphviz as pgv
 
 # TODO: make commandline parameter
@@ -33,9 +33,11 @@ class LogicSim():
     model: an instantiated MTL model (VerilogModule).
     """
     self.model = model
-    self.num_cycles     = 0
+    self.num_cycles      = 0
     self.vnode_callbacks = {}
-    self.event_queue    = deque()
+    self.rnode_callbacks = []
+    self.event_queue     = deque()
+    self.rising_edge_fns = []
 
   def cycle(self):
     """Execute a single cycle in the simulator.
@@ -45,9 +47,19 @@ class LogicSim():
 
     TODO: execute all @posedge, @negedge decorated functions.
     """
+    # Call all event queue events
     while self.event_queue:
       func = self.event_queue.pop()
       func()
+
+    # Call all rising edge triggered functions
+    for func in self.rising_edge_fns:
+      func()
+
+    # Then call clock() on all registers
+    for reg in self.rnode_callbacks:
+      reg.clock()
+
     self.num_cycles += 1
 
   def add_event(self, value_node):
@@ -190,9 +202,15 @@ class LogicSim():
     """Utility method which detects the sensitivity list of annotated functions.
 
     This method uses the SensitivityListVisitor class to walk the AST of the
-    provided model and register any functions annotated with the @combinational
-    decorator. The SensitivityListVisitor attempts to construct a signal
-    sensitivity list based on accesses in the annotated function.
+    provided model and register any functions annotated with special
+    decorators.
+
+    For @combinational decorators, the SensitivityListVisitor attempts to
+    construct a signal sensitivity list based on loads performed inside the
+    annotated function.
+
+    For @rising_edge decorators, the SensitivityListVisitor replaces the
+    ValueNodes of written ports/wires with RegisterNodes.
 
     Parameters
     ----------
@@ -203,16 +221,18 @@ class LogicSim():
     model_class = model.__class__
     src = inspect.getsource( model_class )
     tree = ast.parse( src )
-    temp_registry = set()
+    comb_loads = set()
+    reg_stores = set()
 
     # Walk the tree to inspect a given modules combinational blocks and
     # build a sensitivity list from it,
     # only gives us function names... still need function pointers
-    SensitivityListVisitor( temp_registry ).visit( tree )
+    SensitivityListVisitor( comb_loads, reg_stores ).visit( tree )
+    print "COMB", comb_loads
+    print "REGS", reg_stores
 
-    # Get the function pointers here
-    # TODO: debug_sensitivity_list
-    for port_name, func_name in temp_registry:
+    # Iterate through all comb_loads, add function_pointers to vnode_callbacks
+    for port_name, func_name in comb_loads:
       port_ptr = model.__getattribute__(port_name)
       func_ptr = model.__getattribute__(func_name)
       value_ptr = port_ptr._value
@@ -220,13 +240,23 @@ class LogicSim():
         value_ptr = value_ptr._value
       #print value_ptr
       # TODO: use a defaultdict here?
-      if value_ptr in self.vnode_callbacks:
-        self.vnode_callbacks[value_ptr] += [func_ptr]
-      else:
-        #TODO: hacky! Adding simulator instance to Nodes here...
-        value_ptr.sim = self
-        self.vnode_callbacks[value_ptr] = [func_ptr]
+      # Initialize value_ptr entry to [] if not in callback list yet
+      if value_ptr not in self.vnode_callbacks:
+        self.vnode_callbacks[value_ptr] = []
+      self.vnode_callbacks[value_ptr] += [func_ptr]
 
+    # Iterate through all reg_stores, replace all instances of ValueNodes
+    # with RegisterNodes. This could be tricky!
+    for port_name, func_name in reg_stores:
+      port_ptr = model.__getattribute__(port_name)
+      func_ptr = model.__getattribute__(func_name)
+      self.rising_edge_fns += [func_ptr]
+      # TODO: special case for slices
+      value_node = port_ptr._value
+      register_node = RegisterNode( value_node.width, sim=self )
+      self.rnode_callbacks += [register_node]
+      port_ptr._value = register_node
+      #print port_ptr.parent.name, port_ptr.name, port_ptr._value
 
 class SensitivityListVisitor(ast.NodeVisitor):
   """Hidden class for building a sensitivity list from the AST of a MTL model.
@@ -236,15 +266,21 @@ class SensitivityListVisitor(ast.NodeVisitor):
   loads in these functions are added to the sensitivity list (registry).
   """
   # http://docs.python.org/library/ast.html#abstract-grammar
-  def __init__(self, registry):
+  def __init__(self, comb_loads, reg_stores):
     """Construct a new SensitivityListVisitor.
 
     Parameters
     ----------
-    registry: a set() object with which to add variable names to.
+    comb_loads: a set() object, (var_name, func_name) tuples will be added to
+                this set for all variables loaded inside @combinational blocks
+    reg_stores: a set() object, (var_name, func_name) tuples will be added to
+                this set for all variables updated inside @rising_edge blocks
+                (via the <<= operator)
     """
     self.current_fn = None
-    self.registry   = registry
+    self.comb_loads = comb_loads
+    self.reg_stores = reg_stores
+    self.add_regs   = False
 
   def visit_FunctionDef(self, node):
     """Visit all functions, but only parse those with special decorators."""
@@ -253,24 +289,42 @@ class SensitivityListVisitor(ast.NodeVisitor):
     if not node.decorator_list:
       return
     decorator_names = [x.id for x in node.decorator_list]
+    self.current_fn = node.name
     if 'combinational' in decorator_names:
       # Visit each line in the function, translate one at a time.
       for x in node.body:
-        self.current_fn = node.name
         self.visit(x)
-        self.current_fn = None
+    elif 'rising_edge' in decorator_names:
+      # Visit each line in the function, translate one at a time.
+      self.add_regs = True
+      for x in node.body:
+        self.visit(x)
+      self.add_regs = False
+    self.current_fn = None
+
+  def visit_AugAssign(self, node):
+    """Visit all aug assigns, searches for synchronous (registered) stores."""
+    # @rising_edge annotation, find nodes we need toconvert to registers
+    if self.add_regs and isinstance(node.op, _ast.LShift):
+      self.reg_stores.add( (node.target.id, self.current_fn) )
+    else:
+      self.generic_visit(node)
 
   # All attributes... only want names?
   #def visit_Attribute(self, node):
   def visit_Name(self, node):
-    """Visit all variables, add those that perform loads to the registry."""
+    """Visit all variables, searches for combinational loads."""
     #pprint.pprint( dir(node.ctx) )
     #print node.id, type( node.ctx )
-    if not self.current_fn:
+    # Function with no annotations
+    if not self.current_fn or self.add_regs:
       return
-    if isinstance( node.ctx, _ast.Load ) and node.id != "self":
+    # @combinational annotation, find nodes to add to the sensitivity list
+    elif (not self.add_regs
+          and isinstance( node.ctx, _ast.Load )
+          and node.id != "self"):
       #print node.id, type( node.ctx )
-      self.registry.add( (node.id, self.current_fn) )
+      self.comb_loads.add( (node.id, self.current_fn) )
 
 
 
@@ -280,5 +334,8 @@ def combinational(func):
   # Normally a decorator returns a wrapped function, but here we return
   # func unmodified.  We only use the decorator as a flag for the ast
   # parsers.
+  return func
+
+def rising_edge(func):
   return func
 
