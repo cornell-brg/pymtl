@@ -222,30 +222,32 @@ class VerilogPort(object):
     # TODO: support wires?
     # TODO: do we want to use an assert here
     if isinstance(target, int):
-      self.connections += [VerilogConstant(target, self.width)]
-      self._value     = ValueNode(self.width, target)
+      #self.connections += [VerilogConstant(target, self.width)]
+      #self._value     = ValueNode(self.width, target)
+      self._value     = VerilogConstant(target, self.width)
       #print "CreateConstValueNode:", self.parent, self.name, self._value
     elif isinstance(target, VerilogSlice):
       assert self.width == target.width
-      self.connections.append( target )
-      target.parent_ptr.connections.append( target )
-      target.connections.append( self )
-      if target._value:
-        self._value = target
-      else:
-        self._value = target
-        target._value = ValueNode(target.parent_ptr.width)
-        #print "CreateValueNode:", self.parent, self.name, target._value
+      self.connections              += [ target ]
+      target.parent_ptr.connections += [ target ]
+      target.connections            += [ self ]
+      self._value                    = target
+      #if target._value:
+      #  self._value = target
+      #else:
+      #  self._value = target
+      #  target._value = ValueNode(target.parent_ptr.width)
+      #  #print "CreateValueNode:", self.parent, self.name, target._value
     else:
       assert self.width == target.width
-      self.connections.append(   target )
-      target.connections.append( self   )
-      if target._value:
-        self._value = target._value
-      else:
-        self._value = ValueNode(self.width)
-        #print "CreateValueNode:", self.parent, self.name, self._value
-        target._value = self._value
+      self.connections   += [ target ]
+      target.connections += [ self   ]
+      #if target._value:
+      #  self._value = target._value
+      #else:
+      #  self._value = ValueNode(self.width)
+      #  #print "CreateValueNode:", self.parent, self.name, self._value
+      #  target._value = self._value
 
   def parse(self, line):
     """Sets port parameters using a Verilog port declaration.

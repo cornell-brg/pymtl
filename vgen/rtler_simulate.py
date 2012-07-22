@@ -8,10 +8,13 @@ from collections import deque
 import ast, _ast
 import inspect
 import pprint
-from rtler_vbase import VerilogSlice
+from rtler_vbase import VerilogSlice, ValueNode, VerilogConstant
+import pygraphviz as pgv
 
 # TODO: make commandline parameter
-debug_hierarchy = True
+debug_hierarchy = False
+dag = pgv.AGraph(directed=True)
+
 
 class LogicSim():
 
@@ -84,14 +87,84 @@ class LogicSim():
       print "Submodules:"
       pprint.pprint( model.submodules, indent=3 )
 
-    self.infer_sensitivity_list( model )
+    # Walk ports to add value nodes.  Do leaves or toplevel first?
+    # Eventually want to check out sensitivity list...
+    print "\n### CREATE NODES"
+    for port in model.ports:
+
+      port_name = "{0}.{1}".format( port.parent.name, port.name )
+      print port_name, port.connections
+      # We don't have a ValueNode yet, create one
+      # Do any of our connections have values?
+      has_vnodes = any(cxn._value for cxn in port.connections)
+      if port._value:
+        print "HAS VAL", port._value
+      elif not port._value and not has_vnodes:
+        widths = [port.width]
+        widths += [cxn.width for cxn in port.connections]
+        max_width = max(widths)
+        port._value = ValueNode(max_width, sim=self)
+        print "CREATE:", port._value
+      else:
+        assert len(port.connections) == 1
+        cxn = port.connections[0]
+        assert port.width == cxn.width
+        port._value = cxn._value
+        print "CONNECT:", port._value
+
+      # Print Debug
+      #print pname
+      #print "    ", p.width, p.connections
+      #print "    ", p._value
+
+    print "\n### VERIFY NODES"
+    # DAG Debug
+    for port in model.ports:
+      pname = "{0}.{1}".format( port.parent.name, port.name )
+      print "EDGE", pname, port._value
+      if not port._value:
+        dag.add_edge( pname, "NONE" )
+      elif isinstance(port._value, VerilogSlice):
+        name = "{0}.{1}".format( port._value.parent.name, port._value.name )
+        dag.add_edge( pname, name )
+        dag.add_edge( name, port._value._value)
+        #dag.add_edge( pname, port._value.name)
+        #dag.add_edge( port._value.name, port._value._value )
+      else:
+        dag.add_edge( pname, port._value )
+      for c in port.connections:
+        if c.parent:
+          cname = "{0}.{1}".format( c.parent.name, c.name )
+        else:
+          cname = c.name
+        dag.add_edge( pname, cname, style='dashed' )
+        if isinstance(c, VerilogSlice):
+          dag.add_edge( cname, c._value )
+      #  if isinstance(c, VerilogSlice):
+      #    for x in c.connections:
+      #      if x.parent:
+      #        xname = "{0}.{1}".format( x.parent.name, x.name )
+      #      else:
+      #        xname = x.name
+      #      dag.add_edge( cname, xname )
 
     for m in model.submodules:
       self.generate( m )
 
+    self.infer_sensitivity_list( model )
+
+
     # TODO: debug_sensitivity_list
     #print "VALUE NODE CALLBACKS"
     #pprint.pprint( self.vnode_callbacks )
+  def dump(self):
+    #print dag.string()
+    dag.layout(prog='dot')
+    # layout types: neato dot twopi circo fdp nop
+    dag.draw('test.png')
+
+
+
 
   def infer_sensitivity_list(self, model):
     """Utility method which detects the sensitivity list of annotated functions.
