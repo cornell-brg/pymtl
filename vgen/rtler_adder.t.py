@@ -50,7 +50,6 @@ four_bit.elaborate()
 # Generate a simulator for the Ripple Carry Adder
 sim = LogicSim( four_bit )
 sim.generate()
-sim.dump()
 
 # Test the RippleCarryAdder Module
 #rtler_debug.port_walk(four_bit)
@@ -77,7 +76,7 @@ many.elaborate()
 # Generate a simulator for ManyAdders
 sim = LogicSim( many )
 sim.generate()
-sim.dump()
+sim.dump_graphviz()
 
 # Test ManyAdders
 #rtler_debug.port_walk(four_bit)

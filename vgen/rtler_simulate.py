@@ -13,6 +13,7 @@ import pygraphviz as pgv
 
 # TODO: make commandline parameter
 debug_hierarchy = False
+# TODO: temporary
 dag = pgv.AGraph(directed=True)
 
 
@@ -88,12 +89,41 @@ class LogicSim():
       pprint.pprint( model.submodules, indent=3 )
 
     # Walk ports to add value nodes.  Do leaves or toplevel first?
-    # Eventually want to check out sensitivity list...
-    print "\n### CREATE NODES"
-    for port in model.ports:
+    self.add_value_nodes(model)
 
+    # DEBUGGING: creates a graphviz graph
+    self.graphviz(model)
+
+    # Recursively call on all submodules
+    for m in model.submodules:
+      self.generate( m )
+
+    # All value nodes have been added, create the sensitivity list.
+    self.infer_sensitivity_list( model )
+
+    # TODO: debug_sensitivity_list
+    #print "VALUE NODE CALLBACKS"
+    #pprint.pprint( self.vnode_callbacks )
+
+  def add_value_nodes(self, model):
+    """Utility method which adds ValueNodes to port and wire connections.
+
+    WARNING: this implementation is very fragile.  The best way to really do
+    this would be to create some kind of datastructure that groups all ports
+    and wires by their connections.  Once this datastructure is complete we
+    could instantiate a ValueNode for each grouping, set its width to be equal
+    to the largest port attached to that node, and then walk through the list
+    of all ports attached to the node and give them pointers to the ValueNode
+    instance.
+
+    Parameters
+    ----------
+    model: a VerilogModel instance
+    """
+    #print "\n### CREATE NODES"
+    for port in model.ports:
       port_name = "{0}.{1}".format( port.parent.name, port.name )
-      print port_name, port.connections
+      #print port_name, port.connections
       has_vnodes = any(cxn._value for cxn in port.connections)
       if port._value:
         #print "HAS VAL", port._value
@@ -117,18 +147,8 @@ class LogicSim():
         port._value = cxn._value
         #print "CONNECT:", port._value
 
-    self.graphviz(model)
-
-    for m in model.submodules:
-      self.generate( m )
-
-    self.infer_sensitivity_list( model )
-
-    # TODO: debug_sensitivity_list
-    #print "VALUE NODE CALLBACKS"
-    #pprint.pprint( self.vnode_callbacks )
-
   def graphviz(self, model):
+    """Temporary utility method to add edges to a graphviz plot."""
     print "\n### VERIFY NODES"
     # DAG Debug
     for port in model.ports:
@@ -161,7 +181,8 @@ class LogicSim():
       #      dag.add_edge( cname, xname )
 
 
-  def dump(self):
+  def dump_graphviz(self):
+    """Temporary utility method to dump out a graphviz plot."""
     #print dag.string()
     dag.layout(prog='dot')
     # layout types: neato dot twopi circo fdp nop
