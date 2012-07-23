@@ -1,5 +1,6 @@
 import pprint
 import inspect
+import rtler_vbase
 
 def print_members(module):
   print "ALL MEMBERS"
@@ -25,6 +26,8 @@ def port_walk(tgt, spaces=0):
         fullname = y.parent.name+'.'+fullname
       print spaces*' ', '   knctn: {0} {1}'.format(type(y), fullname)
     print spaces*' ', '   value:', x._value, x.value
+    if isinstance(x._value, rtler_vbase.VerilogSlice):
+      print (spaces+1)*' ', '   slice:', x._value._value, bin(x._value.pmask)
   print
   for x in tgt.submodules:
     print spaces*' ', x.name
