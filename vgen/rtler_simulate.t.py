@@ -4,52 +4,52 @@ from rtler_simulate import *
 from rtler_translate import *
 import sys
 
-#class Rotator(VerilogModule):
-#  def __init__(self, bits):
-#    self.inp = [ InPort(1)  for x in xrange(bits) ]
-#    self.out = [ OutPort(1) for x in xrange(bits) ]
-#
-#    for i in xrange(bits - 1):
-#      self.inp[i] <> self.out[i+1]
-#    self.inp[-1] <> self.out[0]
-#
-#class SimpleSplitter(VerilogModule):
-#  def __init__(self, bits):
-#    self.inp = InPort(bits)
-#    self.out = [ OutPort(1) for x in xrange(bits) ]
-#
-#    for i in xrange(bits):
-#      self.out[i] <> self.inp[i]
-#
-#class ComplexSplitter(VerilogModule):
-#  def __init__(self, bits, groupings):
-#    self.inp = InPort(bits)
-#    self.out = [ OutPort(groupings) for x in xrange(0, bits, groupings) ]
-#
-#    outport_num = 0
-#    for i in xrange(0, bits, groupings):
-#      self.out[outport_num] <> self.inp[i:i+groupings]
-#      outport_num += 1
-#
-#class SimpleMerger(VerilogModule):
-#  def __init__(self, bits):
-#    self.inp = [ InPort(1) for x in xrange(bits) ]
-#    self.out = OutPort(bits)
-#
-#    for i in xrange(bits):
-#      self.out[i] <> self.inp[i]
-#
-#class ComplexMerger(VerilogModule):
-#  def __init__(self, bits, groupings):
-#    self.inp = [ InPort(groupings) for x in xrange(0, bits, groupings) ]
-#    self.out = OutPort(bits)
-#
-#    inport_num = 0
-#    for i in xrange(0, bits, groupings):
-#      self.out[i:i+groupings] <> self.inp[inport_num]
-#      inport_num += 1
-#
-#
+class Rotator(VerilogModule):
+  def __init__(self, bits):
+    self.inp = [ InPort(1)  for x in xrange(bits) ]
+    self.out = [ OutPort(1) for x in xrange(bits) ]
+
+    for i in xrange(bits - 1):
+      self.inp[i] <> self.out[i+1]
+    self.inp[-1] <> self.out[0]
+
+class SimpleSplitter(VerilogModule):
+  def __init__(self, bits):
+    self.inp = InPort(bits)
+    self.out = [ OutPort(1) for x in xrange(bits) ]
+
+    for i in xrange(bits):
+      self.out[i] <> self.inp[i]
+
+class ComplexSplitter(VerilogModule):
+  def __init__(self, bits, groupings):
+    self.inp = InPort(bits)
+    self.out = [ OutPort(groupings) for x in xrange(0, bits, groupings) ]
+
+    outport_num = 0
+    for i in xrange(0, bits, groupings):
+      self.out[outport_num] <> self.inp[i:i+groupings]
+      outport_num += 1
+
+class SimpleMerger(VerilogModule):
+  def __init__(self, bits):
+    self.inp = [ InPort(1) for x in xrange(bits) ]
+    self.out = OutPort(bits)
+
+    for i in xrange(bits):
+      self.out[i] <> self.inp[i]
+
+class ComplexMerger(VerilogModule):
+  def __init__(self, bits, groupings):
+    self.inp = [ InPort(groupings) for x in xrange(0, bits, groupings) ]
+    self.out = OutPort(bits)
+
+    inport_num = 0
+    for i in xrange(0, bits, groupings):
+      self.out[i:i+groupings] <> self.inp[inport_num]
+      inport_num += 1
+
+
 #class TestSlicesSim(unittest.TestCase):
 #
 #  # Splitters
@@ -210,36 +210,50 @@ class RegisterWrapper(VerilogModule):
     self.inp <> self.reg.inp
     self.out <> self.reg.out
 
-class RegisteredAdder1(VerilogModule):
+class RegisterChain(VerilogModule):
   def __init__(self, bits):
-    self.in0 = InPort(bits)
-    self.in1 = InPort(bits)
+    self.inp = InPort(bits)
     self.out = OutPort(bits)
-  @rising_edge
-  def tick(self):
-    in0 = self.in0
-    in1 = self.in1
-    out = self.out
-    out <<= in0 + in1
 
-class RegisteredAdder2(VerilogModule):
-  def __init__(self, bits):
-    self.in0 = InPort(bits)
-    self.in1 = InPort(bits)
-    self.out = OutPort(bits)
-    self.sum = Wire(bits)
-  @combinational
-  def tick(self):
-    in0 = self.in0
-    in1 = self.in1
-    sum = self.sum
-    sum <<= in0 + in1
-  @rising_edge
-  def tick():
-    in0 = self.in0
-    in1 = self.in1
-    out = self.out
-    out <<= sum
+    self.reg1 = Register(bits)
+    self.reg2 = Register(bits)
+    self.reg3 = Register(bits)
+
+    self.inp <> self.reg1.inp
+    self.reg1.out <> self.reg2.inp
+    self.reg2.out <> self.reg3.inp
+    self.reg3.out <> self.out
+
+#class RegisteredAdder1(VerilogModule):
+#  def __init__(self, bits):
+#    self.in0 = InPort(bits)
+#    self.in1 = InPort(bits)
+#    self.out = OutPort(bits)
+#  @rising_edge
+#  def tick(self):
+#    in0 = self.in0
+#    in1 = self.in1
+#    out = self.out
+#    out <<= in0 + in1
+#
+#class RegisteredAdder2(VerilogModule):
+#  def __init__(self, bits):
+#    self.in0 = InPort(bits)
+#    self.in1 = InPort(bits)
+#    self.out = OutPort(bits)
+#    self.sum = Wire(bits)
+#  @combinational
+#  def tick(self):
+#    in0 = self.in0
+#    in1 = self.in1
+#    sum = self.sum
+#    sum <<= in0 + in1
+#  @rising_edge
+#  def tick():
+#    in0 = self.in0
+#    in1 = self.in1
+#    out = self.out
+#    out <<= sum
 
 
 class TestRisingEdge(unittest.TestCase):
@@ -248,8 +262,8 @@ class TestRisingEdge(unittest.TestCase):
     model.elaborate()
     sim = LogicSim(model)
     sim.generate()
-    import rtler_debug
-    rtler_debug.port_walk(model)
+    #import rtler_debug
+    #rtler_debug.port_walk(model)
     return sim
 
   def test_wire(self):
@@ -261,15 +275,14 @@ class TestRisingEdge(unittest.TestCase):
     model.inp.value = 10
     self.assertEqual( model.out.value, 10)
 
-  # TODO: FIXME!  Setup of value nodes broken...
-  #def test_wire_wrapped(self):
-  #  model = WireWrapped(16)
-  #  sim = self.setup_sim(model)
-  #  model.inp.value = 8
-  #  self.assertEqual( model.out.value, 8)
-  #  model.inp.value = 9
-  #  model.inp.value = 10
-  #  self.assertEqual( model.out.value, 10)
+  def test_wire_wrapped(self):
+    model = WireWrapped(16)
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 9
+    model.inp.value = 10
+    self.assertEqual( model.out.value, 10)
 
   def test_register(self):
     model = Register(16)
@@ -284,19 +297,53 @@ class TestRisingEdge(unittest.TestCase):
     sim.cycle()
     self.assertEqual( model.out.value, 10)
 
-  # TODO: FIXME!  Setup of value nodes broken...
-  #def test_register_wrapped(self):
-  #  model = RegisterWrapper(16)
-  #  sim = self.setup_sim(model)
-  #  model.inp.value = 8
-  #  self.assertEqual( model.out.value, 0)
-  #  sim.cycle()
-  #  self.assertEqual( model.out.value, 8)
-  #  model.inp.value = 9
-  #  self.assertEqual( model.out.value, 8)
-  #  model.inp.value = 10
-  #  sim.cycle()
-  #  self.assertEqual( model.out.value, 10)
+  def test_register_wrapped(self):
+    model = RegisterWrapper(16)
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 0)
+    sim.cycle()
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 9
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.out.value, 10)
+
+  def test_register_chain(self):
+    model = RegisterChain(16)
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.reg1.out.value, 0)
+    self.assertEqual( model.reg2.out.value, 0)
+    self.assertEqual( model.reg3.out.value, 0)
+    self.assertEqual( model.out.value,      0)
+    sim.cycle()
+    self.assertEqual( model.reg1.out.value, 8)
+    self.assertEqual( model.reg2.out.value, 0)
+    self.assertEqual( model.reg3.out.value, 0)
+    self.assertEqual( model.out.value,      0)
+    model.inp.value = 9
+    self.assertEqual( model.reg1.out.value, 8)
+    self.assertEqual( model.reg2.out.value, 0)
+    self.assertEqual( model.reg3.out.value, 0)
+    self.assertEqual( model.out.value,      0)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.reg1.out.value,10)
+    self.assertEqual( model.reg2.out.value, 8)
+    self.assertEqual( model.reg3.out.value, 0)
+    self.assertEqual( model.out.value,      0)
+    sim.cycle()
+    self.assertEqual( model.reg1.out.value,10)
+    self.assertEqual( model.reg2.out.value,10)
+    self.assertEqual( model.reg3.out.value, 8)
+    self.assertEqual( model.out.value,      8)
+    sim.cycle()
+    self.assertEqual( model.reg1.out.value,10)
+    self.assertEqual( model.reg2.out.value,10)
+    self.assertEqual( model.reg3.out.value,10)
+    self.assertEqual( model.out.value,     10)
 
 if __name__ == '__main__':
   unittest.main()

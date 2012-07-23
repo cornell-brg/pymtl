@@ -38,6 +38,7 @@ class LogicSim():
     self.rnode_callbacks = []
     self.event_queue     = deque()
     self.rising_edge_fns = []
+    self.node_groups = []
 
   def cycle(self):
     """Execute a single cycle in the simulator.
@@ -81,7 +82,7 @@ class LogicSim():
         if func not in self.event_queue:
           self.event_queue.appendleft(func)
 
-  def generate(self, model=None):
+  def generate(self):
     """Construct a simulator for the provided model by adding necessary hooks.
 
     Parameters
@@ -90,8 +91,40 @@ class LogicSim():
            provided, the model provided in the LogicSim constructor is used
            (toplevel).
     """
-    #TODO: hacky... first call to generate should use toplevel model
-    model = model if model else self.model
+
+    # build up the node_groups data structure
+    self.find_node_groupings(self.model)
+
+    # create ValueNodes and add them to each port
+    pprint.pprint( self.node_groups )
+    for group in self.node_groups:
+      width = max( [port.width for port in group] )
+      value = ValueNode(width, sim=self)
+      # TODO: handle constant
+      #pprint.pprint( [type(port._value) for port in group] )
+      # TODO: handle slices
+      for port in group:
+        port._value = value
+
+    # walk the AST of each module to create sensitivity lists and add registers
+    self.infer_sensitivity_list(self.model)
+
+
+    #self.add_value_nodes(model)
+    # Recursively call on all submodules
+    #for m in model.submodules:
+    #  self.generate( m )
+    # DEBUGGING: creates a graphviz graph
+    # Recursively call on all submodules
+    # All value nodes have been added, create the sensitivity list.
+    #self.infer_sensitivity_list( model )
+    #self.graphviz(model)
+
+    # TODO: debug_sensitivity_list
+    #print "VALUE NODE CALLBACKS"
+    #pprint.pprint( self.vnode_callbacks )
+
+  def find_node_groupings(self, model):
     if debug_hierarchy:
       print 70*'-'
       print "Model:", model
@@ -101,18 +134,29 @@ class LogicSim():
       pprint.pprint( model.submodules, indent=3 )
 
     # Walk ports to add value nodes.  Do leaves or toplevel first?
-    self.add_value_nodes(model)
-    # DEBUGGING: creates a graphviz graph
-    #self.graphviz(model)
-    # Recursively call on all submodules
-    for m in model.submodules:
-      self.generate( m )
-    # All value nodes have been added, create the sensitivity list.
-    self.infer_sensitivity_list( model )
+    print model.name
+    for p in model.ports:
+      self.add_to_node_groups(p)
 
-    # TODO: debug_sensitivity_list
-    #print "VALUE NODE CALLBACKS"
-    #pprint.pprint( self.vnode_callbacks )
+    for m in model.submodules:
+      self.find_node_groupings( m )
+
+
+  def add_to_node_groups(self, port):
+    group = set([port])
+    group.update( port.connections )
+    # Utility function for our list comprehension below.  If the group and set
+    # are disjoint, return true.  Otherwise return false and join the set to
+    # the group.
+    def disjoint(group,s):
+      if not group.isdisjoint(s):
+        group.update(s)
+        return False
+      else:
+        return True
+
+    self.node_groups[:] = [x for x in self.node_groups if disjoint(group, x)]
+    self.node_groups += [ group ]
 
   def add_value_nodes(self, model):
     """Utility method which adds ValueNodes to port and wire connections.
@@ -250,13 +294,21 @@ class LogicSim():
     for port_name, func_name in reg_stores:
       port_ptr = model.__getattribute__(port_name)
       func_ptr = model.__getattribute__(func_name)
+      # Add the @rising_edge function to the callback list
       self.rising_edge_fns += [func_ptr]
       # TODO: special case for slices
+      # Create a RegisterNode object to replace the ValueNode
       value_node = port_ptr._value
       register_node = RegisterNode( value_node.width, sim=self )
+      for group in self.node_groups:
+        if port_ptr in group:
+          for port in group:
+            port._value = register_node
+      # Add the register node to the callback list
       self.rnode_callbacks += [register_node]
-      port_ptr._value = register_node
-      #print port_ptr.parent.name, port_ptr.name, port_ptr._value
+
+    for m in model.submodules:
+      self.infer_sensitivity_list( m )
 
 class SensitivityListVisitor(ast.NodeVisitor):
   """Hidden class for building a sensitivity list from the AST of a MTL model.
