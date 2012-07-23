@@ -272,9 +272,17 @@ class VerilogPort(object):
       #  target._value = ValueNode(target.parent_ptr.width)
       #  #print "CreateValueNode:", self.parent, self.name, target._value
     else:
+      #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)
       assert self.width == target.width
       self.connections   += [ target ]
       target.connections += [ self   ]
+      # If we are connecting a port to another port which is itself a slice of
+      # another object, make our value pointer also point to the slice
+      if self.type == target.type:
+        #print "  TARGETS? {0} to {1}".format(type(self._value), type(target._value))
+        assert not (self._value and target._value)
+        if self._value:   target._value = self._value
+        else:               self._value = target._value
       #if target._value:
       #  self._value = target._value
       #else:

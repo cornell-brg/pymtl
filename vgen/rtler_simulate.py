@@ -96,15 +96,14 @@ class LogicSim():
     self.find_node_groupings(self.model)
 
     # create ValueNodes and add them to each port
-    pprint.pprint( self.node_groups )
+    #pprint.pprint( self.node_groups )
     for group in self.node_groups:
       width = max( [port.width for port in group] )
-      value = ValueNode(width, sim=self)
       # TODO: handle constant
-      #pprint.pprint( [type(port._value) for port in group] )
-      # TODO: handle slices
+      value = ValueNode(width, sim=self)
       for port in group:
-        port._value = value
+        if not port._value:
+          port._value = value
 
     # walk the AST of each module to create sensitivity lists and add registers
     self.infer_sensitivity_list(self.model)
@@ -134,7 +133,6 @@ class LogicSim():
       pprint.pprint( model.submodules, indent=3 )
 
     # Walk ports to add value nodes.  Do leaves or toplevel first?
-    print model.name
     for p in model.ports:
       self.add_to_node_groups(p)
 
@@ -272,8 +270,8 @@ class LogicSim():
     # build a sensitivity list from it,
     # only gives us function names... still need function pointers
     SensitivityListVisitor( comb_loads, reg_stores ).visit( tree )
-    print "COMB", comb_loads
-    print "REGS", reg_stores
+    #print "COMB", comb_loads
+    #print "REGS", reg_stores
 
     # Iterate through all comb_loads, add function_pointers to vnode_callbacks
     for port_name, func_name in comb_loads:
@@ -303,7 +301,12 @@ class LogicSim():
       for group in self.node_groups:
         if port_ptr in group:
           for port in group:
-            port._value = register_node
+            #print port.parent.name, port.name, type(port._value)
+            if not isinstance(port._value, VerilogSlice):
+              port._value = register_node
+            else:
+              # TODO: needs testing!
+              print "TEST ME!!!!"
       # Add the register node to the callback list
       self.rnode_callbacks += [register_node]
 
