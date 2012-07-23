@@ -42,6 +42,7 @@ topdir = ../..
 subpkgs = \
   vc \
   vgen \
+  rtler \
 
 #  imuldiv \
 #  pv2stall \
