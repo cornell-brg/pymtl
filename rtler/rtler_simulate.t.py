@@ -110,39 +110,6 @@ class TestSlicesSim(unittest.TestCase):
     self.assertEqual( model.out.value, 0b11110000 )
 
 
-
-#class RegisteredAdder1(VerilogModule):
-#  def __init__(self, bits):
-#    self.in0 = InPort(bits)
-#    self.in1 = InPort(bits)
-#    self.out = OutPort(bits)
-#  @rising_edge
-#  def tick(self):
-#    in0 = self.in0
-#    in1 = self.in1
-#    out = self.out
-#    out <<= in0 + in1
-#
-#class RegisteredAdder2(VerilogModule):
-#  def __init__(self, bits):
-#    self.in0 = InPort(bits)
-#    self.in1 = InPort(bits)
-#    self.out = OutPort(bits)
-#    self.sum = Wire(bits)
-#  @combinational
-#  def tick(self):
-#    in0 = self.in0
-#    in1 = self.in1
-#    sum = self.sum
-#    sum <<= in0 + in1
-#  @rising_edge
-#  def tick():
-#    in0 = self.in0
-#    in1 = self.in1
-#    out = self.out
-#    out <<= sum
-
-
 class TestRisingEdge(unittest.TestCase):
 
   def setup_sim(self, model):

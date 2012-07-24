@@ -130,6 +130,40 @@ class RegisterSplitter(VerilogModule):
     self.inp     <> self.reg.inp
     self.reg.out <> self.split.inp
     for i, x in enumerate(self.out):
-      #self.split.out[i] <> x
-      x <> self.split.out[i]
+      self.split.out[i] <> x
+
+
+#class RegisteredAdder1(VerilogModule):
+#  def __init__(self, bits):
+#    # Ports
+#    self.in0 = InPort(bits)
+#    self.in1 = InPort(bits)
+#    self.out = OutPort(bits)
+#  @rising_edge
+#  def tick(self):
+#    in0 = self.in0
+#    in1 = self.in1
+#    out = self.out
+#    out <<= in0 + in1
+#
+#class RegisteredAdder2(VerilogModule):
+#  def __init__(self, bits):
+#    # Ports
+#    self.in0 = InPort(bits)
+#    self.in1 = InPort(bits)
+#    self.out = OutPort(bits)
+#    # Submodules
+#    self.sum = Wire(bits)
+#  @combinational
+#  def tick(self):
+#    in0 = self.in0
+#    in1 = self.in1
+#    sum = self.sum
+#    sum <<= in0 + in1
+#  @rising_edge
+#  def tick():
+#    in0 = self.in0
+#    in1 = self.in1
+#    out = self.out
+#    out <<= sum
 
