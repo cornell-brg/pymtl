@@ -37,7 +37,7 @@ class LogicSim():
     self.vnode_callbacks = {}
     self.rnode_callbacks = []
     self.event_queue     = deque()
-    self.rising_edge_fns = []
+    self.posedge_clk_fns = []
     self.node_groups = []
 
   def cycle(self):
@@ -54,7 +54,7 @@ class LogicSim():
       func()
 
     # Call all rising edge triggered functions
-    for func in self.rising_edge_fns:
+    for func in self.posedge_clk_fns:
       func()
 
     # Then call clock() on all registers
@@ -251,7 +251,7 @@ class LogicSim():
     construct a signal sensitivity list based on loads performed inside the
     annotated function.
 
-    For @rising_edge decorators, the SensitivityListVisitor replaces the
+    For @posedge_clk decorators, the SensitivityListVisitor replaces the
     ValueNodes of written ports/wires with RegisterNodes.
 
     Parameters
@@ -292,8 +292,8 @@ class LogicSim():
     for port_name, func_name in reg_stores:
       port_ptr = model.__getattribute__(port_name)
       func_ptr = model.__getattribute__(func_name)
-      # Add the @rising_edge function to the callback list
-      self.rising_edge_fns += [func_ptr]
+      # Add the @posedge_clk function to the callback list
+      self.posedge_clk_fns += [func_ptr]
       # TODO: special case for slices
       # Create a RegisterNode object to replace the ValueNode
       value_node = port_ptr._value
@@ -329,7 +329,7 @@ class SensitivityListVisitor(ast.NodeVisitor):
     comb_loads: a set() object, (var_name, func_name) tuples will be added to
                 this set for all variables loaded inside @combinational blocks
     reg_stores: a set() object, (var_name, func_name) tuples will be added to
-                this set for all variables updated inside @rising_edge blocks
+                this set for all variables updated inside @posedge_clk blocks
                 (via the <<= operator)
     """
     self.current_fn = None
@@ -349,7 +349,7 @@ class SensitivityListVisitor(ast.NodeVisitor):
       # Visit each line in the function, translate one at a time.
       for x in node.body:
         self.visit(x)
-    elif 'rising_edge' in decorator_names:
+    elif 'posedge_clk' in decorator_names:
       # Visit each line in the function, translate one at a time.
       self.add_regs = True
       for x in node.body:
@@ -359,7 +359,7 @@ class SensitivityListVisitor(ast.NodeVisitor):
 
   def visit_AugAssign(self, node):
     """Visit all aug assigns, searches for synchronous (registered) stores."""
-    # @rising_edge annotation, find nodes we need toconvert to registers
+    # @posedge_clk annotation, find nodes we need toconvert to registers
     if self.add_regs and isinstance(node.op, _ast.LShift):
       self.reg_stores.add( (node.target.id, self.current_fn) )
     else:
@@ -391,6 +391,6 @@ def combinational(func):
   # parsers.
   return func
 
-def rising_edge(func):
+def posedge_clk(func):
   return func
 

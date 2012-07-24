@@ -1,5 +1,5 @@
 from rtler_vbase import *
-from rtler_simulate import rising_edge
+from rtler_simulate import posedge_clk
 
 class Rotator(VerilogModule):
   def __init__(self, bits):
@@ -82,7 +82,7 @@ class Register(VerilogModule):
     # Ports
     self.inp = InPort(bits)
     self.out = OutPort(bits)
-  @rising_edge
+  @posedge_clk
   def tick(self):
     inp = self.inp
     out = self.out
@@ -139,7 +139,7 @@ class RegisterSplitter(VerilogModule):
 #    self.in0 = InPort(bits)
 #    self.in1 = InPort(bits)
 #    self.out = OutPort(bits)
-#  @rising_edge
+#  @posedge_clk
 #  def tick(self):
 #    in0 = self.in0
 #    in1 = self.in1
@@ -160,7 +160,7 @@ class RegisterSplitter(VerilogModule):
 #    in1 = self.in1
 #    sum = self.sum
 #    sum <<= in0 + in1
-#  @rising_edge
+#  @posedge_clk
 #  def tick():
 #    in0 = self.in0
 #    in1 = self.in1
