@@ -1,57 +1,10 @@
 import unittest
-from rtler_vbase import *
+
+from rtler_test_examples import *
 from rtler_simulate import *
-from rtler_translate import *
+
 import rtler_debug
-import sys
-
 debug_verbose = False
-
-class Rotator(VerilogModule):
-  def __init__(self, bits):
-    self.inp = [ InPort(1)  for x in xrange(bits) ]
-    self.out = [ OutPort(1) for x in xrange(bits) ]
-
-    for i in xrange(bits - 1):
-      self.inp[i] <> self.out[i+1]
-    self.inp[-1] <> self.out[0]
-
-class SimpleSplitter(VerilogModule):
-  def __init__(self, bits):
-    self.inp = InPort(bits)
-    self.out = [ OutPort(1) for x in xrange(bits) ]
-
-    for i in xrange(bits):
-      self.out[i] <> self.inp[i]
-
-class ComplexSplitter(VerilogModule):
-  def __init__(self, bits, groupings):
-    self.inp = InPort(bits)
-    self.out = [ OutPort(groupings) for x in xrange(0, bits, groupings) ]
-
-    outport_num = 0
-    for i in xrange(0, bits, groupings):
-      self.out[outport_num] <> self.inp[i:i+groupings]
-      outport_num += 1
-
-class SimpleMerger(VerilogModule):
-  def __init__(self, bits):
-    self.inp = [ InPort(1) for x in xrange(bits) ]
-    self.out = OutPort(bits)
-
-    for i in xrange(bits):
-      self.out[i] <> self.inp[i]
-
-class ComplexMerger(VerilogModule):
-  def __init__(self, bits, groupings):
-    self.inp = [ InPort(groupings) for x in xrange(0, bits, groupings) ]
-    self.out = OutPort(bits)
-
-    inport_num = 0
-    for i in xrange(0, bits, groupings):
-      self.out[i:i+groupings] <> self.inp[inport_num]
-      inport_num += 1
-
 
 class TestSlicesSim(unittest.TestCase):
 
@@ -156,92 +109,6 @@ class TestSlicesSim(unittest.TestCase):
     self.set_ports( model.inp, 0b11110000 )
     self.assertEqual( model.out.value, 0b11110000 )
 
-class TestSlicesVerilog(unittest.TestCase):
-
-  def translate(self, model):
-    model.elaborate()
-    if debug_verbose: rtler_debug.port_walk(model)
-    code = ToVerilog(model)
-    code.generate( sys.stdout )
-
-  #TODO: how do we test this?!
-  def test_zero(self):
-    self.translate( Rotator(8) )
-
-  def test_one(self):
-    self.translate( SimpleSplitter(8) )
-
-  def test_two(self):
-    self.translate( SimpleMerger(8) )
-
-  def test_three(self):
-    self.translate( ComplexSplitter(16, 4) )
-
-  def test_four(self):
-    self.translate( ComplexMerger(16, 4) )
-
-
-class Wire(VerilogModule):
-  def __init__(self, bits):
-    self.inp = InPort(bits)
-    self.out = OutPort(bits)
-    self.inp <> self.out
-
-class WireWrapped(VerilogModule):
-  def __init__(self, bits):
-    self.inp = InPort(bits)
-    self.out = OutPort(bits)
-    self.wire = Wire(16)
-    self.inp <> self.wire.inp
-    self.out <> self.wire.out
-
-class Register(VerilogModule):
-  def __init__(self, bits):
-    self.inp = InPort(bits)
-    self.out = OutPort(bits)
-  @rising_edge
-  def tick(self):
-    inp = self.inp
-    out = self.out
-    out <<= inp
-
-class RegisterWrapper(VerilogModule):
-  def __init__(self, bits):
-    self.inp = InPort(bits)
-    self.out = OutPort(bits)
-    self.reg = Register(bits)
-    self.inp <> self.reg.inp
-    self.out <> self.reg.out
-
-class RegisterChain(VerilogModule):
-  def __init__(self, bits):
-    self.inp = InPort(bits)
-    self.out = OutPort(bits)
-
-    self.reg1 = Register(bits)
-    self.reg2 = Register(bits)
-    self.reg3 = Register(bits)
-
-    self.inp <> self.reg1.inp
-    self.reg1.out <> self.reg2.inp
-    self.reg2.out <> self.reg3.inp
-    self.reg3.out <> self.out
-
-class RegisterSplitter(VerilogModule):
-  def __init__(self, bits):
-    groupings = 2
-    self.inp = InPort(bits)
-    self.out = [ OutPort(groupings) for x in xrange(0, bits, groupings) ]
-
-    self.reg   = Register(bits)
-    self.split = ComplexSplitter(bits, groupings)
-
-    self.inp     <> self.reg.inp
-    self.reg.out <> self.split.inp
-
-    for i, x in enumerate(self.out):
-      #self.split.out[i] <> x
-      x <> self.split.out[i]
 
 
 #class RegisteredAdder1(VerilogModule):
