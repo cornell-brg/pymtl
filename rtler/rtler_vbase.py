@@ -128,14 +128,6 @@ class VerilogSlice(object):
     """Return the type of object we are slicing."""
     return self.parent_ptr.type
 
-  #@property
-  #def connections(self):
-  #  """The list of connections attached to the port/wire we are slicing."""
-  #  return self.parent_ptr.connections
-  #@connections.setter
-  #def connections(self, target):
-  #  self.parent_ptr.connections += [target]
-
   @property
   def value(self):
     """Value of the bits we are slicing."""
@@ -198,6 +190,11 @@ class VerilogPort(object):
     """Connection operator (<>), calls connect()."""
     self.connect(target)
 
+  def __inv__(self):
+    """Bitwise inversion (~)."""
+    temp = ~self.value
+    return temp
+
   def __xor__(self, target):
     """Bitwise xor (^)."""
     # TODO: returns an int, not a port. Is this okay?
@@ -217,12 +214,143 @@ class VerilogPort(object):
     temp = self.value & target.value
     return temp
 
+  def __rand__(self, target):
+    """Bitwise and (&), allows and-ing a VerilogPort with an int object."""
+    temp = self.value & target
+    return temp
+
   def __or__(self, target):
     """Bitwise or (|)."""
     # TODO: returns an int, not a port. Is this okay?
     #temp = VerilogPort(name='or_temp') #temp.value = self.value | target.value
     temp = self.value | target.value
     return temp
+
+  def __ror__(self, target):
+    """Bitwise or (|), allows or-ing a VerilogPort with an int object."""
+    temp = self.value | target
+    return temp
+
+  def __add__(self, target):
+    """Add (+)."""
+    temp = self.value + target.value
+    return temp
+
+  def __radd__(self, target):
+    """Add (+), allows adding a VerilogPort with an int object."""
+    temp = self.value + target
+    return temp
+
+  def __sub__(self, target):
+    """Sub (-)."""
+    temp = self.value - target.value
+    return temp
+
+  # TODO
+  #def __rsub__(self, target):
+
+  def __mul__(self, target):
+    """Multiply (*)."""
+    temp = self.value * target.value
+    return temp
+
+  def __rmul__(self, target):
+    """Multiply (*), allows multiplying a VerilogPort with an int object."""
+    temp = self.value * target
+    return temp
+
+  def __mod__(self, target):
+    """Modulo (%)."""
+    temp = self.value % target.value
+    return temp
+
+  # TODO
+  #def __rmod__(self, target):
+
+  def __div__(self, target):
+    """Division (/)."""
+    temp = self.value / target.value
+    return temp
+
+  # TODO
+  #def __rdiv__(self, target):
+
+  def __lshift__(self, target):
+    """Left shift (<<)."""
+    temp = self.value << target.value
+    return temp
+
+  # TODO
+  #def __lshift__(self, target):
+
+  def __rshift__(self, target):
+    """Right shift (>>)."""
+    temp = self.value >> target.value
+    return temp
+
+  # TODO
+  #def __rshift__(self, target):
+
+  def __lt__(self, target):
+    """Less than (<)."""
+    temp = self.value < target.value
+    return temp
+
+  def __rlt__(self, target):
+    """Less than (<), allows comparison with an int object."""
+    temp = self.value < target
+    return temp
+
+  def __gt__(self, target):
+    """Greater than (>)."""
+    temp = self.value > target.value
+    return temp
+
+  def __rgt__(self, target):
+    """Greater than (>), allows comparison with an int object."""
+    temp = self.value > target
+    return temp
+
+  def __lte__(self, target):
+    """Less than or equal (<=)."""
+    temp = self.value <= target.value
+    return temp
+
+  def __rlte__(self, target):
+    """Less than or equal (<=), allows comparison with an int object."""
+    temp = self.value <= target
+    return temp
+
+  def __gte__(self, target):
+    """Greater than or equal (>=)."""
+    temp = self.value >= target.value
+    return temp
+
+  def __rgte__(self, target):
+    """Greater than or equal (>=), allows comparison with an int object."""
+    temp = self.value >= target
+    return temp
+
+  def __eq__(self, target):
+    """Equal (==)."""
+    temp = self.value == target.value
+    return temp
+
+  def __req__(self, target):
+    """Equal (==), allows comparison with an int object."""
+    temp = self.value == target
+    return temp
+
+  def __neq__(self, target):
+    """Not equal (!=)."""
+    temp = self.value != target.value
+    return temp
+
+  def __rneq__(self, target):
+    """Not equal (!=), allows comparison with an int object."""
+    temp = self.value != target
+    return temp
+
 
   def __ilshift__(self, target):
     """Assignment operator (<<=). Sets value of this port."""
