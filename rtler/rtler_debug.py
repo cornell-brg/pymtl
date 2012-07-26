@@ -25,9 +25,17 @@ def port_walk(tgt, spaces=0):
       if y.parent:
         fullname = y.parent.name+'.'+fullname
       print spaces*' ', '   knctn: {0} {1}'.format(type(y), fullname)
-    print spaces*' ', '   value:', x._value, x.value
+    print spaces*' ', '   value:', x._value, #x.value
     if isinstance(x._value, rtler_vbase.VerilogSlice):
+      # TODO: handle this case in VerilogSlice instead?
+      if x._value._value:
+        print x.value
+      else:
+        print None
       print (spaces+1)*' ', '   slice:', x._value._value, bin(x._value.pmask)
+    # TODO: handle this case in VerilogSlice instead?
+    else:
+      print x.value
   print
   for x in tgt.submodules:
     print spaces*' ', x.name
