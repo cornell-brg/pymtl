@@ -169,6 +169,7 @@ class VerilogPort(object):
     self.name  = name
     self.parent = None
     self.connections = []
+    self.inst_connection = None
     self._value     = None
     if str:
       self.type, self.width, self.name  = self.parse( str )

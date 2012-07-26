@@ -20,8 +20,9 @@ class ToVerilog(object):
     model: an instantiated MTL model (VerilogModule).
     """
     self.model = model
+    self.generated = set()
 
-  def generate(self, o):
+  def generate(self, o, target=None):
     """Generates Verilog source from a MTL model.
 
     Calls gen_port_decls(), gen_impl_wires(), gen_module_insts(), and gen_ast()
@@ -31,7 +32,8 @@ class ToVerilog(object):
     ----------
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
-    target = self.model
+    if not target:
+      target = self.model
     print >> o, 'module %s' % target.class_name
     # Declare Params
     #if self.params: self.gen_param_decls( self.params, o )
@@ -47,6 +49,11 @@ class ToVerilog(object):
     self.gen_port_assigns( target, o )
     # End module
     print >> o, '\nendmodule\n'
+
+    self.generated.add( target.class_name )
+    for m in target.submodules:
+      if m.class_name not in self.generated:
+        self.generate(o, m)
 
   def gen_port_decls(self, ports, o):
     """Generate Verilog source for port declarations.
@@ -97,17 +104,25 @@ class ToVerilog(object):
       for port in submodule.ports:
         if isinstance(port.connections, VerilogWire):
           break
-        for c in port.connections:
-          if (    c.type != 'wire'
-              and c.type != 'constant'
-              and c.type != port.type):
-            # TODO: figure out a way to get connection submodule name...
-            wire_name = '{0}_{1}_TO_{2}_{3}'.format(submodule.name, port.name,
-                                                    c.parent.name, c.name)
-            wire = VerilogWire(wire_name, port.width)
-            c.connections = [wire]
-            port.connections = [wire]
-            print >> o, '  %s' % wire
+        c = self.get_parent_connection(port)
+        # If we found a parent connection, no wire is required
+        if c:
+          port.inst_connection = c
+        # If there's no parent connection, create a wire
+        # TODO: why is this a loop? Shouldnt there only be one?
+        else:
+          for c in port.connections:
+            if (not port.inst_connection
+                and c.type != 'wire'
+                and c.type != 'constant'
+                and c.type != port.type):
+              # TODO: set names based on directionality
+              wire_name = '{0}_{1}_TO_{2}_{3}'.format(submodule.name, port.name,
+                                                      c.parent.name, c.name)
+              wire = VerilogWire(wire_name, port.width)
+              c.inst_connection = wire
+              port.inst_connection = wire
+              print >> o, '  %s' % wire
 
   def gen_wire_decls(self, wires, o):
     """Generate Verilog source for wire declarations.
@@ -178,14 +193,10 @@ class ToVerilog(object):
     """
     # TODO: hacky! fix p.connection
     for p in ports[:-1]:
-      name = self.get_parent_connection(p)
-      #assert len(p.connections) <= 1
-      #name = p.connections[0].name if p.connections else ' '
+      name = p.inst_connection.name if p.inst_connection else ' '
       print >> o , '    .%s (%s),' % (p.name, name)
     p = ports[-1]
-    name = self.get_parent_connection(p)
-    #assert len(p.connections) <= 1
-    #name = p.connections[0].name if p.connections else ' '
+    name = p.inst_connection.name if p.inst_connection else ' '
     print >> o, '    .%s (%s)' % (p.name, name)
 
   def get_parent_connection(self, port):
@@ -207,13 +218,15 @@ class ToVerilog(object):
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
     # TODO: separate connections into inst_cxt and impl_cxn
+    # No connection, return none
     if not port.connections:
-      return ''
-    if len(port.connections) == 1:
-      return port.connections[0].name
+      return None
+    # Look in connections for any parent connections
     for connection in port.connections:
       if port.parent.parent == connection.parent:
-        return connection.name
+        return connection
+    # No parent connections
+    return None
 
   def gen_ast(self, v, o):
     """Generate Verilog source @combinational annotated python functions.
