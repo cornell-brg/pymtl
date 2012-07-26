@@ -71,10 +71,12 @@ class WireWrapped(VerilogModule):
     self.inp = InPort(bits)
     self.out = OutPort(bits)
     # Submodules
-    self.wire = Wire(16)
+    # TODO: cannot use keyword "wire" for variable names when converting
+    #       ToVerilog! Check for this?
+    self.wire0 = Wire(16)
     # Connections
-    self.inp <> self.wire.inp
-    self.out <> self.wire.out
+    self.inp <> self.wire0.inp
+    self.out <> self.wire0.out
 
 
 class Register(VerilogModule):
@@ -95,10 +97,12 @@ class RegisterWrapper(VerilogModule):
     self.inp = InPort(bits)
     self.out = OutPort(bits)
     # Submodules
-    self.reg = Register(bits)
+    # TODO: cannot use keyword "reg" for variable names when converting
+    #       ToVerilog! Check for this?
+    self.reg0 = Register(bits)
     # Connections
-    self.inp <> self.reg.inp
-    self.out <> self.reg.out
+    self.inp <> self.reg0.inp
+    self.out <> self.reg0.out
 
 
 class RegisterChain(VerilogModule):
@@ -124,11 +128,11 @@ class RegisterSplitter(VerilogModule):
     self.inp = InPort(bits)
     self.out = [ OutPort(groupings) for x in xrange(0, bits, groupings) ]
     # Submodules
-    self.reg   = Register(bits)
+    self.reg0  = Register(bits)
     self.split = ComplexSplitter(bits, groupings)
     # Connections
-    self.inp     <> self.reg.inp
-    self.reg.out <> self.split.inp
+    self.inp      <> self.reg0.inp
+    self.reg0.out <> self.split.inp
     for i, x in enumerate(self.out):
       self.split.out[i] <> x
 
