@@ -116,9 +116,13 @@ class ToVerilog(object):
                 and c.type != 'wire'
                 and c.type != 'constant'
                 and c.type != port.type):
-              # TODO: set names based on directionality
-              wire_name = '{0}_{1}_TO_{2}_{3}'.format(submodule.name, port.name,
-                                                      c.parent.name, c.name)
+              # set names based on directionality
+              if isinstance(port, OutPort):
+                wire_name = '{0}_{1}_TO_{2}_{3}'.format(
+                    submodule.name, port.name, c.parent.name, c.name)
+              else:
+                wire_name = '{0}_{1}_TO_{2}_{3}'.format(
+                    c.parent.name, c.name, submodule.name, port.name)
               wire = VerilogWire(wire_name, port.width)
               c.inst_connection = wire
               port.inst_connection = wire

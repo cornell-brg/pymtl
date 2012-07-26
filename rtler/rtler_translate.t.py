@@ -88,8 +88,8 @@ class TestSlicesVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  #def tearDown(self):
-  #  os.remove(self.temp_file)
+  def tearDown(self):
+    os.remove(self.temp_file)
 
 if __name__ == '__main__':
   unittest.main()
