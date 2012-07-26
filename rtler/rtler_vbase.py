@@ -171,6 +171,7 @@ class VerilogPort(object):
     self.connections = []
     self.inst_connection = None
     self._value     = None
+    self.is_reg = False
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
@@ -179,13 +180,14 @@ class VerilogPort(object):
   #  return "Port(%s, %s, %s)" % (self.type, self.width, self.name)
 
   def __str__(self):
+    reg = 'reg' if self.is_reg else ''
     if isinstance(self.width, str):
-      return "%s %s %s" % (self.type, self.width, self.name)
+      return "%s %s %s %s" % (self.type, reg, self.width, self.name)
     elif isinstance(self.width, int):
       if self.width == 1:
-        return "%s %s" % (self.type, self.name)
+        return "%s %s %s" % (self.type, reg, self.name)
       else :
-        return "%s [%d:0] %s" % (self.type, self.width-1, self.name)
+        return "%s %s [%d:0] %s" % (self.type, reg, self.width-1, self.name)
 
   def __ne__(self, target):
     """Connection operator (<>), calls connect()."""

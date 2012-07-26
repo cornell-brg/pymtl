@@ -84,6 +84,8 @@ class Register(VerilogModule):
     # Ports
     self.inp = InPort(bits)
     self.out = OutPort(bits)
+    # TODO: how to handle clock?
+    self.clk = InPort(1)
   @posedge_clk
   def tick(self):
     inp = self.inp
@@ -96,6 +98,8 @@ class RegisterWrapper(VerilogModule):
     # Ports
     self.inp = InPort(bits)
     self.out = OutPort(bits)
+    # TODO: how to handle clock?
+    self.clk = InPort(1)
     # Submodules
     # TODO: cannot use keyword "reg" for variable names when converting
     #       ToVerilog! Check for this?
@@ -103,6 +107,7 @@ class RegisterWrapper(VerilogModule):
     # Connections
     self.inp <> self.reg0.inp
     self.out <> self.reg0.out
+    self.clk <> self.reg0.clk
 
 
 class RegisterChain(VerilogModule):
@@ -110,6 +115,8 @@ class RegisterChain(VerilogModule):
     # Ports
     self.inp = InPort(bits)
     self.out = OutPort(bits)
+    # TODO: how to handle clock?
+    self.clk = InPort(1)
     # Submodules
     self.reg1 = Register(bits)
     self.reg2 = Register(bits)
@@ -119,6 +126,9 @@ class RegisterChain(VerilogModule):
     self.reg1.out <> self.reg2.inp
     self.reg2.out <> self.reg3.inp
     self.reg3.out <> self.out
+    self.clk <> self.reg1.clk
+    self.clk <> self.reg2.clk
+    self.clk <> self.reg3.clk
 
 
 class RegisterSplitter(VerilogModule):
@@ -127,10 +137,13 @@ class RegisterSplitter(VerilogModule):
     # Ports
     self.inp = InPort(bits)
     self.out = [ OutPort(groupings) for x in xrange(0, bits, groupings) ]
+    # TODO: how to handle clock?
+    self.clk = InPort(1)
     # Submodules
     self.reg0  = Register(bits)
     self.split = ComplexSplitter(bits, groupings)
     # Connections
+    self.clk      <> self.reg0.clk
     self.inp      <> self.reg0.inp
     self.reg0.out <> self.split.inp
     for i, x in enumerate(self.out):

@@ -6,7 +6,7 @@ hardware description languages, such as Verilog.
 
 from rtler_vbase import *
 import inspect
-import ast
+import ast, _ast
 
 class ToVerilog(object):
 
@@ -37,6 +37,8 @@ class ToVerilog(object):
     print >> o, 'module %s' % target.class_name
     # Declare Params
     #if self.params: self.gen_param_decls( self.params, o )
+    # Find Registers
+    self.get_regs( target, o )
     # Declare Ports
     if target.ports: self.gen_port_decls( target.ports, o )
     # Wires & Instantiations
@@ -232,8 +234,28 @@ class ToVerilog(object):
     # No parent connections
     return None
 
+  def get_regs(self, v, o):
+    """Find which wires/ports should be Verilog reg type.
+
+    Parameters
+    ----------
+    target: a VerilogModule instance.
+    o: the output object to write Verilog source to (ie. sys.stdout).
+    """
+    reg_stores = set()
+
+    model_class = v.__class__
+    src = inspect.getsource( model_class )
+    tree = ast.parse( src )
+    FindRegistersVisitor( reg_stores ).visit(tree)
+    for reg_name in reg_stores:
+      port_ptr = v.__getattribute__(reg_name)
+      port_ptr.is_reg = True
+
   def gen_ast(self, v, o):
-    """Generate Verilog source @combinational annotated python functions.
+    """Generate Verilog source from decorated python functions.
+
+    Currently supports the @combinational and @posedge_clk decorators.
 
     Parameters
     ----------
@@ -351,6 +373,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     o: the output object to write to (ie. sys.stdout).
     """
     self.write_names = False
+    self.block_type  = None
     self.o = o
 
   def visit_FunctionDef(self, node):
@@ -359,9 +382,17 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     if not node.decorator_list:
       return
     if node.decorator_list[0].id == 'combinational':
+      self.block_type = node.decorator_list[0].id
       # Visit each line in the function, translate one at a time.
       for x in node.body:
         self.visit(x)
+    elif node.decorator_list[0].id == 'posedge_clk':
+      self.block_type = node.decorator_list[0].id
+      print >> self.o, ' always @ (posedge clk) begin'
+      # Visit each line in the function, translate one at a time.
+      for x in node.body:
+        self.visit(x)
+      print >> self.o, ' end'
 
   def visit_BinOp(self, node):
     """Visit all binary operators, convert into Verilog operators.
@@ -393,9 +424,14 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     """
     # TODO: this turns all comparisons into assign statements! Fix!
     self.write_names = True
-    print >> self.o, '  assign', node.target.id, '=',
-    self.visit(node.value)
-    print >> self.o, ';'
+    if self.block_type == 'combinational':
+      print >> self.o, '  assign', node.target.id, '=',
+      self.visit(node.value)
+      print >> self.o, ';'
+    elif self.block_type == 'posedge_clk':
+      print >> self.o, ' ', node.target.id, '<=',
+      self.visit(node.value)
+      print >> self.o, ';'
     self.write_names = False
 
   #def visit_Compare(self, node):
@@ -405,6 +441,43 @@ class PyToVerilogVisitor(ast.NodeVisitor):
   def visit_Name(self, node):
     """Visit all variables, convert into Verilog variables."""
     if self.write_names: print >> self.o, node.id,
+
+
+class FindRegistersVisitor(ast.NodeVisitor):
+  """Hidden class finding all registers in the AST of a MTL model.
+
+  In order to translate synchronous @posedge_clk blocks into Verilog, we need
+  to declare certain wires as registers.  This visitor looks for all ports
+  written in @posedge_clk blocks so they can be declared as reg types.
+
+  TODO: factor this and SensitivityListVisitor into same file?
+  """
+  def __init__(self, reg_stores):
+    """Construct a new SensitivityListVisitor.
+
+    Parameters
+    ----------
+    reg_stores: a set() object, (var_name, func_name) tuples will be added to
+                this set for all variables updated inside @posedge_clk blocks
+                (via the <<= operator)
+    """
+    self.reg_stores = reg_stores
+
+  def visit_FunctionDef(self, node):
+    """Visit all functions, but only parse those with special decorators."""
+    if not node.decorator_list:
+      return
+    elif node.decorator_list[0].id == 'posedge_clk':
+      # Visit each line in the function, translate one at a time.
+      for x in node.body:
+        self.visit(x)
+
+  def visit_AugAssign(self, node):
+    """Visit all aug assigns, searches for synchronous (registered) stores."""
+    # @posedge_clk annotation, find nodes we need toconvert to registers
+    #if self.add_regs and isinstance(node.op, _ast.LShift):
+    if isinstance(node.op, _ast.LShift):
+      self.reg_stores.add( node.target.id )
 
 
 #req_resp_port = FromVerilog("vgen-TestMemReqRespPort.v")

@@ -6,7 +6,7 @@ from rtler_test_examples import *
 from rtler_translate import *
 
 import rtler_debug
-debug_verbose = True
+debug_verbose = False
 
 class TestSlicesVerilog(unittest.TestCase):
 
@@ -66,21 +66,18 @@ class TestSlicesVerilog(unittest.TestCase):
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
-    self.fail( "@posedge_clk translation not implemented yet!" )
 
   def test_register_wrapped(self):
     model = RegisterWrapper(16)
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
-    self.fail( "@posedge_clk translation not implemented yet!" )
 
   def test_register_chain(self):
     model = RegisterChain(16)
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
-    self.fail( "@posedge_clk translation not implemented yet!" )
 
   def test_register_splitter(self):
     model = RegisterSplitter(16)
