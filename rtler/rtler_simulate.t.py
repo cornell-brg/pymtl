@@ -211,19 +211,19 @@ class TestRisingEdge(unittest.TestCase):
     sim = self.setup_sim(model)
     model.inp.value = 0b11110000
     self.verify_splitter( model.out, 0b0 )
-    self.assertEqual( model.reg.out.value, 0b0 )
+    self.assertEqual( model.reg0.out.value, 0b0 )
     sim.cycle()
-    self.assertEqual( model.reg.out.value, 0b11110000 )
+    self.assertEqual( model.reg0.out.value, 0b11110000 )
     self.assertEqual( model.split.inp.value, 0b11110000 )
     self.verify_splitter( model.split.out, 0b11110000 )
     self.verify_splitter( model.out, 0b11110000 )
     model.inp.value = 0b1111000011001010
-    self.assertEqual( model.reg.out.value, 0b11110000 )
+    self.assertEqual( model.reg0.out.value, 0b11110000 )
     self.assertEqual( model.split.inp.value, 0b11110000 )
     self.verify_splitter( model.split.out, 0b11110000 )
     self.verify_splitter( model.out, 0b11110000 )
     sim.cycle()
-    self.assertEqual( model.reg.out.value, 0b1111000011001010 )
+    self.assertEqual( model.reg0.out.value, 0b1111000011001010 )
     self.verify_splitter( model.out, 0b1111000011001010 )
 
 if __name__ == '__main__':
