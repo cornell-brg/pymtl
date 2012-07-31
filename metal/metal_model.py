@@ -26,6 +26,7 @@ class Node(object):
     self.sim = sim
     self.width = width
     self._value = value
+    self.is_reg = False
 
   @property
   def value(self):
@@ -33,8 +34,11 @@ class Node(object):
     return self._value
   @value.setter
   def value(self, value):
-    self.sim.add_event(self)
-    self._value = value
+    if self.is_reg:
+      self.next = value
+    else:
+      self.sim.add_event(self)
+      self._value = value
 
   def clock(self):
     """Update value to store contents of next. Should only be called by sim."""
@@ -264,6 +268,31 @@ class OutPort(Port):
     super(OutPort, self).__init__('output', width)
 
 
+class Constant(object):
+
+  """Hidden class for storing a constant valued node."""
+
+  def __init__(self, value, width):
+    """Constructor for a Constant object.
+
+    Parameters
+    ----------
+    value: value of the constant.
+    width: bitwidth of the constant.
+    """
+    self.value = value
+    self.width = width
+    self.type  = 'constant'
+    self.name  = "%d'd%d" % (self.width, self.value)
+    self.parent = None
+
+  def __repr__(self):
+    return "Constant(%s, %s)" % (self.value, self.width)
+
+  def __str__(self):
+    return self.name
+
+
 class Module(object):
 
   """User visible base class for hardware models.
@@ -295,7 +324,7 @@ class Module(object):
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
       # TODO: make ports, submodules, wires _ports, _submodules, _wires
-      if (name is not 'ports' and name is not 'submodules'):
+      if (name is not 'ports' and name is not 'submodules' and name is not 'regs'):
         self.check_type(target, name, obj)
 
   def check_type(self, target, name, obj):
