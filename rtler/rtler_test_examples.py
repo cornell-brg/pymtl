@@ -93,6 +93,18 @@ class Register(VerilogModule):
     out <<= inp
 
 
+class RegisterAlt(VerilogModule):
+  def __init__(self, bits):
+    # Ports
+    self.inp = InPort(bits)
+    self.out = OutPort(bits)
+    # TODO: how to handle clock?
+    self.clk = InPort(1)
+  @posedge_clk
+  def tick(self):
+    self.out.value = self.inp.value
+
+
 class RegisterWrapper(VerilogModule):
   def __init__(self, bits):
     # Ports

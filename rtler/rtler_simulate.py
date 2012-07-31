@@ -263,6 +263,9 @@ class LogicSim():
     model_class = model.__class__
     src = inspect.getsource( model_class )
     tree = ast.parse( src )
+    #print
+    #import rtler_debug
+    #rtler_debug.print_ast(tree)
     comb_loads = set()
     reg_stores = set()
 
@@ -290,6 +293,7 @@ class LogicSim():
     # Iterate through all reg_stores, replace all instances of ValueNodes
     # with RegisterNodes. This could be tricky!
     for port_name, func_name in reg_stores:
+      #print model.__dict__
       port_ptr = model.__getattribute__(port_name)
       func_ptr = model.__getattribute__(func_name)
       # Add the @posedge_clk function to the callback list
@@ -357,6 +361,28 @@ class SensitivityListVisitor(ast.NodeVisitor):
       self.add_regs = False
     self.current_fn = None
 
+
+  def get_name(self, node, l):
+    if isinstance(node, _ast.Attribute):
+      l.append(node.attr)
+      self.get_name(node.value, l)
+    else:
+      l.append(node.id)
+
+  def visit_Assign(self, node):
+    """Visit all aug assigns, searches for synchronous (registered) stores."""
+    if self.add_regs:
+      for x in node.targets:
+        l = []
+        self.get_name(x, l)
+        var_name = '.'.join(l[::-1])
+        if l[-1] == 'self':
+          # TODO, this looks for items of the form: self.varname.some_fields.value
+          #       then pulls off the varname
+          self.reg_stores.add( (l[-2], self.current_fn) )
+    else:
+      self.generic_visit(node)
+
   def visit_AugAssign(self, node):
     """Visit all aug assigns, searches for synchronous (registered) stores."""
     # @posedge_clk annotation, find nodes we need toconvert to registers
@@ -366,7 +392,6 @@ class SensitivityListVisitor(ast.NodeVisitor):
       self.generic_visit(node)
 
   # All attributes... only want names?
-  #def visit_Attribute(self, node):
   def visit_Name(self, node):
     """Visit all variables, searches for combinational loads."""
     #pprint.pprint( dir(node.ctx) )
@@ -380,6 +405,10 @@ class SensitivityListVisitor(ast.NodeVisitor):
           and node.id != "self"):
       #print node.id, type( node.ctx )
       self.comb_loads.add( (node.id, self.current_fn) )
+
+  #def visit_Attribute(self, node):
+  #  print dir(node)
+  #  print node.attr
 
 
 

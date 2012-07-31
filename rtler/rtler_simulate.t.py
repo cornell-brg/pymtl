@@ -151,6 +151,20 @@ class TestRisingEdge(unittest.TestCase):
     sim.cycle()
     self.assertEqual( model.out.value, 10)
 
+  def test_register_alt(self):
+    model = RegisterAlt(16)
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 0)
+    sim.cycle()
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 9
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.out.value, 10)
+
+
   def test_register_wrapped(self):
     model = RegisterWrapper(16)
     sim = self.setup_sim(model)
