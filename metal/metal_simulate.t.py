@@ -3,8 +3,8 @@ import unittest
 from metal_test_examples import *
 from metal_simulate import *
 
-#import rtler_debug
-#debug_verbose = False
+import metal_debug
+debug_verbose = False
 
 class TestNode(unittest.TestCase):
 
@@ -131,20 +131,21 @@ class TestSlicesSim(unittest.TestCase):
     self.assertEqual( model.out.value, 0b11110000 )
 
 
-class TestRisingEdge(unittest.TestCase):
+class TestCombinationalSim(unittest.TestCase):
 
   def setup_sim(self, model):
     model.elaborate()
     sim = LogicSim(model)
     sim.generate()
-    #import rtler_debug
-    #if debug_verbose: rtler_debug.port_walk(model)
+    if debug_verbose:
+      metal_debug.port_walk(model)
     return sim
 
   def test_wire(self):
     model = Wire(16)
     sim = self.setup_sim(model)
     model.inp.value = 8
+    # Note: no need to call cycle, no @combinational block
     self.assertEqual( model.out.value, 8)
     model.inp.value = 9
     model.inp.value = 10
@@ -154,10 +155,34 @@ class TestRisingEdge(unittest.TestCase):
     model = WireWrapped(16)
     sim = self.setup_sim(model)
     model.inp.value = 8
+    # Note: no need to call cycle, no @combinational block
     self.assertEqual( model.out.value, 8)
     model.inp.value = 9
     model.inp.value = 10
     self.assertEqual( model.out.value, 10)
+
+  def test_full_adder(self):
+    model = FullAdder()
+    sim = self.setup_sim(model)
+    import itertools
+    for x,y,z in itertools.product([0,1], [0,1], [0,1]):
+      model.in0.value = x
+      model.in1.value = y
+      model.cin.value = z
+      sim.cycle()
+      self.assertEqual( model.sum.value,  x^y^z )
+      self.assertEqual( model.cout.value, (x&y)|(x&z)|(y&z) )
+
+
+class TestPosedgeClkSim(unittest.TestCase):
+
+  def setup_sim(self, model):
+    model.elaborate()
+    sim = LogicSim(model)
+    sim.generate()
+    if debug_verbose:
+      metal_debug.port_walk(model)
+    return sim
 
   def test_register(self):
     model = Register(16)

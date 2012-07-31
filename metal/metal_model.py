@@ -280,11 +280,13 @@ class Module(object):
     target.wires = []
     target.ports = []
     target.submodules = []
+    target.senses = []
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
       # TODO: make ports, submodules, wires _ports, _submodules, _wires
-      if (name is not 'ports' and name is not 'submodules' and name is not 'regs'):
+      if (name is not 'ports' and name is not 'submodules' and
+          name is not 'regs'  and name is not 'senses'):
         self.check_type(target, name, obj)
 
   def check_type(self, target, name, obj):
@@ -294,6 +296,8 @@ class Module(object):
       obj.name = name
       obj.parent = target
       target.ports += [obj]
+      if obj.type == 'input':
+        target.senses += [obj]
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Module):

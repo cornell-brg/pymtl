@@ -148,6 +148,41 @@ class RegisterSplitter(Module):
       self.split.out[i] <> x
 
 
+class FullAdder(Module):
+  def __init__(self):
+    self.in0  = InPort (1)
+    self.in1  = InPort (1)
+    self.cin  = InPort (1)
+    self.sum  = OutPort(1)
+    self.cout = OutPort(1)
+
+  @combinational
+  def logic(self):
+    in0 = self.in0.value
+    in1 = self.in1.value
+    cin = self.cin.value
+    self.sum.value  = (self.in0.value ^ self.in1.value) ^ self.cin.value
+    self.cout.value = (in0 & in1) | (in0 & cin) | (in1 & cin)
+
+
+#class RippleCarryAdder(Module):
+#  def __init__(self, bits):
+#    self.in0 = InPort (bits)
+#    self.in1 = InPort (bits)
+#    self.sum = OutPort(bits)
+#
+#    self.adders = [ FullAdder() for i in xrange(bits) ]
+#
+#    for i in xrange(bits):
+#      self.adders[i].in0 <> self.in0[i]
+#      self.adders[i].in1 <> self.in1[i]
+#      self.adders[i].sum <> self.sum[i]
+#
+#    for i in xrange(bits-1):
+#      self.adders[i+1].cin <> self.adders[i].cout
+#    self.adders[0].cin <> 0
+
+
 #class RegisteredAdder1(Module):
 #  def __init__(self, bits):
 #    # Ports

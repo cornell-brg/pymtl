@@ -233,18 +233,13 @@ class LogicSim():
     #print "REGS", reg_stores
 
     # Iterate through all comb_loads, add function_pointers to vnode_callbacks
-    for port_name, func_name in comb_loads:
-      port_ptr = model.__getattribute__(port_name)
+    for func_name in comb_loads:
       func_ptr = model.__getattribute__(func_name)
-      value_ptr = port_ptr._value
-      if isinstance(value_ptr, VerilogSlice):
-        value_ptr = value_ptr._value
-      #print value_ptr
-      # TODO: use a defaultdict here?
-      # Initialize value_ptr entry to [] if not in callback list yet
-      if value_ptr not in self.vnode_callbacks:
-        self.vnode_callbacks[value_ptr] = []
-      self.vnode_callbacks[value_ptr] += [func_ptr]
+      for input_port in model.senses:
+        value_ptr = input_port._value
+        if value_ptr not in self.vnode_callbacks:
+          self.vnode_callbacks[value_ptr] = []
+        self.vnode_callbacks[value_ptr] += [func_ptr]
 
     # Add all posedge_clk functions
     for func_name in reg_stores:
@@ -252,10 +247,13 @@ class LogicSim():
       self.posedge_clk_fns += [func_ptr]
 
     # Add all register objects
-    if 'regs' in dir(model):
+    # TODO: better way to do this
+    try:
       for reg in model.regs:
         reg._value.is_reg = True
         self.rnode_callbacks += [reg._value]
+    except:
+      pass
 
     for m in model.submodules:
       self.infer_sensitivity_list( m )
@@ -291,47 +289,10 @@ class SensitivityListVisitor(ast.NodeVisitor):
     if not node.decorator_list:
       return
     decorator_names = [x.id for x in node.decorator_list]
-    self.current_fn = node.name
     if 'combinational' in decorator_names:
-      # Visit each line in the function, translate one at a time.
-      for x in node.body:
-        self.visit(x)
+      self.comb_loads.add( node.name )
     elif 'posedge_clk' in decorator_names:
       self.reg_stores.add( node.name )
-
-  def get_name(self, node, l):
-    if isinstance(node, _ast.Attribute):
-      l.append(node.attr)
-      self.get_name(node.value, l)
-    else:
-      l.append(node.id)
-
-  def visit_AugAssign(self, node):
-    """Visit all aug assigns, searches for synchronous (registered) stores."""
-    # @posedge_clk annotation, find nodes we need toconvert to registers
-    if self.add_regs and isinstance(node.op, _ast.LShift):
-      self.reg_stores.add( (node.target.id, self.current_fn) )
-    else:
-      self.generic_visit(node)
-
-  # All attributes... only want names?
-  def visit_Name(self, node):
-    """Visit all variables, searches for combinational loads."""
-    #pprint.pprint( dir(node.ctx) )
-    #print node.id, type( node.ctx )
-    # Function with no annotations
-    if not self.current_fn or self.add_regs:
-      return
-    # @combinational annotation, find nodes to add to the sensitivity list
-    elif (not self.add_regs
-          and isinstance( node.ctx, _ast.Load )
-          and node.id != "self"):
-      #print node.id, type( node.ctx )
-      self.comb_loads.add( (node.id, self.current_fn) )
-
-  #def visit_Attribute(self, node):
-  #  print dir(node)
-  #  print node.attr
 
 
 class Node(object):
