@@ -1,5 +1,4 @@
 from metal_model import *
-from metal_simulate import posedge_clk
 
 class Rotator(Module):
   def __init__(self, bits):

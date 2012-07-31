@@ -5,46 +5,6 @@ This module contains a collection of classes that can be used to construct MTL
 a number of tools for various purposes (simulation, translation into HDLs, etc).
 """
 
-class Node(object):
-
-  """Hidden class implementing a node storing value (like a net in ).
-
-  Connected ports and wires have a pointer to the same Node
-  instance, such that reads and writes remain consistent. Can be either treated
-  as a wire or a register depending on use, but not both.
-  """
-
-  def __init__(self, width, value=0, sim=None):
-    """Constructor for a Node object.
-
-    Parameters
-    ----------
-    width: bitwidth of the node.
-    value: initial value of the node. Only set by Constant objects.
-    sim: simulation object to register events with on write.
-    """
-    self.sim = sim
-    self.width = width
-    self._value = value
-    self.is_reg = False
-
-  @property
-  def value(self):
-    """Value stored by node. Informs the attached simulator on any write."""
-    return self._value
-  @value.setter
-  def value(self, value):
-    if self.is_reg:
-      self.next = value
-    else:
-      self.sim.add_event(self)
-      self._value = value
-
-  def clock(self):
-    """Update value to store contents of next. Should only be called by sim."""
-    self._value = self.next
-
-
 class Slice(object):
 
   """Hidden class implementing the ability to access sub-bits of a wire/port.
@@ -348,4 +308,16 @@ class Module(object):
       for i, item in enumerate(obj):
         item_name = "%s_%d" % (name, i)
         self.check_type(target, item_name, item)
+
+
+# Decorators
+
+def combinational(func):
+  # Normally a decorator returns a wrapped function, but here we return
+  # func unmodified.  We only use the decorator as a flag for the ast
+  # parsers.
+  return func
+
+def posedge_clk(func):
+  return func
 

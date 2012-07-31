@@ -8,7 +8,7 @@ from collections import deque
 import ast, _ast
 import inspect
 import pprint
-from metal_model import Slice, Node, Constant
+from metal_model import Slice, Constant
 
 # TODO: make commandline parameter
 debug_hierarchy = False
@@ -334,15 +334,43 @@ class SensitivityListVisitor(ast.NodeVisitor):
   #  print node.attr
 
 
+class Node(object):
 
-# Decorators
+  """Hidden class implementing a node storing value (like a net in ).
 
-def combinational(func):
-  # Normally a decorator returns a wrapped function, but here we return
-  # func unmodified.  We only use the decorator as a flag for the ast
-  # parsers.
-  return func
+  Connected ports and wires have a pointer to the same Node
+  instance, such that reads and writes remain consistent. Can be either treated
+  as a wire or a register depending on use, but not both.
+  """
 
-def posedge_clk(func):
-  return func
+  def __init__(self, width, value=0, sim=None):
+    """Constructor for a Node object.
+
+    Parameters
+    ----------
+    width: bitwidth of the node.
+    value: initial value of the node. Only set by Constant objects.
+    sim: simulation object to register events with on write.
+    """
+    self.sim = sim
+    self.width = width
+    self._value = value
+    self.is_reg = False
+
+  @property
+  def value(self):
+    """Value stored by node. Informs the attached simulator on any write."""
+    return self._value
+  @value.setter
+  def value(self, value):
+    if self.is_reg:
+      self.next = value
+    else:
+      self.sim.add_event(self)
+      self._value = value
+
+  def clock(self):
+    """Update value to store contents of next. Should only be called by sim."""
+    self._value = self.next
+
 
