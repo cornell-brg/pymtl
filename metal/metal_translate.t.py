@@ -49,14 +49,14 @@ class TestSlicesVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  def test_wire(self):
-    model = Wire(16)
+  def test_onewire(self):
+    model = OneWire(16)
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  def test_wire_wrapped(self):
-    model = WireWrapped(16)
+  def test_onewire_wrapped(self):
+    model = OneWireWrapped(16)
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)

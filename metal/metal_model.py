@@ -211,7 +211,7 @@ class Constant(object):
     self.parent = None
 
 
-class VWire(object):
+class Wire(object):
 
   """User visible (?) class to represent wire/connection objects.
 

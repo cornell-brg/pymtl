@@ -141,8 +141,8 @@ class TestCombinationalSim(unittest.TestCase):
       metal_debug.port_walk(model)
     return sim
 
-  def test_wire(self):
-    model = Wire(16)
+  def test_onewire(self):
+    model = OneWire(16)
     sim = self.setup_sim(model)
     model.inp.value = 8
     # Note: no need to call cycle, no @combinational block
@@ -151,8 +151,8 @@ class TestCombinationalSim(unittest.TestCase):
     model.inp.value = 10
     self.assertEqual( model.out.value, 10)
 
-  def test_wire_wrapped(self):
-    model = WireWrapped(16)
+  def test_onewire_wrapped(self):
+    model = OneWireWrapped(16)
     sim = self.setup_sim(model)
     model.inp.value = 8
     # Note: no need to call cycle, no @combinational block

@@ -41,7 +41,7 @@ class ToVerilog(object):
     self.get_regs( target, o )
     # Declare Ports
     if target.ports: self.gen_port_decls( target.ports, o )
-    # VWires & Instantiations
+    # Wires & Instantiations
     self.gen_impl_wires( target, o )
     #if self.wires: self.gen_wire_decls( self.wires, o )
     if target.submodules: self.gen_module_insts( target.submodules, o )
@@ -93,7 +93,7 @@ class ToVerilog(object):
     The MTL modeling framework allows you to make certain connections between
     ports without needing to explicitly declare intermediate wires. In some
     cases Verilog requires these wire declarations to be explicit. This utility
-    method attempts to infer these implicit wires, generate VWire objects
+    method attempts to infer these implicit wires, generate Wire objects
     from them, and then add them to the connectivity lists of the necessary
     ports.
 
@@ -104,7 +104,7 @@ class ToVerilog(object):
     """
     for submodule in target.submodules:
       for port in submodule.ports:
-        if isinstance(port.connections, VWire):
+        if isinstance(port.connections, Wire):
           break
         c = self.get_parent_connection(port)
         # If we found a parent connection, no wire is required
@@ -125,7 +125,7 @@ class ToVerilog(object):
               else:
                 wire_name = '{0}_{1}_TO_{2}_{3}'.format(
                     c.parent.name, c.name, submodule.name, port.name)
-              wire = VWire(wire_name, port.width)
+              wire = Wire(wire_name, port.width)
               c.inst_connection = wire
               port.inst_connection = wire
               print >> o, '  %s' % self.wire_to_str(wire)
@@ -135,7 +135,7 @@ class ToVerilog(object):
 
     Parameters
     ----------
-    wires: list of VWire objects.
+    wires: list of Wire objects.
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
     for w in wires.values():
@@ -252,7 +252,7 @@ class ToVerilog(object):
 
     Parameters
     ----------
-    w: a VWire object.
+    w: a Wire object.
     """
     if w.width == 1:
       return "wire %s;" % (w.name)

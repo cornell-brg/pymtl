@@ -55,7 +55,7 @@ class ComplexMerger(Module):
       inport_num += 1
 
 
-class Wire(Module):
+class OneWire(Module):
   def __init__(self, bits):
     # Ports
     self.inp = InPort(bits)
@@ -64,7 +64,7 @@ class Wire(Module):
     self.inp <> self.out
 
 
-class WireWrapped(Module):
+class OneWireWrapped(Module):
   def __init__(self, bits):
     # Ports
     self.inp = InPort(bits)
@@ -72,7 +72,7 @@ class WireWrapped(Module):
     # Submodules
     # TODO: cannot use keyword "wire" for variable names when converting
     #       To! Check for this?
-    self.wire0 = Wire(16)
+    self.wire0 = OneWire(16)
     # Connections
     self.inp <> self.wire0.inp
     self.out <> self.wire0.out
