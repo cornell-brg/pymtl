@@ -85,7 +85,6 @@ class Register(Model):
     self.out = OutPort(bits)
     # TODO: how to handle clock?
     self.clk = InPort(1)
-    self._regs = [self.out]
   @posedge_clk
   def tick(self):
     self.out.next = self.inp.value

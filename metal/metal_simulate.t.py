@@ -10,6 +10,8 @@ class TestNode(unittest.TestCase):
 
   def setUp(self):
     self.reg = Node(8)
+    sim = LogicSim(None)
+    self.reg.sim = sim
 
   def test_init_write(self):
     self.reg.next = 2

@@ -201,12 +201,12 @@ class LogicSim():
 
     # Add all register objects
     # TODO: better way to do this
-    try:
-      for reg in model._regs:
-        reg._value.is_reg = True
-        self.rnode_callbacks += [reg._value]
-    except:
-      pass
+    #try:
+    #  for reg in model._regs:
+    #    reg._value.is_reg = True
+    #    self.rnode_callbacks += [reg._value]
+    #except:
+    #  pass
 
     for m in model._submodules:
       self.infer_sensitivity_list( m )
@@ -280,12 +280,24 @@ class Node(object):
   def value(self, value):
     # TODO: this is a check that makes sure you dont write the value directly
     #       if this is a register.  Put a helpful message here?
-    assert not self.is_reg
+    #assert not self.is_reg
     self.sim.add_event(self)
     self._value = value
 
+  @property
+  def next(self):
+    """Value stored by node. Informs the attached simulator on any write."""
+    return self._next
+  @next.setter
+  def next(self, value):
+    # TODO: this is a check that makes sure you dont write the value directly
+    #       if this is a register.  Put a helpful message here?
+    #assert not self.is_reg
+    self.sim.rnode_callbacks += [self]
+    self._next = value
+
   def clock(self):
     """Update value to store contents of next. Should only be called by sim."""
-    self._value = self.next
+    self._value = self._next
 
 
