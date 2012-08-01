@@ -326,11 +326,11 @@ class Node(object):
     return self._value
   @value.setter
   def value(self, value):
-    if self.is_reg:
-      self.next = value
-    else:
-      self.sim.add_event(self)
-      self._value = value
+    # TODO: this is a check that makes sure you dont write the value directly
+    #       if this is a register.  Put a helpful message here?
+    assert not self.is_reg
+    self.sim.add_event(self)
+    self._value = value
 
   def clock(self):
     """Update value to store contents of next. Should only be called by sim."""

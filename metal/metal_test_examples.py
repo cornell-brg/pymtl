@@ -88,7 +88,7 @@ class Register(Model):
     self.regs = [self.out]
   @posedge_clk
   def tick(self):
-    self.out.value = self.inp.value
+    self.out.next = self.inp.value
 
 
 class RegisterWrapper(Model):

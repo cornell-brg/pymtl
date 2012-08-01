@@ -152,17 +152,28 @@ class Port(object):
 
   @property
   def value(self):
-    """Value on the port."""
+    """Access the value on this port."""
     if self._value: return self._value.value
     else:           return self._value
   @value.setter
   def value(self, value):
+    # TODO: remove this check?
     if not self._value:
       print "// WARNING: writing to unconnected node {0}.{1}!".format(
             self.parent, self.name)
       self._value = ValueNode(self.width, value)
     else:
       self._value.value = value
+
+  @property
+  def next(self):
+    """Access the shadow value on this port."""
+    assert self._value
+    return self._value.next
+  @next.setter
+  def next(self, value):
+    assert self._value
+    self._value.next = value
 
 
 class InPort(Port):
