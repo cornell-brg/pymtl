@@ -173,6 +173,27 @@ class TestCombinationalSim(unittest.TestCase):
       self.assertEqual( model.sum.value,  x^y^z )
       self.assertEqual( model.cout.value, (x&y)|(x&z)|(y&z) )
 
+  def test_ripple_carry(self):
+    model = RippleCarryAdder(4)
+    sim = self.setup_sim(model)
+    model.in0.value = 2
+    model.in1.value = 2
+    sim.cycle()
+    self.assertEqual( model.sum.value, 4 )
+    model.in0.value = 11
+    model.in1.value = 4
+    sim.cycle()
+    self.assertEqual( model.sum.value, 15 )
+    model.in0.value = 9
+    self.assertEqual( model.sum.value, 15 )
+    sim.cycle()
+    self.assertEqual( model.sum.value, 13 )
+    model.in0.value = 5
+    model.in1.value = 12
+    self.assertEqual( model.sum.value, 13 )
+    sim.cycle()
+    self.assertEqual( model.sum.value, 1 )
+
 
 class TestPosedgeClkSim(unittest.TestCase):
 

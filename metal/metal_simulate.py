@@ -237,6 +237,8 @@ class LogicSim():
       func_ptr = model.__getattribute__(func_name)
       for input_port in model.senses:
         value_ptr = input_port._value
+        if isinstance(value_ptr, Slice):
+          value_ptr = value_ptr._value
         if value_ptr not in self.vnode_callbacks:
           self.vnode_callbacks[value_ptr] = []
         self.vnode_callbacks[value_ptr] += [func_ptr]
