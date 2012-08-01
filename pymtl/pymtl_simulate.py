@@ -8,7 +8,8 @@ from collections import deque
 import ast, _ast
 import inspect
 import pprint
-from metal_model import Slice, Constant
+
+from pymtl_model import Slice, Constant
 
 # TODO: make commandline parameter
 debug_hierarchy = False

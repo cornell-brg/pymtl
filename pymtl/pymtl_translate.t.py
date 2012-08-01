@@ -2,10 +2,10 @@ import unittest
 import sys
 import os
 
-from metal_test_examples import *
-from metal_translate import *
+from pymtl_test_examples import *
+from pymtl_translate import *
 
-import metal_debug
+import pymtl_debug
 debug_verbose = False
 
 class TestSlicesVerilog(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestSlicesVerilog(unittest.TestCase):
 
   def translate(self, model):
     model.elaborate()
-    if debug_verbose: metal_debug.port_walk(model)
+    if debug_verbose: pymtl_debug.port_walk(model)
     code = ToVerilog(model)
     code.generate( self.fd )
     self.fd.close()

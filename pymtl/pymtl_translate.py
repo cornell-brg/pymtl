@@ -4,7 +4,7 @@ This module contains classes which translate between MTL models and various
 hardware description languages, such as Verilog.
 """
 
-from metal_model import *
+from pymtl_model import *
 import inspect
 import ast, _ast
 

@@ -2,8 +2,8 @@
 # Test Source
 #=========================================================================
 
-from metal_model import *
-from metal_simulate import LogicSim
+from pymtl_model import *
+from pymtl_simulate import LogicSim
 
 class TestSource (Model):
 

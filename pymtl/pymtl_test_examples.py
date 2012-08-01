@@ -1,4 +1,4 @@
-from metal_model import *
+from pymtl_model import *
 
 class Rotator(Model):
   def __init__(self, bits):

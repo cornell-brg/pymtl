@@ -1,4 +1,4 @@
-import metal_model
+import pymtl_model
 
 def port_walk(tgt, spaces=0):
   for x in tgt.ports:
@@ -9,7 +9,7 @@ def port_walk(tgt, spaces=0):
         fullname = y.parent.name+'.'+fullname
       print spaces*' ', '   knctn: {0} {1}'.format(type(y), fullname)
     print spaces*' ', '   value:', x._value, #x.value
-    if isinstance(x._value, metal_model.Slice):
+    if isinstance(x._value, pymtl_model.Slice):
       # TODO: handle this case in VerilogSlice instead?
       if x._value._value:
         print x.value

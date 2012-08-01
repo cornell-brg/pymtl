@@ -1,9 +1,9 @@
 import unittest
 
-from metal_test_examples import *
-from metal_simulate import *
+from pymtl_test_examples import *
+from pymtl_simulate import *
 
-import metal_debug
+import pymtl_debug
 debug_verbose = False
 
 class TestNode(unittest.TestCase):
@@ -140,7 +140,7 @@ class TestCombinationalSim(unittest.TestCase):
     sim = LogicSim(model)
     sim.generate()
     if debug_verbose:
-      metal_debug.port_walk(model)
+      pymtl_debug.port_walk(model)
     return sim
 
   def test_onewire(self):
@@ -204,7 +204,7 @@ class TestPosedgeClkSim(unittest.TestCase):
     sim = LogicSim(model)
     sim.generate()
     if debug_verbose:
-      metal_debug.port_walk(model)
+      pymtl_debug.port_walk(model)
     return sim
 
   def test_register(self):
