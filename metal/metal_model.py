@@ -104,20 +104,6 @@ class Port(object):
     if str:
       self.type, self.width, self.name  = self.parse( str )
 
-  # TODO: add id?
-  #def __repr__(self):
-  #  return "Port(%s, %s, %s)" % (self.type, self.width, self.name)
-
-  def __str__(self):
-    reg = 'reg' if self.is_reg else ''
-    if isinstance(self.width, str):
-      return "%s %s %s %s" % (self.type, reg, self.width, self.name)
-    elif isinstance(self.width, int):
-      if self.width == 1:
-        return "%s %s %s" % (self.type, reg, self.name)
-      else :
-        return "%s %s [%d:0] %s" % (self.type, reg, self.width-1, self.name)
-
   def __ne__(self, target):
     """Connection operator (<>), calls connect()."""
     self.connect(target)
@@ -144,22 +130,13 @@ class Port(object):
     # TODO: support wires?
     # TODO: do we want to use an assert here
     if isinstance(target, int):
-      #self.connections += [Constant(target, self.width)]
-      #self._value     = ValueNode(self.width, target)
       self._value     = Constant(target, self.width)
-      #print "CreateConstValueNode:", self.parent, self.name, self._value
     elif isinstance(target, Slice):
       assert self.width == target.width
       self.connections              += [ target ]
       target.parent_ptr.connections += [ target ]
       target.connections            += [ self ]
       self._value                    = target
-      #if target._value:
-      #  self._value = target
-      #else:
-      #  self._value = target
-      #  target._value = ValueNode(target.parent_ptr.width)
-      #  #print "CreateValueNode:", self.parent, self.name, target._value
     else:
       #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)
       assert self.width == target.width
@@ -172,12 +149,6 @@ class Port(object):
         assert not (self._value and target._value)
         if self._value:   target._value = self._value
         else:               self._value = target._value
-      #if target._value:
-      #  self._value = target._value
-      #else:
-      #  self._value = ValueNode(self.width)
-      #  #print "CreateValueNode:", self.parent, self.name, self._value
-      #  target._value = self._value
 
   @property
   def value(self):
@@ -186,13 +157,6 @@ class Port(object):
     else:           return self._value
   @value.setter
   def value(self, value):
-    # TODO: add as debug?
-    #print "PORT:", self.parent.name+'.'+self.name
-    #if isinstance(self, Slice):
-    #  print "  writing", 'SLICE.'+self.name, ':   ', value
-    #else:
-    #  print "  writing", self.parent.name+'.'+self.name, ':   ', value
-    # TODO: change how ValueNode instantiation occurs
     if not self._value:
       print "// WARNING: writing to unconnected node {0}.{1}!".format(
             self.parent, self.name)
@@ -246,12 +210,6 @@ class Constant(object):
     self.name  = "%d'd%d" % (self.width, self.value)
     self.parent = None
 
-  def __repr__(self):
-    return "Constant(%s, %s)" % (self.value, self.width)
-
-  def __str__(self):
-    return self.name
-
 
 class VWire(object):
 
@@ -273,19 +231,6 @@ class VWire(object):
     self.name  = name
     self.width = width
     self.type  = "wire"
-
-  def __repr__(self):
-    return "Wire(%s, %s)" % (self.name, self.width)
-
-  def __str__(self):
-    # TODO: this seems weird.
-    if isinstance(self.width, str):
-      return "wire %s %s;" % (self.width, self.name)
-    elif isinstance(self.width, int):
-      if self.width == 1:
-        return "wire %s;" % (self.name)
-      else :
-        return "wire [%d:0] %s;" % (self.width-1, self.name)
 
 
 class Module(object):

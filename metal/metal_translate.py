@@ -67,9 +67,9 @@ class ToVerilog(object):
     """
     print >> o, '('
     for p in ports[:-1]:
-      print >> o , '  %s,' % p
+      print >> o , '  %s,' % self.port_to_str(p)
     p = ports[-1]
-    print >> o, '  %s' % p
+    print >> o, '  %s' % self.port_to_str(p)
     print >> o, ');\n'
 
   def gen_param_decls(self, params, o):
@@ -128,7 +128,7 @@ class ToVerilog(object):
               wire = VWire(wire_name, port.width)
               c.inst_connection = wire
               port.inst_connection = wire
-              print >> o, '  %s' % wire
+              print >> o, '  %s' % self.wire_to_str(wire)
 
   def gen_wire_decls(self, wires, o):
     """Generate Verilog source for wire declarations.
@@ -139,7 +139,7 @@ class ToVerilog(object):
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
     for w in wires.values():
-      print >> o, '  %s' % w
+      print >> o, '  %s' % self.wire_to_str(w)
 
   def gen_port_assigns(self, target, o):
     """Generate Verilog source for assigning values to output ports.
@@ -233,6 +233,31 @@ class ToVerilog(object):
         return connection
     # No parent connections
     return None
+
+  def port_to_str(self, p):
+    """Generate Verilog source for a port declaration.
+
+    Parameters
+    ----------
+    p: a Port object.
+    """
+    reg = 'reg' if p.is_reg else ''
+    if p.width == 1:
+      return "%s %s %s" % (p.type, reg, p.name)
+    else :
+      return "%s %s [%d:0] %s" % (p.type, reg, p.width-1, p.name)
+
+  def wire_to_str(self, w):
+    """Generate Verilog source for a wire declaration.
+
+    Parameters
+    ----------
+    w: a VWire object.
+    """
+    if w.width == 1:
+      return "wire %s;" % (w.name)
+    else :
+      return "wire [%d:0] %s;" % (w.width-1, w.name)
 
   def get_regs(self, v, o):
     """Find which wires/ports should be Verilog reg type.
