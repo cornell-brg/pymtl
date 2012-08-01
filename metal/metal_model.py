@@ -253,6 +253,41 @@ class Constant(object):
     return self.name
 
 
+class VWire(object):
+
+  """User visible (?) class to represent wire/connection objects.
+
+  Not sure if VerilogWire objects should be user visible, or should always be
+  inferred based on connectivity/logic.  Currently only inferred based on
+  connectivity...
+  """
+
+  def __init__(self, name, width):
+    """Constructor for a VerilogWire object.
+
+    Parameters
+    ----------
+    name: name of the wire.
+    width: bitwidth of the wire.
+    """
+    self.name  = name
+    self.width = width
+    self.type  = "wire"
+
+  def __repr__(self):
+    return "Wire(%s, %s)" % (self.name, self.width)
+
+  def __str__(self):
+    # TODO: this seems weird.
+    if isinstance(self.width, str):
+      return "wire %s %s;" % (self.width, self.name)
+    elif isinstance(self.width, int):
+      if self.width == 1:
+        return "wire %s;" % (self.name)
+      else :
+        return "wire [%d:0] %s;" % (self.width-1, self.name)
+
+
 class Module(object):
 
   """User visible base class for hardware models.
