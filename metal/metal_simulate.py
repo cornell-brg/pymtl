@@ -35,7 +35,7 @@ class LogicSim():
     self.rnode_callbacks = []
     self.event_queue     = deque()
     self.posedge_clk_fns = []
-    self.node_groups = []
+    self.node_groups     = []
 
   def cycle(self):
     """Execute a single cycle in the simulator.
@@ -88,7 +88,6 @@ class LogicSim():
            provided, the model provided in the LogicSim constructor is used
            (toplevel).
     """
-
     # build up the node_groups data structure
     self.find_node_groupings(self.model)
 
@@ -105,39 +104,35 @@ class LogicSim():
     # walk the AST of each module to create sensitivity lists and add registers
     self.infer_sensitivity_list(self.model)
 
-
-    #self.add_value_nodes(model)
-    # Recursively call on all submodules
-    #for m in model.submodules:
-    #  self.generate( m )
-    # DEBUGGING: creates a graphviz graph
-    # Recursively call on all submodules
-    # All value nodes have been added, create the sensitivity list.
-    #self.infer_sensitivity_list( model )
-    #self.graphviz(model)
-
-    # TODO: debug_sensitivity_list
-    #print "VALUE NODE CALLBACKS"
-    #pprint.pprint( self.vnode_callbacks )
-
   def find_node_groupings(self, model):
+    """Walk all connections to find where Node objects should be placed.
+
+    Parameters
+    ----------
+    model: a Model instance.
+    """
     if debug_hierarchy:
       print 70*'-'
       print "Model:", model
       print "Ports:"
-      pprint.pprint( model.ports, indent=3 )
+      pprint.pprint( model._ports, indent=3 )
       print "Submodules:"
-      pprint.pprint( model.submodules, indent=3 )
+      pprint.pprint( model._submodules, indent=3 )
 
     # Walk ports to add value nodes.  Do leaves or toplevel first?
-    for p in model.ports:
+    for p in model._ports:
       self.add_to_node_groups(p)
 
-    for m in model.submodules:
+    for m in model._submodules:
       self.find_node_groupings( m )
 
-
   def add_to_node_groups(self, port):
+    """Add the port to a node group, merge groups if necessary.
+
+    Parameters
+    ----------
+    port: a Port instance.
+    """
     group = set([port])
     group.update( port.connections )
     # Utility function for our list comprehension below.  If the group and set
@@ -149,52 +144,8 @@ class LogicSim():
         return False
       else:
         return True
-
     self.node_groups[:] = [x for x in self.node_groups if disjoint(group, x)]
     self.node_groups += [ group ]
-
-  def add_value_nodes(self, model):
-    """Utility method which adds Nodes to port and wire connections.
-
-    WARNING: this implementation is very fragile.  The best way to really do
-    this would be to create some kind of datastructure that groups all ports
-    and wires by their connections.  Once this datastructure is complete we
-    could instantiate a Node for each grouping, set its width to be equal
-    to the largest port attached to that node, and then walk through the list
-    of all ports attached to the node and give them pointers to the Node
-    instance.
-
-    Parameters
-    ----------
-    model: a VerilogModel instance
-    """
-    #print "\n### CREATE NODES"
-    for port in model.ports:
-      port_name = "{0}.{1}".format( port.parent.name, port.name )
-      #print port_name, port.connections
-      has_vnodes = any(cxn._value for cxn in port.connections)
-      if port._value:
-        #print "HAS VAL", port._value
-        pass
-      # We don't have a Node yet, and none of our connections do either,
-      # create a new value
-      elif not port._value and not has_vnodes:
-        widths = [port.width]
-        widths += [cxn.width for cxn in port.connections]
-        max_width = max(widths)
-        port._value = Node(max_width, sim=self)
-        #print "CREATE:", port._value
-      # We don't have a Node yet, but at least one of our connections does,
-      # attach to his connection.  This is pretty fragile...
-      # TODO: fix
-      else:
-        widths = [cxn.width for cxn in port.connections]
-        idx = widths.index( max(widths) )
-        cxn = port.connections[idx]
-        assert port.width == cxn.width
-        port._value = cxn._value
-        #print "CONNECT:", port._value
-
 
   def infer_sensitivity_list(self, model):
     """Utility method which detects the sensitivity list of annotated functions.
@@ -235,7 +186,7 @@ class LogicSim():
     # Iterate through all comb_loads, add function_pointers to vnode_callbacks
     for func_name in comb_loads:
       func_ptr = model.__getattribute__(func_name)
-      for input_port in model.senses:
+      for input_port in model._senses:
         value_ptr = input_port._value
         if isinstance(value_ptr, Slice):
           value_ptr = value_ptr._value
@@ -251,14 +202,15 @@ class LogicSim():
     # Add all register objects
     # TODO: better way to do this
     try:
-      for reg in model.regs:
+      for reg in model._regs:
         reg._value.is_reg = True
         self.rnode_callbacks += [reg._value]
     except:
       pass
 
-    for m in model.submodules:
+    for m in model._submodules:
       self.infer_sensitivity_list( m )
+
 
 class SensitivityListVisitor(ast.NodeVisitor):
   """Hidden class for building a sensitivity list from the AST of a MTL model.

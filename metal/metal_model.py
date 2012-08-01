@@ -268,16 +268,14 @@ class Model(object):
     target.class_name = target.__class__.__name__
     target.parent = None
     target.name = iname
-    target.wires = []
-    target.ports = []
-    target.submodules = []
-    target.senses = []
+    target._wires = []
+    target._ports = []
+    target._submodules = []
+    target._senses = []
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
-      # TODO: make ports, submodules, wires _ports, _submodules, _wires
-      if (name is not 'ports' and name is not 'submodules' and
-          name is not 'regs'  and name is not 'senses'):
+      if not name.startswith('_'):
         self.check_type(target, name, obj)
 
   def check_type(self, target, name, obj):
@@ -286,9 +284,9 @@ class Model(object):
     if isinstance(obj, Port):
       obj.name = name
       obj.parent = target
-      target.ports += [obj]
+      target._ports += [obj]
       if obj.type == 'input':
-        target.senses += [obj]
+        target._senses += [obj]
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):
@@ -296,7 +294,7 @@ class Model(object):
       obj.type = obj.__class__.__name__
       obj.elaborate( name )
       obj.parent = target
-      target.submodules += [obj]
+      target._submodules += [obj]
     # If the object is a list, iterate through each item in the list and
     # recursively call the check_type() utility function
     elif isinstance(obj, list):
