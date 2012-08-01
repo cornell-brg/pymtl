@@ -1,6 +1,6 @@
 from metal_model import *
 
-class Rotator(Module):
+class Rotator(Model):
   def __init__(self, bits):
     # Ports
     self.inp = [ InPort(1)  for x in xrange(bits) ]
@@ -11,7 +11,7 @@ class Rotator(Module):
     self.inp[-1] <> self.out[0]
 
 
-class SimpleSplitter(Module):
+class SimpleSplitter(Model):
   def __init__(self, bits):
     # Ports
     self.inp = InPort(bits)
@@ -21,7 +21,7 @@ class SimpleSplitter(Module):
       self.out[i] <> self.inp[i]
 
 
-class ComplexSplitter(Module):
+class ComplexSplitter(Model):
   def __init__(self, bits, groupings):
     # Port Definitions
     self.inp = InPort(bits)
@@ -33,7 +33,7 @@ class ComplexSplitter(Module):
       outport_num += 1
 
 
-class SimpleMerger(Module):
+class SimpleMerger(Model):
   def __init__(self, bits):
     # Port Definitions
     self.inp = [ InPort(1) for x in xrange(bits) ]
@@ -43,7 +43,7 @@ class SimpleMerger(Module):
       self.out[i] <> self.inp[i]
 
 
-class ComplexMerger(Module):
+class ComplexMerger(Model):
   def __init__(self, bits, groupings):
     # Port Definitions
     self.inp = [ InPort(groupings) for x in xrange(0, bits, groupings) ]
@@ -55,7 +55,7 @@ class ComplexMerger(Module):
       inport_num += 1
 
 
-class OneWire(Module):
+class OneWire(Model):
   def __init__(self, bits):
     # Ports
     self.inp = InPort(bits)
@@ -64,7 +64,7 @@ class OneWire(Module):
     self.inp <> self.out
 
 
-class OneWireWrapped(Module):
+class OneWireWrapped(Model):
   def __init__(self, bits):
     # Ports
     self.inp = InPort(bits)
@@ -78,7 +78,7 @@ class OneWireWrapped(Module):
     self.out <> self.wire0.out
 
 
-class Register(Module):
+class Register(Model):
   def __init__(self, bits):
     # Ports
     self.inp = InPort(bits)
@@ -91,7 +91,7 @@ class Register(Module):
     self.out.value = self.inp.value
 
 
-class RegisterWrapper(Module):
+class RegisterWrapper(Model):
   def __init__(self, bits):
     # Ports
     self.inp = InPort(bits)
@@ -108,7 +108,7 @@ class RegisterWrapper(Module):
     self.clk <> self.reg0.clk
 
 
-class RegisterChain(Module):
+class RegisterChain(Model):
   def __init__(self, bits):
     # Ports
     self.inp = InPort(bits)
@@ -129,7 +129,7 @@ class RegisterChain(Module):
     self.clk <> self.reg3.clk
 
 
-class RegisterSplitter(Module):
+class RegisterSplitter(Model):
   def __init__(self, bits):
     groupings = 2
     # Ports
@@ -148,7 +148,7 @@ class RegisterSplitter(Module):
       self.split.out[i] <> x
 
 
-class FullAdder(Module):
+class FullAdder(Model):
   def __init__(self):
     # Ports
     self.in0  = InPort (1)
@@ -166,7 +166,7 @@ class FullAdder(Module):
     self.cout.value = (in0 & in1) | (in0 & cin) | (in1 & cin)
 
 
-class RippleCarryAdder(Module):
+class RippleCarryAdder(Model):
   def __init__(self, bits):
     # Ports
     self.in0 = InPort (bits)
@@ -184,7 +184,7 @@ class RippleCarryAdder(Module):
     self.adders[0].cin <> 0
 
 
-#class RegisteredAdder1(Module):
+#class RegisteredAdder1(Model):
 #  def __init__(self, bits):
 #    # Ports
 #    self.in0 = InPort(bits)
@@ -197,7 +197,7 @@ class RippleCarryAdder(Module):
 #    out = self.out
 #    out <<= in0 + in1
 #
-#class RegisteredAdder2(Module):
+#class RegisteredAdder2(Model):
 #  def __init__(self, bits):
 #    # Ports
 #    self.in0 = InPort(bits)

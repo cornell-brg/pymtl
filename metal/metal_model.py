@@ -233,7 +233,7 @@ class Wire(object):
     self.type  = "wire"
 
 
-class Module(object):
+class Model(object):
 
   """User visible base class for hardware models.
 
@@ -280,7 +280,7 @@ class Module(object):
         target.senses += [obj]
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
-    elif isinstance(obj, Module):
+    elif isinstance(obj, Model):
       # TODO: change obj.type to obj.inst_type?
       obj.type = obj.__class__.__name__
       obj.elaborate( name )

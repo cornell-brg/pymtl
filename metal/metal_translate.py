@@ -17,7 +17,7 @@ class ToVerilog(object):
 
     Parameters
     ----------
-    model: an instantiated MTL model (VerilogModule).
+    model: an instantiated MTL model (Model).
     """
     self.model = model
     self.generated = set()
@@ -99,7 +99,7 @@ class ToVerilog(object):
 
     Parameters
     ----------
-    target: a VerilogModule instance.
+    target: a Model instance.
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
     for submodule in target.submodules:
@@ -149,7 +149,7 @@ class ToVerilog(object):
 
     Parameters
     ----------
-    target: a VerilogModule instance.
+    target: a Model instance.
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
     # Utility function
@@ -178,7 +178,7 @@ class ToVerilog(object):
 
     Parameters
     ----------
-    submodules: list of VerilogModule objects.
+    submodules: list of Model objects.
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
     for s in submodules:
@@ -264,7 +264,7 @@ class ToVerilog(object):
 
     Parameters
     ----------
-    target: a VerilogModule instance.
+    target: a Model instance.
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
     reg_stores = set()
@@ -284,7 +284,7 @@ class ToVerilog(object):
 
     Parameters
     ----------
-    target: a VerilogModule instance.
+    target: a Model instance.
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
     #print inspect.getsource( v )  # Doesn't work? Wtf...
@@ -298,7 +298,7 @@ class ToVerilog(object):
 class PyToVerilogVisitor(ast.NodeVisitor):
   """Hidden class for translating python AST into Verilog source.
 
-  This class takes the AST tree of a VerilogModule class and looks for any
+  This class takes the AST tree of a Model class and looks for any
   functions annotated with the @combinational decorator. These functions are
   translated into Verilog source (in the form of assign statements).
 

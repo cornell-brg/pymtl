@@ -27,7 +27,7 @@ class LogicSim():
 
     Parameters
     ----------
-    model: an instantiated MTL model (VerilogModule).
+    model: an instantiated MTL model (Model).
     """
     self.model = model
     self.num_cycles      = 0
@@ -84,7 +84,7 @@ class LogicSim():
 
     Parameters
     ----------
-    model: the MTL model (VerilogModule) to add simulator hooks to. If None is
+    model: the MTL model (Model) to add simulator hooks to. If None is
            provided, the model provided in the LogicSim constructor is used
            (toplevel).
     """
@@ -263,7 +263,7 @@ class LogicSim():
 class SensitivityListVisitor(ast.NodeVisitor):
   """Hidden class for building a sensitivity list from the AST of a MTL model.
 
-  This class takes the AST tree of a VerilogModule class and looks for any
+  This class takes the AST tree of a Model class and looks for any
   functions annotated with the @combinational decorator. Variables that perform
   loads in these functions are added to the sensitivity list (registry).
   """

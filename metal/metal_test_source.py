@@ -5,7 +5,7 @@
 from metal_model import *
 from metal_simulate import LogicSim
 
-class TestSource (Module):
+class TestSource (Model):
 
   def __init__( self, n, msg_list ):
     self.out_msg = OutPort(n)
