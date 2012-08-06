@@ -10,7 +10,6 @@ debug_verbose = False
 
 class TestSlicesVerilog(unittest.TestCase):
 
-
   def setUp(self):
     self.temp_file = self.id().split('.')[-1]
     self.fd = open(self.temp_file, 'w')
@@ -49,6 +48,25 @@ class TestSlicesVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
+  #def tearDown(self):
+  #  os.remove(self.temp_file)
+
+
+class TestCombinationalVerilog(unittest.TestCase):
+
+  def setUp(self):
+    self.temp_file = self.id().split('.')[-1]
+    self.fd = open(self.temp_file, 'w')
+    self.compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
+                        "-Wno-sensitivity-entire-array " + self.temp_file)
+
+  def translate(self, model):
+    model.elaborate()
+    if debug_verbose: pymtl_debug.port_walk(model)
+    code = ToVerilog(model)
+    code.generate( self.fd )
+    self.fd.close()
+
   def test_onewire(self):
     model = OneWire(16)
     self.translate( model )
@@ -60,6 +78,37 @@ class TestSlicesVerilog(unittest.TestCase):
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
+
+  def test_full_adder(self):
+    model = FullAdder()
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_ripple_carry(self):
+    model = RippleCarryAdder(4)
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  #def tearDown(self):
+  #  os.remove(self.temp_file)
+
+
+class TestPosedgeClkVerilog(unittest.TestCase):
+
+  def setUp(self):
+    self.temp_file = self.id().split('.')[-1]
+    self.fd = open(self.temp_file, 'w')
+    self.compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
+                        "-Wno-sensitivity-entire-array " + self.temp_file)
+
+  def translate(self, model):
+    model.elaborate()
+    if debug_verbose: pymtl_debug.port_walk(model)
+    code = ToVerilog(model)
+    code.generate( self.fd )
+    self.fd.close()
 
   def test_register(self):
     model = Register(16)
@@ -85,8 +134,8 @@ class TestSlicesVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  def tearDown(self):
-    os.remove(self.temp_file)
+  #def tearDown(self):
+  #  os.remove(self.temp_file)
 
 if __name__ == '__main__':
   unittest.main()

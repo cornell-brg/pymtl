@@ -26,6 +26,7 @@ class Slice(object):
     """
     self.parent_ptr = parent_ptr
     self.connections = []
+    self.inst_connection = None
     # TODO: add asserts that check the parent width, range, etc
     if isinstance(addr, slice):
       assert not addr.step  # We dont support steps!
@@ -130,7 +131,9 @@ class Port(object):
     # TODO: support wires?
     # TODO: do we want to use an assert here
     if isinstance(target, int):
-      self._value     = Constant(target, self.width)
+      self._value          = Constant(target, self.width)
+      # TODO: make an inst_connection or regular connection?
+      self.inst_connection = Constant(target, self.width)
     elif isinstance(target, Slice):
       assert self.width == target.width
       self.connections              += [ target ]

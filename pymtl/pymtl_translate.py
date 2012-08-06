@@ -296,6 +296,21 @@ class ToVerilog(object):
       PyToVerilogVisitor( o ).visit(tree)
 
 
+
+def get_target_name(node):
+  name = []
+  while isinstance(node, _ast.Attribute):
+    name += [node.attr]
+    node = node.value
+  assert isinstance(node, _ast.Name)
+  name += [node.id]
+  #TODO: hacky!!!
+  if name[0] in ['value', 'next']:
+    return '.'.join( name[::-1][1:-1] ), True
+  else:
+    return name[0], False
+
+
 class PyToVerilogVisitor(ast.NodeVisitor):
   """Hidden class for translating python AST into Verilog source.
 
@@ -351,9 +366,11 @@ class PyToVerilogVisitor(ast.NodeVisitor):
       return
     if node.decorator_list[0].id == 'combinational':
       self.block_type = node.decorator_list[0].id
+      print >> self.o, ' always @ (*) begin'
       # Visit each line in the function, translate one at a time.
       for x in node.body:
         self.visit(x)
+      print >> self.o, ' end'
     elif node.decorator_list[0].id == 'posedge_clk':
       self.block_type = node.decorator_list[0].id
       print >> self.o, ' always @ (posedge clk) begin'
@@ -370,7 +387,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     """
     print >> self.o, '(',
     self.visit(node.left)
-    print PyToVerilogVisitor.opmap[type(node.op)],
+    print >> self.o, PyToVerilogVisitor.opmap[type(node.op)],
     self.visit(node.right)
     print >> self.o, ')',
 
@@ -385,21 +402,22 @@ class PyToVerilogVisitor(ast.NodeVisitor):
   #def visit_Num(self, node):
   #  print 'Found Num', node.n
 
-  def visit_AugAssign(self, node):
-    """Visit all special assigns, convert <<= ops into assign statements.
-
-    TODO: instead of assign statements, convert into "always @ *" assignments.
-    """
-    # TODO: this turns all comparisons into assign statements! Fix!
+  def visit_Assign(self, node):
+    """Visit all stores to variables."""
     self.write_names = True
-    if self.block_type == 'combinational':
-      print >> self.o, '  assign', node.target.id, '=',
-      self.visit(node.value)
-      print >> self.o, ';'
-    elif self.block_type == 'posedge_clk':
-      print >> self.o, ' ', node.target.id, '<=',
-      self.visit(node.value)
-      print >> self.o, ';'
+    # TO
+    assert len(node.targets) == 1
+    target = node.targets[0]
+    target_name, debug = get_target_name(target)
+    if debug:
+      if self.block_type == 'combinational':
+        print >> self.o, ' ', target_name, '=',
+        self.visit(node.value)
+        print >> self.o, ';'
+      elif self.block_type == 'posedge_clk':
+        print >> self.o, ' ', target_name, '<=',
+        self.visit(node.value)
+        print >> self.o, ';'
     self.write_names = False
 
   #def visit_Compare(self, node):
@@ -408,7 +426,15 @@ class PyToVerilogVisitor(ast.NodeVisitor):
 
   def visit_Name(self, node):
     """Visit all variables, convert into Verilog variables."""
-    if self.write_names: print >> self.o, node.id,
+    # TODO: check special cases...
+    if self.write_names:
+      print >> self.o, node.id,
+
+  def visit_Attribute(self, node):
+    """Visit all attributes, convert into Verilog variables."""
+    if self.write_names:
+      target_name, debug = get_target_name(node)
+      print >> self.o, target_name,
 
 
 class FindRegistersVisitor(ast.NodeVisitor):
@@ -435,17 +461,20 @@ class FindRegistersVisitor(ast.NodeVisitor):
     """Visit all functions, but only parse those with special decorators."""
     if not node.decorator_list:
       return
-    elif node.decorator_list[0].id == 'posedge_clk':
+    elif node.decorator_list[0].id in ['posedge_clk', 'combinational']:
       # Visit each line in the function, translate one at a time.
       for x in node.body:
         self.visit(x)
 
-  def visit_AugAssign(self, node):
-    """Visit all aug assigns, searches for synchronous (registered) stores."""
+  def visit_Assign(self, node):
+    """Visit all assigns, searches for synchronous (registered) stores."""
     # @posedge_clk annotation, find nodes we need toconvert to registers
     #if self.add_regs and isinstance(node.op, _ast.LShift):
-    if isinstance(node.op, _ast.LShift):
-      self.reg_stores.add( node.target.id )
+    assert len(node.targets) == 1
+    target = node.targets[0]
+    target_name, debug = get_target_name(target)
+    if debug:
+      self.reg_stores.add( target_name )
 
 
 #req_resp_port = FromVerilog("vgen-TestMemReqRespPort.v")
