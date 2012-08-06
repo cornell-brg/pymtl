@@ -47,6 +47,8 @@ class PrintVisitor(ast.NodeVisitor):
       print "ARGUMENTS:  ",
     elif isinstance(node, _ast.Assign):
       print "ASSIGN:     ",
+    elif isinstance(node, _ast.If):
+      print "IFELSE:     ",
     else:
       print "            ",
 
@@ -68,6 +70,8 @@ class PrintVisitor(ast.NodeVisitor):
       print node.func
     elif isinstance(node, _ast.arguments):
       print node.args
+    elif isinstance(node, _ast.If):
+      print node.test, node.body, node.orelse
     else:
       print node._attributes,
       print
