@@ -137,5 +137,53 @@ class TestPosedgeClkVerilog(unittest.TestCase):
   #def tearDown(self):
   #  os.remove(self.temp_file)
 
+class TestCombAndPosedgeVerilog(unittest.TestCase):
+
+  def setUp(self):
+    self.temp_file = self.id().split('.')[-1]
+    self.fd = open(self.temp_file, 'w')
+    self.compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
+                        "-Wno-sensitivity-entire-array " + self.temp_file)
+
+  def translate(self, model):
+    model.elaborate()
+    if debug_verbose: pymtl_debug.port_walk(model)
+    code = ToVerilog(model)
+    code.generate( self.fd )
+    self.fd.close()
+
+  def test_incrementer(self):
+    model = Incrementer()
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_counter(self):
+    model = Counter(7)
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_count_incr(self):
+    model = CountIncr(7)
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_reg_incr(self):
+    model = RegIncr()
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_incr_reg(self):
+    model = IncrReg()
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  #def tearDown(self):
+  #  os.remove(self.temp_file)
+
 if __name__ == '__main__':
   unittest.main()
