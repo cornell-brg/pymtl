@@ -11,7 +11,7 @@ debug_verbose = False
 class TestSlicesVerilog(unittest.TestCase):
 
   def setUp(self):
-    self.temp_file = self.id().split('.')[-1]
+    self.temp_file = self.id().split('.')[-1] + '.v'
     self.fd = open(self.temp_file, 'w')
     self.compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
                         "-Wno-sensitivity-entire-array " + self.temp_file)
@@ -55,7 +55,7 @@ class TestSlicesVerilog(unittest.TestCase):
 class TestCombinationalVerilog(unittest.TestCase):
 
   def setUp(self):
-    self.temp_file = self.id().split('.')[-1]
+    self.temp_file = self.id().split('.')[-1] + '.v'
     self.fd = open(self.temp_file, 'w')
     self.compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
                         "-Wno-sensitivity-entire-array " + self.temp_file)
@@ -98,7 +98,7 @@ class TestCombinationalVerilog(unittest.TestCase):
 class TestPosedgeClkVerilog(unittest.TestCase):
 
   def setUp(self):
-    self.temp_file = self.id().split('.')[-1]
+    self.temp_file = self.id().split('.')[-1] + '.v'
     self.fd = open(self.temp_file, 'w')
     self.compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
                         "-Wno-sensitivity-entire-array " + self.temp_file)
@@ -140,7 +140,7 @@ class TestPosedgeClkVerilog(unittest.TestCase):
 class TestCombAndPosedgeVerilog(unittest.TestCase):
 
   def setUp(self):
-    self.temp_file = self.id().split('.')[-1]
+    self.temp_file = self.id().split('.')[-1] + '.v'
     self.fd = open(self.temp_file, 'w')
     self.compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
                         "-Wno-sensitivity-entire-array " + self.temp_file)

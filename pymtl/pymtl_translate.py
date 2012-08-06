@@ -35,12 +35,12 @@ class ToVerilog(object):
     if not target:
       target = self.model
     print >> o, 'module %s' % target.class_name
-    # Declare Params
-    #if self.params: self.gen_param_decls( self.params, o )
     # Find Registers
     self.get_regs( target, o )
     # Declare Ports
     if target._ports: self.gen_port_decls( target._ports, o )
+    # Declare Localparams
+    if target._localparams: self.gen_localparam_decls( target._localparams, o )
     # Wires & Instantiations
     self.gen_impl_wires( target, o )
     #if self.wires: self.gen_wire_decls( self.wires, o )
@@ -86,6 +86,18 @@ class ToVerilog(object):
     p = params[-1]
     print >> o, '  %s' % p
     print >> o, ')'
+
+  def gen_localparam_decls(self, params, o):
+    """Generate Verilog source for parameter declarations.
+
+    Parameters
+    ----------
+    params: list of VerilogParam objects.
+    o: the output object to write Verilog source to (ie. sys.stdout).
+    """
+    for name, val in params:
+      print >> o, '  localparam {0} = {1};'.format(name, val)
+    print >> o
 
   def gen_impl_wires(self, target, o):
     """Creates a list of implied wire objects from connections in the MTL model.
@@ -293,6 +305,8 @@ class ToVerilog(object):
     for x,y in inspect.getmembers(v, inspect.isclass):
       src = inspect.getsource( y )
       tree = ast.parse( src )
+      #import pymtl_debug
+      #pymtl_debug.print_ast( tree )
       PyToVerilogVisitor( o ).visit(tree)
 
 
@@ -417,9 +431,48 @@ class PyToVerilogVisitor(ast.NodeVisitor):
         print >> self.o, ';'
     self.write_names = False
 
-  #def visit_Compare(self, node):
-  #  """Visit all comparisons assigns, convert into Verilog operators."""
-  #  print 'Found Comparison "%s"' % node.op
+  def visit_If(self, node):
+    """Visit all if/elif blocks (not else!)."""
+    # Write out the IF block
+    self.write_names = True
+    print >> self.o, "  if (",
+    self.visit(node.test)
+    print >> self.o, " ) begin"
+    # Write out the body
+    assert len(node.body) == 1
+    assert len(node.orelse) == 1
+    self.visit(node.body[0])
+    print >> self.o, "  end"
+    # Write out any else blocks
+    if not isinstance(node.orelse[0], _ast.If):
+      print >> self.o, "  else begin"
+      self.visit(node.orelse[0])
+      print >> self.o, "  end"
+    else:
+      # TODO: hacky...
+      print >> self.o, "  else",
+      self.visit(node.orelse[0])
+    self.write_names = False
+
+  def visit_IfExp(self, node):
+    """Visit all ternary operators (w = x if y else z)."""
+    # TODO: verify this works
+    self.visit(node.test)
+    print >> self.o, '?',
+    self.visit(node.body)
+    print >> self.o, ':',
+    self.visit(node.orelse)
+
+  def visit_Compare(self, node):
+    """Visit all comparisons expressions."""
+    # TODO: add write_names check, careful...
+    assert len(node.ops) == 1
+    # TODO: add debug check
+    left_name,  debug = get_target_name(node.left)
+    right_name, debug = get_target_name(node.comparators[0])
+    op_symbol = PyToVerilogVisitor.opmap[type(node.ops[0])]
+    comparison_str = "{0} {1} {2}".format(left_name, op_symbol, right_name)
+    print >> self.o, comparison_str,
 
   def visit_Name(self, node):
     """Visit all variables, convert into Verilog variables."""

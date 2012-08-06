@@ -275,6 +275,7 @@ class Model(object):
     target._ports = []
     target._submodules = []
     target._senses = []
+    target._localparams = []
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
@@ -298,6 +299,10 @@ class Model(object):
       obj.elaborate( name )
       obj.parent = target
       target._submodules += [obj]
+    # We've found a constant assigned to a global variable.
+    # TODO: add support for floats?
+    elif isinstance(obj, int):
+      target._localparams += [(name, obj)]
     # If the object is a list, iterate through each item in the list and
     # recursively call the check_type() utility function
     elif isinstance(obj, list):
