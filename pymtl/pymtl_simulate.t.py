@@ -196,6 +196,10 @@ class TestCombinationalSim(unittest.TestCase):
     sim.cycle()
     self.assertEqual( model.sum.value, 1 )
 
+  def test_ripple_carry(self):
+    model = RippleCarryAdder(4)
+    sim = self.setup_sim(model)
+
 
 class TestPosedgeClkSim(unittest.TestCase):
 
@@ -294,6 +298,76 @@ class TestPosedgeClkSim(unittest.TestCase):
     sim.cycle()
     self.assertEqual( model.reg0.out.value, 0b1111000011001010 )
     self.verify_splitter( model.out, 0b1111000011001010 )
+
+class TestCombAndPosedge(unittest.TestCase):
+
+  def setup_sim(self, model):
+    model.elaborate()
+    sim = LogicSim(model)
+    sim.generate()
+    if debug_verbose:
+      pymtl_debug.port_walk(model)
+    return sim
+
+  def test_incrementer(self):
+    model = Incrementer()
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 0)
+    for i in xrange(10):
+      model.inp.value = i
+      sim.cycle()
+      self.assertEqual( model.out.value, i+1)
+
+  def test_counter(self):
+    model = Counter(7)
+    sim = self.setup_sim(model)
+    model.clear.value = 0
+    self.assertEqual( model.count.value, 0)
+    expected = [1,2,3,4,5,6,7,0,1,2,
+                0,1,2,3,4,5,6,7,0,1]
+    for i in xrange(20):
+      if i == 10:
+        model.clear.value = 1
+      else:
+        model.clear.value = 0
+      sim.cycle()
+      self.assertEqual( model.count.value, expected[i])
+
+  def test_count_incr(self):
+    model = CountIncr(7)
+    sim = self.setup_sim(model)
+    model.clear.value = 0
+    self.assertEqual( model.count.value, 0)
+    expected = [1,2,3,4,5,6,7,0,1,2,
+                0,1,2,3,4,5,6,7,0,1]
+    for i in xrange(20):
+      if i == 10:
+        model.clear.value = 1
+      else:
+        model.clear.value = 0
+      sim.cycle()
+      self.assertEqual( model.count.value, expected[i]+1)
+
+  def test_reg_incr(self):
+    model = RegIncr()
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 0)
+    for i in xrange(20):
+      model.inp.value = i
+      sim.cycle()
+      self.assertEqual( model.out.value, i+1)
+
+  def test_incr_reg(self):
+    model = IncrReg()
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 0)
+    for i in xrange(20):
+      model.inp.value = i
+      sim.cycle()
+      self.assertEqual( model.out.value, i+1)
 
 if __name__ == '__main__':
   unittest.main()

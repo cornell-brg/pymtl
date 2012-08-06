@@ -183,6 +183,72 @@ class RippleCarryAdder(Model):
     self.adders[0].cin <> 0
 
 
+class Incrementer(Model):
+  def __init__(self):
+    # Ports
+    self.inp  = InPort(32)
+    self.out  = OutPort(32)
+
+  @combinational
+  def logic(self):
+    self.out.value = self.inp.value + 1
+
+class Counter(Model):
+  def __init__(self, max=None):
+    # Ports
+    self.clear = InPort(1)
+    self.count = OutPort(32)
+    # Params
+    self.max   = max
+
+  @posedge_clk
+  def logic(self):
+    if self.clear.value:
+      self.count.next = 0
+    elif self.count.value == self.max:
+      self.count.next = 0
+    else:
+      self.count.next = self.count.value + 1
+
+class CountIncr(Model):
+  def __init__(self, max=None):
+    # Ports
+    self.clear = InPort(1)
+    self.count = OutPort(32)
+    # Submodules
+    self.incr  = Incrementer()
+    self.cntr  = Counter(max)
+    # Connections
+    self.clear <> self.cntr.clear
+    self.cntr.count <> self.incr.inp
+    self.incr.out <> self.count
+
+class RegIncr(Model):
+  def __init__(self):
+    # Ports
+    self.inp = InPort(32)
+    self.out = OutPort(32)
+    # Submodules
+    self.reg  = Register(32)
+    self.incr = Incrementer()
+    # Connections
+    self.inp <> self.reg.inp
+    self.reg.out <> self.incr.inp
+    self.incr.out <> self.out
+
+class IncrReg(Model):
+  def __init__(self):
+    # Ports
+    self.inp = InPort(32)
+    self.out = OutPort(32)
+    # Submodules
+    self.incr = Incrementer()
+    self.reg  = Register(32)
+    # Connections
+    self.inp <> self.incr.inp
+    self.incr.out <> self.reg.inp
+    self.reg.out <> self.out
+
 #class RegisteredAdder1(Model):
 #  def __init__(self, bits):
 #    # Ports
