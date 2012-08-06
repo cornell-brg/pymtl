@@ -196,6 +196,7 @@ class Incrementer(Model):
 class Counter(Model):
   def __init__(self, max=None):
     # Ports
+    self.clk   = InPort(1)
     self.clear = InPort(1)
     self.count = OutPort(32)
     # Params
@@ -213,12 +214,14 @@ class Counter(Model):
 class CountIncr(Model):
   def __init__(self, max=None):
     # Ports
+    self.clk   = InPort(1)
     self.clear = InPort(1)
     self.count = OutPort(32)
     # Submodules
     self.incr  = Incrementer()
     self.cntr  = Counter(max)
     # Connections
+    self.clk   <> self.cntr.clk
     self.clear <> self.cntr.clear
     self.cntr.count <> self.incr.inp
     self.incr.out <> self.count
@@ -226,28 +229,32 @@ class CountIncr(Model):
 class RegIncr(Model):
   def __init__(self):
     # Ports
+    self.clk = InPort(1)
     self.inp = InPort(32)
     self.out = OutPort(32)
     # Submodules
-    self.reg  = Register(32)
+    self.reg0 = Register(32)
     self.incr = Incrementer()
     # Connections
-    self.inp <> self.reg.inp
-    self.reg.out <> self.incr.inp
+    self.clk <> self.reg0.clk
+    self.inp <> self.reg0.inp
+    self.reg0.out <> self.incr.inp
     self.incr.out <> self.out
 
 class IncrReg(Model):
   def __init__(self):
     # Ports
+    self.clk = InPort(1)
     self.inp = InPort(32)
     self.out = OutPort(32)
     # Submodules
     self.incr = Incrementer()
-    self.reg  = Register(32)
+    self.reg0 = Register(32)
     # Connections
+    self.clk <> self.reg0.clk
     self.inp <> self.incr.inp
-    self.incr.out <> self.reg.inp
-    self.reg.out <> self.out
+    self.incr.out <> self.reg0.inp
+    self.reg0.out <> self.out
 
 #class RegisteredAdder1(Model):
 #  def __init__(self, bits):

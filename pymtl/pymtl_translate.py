@@ -399,9 +399,6 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     """Visit all unary operators, TODO: UNIMPLEMENTED."""
     print 'Found UnaryOp "%s"' % node.op
 
-  #def visit_Num(self, node):
-  #  print 'Found Num', node.n
-
   def visit_Assign(self, node):
     """Visit all stores to variables."""
     self.write_names = True
@@ -435,6 +432,11 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     if self.write_names:
       target_name, debug = get_target_name(node)
       print >> self.o, target_name,
+
+  def visit_Num(self, node):
+    """Visit all constants."""
+    if self.write_names:
+      print >> self.o, node.n,
 
 
 class FindRegistersVisitor(ast.NodeVisitor):
