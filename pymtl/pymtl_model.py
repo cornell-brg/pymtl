@@ -99,6 +99,8 @@ class Port(object):
     self.name  = name
     self.parent = None
     self.connections = []
+    self.int_connections = []  # defined inside module implementation
+    self.ext_connections = []  # defined during module instantiation
     self.inst_connection = None
     self._value     = None
     self.is_reg = False
@@ -259,7 +261,11 @@ class Model(object):
   should subclass this.
   """
 
-  def elaborate(self, iname='toplevel'):
+  def elaborate(self):
+    self.recurse_elaborate('toplevel')
+    self.recurse_connections()
+
+  def recurse_elaborate(self, iname):
     """Elaborate a MTL model (construct hierarchy, name modules, etc.).
 
     The elaborate() function must be called on an instantiated toplevel module
@@ -296,7 +302,7 @@ class Model(object):
     elif isinstance(obj, Model):
       # TODO: change obj.type to obj.inst_type?
       obj.type = obj.__class__.__name__
-      obj.elaborate( name )
+      obj.recurse_elaborate( name )
       obj.parent = target
       target._submodules += [obj]
     # We've found a constant assigned to a global variable.
@@ -309,6 +315,20 @@ class Model(object):
       for i, item in enumerate(obj):
         item_name = "%s_%d" % (name, i)
         self.check_type(target, item_name, item)
+
+  def recurse_connections(self):
+    for port in self._ports:
+      #print port.parent.name, port.name
+      for c in port.connections:
+        #print '  :::', c.parent.name, c.name,
+        if c.parent == port.parent or c.parent in self._submodules:
+          #print 'int'
+          port.int_connections += [c]
+        else:
+          #print 'ext'
+          port.ext_connections += [c]
+    for submodule in self._submodules:
+      submodule.recurse_connections()
 
 
 # Decorators
