@@ -44,7 +44,26 @@ class GraphvizDiagram(object):
       #  node.attr['ordering'] = 'out'
       for connect in port.connections:
         c_name = get_port_name(connect)
-        graph.add_edge(p_name, c_name, label=connect.width, fontsize=8)
+        # Add slices to the correct subwhatever
+        if isinstance(connect, Slice) and connect.parent.name == target.name:
+          subg.add_node( get_port_name(connect) )
+
+        # Assign a direction to the edge.
+        # port is InPort   and connection is internal: port -> connection
+        #                  and connection is external: connection -> port
+        # port is OutPort: and connection is external: connection -> port
+        #                  and connection is internal: port -> connection
+        if   isinstance(port, InPort)  and connect in port.int_connections:
+          graph.add_edge(p_name, c_name, label=connect.width, fontsize=8)
+        elif isinstance(port, InPort)  and connect in port.ext_connections:
+          graph.add_edge(c_name, p_name, label=connect.width, fontsize=8)
+        elif isinstance(port, OutPort) and connect in port.int_connections:
+          graph.add_edge(c_name, p_name, label=connect.width, fontsize=8)
+        elif isinstance(port, OutPort) and connect in port.ext_connections:
+          graph.add_edge(p_name, c_name, label=connect.width, fontsize=8)
+        else:
+          print "WTFFFFF"
+          assert False
 
     for m in target._submodules:
       self.generate( m, subg )
@@ -89,9 +108,13 @@ model = CountIncr()
 #model = RegIncr()
 #model = IncrReg()
 model.elaborate()
+print
+print
+#import pymtl_debug
+#pymtl_debug.port_walk( model )
 
 plot = GraphvizDiagram(model)
 plot.generate()
 plot.to_diagram('_abc.png')
-plot.to_text()
+#plot.to_text()
 
