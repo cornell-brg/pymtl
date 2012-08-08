@@ -10,6 +10,16 @@ class Rotator(Model):
       self.inp[i] <> self.out[i+1]
     self.inp[-1] <> self.out[0]
 
+# TODO: broken!
+#class RotatorSlice(Model):
+#  def __init__(self, bits):
+#    # Ports
+#    self.inp = InPort(bits)
+#    self.out = OutPort(bits)
+#    # Connections
+#    for i in xrange(bits - 1):
+#      self.inp[i] <> self.out[i+1]
+#    self.inp[-1] <> self.out[0]
 
 class SimpleSplitter(Model):
   def __init__(self, bits):
@@ -72,7 +82,7 @@ class OneWireWrapped(Model):
     # Submodules
     # TODO: cannot use keyword "wire" for variable names when converting
     #       To! Check for this?
-    self.wire0 = OneWire(16)
+    self.wire0 = OneWire(bits)
     # Connections
     self.inp <> self.wire0.inp
     self.out <> self.wire0.out
