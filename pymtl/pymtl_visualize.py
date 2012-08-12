@@ -59,6 +59,9 @@ class GraphvizDiagram(object):
         # Add slices to the correct subwhatever
         if isinstance(connect, Slice) and connect.parent.name == target.name:
           subg.add_node( get_port_name(connect) )
+        # Bugfix: port coloring issue
+        elif isinstance(connect, Port):
+          graph.add_node(c_name, style = 'filled' )
 
         # Assign a direction to the edge.
         # port is InPort   and connection is internal: port -> connection
@@ -98,7 +101,7 @@ class GraphvizDiagram(object):
 
 model_list = [
   Rotator(8),
-  ##RotatorSlice(8), # DNE!
+  #RotatorSlice(8), # DNE!
   SimpleSplitter(4),
   SimpleMerger(4),
   ComplexSplitter(16,2),
