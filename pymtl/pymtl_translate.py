@@ -43,7 +43,7 @@ class ToVerilog(object):
     if target._localparams: self.gen_localparam_decls( target._localparams, o )
     # Wires & Instantiations
     self.gen_impl_wires( target, o )
-    #if self.wires: self.gen_wire_decls( self.wires, o )
+    if target._wires: self.gen_wire_decls( target._wires, o )
     if target._submodules: self.gen_module_insts( target._submodules, o )
     # Logic
     self.gen_ast( target, o )
@@ -143,6 +143,7 @@ class ToVerilog(object):
               # TODO: move to gen_wire_decls
               print >> o, '  %s' % self.wire_to_str(wire)
 
+  # TODO: rename wire decls to be reg decls?
   def gen_wire_decls(self, wires, o):
     """Generate Verilog source for wire declarations.
 
@@ -151,8 +152,12 @@ class ToVerilog(object):
     wires: list of Wire objects.
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
-    for w in wires.values():
-      print >> o, '  %s' % self.wire_to_str(w)
+    for w in wires:
+      if w.width == 1:
+        print >> o, "  reg %s;" % (w.name)
+      else :
+        print >> o, "  reg [%d:0] %s;" % (w.width-1, w.name)
+    print >> o
 
   def gen_port_assigns(self, target, o):
     """Generate Verilog source for assigning values to output ports.
@@ -393,7 +398,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
       for x in node.body:
         self.visit(x)
       self.ident -= 2
-      print >> self.o, ' end'
+      print >> self.o, ' end\n'
     elif node.decorator_list[0].id == 'posedge_clk':
       self.block_type = node.decorator_list[0].id
       print >> self.o, ' always @ (posedge clk) begin'
@@ -402,7 +407,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
       for x in node.body:
         self.visit(x)
       self.ident -= 2
-      print >> self.o, ' end'
+      print >> self.o, ' end\n'
 
   def visit_BinOp(self, node):
     """Visit all binary operators, convert into Verilog operators.
@@ -468,7 +473,6 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     print >> self.o, " ) begin"
     # Write out the body
     assert len(node.body) == 1
-    print len(node.orelse)
     self.ident += 4
     self.visit(node.body[0])
     self.ident -= 4
