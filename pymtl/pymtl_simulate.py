@@ -264,7 +264,7 @@ class Node(object):
   as a wire or a register depending on use, but not both.
   """
 
-  def __init__(self, width, value=0, sim=None):
+  def __init__(self, width, value=None, sim=None):
     """Constructor for a Node object.
 
     Parameters
@@ -275,12 +275,19 @@ class Node(object):
     """
     self.sim = sim
     self.width = width
+    # TODO: Initializing _value to None ensures we dont have to check for reset
+    # condition when adding to the event queue! However, without a reset() we do
+    # need to check for the None condition in the value parameter and return a 0
+    # instead, otherwise certain modules break. Better way to do this?
     self._value = value
     self.is_reg = False
 
   @property
   def value(self):
     """Value stored by node. Informs the attached simulator on any write."""
+    # TODO: get rid of this check?
+    if self._value == None:
+      return 0
     return self._value
   @value.setter
   def value(self, value):
@@ -290,8 +297,6 @@ class Node(object):
     if self._value != value:
       self.sim.add_event(self)
       self._value = value
-    #self.sim.add_event(self)
-    #self._value = value
 
   @property
   def next(self):

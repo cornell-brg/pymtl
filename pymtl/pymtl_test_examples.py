@@ -329,7 +329,7 @@ class GCD(Model):
                                      self.in_val.value )
     line += "{0:2} {1:2} {2}".format( self.A_reg.value, self.B_reg.value,
                                     sdict[self.state.value] )
-    line += " A<B:{0:b} B!=0:{1:b}".format( self.is_A_lt_B.value, self.is_B_neq_0.value)
+    line += " A<B:{0} B!=0:{1}".format( self.is_A_lt_B.value, self.is_B_neq_0.value)
     line += "|| {0} {1}".format( self.out.value, self.out_val.value )
     print line
 
