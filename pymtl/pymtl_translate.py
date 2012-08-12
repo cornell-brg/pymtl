@@ -372,6 +372,8 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     self.write_names = False
     self.block_type  = None
     self.o = o
+    self.ident = 0
+    self.elseif = False
 
   def visit_FunctionDef(self, node):
     """Visit all functions, but only parse those with special decorators."""
@@ -382,15 +384,19 @@ class PyToVerilogVisitor(ast.NodeVisitor):
       self.block_type = node.decorator_list[0].id
       print >> self.o, ' always @ (*) begin'
       # Visit each line in the function, translate one at a time.
+      self.ident += 2
       for x in node.body:
         self.visit(x)
+      self.ident -= 2
       print >> self.o, ' end'
     elif node.decorator_list[0].id == 'posedge_clk':
       self.block_type = node.decorator_list[0].id
       print >> self.o, ' always @ (posedge clk) begin'
       # Visit each line in the function, translate one at a time.
+      self.ident += 2
       for x in node.body:
         self.visit(x)
+      self.ident -= 2
       print >> self.o, ' end'
 
   def visit_BinOp(self, node):
@@ -422,11 +428,11 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     target_name, debug = get_target_name(target)
     if debug:
       if self.block_type == 'combinational':
-        print >> self.o, ' ', target_name, '=',
+        print >> self.o, self.ident * ' ', target_name, '=',
         self.visit(node.value)
         print >> self.o, ';'
       elif self.block_type == 'posedge_clk':
-        print >> self.o, ' ', target_name, '<=',
+        print >> self.o, self.ident * ' ', target_name, '<=',
         self.visit(node.value)
         print >> self.o, ';'
     self.write_names = False
@@ -435,23 +441,34 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     """Visit all if/elif blocks (not else!)."""
     # Write out the IF block
     self.write_names = True
-    print >> self.o, "  if (",
+    if self.elseif:
+      print >> self.o,  "if (",
+      self.elseif = False
+    else:
+      print >> self.o, self.ident*" " + "  if (",
     self.visit(node.test)
     print >> self.o, " ) begin"
     # Write out the body
     assert len(node.body) == 1
-    assert len(node.orelse) == 1
+    print len(node.orelse)
+    self.ident += 4
     self.visit(node.body[0])
-    print >> self.o, "  end"
+    self.ident -= 4
+    print >> self.o, self.ident*" " + "  end"
     # Write out any else blocks
-    if not isinstance(node.orelse[0], _ast.If):
-      print >> self.o, "  else begin"
-      self.visit(node.orelse[0])
-      print >> self.o, "  end"
-    else:
-      # TODO: hacky...
-      print >> self.o, "  else",
-      self.visit(node.orelse[0])
+    assert len(node.orelse) <= 1
+    if node.orelse:
+      if not isinstance(node.orelse[0], _ast.If):
+        print >> self.o, self.ident*" " + "  else begin"
+        self.ident += 4
+        self.visit(node.orelse[0])
+        self.ident -= 4
+        print >> self.o, self.ident*" " + "  end"
+      else:
+        # TODO: hacky...
+        print >> self.o, self.ident*" " + "  else",
+        self.elseif = True
+        self.visit(node.orelse[0])
     self.write_names = False
 
   def visit_IfExp(self, node):

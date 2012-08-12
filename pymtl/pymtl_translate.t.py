@@ -182,6 +182,18 @@ class TestCombAndPosedgeVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
+  def test_incr_reg(self):
+    model = IncrReg()
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  #def test_gcd(self):
+  #  model = GCD()
+  #  self.translate( model )
+  #  x = os.system( self.compile_cmd )
+  #  self.assertEqual( x, 0)
+
   #def tearDown(self):
   #  os.remove(self.temp_file)
 
