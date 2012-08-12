@@ -83,6 +83,9 @@ class Port(object):
 
   """Hidden base class implementing a module port."""
 
+  # TODO: get rid of str
+  # TODO: get rid of type
+  # TODO: get rid of name?
   def __init__(self, type=None, width=None, name='???', str=None):
     """Constructor for a Port object.
 
@@ -166,7 +169,7 @@ class Port(object):
     if not self._value:
       print "// WARNING: writing to unconnected node {0}.{1}!".format(
             self.parent, self.name)
-      self._value = ValueNode(self.width, value)
+      assert False
     else:
       self._value.value = value
 
@@ -206,6 +209,106 @@ class OutPort(Port):
     width: bitwidth of the port.
     """
     super(OutPort, self).__init__('output', width)
+
+
+class UWire(object):
+
+  """Hidden base class implementing a module port."""
+
+  def __init__(self, width):
+    """Constructor for a Port object.
+
+    Parameters
+    ----------
+    type: string indicated whether this is an 'input' or 'output' port.
+    width: bitwidth of the port.
+    name: (TODO: remove? Previously only used for intermediate values).
+    str: initializes a Port given a string containing a  port
+         declaration. (TODO: remove. Only used by From.)
+    """
+    self.type  = 'wire'
+    self.width = width
+    self.name  = '???'
+    self.parent = None
+    self.connections = []
+    self.int_connections = []  # defined inside module implementation
+    self.ext_connections = []  # defined during module instantiation
+    self.inst_connection = None
+    self._value     = None
+    self.is_reg = False
+
+  def __ne__(self, target):
+    """Connection operator (<>), calls connect()."""
+    self.connect(target)
+
+  def __getitem__(self, addr):
+    """Bitfield access ([]). Returns a VeriogSlice object.
+
+    TODO: only works for connectivity, not logic?
+    """
+    #print "@__getitem__", type(addr), addr, str(addr)
+    if isinstance(addr, int):
+      assert addr < self.width
+    elif isinstance(addr, slice):
+      assert addr.start < addr.stop
+      assert addr.stop <= self.width
+    return Slice(self, addr)
+
+  def connect(self, target):
+    """Creates a connection with a Port or Slice.
+
+    TODO: implement connections with a Wire?
+    """
+    # TODO: throw an exception if the other object is not a Port
+    # TODO: support wires?
+    # TODO: do we want to use an assert here
+    if isinstance(target, int):
+      self._value          = Constant(target, self.width)
+      # TODO: make an inst_connection or regular connection?
+      self.inst_connection = Constant(target, self.width)
+    elif isinstance(target, Slice):
+      assert self.width == target.width
+      self.connections              += [ target ]
+      target.parent_ptr.connections += [ target ]
+      target.connections            += [ self ]
+      self._value                    = target
+    else:
+      #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)
+      assert self.width == target.width
+      self.connections   += [ target ]
+      target.connections += [ self   ]
+      # If we are connecting a port to another port which is itself a slice of
+      # another object, make our value pointer also point to the slice
+      if self.type == target.type:
+        #print "  TARGETS? {0} to {1}".format(type(self._value), type(target._value))
+        assert not (self._value and target._value)
+        if self._value:   target._value = self._value
+        else:               self._value = target._value
+
+  @property
+  def value(self):
+    """Access the value on this port."""
+    if self._value: return self._value.value
+    else:           return self._value
+  @value.setter
+  def value(self, value):
+    # TODO: remove this check?
+    if not self._value:
+      print "// WARNING: writing to unconnected node {0}.{1}!".format(
+            self.parent, self.name)
+      assert False
+    else:
+      self._value.value = value
+
+  @property
+  def next(self):
+    """Access the shadow value on this port."""
+    assert self._value
+    return self._value.next
+  @next.setter
+  def next(self, value):
+    assert self._value
+    self._value.next = value
 
 
 class Constant(object):
@@ -297,6 +400,11 @@ class Model(object):
       target._ports += [obj]
       if obj.type == 'input':
         target._senses += [obj]
+    elif isinstance(obj, UWire):
+      obj.name = name
+      obj.parent = target
+      target._wires += [obj]
+      target._senses += [obj]
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):

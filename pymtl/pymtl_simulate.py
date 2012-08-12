@@ -129,6 +129,9 @@ class LogicSim():
     for p in model._ports:
       self.add_to_node_groups(p)
 
+    for w in model._wires:
+      self.add_to_node_groups(w)
+
     for m in model._submodules:
       self.find_node_groupings( m )
 

@@ -3,7 +3,8 @@ import sys
 import ast, _ast
 
 def port_walk(tgt, spaces=0, o=sys.stdout):
-  for x in tgt._ports:
+  pw = tgt._ports + tgt._wires
+  for x in pw:
     print >> o, spaces*' ', x.parent.name, x.name, x
     for y in x.connections:
       fullname = y.name

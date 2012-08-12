@@ -276,11 +276,11 @@ class GCD(Model):
     self.out     = OutPort(32)
     self.out_val = OutPort(1)
     # Wires
-    self.state      = InPort(2)
-    self.A_reg      = InPort(32)
-    self.B_reg      = InPort(32)
-    self.is_A_lt_B  = InPort(1)
-    self.is_B_neq_0 = InPort(1)
+    self.state      = UWire(2)
+    self.A_reg      = UWire(32)
+    self.B_reg      = UWire(32)
+    self.is_A_lt_B  = UWire(1)
+    self.is_B_neq_0 = UWire(1)
     # Constants
     self.IDLE   = 0
     self.ACTIVE = 1
