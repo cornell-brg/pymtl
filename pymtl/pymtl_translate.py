@@ -312,13 +312,18 @@ class ToVerilog(object):
 
 
 def get_target_name(node):
+  # Is this a number/constant? Return it.
+  if isinstance(node, _ast.Num):
+    return node.n, True
+  # Is this an attribute? Follow it until we find a Name.
   name = []
   while isinstance(node, _ast.Attribute):
     name += [node.attr]
     node = node.value
+  # We've found the Name.
   assert isinstance(node, _ast.Name)
   name += [node.id]
-  #TODO: hacky!!!
+  # If the target does not access .value or .next, tell the code to ignore it.
   if name[0] in ['value', 'next']:
     return '.'.join( name[::-1][1:-1] ), True
   else:
@@ -412,12 +417,25 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     print >> self.o, ')',
 
   def visit_BoolOp(self, node):
-    """Visit all boolean operators, TODO: UNIMPLEMENTED."""
-    print 'Found BoolOp "%s"' % node.op
+    """Visit all boolean operators, convert into Verilog operators.
+
+    Parenthesis are placed around every operator along with its args to ensure
+    that the order of operations are preserved.
+    """
+    assert len(node.values) == 2
+    self.visit(node.values[0])
+    print >> self.o, PyToVerilogVisitor.opmap[type(node.op)],
+    self.visit(node.values[1])
 
   def visit_UnaryOp(self, node):
-    """Visit all unary operators, TODO: UNIMPLEMENTED."""
-    print 'Found UnaryOp "%s"' % node.op
+    """Visit all unary operators, convert into Verilog operators.
+
+    Parenthesis are placed around every operator along with its args to ensure
+    that the order of operations are preserved.
+    """
+    print >> self.o, PyToVerilogVisitor.opmap[type(node.op)],
+    # node.operand should be either a name or an attribute
+    self.visit(node.operand)
 
   def visit_Assign(self, node):
     """Visit all stores to variables."""
@@ -488,7 +506,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     left_name,  debug = get_target_name(node.left)
     right_name, debug = get_target_name(node.comparators[0])
     op_symbol = PyToVerilogVisitor.opmap[type(node.ops[0])]
-    comparison_str = "{0} {1} {2}".format(left_name, op_symbol, right_name)
+    comparison_str = "({0} {1} {2})".format(left_name, op_symbol, right_name)
     print >> self.o, comparison_str,
 
   def visit_Name(self, node):
