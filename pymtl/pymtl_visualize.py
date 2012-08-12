@@ -1,5 +1,7 @@
 import pygraphviz as pgv
 from pymtl_test_examples import *
+from pymtl_simulate import *
+import pymtl_debug
 
 
 class GraphvizDiagram(object):
@@ -20,28 +22,38 @@ class GraphvizDiagram(object):
 
   def generate(self, target=None, graph=None):
 
+    # This allows us to make this function recursive
     if not target:
       target = self.model
     if not graph:
       graph = self.g
 
+    # Utility function to generate the name module_name.port_name
     def get_port_name(port):
       return "{0}.{1}".format( port.parent.name, port.name )
 
-    # Add all the ports
+    # Add all of this modules ports to the graph, also assign them to the
+    # correct subgraph
     port_names = [ get_port_name(x) for x in target._ports ]
     # TODO: isn't coloring all ports correctly...
     graph.add_nodes_from( port_names, style = 'filled' )
     subg = graph.add_subgraph( nbunch = port_names, label = target.name,
                                name = "cluster_"+target.name)
 
+    # Iterate through all the ports and add directional arrows
     for port in target._ports:
       p_name = get_port_name(port)
-      #node = graph.get_node( p_name )
-      #if isinstance(port, InPort):
-      #  node.attr['ordering'] = 'in'
-      #elif isinstance(port, OutPort):
-      #  node.attr['ordering'] = 'out'
+      # Get at the value node, special case for slices
+      node = port._value
+      if isinstance(port._value, Slice):
+        node = port._value._value
+      # Add value nodes if they exist
+      if node is not None:
+        node_name = id(node)
+        node_label = "node {0:5}bits".format( node.width )
+        graph.add_node( node_name, label=node_label, color='gray' )
+        graph.add_edge(p_name, node_name, color='gray')
+      # Add all connections
       for connect in port.connections:
         c_name = get_port_name(connect)
         # Add slices to the correct subwhatever
@@ -65,9 +77,11 @@ class GraphvizDiagram(object):
           print "WTFFFFF"
           assert False
 
+    # Iterate through all the submodules and call generate recursively
     for m in target._submodules:
       self.generate( m, subg )
 
+    # TODO: show logic blocks
     #for sync in target._posedge_clks:
     #for sync in target._combinationals:
       #subg = graph.add_subgraph()
@@ -75,46 +89,62 @@ class GraphvizDiagram(object):
 
   def to_diagram(self, filename):
     # layout types: neato dot twopi circo fdp nop
-    #self.g.layout(prog='dot')
     self.g.layout(prog='dot')
     self.g.draw(filename)
 
   def to_text(self):
     print self.g.string()
 
-#for port in model._ports:
-#  port_name = "{0}.{1}".format( port.parent.name, port.name )
-#  g.add_node( port_name )
 
+model_list = [
+  Rotator(8),
+  ##RotatorSlice(8), # DNE!
+  SimpleSplitter(4),
+  SimpleMerger(4),
+  ComplexSplitter(16,2),
+  ComplexMerger(16,4),
+  OneWire(32),
+  OneWireWrapped(8),
+  Register(4),
+  RegisterWrapper(4),
+  RegisterChain(4),
+  RegisterSplitter(4),
+  FullAdder(),
+  # TODO: fix filling on some of the ports...
+  RippleCarryAdder(4),
+  Incrementer(),
+  Counter(),
+  # Good examples
+  CountIncr(),
+  RegIncr(),
+  IncrReg(),
+  GCD(),
+]
 
-#model = Rotator(8)
-#model = RotatorSlice(8)
-#model = SimpleSplitter(4)
-#model = SimpleMerger(4)
-#model = ComplexSplitter(16,2)
-#model = ComplexMerger(16,4)
-#model = OneWire(32)
-#model = OneWireWrapped(8)
-#model = Register(4)
-#model = RegisterWrapper(4)
-#model = RegisterChain(4)
-#model = RegisterSplitter(4)
-#model = FullAdder()
-# TODO: fix filling on some of the ports...
-#model = RippleCarryAdder(4)
-#model = Incrementer()
-#model = Counter()
-model = CountIncr()
-#model = RegIncr()
-#model = IncrReg()
-model.elaborate()
-print
-print
-#import pymtl_debug
-#pymtl_debug.port_walk( model )
+def dump_ast():
+  print
+  print
+  import inspect
+  import ast
+  model_class = model.__class__
+  src = inspect.getsource( model_class )
+  tree = ast.parse( src )
+  pymtl_debug.print_ast( tree )
 
-plot = GraphvizDiagram(model)
-plot.generate()
-plot.to_diagram('_abc.png')
-#plot.to_text()
+for model in model_list:
+  model.elaborate()
+  cname = model.class_name
+  print "* Visualizing " + cname
+  plot = GraphvizDiagram(model)
+  plot.generate()
+  plot.to_diagram('_{0}.png'.format(cname))
+
+  sim = LogicSim(model)
+  sim.generate()
+  plot.generate()
+  plot.to_diagram('_{0}_vnode.png'.format(cname))
+
+  # Debugging
+  #pymtl_debug.port_walk( model )
+  #plot.to_text()
 
