@@ -287,8 +287,11 @@ class Node(object):
     # TODO: this is a check that makes sure you dont write the value directly
     #       if this is a register.  Put a helpful message here?
     #assert not self.is_reg
-    self.sim.add_event(self)
-    self._value = value
+    if self._value != value:
+      self.sim.add_event(self)
+      self._value = value
+    #self.sim.add_event(self)
+    #self._value = value
 
   @property
   def next(self):

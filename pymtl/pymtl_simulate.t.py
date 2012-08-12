@@ -369,5 +369,34 @@ class TestCombAndPosedge(unittest.TestCase):
       sim.cycle()
       self.assertEqual( model.out.value, i+1)
 
+  def test_gcd(self):
+    model = GCD()
+    sim = self.setup_sim(model)
+    def util_test( a, b, out ):
+      model.line_trace()
+      model.in_A.value   = a
+      model.in_B.value   = b
+      model.in_val.value = 1
+      sim.cycle()
+      model.line_trace()
+      model.in_val.value = 0
+      done = False
+      for i in xrange(15):
+        model.line_trace()
+        sim.cycle()
+        if model.out_val.value == True:
+          done = True
+          model.line_trace()
+          self.assertEqual( model.out.value, out )
+          sim.cycle()
+          break
+      self.assertEqual( done, True )
+    util_test( 15, 5, 5 )
+    util_test( 5, 15, 5 )
+    util_test( 5, 8, 1 )
+    util_test( 12, 3, 3 )
+    util_test( 7, 4, 1 )
+    util_test( 7, 0, 7 )
+
 if __name__ == '__main__':
   unittest.main()
