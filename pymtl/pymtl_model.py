@@ -211,7 +211,7 @@ class OutPort(Port):
     super(OutPort, self).__init__('output', width)
 
 
-class UWire(object):
+class TempVal(object):
 
   """Hidden base class implementing a module port."""
 
@@ -400,7 +400,7 @@ class Model(object):
       target._ports += [obj]
       if obj.type == 'input':
         target._senses += [obj]
-    elif isinstance(obj, UWire):
+    elif isinstance(obj, TempVal):
       obj.name = name
       obj.parent = target
       target._wires += [obj]
