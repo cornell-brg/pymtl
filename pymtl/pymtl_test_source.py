@@ -22,12 +22,14 @@ class TestSource (Model):
     out_val = self.out_val
     out_rdy = self.out_rdy
 
-    if ( (self.idx < len(self.msg_list)) ):
+    if out_val.value and out_rdy.value:
+      self.idx += 1
+
+    if self.idx < len(self.msg_list):
       out_msg.value = self.msg_list[self.idx]
       out_val.value = 1
-      self.idx += 1
     else:
-      out_val = 0
+      out_val.value = 0
 
   def line_trace( self ):
     return "{0:3} {1:3} {2:4}".format( self.out_val.value,
