@@ -116,32 +116,29 @@ class ToVerilog(object):
     """
     for submodule in target._submodules:
       for port in submodule._ports:
-        if isinstance(port.connections, Wire):
-          break
-        c = self.get_parent_connection(port)
-        # If we found a parent connection, no wire is required
-        if c:
-          port.inst_connection = c
-        # If there's no parent connection, create a wire
-        # TODO: why is this a loop? Shouldnt there only be one?
+        # TODO: handle TempVal?
+        if port.inst_connection or not port.ext_connections:
+          continue
+        # There should never be more than one external connection...
+        assert len(port.ext_connections) == 1
+        c = port.ext_connections[0]
+        # If this submodule port connects to a port in the target, then no
+        # wire should be necessary
+        if c.parent.name == target.name:
+          port.inst_connection = port.ext_connections[0]
+        # Otherwise we need to create an implicit wire
         else:
-          for c in port.connections:
-            if (not port.inst_connection
-                and c.type != 'wire'
-                and c.type != 'constant'
-                and c.type != port.type):
-              # set names based on directionality
-              if isinstance(port, OutPort):
-                wire_name = '{0}_{1}_TO_{2}_{3}'.format(
-                    submodule.name, port.name, c.parent.name, c.name)
-              else:
-                wire_name = '{0}_{1}_TO_{2}_{3}'.format(
-                    c.parent.name, c.name, submodule.name, port.name)
-              wire = Wire(wire_name, port.width)
-              c.inst_connection = wire
-              port.inst_connection = wire
-              # TODO: move to gen_wire_decls
-              print >> o, '  %s' % self.wire_to_str(wire)
+          if isinstance(port, OutPort):
+            wire_name = '{0}_{1}_TO_{2}_{3}'.format(
+                submodule.name, port.name, c.parent.name, c.name)
+          else:
+            wire_name = '{0}_{1}_TO_{2}_{3}'.format(
+                c.parent.name, c.name, submodule.name, port.name)
+          wire = Wire(wire_name, port.width)
+          c.inst_connection = wire
+          port.inst_connection = wire
+          # TODO: move to gen_wire_decls
+          print >> o, '  %s' % self.wire_to_str(wire)
 
   # TODO: rename wire decls to be reg decls?
   def gen_wire_decls(self, wires, o):
@@ -179,9 +176,10 @@ class ToVerilog(object):
     # Get all output ports
     output_ports = [x for x in target._ports if isinstance(x,OutPort)]
     for port in output_ports:
-      output_assigns = [x for x in port.connections if needs_assign(port, x)]
+      output_assigns = [x for x in port.int_connections if needs_assign(port, x)]
       for assign in output_assigns:
-        # Handle the case where we are assigning to an output slice...
+        # Handle the case where we are assigning to a slice of an output port
+        # instead of an entire output port
         if assign.type == 'output':
           assert len(assign.connections) == 1
           left  = assign.name
@@ -222,35 +220,6 @@ class ToVerilog(object):
     p = ports[-1]
     name = p.inst_connection.name if p.inst_connection else ' '
     print >> o, '    .%s (%s)' % (p.name, name)
-
-  def get_parent_connection(self, port):
-    """Utility method to find the parent connection in the connection list.
-
-    Currently all VerilogPort objects maintain a list of all other ports they
-    are connected to.  If a given VerilogPort is in the middle of a hierarchy,
-    ie. when a module A instantiates submodule B, and submodule B instantiates
-    another submodule C, the connections list will contain connections to both
-    parents and children.  When printing out the instantiation of submodule B,
-    we need to know which of the connections leads to the parent so we can
-    attach it to module B's port list.  This method attempts to find the parent
-    connection by walking though all the port connections and checking them
-    one-by-one.
-
-    Parameters
-    ----------
-    port: a VerilogPort object.
-    o: the output object to write Verilog source to (ie. sys.stdout).
-    """
-    # TODO: separate connections into inst_cxt and impl_cxn
-    # No connection, return none
-    if not port.connections:
-      return None
-    # Look in connections for any parent connections
-    for connection in port.connections:
-      if port.parent.parent == connection.parent:
-        return connection
-    # No parent connections
-    return None
 
   def port_to_str(self, p):
     """Generate Verilog source for a port declaration.
