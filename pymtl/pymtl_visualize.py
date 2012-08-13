@@ -1,5 +1,5 @@
 import pygraphviz as pgv
-from pymtl_test_examples import *
+from pymtl_model import *
 from pymtl_simulate import *
 import pymtl_debug
 
@@ -98,32 +98,6 @@ class GraphvizDiagram(object):
   def to_text(self):
     print self.g.string()
 
-
-model_list = [
-  Rotator(8),
-  #RotatorSlice(8), # DNE!
-  SimpleSplitter(4),
-  SimpleMerger(4),
-  ComplexSplitter(16,2),
-  ComplexMerger(16,4),
-  OneWire(32),
-  OneWireWrapped(8),
-  Register(4),
-  RegisterWrapper(4),
-  RegisterChain(4),
-  RegisterSplitter(4),
-  FullAdder(),
-  # TODO: fix filling on some of the ports...
-  RippleCarryAdder(4),
-  Incrementer(),
-  Counter(),
-  # Good examples
-  CountIncr(),
-  RegIncr(),
-  IncrReg(),
-  GCD(),
-]
-
 def dump_ast():
   print
   print
@@ -134,20 +108,49 @@ def dump_ast():
   tree = ast.parse( src )
   pymtl_debug.print_ast( tree )
 
-for model in model_list:
-  model.elaborate()
-  cname = model.class_name
-  print "* Visualizing " + cname
-  plot = GraphvizDiagram(model)
-  plot.generate()
-  plot.to_diagram('_{0}.png'.format(cname))
 
-  sim = LogicSim(model)
-  sim.generate()
-  plot.generate()
-  plot.to_diagram('_{0}_vnode.png'.format(cname))
+if __name__ == '__main__':
 
-  # Debugging
-  #pymtl_debug.port_walk( model )
-  #plot.to_text()
+  from pymtl_test_examples import *
+  model_list = [
+    Rotator(8),
+    #RotatorSlice(8), # DNE!
+    SimpleSplitter(4),
+    SimpleMerger(4),
+    ComplexSplitter(16,2),
+    ComplexMerger(16,4),
+    OneWire(32),
+    OneWireWrapped(8),
+    Register(4),
+    RegisterWrapper(4),
+    RegisterChain(4),
+    RegisterSplitter(4),
+    FullAdder(),
+    # TODO: fix filling on some of the ports...
+    RippleCarryAdder(4),
+    Incrementer(),
+    Counter(),
+    # Good examples
+    CountIncr(),
+    RegIncr(),
+    IncrReg(),
+    GCD(),
+  ]
+
+  for model in model_list:
+    model.elaborate()
+    cname = model.class_name
+    print "* Visualizing " + cname
+    plot = GraphvizDiagram(model)
+    plot.generate()
+    plot.to_diagram('_{0}.png'.format(cname))
+
+    sim = LogicSim(model)
+    sim.generate()
+    plot.generate()
+    plot.to_diagram('_{0}_vnode.png'.format(cname))
+
+    # Debugging
+    #pymtl_debug.port_walk( model )
+    #plot.to_text()
 
