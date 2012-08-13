@@ -23,9 +23,9 @@ class GraphvizDiagram(object):
   def generate(self, target=None, graph=None):
 
     # This allows us to make this function recursive
-    if not target:
+    if target is None:
       target = self.model
-    if not graph:
+    if graph is None:
       graph = self.g
 
     # Utility function to generate the name module_name.port_name
