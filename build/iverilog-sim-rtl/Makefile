@@ -43,6 +43,7 @@ subpkgs = \
   vc \
   vgen \
   rtler \
+  pymtl \
 
 #  imuldiv \
 #  pv2stall \
@@ -354,7 +355,8 @@ junk += $(pnet_traces_outs)
 # Programs
 #-------------------------------------------------------------------------
 
-COMP       = iverilog -DIVERILOG -DCLOCK_PERIOD=$(vcs_clock_period)
+#COMP       = iverilog -DIVERILOG -DCLOCK_PERIOD=$(vcs_clock_period)
+COMP       = iverilog -DIVERILOG -DCLOCK_PERIOD=10
 COMP_FLAGS = -g2005 -Wall -Wno-sensitivity-entire-vector -Wno-sensitivity-entire-array
 
 #-------------------------------------------------------------------------
