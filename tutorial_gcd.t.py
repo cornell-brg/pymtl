@@ -13,9 +13,9 @@ from pymtl.pymtl_translate import *
 class TestHarness(Model):
 
   def __init__( self, msg_list_1, msg_list_2, msg_list_3 ):
-    self.src1 = TestSource(32, msg_list_1 )
-    self.src2 = TestSource(32, msg_list_2 )
-    self.sink = TestSink(32, msg_list_3 )
+    self.src1 = TestSource(16, msg_list_1 )
+    self.src2 = TestSource(16, msg_list_2 )
+    self.sink = TestSink(16, msg_list_3 )
     self.gcd  = GCD()
 
     self.src1.out_msg <> self.gcd.in_A

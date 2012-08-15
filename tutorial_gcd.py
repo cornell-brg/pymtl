@@ -6,15 +6,15 @@
 #
 #    clk          1
 #    reset        1
-#    in_A        32
-#    in_B        32
+#    in_A        16
+#    in_B        16
 #    in_val       1
 #    in_rdy       1
 #
 #    OUTPUTS
 #    Name     Width
 #
-#    out         32
+#    out         16
 #    out_val      1
 #    out_rdy      1
 #
