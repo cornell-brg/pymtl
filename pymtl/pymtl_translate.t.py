@@ -197,5 +197,50 @@ class TestCombAndPosedgeVerilog(unittest.TestCase):
   #def tearDown(self):
   #  os.remove(self.temp_file)
 
+
+class DumbA(Model):
+  def __init__(self):
+    self.clk   = InPort(1)
+    self.in_A  = InPort(1)
+    self.in_B  = InPort(1)
+    self.in_C  = InPort(1)
+    self.in_D  = InPort(1)
+    self.out_A = OutPort(1)
+    self.out_B = OutPort(1)
+    self.out_C = OutPort(1)
+    self.out_D = OutPort(1)
+  @posedge_clk
+  def tick(self):
+    if in_A:
+      self.out_A.next = 5
+    else:
+      if in_B:
+        self.out_B.next = 5
+      elif in_C:
+        self.out_C.next = 5
+      if in_D:
+        self.out_D.next = 5
+
+class TestDumb(unittest.TestCase):
+
+  def setUp(self):
+    self.temp_file = self.id().split('.')[-1] + '.v'
+    self.fd = open(self.temp_file, 'w')
+    self.compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
+                        "-Wno-sensitivity-entire-array " + self.temp_file)
+
+  def translate(self, model):
+    model.elaborate()
+    if debug_verbose: pymtl_debug.port_walk(model)
+    code = ToVerilog(model)
+    code.generate( self.fd )
+    self.fd.close()
+
+  def test_dumb_a(self):
+    model = DumbA()
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
 if __name__ == '__main__':
   unittest.main()

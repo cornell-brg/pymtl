@@ -169,6 +169,7 @@ class ToVerilog(object):
     """
     # Utility function
     def needs_assign(port, connection):
+      # TODO: clean this up...
       if isinstance(connection, Slice):
         return port.parent == connection.connections[0].parent
       else:
@@ -352,7 +353,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     self.block_type  = None
     self.o = o
     self.ident = 0
-    self.elseif = False
+
 
   def visit_FunctionDef(self, node):
     """Visit all functions, but only parse those with special decorators."""
@@ -431,35 +432,32 @@ class PyToVerilogVisitor(ast.NodeVisitor):
 
   def visit_If(self, node):
     """Visit all if/elif blocks (not else!)."""
-    # Write out the IF block
+
+    # Write out the if block
     self.write_names = True
-    if self.elseif:
-      print >> self.o,  "if (",
-      self.elseif = False
-    else:
-      print >> self.o, self.ident*" " + "  if (",
+    print >> self.o, self.ident*" " + "  if (",
     self.visit(node.test)
     print >> self.o, " ) begin"
+
     # Write out the body
     assert len(node.body) == 1
-    self.ident += 4
+    self.ident += 2
     self.visit(node.body[0])
-    self.ident -= 4
+    self.ident -= 2
     print >> self.o, self.ident*" " + "  end"
-    # Write out any else blocks
-    assert len(node.orelse) <= 1
+
+    # Write out any else and elif blocks
+    # TODO: all elif blocks appear as an if nested inside of an else! This
+    #       means the generated code is VERY ugly. FIX!
     if node.orelse:
-      if not isinstance(node.orelse[0], _ast.If):
-        print >> self.o, self.ident*" " + "  else begin"
-        self.ident += 4
-        self.visit(node.orelse[0])
-        self.ident -= 4
-        print >> self.o, self.ident*" " + "  end"
-      else:
-        # TODO: hacky...
-        print >> self.o, self.ident*" " + "  else",
-        self.elseif = True
-        self.visit(node.orelse[0])
+      print >> self.o, self.ident*" " + "  else begin"
+    for orelse in node.orelse:
+      self.ident += 2
+      self.visit(orelse)
+      self.ident -= 2
+    if node.orelse:
+      print >> self.o, self.ident*" " + "  end"
+
     self.write_names = False
 
   def visit_IfExp(self, node):
