@@ -8,9 +8,9 @@ from pymtl_visualize import *
 class TestHarness(Model):
 
   def __init__( self, msg_list_1, msg_list_2, msg_list_3 ):
-    self.src1 = TestSource(32, msg_list_1 )
-    self.src2 = TestSource(32, msg_list_2 )
-    self.sink = TestSink(32, msg_list_3 )
+    self.src1 = TestSource(16, msg_list_1 )
+    self.src2 = TestSource(16, msg_list_2 )
+    self.sink = TestSink(16, msg_list_3 )
     self.gcd  = GCD()
 
     self.src1.out_msg <> self.gcd.in_A
@@ -64,6 +64,9 @@ if __name__ == '__main__':
       print
 
   print "VISUALIZING"
+  viz = GraphvizDiagram( model )
+  viz.generate()
+  viz.to_diagram('_test_gcd_node.png')
   model = TestHarness( msg_list_1, msg_list_2, msg_list_3 )
   model.elaborate()
   viz = GraphvizDiagram( model )
@@ -71,11 +74,10 @@ if __name__ == '__main__':
   viz.to_diagram('_test_gcd.png')
   #viz.to_text()
 
-
-  #model = GCD()
-  #model.elaborate()
-  #from pymtl_translate import *
-  #tran = ToVerilog (model)
-  #fd = open('_test_file.v', 'w')
-  #tran.generate(fd)
+  model = GCD()
+  model.elaborate()
+  from pymtl_translate import *
+  tran = ToVerilog (model)
+  fd = open('gcd.v', 'w')
+  tran.generate(fd)
 
