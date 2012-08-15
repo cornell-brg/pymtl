@@ -221,6 +221,59 @@ class DumbA(Model):
       if in_D:
         self.out_D.next = 5
 
+class DumbB(Model):
+  def __init__(self):
+    self.clk   = InPort(1)
+    self.in_A  = InPort(1)
+    self.in_B  = InPort(1)
+    self.in_C  = InPort(1)
+    self.in_D  = InPort(1)
+    self.in_E  = InPort(1)
+    self.in_X  = InPort(1)
+    self.in_Y  = InPort(1)
+    self.out_A = OutPort(1)
+    self.out_B = OutPort(1)
+    self.out_C = OutPort(1)
+    self.out_D = OutPort(1)
+    self.out_E = OutPort(1)
+    self.out_X = OutPort(1)
+    self.out_Y = OutPort(1)
+  @posedge_clk
+  def tick(self):
+    if in_A:
+      self.out_A.next = 5
+    elif in_E:
+      self.out_E.next = 5
+    else:
+      self.out_X.next = 10
+      self.out_Y.next = 10
+      if in_B:
+        self.out_B.next = 5
+        self.out_X.next = 5
+      elif in_C:
+        self.out_C.next = 5
+      elif in_D:
+        self.out_D.next = 5
+      else:
+        if in_A:
+          self.out_A.next = 5
+        elif in_C:
+          self.out_C.next = 5
+        elif in_D:
+          self.out_D.next = 5
+        else:
+          self.out_E.next = 5
+
+        if in_A:
+          self.out_A.next = 5
+        elif in_C:
+          self.out_C.next = 5
+        elif in_D:
+          self.out_D.next = 5
+        else:
+          self.out_E.next = 5
+
+
 class TestDumb(unittest.TestCase):
 
   def setUp(self):
@@ -238,6 +291,12 @@ class TestDumb(unittest.TestCase):
 
   def test_dumb_a(self):
     model = DumbA()
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_dumb_b(self):
+    model = DumbB()
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)

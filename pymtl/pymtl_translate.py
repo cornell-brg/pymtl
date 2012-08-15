@@ -353,6 +353,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     self.block_type  = None
     self.o = o
     self.ident = 0
+    self.elseif = False
 
 
   def visit_FunctionDef(self, node):
@@ -415,49 +416,51 @@ class PyToVerilogVisitor(ast.NodeVisitor):
   def visit_Assign(self, node):
     """Visit all stores to variables."""
     self.write_names = True
-    # TO
+    # TODO: implement multiple left hand targets?
     assert len(node.targets) == 1
     target = node.targets[0]
     target_name, debug = get_target_name(target)
     if debug:
       if self.block_type == 'combinational':
-        print >> self.o, self.ident * ' ', target_name, '=',
+        print >> self.o, (self.ident+2)*" " + target_name, '=',
         self.visit(node.value)
         print >> self.o, ';'
       elif self.block_type == 'posedge_clk':
-        print >> self.o, self.ident * ' ', target_name, '<=',
+        print >> self.o, (self.ident+2)*" " + target_name, '<=',
         self.visit(node.value)
         print >> self.o, ';'
     self.write_names = False
 
   def visit_If(self, node):
     """Visit all if/elif blocks (not else!)."""
-
     # Write out the if block
     self.write_names = True
-    print >> self.o, self.ident*" " + "  if (",
+    if not self.elseif:
+      print >> self.o
+      print >> self.o, self.ident*" " + "  if (",
+    else:
+      print >> self.o, self.ident*" " + "  else if (",
+      self.elseif = False
     self.visit(node.test)
     print >> self.o, " ) begin"
-
     # Write out the body
-    assert len(node.body) == 1
-    self.ident += 2
-    self.visit(node.body[0])
-    self.ident -= 2
-    print >> self.o, self.ident*" " + "  end"
-
-    # Write out any else and elif blocks
-    # TODO: all elif blocks appear as an if nested inside of an else! This
-    #       means the generated code is VERY ugly. FIX!
-    if node.orelse:
-      print >> self.o, self.ident*" " + "  else begin"
-    for orelse in node.orelse:
+    for body in node.body:
       self.ident += 2
-      self.visit(orelse)
+      self.visit(body)
       self.ident -= 2
-    if node.orelse:
+    print >> self.o, self.ident*" " + "  end"
+    # Write out an an elif block
+    if len(node.orelse) == 1 and isinstance(node.orelse[0], _ast.If):
+      self.elseif = True
+      self.visit(node.orelse[0])
+    # Write out an else block
+    elif node.orelse:
+      print >> self.o, self.ident*" " + "  else begin"
+      for orelse in node.orelse:
+        self.ident += 2
+        self.visit(orelse)
+        self.ident -= 2
       print >> self.o, self.ident*" " + "  end"
-
     self.write_names = False
 
   def visit_IfExp(self, node):
