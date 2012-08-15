@@ -477,11 +477,12 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     # TODO: add write_names check, careful...
     assert len(node.ops) == 1
     # TODO: add debug check
-    left_name,  debug = get_target_name(node.left)
-    right_name, debug = get_target_name(node.comparators[0])
+    print >> self.o, "(",
+    self.visit(node.left)
     op_symbol = PyToVerilogVisitor.opmap[type(node.ops[0])]
-    comparison_str = "({0} {1} {2})".format(left_name, op_symbol, right_name)
-    print >> self.o, comparison_str,
+    print >> self.o, op_symbol,
+    self.visit(node.comparators[0])
+    print >> self.o, ")",
 
   def visit_Name(self, node):
     """Visit all variables, convert into Verilog variables."""

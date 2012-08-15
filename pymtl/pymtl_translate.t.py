@@ -273,6 +273,22 @@ class DumbB(Model):
         else:
           self.out_E.next = 5
 
+class FixCompare(Model):
+  def __init__(self):
+    self.clk          = InPort( 1 )
+    self.clear        = InPort( 1 )
+    self.p_data_nbits = 4
+    self.count        = OutPort( self.p_data_nbits )
+    self.c_max_value  = 2**self.p_data_nbits
+  @posedge_clk
+  def seq_logic( self ):
+    if ( self.clear.value ):
+      self.count.next = 0
+    elif ( self.count.value == self.c_max_value - 1 ):
+      self.count.next = 0
+    else:
+      self.count.next = self.count.value + 1
+
 
 class TestDumb(unittest.TestCase):
 
@@ -297,6 +313,12 @@ class TestDumb(unittest.TestCase):
 
   def test_dumb_b(self):
     model = DumbB()
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_fix_compare(self):
+    model = FixCompare()
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
