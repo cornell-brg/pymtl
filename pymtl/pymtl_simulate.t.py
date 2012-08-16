@@ -299,6 +299,76 @@ class TestPosedgeClkSim(unittest.TestCase):
     self.assertEqual( model.reg0.out.value, 0b1111000011001010 )
     self.verify_splitter( model.out, 0b1111000011001010 )
 
+  def test_fanout_one(self):
+    model = FanOutOne(16)
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.reg0.out.value,  0)
+    self.assertEqual( model.out1.value,      0)
+    self.assertEqual( model.out2.value,      0)
+    self.assertEqual( model.out3.value,      0)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value,  8)
+    self.assertEqual( model.out1.value,      8)
+    self.assertEqual( model.out2.value,      8)
+    self.assertEqual( model.out3.value,      8)
+    model.inp.value = 9
+    self.assertEqual( model.reg0.out.value,  8)
+    self.assertEqual( model.out1.value,      8)
+    self.assertEqual( model.out2.value,      8)
+    self.assertEqual( model.out3.value,      8)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+
+  def test_fanout_two(self):
+    model = FanOutTwo(16)
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.reg0.out.value,  0)
+    self.assertEqual( model.out1.value,      0)
+    self.assertEqual( model.out2.value,      0)
+    self.assertEqual( model.out3.value,      0)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value,  8)
+    self.assertEqual( model.out1.value,      0)
+    self.assertEqual( model.out2.value,      0)
+    self.assertEqual( model.out3.value,      0)
+    model.inp.value = 9
+    self.assertEqual( model.reg0.out.value,  8)
+    self.assertEqual( model.out1.value,      0)
+    self.assertEqual( model.out2.value,      0)
+    self.assertEqual( model.out3.value,      0)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,      8)
+    self.assertEqual( model.out2.value,      8)
+    self.assertEqual( model.out3.value,      8)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+
 class TestCombAndPosedge(unittest.TestCase):
 
   def setup_sim(self, model):

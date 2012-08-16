@@ -156,6 +156,51 @@ class RegisterSplitter(Model):
     for i, x in enumerate(self.out):
       self.split.out[i] <> x
 
+class FanOutOne(Model):
+  def __init__(self, bits):
+    # Ports
+    self.inp  = InPort(bits)
+    self.out1 = OutPort(bits)
+    self.out2 = OutPort(bits)
+    self.out3 = OutPort(bits)
+    # TODO: how to handle clock?
+    self.clk = InPort(1)
+    # Submodules
+    self.reg0 = Register(bits)
+    # Connections
+    self.inp <> self.reg0.inp
+    self.reg0.out <> self.out1
+    self.reg0.out <> self.out2
+    self.reg0.out <> self.out3
+    self.clk <> self.reg0.clk
+
+class FanOutTwo(Model):
+  def __init__(self, bits):
+    # Ports
+    self.inp  = InPort(bits)
+    self.out1 = OutPort(bits)
+    self.out2 = OutPort(bits)
+    self.out3 = OutPort(bits)
+    # TODO: how to handle clock?
+    self.clk = InPort(1)
+    # Submodules
+    self.reg0 = Register(bits)
+    self.reg1 = Register(bits)
+    self.reg2 = Register(bits)
+    self.reg3 = Register(bits)
+    # Connections
+    self.inp <> self.reg0.inp
+    self.reg0.out <> self.reg1.inp
+    self.reg0.out <> self.reg2.inp
+    self.reg0.out <> self.reg3.inp
+    self.reg1.out <> self.out1
+    self.reg2.out <> self.out2
+    self.reg3.out <> self.out3
+    self.clk <> self.reg0.clk
+    self.clk <> self.reg1.clk
+    self.clk <> self.reg2.clk
+    self.clk <> self.reg3.clk
+
 
 class FullAdder(Model):
   def __init__(self):

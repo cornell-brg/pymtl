@@ -119,26 +119,46 @@ class ToVerilog(object):
         # TODO: handle TempVal?
         if port.inst_connection or not port.ext_connections:
           continue
-        # There should never be more than one external connection...
-        assert len(port.ext_connections) == 1
-        c = port.ext_connections[0]
-        # If this submodule port connects to a port in the target, then no
-        # wire should be necessary
-        if c.parent.name == target.name:
-          port.inst_connection = port.ext_connections[0]
-        # Otherwise we need to create an implicit wire
-        else:
-          if isinstance(port, OutPort):
-            wire_name = '{0}_{1}_TO_{2}_{3}'.format(
-                submodule.name, port.name, c.parent.name, c.name)
+        # TODO: handle case where we connect to submodule and parent
+        # We only have one external connection
+        if len(port.ext_connections) == 1:
+          c = port.ext_connections[0]
+          # If this submodule port connects to a port in the target, then no
+          # wire should be necessary
+          if c.parent.name == target.name:
+            port.inst_connection = port.ext_connections[0]
+          # Otherwise we need to create an implicit wire
           else:
-            wire_name = '{0}_{1}_TO_{2}_{3}'.format(
-                c.parent.name, c.name, submodule.name, port.name)
+            # Our connection has fanout, delay wire creation.  Allow the module
+            # with the fanout to create the wire.
+            if len(c.ext_connections) > 1:
+              continue
+            # Create the wire, check the direction for naming.
+            if isinstance(port, OutPort):
+              wire_name = '{0}_{1}_TO_{2}_{3}'.format(
+                  submodule.name, port.name, c.parent.name, c.name)
+            else:
+              wire_name = '{0}_{1}_TO_{2}_{3}'.format(
+                  c.parent.name, c.name, submodule.name, port.name)
+            wire = Wire(wire_name, port.width)
+            assert port.inst_connection == None
+            assert c.inst_connection == None
+            c.inst_connection = wire
+            port.inst_connection = wire
+            # TODO: move to gen_wire_decls
+            print >> o, '  %s' % self.wire_to_str(wire)
+        # We have multiple external connections.  Connect one to many.
+        else:
+          assert isinstance(port, OutPort)
+          wire_name = '{0}_{1}_TO_many'.format( submodule.name, port.name )
           wire = Wire(wire_name, port.width)
-          c.inst_connection = wire
+          assert port.inst_connection == None
           port.inst_connection = wire
-          # TODO: move to gen_wire_decls
+          for c in port.ext_connections:
+            assert c.inst_connection == None
+            c.inst_connection = wire
           print >> o, '  %s' % self.wire_to_str(wire)
+
 
   # TODO: rename wire decls to be reg decls?
   def gen_wire_decls(self, wires, o):
@@ -170,6 +190,8 @@ class ToVerilog(object):
     # Utility function
     def needs_assign(port, connection):
       # TODO: clean this up...
+      if isinstance(connection.inst_connection, Wire):
+        return True
       if isinstance(connection, Slice):
         return port.parent == connection.connections[0].parent
       else:
@@ -181,7 +203,10 @@ class ToVerilog(object):
       for assign in output_assigns:
         # Handle the case where we are assigning to a slice of an output port
         # instead of an entire output port
-        if assign.type == 'output':
+        if isinstance(assign.inst_connection, Wire):
+          left  = port.name
+          right = assign.inst_connection.name
+        elif assign.type == 'output':
           assert len(assign.connections) == 1
           left  = assign.name
           right = assign.connections[0].name

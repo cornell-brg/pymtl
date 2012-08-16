@@ -134,6 +134,18 @@ class TestPosedgeClkVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
+  def test_fanout_one(self):
+    model = FanOutOne(16)
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_fanout_two(self):
+    model = FanOutTwo(16)
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
   #def tearDown(self):
   #  os.remove(self.temp_file)
 
