@@ -30,6 +30,11 @@ class LogicSim():
     ----------
     model: an instantiated MTL model (Model).
     """
+    # TODO: call elaborate on model?
+    if not model.is_elaborated():
+      msg  = "cannot initialize {0} tool.\n".format(self.__class__.__name__)
+      msg += "Provided model has not been elaborated yet!!!"
+      raise Exception(msg)
     self.model = model
     self.num_cycles      = 0
     self.vnode_callbacks = {}

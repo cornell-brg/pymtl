@@ -438,6 +438,9 @@ class Model(object):
     for submodule in self._submodules:
       submodule.recurse_connections()
 
+  def is_elaborated(self):
+    return hasattr(self, 'class_name')
+
 
 # Decorators
 

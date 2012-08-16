@@ -14,6 +14,11 @@ class GraphvizDiagram(object):
     ----------
     model: an instantiated MTL model (Model).
     """
+    # TODO: call elaborate on model?
+    if not model.is_elaborated():
+      msg  = "cannot initialize {0} tool.\n".format(self.__class__.__name__)
+      msg += "Provided model has not been elaborated yet!!!"
+      raise Exception(msg)
     self.model = model
     self.g     = pgv.AGraph(directed=True,rankdir='LR')
     #self.g.graph_attr['rankdir'] = 'LR'
@@ -125,6 +130,8 @@ if __name__ == '__main__':
     RegisterWrapper(4),
     RegisterChain(4),
     RegisterSplitter(4),
+    FanOutOne(8),
+    FanOutTwo(8),
     FullAdder(),
     # TODO: fix filling on some of the ports...
     RippleCarryAdder(4),
