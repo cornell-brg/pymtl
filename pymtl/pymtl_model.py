@@ -365,18 +365,24 @@ class Model(object):
   """
 
   def elaborate(self):
-    self.recurse_elaborate('toplevel')
+    self.model_classes = set()
+    self.recurse_elaborate(self, 'toplevel')
     self.recurse_connections()
+    for c in self.model_classes:
+      import inspect, ast
+      src = inspect.getsource( c )
+      tree = ast.parse( src )
+      CheckSyntaxVisitor().visit(tree)
 
-  def recurse_elaborate(self, iname):
+  def recurse_elaborate(self, target, iname):
     """Elaborate a MTL model (construct hierarchy, name modules, etc.).
 
     The elaborate() function must be called on an instantiated toplevel module
     before it is passed to any MTL tools!
     """
     # TODO: call elaborate() in the tools?
-    target = self
     # TODO: better way to set the name?
+    self.model_classes.add( target.__class__ )
     target.class_name = target.__class__.__name__
     target.parent = None
     target.name = iname
@@ -410,7 +416,7 @@ class Model(object):
     elif isinstance(obj, Model):
       # TODO: change obj.type to obj.inst_type?
       obj.type = obj.__class__.__name__
-      obj.recurse_elaborate( name )
+      self.recurse_elaborate( obj, name )
       obj.parent = target
       target._submodules += [obj]
     # We've found a constant assigned to a global variable.
@@ -441,8 +447,64 @@ class Model(object):
   def is_elaborated(self):
     return hasattr(self, 'class_name')
 
+#------------------------------------------------------------------------
+# Visitors
+#------------------------------------------------------------------------
 
+import ast, _ast
+class CheckSyntaxVisitor(ast.NodeVisitor):
+  """Hidden class checking the validity of port and wire accesses.
+
+  In order to translate synchronous @posedge_clk blocks into Verilog, we need
+  to declare certain wires as registers.  This visitor looks for all ports
+  written in @posedge_clk blocks so they can be declared as reg types.
+
+  TODO: factor this and SensitivityListVisitor into same file?
+  """
+  def __init__(self):
+    """Construct a new SensitivityListVisitor."""
+    self.decorator = None
+
+  def visit_FunctionDef(self, node):
+    """Visit all functions, but only parse those with special decorators."""
+    if not node.decorator_list:
+      return
+    elif node.decorator_list[0].id in ['posedge_clk', 'combinational']:
+      # Visit each line in the function, translate one at a time.
+      self.decorator = node.decorator_list[0].id
+      for x in node.body:
+        self.visit(x)
+
+  def visit_Assign(self, node):
+    """Visit all assigns, searches for synchronous (registered) stores."""
+    # @posedge_clk annotation, find nodes we need toconvert to registers
+    #if self.add_regs and isinstance(node.op, _ast.LShift):
+    assert len(node.targets) == 1
+    target = node.targets[0]
+    target_name, debug = self.get_target_name(target)
+    if   self.decorator == 'posedge_clk' and debug == 'value':
+      raise Exception("ERROR: writing .value in an @posedge_clk block!")
+    elif self.decorator == 'combinational' and debug == 'next':
+      raise Exception("ERROR: writing .next in an @combinational block!")
+
+  def get_target_name(self, node):
+    # Is this an attribute? Follow it until we find a Name.
+    name = []
+    while isinstance(node, _ast.Attribute):
+      name += [node.attr]
+      node = node.value
+    # We've found the Name.
+    assert isinstance(node, _ast.Name)
+    name += [node.id]
+    # If the target does not access .value or .next, tell the code to ignore it.
+    if name[0] in ['value', 'next']:
+      return '.'.join( name[::-1][1:-1] ), name[0]
+    else:
+      return name[0], False
+
+#------------------------------------------------------------------------
 # Decorators
+#------------------------------------------------------------------------
 
 def combinational(func):
   # Normally a decorator returns a wrapped function, but here we return
