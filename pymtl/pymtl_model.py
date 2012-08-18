@@ -370,9 +370,17 @@ class Model(object):
     self.recurse_connections()
     for c in self.model_classes:
       import inspect, ast
-      src = inspect.getsource( c )
+      src = inspect.getsource( c.__class__ )
       tree = ast.parse( src )
-      CheckSyntaxVisitor().visit(tree)
+      accesses = set()
+      CheckSyntaxVisitor(accesses).visit(tree)
+      for a in accesses:
+        if a[0] in vars(c):
+          ptr = c.__getattribute__( a[0] )
+          if isinstance( ptr, OutPort )   and a[1] == 'value':
+            raise Exception("ERROR: writing .value in an @posedge_clk block!")
+          elif isinstance( ptr, OutPort ) and a[1] == 'next':
+            raise Exception("ERROR: writing .next in an @combinational block!")
 
   def recurse_elaborate(self, target, iname):
     """Elaborate a MTL model (construct hierarchy, name modules, etc.).
@@ -382,7 +390,7 @@ class Model(object):
     """
     # TODO: call elaborate() in the tools?
     # TODO: better way to set the name?
-    self.model_classes.add( target.__class__ )
+    self.model_classes.add( target )
     target.class_name = target.__class__.__name__
     target.parent = None
     target.name = iname
@@ -461,8 +469,9 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
 
   TODO: factor this and SensitivityListVisitor into same file?
   """
-  def __init__(self):
+  def __init__(self, accesses):
     """Construct a new SensitivityListVisitor."""
+    self.accesses = accesses
     self.decorator = None
 
   def visit_FunctionDef(self, node):
@@ -482,10 +491,12 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     assert len(node.targets) == 1
     target = node.targets[0]
     target_name, debug = self.get_target_name(target)
+    # We are writing value inside of a posedge_clk, raise exception
     if   self.decorator == 'posedge_clk' and debug == 'value':
-      raise Exception("ERROR: writing .value in an @posedge_clk block!")
+      self.accesses.add( (target_name, debug) )
+    # We are writing next inside of a combinational, raise exception
     elif self.decorator == 'combinational' and debug == 'next':
-      raise Exception("ERROR: writing .next in an @combinational block!")
+      self.accesses.add( (target_name, debug) )
 
   def get_target_name(self, node):
     # Is this an attribute? Follow it until we find a Name.
