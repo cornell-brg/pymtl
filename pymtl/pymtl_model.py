@@ -351,6 +351,8 @@ class Wire(object):
     self.width = width
     self.type  = "wire"
 
+class LogicSyntaxError(Exception):
+  pass
 
 class Model(object):
 
@@ -377,10 +379,13 @@ class Model(object):
       for a in accesses:
         if a[0] in vars(c):
           ptr = c.__getattribute__( a[0] )
-          if isinstance( ptr, OutPort )   and a[1] == 'value':
-            raise Exception("ERROR: writing .value in an @posedge_clk block!")
-          elif isinstance( ptr, OutPort ) and a[1] == 'next':
-            raise Exception("ERROR: writing .next in an @combinational block!")
+          # Check InPort vs OutPort?
+          if   isinstance( ptr, Port ) and a[1] == 'wr_value':
+            raise LogicSyntaxError("Writing .value in an @posedge_clk block!")
+          elif isinstance( ptr, Port ) and a[1] == 'wr_next':
+            raise LogicSyntaxError("Writing .next in an @combinational block!")
+          elif isinstance( ptr, Port ) and a[1] == 'rd_next':
+            raise LogicSyntaxError("Reading .next inside logic block not allowed!")
 
   def recurse_elaborate(self, target, iname):
     """Elaborate a MTL model (construct hierarchy, name modules, etc.).
@@ -483,20 +488,31 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
       self.decorator = node.decorator_list[0].id
       for x in node.body:
         self.visit(x)
+      self.decorator = None
+
+  def visit_Attribute(self, node):
+    """Visit all attributes, convert into Verilog variables."""
+    #target_name, debug = self.get_target_name(node)
+    if self.decorator:
+      target_name, debug = self.get_target_name(node)
+      if  self.decorator == 'posedge_clk' and debug == 'value':
+        self.accesses.add( (target_name, 'rd_'+debug) )
+      elif self.decorator == 'combinational' and debug == 'next':
+        self.accesses.add( (target_name, 'rd_'+debug) )
 
   def visit_Assign(self, node):
     """Visit all assigns, searches for synchronous (registered) stores."""
-    # @posedge_clk annotation, find nodes we need toconvert to registers
-    #if self.add_regs and isinstance(node.op, _ast.LShift):
+    # Only works for one lefthand target
     assert len(node.targets) == 1
     target = node.targets[0]
     target_name, debug = self.get_target_name(target)
     # We are writing value inside of a posedge_clk, raise exception
     if   self.decorator == 'posedge_clk' and debug == 'value':
-      self.accesses.add( (target_name, debug) )
+      self.accesses.add( (target_name, 'wr_'+debug) )
     # We are writing next inside of a combinational, raise exception
     elif self.decorator == 'combinational' and debug == 'next':
-      self.accesses.add( (target_name, debug) )
+      self.accesses.add( (target_name, 'wr_'+debug) )
+    self.visit( node.value )
 
   def get_target_name(self, node):
     # Is this an attribute? Follow it until we find a Name.
