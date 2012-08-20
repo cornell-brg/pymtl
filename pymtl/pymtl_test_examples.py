@@ -7,8 +7,8 @@ class Rotator(Model):
     self.out = [ OutPort(1) for x in xrange(bits) ]
     # Connections
     for i in xrange(bits - 1):
-      self.inp[i] <> self.out[i+1]
-    self.inp[-1] <> self.out[0]
+      connect( self.inp[i], self.out[i+1] )
+    connect( self.inp[-1], self.out[0] )
 
 # TODO: broken!
 #class RotatorSlice(Model):
@@ -28,7 +28,7 @@ class SimpleSplitter(Model):
     self.out = [ OutPort(1) for x in xrange(bits) ]
     # Connections
     for i in xrange(bits):
-      self.out[i] <> self.inp[i]
+      connect( self.out[i], self.inp[i] )
 
 
 class ComplexSplitter(Model):
@@ -39,7 +39,7 @@ class ComplexSplitter(Model):
     # Connections
     outport_num = 0
     for i in xrange(0, bits, groupings):
-      self.out[outport_num] <> self.inp[i:i+groupings]
+      connect( self.out[outport_num], self.inp[i:i+groupings] )
       outport_num += 1
 
 
@@ -50,7 +50,7 @@ class SimpleMerger(Model):
     self.out = OutPort(bits)
     # Connections
     for i in xrange(bits):
-      self.out[i] <> self.inp[i]
+      connect( self.out[i], self.inp[i] )
 
 
 class ComplexMerger(Model):
@@ -61,7 +61,7 @@ class ComplexMerger(Model):
     # Connections
     inport_num = 0
     for i in xrange(0, bits, groupings):
-      self.out[i:i+groupings] <> self.inp[inport_num]
+      connect( self.out[i:i+groupings], self.inp[inport_num] )
       inport_num += 1
 
 
@@ -71,7 +71,7 @@ class OneWire(Model):
     self.inp = InPort(bits)
     self.out = OutPort(bits)
     # Connections
-    self.inp <> self.out
+    connect( self.inp, self.out )
 
 
 class OneWireWrapped(Model):
@@ -84,8 +84,8 @@ class OneWireWrapped(Model):
     #       To! Check for this?
     self.wire0 = OneWire(bits)
     # Connections
-    self.inp <> self.wire0.inp
-    self.out <> self.wire0.out
+    connect( self.inp, self.wire0.inp )
+    connect( self.out, self.wire0.out )
 
 
 class Register(Model):
@@ -112,9 +112,9 @@ class RegisterWrapper(Model):
     #       To! Check for this?
     self.reg0 = Register(bits)
     # Connections
-    self.inp <> self.reg0.inp
-    self.out <> self.reg0.out
-    self.clk <> self.reg0.clk
+    connect( self.inp, self.reg0.inp )
+    connect( self.out, self.reg0.out )
+    connect( self.clk, self.reg0.clk )
 
 
 class RegisterChain(Model):
@@ -129,13 +129,13 @@ class RegisterChain(Model):
     self.reg2 = Register(bits)
     self.reg3 = Register(bits)
     # Connections
-    self.inp <> self.reg1.inp
-    self.reg1.out <> self.reg2.inp
-    self.reg2.out <> self.reg3.inp
-    self.reg3.out <> self.out
-    self.clk <> self.reg1.clk
-    self.clk <> self.reg2.clk
-    self.clk <> self.reg3.clk
+    connect( self.inp     , self.reg1.inp )
+    connect( self.reg1.out, self.reg2.inp )
+    connect( self.reg2.out, self.reg3.inp )
+    connect( self.reg3.out, self.out      )
+    connect( self.clk     , self.reg1.clk )
+    connect( self.clk     , self.reg2.clk )
+    connect( self.clk     , self.reg3.clk )
 
 
 class RegisterSplitter(Model):
@@ -150,11 +150,11 @@ class RegisterSplitter(Model):
     self.reg0  = Register(bits)
     self.split = ComplexSplitter(bits, groupings)
     # Connections
-    self.clk      <> self.reg0.clk
-    self.inp      <> self.reg0.inp
-    self.reg0.out <> self.split.inp
+    connect( self.clk     , self.reg0.clk  )
+    connect( self.inp     , self.reg0.inp  )
+    connect( self.reg0.out, self.split.inp )
     for i, x in enumerate(self.out):
-      self.split.out[i] <> x
+      connect( self.split.out[i], x )
 
 class FanOutOne(Model):
   def __init__(self, bits):
@@ -168,11 +168,11 @@ class FanOutOne(Model):
     # Submodules
     self.reg0 = Register(bits)
     # Connections
-    self.inp <> self.reg0.inp
-    self.reg0.out <> self.out1
-    self.reg0.out <> self.out2
-    self.reg0.out <> self.out3
-    self.clk <> self.reg0.clk
+    connect( self.inp     , self.reg0.inp )
+    connect( self.reg0.out, self.out1     )
+    connect( self.reg0.out, self.out2     )
+    connect( self.reg0.out, self.out3     )
+    connect( self.clk     , self.reg0.clk )
 
 class FanOutTwo(Model):
   def __init__(self, bits):
@@ -189,17 +189,17 @@ class FanOutTwo(Model):
     self.reg2 = Register(bits)
     self.reg3 = Register(bits)
     # Connections
-    self.inp <> self.reg0.inp
-    self.reg0.out <> self.reg1.inp
-    self.reg0.out <> self.reg2.inp
-    self.reg0.out <> self.reg3.inp
-    self.reg1.out <> self.out1
-    self.reg2.out <> self.out2
-    self.reg3.out <> self.out3
-    self.clk <> self.reg0.clk
-    self.clk <> self.reg1.clk
-    self.clk <> self.reg2.clk
-    self.clk <> self.reg3.clk
+    connect( self.inp     , self.reg0.inp )
+    connect( self.reg0.out, self.reg1.inp )
+    connect( self.reg0.out, self.reg2.inp )
+    connect( self.reg0.out, self.reg3.inp )
+    connect( self.reg1.out, self.out1     )
+    connect( self.reg2.out, self.out2     )
+    connect( self.reg3.out, self.out3     )
+    connect( self.clk     , self.reg0.clk )
+    connect( self.clk     , self.reg1.clk )
+    connect( self.clk     , self.reg2.clk )
+    connect( self.clk     , self.reg3.clk )
 
 
 class FullAdder(Model):
@@ -230,12 +230,12 @@ class RippleCarryAdder(Model):
     self.adders = [ FullAdder() for i in xrange(bits) ]
     # Connections
     for i in xrange(bits):
-      self.adders[i].in0 <> self.in0[i]
-      self.adders[i].in1 <> self.in1[i]
-      self.adders[i].sum <> self.sum[i]
+      connect( self.adders[i].in0, self.in0[i] )
+      connect( self.adders[i].in1, self.in1[i] )
+      connect( self.adders[i].sum, self.sum[i] )
     for i in xrange(bits-1):
-      self.adders[i+1].cin <> self.adders[i].cout
-    self.adders[0].cin <> 0
+      connect( self.adders[i+1].cin, self.adders[i].cout )
+    connect( self.adders[0].cin, 0 )
 
 
 class Incrementer(Model):
@@ -276,10 +276,10 @@ class CountIncr(Model):
     self.incr  = Incrementer()
     self.cntr  = Counter(max)
     # Connections
-    self.clk   <> self.cntr.clk
-    self.clear <> self.cntr.clear
-    self.cntr.count <> self.incr.inp
-    self.incr.out <> self.count
+    connect( self.clk       , self.cntr.clk   )
+    connect( self.clear     , self.cntr.clear )
+    connect( self.cntr.count, self.incr.inp   )
+    connect( self.incr.out  , self.count      )
 
 class RegIncr(Model):
   def __init__(self):
@@ -291,10 +291,10 @@ class RegIncr(Model):
     self.reg0 = Register(32)
     self.incr = Incrementer()
     # Connections
-    self.clk <> self.reg0.clk
-    self.inp <> self.reg0.inp
-    self.reg0.out <> self.incr.inp
-    self.incr.out <> self.out
+    connect( self.clk     , self.reg0.clk )
+    connect( self.inp     , self.reg0.inp )
+    connect( self.reg0.out, self.incr.inp )
+    connect( self.incr.out, self.out      )
 
 class IncrReg(Model):
   def __init__(self):
@@ -306,10 +306,10 @@ class IncrReg(Model):
     self.incr = Incrementer()
     self.reg0 = Register(32)
     # Connections
-    self.clk <> self.reg0.clk
-    self.inp <> self.incr.inp
-    self.incr.out <> self.reg0.inp
-    self.reg0.out <> self.out
+    connect( self.clk     , self.reg0.clk )
+    connect( self.inp     , self.incr.inp )
+    connect( self.incr.out, self.reg0.inp )
+    connect( self.reg0.out, self.out      )
 
 class GCD(Model):
   def __init__(self):

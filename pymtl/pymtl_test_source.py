@@ -80,9 +80,9 @@ class TestHarness(Model):
   def __init__( self, n, msg_list ):
     self.src  = TestSource(n, msg_list)
     self.sink = TestSink(n, msg_list)
-    self.src.out_msg <> self.sink.in_msg
-    self.src.out_val <> self.sink.in_val
-    self.src.out_rdy <> self.sink.in_rdy
+    connect( self.src.out_msg, self.sink.in_msg )
+    connect( self.src.out_val, self.sink.in_val )
+    connect( self.src.out_rdy, self.sink.in_rdy )
 
   def done( self ):
     return self.src.done() and self.sink.done()

@@ -13,17 +13,17 @@ class TestHarness(Model):
     self.sink = TestSink(16, msg_list_3 )
     self.gcd  = GCD()
 
-    self.src1.out_msg <> self.gcd.in_A
-    self.src2.out_msg <> self.gcd.in_B
+    connect( self.src1.out_msg, self.gcd.in_A )
+    connect( self.src2.out_msg, self.gcd.in_B )
     # TODO: really should be anding src1 and src2 val...
     #       will need to change this if we have random delay
-    self.src1.out_val <> self.gcd.in_val
-    self.src1.out_rdy <> self.gcd.in_rdy
-    self.src2.out_rdy <> self.gcd.in_rdy
+    connect( self.src1.out_val, self.gcd.in_val )
+    connect( self.src1.out_rdy, self.gcd.in_rdy )
+    connect( self.src2.out_rdy, self.gcd.in_rdy )
 
-    self.gcd.out     <> self.sink.in_msg
-    self.gcd.out_val <> self.sink.in_val
-    self.gcd.out_rdy <> self.sink.in_rdy
+    connect( self.gcd.out    , self.sink.in_msg )
+    connect( self.gcd.out_val, self.sink.in_val )
+    connect( self.gcd.out_rdy, self.sink.in_rdy )
 
   def done( self ):
     return self.src1.done() and self.src2.done() and self.sink.done()

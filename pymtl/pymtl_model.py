@@ -111,8 +111,7 @@ class Port(object):
       self.type, self.width, self.name  = self.parse( str )
 
   def __ne__(self, target):
-    """Connection operator (<>), calls connect()."""
-    self.connect(target)
+    raise Exception("The <> operator is deprecated!  Use connect() instead.")
 
   def __getitem__(self, addr):
     """Bitfield access ([]). Returns a VeriogSlice object.
@@ -238,8 +237,7 @@ class TempVal(object):
     self.is_reg = False
 
   def __ne__(self, target):
-    """Connection operator (<>), calls connect()."""
-    self.connect(target)
+    raise Exception("The <> operator is deprecated!  Use connect() instead.")
 
   def __getitem__(self, addr):
     """Bitfield access ([]). Returns a VeriogSlice object.
@@ -458,6 +456,22 @@ class Model(object):
 
   def is_elaborated(self):
     return hasattr(self, 'class_name')
+
+  #def __getattribute__(self, name):
+  #  x = object.__getattribute__(self, name)
+  #  if isinstance(x, Port):
+  #    print name, "is a port!"
+  #  return x
+
+#------------------------------------------------------------------------
+# Utility Function
+#------------------------------------------------------------------------
+
+def connect( port_A, port_B):
+  if isinstance(port_A, Slice):
+    port_B.connect( port_A )
+  else:
+    port_A.connect( port_B )
 
 #------------------------------------------------------------------------
 # Visitors
