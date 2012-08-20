@@ -380,12 +380,15 @@ class Model(object):
         if a[0] in vars(c):
           ptr = c.__getattribute__( a[0] )
           # Check InPort vs OutPort?
-          if   isinstance( ptr, Port ) and a[1] == 'wr_value':
+          if   isinstance( ptr, (Port,TempVal) ) and a[1] == 'wr_value':
             raise LogicSyntaxError("Writing .value in an @posedge_clk block!")
-          elif isinstance( ptr, Port ) and a[1] == 'wr_next':
+          elif isinstance( ptr, (Port,TempVal) ) and a[1] == 'wr_next':
             raise LogicSyntaxError("Writing .next in an @combinational block!")
-          elif isinstance( ptr, Port ) and a[1] == 'rd_next':
+          elif isinstance( ptr, (Port,TempVal) ) and a[1] == 'rd_next':
             raise LogicSyntaxError("Reading .next inside logic block not allowed!")
+          elif isinstance( ptr, (Port,TempVal) ) and a[1] == False:
+            print "WARNING: reading from Port without .value.",
+            print "Module: {0}  Port: {1}".format( c.class_name, ptr.name)
 
   def recurse_elaborate(self, target, iname):
     """Elaborate a MTL model (construct hierarchy, name modules, etc.).
@@ -445,14 +448,10 @@ class Model(object):
 
   def recurse_connections(self):
     for port in self._ports:
-      #print port.parent.name, port.name
       for c in port.connections:
-        #print '  :::', c.parent.name, c.name,
         if c.parent == port.parent or c.parent in self._submodules:
-          #print 'int'
           port.int_connections += [c]
         else:
-          #print 'ext'
           port.ext_connections += [c]
     for submodule in self._submodules:
       submodule.recurse_connections()
@@ -496,9 +495,11 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     if self.decorator:
       target_name, debug = self.get_target_name(node)
       if  self.decorator == 'posedge_clk' and debug == 'value':
-        self.accesses.add( (target_name, 'rd_'+debug) )
+        self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
       elif self.decorator == 'combinational' and debug == 'next':
-        self.accesses.add( (target_name, 'rd_'+debug) )
+        self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
+      else:
+        self.accesses.add( (target_name, debug, node.lineno) )
 
   def visit_Assign(self, node):
     """Visit all assigns, searches for synchronous (registered) stores."""
@@ -508,10 +509,10 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     target_name, debug = self.get_target_name(target)
     # We are writing value inside of a posedge_clk, raise exception
     if   self.decorator == 'posedge_clk' and debug == 'value':
-      self.accesses.add( (target_name, 'wr_'+debug) )
+      self.accesses.add( (target_name, 'wr_'+debug, node.lineno) )
     # We are writing next inside of a combinational, raise exception
     elif self.decorator == 'combinational' and debug == 'next':
-      self.accesses.add( (target_name, 'wr_'+debug) )
+      self.accesses.add( (target_name, 'wr_'+debug, node.lineno) )
     self.visit( node.value )
 
   def get_target_name(self, node):
