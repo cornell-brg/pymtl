@@ -17,11 +17,11 @@ class GCD(Model):
     self.out_rdy = InPort(1)
 
     # Wires
-    self.state      = TempVal(2)
-    self.A_reg      = TempVal(16)
-    self.B_reg      = TempVal(16)
-    self.is_A_lt_B  = TempVal(1)
-    self.is_B_neq_0 = TempVal(1)
+    self.state      = Wire(2)
+    self.A_reg      = Wire(16)
+    self.B_reg      = Wire(16)
+    self.is_A_lt_B  = Wire(1)
+    self.is_B_neq_0 = Wire(1)
 
     # Constants
     self.IDLE   = 0

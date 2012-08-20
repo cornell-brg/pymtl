@@ -321,11 +321,11 @@ class GCD(Model):
     self.out     = OutPort(32)
     self.out_val = OutPort(1)
     # Wires
-    self.state      = TempVal(2)
-    self.A_reg      = TempVal(32)
-    self.B_reg      = TempVal(32)
-    self.is_A_lt_B  = TempVal(1)
-    self.is_B_neq_0 = TempVal(1)
+    self.state      = Wire(2)
+    self.A_reg      = Wire(32)
+    self.B_reg      = Wire(32)
+    self.is_A_lt_B  = Wire(1)
+    self.is_B_neq_0 = Wire(1)
     # Constants
     self.IDLE   = 0
     self.ACTIVE = 1
@@ -398,7 +398,7 @@ class GCD(Model):
 #    self.in1 = InPort(bits)
 #    self.out = OutPort(bits)
 #    # Submodules
-#    self.sum = Wire(bits)
+#    self.sum = OneWire(bits)
 #  @combinational
 #  def tick(self):
 #    in0 = self.in0

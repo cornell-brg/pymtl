@@ -110,7 +110,7 @@ class ToVerilog(object):
     The MTL modeling framework allows you to make certain connections between
     ports without needing to explicitly declare intermediate wires. In some
     cases Verilog requires these wire declarations to be explicit. This utility
-    method attempts to infer these implicit wires, generate Wire objects
+    method attempts to infer these implicit wires, generate ImplicitWire objects
     from them, and then add them to the connectivity lists of the necessary
     ports.
 
@@ -121,7 +121,7 @@ class ToVerilog(object):
     """
     for submodule in target._submodules:
       for port in submodule._ports:
-        # TODO: handle TempVal?
+        # TODO: handle Wire?
         if port.inst_connection or not port.ext_connections:
           continue
         # TODO: handle case where we connect to submodule and parent
@@ -145,7 +145,7 @@ class ToVerilog(object):
             else:
               wire_name = '{0}_{1}_TO_{2}_{3}'.format(
                   c.parent.name, c.name, submodule.name, port.name)
-            wire = Wire(wire_name, port.width)
+            wire = ImplicitWire(wire_name, port.width)
             assert port.inst_connection == None
             assert c.inst_connection == None
             c.inst_connection = wire
@@ -156,7 +156,7 @@ class ToVerilog(object):
         else:
           assert isinstance(port, OutPort)
           wire_name = '{0}_{1}_TO_many'.format( submodule.name, port.name )
-          wire = Wire(wire_name, port.width)
+          wire = ImplicitWire(wire_name, port.width)
           assert port.inst_connection == None
           port.inst_connection = wire
           for c in port.ext_connections:
@@ -195,7 +195,7 @@ class ToVerilog(object):
     # Utility function
     def needs_assign(port, connection):
       # TODO: clean this up...
-      if isinstance(connection.inst_connection, Wire):
+      if isinstance(connection.inst_connection, ImplicitWire):
         return True
       if isinstance(connection, Slice):
         return port.parent == connection.connections[0].parent
@@ -208,7 +208,7 @@ class ToVerilog(object):
       for assign in output_assigns:
         # Handle the case where we are assigning to a slice of an output port
         # instead of an entire output port
-        if isinstance(assign.inst_connection, Wire):
+        if isinstance(assign.inst_connection, ImplicitWire):
           left  = port.name
           right = assign.inst_connection.name
         elif assign.type == 'output':
@@ -319,6 +319,7 @@ class ToVerilog(object):
 def get_target_name(node):
   # Is this a number/constant? Return it.
   if isinstance(node, _ast.Num):
+    raise Exception("Ran into a number/constant!")
     return node.n, True
   # Is this an attribute? Follow it until we find a Name.
   name = []

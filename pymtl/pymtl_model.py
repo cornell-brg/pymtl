@@ -127,10 +127,7 @@ class Port(object):
     return Slice(self, addr)
 
   def connect(self, target):
-    """Creates a connection with a Port or Slice.
-
-    TODO: implement connections with a Wire?
-    """
+    """Creates a connection with a Port or Slice."""
     # TODO: throw an exception if the other object is not a Port
     # TODO: support wires?
     # TODO: do we want to use an assert here
@@ -210,7 +207,7 @@ class OutPort(Port):
     super(OutPort, self).__init__('output', width)
 
 
-class TempVal(object):
+class Wire(object):
 
   """Hidden base class implementing a module port."""
 
@@ -328,17 +325,12 @@ class Constant(object):
     self.parent = None
 
 
-class Wire(object):
+class ImplicitWire(object):
 
-  """User visible (?) class to represent wire/connection objects.
-
-  Not sure if VerilogWire objects should be user visible, or should always be
-  inferred based on connectivity/logic.  Currently only inferred based on
-  connectivity...
-  """
+  """Hidden class to represent wires implicitly generated from connections."""
 
   def __init__(self, name, width):
-    """Constructor for a VerilogWire object.
+    """Constructor for a ImplicitWire object.
 
     Parameters
     ----------
@@ -378,13 +370,13 @@ class Model(object):
         if a[0] in vars(c):
           ptr = c.__getattribute__( a[0] )
           # Check InPort vs OutPort?
-          if   isinstance( ptr, (Port,TempVal) ) and a[1] == 'wr_value':
+          if   isinstance( ptr, (Port,Wire) ) and a[1] == 'wr_value':
             raise LogicSyntaxError("Writing .value in an @posedge_clk block!")
-          elif isinstance( ptr, (Port,TempVal) ) and a[1] == 'wr_next':
+          elif isinstance( ptr, (Port,Wire) ) and a[1] == 'wr_next':
             raise LogicSyntaxError("Writing .next in an @combinational block!")
-          elif isinstance( ptr, (Port,TempVal) ) and a[1] == 'rd_next':
+          elif isinstance( ptr, (Port,Wire) ) and a[1] == 'rd_next':
             raise LogicSyntaxError("Reading .next inside logic block not allowed!")
-          elif isinstance( ptr, (Port,TempVal) ) and a[1] == False:
+          elif isinstance( ptr, (Port,Wire) ) and a[1] == False:
             print "WARNING: reading from Port without .value.",
             print "Module: {0}  Port: {1}".format( c.class_name, ptr.name)
 
@@ -420,7 +412,7 @@ class Model(object):
       target._ports += [obj]
       if obj.type == 'input':
         target._senses += [obj]
-    elif isinstance(obj, TempVal):
+    elif isinstance(obj, Wire):
       obj.name = name
       obj.parent = target
       target._wires += [obj]
