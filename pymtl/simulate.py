@@ -15,7 +15,7 @@ from model import Slice, Constant
 debug_hierarchy = False
 
 
-class LogicSim():
+class SimulationTool():
 
   """User visible class implementing a tool for simulating MTL models.
 
@@ -91,14 +91,7 @@ class LogicSim():
           self.event_queue.appendleft(func)
 
   def generate(self):
-    """Construct a simulator for the provided model by adding necessary hooks.
-
-    Parameters
-    ----------
-    model: the MTL model (Model) to add simulator hooks to. If None is
-           provided, the model provided in the LogicSim constructor is used
-           (toplevel).
-    """
+    """Construct a simulator for the provided model by adding necessary hooks."""
     # build up the node_groups data structure
     self.find_node_groupings(self.model)
 

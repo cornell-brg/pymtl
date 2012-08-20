@@ -13,7 +13,7 @@ debug_verbose = False
 #    def elab():
 #      return True
 #    self.reg.is_elaborated = elab
-#    sim = LogicSim(self.reg)
+#    sim = SimulationTool(self.reg)
 #    #self.reg.sim = sim
 #
 #  def test_init_write(self):
@@ -42,7 +42,7 @@ class TestSlicesSim(unittest.TestCase):
     else:
       model = ComplexSplitter(bits, groups)
     model.elaborate()
-    sim = LogicSim(model)
+    sim = SimulationTool(model)
     sim.generate()
     #if debug_verbose: debug_utils.port_walk(model)
     return model, sim
@@ -94,7 +94,7 @@ class TestSlicesSim(unittest.TestCase):
     else:
       model = ComplexMerger(bits, groups)
     model.elaborate()
-    sim = LogicSim(model)
+    sim = SimulationTool(model)
     sim.generate()
     return model, sim
 
@@ -140,7 +140,7 @@ class TestCombinationalSim(unittest.TestCase):
 
   def setup_sim(self, model):
     model.elaborate()
-    sim = LogicSim(model)
+    sim = SimulationTool(model)
     sim.generate()
     if debug_verbose:
       debug_utils.port_walk(model)
@@ -208,7 +208,7 @@ class TestPosedgeClkSim(unittest.TestCase):
 
   def setup_sim(self, model):
     model.elaborate()
-    sim = LogicSim(model)
+    sim = SimulationTool(model)
     sim.generate()
     if debug_verbose:
       debug_utils.port_walk(model)
@@ -376,7 +376,7 @@ class TestCombAndPosedge(unittest.TestCase):
 
   def setup_sim(self, model):
     model.elaborate()
-    sim = LogicSim(model)
+    sim = SimulationTool(model)
     sim.generate()
     if debug_verbose:
       debug_utils.port_walk(model)

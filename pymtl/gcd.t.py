@@ -39,7 +39,7 @@ if __name__ == '__main__':
   model = TestHarness( msg_list_1, msg_list_2, msg_list_3 )
   model.elaborate()
 
-  sim = LogicSim( model )
+  sim = SimulationTool( model )
   sim.generate()
   cycle_count = 0
   print "{0:6} {1:3} {2:3} {3:4} | {4:3} {5:3} {6:4}".format(

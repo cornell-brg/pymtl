@@ -152,7 +152,7 @@ if __name__ == '__main__':
     plot.generate()
     plot.to_diagram('_{0}.png'.format(cname))
 
-    sim = LogicSim(model)
+    sim = SimulationTool(model)
     sim.generate()
     plot.generate()
     plot.to_diagram('_{0}_vnode.png'.format(cname))
