@@ -8,7 +8,7 @@ from model import *
 import inspect
 import ast, _ast
 
-class ToVerilog(object):
+class VerilogTranslationTool(object):
 
   """User visible class for translating MTL models into Verilog source."""
 

@@ -77,7 +77,7 @@ if __name__ == '__main__':
   model = GCD()
   model.elaborate()
   from translate import *
-  tran = ToVerilog (model)
+  tran = VerilogTranslationTool (model)
   fd = open('gcd.v', 'w')
   tran.generate(fd)
 

@@ -19,7 +19,7 @@ class TestSlicesVerilog(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = ToVerilog(model)
+    code = VerilogTranslationTool(model)
     code.generate( self.fd )
     self.fd.close()
 
@@ -63,7 +63,7 @@ class TestCombinationalVerilog(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = ToVerilog(model)
+    code = VerilogTranslationTool(model)
     code.generate( self.fd )
     self.fd.close()
 
@@ -106,7 +106,7 @@ class TestPosedgeClkVerilog(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = ToVerilog(model)
+    code = VerilogTranslationTool(model)
     code.generate( self.fd )
     self.fd.close()
 
@@ -160,7 +160,7 @@ class TestCombAndPosedgeVerilog(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = ToVerilog(model)
+    code = VerilogTranslationTool(model)
     code.generate( self.fd )
     self.fd.close()
 
@@ -313,7 +313,7 @@ class TestDumb(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = ToVerilog(model)
+    code = VerilogTranslationTool(model)
     code.generate( self.fd )
     self.fd.close()
 
