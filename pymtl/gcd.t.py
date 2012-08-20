@@ -63,15 +63,15 @@ if __name__ == '__main__':
     else:
       print
 
-  print "VISUALIZING"
-  viz = GraphvizDiagram( model )
-  viz.generate()
-  viz.to_diagram('_test_gcd_node.png')
-  model = TestHarness( msg_list_1, msg_list_2, msg_list_3 )
-  model.elaborate()
-  viz = GraphvizDiagram( model )
-  viz.generate()
-  viz.to_diagram('_test_gcd.png')
+  #print "VISUALIZING"
+  #viz = VisualizationTool( model )
+  #viz.generate()
+  #viz.to_diagram('_test_gcd_node.png')
+  #model = TestHarness( msg_list_1, msg_list_2, msg_list_3 )
+  #model.elaborate()
+  #viz = VisualizationTool( model )
+  #viz.generate()
+  #viz.to_diagram('_test_gcd.png')
   #viz.to_text()
 
   model = GCD()

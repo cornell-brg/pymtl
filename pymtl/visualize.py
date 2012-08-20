@@ -4,7 +4,7 @@ from simulate import *
 import debug_utils
 
 
-class GraphvizDiagram(object):
+class VisualizationTool(object):
   """User visible class for translating MTL models into Verilog source."""
 
   def __init__(self, model):
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     model.elaborate()
     cname = model.class_name
     print "* Visualizing " + cname
-    plot = GraphvizDiagram(model)
+    plot = VisualizationTool(model)
     plot.generate()
     plot.to_diagram('_{0}.png'.format(cname))
 
