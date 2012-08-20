@@ -2,8 +2,8 @@
 # Test Source
 #=========================================================================
 
-from pymtl_model import *
-from pymtl_simulate import LogicSim
+from model import *
+from simulate import LogicSim
 
 class TestSource (Model):
 

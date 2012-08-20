@@ -1,9 +1,9 @@
 
-from pymtl_gcd import GCD
-from pymtl_test_source import TestSource, TestSink
-from pymtl_model import *
-from pymtl_simulate import *
-from pymtl_visualize import *
+from gcd import GCD
+from test_source import TestSource, TestSink
+from model import *
+from simulate import *
+from visualize import *
 
 class TestHarness(Model):
 
@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
   model = GCD()
   model.elaborate()
-  from pymtl_translate import *
+  from translate import *
   tran = ToVerilog (model)
   fd = open('gcd.v', 'w')
   tran.generate(fd)

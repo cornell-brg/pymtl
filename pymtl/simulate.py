@@ -9,7 +9,7 @@ import ast, _ast
 import inspect
 import pprint
 
-from pymtl_model import Slice, Constant
+from model import Slice, Constant
 
 # TODO: make commandline parameter
 debug_hierarchy = False
@@ -185,8 +185,8 @@ class LogicSim():
     src = inspect.getsource( model_class )
     tree = ast.parse( src )
     #print
-    #import rtler_debug
-    #rtler_debug.print_ast(tree)
+    #import debug_utils
+    #debug_utils.print_ast(tree)
     comb_loads = set()
     reg_stores = set()
 

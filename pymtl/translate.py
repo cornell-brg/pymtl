@@ -4,7 +4,7 @@ This module contains classes which translate between MTL models and various
 hardware description languages, such as Verilog.
 """
 
-from pymtl_model import *
+from model import *
 import inspect
 import ast, _ast
 
@@ -310,8 +310,8 @@ class ToVerilog(object):
     for x,y in inspect.getmembers(v, inspect.isclass):
       src = inspect.getsource( y )
       tree = ast.parse( src )
-      #import pymtl_debug
-      #pymtl_debug.print_ast( tree )
+      #import debug_utils
+      #debug_utils.print_ast( tree )
       PyToVerilogVisitor( o ).visit(tree)
 
 

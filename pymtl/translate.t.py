@@ -2,10 +2,10 @@ import unittest
 import sys
 import os
 
-from pymtl_test_examples import *
-from pymtl_translate import *
+from test_examples import *
+from translate import *
 
-import pymtl_debug
+import debug_utils
 debug_verbose = False
 
 class TestSlicesVerilog(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestSlicesVerilog(unittest.TestCase):
 
   def translate(self, model):
     model.elaborate()
-    if debug_verbose: pymtl_debug.port_walk(model)
+    if debug_verbose: debug_utils.port_walk(model)
     code = ToVerilog(model)
     code.generate( self.fd )
     self.fd.close()
@@ -62,7 +62,7 @@ class TestCombinationalVerilog(unittest.TestCase):
 
   def translate(self, model):
     model.elaborate()
-    if debug_verbose: pymtl_debug.port_walk(model)
+    if debug_verbose: debug_utils.port_walk(model)
     code = ToVerilog(model)
     code.generate( self.fd )
     self.fd.close()
@@ -105,7 +105,7 @@ class TestPosedgeClkVerilog(unittest.TestCase):
 
   def translate(self, model):
     model.elaborate()
-    if debug_verbose: pymtl_debug.port_walk(model)
+    if debug_verbose: debug_utils.port_walk(model)
     code = ToVerilog(model)
     code.generate( self.fd )
     self.fd.close()
@@ -159,7 +159,7 @@ class TestCombAndPosedgeVerilog(unittest.TestCase):
 
   def translate(self, model):
     model.elaborate()
-    if debug_verbose: pymtl_debug.port_walk(model)
+    if debug_verbose: debug_utils.port_walk(model)
     code = ToVerilog(model)
     code.generate( self.fd )
     self.fd.close()
@@ -312,7 +312,7 @@ class TestDumb(unittest.TestCase):
 
   def translate(self, model):
     model.elaborate()
-    if debug_verbose: pymtl_debug.port_walk(model)
+    if debug_verbose: debug_utils.port_walk(model)
     code = ToVerilog(model)
     code.generate( self.fd )
     self.fd.close()

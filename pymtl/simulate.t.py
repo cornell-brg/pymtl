@@ -1,9 +1,9 @@
 import unittest
 
-from pymtl_test_examples import *
-from pymtl_simulate import *
+from test_examples import *
+from simulate import *
 
-import pymtl_debug
+import debug_utils
 debug_verbose = False
 
 #class TestNode(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestSlicesSim(unittest.TestCase):
     model.elaborate()
     sim = LogicSim(model)
     sim.generate()
-    #if debug_verbose: rtler_debug.port_walk(model)
+    #if debug_verbose: debug_utils.port_walk(model)
     return model, sim
 
   def verify_splitter(self, port_array, expected):
@@ -143,7 +143,7 @@ class TestCombinationalSim(unittest.TestCase):
     sim = LogicSim(model)
     sim.generate()
     if debug_verbose:
-      pymtl_debug.port_walk(model)
+      debug_utils.port_walk(model)
     return sim
 
   def test_onewire(self):
@@ -211,7 +211,7 @@ class TestPosedgeClkSim(unittest.TestCase):
     sim = LogicSim(model)
     sim.generate()
     if debug_verbose:
-      pymtl_debug.port_walk(model)
+      debug_utils.port_walk(model)
     return sim
 
   def test_register(self):
@@ -379,7 +379,7 @@ class TestCombAndPosedge(unittest.TestCase):
     sim = LogicSim(model)
     sim.generate()
     if debug_verbose:
-      pymtl_debug.port_walk(model)
+      debug_utils.port_walk(model)
     return sim
 
   def test_incrementer(self):

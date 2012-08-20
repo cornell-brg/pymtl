@@ -1,4 +1,4 @@
-import pymtl_model
+import model
 import sys
 import ast, _ast
 
@@ -12,7 +12,7 @@ def port_walk(tgt, spaces=0, o=sys.stdout):
         fullname = y.parent.name+'.'+fullname
       print >> o, spaces*' ', '   knctn: {0} {1}'.format(type(y), fullname)
     print >> o, spaces*' ', '   value:', x._value, #x.value
-    if isinstance(x._value, pymtl_model.Slice):
+    if isinstance(x._value, model.Slice):
       # TODO: handle this case in VerilogSlice instead?
       if x._value._value:
         print >> o, x.value
@@ -42,6 +42,10 @@ class PrintVisitor(ast.NodeVisitor):
 
   def generic_visit(self, node):
 
+    #off = "??"
+    #if hasattr(node, 'col_offset'):
+    #  off = node.col_offset
+    #print "{0:2}".format(off),
     if isinstance(node, _ast.FunctionDef):
       print "FUNCTIONDEF:",
     elif isinstance(node, _ast.arguments):
@@ -49,7 +53,7 @@ class PrintVisitor(ast.NodeVisitor):
     elif isinstance(node, _ast.Assign):
       print "ASSIGN:     ",
     elif isinstance(node, _ast.If):
-      print "IFELSE:     ",
+      print "IFELSE: {0:4}".format(node.lineno),
     else:
       print "            ",
 

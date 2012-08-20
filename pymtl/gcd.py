@@ -1,4 +1,4 @@
-from pymtl_model import *
+from model import *
 
 class GCD(Model):
 

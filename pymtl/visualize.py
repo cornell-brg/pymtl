@@ -1,7 +1,7 @@
 import pygraphviz as pgv
-from pymtl_model import *
-from pymtl_simulate import *
-import pymtl_debug
+from model import *
+from simulate import *
+import debug_utils
 
 
 class GraphvizDiagram(object):
@@ -111,12 +111,12 @@ def dump_ast():
   model_class = model.__class__
   src = inspect.getsource( model_class )
   tree = ast.parse( src )
-  pymtl_debug.print_ast( tree )
+  debug_utils.print_ast( tree )
 
 
 if __name__ == '__main__':
 
-  from pymtl_test_examples import *
+  from test_examples import *
   model_list = [
     Rotator(8),
     #RotatorSlice(8), # DNE!
@@ -158,6 +158,6 @@ if __name__ == '__main__':
     plot.to_diagram('_{0}_vnode.png'.format(cname))
 
     # Debugging
-    #pymtl_debug.port_walk( model )
+    #debug_utils.port_walk( model )
     #plot.to_text()
 

@@ -1,5 +1,5 @@
 import unittest
-from pymtl_model import *
+from model import *
 
 class BadNextAssign(Model):
   def __init__(self):
