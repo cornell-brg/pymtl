@@ -392,6 +392,8 @@ class Model(object):
     target.class_name = target.__class__.__name__
     target.parent = None
     target.name = iname
+    target._exe_seq_logic = False
+    target._exe_comb_logic = False
     target._wires = []
     target._ports = []
     target._submodules = []

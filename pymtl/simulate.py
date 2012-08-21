@@ -9,10 +9,12 @@ import ast, _ast
 import inspect
 import pprint
 
-from model import Slice, Constant
+from model import *
 
 # TODO: make commandline parameter
 debug_hierarchy = False
+# TODO: hacky and temporary
+dump_vcd = False
 
 
 class SimulationTool():
@@ -55,6 +57,9 @@ class SimulationTool():
     while self.event_queue:
       func = self.event_queue.pop()
       func()
+
+    if dump_vcd:
+      print "#%s" % self.num_cycles
 
     # Call all rising edge triggered functions
     for func in self.posedge_clk_fns:
@@ -104,6 +109,8 @@ class SimulationTool():
       for port in group:
         if not port._value:
           port._value = value
+        if dump_vcd:
+          value.signals.add( port )
 
     # walk the AST of each module to create sensitivity lists and add registers
     self.infer_sensitivity_list(self.model)
@@ -282,6 +289,7 @@ class Node(object):
     # instead, otherwise certain modules break. Better way to do this?
     self._value = value
     self.is_reg = False
+    self.signals = set()
 
   @property
   def value(self):
@@ -314,5 +322,12 @@ class Node(object):
   def clock(self):
     """Update value to store contents of next. Should only be called by sim."""
     self.value = self._next
+    if dump_vcd:
+      for signal in self.signals:
+        if not isinstance(signal, Slice):
+          print "s%s %s" % (str(signal.value), signal._code)
+      #    print self.value, self._next
+      #    print "s%s %s %s %s %d" % (str(self._next), signal.parent.name, signal.name, signal.is_reg, signal.width)
+
 
 
