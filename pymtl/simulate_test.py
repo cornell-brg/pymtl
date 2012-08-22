@@ -6,31 +6,6 @@ from simulate import *
 import debug_utils
 debug_verbose = False
 
-#class TestNode(unittest.TestCase):
-#
-#  def setUp(self):
-#    self.reg = Node(8)
-#    def elab():
-#      return True
-#    self.reg.is_elaborated = elab
-#    sim = SimulationTool(self.reg)
-#    #self.reg.sim = sim
-#
-#  def test_init_write(self):
-#    self.reg.next = 2
-#    self.assertEqual( self.reg.value, 0 )
-#    self.reg.clock()
-#    self.assertEqual( self.reg.value, 2 )
-#
-#  def test_second_write(self):
-#    self.reg.next = 5
-#    self.reg.clock()
-#    self.reg.next = 7
-#    self.reg.next = 8
-#    self.assertEqual( self.reg.value, 5 )
-#    self.reg.clock()
-#    self.assertEqual( self.reg.value, 8 )
-
 
 class TestSlicesSim(unittest.TestCase):
 
@@ -198,10 +173,6 @@ class TestCombinationalSim(unittest.TestCase):
     self.assertEqual( model.sum.value, 13 )
     sim.cycle()
     self.assertEqual( model.sum.value, 1 )
-
-  def test_ripple_carry(self):
-    model = RippleCarryAdder(4)
-    sim = self.setup_sim(model)
 
 
 class TestPosedgeClkSim(unittest.TestCase):
