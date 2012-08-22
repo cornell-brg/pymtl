@@ -11,7 +11,7 @@ def build(ctx):
            'pymtl/translate_test.py',
            'pymtl/visualize.py',
            'pymtl/gcd_test.py',
-           #'pymtl/vcd.t.py',
+           'pymtl/vcd_test.py',
           ]
 
   for test in tests:

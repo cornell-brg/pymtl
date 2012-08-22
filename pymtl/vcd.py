@@ -78,72 +78,98 @@ def _writeVcdSigs(f, hierarchy):
     for s in siglist:
         # TODO: edited this
         #s._printVcd() # initial value
-        print >> f, "s%s %s %s" % (hex(s._val), s._code, s.name)
+        # DEBUG
+        #print >> f, "s%s %s %s" % (hex(s._val), s._code, s.name)
+        # TODO: do real initialization
+        if s.width == 1:
+          print >> f, "%d%s" % (0, s._code)
+        else:
+          print >> f, "s%s %s" % (hex(s._val), s._code)
     print >> f, "$end"
 
 ########################################################################
 # End Code Borrowed from MyHDL 0.7
 ########################################################################
+import sys
 
-from test_examples import *
-model = RegisterSplitter(8)
-model.elaborate()
-
-h = []
-
-class Temp():
+class _MyHDLNode():
+  """A hacky container for use in the MyHDL VCD dump methods."""
   pass
 
-# Hacky attempt at generating a hierarchy in the form MyHDL code expects
-def recurse_models(m, l):
-  t = Temp()
-  t.name = m.name
-  t.level = l
-  t.sigdict = {}
-  t.memdict = {}
-  # get signals
-  for sig in m._ports:
-    sig._val = 8  # TODO: temporary
-    sig._tracing = None  # TODO: temporary
-    t.sigdict[sig.name] = sig
-  # add to hierarchy
-  h.append( t )
 
-  # recurse
-  for subm in m._submodules:
-    recurse_models( subm, l+1 )
+class VCDTool():
 
-recurse_models(model, 0)
-#for x in h:
-#  print x.name, x.level
+  """User visible class implementing a tool for generating VCD output.
 
-# Print out our VCD
-import sys
-_writeVcdHeader( sys.stdout )
-_writeVcdSigs( sys.stdout, h )
+  This class takes a SimulationTool instance and augments it to generate
+  VCD output.
+  """
+  def __init__(self, simulator, outfile=None):
+    self.simulator = simulator
+    self.hierarchy = []
+    if not outfile:
+      self.o = sys.stdout
+    else:
+      self.o = outfile
 
-import simulate
+    self.recurse_models( simulator.model, 0 )
+
+    _writeVcdHeader( self.o )
+    _writeVcdSigs( self.o, self.hierarchy )
+
+  # Hacky attempt at generating a hierarchy in the form MyHDL code expects
+  def recurse_models(self, model, level):
+    t = _MyHDLNode()
+    t.name = model.name
+    t.level = level
+    t.sigdict = {}
+    t.memdict = {}
+    # get signals
+    for signal in model._ports:
+      signal._val = 8  # TODO: temporary
+      signal._tracing = None  # TODO: temporary
+      t.sigdict[signal.name] = signal
+    # add to hierarchy
+    self.hierarchy.append( t )
+
+    # recurse
+    for submodel in model._submodules:
+      self.recurse_models( submodel, level+1 )
+
+
+from test_examples import *
 from simulate import *
-simulate.dump_vcd = True
-sim = SimulationTool(model)
-sim.generate()
-model.inp.value = 0b11110000
-sim.cycle()
-#print "  IN",  model.inp.value
-#print "  .",   model.reg0.out.value
-#print "  OUT", [x.value for x in model.out]
-model.inp.value = 0b1111000011001010
-sim.cycle()
-#print "  IN",  model.inp.value
-#print "  .",   model.reg0.out.value
-#print "  OUT", [x.value for x in model.out]
-model.inp.value = 0b0000000000000000
-sim.cycle()
-#print "  IN",  model.inp.value
-#print "  .",   model.reg0.out.value
-#print "  OUT", [x.value for x in model.out]
-model.inp.value = 0b0000011111110000
-sim.cycle()
-#print "  IN",  model.inp.value
-#print "  .",   model.reg0.out.value
-#print "  OUT", [x.value for x in model.out]
+
+
+
+
+
+if __name__ == '__main__':
+  #model = RegisterSplitter(8)
+  model = FullAdder()
+  model.elaborate()
+
+  import simulate
+  simulate.dump_vcd = True
+
+  sim = SimulationTool(model)
+  sim.generate()
+  VCDTool(sim)
+
+
+
+  #model.inp.value = 0b11110000
+  #sim.cycle()
+  #model.inp.value = 0b1111000011001010
+  #sim.cycle()
+  #model.inp.value = 0b0000000000000000
+  #sim.cycle()
+  #model.inp.value = 0b0000011111110000
+  #sim.cycle()
+
+  import itertools
+  for x,y,z in itertools.product([0,1], [0,1], [0,1]):
+    model.in0.value = x
+    model.in1.value = y
+    model.cin.value = z
+    sim.cycle()

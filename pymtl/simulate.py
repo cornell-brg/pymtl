@@ -15,6 +15,7 @@ from model import *
 debug_hierarchy = False
 # TODO: hacky and temporary
 dump_vcd = False
+o = None
 
 
 class SimulationTool():
@@ -59,7 +60,7 @@ class SimulationTool():
       func()
 
     if dump_vcd:
-      print "#%s" % self.num_cycles
+      print >>o, "#%s" % self.num_cycles
 
     # Call all rising edge triggered functions
     for func in self.posedge_clk_fns:
@@ -306,6 +307,13 @@ class Node(object):
     if self._value != value:
       self.sim.add_event(self)
       self._value = value
+      if dump_vcd:
+        for signal in self.signals:
+          if not isinstance(signal, (Slice,Wire)):
+            if signal.width == 1:
+              print >>o, "%d%s" % (signal.value, signal._code)
+            else:
+              print >>o, "s%s %s" % (signal.value, signal._code)
 
   @property
   def next(self):
@@ -322,12 +330,3 @@ class Node(object):
   def clock(self):
     """Update value to store contents of next. Should only be called by sim."""
     self.value = self._next
-    if dump_vcd:
-      for signal in self.signals:
-        if not isinstance(signal, Slice):
-          print "s%s %s" % (str(signal.value), signal._code)
-      #    print self.value, self._next
-      #    print "s%s %s %s %s %d" % (str(self._next), signal.parent.name, signal.name, signal.is_reg, signal.width)
-
-
-

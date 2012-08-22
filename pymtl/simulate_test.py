@@ -10,16 +10,20 @@ debug_verbose = False
 class TestSlicesSim(unittest.TestCase):
 
   # Splitters
+  def setup_sim(self, model):
+    model.elaborate()
+    sim = SimulationTool(model)
+    sim.generate()
+    if debug_verbose:
+      debug_utils.port_walk(model)
+    return sim
 
   def setup_splitter(self, bits, groups=None):
     if not groups:
       model = SimpleSplitter(bits)
     else:
       model = ComplexSplitter(bits, groups)
-    model.elaborate()
-    sim = SimulationTool(model)
-    sim.generate()
-    #if debug_verbose: debug_utils.port_walk(model)
+    sim = self.setup_sim(model)
     return model, sim
 
   def verify_splitter(self, port_array, expected):
@@ -68,9 +72,7 @@ class TestSlicesSim(unittest.TestCase):
       model = SimpleMerger(bits)
     else:
       model = ComplexMerger(bits, groups)
-    model.elaborate()
-    sim = SimulationTool(model)
-    sim.generate()
+    sim = self.setup_sim(model)
     return model, sim
 
   def set_ports(self, port_array, value):
