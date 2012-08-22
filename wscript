@@ -6,21 +6,14 @@ out = 'build_out'
 def configure(ctx):
   print('→ configuring the project in ' + ctx.path.abspath())
 
-def options(ctx):
-  ctx.add_option('--tgt', action='store', default=False)
-
 def build(ctx):
-  tests = ['pymtl/simulate.t.py',
-           'pymtl/translate.t.py',
+  tests = ['pymtl/simulate_test.py',
+           'pymtl/translate_test.py',
            'pymtl/visualize.py',
-           'pymtl/gcd.t.py',
+           'pymtl/gcd_test.py',
+           #'pymtl/vcd.t.py',
           ]
 
-  if not ctx.options.tgt:
-    for test in tests:
-      ctx(rule='python ${SRC}', source=test)
-  else:
-    test = 'pymtl/{0}.t.py'.format( ctx.options.tgt )
-    ctx(rule='python ${SRC}', source=test)
-
+  for test in tests:
+    ctx(rule='python ${SRC} --verbose', source=test)
 
