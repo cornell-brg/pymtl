@@ -109,6 +109,8 @@ class VCDTool():
     self.hierarchy = []
     if not outfile:
       self.o = sys.stdout
+    elif isinstance(outfile, str):
+      self.o = open( outfile, 'w' )
     else:
       self.o = outfile
 

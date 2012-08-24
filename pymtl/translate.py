@@ -39,6 +39,8 @@ class VerilogTranslationTool(object):
     """
     if not target:
       target = self.model
+    if isinstance(o, str):
+      o = open(o, 'w')
     print >> o, 'module %s' % target.class_name
     # Find Registers
     self.get_regs( target, o )
