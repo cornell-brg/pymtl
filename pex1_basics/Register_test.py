@@ -18,6 +18,10 @@ class TestRegister(unittest.TestCase):
       self.sim.cycle()
       self.assertEqual( self.model.out.value, value )
 
+  def test_vcd(self):
+    VCDTool( self.sim, 'Register_test.vcd' )
+    self.test_one()
+
   def test_translate(self):
     self.hdl = VerilogTranslationTool( self.model )
     self.hdl.generate( 'Register.v' )

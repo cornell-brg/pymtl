@@ -28,6 +28,10 @@ class TestSorterBehavioralLevel(unittest.TestCase):
       for i, value in enumerate(test):
         self.assertEquals( self.model.out[ i ].value, value )
 
+  def test_vcd(self):
+    VCDTool( self.sim, 'SorterBehavioralLevel_test.vcd' )
+    self.test_one()
+
   # Not Translatable!
   #def test_translate(self):
   #  self.hdl = VerilogTranslationTool( self.model )

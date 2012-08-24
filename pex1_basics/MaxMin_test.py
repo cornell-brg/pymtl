@@ -26,5 +26,14 @@ class TestMaxMin(unittest.TestCase):
       self.assertEquals( self.model.min.value, test[0] )
       self.assertEquals( self.model.max.value, test[1] )
 
+  def test_vcd(self):
+    VCDTool( self.sim, 'MaxMin_test.vcd' )
+    self.test_one()
+
+  def test_translate(self):
+    self.hdl = VerilogTranslationTool( self.model )
+    self.hdl.generate( 'MaxMin.v' )
+
+
 if __name__ == '__main__':
   unittest.main()

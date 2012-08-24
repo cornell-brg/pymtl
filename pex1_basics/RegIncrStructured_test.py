@@ -16,6 +16,10 @@ class TestRegIncrStructured(unittest.TestCase):
       self.sim.cycle()
       self.assertEqual( self.model.out.value, i + 1 )
 
+  def test_vcd(self):
+    VCDTool( self.sim, 'RegIncrStructured_test.vcd' )
+    self.test_one()
+
   def test_translate(self):
     self.hdl = VerilogTranslationTool( self.model )
     self.hdl.generate( 'RegIncrStructured.v' )
