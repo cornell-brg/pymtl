@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 top = '.'
-out = 'build_out'
+out = 'build'
 
 def configure(ctx):
   print('→ configuring the project in ' + ctx.path.abspath())
@@ -13,15 +13,9 @@ def configure(ctx):
 #------------------------------------------------------------------------
 # TODO: look into variants in wafbook, section 6.2.2
 def build(bld):
-  tests = ['pymtl/simulate_test.py',
-           'pymtl/translate_test.py',
-           'pymtl/visualize.py',
-           'pymtl/gcd_test.py',
-           'pymtl/vcd_test.py',
-          ]
-
+  tests = bld.path.ant_glob('pymtl/*_test.py')
   for test in tests:
-    name = test.replace('pymtl/', '').replace('.py','')
+    name = str(test).replace('.py','')
     bld(rule='python ${SRC} --verbose', source=test, name=name)
 
 
