@@ -113,6 +113,9 @@ class VCDTool():
       self.o = open( outfile, 'w' )
     else:
       self.o = outfile
+    import simulate
+    simulate.dump_vcd = True
+    simulate.o = self.o
 
     self.recurse_models( simulator.model, 0 )
 

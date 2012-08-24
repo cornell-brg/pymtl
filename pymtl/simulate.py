@@ -110,8 +110,8 @@ class SimulationTool():
       for port in group:
         if not port._value:
           port._value = value
-        if dump_vcd:
-          value.signals.add( port )
+        #if dump_vcd:
+        value.signals.add( port )
 
     # walk the AST of each module to create sensitivity lists and add registers
     self.infer_sensitivity_list(self.model)
