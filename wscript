@@ -13,7 +13,6 @@ def configure(ctx):
 #------------------------------------------------------------------------
 # TODO: look into variants in wafbook, section 6.2.2
 def build(bld):
-  print bld.cmd
   tests = ['pymtl/simulate_test.py',
            'pymtl/translate_test.py',
            'pymtl/visualize.py',
@@ -25,6 +24,17 @@ def build(bld):
     name = test.replace('pymtl/', '').replace('.py','')
     bld(rule='python ${SRC} --verbose', source=test, name=name)
 
+
+def pex1(bld):
+  tests = bld.path.ant_glob('pex1_basics/*_test.py')
+  for test in tests:
+    name = str(test).replace('.py','')
+    bld(rule='python ${SRC} --verbose', source=test, name=name)
+
+from waflib.Build import BuildContext
+class pex1_class(BuildContext):
+  cmd = 'pex1'
+  fun = 'pex1'
 
 #------------------------------------------------------------------------
 # iverilog build definitions
