@@ -529,6 +529,9 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     while isinstance(node, _ast.Attribute):
       name += [node.attr]
       node = node.value
+    # Subscript, do nothing
+    if isinstance(node, _ast.Subscript):
+      return None, False
     # We've found the Name.
     assert isinstance(node, _ast.Name)
     name += [node.id]
