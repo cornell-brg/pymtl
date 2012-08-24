@@ -28,6 +28,11 @@ class TestSorterBehavioralLevel(unittest.TestCase):
       for i, value in enumerate(test):
         self.assertEquals( self.model.out[ i ].value, value )
 
+  # Not Translatable!
+  #def test_translate(self):
+  #  self.hdl = VerilogTranslationTool( self.model )
+  #  self.hdl.generate( 'SorterBehavioralLevel.v' )
+
 
 if __name__ == '__main__':
   unittest.main()

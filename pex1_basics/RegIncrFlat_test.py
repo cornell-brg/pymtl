@@ -16,5 +16,10 @@ class TestRegIncrFlat(unittest.TestCase):
       self.sim.cycle()
       self.assertEqual( self.model.out.value, i + 1 )
 
+  def test_translate(self):
+    self.hdl = VerilogTranslationTool( self.model )
+    self.hdl.generate( 'RegIncrFlat.v' )
+
+
 if __name__ == '__main__':
   unittest.main()

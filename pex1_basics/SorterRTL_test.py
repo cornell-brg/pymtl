@@ -9,6 +9,7 @@ class TestSorterRTL(unittest.TestCase):
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
     self.sim.generate()
+    #VCDTool( self.sim )
 
   def test_one(self):
     test_cases = [ [ 1, 2, 3, 4],
@@ -34,6 +35,10 @@ class TestSorterRTL(unittest.TestCase):
         test.sort()
         for j, value in enumerate(test):
           self.assertEquals( self.model.out[ j ].value, value )
+
+  def test_translate(self):
+    self.hdl = VerilogTranslationTool( self.model )
+    self.hdl.generate( 'SorterRTL.v' )
 
 
 if __name__ == '__main__':

@@ -35,6 +35,11 @@ class TestSorterCycleLevel(unittest.TestCase):
         for j, value in enumerate(test):
           self.assertEquals( self.model.out[ j ].value, value )
 
+  # Not Translatable!
+  #def test_translate(self):
+  #  self.hdl = VerilogTranslationTool( self.model )
+  #  self.hdl.generate( 'SorterCycleLevel.v' )
+
 
 if __name__ == '__main__':
   unittest.main()

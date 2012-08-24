@@ -2,7 +2,7 @@ import unittest
 
 from RegIncrStructured import *
 
-class TestRegIncrFlat(unittest.TestCase):
+class TestRegIncrStructured(unittest.TestCase):
 
   def setUp(self):
     self.model = RegIncrStructured( 16 )
@@ -15,6 +15,11 @@ class TestRegIncrFlat(unittest.TestCase):
       self.model.in_.value = i
       self.sim.cycle()
       self.assertEqual( self.model.out.value, i + 1 )
+
+  def test_translate(self):
+    self.hdl = VerilogTranslationTool( self.model )
+    self.hdl.generate( 'RegIncrStructured.v' )
+
 
 if __name__ == '__main__':
   unittest.main()

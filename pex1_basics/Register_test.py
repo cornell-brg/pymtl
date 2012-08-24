@@ -18,5 +18,10 @@ class TestRegister(unittest.TestCase):
       self.sim.cycle()
       self.assertEqual( self.model.out.value, value )
 
+  def test_translate(self):
+    self.hdl = VerilogTranslationTool( self.model )
+    self.hdl.generate( 'Register.v' )
+
+
 if __name__ == '__main__':
   unittest.main()
