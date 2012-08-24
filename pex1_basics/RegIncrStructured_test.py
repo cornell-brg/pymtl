@@ -10,7 +10,7 @@ class TestRegIncrFlat(unittest.TestCase):
     self.sim = SimulationTool( self.model )
     self.sim.generate()
 
-  def test_regincr(self):
+  def test_one(self):
     for i in range(10):
       self.model.in_.value = i
       self.sim.cycle()
