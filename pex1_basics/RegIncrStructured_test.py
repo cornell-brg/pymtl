@@ -8,7 +8,6 @@ class TestRegIncrStructured(unittest.TestCase):
     self.model = RegIncrStructured( 16 )
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
-    self.sim.generate()
 
   def test_one(self):
     for i in range(10):
@@ -22,7 +21,7 @@ class TestRegIncrStructured(unittest.TestCase):
 
   def test_translate(self):
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.generate( 'RegIncrStructured.v' )
+    self.hdl.translate( 'RegIncrStructured.v' )
 
 
 if __name__ == '__main__':

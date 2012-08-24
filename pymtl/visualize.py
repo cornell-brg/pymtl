@@ -153,7 +153,6 @@ if __name__ == '__main__':
     plot.to_diagram('_{0}.png'.format(cname))
 
     sim = SimulationTool(model)
-    sim.generate()
     plot.generate()
     plot.to_diagram('_{0}_vnode.png'.format(cname))
 

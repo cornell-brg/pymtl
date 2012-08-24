@@ -8,7 +8,6 @@ class TestSorterRTL(unittest.TestCase):
     self.model = SorterRTL()
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
-    self.sim.generate()
 
   def test_one(self):
     test_cases = [ [ 1, 2, 3, 4],
@@ -41,7 +40,7 @@ class TestSorterRTL(unittest.TestCase):
 
   def test_translate(self):
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.generate( 'SorterRTL.v' )
+    self.hdl.translate( 'SorterRTL.v' )
 
 
 if __name__ == '__main__':

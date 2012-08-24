@@ -20,7 +20,7 @@ class TestSlicesVerilog(unittest.TestCase):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
     code = VerilogTranslationTool(model)
-    code.generate( self.fd )
+    code.translate( self.fd )
     self.fd.close()
 
   def test_rotator(self):
@@ -64,7 +64,7 @@ class TestCombinationalVerilog(unittest.TestCase):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
     code = VerilogTranslationTool(model)
-    code.generate( self.fd )
+    code.translate( self.fd )
     self.fd.close()
 
   def test_onewire(self):
@@ -107,7 +107,7 @@ class TestPosedgeClkVerilog(unittest.TestCase):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
     code = VerilogTranslationTool(model)
-    code.generate( self.fd )
+    code.translate( self.fd )
     self.fd.close()
 
   def test_register(self):
@@ -161,7 +161,7 @@ class TestCombAndPosedgeVerilog(unittest.TestCase):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
     code = VerilogTranslationTool(model)
-    code.generate( self.fd )
+    code.translate( self.fd )
     self.fd.close()
 
   def test_incrementer(self):
@@ -314,7 +314,7 @@ class TestDumb(unittest.TestCase):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
     code = VerilogTranslationTool(model)
-    code.generate( self.fd )
+    code.translate( self.fd )
     self.fd.close()
 
   def test_dumb_a(self):

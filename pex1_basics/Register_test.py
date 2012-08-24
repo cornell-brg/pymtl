@@ -8,7 +8,6 @@ class TestRegister(unittest.TestCase):
     self.model = Register( 16 )
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
-    self.sim.generate()
 
   def test_one(self):
     test_vectors = [0, 5, 8, 1, 9, 12, 0, 4]
@@ -24,7 +23,7 @@ class TestRegister(unittest.TestCase):
 
   def test_translate(self):
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.generate( 'Register.v' )
+    self.hdl.translate( 'Register.v' )
 
 
 if __name__ == '__main__':

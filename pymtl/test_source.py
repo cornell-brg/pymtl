@@ -98,7 +98,6 @@ if __name__ == '__main__':
   model.elaborate()
 
   sim = SimulationTool( model )
-  sim.generate()
 
   cycle_count = 0
   model.out_rdy.value = 1
@@ -116,7 +115,6 @@ if __name__ == '__main__':
   model.elaborate()
 
   sim = SimulationTool( model )
-  sim.generate()
 
   cycle_count = 0
   model.in_val.value = 1
@@ -138,7 +136,6 @@ if __name__ == '__main__':
   model.elaborate()
 
   sim = SimulationTool( model )
-  sim.generate()
   cycle_count = 0
   print "{0:6} {1:3} {2:3} {3:4} | {4:3} {5:3} {6:4}".format(
           '', 'val', 'rdy', 'data', 'val', 'rdy','data')

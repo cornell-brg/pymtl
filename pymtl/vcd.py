@@ -158,7 +158,6 @@ if __name__ == '__main__':
   simulate.dump_vcd = True
 
   sim = SimulationTool(model)
-  sim.generate()
   VCDTool(sim)
 
 

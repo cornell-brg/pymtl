@@ -8,7 +8,6 @@ class TestIncrementer(unittest.TestCase):
     self.model = Incrementer( 16 )
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
-    self.sim.generate()
 
   def test_one(self):
     for i in range(10):

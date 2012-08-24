@@ -8,7 +8,6 @@ class TestSorterBehavioralLevel(unittest.TestCase):
     self.model = SorterBehavioralLevel()
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
-    self.sim.generate()
 
   def test_one(self):
     test_cases = [ [ 1, 2, 3, 4],
@@ -35,7 +34,7 @@ class TestSorterBehavioralLevel(unittest.TestCase):
   # Not Translatable!
   #def test_translate(self):
   #  self.hdl = VerilogTranslationTool( self.model )
-  #  self.hdl.generate( 'SorterBehavioralLevel.v' )
+  #  self.hdl.translate( 'SorterBehavioralLevel.v' )
 
 
 if __name__ == '__main__':

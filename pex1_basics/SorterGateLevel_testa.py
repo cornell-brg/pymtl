@@ -1,13 +1,14 @@
 import unittest
 
-from SorterCycleLevel import *
+from SorterGateLevel import *
 
-class TestSorterCycleLevel(unittest.TestCase):
+class TestSorterGateLevel(unittest.TestCase):
 
   def setUp(self):
-    self.model = SorterCycleLevel()
+    self.model = SorterGateLevel()
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
+    self.sim.generate()
 
   def test_one(self):
     test_cases = [ [ 1, 2, 3, 4],
@@ -35,13 +36,12 @@ class TestSorterCycleLevel(unittest.TestCase):
           self.assertEquals( self.model.out[ j ].value, value )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'SorterCycleLevel_test.vcd' )
+    VCDTool( self.sim, 'SorterGateLevel_test.vcd' )
     self.test_one()
 
-  # Not Translatable!
-  #def test_translate(self):
-  #  self.hdl = VerilogTranslationTool( self.model )
-  #  self.hdl.translate( 'SorterCycleLevel.v' )
+  def test_translate(self):
+    self.hdl = VerilogTranslationTool( self.model )
+    self.hdl.generate( 'SorterGateLevel.v' )
 
 
 if __name__ == '__main__':

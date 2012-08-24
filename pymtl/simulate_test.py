@@ -13,7 +13,6 @@ class TestSlicesSim(unittest.TestCase):
   def setup_sim(self, model):
     model.elaborate()
     sim = SimulationTool(model)
-    sim.generate()
     if debug_verbose:
       debug_utils.port_walk(model)
     return sim
@@ -118,7 +117,6 @@ class TestCombinationalSim(unittest.TestCase):
   def setup_sim(self, model):
     model.elaborate()
     sim = SimulationTool(model)
-    sim.generate()
     if debug_verbose:
       debug_utils.port_walk(model)
     return sim
@@ -182,7 +180,6 @@ class TestPosedgeClkSim(unittest.TestCase):
   def setup_sim(self, model):
     model.elaborate()
     sim = SimulationTool(model)
-    sim.generate()
     if debug_verbose:
       debug_utils.port_walk(model)
     return sim
@@ -350,7 +347,6 @@ class TestCombAndPosedge(unittest.TestCase):
   def setup_sim(self, model):
     model.elaborate()
     sim = SimulationTool(model)
-    sim.generate()
     if debug_verbose:
       debug_utils.port_walk(model)
     return sim

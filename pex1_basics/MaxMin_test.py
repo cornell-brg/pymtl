@@ -8,7 +8,6 @@ class TestMaxMin(unittest.TestCase):
     self.model = MaxMin()
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
-    self.sim.generate()
 
   def test_one(self):
     test_cases = [ [ 1, 2,],
@@ -32,7 +31,7 @@ class TestMaxMin(unittest.TestCase):
 
   def test_translate(self):
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.generate( 'MaxMin.v' )
+    self.hdl.translate( 'MaxMin.v' )
 
 
 if __name__ == '__main__':

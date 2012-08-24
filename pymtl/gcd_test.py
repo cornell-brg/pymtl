@@ -40,7 +40,6 @@ if __name__ == '__main__':
   model.elaborate()
 
   sim = SimulationTool( model )
-  sim.generate()
   cycle_count = 0
   print "{0:6} {1:3} {2:3} {3:4} | {4:3} {5:3} {6:4}".format(
           '', 'val', 'rdy', 'data', 'val', 'rdy','data')
@@ -79,5 +78,5 @@ if __name__ == '__main__':
   from translate import *
   tran = VerilogTranslationTool (model)
   fd = open('gcd.v', 'w')
-  tran.generate(fd)
+  tran.translate(fd)
 

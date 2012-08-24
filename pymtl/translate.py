@@ -25,9 +25,9 @@ class VerilogTranslationTool(object):
       msg += "Provided model has not been elaborated yet!!!"
       raise Exception(msg)
     self.model = model
-    self.generated = set()
+    self.translated = set()
 
-  def generate(self, o, target=None):
+  def translate(self, o, target=None):
     """Generates Verilog source from a MTL model.
 
     Calls gen_port_decls(), gen_impl_wires(), gen_module_insts(), and gen_ast()
@@ -59,10 +59,10 @@ class VerilogTranslationTool(object):
     # End module
     print >> o, '\nendmodule\n'
 
-    self.generated.add( target.class_name )
+    self.translated.add( target.class_name )
     for m in target._submodules:
-      if m.class_name not in self.generated:
-        self.generate(o, m)
+      if m.class_name not in self.translated:
+        self.translate(o, m)
 
   def gen_port_decls(self, ports, o):
     """Generate Verilog source for port declarations.

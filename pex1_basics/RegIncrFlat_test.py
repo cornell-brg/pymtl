@@ -8,7 +8,6 @@ class TestRegIncrFlat(unittest.TestCase):
     self.model = RegIncrFlat()
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
-    self.sim.generate()
 
   def test_one(self):
     for i in range(10):
@@ -22,7 +21,7 @@ class TestRegIncrFlat(unittest.TestCase):
 
   def test_translate(self):
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.generate( 'RegIncrFlat.v' )
+    self.hdl.translate( 'RegIncrFlat.v' )
 
 
 if __name__ == '__main__':

@@ -23,7 +23,7 @@ class SimulationTool():
   """User visible class implementing a tool for simulating MTL models.
 
   This class takes a MTL model instance and creates a simulator for execution
-  in the python interpreter (once the generate() function is called).
+  in the python interpreter.
   """
 
   def __init__(self, model):
@@ -45,6 +45,9 @@ class SimulationTool():
     self.event_queue     = deque()
     self.posedge_clk_fns = []
     self.node_groups     = []
+
+    # Actually construct the simulator
+    self.construct_sim()
 
   def cycle(self):
     """Execute a single cycle in the simulator.
@@ -96,7 +99,7 @@ class SimulationTool():
         if func not in self.event_queue:
           self.event_queue.appendleft(func)
 
-  def generate(self):
+  def construct_sim(self):
     """Construct a simulator for the provided model by adding necessary hooks."""
     # build up the node_groups data structure
     self.find_node_groupings(self.model)
