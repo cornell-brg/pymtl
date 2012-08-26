@@ -63,8 +63,10 @@ class SimulationTool():
       func = self.event_queue.pop()
       func()
 
+    # TODO: Hacky auto clock generation
     if dump_vcd:
-      print >>o, "#%s" % self.num_cycles
+      print >>o, "#%s" % (2 * self.num_cycles)
+    self.model.clk.value = 1
 
     # Call all rising edge triggered functions
     for func in self.posedge_clk_fns:
@@ -78,6 +80,11 @@ class SimulationTool():
     while self.event_queue:
       func = self.event_queue.pop()
       func()
+
+    # TODO: Hacky auto clock generation
+    if dump_vcd:
+      print >>o, "#%s" % ((2 * self.num_cycles) + 1)
+    self.model.clk.value = 0
 
     self.num_cycles += 1
 
