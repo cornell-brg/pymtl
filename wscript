@@ -19,16 +19,16 @@ def build(bld):
     bld(rule='python ${SRC} --verbose', source=test, name=name)
 
 
-def pex1(bld):
-  tests = bld.path.ant_glob('pex1_basics/*_test.py')
+def pex(bld):
+  tests = bld.path.ant_glob('pex*/*_test.py')
   for test in tests:
     name = str(test).replace('.py','')
     bld(rule='python ${SRC} --verbose', source=test, name=name)
 
 from waflib.Build import BuildContext
-class pex1_class(BuildContext):
-  cmd = 'pex1'
-  fun = 'pex1'
+class pex_class(BuildContext):
+  cmd = 'pex'
+  fun = 'pex'
 
 #------------------------------------------------------------------------
 # iverilog build definitions

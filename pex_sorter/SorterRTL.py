@@ -6,7 +6,7 @@ import sys
 sys.path.append('..')
 from pymtl import *
 
-from Register import *
+from pex_regincr.Register import *
 from MaxMin import *
 
 class SorterRTL( Model ):
