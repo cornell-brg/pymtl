@@ -1,11 +1,11 @@
 import unittest
 
-from SorterRTL import *
+from SorterRTLStructural import *
 
-class TestSorterRTL(unittest.TestCase):
+class TestSorterRTLStructural(unittest.TestCase):
 
   def setUp(self):
-    self.model = SorterRTL()
+    self.model = SorterRTLStructural()
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
 
@@ -35,12 +35,12 @@ class TestSorterRTL(unittest.TestCase):
           self.assertEquals( self.model.out[ j ].value, value )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'SorterRTL_test.vcd' )
+    VCDTool( self.sim, 'SorterRTLStructural_test.vcd' )
     self.test_one()
 
   def test_translate(self):
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.translate( 'SorterRTL.v' )
+    self.hdl.translate( 'SorterRTLStructural.v' )
 
 
 if __name__ == '__main__':

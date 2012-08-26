@@ -1,5 +1,5 @@
 #=========================================================================
-# SorterRTL
+# SorterRTLStructural
 #=========================================================================
 
 import sys
@@ -9,7 +9,7 @@ from pymtl import *
 from pex_regincr.Register import *
 from MaxMin import *
 
-class SorterRTL( Model ):
+class SorterRTLStructural( Model ):
 
   def __init__( self ):
 
