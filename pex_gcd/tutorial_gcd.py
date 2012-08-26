@@ -20,7 +20,9 @@
 #
 ########################################################################
 
-from pymtl.pymtl_model import *
+import sys
+sys.path.append('..')
+from pymtl import *
 
 class GCD(Model):
 

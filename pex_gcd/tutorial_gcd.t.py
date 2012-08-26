@@ -1,11 +1,9 @@
 
 import sys
+sys.path.append('..')
+from pymtl import *
+
 from tutorial_gcd import GCD
-from pymtl.pymtl_test_source import TestSource, TestSink
-from pymtl.pymtl_model import *
-from pymtl.pymtl_simulate import *
-from pymtl.pymtl_visualize import *
-from pymtl.pymtl_translate import *
 
 ######################################################################
 # TEST HARNESS

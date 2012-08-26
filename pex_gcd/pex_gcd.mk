@@ -1,15 +1,15 @@
 #=========================================================================
-# pymtl Subpackage
+# pex_gcd Subpackage
 #=========================================================================
 
-pymtl_deps =
+pex_gcd_deps =
 
-pymtl_srcs = \
+pex_gcd_srcs = \
 
-#  pymtl-Adder.v \
+#  pex-Adder.v \
 
-pymtl_test_srcs = \
+pex_gcd_test_srcs = \
   gcd.t.v \
 
-pymtl_prog_srcs = \
+pex_gcd_prog_srcs = \
 

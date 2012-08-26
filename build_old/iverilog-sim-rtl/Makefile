@@ -41,9 +41,7 @@ topdir = ../..
 
 subpkgs = \
   vc \
-  vgen \
-  rtler \
-  pymtl \
+  pex_gcd \
 
 #  imuldiv \
 #  pv2stall \
