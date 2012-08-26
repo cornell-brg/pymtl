@@ -19,6 +19,7 @@ class TestRegister(unittest.TestCase):
 
   def test_one(self):
     test_vectors = [0, 5, 8, 1, 9, 12, 0, 4]
+    self.sim.reset()
     for i, value in enumerate( test_vectors[1:] ):
       self.model.in_.value = value
       self.assertEqual( self.model.out.value, test_vectors[i] )

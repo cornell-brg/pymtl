@@ -18,6 +18,8 @@ class TestSorterBehavioralLevel(unittest.TestCase):
                  ]
 
     print self.sim.num_cycles, self.model.line_trace()
+    self.sim.reset()
+    print self.sim.num_cycles, self.model.line_trace()
     for test in test_cases:
       for i, input in enumerate(test):
         self.model.in_[ i ].value = input

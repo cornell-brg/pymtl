@@ -29,6 +29,7 @@ class TestRegIncrFlat(unittest.TestCase):
 
     self.sim = SimulationTool( self.model )
 
+    self.sim.reset()
     self.basic_cycle(  0,  1 )
     self.basic_cycle(  1,  2 )
     self.basic_cycle( 10, 11 )

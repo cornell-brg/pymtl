@@ -18,6 +18,8 @@ class TestSorterCycleLevel(unittest.TestCase):
                  ]
 
     print self.sim.num_cycles, self.model.line_trace()
+    self.sim.reset()
+    print self.sim.num_cycles, self.model.line_trace()
     for i in range( len(test_cases) + 1 ):
       # Only set inputs for N cycles
       if i < len(test_cases):

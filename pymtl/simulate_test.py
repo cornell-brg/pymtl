@@ -144,6 +144,7 @@ class TestCombinationalSim(unittest.TestCase):
   def test_full_adder(self):
     model = FullAdder()
     sim = self.setup_sim(model)
+    sim.reset()
     import itertools
     for x,y,z in itertools.product([0,1], [0,1], [0,1]):
       model.in0.value = x
@@ -156,6 +157,7 @@ class TestCombinationalSim(unittest.TestCase):
   def test_ripple_carry(self):
     model = RippleCarryAdder(4)
     sim = self.setup_sim(model)
+    sim.reset()
     model.in0.value = 2
     model.in1.value = 2
     sim.cycle()
@@ -200,6 +202,7 @@ class TestPosedgeClkSim(unittest.TestCase):
   def test_register_wrapped(self):
     model = RegisterWrapper(16)
     sim = self.setup_sim(model)
+    sim.reset()
     model.inp.value = 8
     self.assertEqual( model.out.value, 0)
     sim.cycle()
@@ -213,6 +216,7 @@ class TestPosedgeClkSim(unittest.TestCase):
   def test_register_chain(self):
     model = RegisterChain(16)
     sim = self.setup_sim(model)
+    sim.reset()
     model.inp.value = 8
     self.assertEqual( model.reg1.out.value, 0)
     self.assertEqual( model.reg2.out.value, 0)
@@ -255,6 +259,7 @@ class TestPosedgeClkSim(unittest.TestCase):
   def test_register_splitter(self):
     model = RegisterSplitter(16)
     sim = self.setup_sim(model)
+    sim.reset()
     model.inp.value = 0b11110000
     self.verify_splitter( model.out, 0b0 )
     self.assertEqual( model.reg0.out.value, 0b0 )
@@ -275,6 +280,7 @@ class TestPosedgeClkSim(unittest.TestCase):
   def test_fanout_one(self):
     model = FanOutOne(16)
     sim = self.setup_sim(model)
+    sim.reset()
     model.inp.value = 8
     self.assertEqual( model.reg0.out.value,  0)
     self.assertEqual( model.out1.value,      0)
@@ -310,6 +316,7 @@ class TestPosedgeClkSim(unittest.TestCase):
   def test_fanout_two(self):
     model = FanOutTwo(16)
     sim = self.setup_sim(model)
+    sim.reset()
     model.inp.value = 8
     self.assertEqual( model.reg0.out.value,  0)
     self.assertEqual( model.out1.value,      0)
@@ -354,8 +361,9 @@ class TestCombAndPosedge(unittest.TestCase):
   def test_incrementer(self):
     model = Incrementer()
     sim = self.setup_sim(model)
+    sim.reset()
     model.inp.value = 8
-    self.assertEqual( model.out.value, 0)
+    self.assertEqual( model.out.value, 1)
     for i in xrange(10):
       model.inp.value = i
       sim.cycle()
@@ -364,6 +372,8 @@ class TestCombAndPosedge(unittest.TestCase):
   def test_counter(self):
     model = Counter(7)
     sim = self.setup_sim(model)
+    model.clear.value = 1
+    sim.reset()
     model.clear.value = 0
     self.assertEqual( model.count.value, 0)
     expected = [1,2,3,4,5,6,7,0,1,2,
@@ -379,8 +389,10 @@ class TestCombAndPosedge(unittest.TestCase):
   def test_count_incr(self):
     model = CountIncr(7)
     sim = self.setup_sim(model)
+    model.clear.value = 1
+    sim.reset()
     model.clear.value = 0
-    self.assertEqual( model.count.value, 0)
+    self.assertEqual( model.count.value, 1)
     expected = [1,2,3,4,5,6,7,0,1,2,
                 0,1,2,3,4,5,6,7,0,1]
     for i in xrange(20):
@@ -394,8 +406,9 @@ class TestCombAndPosedge(unittest.TestCase):
   def test_reg_incr(self):
     model = RegIncr()
     sim = self.setup_sim(model)
+    sim.reset()
     model.inp.value = 8
-    self.assertEqual( model.out.value, 0)
+    self.assertEqual( model.out.value, 1)
     for i in xrange(20):
       model.inp.value = i
       sim.cycle()
@@ -404,8 +417,9 @@ class TestCombAndPosedge(unittest.TestCase):
   def test_incr_reg(self):
     model = IncrReg()
     sim = self.setup_sim(model)
+    sim.reset()
     model.inp.value = 8
-    self.assertEqual( model.out.value, 0)
+    self.assertEqual( model.out.value, 1)
     for i in xrange(20):
       model.inp.value = i
       sim.cycle()
@@ -414,6 +428,7 @@ class TestCombAndPosedge(unittest.TestCase):
   def test_gcd(self):
     model = GCD()
     sim = self.setup_sim(model)
+    sim.reset()
     def util_test( a, b, out ):
       #model.line_trace()
       model.in_A.value   = a

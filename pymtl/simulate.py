@@ -88,6 +88,13 @@ class SimulationTool():
 
     self.num_cycles += 1
 
+  def reset(self):
+    """Sets the reset signal high and cycles the simulator."""
+    self.model.reset.value = 1
+    self.cycle()
+    self.cycle()
+    self.model.reset.value = 0
+
   def dump_vcd(self, outfile=None):
     """Configure the simulator to dump VCD output during simulation."""
     VCDUtil(self, outfile)

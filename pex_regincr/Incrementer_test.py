@@ -10,6 +10,7 @@ class TestIncrementer(unittest.TestCase):
     self.sim = SimulationTool( self.model )
 
   def test_one(self):
+    self.sim.reset()
     for i in range(10):
       self.model.in_.value = i
       self.sim.cycle()

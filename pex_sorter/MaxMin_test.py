@@ -17,6 +17,7 @@ class TestMaxMin(unittest.TestCase):
                    [ 0, 2,],
                  ]
 
+    self.sim.reset()
     for test in test_cases:
       self.model.in0.value = test[0]
       self.model.in1.value = test[1]
