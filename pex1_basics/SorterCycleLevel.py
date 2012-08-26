@@ -1,3 +1,7 @@
+#=========================================================================
+# SorterCycleLevel
+#=========================================================================
+
 import sys
 sys.path.append('..')
 from pymtl import *
@@ -8,19 +12,23 @@ class SorterCycleLevel( Model ):
 
     self.in_ = [ InPort( 16 )  for x in range(4) ]
     self.out = [ OutPort( 16 ) for x in range(4) ]
-    self.delay0 = 4*[0]
-    self.delay1 = 4*[0]
+
+    self.buf0 = [ 0, 0, 0, 0 ]
+    self.buf1 = [ 0, 0, 0, 0 ]
 
   @posedge_clk
   def seq_logic( self ):
 
-    self.delay1 = self.delay0
+    # Delay by one cycle and write outputs
 
-    self.delay0 = [ x.value for x in self.in_ ]
-    self.delay0.sort()
-
-    for i, value in enumerate( self.delay1 ):
+    self.buf1 = self.buf0
+    for i, value in enumerate( self.buf1 ):
       self.out[i].value = value
+
+    # Sort behavioral level
+
+    self.buf0 = [ x.value for x in self.in_ ]
+    self.buf0.sort()
 
   def line_trace( self ):
     inputs  = [ x.value for x in self.in_ ]

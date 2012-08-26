@@ -1,6 +1,14 @@
+#=========================================================================
+# RegIncrFlat Unit Tests
+#=========================================================================
+
 import unittest
 
 from RegIncrFlat import *
+
+#-------------------------------------------------------------------------
+# Basic Test Suite
+#-------------------------------------------------------------------------
 
 class TestRegIncrFlat(unittest.TestCase):
 
@@ -9,20 +17,24 @@ class TestRegIncrFlat(unittest.TestCase):
     self.model.elaborate()
     self.sim = SimulationTool( self.model )
 
-  def test_one(self):
-    for i in range(10):
-      self.model.in_.value = i
-      self.sim.cycle()
-      self.assertEqual( self.model.out.value, i + 1 )
+  def basic_cycle( self, in_, out ):
+    self.model.in_.value = in_
+    self.sim.cycle()
+    self.assertEqual( self.model.out.value, out )
 
-  def test_vcd(self):
-    VCDTool( self.sim, 'RegIncrFlat_test.vcd' )
-    self.test_one()
+  def test_basic(self):
 
-  def test_translate(self):
-    self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.translate( 'RegIncrFlat.v' )
+    self.model = RegIncrFlat()
+    self.model.elaborate()
+
+    self.sim = SimulationTool( self.model )
+
+    self.basic_cycle(  0,  1 )
+    self.basic_cycle(  1,  2 )
+    self.basic_cycle( 10, 11 )
+    self.basic_cycle( 13, 14 )
 
 
 if __name__ == '__main__':
   unittest.main()
+

@@ -1,3 +1,7 @@
+#=========================================================================
+# SorterBehavioralLevel
+#=========================================================================
+
 import sys
 sys.path.append('..')
 from pymtl import *
@@ -5,7 +9,6 @@ from pymtl import *
 class SorterBehavioralLevel( Model ):
 
   def __init__( self ):
-
     self.in_ = [ InPort( 16 )  for x in range(4) ]
     self.out = [ OutPort( 16 ) for x in range(4) ]
 
