@@ -26,7 +26,7 @@ class TestMaxMin(unittest.TestCase):
       self.assertEquals( self.model.max.value, test[1] )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'MaxMin_test.vcd' )
+    self.sim.dump_vcd( 'MaxMin_test.vcd' )
     self.test_one()
 
   def test_translate(self):

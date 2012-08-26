@@ -10,6 +10,7 @@ import inspect
 import pprint
 
 from model import *
+from vcd import VCDUtil
 
 # TODO: make commandline parameter
 debug_hierarchy = False
@@ -79,6 +80,10 @@ class SimulationTool():
       func()
 
     self.num_cycles += 1
+
+  def dump_vcd(self, outfile=None):
+    """Configure the simulator to dump VCD output during simulation."""
+    VCDUtil(self, outfile)
 
   def add_event(self, value_node):
     """Add an event to the simulator event queue for later execution.

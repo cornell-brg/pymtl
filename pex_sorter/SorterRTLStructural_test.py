@@ -35,7 +35,7 @@ class TestSorterRTLStructural(unittest.TestCase):
           self.assertEquals( self.model.out[ j ].value, value )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'SorterRTLStructural_test.vcd' )
+    self.sim.dump_vcd( 'SorterRTLStructural_test.vcd' )
     self.test_one()
 
   def test_translate(self):

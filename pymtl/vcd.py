@@ -97,9 +97,9 @@ class _MyHDLNode():
   pass
 
 
-class VCDTool():
+class VCDUtil():
 
-  """User visible class implementing a tool for generating VCD output.
+  """Hidden class used by the simulator tool for generating VCD output.
 
   This class takes a SimulationTool instance and augments it to generate
   VCD output.

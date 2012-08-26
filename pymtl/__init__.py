@@ -3,7 +3,6 @@ from model import posedge_clk, combinational, connect
 from simulate import SimulationTool
 from translate import VerilogTranslationTool
 #from visualize import VisualizationTool
-from vcd import VCDTool
 
 __all__ = ['Model',
            'Wire',
@@ -15,7 +14,6 @@ __all__ = ['Model',
            'connect',
            'SimulationTool',
            'VerilogTranslationTool',
-           'VCDTool',
 #           'VisualizationTool'
           ]
 

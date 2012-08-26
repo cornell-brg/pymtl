@@ -39,7 +39,7 @@ class TestSorterRTLFlat(unittest.TestCase):
         self.assertEquals( self.model.out_3.value, test[3] )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'SorterRTLFlat_test.vcd' )
+    self.sim.dump_vcd( 'SorterRTLFlat_test.vcd' )
     self.test_one()
 
   def test_translate(self):

@@ -16,7 +16,7 @@ class TestRegIncrStructured(unittest.TestCase):
       self.assertEqual( self.model.out.value, i + 1 )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'RegIncrStructured_test.vcd' )
+    self.sim.dump_vcd( 'RegIncrStructured_test.vcd' )
     self.test_one()
 
   def test_translate(self):

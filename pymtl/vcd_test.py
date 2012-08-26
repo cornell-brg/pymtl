@@ -11,7 +11,7 @@ def setUp(self):
 def setup_sim(self, model):
   model.elaborate()
   sim = SimulationTool(model)
-  VCDTool(sim, self.fd)
+  sim.dump_vcd( self.fd )
   if debug_verbose:
     debug_utils.port_walk(model)
   return sim

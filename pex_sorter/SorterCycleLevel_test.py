@@ -35,7 +35,7 @@ class TestSorterCycleLevel(unittest.TestCase):
           self.assertEquals( self.model.out[ j ].value, value )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'SorterCycleLevel_test.vcd' )
+    self.sim.dump_vcd( 'SorterCycleLevel_test.vcd' )
     self.test_one()
 
   # Not Translatable!

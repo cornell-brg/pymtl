@@ -26,7 +26,7 @@ class TestRegister(unittest.TestCase):
       self.assertEqual( self.model.out.value, value )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'Register_test.vcd' )
+    self.sim.dump_vcd( 'Register_test.vcd' )
     self.test_one()
 
   def test_translate(self):

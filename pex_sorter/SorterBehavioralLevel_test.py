@@ -28,7 +28,7 @@ class TestSorterBehavioralLevel(unittest.TestCase):
         self.assertEquals( self.model.out[ i ].value, value )
 
   def test_vcd(self):
-    VCDTool( self.sim, 'SorterBehavioralLevel_test.vcd' )
+    self.sim.dump_vcd( 'SorterBehavioralLevel_test.vcd' )
     self.test_one()
 
   # Not Translatable!
