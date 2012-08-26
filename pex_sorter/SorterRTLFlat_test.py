@@ -22,6 +22,8 @@ class TestSorterRTLFlat(unittest.TestCase):
       # Only set inputs for N cycles
       if i < len(test_cases):
         test = test_cases[i]
+        #for j, input in enumerate(test):
+        #  self.model.in_[ j ].value = input
         self.model.in_0.value = test[0]
         self.model.in_1.value = test[1]
         self.model.in_2.value = test[2]
@@ -33,6 +35,8 @@ class TestSorterRTLFlat(unittest.TestCase):
       if i >= 1:
         test = test_cases[i - 1]
         test.sort()
+        #for j, value in enumerate(test):
+        #  self.assertEquals( self.model.out[ j ].value, value )
         self.assertEquals( self.model.out_0.value, test[0] )
         self.assertEquals( self.model.out_1.value, test[1] )
         self.assertEquals( self.model.out_2.value, test[2] )
