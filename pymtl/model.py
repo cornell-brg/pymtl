@@ -392,6 +392,8 @@ class Model(object):
     target.class_name = target.__class__.__name__
     target.parent = None
     target.name = iname
+    target.clk   = InPort(1)
+    target.reset = InPort(1)
     target._exe_seq_logic = False
     target._exe_comb_logic = False
     target._wires = []
@@ -426,6 +428,8 @@ class Model(object):
       obj.type = obj.__class__.__name__
       self.recurse_elaborate( obj, name )
       obj.parent = target
+      connect( obj.clk, obj.parent.clk )
+      connect( obj.reset, obj.parent.reset )
       target._submodules += [obj]
     # We've found a constant assigned to a global variable.
     # TODO: add support for floats?
