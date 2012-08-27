@@ -5,36 +5,35 @@ out = 'build'
 
 def configure(ctx):
   print('→ configuring the project in ' + ctx.path.abspath())
-  #ctx.env.CMD = ("iverilog -DIVERILOG -DCLOCK_PERIOD=10 -g2005 -Wall"
-  #               "-Wno-sensitivity-entire-vector -Wno-sensitivity-entire-array")
 
 #------------------------------------------------------------------------
-# python tests
+# build: currently empty
 #------------------------------------------------------------------------
 # TODO: look into variants in wafbook, section 6.2.2
 def build(bld):
-  tests = bld.path.ant_glob('pymtl/*_test.py')
-  for test in tests:
-    name = str(test).replace('.py','')
-    bld(rule='python ${SRC} --verbose', source=test, name=name)
+  pass
 
-
-def pex(bld):
-  tests = bld.path.ant_glob('pex*/*_test.py')
-  for test in tests:
-    name = str(test).replace('.py','')
-    bld(rule='python ${SRC} --verbose', source=test, name=name)
+#------------------------------------------------------------------------
+# check: run python tests using py.test
+#------------------------------------------------------------------------
+def check(bld):
+  dirs = ['pymtl',
+          'pex_regincr',
+          'pex_sorter',
+          ]
+  for d in dirs:
+    bld(rule='py.test ../'+d)
 
 from waflib.Build import BuildContext
-class pex_class(BuildContext):
-  cmd = 'pex'
-  fun = 'pex'
+class check_class(BuildContext):
+  cmd = 'check'
+  fun = 'check'
 
 #------------------------------------------------------------------------
-# iverilog build definitions
+# check_vc: build and run iverilog unit tests
 #------------------------------------------------------------------------
 # TODO: fix so that ./waf list and ./waf --targets=... works with this
-def vc(bld):
+def check_vc(bld):
   cmd = ("iverilog -DIVERILOG -DCLOCK_PERIOD=10 -g2005 -Wall "
          "-Wno-sensitivity-entire-vector -Wno-sensitivity-entire-array")
 
@@ -52,9 +51,9 @@ def vc(bld):
     bld(rule='./${SRC}', source=tgt)
 
 from waflib.Build import BuildContext
-class vc_class(BuildContext):
-  cmd = 'vc'
-  fun = 'vc'
+class check_vc_class(BuildContext):
+  cmd = 'check_vc'
+  fun = 'check_vc'
 
 
 #------------------------------------------------------------------------
