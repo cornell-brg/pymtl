@@ -22,10 +22,10 @@ class TestMux2( unittest.TestCase ):
       self.sim.cycle()
       self.assertEquals( self.model.out.value, test[1] )
 
-    self.sim.dump_vcd( 'Mux2_test.vcd' )
+#    self.sim.dump_vcd( 'Mux2_test.vcd' )
 
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.translate( 'Mux2.v' )
+#    self.hdl.translate( 'Mux2.v' )
 
 class TestMux3( unittest.TestCase ):
 
@@ -50,10 +50,10 @@ class TestMux3( unittest.TestCase ):
       self.sim.cycle()
       self.assertEquals( self.model.out.value, test[1] )
 
-    self.sim.dump_vcd( 'Mux3_test.vcd' )
+#    self.sim.dump_vcd( 'Mux3_test.vcd' )
 
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.translate( 'Mux3.v' )
+#    self.hdl.translate( 'Mux3.v' )
 
 class TestMux4( unittest.TestCase ):
 
@@ -235,10 +235,10 @@ class TestMux8( unittest.TestCase ):
       self.sim.cycle()
       self.assertEquals( self.model.out.value, test[1] )
 
-    self.sim.dump_vcd( 'Mux8_test.vcd' )
+#    self.sim.dump_vcd( 'Mux8_test.vcd' )
 
     self.hdl = VerilogTranslationTool( self.model )
-    self.hdl.translate( 'Mux8.v' )
+#    self.hdl.translate( 'Mux8.v' )
 
 
 if __name__ == '__main__':
