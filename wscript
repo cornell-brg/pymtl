@@ -22,7 +22,7 @@ def check(bld):
           'pex_sorter',
           ]
   for d in dirs:
-    bld(rule='py.test ../'+d)
+    bld(rule='py.test ../'+d, always=True)
 
 from waflib.Build import BuildContext
 class check_class(BuildContext):
