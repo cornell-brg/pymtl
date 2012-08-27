@@ -29,10 +29,8 @@ class Mux2( Model ):
   def comb_logic( self ):
     if self.sel.value == 0:
       self.out.value = self.in0.value
-    if self.sel.value == 1:
+    elif self.sel.value == 1:
       self.out.value = self.in1.value
-    else:
-      self.out.value = 0
 
 #-------------------------------------------------------------------------
 # Mux3
