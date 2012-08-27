@@ -1,0 +1,36 @@
+$date
+    Sun Aug 26 18:27:09 2012
+$end
+$version
+    PyMTL ?.??
+$end
+$timescale
+    1ns
+$end
+
+$upscope $end
+$scope module toplevel $end
+$var reg 16 ! in4 $end
+$var reg 16 " in5 $end
+$var reg 16 # in6 $end
+$var reg 16 $ in7 $end
+$var reg 16 % in0 $end
+$var reg 16 & in1 $end
+$var reg 16 ' in2 $end
+$var reg 16 ( in3 $end
+$var reg 3 ) sel $end
+$var reg 16 * out $end
+
+$enddefinitions $end
+$dumpvars
+s0x8 !
+s0x8 "
+s0x8 #
+s0x8 $
+s0x8 %
+s0x8 &
+s0x8 '
+s0x8 (
+s0x8 )
+s0x8 *
+$end
