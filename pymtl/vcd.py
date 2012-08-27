@@ -113,9 +113,8 @@ class VCDUtil():
       self.o = open( outfile, 'w' )
     else:
       self.o = outfile
-    import simulate
-    simulate.dump_vcd = True
-    simulate.o = self.o
+    simulator.vcd = True
+    simulator.o   = self.o
 
     self.recurse_models( simulator.model, 0 )
 
@@ -142,38 +141,3 @@ class VCDUtil():
       self.recurse_models( submodel, level+1 )
 
 
-from test_examples import *
-from simulate import *
-
-
-
-
-
-if __name__ == '__main__':
-  #model = RegisterSplitter(8)
-  model = FullAdder()
-  model.elaborate()
-
-  import simulate
-  simulate.dump_vcd = True
-
-  sim = SimulationTool(model)
-  VCDTool(sim)
-
-
-
-  #model.inp.value = 0b11110000
-  #sim.cycle()
-  #model.inp.value = 0b1111000011001010
-  #sim.cycle()
-  #model.inp.value = 0b0000000000000000
-  #sim.cycle()
-  #model.inp.value = 0b0000011111110000
-  #sim.cycle()
-
-  import itertools
-  for x,y,z in itertools.product([0,1], [0,1], [0,1]):
-    model.in0.value = x
-    model.in1.value = y
-    model.cin.value = z
-    sim.cycle()

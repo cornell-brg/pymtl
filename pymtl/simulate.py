@@ -14,10 +14,6 @@ from vcd import VCDUtil
 
 # TODO: make commandline parameter
 debug_hierarchy = False
-# TODO: hacky and temporary
-dump_vcd = False
-o = None
-
 
 class SimulationTool():
 
@@ -46,6 +42,9 @@ class SimulationTool():
     self.event_queue     = deque()
     self.posedge_clk_fns = []
     self.node_groups     = []
+    # Set by VCDUtil
+    self.vcd = False
+    self.o   = None
 
     # Actually construct the simulator
     self.construct_sim()
@@ -64,8 +63,8 @@ class SimulationTool():
       func()
 
     # TODO: Hacky auto clock generation
-    if dump_vcd:
-      print >>o, "#%s" % (2 * self.num_cycles)
+    if self.vcd:
+      print >> self.o, "#%s" % (2 * self.num_cycles)
     self.model.clk.value = 1
 
     # Call all rising edge triggered functions
@@ -82,8 +81,8 @@ class SimulationTool():
       func()
 
     # TODO: Hacky auto clock generation
-    if dump_vcd:
-      print >>o, "#%s" % ((2 * self.num_cycles) + 1)
+    if self.vcd:
+      print >> self.o, "#%s" % ((2 * self.num_cycles) + 1)
     self.model.clk.value = 0
 
     self.num_cycles += 1
@@ -329,13 +328,13 @@ class Node(object):
     if self._value != value:
       self.sim.add_event(self)
       self._value = value
-      if dump_vcd:
+      if self.sim.vcd:
         for signal in self.signals:
           if not isinstance(signal, (Slice,Wire)):
             if signal.width == 1:
-              print >>o, "%d%s" % (signal.value, signal._code)
+              print >> self.sim.o, "%d%s" % (signal.value, signal._code)
             else:
-              print >>o, "s%s %s" % (signal.value, signal._code)
+              print >> self.sim.o, "s%s %s" % (signal.value, signal._code)
 
   @property
   def next(self):
