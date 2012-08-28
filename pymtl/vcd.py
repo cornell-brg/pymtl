@@ -129,7 +129,8 @@ class VCDUtil():
     t.sigdict = {}
     t.memdict = {}
     # get signals
-    for signal in model._ports:
+    signals = model._ports + model._wires
+    for signal in signals:
       signal._val = 8  # TODO: temporary
       signal._tracing = None  # TODO: temporary
       t.sigdict[signal.name] = signal

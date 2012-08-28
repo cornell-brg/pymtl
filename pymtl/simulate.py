@@ -330,7 +330,7 @@ class Node(object):
       self._value = value
       if self.sim.vcd:
         for signal in self.signals:
-          if not isinstance(signal, (Slice,Wire)):
+          if not isinstance(signal, Slice):
             if signal.width == 1:
               print >> self.sim.o, "%d%s" % (signal.value, signal._code)
             else:

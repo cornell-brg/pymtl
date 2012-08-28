@@ -39,14 +39,15 @@ class VisualizationTool(object):
 
     # Add all of this modules ports to the graph, also assign them to the
     # correct subgraph
-    port_names = [ get_port_name(x) for x in target._ports ]
+    signals = target._ports + target._wires
+    port_names = [ get_port_name(x) for x in signals]
     # TODO: isn't coloring all ports correctly...
     graph.add_nodes_from( port_names, style = 'filled' )
     subg = graph.add_subgraph( nbunch = port_names, label = target.name,
                                name = "cluster_"+target.name)
 
     # Iterate through all the ports and add directional arrows
-    for port in target._ports:
+    for port in signals:
       p_name = get_port_name(port)
       # Get at the value node, special case for slices
       node = port._value
