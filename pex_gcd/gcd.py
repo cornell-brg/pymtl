@@ -6,9 +6,6 @@ class GCD(Model):
 
   def __init__(self):
     # Ports
-    self.clk     = InPort(1)
-    self.reset   = InPort(1)
-
     self.in_A    = InPort(16)
     self.in_B    = InPort(16)
     self.in_val  = InPort(1)

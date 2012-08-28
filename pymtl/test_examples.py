@@ -93,8 +93,6 @@ class Register(Model):
     # Ports
     self.inp = InPort(bits)
     self.out = OutPort(bits)
-    # TODO: how to handle clock?
-    self.clk = InPort(1)
   @posedge_clk
   def tick(self):
     self.out.next = self.inp.value
@@ -105,8 +103,6 @@ class RegisterWrapper(Model):
     # Ports
     self.inp = InPort(bits)
     self.out = OutPort(bits)
-    # TODO: how to handle clock?
-    self.clk = InPort(1)
     # Submodules
     # TODO: cannot use keyword "reg" for variable names when converting
     #       To! Check for this?
@@ -114,7 +110,6 @@ class RegisterWrapper(Model):
     # Connections
     connect( self.inp, self.reg0.inp )
     connect( self.out, self.reg0.out )
-    connect( self.clk, self.reg0.clk )
 
 
 class RegisterChain(Model):
@@ -122,8 +117,6 @@ class RegisterChain(Model):
     # Ports
     self.inp = InPort(bits)
     self.out = OutPort(bits)
-    # TODO: how to handle clock?
-    self.clk = InPort(1)
     # Submodules
     self.reg1 = Register(bits)
     self.reg2 = Register(bits)
@@ -133,9 +126,6 @@ class RegisterChain(Model):
     connect( self.reg1.out, self.reg2.inp )
     connect( self.reg2.out, self.reg3.inp )
     connect( self.reg3.out, self.out      )
-    connect( self.clk     , self.reg1.clk )
-    connect( self.clk     , self.reg2.clk )
-    connect( self.clk     , self.reg3.clk )
 
 
 class RegisterSplitter(Model):
@@ -144,13 +134,10 @@ class RegisterSplitter(Model):
     # Ports
     self.inp = InPort(bits)
     self.out = [ OutPort(groupings) for x in xrange(0, bits, groupings) ]
-    # TODO: how to handle clock?
-    self.clk = InPort(1)
     # Submodules
     self.reg0  = Register(bits)
     self.split = ComplexSplitter(bits, groupings)
     # Connections
-    connect( self.clk     , self.reg0.clk  )
     connect( self.inp     , self.reg0.inp  )
     connect( self.reg0.out, self.split.inp )
     for i, x in enumerate(self.out):
@@ -163,8 +150,6 @@ class FanOutOne(Model):
     self.out1 = OutPort(bits)
     self.out2 = OutPort(bits)
     self.out3 = OutPort(bits)
-    # TODO: how to handle clock?
-    self.clk = InPort(1)
     # Submodules
     self.reg0 = Register(bits)
     # Connections
@@ -172,7 +157,6 @@ class FanOutOne(Model):
     connect( self.reg0.out, self.out1     )
     connect( self.reg0.out, self.out2     )
     connect( self.reg0.out, self.out3     )
-    connect( self.clk     , self.reg0.clk )
 
 class FanOutTwo(Model):
   def __init__(self, bits):
@@ -181,8 +165,6 @@ class FanOutTwo(Model):
     self.out1 = OutPort(bits)
     self.out2 = OutPort(bits)
     self.out3 = OutPort(bits)
-    # TODO: how to handle clock?
-    self.clk = InPort(1)
     # Submodules
     self.reg0 = Register(bits)
     self.reg1 = Register(bits)
@@ -196,10 +178,6 @@ class FanOutTwo(Model):
     connect( self.reg1.out, self.out1     )
     connect( self.reg2.out, self.out2     )
     connect( self.reg3.out, self.out3     )
-    connect( self.clk     , self.reg0.clk )
-    connect( self.clk     , self.reg1.clk )
-    connect( self.clk     , self.reg2.clk )
-    connect( self.clk     , self.reg3.clk )
 
 
 class FullAdder(Model):
@@ -251,7 +229,6 @@ class Incrementer(Model):
 class Counter(Model):
   def __init__(self, max=None):
     # Ports
-    self.clk   = InPort(1)
     self.clear = InPort(1)
     self.count = OutPort(32)
     # Params
@@ -269,14 +246,12 @@ class Counter(Model):
 class CountIncr(Model):
   def __init__(self, max=None):
     # Ports
-    self.clk   = InPort(1)
     self.clear = InPort(1)
     self.count = OutPort(32)
     # Submodules
     self.incr  = Incrementer()
     self.cntr  = Counter(max)
     # Connections
-    connect( self.clk       , self.cntr.clk   )
     connect( self.clear     , self.cntr.clear )
     connect( self.cntr.count, self.incr.inp   )
     connect( self.incr.out  , self.count      )
@@ -284,14 +259,12 @@ class CountIncr(Model):
 class RegIncr(Model):
   def __init__(self):
     # Ports
-    self.clk = InPort(1)
     self.inp = InPort(32)
     self.out = OutPort(32)
     # Submodules
     self.reg0 = Register(32)
     self.incr = Incrementer()
     # Connections
-    connect( self.clk     , self.reg0.clk )
     connect( self.inp     , self.reg0.inp )
     connect( self.reg0.out, self.incr.inp )
     connect( self.incr.out, self.out      )
@@ -299,14 +272,12 @@ class RegIncr(Model):
 class IncrReg(Model):
   def __init__(self):
     # Ports
-    self.clk = InPort(1)
     self.inp = InPort(32)
     self.out = OutPort(32)
     # Submodules
     self.incr = Incrementer()
     self.reg0 = Register(32)
     # Connections
-    connect( self.clk     , self.reg0.clk )
     connect( self.inp     , self.incr.inp )
     connect( self.incr.out, self.reg0.inp )
     connect( self.reg0.out, self.out      )
@@ -314,7 +285,6 @@ class IncrReg(Model):
 class GCD(Model):
   def __init__(self):
     # Ports
-    self.clk     = InPort(1)
     self.in_A    = InPort(32)
     self.in_B    = InPort(32)
     self.in_val  = InPort(1)

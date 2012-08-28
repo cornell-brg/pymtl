@@ -212,7 +212,6 @@ class TestCombAndPosedgeVerilog(unittest.TestCase):
 
 class DumbA(Model):
   def __init__(self):
-    self.clk   = InPort(1)
     self.in_A  = InPort(1)
     self.in_B  = InPort(1)
     self.in_C  = InPort(1)
@@ -235,7 +234,6 @@ class DumbA(Model):
 
 class DumbB(Model):
   def __init__(self):
-    self.clk   = InPort(1)
     self.in_A  = InPort(1)
     self.in_B  = InPort(1)
     self.in_C  = InPort(1)
@@ -287,7 +285,6 @@ class DumbB(Model):
 
 class FixCompare(Model):
   def __init__(self):
-    self.clk          = InPort( 1 )
     self.clear        = InPort( 1 )
     self.p_data_nbits = 4
     self.count        = OutPort( self.p_data_nbits )

@@ -4,8 +4,6 @@
 #    INPUTS
 #    Name     Width
 #
-#    clk          1
-#    reset        1
 #    in_A        16
 #    in_B        16
 #    in_val       1
