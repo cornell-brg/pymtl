@@ -20,6 +20,7 @@ def check(bld):
   dirs = ['pymtl',
           'pex_regincr',
           'pex_sorter',
+          'pmlib',
           ]
   for d in dirs:
     bld(rule='py.test ../'+d, always=True)
