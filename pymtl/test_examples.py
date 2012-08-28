@@ -97,6 +97,17 @@ class Register(Model):
   def tick(self):
     self.out.next = self.inp.value
 
+class RegisterReset(Model):
+  def __init__(self, bits):
+    # Ports
+    self.inp = InPort(bits)
+    self.out = OutPort(bits)
+  @posedge_clk
+  def tick(self):
+    if self.reset.value:
+      self.out.next = 0
+    else:
+      self.out.next = self.inp.value
 
 class RegisterWrapper(Model):
   def __init__(self, bits):

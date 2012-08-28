@@ -116,6 +116,12 @@ class TestPosedgeClkVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
+  def test_register_reset(self):
+    model = RegisterReset(16)
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
   def test_register_wrapped(self):
     model = RegisterWrapper(16)
     self.translate( model )
