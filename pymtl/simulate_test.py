@@ -130,6 +130,8 @@ class TestCombinationalSim(unittest.TestCase):
     model.inp.value = 9
     model.inp.value = 10
     self.assertEqual( model.out.value, 10)
+    model.inp.value = -1
+    self.assertEqual( model.out.value, 65535)
 
   def test_onewire_wrapped(self):
     model = OneWireWrapped(16)
@@ -198,6 +200,9 @@ class TestPosedgeClkSim(unittest.TestCase):
     model.inp.value = 10
     sim.cycle()
     self.assertEqual( model.out.value, 10)
+    model.inp.value = -1
+    sim.cycle()
+    self.assertEqual( model.out.value, 65535)
 
   def test_register_reset(self):
     model = RegisterReset(16)
@@ -471,6 +476,24 @@ class TestCombAndPosedge(unittest.TestCase):
     util_test( 12, 3, 3 )
     util_test( 7, 4, 1 )
     util_test( 7, 0, 7 )
+
+  def test_overflow(self):
+    model = Overflow()
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.in0.value = 2
+    model.in1.value = 1
+    sim.cycle()
+    self.assertEqual( model.out.value, 1 )
+    model.out.value
+    model.in0.value = 2
+    model.in1.value = 0
+    sim.cycle()
+    self.assertEqual( model.out.value, 2 )
+    model.in0.value = 1
+    model.in1.value = 2
+    sim.cycle()
+    self.assertEqual( model.out.value, (2**16 - 1) )
 
 if __name__ == '__main__':
   unittest.main()

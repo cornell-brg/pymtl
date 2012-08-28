@@ -27,7 +27,7 @@ class Reg( Model ):
 class RegEn( Model ):
 
   def __init__( self, W = 16 ):
-    self.en = InPort()
+    self.en = InPort( 1 )
     self.in_ = InPort( W )
     self.out = OutPort( W )
 
@@ -46,7 +46,7 @@ class RegEn( Model ):
 class RegRst( Model ):
 
   def __init__( self, W = 16 ):
-    self.rst = InPort()
+    self.rst = InPort( 1 )
     self.in_ = InPort( W )
     self.out = OutPort( W )
 
@@ -68,8 +68,8 @@ class RegRst( Model ):
 class RegEnRst( Model ):
 
   def __init__( self, W = 16 ):
-    self.rst = InPort()
-    self.en = InPort()
+    self.rst = InPort( 1 )
+    self.en = InPort( 1 )
     self.in_ = InPort( W )
     self.out = OutPort( W )
 

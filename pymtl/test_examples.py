@@ -359,6 +359,17 @@ class GCD(Model):
     line += "|| {0} {1}".format( self.out.value, self.out_val.value )
     print line
 
+
+class Overflow( Model ):
+  def __init__( self, W = 16 ):
+    self.in0 = InPort( W )
+    self.in1 = InPort( W )
+    self.out = OutPort( W )
+  @combinational
+  def comb_logic( self ):
+    self.out.value = self.in0.value - self.in1.value;
+
+
 #class RegisteredAdder1(Model):
 #  def __init__(self, bits):
 #    # Ports

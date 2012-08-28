@@ -86,7 +86,7 @@ class Port(object):
   # TODO: get rid of str
   # TODO: get rid of type
   # TODO: get rid of name?
-  def __init__(self, type=None, width=None, name='???', str=None):
+  def __init__(self, type, width, name='???'):
     """Constructor for a Port object.
 
     Parameters
@@ -107,8 +107,8 @@ class Port(object):
     self.inst_connection = None
     self._value     = None
     self.is_reg = False
-    if str:
-      self.type, self.width, self.name  = self.parse( str )
+    #if str:
+    #  self.type, self.width, self.name  = self.parse( str )
 
   def __ne__(self, target):
     raise Exception("The <> operator is deprecated!  Use connect() instead.")
@@ -183,7 +183,7 @@ class Port(object):
 class InPort(Port):
   """User visible implementation of an input port."""
 
-  def __init__(self, width=None):
+  def __init__(self, width):
     """Constructor for an InPort object.
 
     Parameters
@@ -197,7 +197,7 @@ class OutPort(Port):
 
   """User visible implementation of an output port."""
 
-  def __init__(self, width=None):
+  def __init__(self, width):
     """Constructor for an InPort object.
 
     Parameters

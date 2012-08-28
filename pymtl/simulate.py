@@ -304,14 +304,20 @@ class Node(object):
     sim: simulation object to register events with on write.
     """
     self.sim = sim
-    self.width = width
+    self._width = width
     # TODO: Initializing _value to None ensures we dont have to check for reset
     # condition when adding to the event queue! However, without a reset() we do
     # need to check for the None condition in the value parameter and return a 0
     # instead, otherwise certain modules break. Better way to do this?
     self._value = value
+    self.wmask = (1 << self.width) - 1
     self.is_reg = False
     self.signals = set()
+
+  @property
+  def width(self):
+    """Ensures width can only be set by constructor."""
+    return self._width
 
   @property
   def value(self):
@@ -319,7 +325,7 @@ class Node(object):
     # TODO: get rid of this check?
     if self._value == None:
       return 0
-    return self._value
+    return (self._value & self.wmask)
   @value.setter
   def value(self, value):
     # TODO: this is a check that makes sure you dont write the value directly
