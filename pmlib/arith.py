@@ -6,8 +6,11 @@ import sys
 sys.path.append('..')
 from pymtl import *
 
+from muxes import *
+from bit import *
+
 #-------------------------------------------------------------------------
-# Adders
+# 1-bit Full Adder
 #-------------------------------------------------------------------------
 
 class FullAdder( Model ):
@@ -19,20 +22,16 @@ class FullAdder( Model ):
     self.out = OutPort( 1 )
     self.cout = OutPort( 1 )
 
-    self.temp = Wire(2)
-
-    # connections
-    connect(self.out, self.temp[0])
-    connect(self.cout, self.temp[1])
-
   @combinational
   def comb_logic( self ):
-    self.temp.value = self.in0.value + self.in1.value + self.cin.value;
+    self.out.value = (self.in0.value ^ self.in1.value ^ self.cin.value);
+    self.cout.value = ((self.in0.value & self.in1.value) | \
+                       (self.in1.value & self.cin.value) | \
+                       (self.in0.value & self.cin.value));
 
-#    self.out.value = (self.in0.value + self.in1.value + self.cin.value);
-#    self.cout.value = ((self.in0.value and self.in1.value) or \
-#                       (self.in1.value and self.cin.value) or \
-#                       (self.in0.value and self.cin.value));
+#-------------------------------------------------------------------------
+# Adder
+#-------------------------------------------------------------------------
 
 class Adder( Model ):
 
@@ -48,7 +47,7 @@ class Adder( Model ):
 
     #connections
     connect(self.out, self.temp[0:W])
-    connect(self.cout, self.temp[W:W+1])
+    connect(self.cout, self.temp[W])
 
   @combinational
   def comb_logic( self ):
@@ -70,7 +69,7 @@ class Sub( Model ):
     self.out.value = self.in0.value - self.in1.value;
 
 #-------------------------------------------------------------------------
-# Incrememter
+# Incrementer
 #-------------------------------------------------------------------------
 
 class Inc( Model ):
@@ -78,6 +77,7 @@ class Inc( Model ):
   def __init__( self, W = 16, INC = 1 ):
     self.in_ = InPort( W )
     self.out = OutPort( W )
+
     self.inc = INC
 
   @combinational
@@ -97,8 +97,8 @@ class ZeroExt( Model ):
     self.temp = Wire( W_OUT - W_IN )
 
     #connections
-    connect( self.out[0:(W_IN-1)], self.in_ )
-    connect( self.out[W_IN:(W_OUT-1)], self.temp )
+    connect( self.out[0:W_IN], self.in_ )
+    connect( self.out[W_IN:W_OUT], self.temp )
 
   @combinational
   def comb_logic( self ):
@@ -107,6 +107,9 @@ class ZeroExt( Model ):
 #-------------------------------------------------------------------------
 # Sign-Extension
 #-------------------------------------------------------------------------
+# Doesn't work yet.
+# TODO: finish the design
+#
 
 class SignExt( Model ):
 
@@ -114,10 +117,35 @@ class SignExt( Model ):
     self.in_ = InPort( W_IN )
     self.out = OutPort( W_OUT )
 
+    self.counter = 0
+
+    # wire
+    self.temp = Wire( W_OUT - W_IN )
+
+    # sub modules
+    self.msb = MSB( W_IN )
+    self.rev = REV( W_OUT - W_IN )
+    self.mux2 = Mux2( W_OUT - W_IN )
+
     #connections
-    connect( self.out[0:(W_IN-1)], self.in_ )
-    for x in xrange(W_IN, W_OUT):
-      connect( self.out[x], self.in_[W_IN-1] )
+    connect( self.msb.in_, self.in_ )
+    connect( self.msb.out, self.mux2.sel )
+    connect( self.rev.in_, self.temp )
+    connect( self.mux2.in0, self.temp )
+    connect( self.mux2.in1, self.rev.out )
+    connect( self.out[0:W_IN], self.in_ )
+    connect( self.out[W_IN:W_OUT], self.mux2.out )
+
+  @combinational
+  def comb_logic( self ):
+    self.temp.value = 0
+#    print "\n"
+#    print "Counter:", self.counter
+#    self.counter = self.counter + 1
+#    print "self:", self.in_.value, self.out.value
+#    print "MSB:", self.msb.in_.value, self.msb.out.value
+#    print "REV:", self.rev.in_.value, self.rev.out.value
+#    print "MUX2:", self.mux2.in0.value, self.mux2.in1.value, self.mux2.sel.value, self.mux2.out.value
 
 #-------------------------------------------------------------------------
 # Equal comparator
@@ -128,7 +156,7 @@ class CmpEQ( Model ):
   def __init__( self, W = 16 ):
     self.in0 = InPort( W )
     self.in1 = InPort( W )
-    self.out = OutPort( W )
+    self.out = OutPort( 1 )
 
   @combinational
   def comb_logic( self ):
@@ -143,7 +171,7 @@ class CmpLT( Model ):
   def __init__( self, W = 16 ):
     self.in0 = InPort( W )
     self.in1 = InPort( W )
-    self.out = OutPort( W )
+    self.out = OutPort( 1 )
 
   @combinational
   def comb_logic( self ):
@@ -158,7 +186,7 @@ class CmpGT( Model ):
   def __init__( self, W = 16 ):
     self.in0 = InPort( W )
     self.in1 = InPort( W )
-    self.out = OutPort( W )
+    self.out = OutPort( 1 )
 
   @combinational
   def comb_logic( self ):

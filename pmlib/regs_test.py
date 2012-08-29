@@ -96,7 +96,7 @@ class TestReg( unittest.TestCase ):
     test_result = 0
 
     for test in test_cases:
-      self.model.rst.value = test[0]
+      self.model.reset.value = test[0]
       self.model.in_.value = test[1]
       self.sim.cycle()
       if test[0] == 1:
@@ -142,7 +142,7 @@ class TestReg( unittest.TestCase ):
     test_result = 0
 
     for test in test_cases:
-      self.model.rst.value = test[0]
+      self.model.reset.value = test[0]
       self.model.en.value = test[1]
       self.model.in_.value = test[2]
       self.sim.cycle()

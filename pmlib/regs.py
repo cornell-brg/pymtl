@@ -46,13 +46,12 @@ class RegEn( Model ):
 class RegRst( Model ):
 
   def __init__( self, W = 16 ):
-    self.rst = InPort( 1 )
     self.in_ = InPort( W )
     self.out = OutPort( W )
 
   @posedge_clk
   def seq_logic( self ):
-    if self.rst.value == 1:
+    if self.reset.value == 1:
       self.out.next = 0
     else:
       self.out.next = self.in_.value
@@ -68,14 +67,13 @@ class RegRst( Model ):
 class RegEnRst( Model ):
 
   def __init__( self, W = 16 ):
-    self.rst = InPort( 1 )
     self.en = InPort( 1 )
     self.in_ = InPort( W )
     self.out = OutPort( W )
 
   @posedge_clk
   def seq_logic( self ):
-    if self.rst.value == 1:
+    if self.reset.value == 1:
       self.out.next = 0
     elif self.en.value == 1:
       self.out.next = self.in_.value
