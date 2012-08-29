@@ -111,7 +111,17 @@ class ZeroExt( Model ):
 # TODO: finish the design
 #
 
-class SignExt( Model ):
+  #-----------------------------------------------------------------------
+  # Structual design -- not working
+  #-----------------------------------------------------------------------
+  # Structual design made of bit-wise complementer, MSB generater
+  # and mux2. But simulation went into an endless loop. It gets confused
+  # when updating the combinational logics when multiple ports are
+  # connected together.
+  # A substitution is appended.
+  #
+
+class SignExtStructual( Model ):
 
   def __init__( self, W_IN = 16, W_OUT = 32 ):
     self.in_ = InPort( W_IN )
@@ -146,6 +156,46 @@ class SignExt( Model ):
 #    print "MSB:", self.msb.in_.value, self.msb.out.value
 #    print "REV:", self.rev.in_.value, self.rev.out.value
 #    print "MUX2:", self.mux2.in0.value, self.mux2.in1.value, self.mux2.sel.value, self.mux2.out.value
+
+  #-----------------------------------------------------------------------
+  # Substitution design
+  #-----------------------------------------------------------------------
+
+class SignExt( Model ):
+
+  def __init__( self, W_IN = 16, W_OUT = 32 ):
+    self.in_ = InPort( W_IN )
+    self.out = OutPort( W_OUT )
+
+    # wire
+    self.temp = Wire ( W_OUT - W_IN )
+
+    # sub module
+    self.msb = MSB( W_IN )
+
+    # local parameters
+    self.zero = 0
+    self.comp = 2 ** ( W_OUT - W_IN ) - 1
+    self.count = 0
+
+    #connections
+    connect( self.out[0:W_IN], self.in_ )
+    connect( self.out[W_IN:W_OUT], self.temp )
+    connect( self.msb.in_, self.in_ )
+
+  @combinational
+  def comb_logic( self ):
+    if self.count < 30:
+      print "\n", self.count, "times calling the comb_logic()!"
+      print "Input:", self.in_.value
+      print "Output:", self.out.value
+      print "MSB:", self.msb.in_.value
+      print "MSB out:", self.msb.out.value
+    self.count = self.count + 1
+    if self.msb.out.value == 1:
+      self.temp.value = self.comp
+    else:
+      self.temp.value = self.zero
 
 #-------------------------------------------------------------------------
 # Equal comparator

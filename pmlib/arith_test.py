@@ -291,26 +291,26 @@ class TestSignExt( unittest.TestCase ):
 
   def test_one( self ):
     print "\nSign extension module is not working, this test is not ready"
-#    test_cases = [ [ 0, 0,],
-#                   [ 1, 1,],
-#                   [ 10, 10,],
-#                   [ 127, 127,],
-#                   [ 321, 321,],
-#                   [ 1024, 1024,],
-#                   [ 32767, 32767,],
-#                   [ 32768, 4294934528,],
-#                   [ 32769, 4294934529,],
-#                   [ 32770, 4294934530,],
-#                   [ 65535, 4294967295,],
-#                 ]
-#
-#    for test in test_cases:
-#      self.model.in_.value = test[0]
-#      self.sim.cycle()
-#
-#      print self.model.in_.value, self.model.out.value, self.model.temp.value
-#      self.assertEquals( self.model.out.value, test[1] )
-#      self.assertEquals( self.model.out.width, 32 )
+    test_cases = [ [ 0, 0,],
+                   [ 1, 1,],
+                   [ 10, 10,],
+                   [ 127, 127,],
+                   [ 321, 321,],
+                   [ 1024, 1024,],
+                   [ 32767, 32767,],
+                   [ 32768, 4294934528,],
+                   [ 32769, 4294934529,],
+                   [ 32770, 4294934530,],
+                   [ 65535, 4294967295,],
+                 ]
+
+    for test in test_cases:
+      self.model.in_.value = test[0]
+      self.sim.cycle()
+
+      print self.model.in_.value, self.model.out.value, self.model.temp.value
+      self.assertEquals( self.model.out.value, test[1] )
+      self.assertEquals( self.model.out.width, 32 )
 
   def test_vcd( self ):
 #    self.sim.dump_vcd( 'SignExt_test.vcd' )
