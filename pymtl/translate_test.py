@@ -48,6 +48,16 @@ class TestSlicesVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
+  def test_signext_slice(self):
+    self.translate( SignExtSlice(4) )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  def test_signext_comb(self):
+    self.translate( SignExtComb(4) )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
   #def tearDown(self):
   #  os.remove(self.temp_file)
 

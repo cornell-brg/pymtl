@@ -140,6 +140,8 @@ class Port(object):
       self.connections              += [ target ]
       target.parent_ptr.connections += [ target ]
       target.connections            += [ self ]
+      #if self._value:
+      #  raise Exception("A Port can only be attached to one slice!")
       self._value                    = target
     else:
       #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)

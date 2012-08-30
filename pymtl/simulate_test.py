@@ -111,6 +111,37 @@ class TestSlicesSim(unittest.TestCase):
     self.set_ports( model.inp, 0b11110000 )
     self.assertEqual( model.out.value, 0b11110000 )
 
+  # Bit Repeat
+
+  def test_signext_slice( self ):
+    model = SignExtSlice( 2 )
+    sim = self.setup_sim(model)
+    #debug_utils.port_walk( model )
+    #import visualize
+    #viz = visualize.VisualizationTool( model )
+    #viz.generate()
+    #viz.to_diagram( '_temp.png')
+    test_cases = [ [ 0, 0,],
+                   [ 1, 3,],
+                 ]
+    for test in test_cases:
+      model.in_.value = test[0]
+      print bin(model.out.value), model.out[1].value, model.out[0].value
+      self.assertEquals( model.out.value, test[1] )
+
+  def test_signext_comb( self ):
+    model = SignExtComb( 2 )
+    sim = self.setup_sim(model)
+    print sim.vnode_callbacks
+    test_cases = [ [ 0, 0,],
+                   [ 1, 3,],
+                 ]
+    for test in test_cases:
+      model.in_.value = test[0]
+      print bin(model.out.value), model.out[1].value, model.out[0].value
+      sim.cycle()
+      self.assertEquals( model.out.value, test[1] )
+
 
 class TestCombinationalSim(unittest.TestCase):
 

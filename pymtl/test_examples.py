@@ -369,6 +369,24 @@ class Overflow( Model ):
   def comb_logic( self ):
     self.out.value = self.in0.value - self.in1.value;
 
+class SignExtSlice( Model ):
+  def __init__( self, W = 8 ):
+    self.in_ = InPort( 1 )
+    self.out = OutPort( W )
+    for i in range(W):
+      connect( self.out[i], self.in_ )
+
+class SignExtComb( Model ):
+  def __init__( self, W = 2 ):
+    self.in_ = InPort( 1 )
+    self.out = OutPort( W )
+    self.W = W
+  @combinational
+  def comb_logic( self ):
+    print self.W
+    for i in range(self.W):
+      self.out[i].value = self.in_.value
+
 
 #class RegisteredAdder1(Model):
 #  def __init__(self, bits):
