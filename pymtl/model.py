@@ -396,8 +396,9 @@ class Model(object):
     target.name = iname
     target.clk   = InPort(1)
     target.reset = InPort(1)
-    target._exe_seq_logic = False
+    target._exe_seq_logic  = False
     target._exe_comb_logic = False
+    target._line_trace_en  = False
     target._wires = []
     target._ports = []
     target._submodules = []
@@ -456,6 +457,10 @@ class Model(object):
 
   def is_elaborated(self):
     return hasattr(self, 'class_name')
+
+  def print_line_trace(self):
+    if self._line_trace_en:
+      print self.line_trace()
 
   #def __getattribute__(self, name):
   #  x = object.__getattribute__(self, name)

@@ -467,6 +467,36 @@ class TestCombAndPosedge(unittest.TestCase):
       sim.cycle()
       self.assertEqual( model.out.value, i+1)
 
+  def test_reg_incr_2(self):
+    # Build model and simulator
+    model = RegIncr()
+    sim = self.setup_sim(model)
+    # Define line_trace() add it to our model
+    def line_trace( self ):
+      return "in: {:4}  out: {:4}".format(self.inp.value, self.out.value)
+    # Dynamically bind line_trace to our object
+    import types
+    model.line_trace = types.MethodType( line_trace, model )
+    sim.en_line_trace()
+    sim.reset()
+    # Declare utility function
+    def cycle( in_, bw, out ):
+      model.inp.value = in_
+      sim.eval_combinational()
+      assert model.incr.inp.value == bw
+      assert model.out.value      == out
+      sim.cycle()
+    # Tests:  in   bw  out
+    cycle(     1,   0,   1 )
+    cycle(     2,   1,   2 )
+    cycle(    13,   2,   3 )
+    cycle(    42,  13,  14 )
+    cycle(    42,  42,  43 )
+    cycle(    42,  42,  43 )
+    cycle(    42,  42,  43 )
+    cycle(    51,  42,  43 )
+    cycle(    51,  51,  52 )
+
   def test_incr_reg(self):
     model = IncrReg()
     sim = self.setup_sim(model)
@@ -477,6 +507,29 @@ class TestCombAndPosedge(unittest.TestCase):
       model.inp.value = i
       sim.cycle()
       self.assertEqual( model.out.value, i+1)
+
+  def test_incr_reg_2(self):
+    # Build model and simulator
+    model = IncrReg()
+    sim = self.setup_sim(model)
+    sim.reset()
+    # Declare utility function
+    def cycle( in_, bw, out ):
+      model.inp.value = in_
+      sim.eval_combinational()
+      assert model.reg0.inp.value == bw
+      assert model.out.value      == out
+      sim.cycle()
+    # Tests:  in   bw  out
+    cycle(     1,   2,   1 )
+    cycle(     2,   3,   2 )
+    cycle(    13,  14,   3 )
+    cycle(    42,  43,  14 )
+    cycle(    42,  43,  43 )
+    cycle(    42,  43,  43 )
+    cycle(    42,  43,  43 )
+    cycle(    51,  52,  43 )
+    cycle(    51,  52,  52 )
 
   def test_gcd(self):
     model = GCD()
@@ -525,6 +578,7 @@ class TestCombAndPosedge(unittest.TestCase):
     model.in1.value = 2
     sim.cycle()
     self.assertEqual( model.out.value, (2**16 - 1) )
+
 
 if __name__ == '__main__':
   unittest.main()
