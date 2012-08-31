@@ -20,8 +20,9 @@ def test_basics():
 
   def cycle( in_, out ):
     model.in_.value = in_
-    sim.cycle()
+    sim.eval_combinational()
     assert model.out.value == out
+    sim.cycle()
 
   #      in  out
   cycle(  0,   1 )

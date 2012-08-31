@@ -20,17 +20,18 @@ def test_basics():
 
   def cycle( in_, out ):
     model.in_.value = in_
-    sim.cycle()
+    sim.eval_combinational()
     assert model.out.value == out
+    sim.cycle()
 
   #      in  out
   cycle(  0,   0 )
-  cycle(  1,   1 )
-  cycle( 13,  13 )
+  cycle(  1,   0 )
+  cycle( 13,   1 )
+  cycle( 42,  13 )
   cycle( 42,  42 )
   cycle( 42,  42 )
   cycle( 42,  42 )
-  cycle( 42,  42 )
-  cycle( 51,  51 )
+  cycle( 51,  42 )
   cycle( 51,  51 )
 
