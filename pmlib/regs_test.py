@@ -1,164 +1,164 @@
 #=========================================================================
-# Unittest: Reg
+# Unit Tests for Registers
 #=========================================================================
 
-import unittest
-
 from regs import *
+import random
 
-class TestReg( unittest.TestCase ):
+#-------------------------------------------------------------------------
+# Simple Register unit tests
+#-------------------------------------------------------------------------
 
-  #=======================================================================
-  # Reg
-  #=======================================================================
+def test_Reg():
 
-  def test_Reg( self ):
-    self.model = Reg( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+  model = Reg( 32 )
+  model.elaborate()
 
-    test_cases = [ [ 0,],
-                   [ 1,],
-                   [ 2,],
-                   [ 3,],
-                   [ 4,],
-                   [ 1024,],
-                   [ 32768,],
-                 ]
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "Reg_test.vcd" )
 
-    for test in test_cases:
-      self.model.in_.value = test[0]
-      self.sim.cycle()
+  sim.reset()
+  test_cases = [ 0, 12, 17, 42, 1024, 9001, 0x7fffffff ]
+  random_tests = [ random.randint( 0, 0x7fffffff ) for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-      self.assertEquals( self.model.out.value, test[0] )
+  for i,value in enumerate( test_cases[1:] ):
+    model.in_.value = value
+    assert model.out.value == test_cases[i]
+    sim.cycle()
+    assert model.out.value == value
 
-#    self.sim.dump_vcd( 'Reg_test.vcd' )
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "Reg.v" )
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Reg.v' )
+#-------------------------------------------------------------------------
+# Register with Reset unit test
+#-------------------------------------------------------------------------
 
-  #=======================================================================
-  # RegEn
-  #=======================================================================
+def test_RegRst():
 
-  def test_RegEn( self ):
-    self.model = RegEn( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+  model = RegRst( 32 )
+  model.elaborate()
 
-    test_cases = [ [ 0, 0,],
-                   [ 1, 1,],
-                   [ 0, 2,],
-                   [ 1, 3,],
-                   [ 1, 4,],
-                   [ 0, 1024,],
-                   [ 0, 32768,],
-                 ]
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "RegRst_test.vcd" )
 
-    # if en == 0, do not update test_result
-    test_result = 0
+  sim.reset()
+  #              reset    in
+  test_cases = [ [ 0,     0 ], 
+                 [ 1,    12 ], 
+                 [ 0,    17 ], 
+                 [ 0,    42 ], 
+                 [ 1,   1024 ], 
+                 [ 1,   9001 ], 
+                 [ 1,  0x7fffffff ]
+               ]
+  random_tests = [ [ random.randint( 0, 1 ), random.randint( 0, 0x7fffffff ) ] 
+    for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-    for test in test_cases:
-      self.model.en.value = test[0]
-      self.model.in_.value = test[1]
-      self.sim.cycle()
-      if test[0] == 1:
-        test_result = test[1]
+  for i,test in enumerate( test_cases[1:] ):
+    model.reset.value = test[0]
+    model.in_.value = test[1]
+    sim.cycle()
 
-      # print out signals
-#      print test_result, self.model.out.value, test[1]
-      self.assertEquals( self.model.out.value, test_result )
+    result = 0
+    if test[0]:
+      result = 0
+    else:
+      result = test[1]
 
-#    self.sim.dump_vcd( 'RegEn_test.vcd' )
+    assert model.out.value == result
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'RegEn.v' )
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "RegRst.v" )
 
-  #=======================================================================
-  # RegRst
-  #=======================================================================
+#-------------------------------------------------------------------------
+# Register with Enable unit tests
+#-------------------------------------------------------------------------
 
-  def test_RegRst( self ):
-    self.model = RegRst( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+def test_RegEn():
 
-    test_cases = [ [ 0, 0,],
-                   [ 1, 1,],
-                   [ 0, 2,],
-                   [ 0, 3,],
-                   [ 1, 4,],
-                   [ 1, 1024,],
-                   [ 1, 32768,],
-                 ]
+  model = RegEnRst( 32 )
+  model.elaborate()
 
-    # if reset, test_result should become 0
-    test_result = 0
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "RegEn_test.vcd" )
 
-    for test in test_cases:
-      self.model.reset.value = test[0]
-      self.model.in_.value = test[1]
-      self.sim.cycle()
-      if test[0] == 1:
-        test_result = 0
-      else:
-        test_result = test[1]
+  sim.reset()
+  #               en  in
+  test_cases = [ [ 1,  0 ], 
+                 [ 1, 12 ], 
+                 [ 1, 17 ], 
+                 [ 0, 42 ], 
+                 [ 1, 1024 ], 
+                 [ 1, 9001 ], 
+                 [ 0, 0x7fffffff ]
+               ]
+  random_tests = [ [ random.randint( 0, 1 ), random.randint( 0, 0x7fffffff ) ] 
+    for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-      # print out signals
-#      print test_result, self.model.out.value, test[1]
-      self.assertEquals( self.model.out.value, test_result )
+  for i,test in enumerate( test_cases[1:] ):
+    model.en.value = test[0]
+    model.in_.value = test[1]
+    prev_value = model.out.value
+    sim.cycle()
 
-#    self.sim.dump_vcd( 'RegRst_test.vcd' )
+    result = 0
+    if test[0]:
+      result = test[1]
+    else:
+      result = prev_value
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'RegRst.v' )
+    assert model.out.value == result
 
-  #=======================================================================
-  # RegEnRst
-  #=======================================================================
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "RegEn.v" )
 
-  def test_RegEnRst( self ):
-    self.model = RegEnRst( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+#-------------------------------------------------------------------------
+# Register with Enable and Reset unit test
+#-------------------------------------------------------------------------
 
-    test_cases = [ [ 0, 1, 0,],
-                   [ 1, 1, 1,],
-                   [ 0, 1, 2,],
-                   [ 0, 1, 3,],
-                   [ 1, 1, 4,],
-                   [ 1, 1, 1024,],
-                   [ 1, 1, 32768,],
-                   [ 0, 0, 0,],
-                   [ 1, 0, 1,],
-                   [ 0, 0, 2,],
-                   [ 0, 0, 3,],
-                   [ 1, 0, 4,],
-                   [ 1, 0, 1024,],
-                   [ 1, 0, 32768,],
-                 ]
+def test_RegEnRst():
 
-    # if reset, test_result should become 0
-    test_result = 0
+  model = RegEnRst( 32 )
+  model.elaborate()
 
-    for test in test_cases:
-      self.model.reset.value = test[0]
-      self.model.en.value = test[1]
-      self.model.in_.value = test[2]
-      self.sim.cycle()
-      if test[0] == 1:
-        test_result = 0
-      elif test[1] == 1:
-        test_result = test[2]
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "RegEnRst_test.vcd" )
 
-      # print out signals
-#      print test_result, self.model.out.value, test[0], test[1], test[2]
-      self.assertEquals( self.model.out.value, test_result )
+  sim.reset()
+  #              reset  en  in
+  test_cases = [ [ 0,    1,  0 ], 
+                 [ 1,    1, 12 ], 
+                 [ 0,    1, 17 ], 
+                 [ 0,    0, 42 ], 
+                 [ 1,    1, 1024 ], 
+                 [ 1,    1, 9001 ], 
+                 [ 1,    0, 0x7fffffff ]
+               ]
+  random_tests = [ [ random.randint( 0, 1 ), random.randint( 0, 1 ), 
+    random.randint( 0, 0x7fffffff ) ] for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-#    self.sim.dump_vcd( 'RegEnRst_test.vcd' )
+  for i,test in enumerate( test_cases[1:] ):
+    model.reset.value = test[0]
+    model.en.value = test[1]
+    model.in_.value = test[2]
+    prev_value = model.out.value
+    sim.cycle()
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'RegEnRst.v' )
+    result = 0
+    if test[0]:
+      result = 0
+    elif test[1]:
+      result = test[2]
+    else:
+      result = prev_value
 
-if __name__ == '__main__':
-  unittest.main()
+    assert model.out.value == result
+
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "RegEnRst.v" )
+

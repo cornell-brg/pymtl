@@ -1,245 +1,277 @@
-import unittest
+#=========================================================================
+# Unit Tests for Muxes
+#=========================================================================
 
 from muxes import *
+import random as r
 
-class TestMux2( unittest.TestCase ):
+#-------------------------------------------------------------------------
+# 2-Input Mux and unit tests
+#-------------------------------------------------------------------------
 
-  def test_model( self ):
-    self.model = Mux2( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+def test_Mux2():
+  model = Mux2( 32 )
+  model.elaborate()
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "Mux2_test.vcd" )
 
-    test_model = [ [ 0, 1, 1, 2,],
-                   [ 1, 2, 1, 2,],
-                   [ 1, 25, 18, 25,],
-                   [ 0, 18, 18, 25,],
-                 ]
+  #                in0     in1   sel
+  test_cases = [ [ 0,       1,    1 ],
+                 [ 3,       4,    0 ],
+                 [ 18,     25,    1 ],
+                 [ 42,     17,    0 ],
+                 [ 9001,  1024,   0 ]
+               ]
+  random_tests = [ [ r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 1 ) ] for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-    for test in test_model:
-      self.model.sel.value = test[0]
-      self.model.in0.value = test[2]
-      self.model.in1.value = test[3]
-      self.sim.cycle()
-      self.assertEquals( self.model.out.value, test[1] )
+  for test in test_cases:
+    model.in0.value = test[0]
+    model.in1.value = test[1]
+    model.sel.value = test[2]
+    sim.cycle()
 
-#    self.sim.dump_vcd( 'Mux2_test.vcd' )
+    result = test[ test[2] ]
+    assert model.out.value == result
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Mux2.v' )
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "Mux2.v" )
+  
+#-------------------------------------------------------------------------
+# 3-Input Mux and unit tests
+#-------------------------------------------------------------------------
 
-class TestMux3( unittest.TestCase ):
+def test_Mux3():
+  model = Mux3( 32 )
+  model.elaborate()
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "Mux3_test.vcd" )
 
-  def test_model( self ):
-    self.model = Mux3( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+  #                in0     in1   in2   sel
+  test_cases = [ [ 0,       1,   39,    2 ],
+                 [ 3,       4,   44,    0 ],
+                 [ 18,     25,   2,     1 ],
+                 [ 42,     17,   99,    2 ],
+                 [ 9001,  1024,  0,     0 ]
+               ]
+  random_tests = [ [ r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ),  
+                     r.randint( 0, 2 ) ] for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-    test_model = [ [ 0, 1, 1, 2, 3,],
-                   [ 1, 2, 1, 2, 3,],
-                   [ 2, 3, 1, 2, 3,],
-                   [ 1, 25, 18, 25, 42,],
-                   [ 2, 42, 18, 25, 42,],
-                   [ 0, 18, 18, 25, 42,],
-                 ]
+  for test in test_cases:
+    model.in0.value = test[0]
+    model.in1.value = test[1]
+    model.in2.value = test[2]
+    model.sel.value = test[3]
+    sim.cycle()
 
-    for test in test_model:
-      self.model.sel.value = test[0]
-      self.model.in0.value = test[2]
-      self.model.in1.value = test[3]
-      self.model.in2.value = test[4]
-      self.sim.cycle()
-      self.assertEquals( self.model.out.value, test[1] )
+    result = test[ test[3] ]
+    assert model.out.value == result
 
-#    self.sim.dump_vcd( 'Mux3_test.vcd' )
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "Mux3.v" )
+  
+#-------------------------------------------------------------------------
+# 4-Input Mux and unit tests
+#-------------------------------------------------------------------------
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Mux3.v' )
+def test_Mux4():
+  model = Mux4( 32 )
+  model.elaborate()
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "Mux4_test.vcd" )
 
-class TestMux4( unittest.TestCase ):
+  #                in0     in1   in2   in3   sel
+  test_cases = [ [ 0,       1,   39,   22,    0 ],
+                 [ 3,       4,   44,   44,    1 ],
+                 [ 18,     25,   2,    99,    2 ],
+                 [ 42,     17,   99,   88,    3 ],
+                 [ 9001,  1024,  0,    77,    3 ]
+               ]
+  random_tests = [ [ r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 3 ) ] for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-  def test_model( self ):
-    self.model = Mux4( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+  for test in test_cases:
+    model.in0.value = test[0]
+    model.in1.value = test[1]
+    model.in2.value = test[2]
+    model.in3.value = test[3]
+    model.sel.value = test[4]
+    sim.cycle()
 
-    test_model = [ [ 0, 18, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 25, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 2, 42, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 3, 56, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 2, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 2, 3, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 3, 4, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 0, 1, 1, 2, 3, 4, 5, 6, 7, 8],
-                 ]
+    result = test[ test[4] ]
+    assert model.out.value == result
 
-    for test in test_model:
-      self.model.sel.value = test[0]
-      self.model.in0.value = test[2]
-      self.model.in1.value = test[3]
-      self.model.in2.value = test[4]
-      self.model.in3.value = test[5]
-      self.sim.cycle()
-      self.assertEquals( self.model.out.value, test[1] )
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "Mux4.v" )
+  
+#-------------------------------------------------------------------------
+# 5-Input Mux and unit tests
+#-------------------------------------------------------------------------
 
-#    self.sim.dump_vcd( 'Mux4_test.vcd' )
+def test_Mux5():
+  model = Mux5( 32 )
+  model.elaborate()
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "Mux5_test.vcd" )
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Mux4.v' )
+  #                in0     in1   in2   in3   in4   sel
+  test_cases = [ [ 0,       1,   39,   22,   33,    0 ],
+                 [ 3,       4,   44,   44,   55,    1 ],
+                 [ 18,     25,   2,    99,   66,    2 ],
+                 [ 42,     17,   99,   88,   11,    3 ],
+                 [ 9001,  1024,  0,    77,   100,   4 ]
+               ]
+  random_tests = [ [ r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ),  
+                     r.randint( 0, 4 ) ] for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-class TestMux5( unittest.TestCase ):
+  for test in test_cases:
+    model.in0.value = test[0]
+    model.in1.value = test[1]
+    model.in2.value = test[2]
+    model.in3.value = test[3]
+    model.in4.value = test[4]
+    model.sel.value = test[5]
+    sim.cycle()
 
-  def test_model( self ):
-    self.model = Mux5( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+    result = test[ test[5] ]
+    assert model.out.value == result
 
-    test_model = [ [ 0, 18, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 25, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 2, 42, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 3, 56, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 4, 74, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 2, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 4, 5, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 2, 3, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 3, 4, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 0, 1, 1, 2, 3, 4, 5, 6, 7, 8],
-                 ]
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "Mux5.v" )
+  
+#-------------------------------------------------------------------------
+# 6-Input Mux and unit tests
+#-------------------------------------------------------------------------
 
-    for test in test_model:
-      self.model.sel.value = test[0]
-      self.model.in0.value = test[2]
-      self.model.in1.value = test[3]
-      self.model.in2.value = test[4]
-      self.model.in3.value = test[5]
-      self.model.in4.value = test[6]
-      self.sim.cycle()
-      self.assertEquals( self.model.out.value, test[1] )
+def test_Mux6():
+  model = Mux6( 32 )
+  model.elaborate()
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "Mux6_test.vcd" )
 
-#    self.sim.dump_vcd( 'Mux5_test.vcd' )
+  #                in0     in1   in2   in3   in4   in5,  sel
+  test_cases = [ [ 0,       1,   39,   22,   33,   10,    0 ],
+                 [ 3,       4,   44,   44,   55,   20,    1 ],
+                 [ 18,     25,   2,    99,   66,   30,    2 ],
+                 [ 42,     17,   99,   88,   11,   40,    3 ],
+                 [ 47,     19,   91,   80,   101,  50,    4 ],
+                 [ 9001,  1024,  0,    77,   100,  60,    5 ]
+               ]
+  random_tests = [ [ r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 5 ) ] for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Mux5.v' )
+  for test in test_cases:
+    model.in0.value = test[0]
+    model.in1.value = test[1]
+    model.in2.value = test[2]
+    model.in3.value = test[3]
+    model.in4.value = test[4]
+    model.in5.value = test[5]
+    model.sel.value = test[6]
+    sim.cycle()
 
-class TestMux6( unittest.TestCase ):
+    result = test[ test[6] ]
+    assert model.out.value == result
 
-  def test_model( self ):
-    self.model = Mux6( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "Mux6.v" )
+  
+#-------------------------------------------------------------------------
+# 7-Input Mux and unit tests
+#-------------------------------------------------------------------------
 
-    test_model = [ [ 0, 18, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 25, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 2, 42, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 3, 56, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 4, 74, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 5, 13, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 2, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 5, 6, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 4, 5, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 2, 3, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 3, 4, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 0, 1, 1, 2, 3, 4, 5, 6, 7, 8],
-                 ]
+def test_Mux7():
+  model = Mux7( 32 )
+  model.elaborate()
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "Mux7_test.vcd" )
 
-    for test in test_model:
-      self.model.sel.value = test[0]
-      self.model.in0.value = test[2]
-      self.model.in1.value = test[3]
-      self.model.in2.value = test[4]
-      self.model.in3.value = test[5]
-      self.model.in4.value = test[6]
-      self.model.in5.value = test[7]
-      self.sim.cycle()
-      self.assertEquals( self.model.out.value, test[1] )
+  #                in0     in1   in2   in3   in4   in5,  in6  sel
+  test_cases = [ [ 0,       1,   39,   22,   33,   10,   70,   0 ],
+                 [ 3,       4,   44,   44,   55,   20,   90,   1 ],
+                 [ 18,     25,   2,    99,   66,   30,   111,  2 ],
+                 [ 42,     17,   99,   88,   11,   40,   222,  3 ],
+                 [ 47,     19,   91,   80,   101,  50,   333,  4 ],
+                 [ 49,     5,    6 ,   32,   64,   128,  444,  5 ],
+                 [ 9001,  1024,  0,    77,   100,  60,   555,  6 ]
+               ]
+  random_tests = [ [ r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 6 ) ] for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-#    self.sim.dump_vcd( 'Mux6_test.vcd' )
+  for test in test_cases:
+    model.in0.value = test[0]
+    model.in1.value = test[1]
+    model.in2.value = test[2]
+    model.in3.value = test[3]
+    model.in4.value = test[4]
+    model.in5.value = test[5]
+    model.in6.value = test[6]
+    model.sel.value = test[7]
+    sim.cycle()
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Mux6.v' )
+    result = test[ test[7] ]
+    assert model.out.value == result
 
-class TestMux7( unittest.TestCase ):
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "Mux7.v" )
+  
+#-------------------------------------------------------------------------
+# 8-Input Mux and unit tests
+#-------------------------------------------------------------------------
 
-  def test_model( self ):
-    self.model = Mux7( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+def test_Mux8():
+  model = Mux8( 32 )
+  model.elaborate()
+  sim = SimulationTool( model )
+  #sim.dump_vcd( "Mux8_test.vcd" )
 
-    test_model = [ [ 0, 18, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 25, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 2, 42, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 3, 56, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 4, 74, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 5, 13, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 6, 55, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 2, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 6, 7, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 5, 6, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 4, 5, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 2, 3, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 3, 4, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 0, 1, 1, 2, 3, 4, 5, 6, 7, 8],
-                 ]
+  #                in0     in1   in2   in3   in4   in5,  in6  in7  sel
+  test_cases = [ [ 0,       1,   39,   22,   33,   10,   70,  666,  0 ],
+                 [ 3,       4,   44,   44,   55,   20,   90,  777,  1 ],
+                 [ 18,     25,   2,    99,   66,   30,   111, 888,  2 ],
+                 [ 42,     17,   99,   88,   11,   40,   222, 999,  3 ],
+                 [ 47,     19,   91,   80,   101,  50,   333, 1111, 4 ],
+                 [ 49,     5,    6 ,   32,   64,   128,  444, 2222, 5 ],
+                 [ 65,     15,   25,   35,   45,   75,    85, 3333, 6 ],
+                 [ 9001,  1024,  0,    77,   100,  60,   555, 4444, 7 ]
+               ]
+  random_tests = [ [ r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 0xffffffff ), r.randint( 0, 0xffffffff ), 
+                     r.randint( 0, 7 ) ] for x in range( 20 ) ]
+  test_cases.extend( random_tests )
 
-    for test in test_model:
-      self.model.sel.value = test[0]
-      self.model.in0.value = test[2]
-      self.model.in1.value = test[3]
-      self.model.in2.value = test[4]
-      self.model.in3.value = test[5]
-      self.model.in4.value = test[6]
-      self.model.in5.value = test[7]
-      self.model.in6.value = test[8]
-      self.sim.cycle()
-      self.assertEquals( self.model.out.value, test[1] )
+  for test in test_cases:
+    model.in0.value = test[0]
+    model.in1.value = test[1]
+    model.in2.value = test[2]
+    model.in3.value = test[3]
+    model.in4.value = test[4]
+    model.in5.value = test[5]
+    model.in6.value = test[6]
+    model.in7.value = test[7]
+    model.sel.value = test[8]
+    sim.cycle()
 
-#    self.sim.dump_vcd( 'Mux7_test.vcd' )
+    result = test[ test[8] ]
+    assert model.out.value == result
 
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Mux7.v' )
-
-class TestMux8( unittest.TestCase ):
-
-  def test_model( self ):
-    self.model = Mux8( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
-
-    test_model = [ [ 0, 18, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 25, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 2, 42, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 3, 56, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 4, 74, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 5, 13, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 6, 55, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 7, 43, 18, 25, 42, 56, 74, 13, 55, 43],
-                   [ 1, 2, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 6, 7, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 5, 6, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 4, 5, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 2, 3, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 3, 4, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
-                   [ 0, 1, 1, 2, 3, 4, 5, 6, 7, 8],
-                 ]
-
-    for test in test_model:
-      self.model.sel.value = test[0]
-      self.model.in0.value = test[2]
-      self.model.in1.value = test[3]
-      self.model.in2.value = test[4]
-      self.model.in3.value = test[5]
-      self.model.in4.value = test[6]
-      self.model.in5.value = test[7]
-      self.model.in6.value = test[8]
-      self.model.in7.value = test[9]
-      self.sim.cycle()
-      self.assertEquals( self.model.out.value, test[1] )
-
-#    self.sim.dump_vcd( 'Mux8_test.vcd' )
-
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Mux8.v' )
-
-
-if __name__ == '__main__':
-  unittest.main()
+  #hdl = VerilogTranslationTool( model )
+  #hdl.translate( "Mux8.v" )
+  

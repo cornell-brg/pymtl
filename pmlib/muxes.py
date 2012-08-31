@@ -15,11 +15,11 @@ from pymtl import *
 
 class Mux2( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in0 = InPort( W )
-    self.in1 = InPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in0 = InPort( nbits )
+    self.in1 = InPort( nbits )
     self.sel = InPort( 1 )
-    self.out = OutPort( W )
+    self.out = OutPort( nbits )
 
   @combinational
   def comb_logic( self ):
@@ -36,12 +36,12 @@ class Mux2( Model ):
 
 class Mux3( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in0 = InPort( W )
-    self.in1 = InPort( W )
-    self.in2 = InPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in0 = InPort( nbits )
+    self.in1 = InPort( nbits )
+    self.in2 = InPort( nbits )
     self.sel = InPort( 2 )
-    self.out = OutPort( W )
+    self.out = OutPort( nbits )
 
   @combinational
   def comb_logic( self ):
@@ -60,13 +60,13 @@ class Mux3( Model ):
 
 class Mux4( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in0 = InPort( W )
-    self.in1 = InPort( W )
-    self.in2 = InPort( W )
-    self.in3 = InPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in0 = InPort( nbits )
+    self.in1 = InPort( nbits )
+    self.in2 = InPort( nbits )
+    self.in3 = InPort( nbits )
     self.sel = InPort( 2 )
-    self.out = OutPort( W )
+    self.out = OutPort( nbits )
 
   @combinational
   def comb_logic( self ):
@@ -87,14 +87,14 @@ class Mux4( Model ):
 
 class Mux5( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in0 = InPort( W )
-    self.in1 = InPort( W )
-    self.in2 = InPort( W )
-    self.in3 = InPort( W )
-    self.in4 = InPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in0 = InPort( nbits )
+    self.in1 = InPort( nbits )
+    self.in2 = InPort( nbits )
+    self.in3 = InPort( nbits )
+    self.in4 = InPort( nbits )
     self.sel = InPort( 3 )
-    self.out = OutPort( W )
+    self.out = OutPort( nbits )
 
   @combinational
   def comb_logic( self ):
@@ -117,15 +117,15 @@ class Mux5( Model ):
 
 class Mux6( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in0 = InPort( W )
-    self.in1 = InPort( W )
-    self.in2 = InPort( W )
-    self.in3 = InPort( W )
-    self.in4 = InPort( W )
-    self.in5 = InPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in0 = InPort( nbits )
+    self.in1 = InPort( nbits )
+    self.in2 = InPort( nbits )
+    self.in3 = InPort( nbits )
+    self.in4 = InPort( nbits )
+    self.in5 = InPort( nbits )
     self.sel = InPort( 3 )
-    self.out = OutPort( W )
+    self.out = OutPort( nbits )
 
   @combinational
   def comb_logic( self ):
@@ -150,16 +150,16 @@ class Mux6( Model ):
 
 class Mux7( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in0 = InPort( W )
-    self.in1 = InPort( W )
-    self.in2 = InPort( W )
-    self.in3 = InPort( W )
-    self.in4 = InPort( W )
-    self.in5 = InPort( W )
-    self.in6 = InPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in0 = InPort( nbits )
+    self.in1 = InPort( nbits )
+    self.in2 = InPort( nbits )
+    self.in3 = InPort( nbits )
+    self.in4 = InPort( nbits )
+    self.in5 = InPort( nbits )
+    self.in6 = InPort( nbits )
     self.sel = InPort( 3 )
-    self.out = OutPort( W )
+    self.out = OutPort( nbits )
 
   @combinational
   def comb_logic( self ):
@@ -186,17 +186,17 @@ class Mux7( Model ):
 
 class Mux8( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in0 = InPort( W )
-    self.in1 = InPort( W )
-    self.in2 = InPort( W )
-    self.in3 = InPort( W )
-    self.in4 = InPort( W )
-    self.in5 = InPort( W )
-    self.in6 = InPort( W )
-    self.in7 = InPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in0 = InPort( nbits )
+    self.in1 = InPort( nbits )
+    self.in2 = InPort( nbits )
+    self.in3 = InPort( nbits )
+    self.in4 = InPort( nbits )
+    self.in5 = InPort( nbits )
+    self.in6 = InPort( nbits )
+    self.in7 = InPort( nbits )
     self.sel = InPort( 3 )
-    self.out = OutPort( W )
+    self.out = OutPort( nbits )
 
   @combinational
   def comb_logic( self ):

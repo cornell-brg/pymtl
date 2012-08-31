@@ -1,5 +1,5 @@
 #=========================================================================
-# Registers
+# Register with different implementations
 #=========================================================================
 
 import sys
@@ -7,74 +7,76 @@ sys.path.append('..')
 from pymtl import *
 
 #-------------------------------------------------------------------------
-# Reg
+# Register
 #-------------------------------------------------------------------------
 
 class Reg( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in_ = InPort( W )
-    self.out = OutPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in_ = InPort( nbits )
+    self.out = OutPort( nbits )
 
   @posedge_clk
   def seq_logic( self ):
     self.out.next = self.in_.value
 
 #-------------------------------------------------------------------------
-# RegEn
+# Register with enable signal
 #-------------------------------------------------------------------------
 
 class RegEn( Model ):
 
-  def __init__( self, W = 16 ):
-    self.en = InPort( 1 )
-    self.in_ = InPort( W )
-    self.out = OutPort( W )
+  def __init__( self, nbits = 1 ):
+    self.in_ = InPort( nbits )
+    self.en  = InPort( 1 )
+    self.out = OutPort( nbits )
 
   @posedge_clk
   def seq_logic( self ):
-    if self.en.value == 1:
+    if self.en.value:
       self.out.next = self.in_.value
 
 #-------------------------------------------------------------------------
-# RegRst
+# Register with reset signal
 #-------------------------------------------------------------------------
 #
-# If rst = 1, the value will be reset to 0 on the next clock edge
+# If reset = 1, the value will be reset to a default reset_value on the next clock edge
 #
 
 class RegRst( Model ):
 
-  def __init__( self, W = 16 ):
-    self.in_ = InPort( W )
-    self.out = OutPort( W )
+  def __init__( self, nbits = 1, reset_value = 0 ):
+    self.in_ = InPort( nbits )
+    self.out = OutPort( nbits )
+    self.reset_value = reset_value
 
   @posedge_clk
   def seq_logic( self ):
-    if self.reset.value == 1:
-      self.out.next = 0
+    if self.reset.value:
+      self.out.next = self.reset_value
     else:
       self.out.next = self.in_.value
 
 #-------------------------------------------------------------------------
-# RegEnRst
+# Register with reset and enable
 #-------------------------------------------------------------------------
 #
-# If rst = 1, the value will be reset to 0 on the next clock edge,
+# If reset = 1, the value will be reset to default reset_value on the next clock edge,
 # no matter whether en = 1 or not 
 #
 
 class RegEnRst( Model ):
 
-  def __init__( self, W = 16 ):
-    self.en = InPort( 1 )
-    self.in_ = InPort( W )
-    self.out = OutPort( W )
+  def __init__( self, nbits = 1, reset_value = 0 ):
+    self.en  = InPort( 1 )
+    self.in_ = InPort( nbits )
+    self.out = OutPort( nbits )
+    self.reset_value = reset_value
 
   @posedge_clk
   def seq_logic( self ):
-    if self.reset.value == 1:
-      self.out.next = 0
-    elif self.en.value == 1:
+    if self.reset.value:
+      self.out.next = self.reset_value
+    elif self.en.value:
       self.out.next = self.in_.value
 
