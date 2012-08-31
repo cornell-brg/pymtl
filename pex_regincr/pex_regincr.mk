@@ -17,4 +17,5 @@ pex_regincr_test_srcs = \
   RegIncrStruct_test.py \
 
 pex_regincr_prog_srcs = \
+  pex-regincr-sim \
 
