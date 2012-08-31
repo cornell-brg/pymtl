@@ -1,5 +1,7 @@
-import sys
-sys.path.append('..')
+#=========================================================================
+# RegIncrFlat
+#=========================================================================
+
 from pymtl import *
 
 class RegIncrFlat( Model ):
@@ -8,6 +10,17 @@ class RegIncrFlat( Model ):
     self.in_ = InPort(16)
     self.out = OutPort(16)
 
+    self.reg = Wire(16)
+
+  # Register
+
   @posedge_clk
-  def seq_logic( self ):
-    self.out.next = self.in_.value + 1
+  def register( self ):
+    self.reg.next = self.in_.value
+
+  # Incrementer
+
+  @combinational
+  def incrementer( self ):
+    self.out.value = self.reg.value + 1
+

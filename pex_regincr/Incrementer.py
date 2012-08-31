@@ -2,8 +2,6 @@
 # Incrementer
 #=========================================================================
 
-import sys
-sys.path.append('..')
 from pymtl import *
 
 class Incrementer( Model ):
@@ -15,3 +13,4 @@ class Incrementer( Model ):
   @combinational
   def comb_logic( self ):
     self.out.value = self.in_.value + 1
+

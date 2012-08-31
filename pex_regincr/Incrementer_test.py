@@ -1,20 +1,36 @@
-import unittest
+#=========================================================================
+# Incrementer Unit Tests
+#=========================================================================
 
-from Incrementer import *
+from pymtl import *
 
-class TestIncrementer(unittest.TestCase):
+from Incrementer import Incrementer
 
-  def setUp(self):
-    self.model = Incrementer( 16 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
+#-------------------------------------------------------------------------
+# Basic Test Suite
+#-------------------------------------------------------------------------
 
-  def test_one(self):
-    self.sim.reset()
-    for i in range(10):
-      self.model.in_.value = i
-      self.sim.cycle()
-      self.assertEqual( self.model.out.value, i + 1 )
+def test_basics():
 
-if __name__ == '__main__':
-  unittest.main()
+  model = Incrementer(16)
+  model.elaborate()
+
+  sim = SimulationTool( model )
+  sim.reset()
+
+  def cycle( in_, out ):
+    model.in_.value = in_
+    sim.cycle()
+    assert model.out.value == out
+
+  #      in  out
+  cycle(  0,   1 )
+  cycle(  1,   2 )
+  cycle( 13,  14 )
+  cycle( 42,  43 )
+  cycle( 42,  43 )
+  cycle( 42,  43 )
+  cycle( 42,  43 )
+  cycle( 51,  52 )
+  cycle( 51,  52 )
+

@@ -2,8 +2,6 @@
 # Register
 #=========================================================================
 
-import sys
-sys.path.append('..')
 from pymtl import *
 
 class Register( Model ):

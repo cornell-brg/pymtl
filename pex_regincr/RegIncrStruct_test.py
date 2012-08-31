@@ -1,10 +1,10 @@
 #=========================================================================
-# RegIncrFlat Unit Tests
+# RegIncrStruct Unit Tests
 #=========================================================================
 
 from pymtl import *
 
-from RegIncrFlat import RegIncrFlat
+from RegIncrStruct import RegIncrStruct
 
 #-------------------------------------------------------------------------
 # Basic Test Suite
@@ -12,7 +12,7 @@ from RegIncrFlat import RegIncrFlat
 
 def test_basics():
 
-  model = RegIncrFlat()
+  model = RegIncrStruct()
   model.elaborate()
 
   sim = SimulationTool( model )
