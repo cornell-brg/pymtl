@@ -304,3 +304,21 @@ def test_xor():
   assert x ^ 0b1010 == 0b11000110
   #assert 0b1010 ^ x == 0b11000110
 
+def test_mult():
+  x = Bits(8)
+  y = Bits(8)
+  x.value = 0b00000000
+  x.value = 0b00000000
+  assert x * y == 0b0000000000000000
+  assert x * 0b1000 == 0b0000000000000000
+  x.value = 0b11111111
+  y.value = 0b11111111
+  assert x * y == 0b0000000000000001111111000000001
+  assert x * 0b11111111 == 0b0000000000000001111111000000001
+ 
+  # TODO: Currently fails as the second operand is larger than the Bits
+  # object x. Should update the test when we define the behaviour  
+  #assert x * 0b1111111111 == 0b0000000000000001111111000000001
+
+  y.value = 0b10000000
+  assert x * y == 0b0000000000000000111111110000000

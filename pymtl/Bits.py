@@ -131,8 +131,17 @@ class Bits(object):
     else:
       return Bits(self.width, self.value | other.value)
 
+  # TODO: what about multiplying Bits object with an object of other type
+  # where the bitwidth of the other type is larger than the bitwidth of the
+  # Bits object? ( applies to every other oeprator as well.... )
+  def __mul__(self, other):
+    if isinstance(other, int):
+      return Bits(2*self.width, self.value * other)
+    else:
+      assert self.width == other.width
+      return Bits(2*self.width, self.value * other.value)
+
   # TODO: implement these?
-  #def __mul__(self, other)
   #def __floordiv__(self, other)
   #def __mod__(self, other)
   #def __divmod__(self, other)
