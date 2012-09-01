@@ -7,31 +7,42 @@ from pymtl import *
 from Register import Register
 
 #-------------------------------------------------------------------------
-# Basic Test Suite
+# Test Harness
 #-------------------------------------------------------------------------
 
-def test_basics():
+def harness( inouts ):
 
   model = Register(16)
   model.elaborate()
 
   sim = SimulationTool( model )
+  sim.dump_vcd( "Register_test.vcd" )
   sim.reset()
 
-  def cycle( in_, out ):
-    model.in_.value = in_
-    sim.eval_combinational()
-    assert model.out.value == out
+  for inout in inouts:
+    model.in_.value = inout[0]
     sim.cycle()
+    assert model.out.value == inout[1]
 
-  #      in  out
-  cycle(  0,   0 )
-  cycle(  1,   0 )
-  cycle( 13,   1 )
-  cycle( 42,  13 )
-  cycle( 42,  42 )
-  cycle( 42,  42 )
-  cycle( 42,  42 )
-  cycle( 51,  42 )
-  cycle( 51,  51 )
+  sim.cycle()
+  sim.cycle()
+  sim.cycle()
+
+#-------------------------------------------------------------------------
+# Test basics
+#-------------------------------------------------------------------------
+
+def test_basics():
+  harness([
+    # in   out
+    [  0,   0 ],
+    [  1,   1 ],
+    [ 13,  13 ],
+    [ 42,  42 ],
+    [ 42,  42 ],
+    [ 42,  42 ],
+    [ 42,  42 ],
+    [ 51,  51 ],
+    [ 51,  51 ],
+  ])
 

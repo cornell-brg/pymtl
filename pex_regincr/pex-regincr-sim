@@ -60,7 +60,6 @@ def main():
   sim.cycle()
   sim.cycle()
   sim.cycle()
-  sim.cycle()
 
   print model.out.value
 

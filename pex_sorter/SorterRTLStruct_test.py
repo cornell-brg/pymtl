@@ -1,10 +1,10 @@
 #=========================================================================
-# SorterRTLFlat Unit Tests
+# SorterRTLStruct Unit Tests
 #=========================================================================
 
 from pymtl import *
 
-from SorterRTLFlat import SorterRTLFlat
+from SorterRTLStruct import SorterRTLStruct
 
 import random
 
@@ -14,27 +14,27 @@ import random
 
 def harness( inouts ):
 
-  model = SorterRTLFlat()
+  model = SorterRTLStruct()
   model.elaborate()
 
   sim = SimulationTool( model )
-  sim.dump_vcd( "SorterRTLFlat_test.vcd" )
+  sim.dump_vcd( "SorterRTLStruct_test.vcd" )
   sim.reset()
 
   for inout in inouts:
     print inout
 
-    model.in_0.value = inout[0]
-    model.in_1.value = inout[1]
-    model.in_2.value = inout[2]
-    model.in_3.value = inout[3]
+    model.in_[0].value = inout[0]
+    model.in_[1].value = inout[1]
+    model.in_[2].value = inout[2]
+    model.in_[3].value = inout[3]
 
     sim.cycle()
 
-    assert model.out_0.value == inout[4]
-    assert model.out_1.value == inout[5]
-    assert model.out_2.value == inout[6]
-    assert model.out_3.value == inout[7]
+    assert model.out[0].value == inout[4]
+    assert model.out[1].value == inout[5]
+    assert model.out[2].value == inout[6]
+    assert model.out[3].value == inout[7]
 
   sim.cycle()
   sim.cycle()

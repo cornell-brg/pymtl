@@ -2,52 +2,54 @@
 # SorterRTLFlat
 #=========================================================================
 
-import sys
-sys.path.append('..')
 from pymtl import *
-
-from pex_regincr.Register import *
-from MaxMin import *
 
 class SorterRTLFlat( Model ):
 
   def __init__( self ):
+
+    # Input ports
 
     self.in_0 = InPort(16)
     self.in_1 = InPort(16)
     self.in_2 = InPort(16)
     self.in_3 = InPort(16)
 
+    # Ouput ports
+
     self.out_0 = OutPort(16)
     self.out_1 = OutPort(16)
     self.out_2 = OutPort(16)
     self.out_3 = OutPort(16)
+
+    # Wires
 
     self.reg_AB_0 = Wire(16)
     self.reg_AB_1 = Wire(16)
     self.reg_AB_2 = Wire(16)
     self.reg_AB_3 = Wire(16)
 
-    self.B0_max = Wire(16)
-    self.B0_min = Wire(16)
-    self.B1_max = Wire(16)
-    self.B1_min = Wire(16)
+    self.B0_max   = Wire(16)
+    self.B0_min   = Wire(16)
+    self.B1_max   = Wire(16)
+    self.B1_min   = Wire(16)
 
     self.reg_BC_0 = Wire(16)
     self.reg_BC_1 = Wire(16)
     self.reg_BC_2 = Wire(16)
     self.reg_BC_3 = Wire(16)
 
-    self.C0_max = Wire(16)
-    self.C0_min = Wire(16)
-    self.C1_max = Wire(16)
-    self.C1_min = Wire(16)
-    self.C2_max = Wire(16)
-    self.C2_min = Wire(16)
+    self.C0_max   = Wire(16)
+    self.C0_min   = Wire(16)
+    self.C1_max   = Wire(16)
+    self.C1_min   = Wire(16)
+    self.C2_max   = Wire(16)
+    self.C2_min   = Wire(16)
 
   #---------------------------------------------------------------------
   # Stage A->B pipeline registers
   #---------------------------------------------------------------------
+
   @posedge_clk
   def reg_ab( self ):
     self.reg_AB_0.next = self.in_0.value
@@ -58,6 +60,7 @@ class SorterRTLFlat( Model ):
   #---------------------------------------------------------------------
   # Stage B combinational logic
   #---------------------------------------------------------------------
+
   @combinational
   def stage_b( self ):
     if self.reg_AB_0.value >= self.reg_AB_1.value:
@@ -77,6 +80,7 @@ class SorterRTLFlat( Model ):
   #---------------------------------------------------------------------
   # Stage B->C pipeline registers
   #---------------------------------------------------------------------
+
   @posedge_clk
   def reg_bc( self ):
     self.reg_BC_0.next = self.B0_min.value
@@ -88,6 +92,7 @@ class SorterRTLFlat( Model ):
   #---------------------------------------------------------------------
   # Stage C combinational logic
   #---------------------------------------------------------------------
+
   @combinational
   def stage_c( self ):
     if self.reg_BC_0.value >= self.reg_BC_2.value:
@@ -112,17 +117,9 @@ class SorterRTLFlat( Model ):
       self.C2_min.value = self.C0_max.value
 
     # Connect to output ports
+
     self.out_0.value = self.C0_min.value
     self.out_1.value = self.C2_min.value
     self.out_2.value = self.C2_max.value
     self.out_3.value = self.C1_max.value
 
-
-  def line_trace( self ):
-    #inputs  = [ x.value for x in self.in_ ]
-    #outputs = [ x.value for x in self.out ]
-    inputs  = [ x.value for x in self._ports if isinstance(x, InPort)  ]
-    outputs = [ x.value for x in self._ports if isinstance(x, OutPort) ]
-    inputs.sort()
-    outputs.sort()
-    return "in: {0}  out: {1}".format( inputs, outputs )

@@ -7,31 +7,42 @@ from pymtl import *
 from Incrementer import Incrementer
 
 #-------------------------------------------------------------------------
-# Basic Test Suite
+# Test Harness
 #-------------------------------------------------------------------------
 
-def test_basics():
+def harness( inouts ):
 
   model = Incrementer(16)
   model.elaborate()
 
   sim = SimulationTool( model )
+  sim.dump_vcd( "Incrementer_test.vcd" )
   sim.reset()
 
-  def cycle( in_, out ):
-    model.in_.value = in_
-    sim.eval_combinational()
-    assert model.out.value == out
+  for inout in inouts:
+    model.in_.value = inout[0]
     sim.cycle()
+    assert model.out.value == inout[1]
 
-  #      in  out
-  cycle(  0,   1 )
-  cycle(  1,   2 )
-  cycle( 13,  14 )
-  cycle( 42,  43 )
-  cycle( 42,  43 )
-  cycle( 42,  43 )
-  cycle( 42,  43 )
-  cycle( 51,  52 )
-  cycle( 51,  52 )
+  sim.cycle()
+  sim.cycle()
+  sim.cycle()
+
+#-------------------------------------------------------------------------
+# Test basics
+#-------------------------------------------------------------------------
+
+def test_basics():
+  harness([
+    # in   out
+    [  1,   2 ],
+    [  2,   3 ],
+    [ 13,  14 ],
+    [ 42,  43 ],
+    [ 42,  43 ],
+    [ 42,  43 ],
+    [ 42,  43 ],
+    [ 51,  52 ],
+    [ 51,  52 ],
+  ])
 

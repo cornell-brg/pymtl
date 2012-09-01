@@ -2,8 +2,6 @@
 # SorterBehavioralLevel
 #=========================================================================
 
-import sys
-sys.path.append('..')
 from pymtl import *
 
 class SorterBehavioralLevel( Model ):
@@ -19,9 +17,4 @@ class SorterBehavioralLevel( Model ):
     values.sort()
     for i, value in enumerate( values ):
       self.out[i].value = value
-
-  def line_trace( self ):
-    inputs  = [ x.value for x in self.in_ ]
-    outputs = [ x.value for x in self.out ]
-    return "in: {0}  out: {1}".format( inputs, outputs )
 
