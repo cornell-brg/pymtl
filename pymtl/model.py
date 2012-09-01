@@ -478,6 +478,18 @@ def connect( port_A, port_B):
   else:
     port_A.connect( port_B )
 
+_connect_ports = connect
+
+def _connect_dict( connections ):
+ for left_port,right_port in connections.iteritems():
+   connect( left_port, right_port )
+
+def connect( left, right=None ):
+ if type(left) == dict:
+   _connect_dict( left )
+ else:
+   _connect_ports( left, right )
+
 #------------------------------------------------------------------------
 # Visitors
 #------------------------------------------------------------------------
