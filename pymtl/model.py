@@ -458,9 +458,10 @@ class Model(object):
   def is_elaborated(self):
     return hasattr(self, 'class_name')
 
-  def print_line_trace(self):
-    if self._line_trace_en:
-      print self.line_trace()
+  # Having a default line trace makes it easier to just always enable
+  # line tracing in the test harness. -cbatten
+  def line_trace(self):
+    return ""
 
   #def __getattribute__(self, name):
   #  x = object.__getattribute__(self, name)
