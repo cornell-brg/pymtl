@@ -61,11 +61,12 @@ class SimulationTool():
     self.eval_combinational()
 
     # TODO: Hacky auto clock generation
+    #       this self.model.clk.value changes behavior event queue
+    #       behavior depending on whether vcd output is enabled or not... bad
     if self.vcd:
       print >> self.o, "#%s" % (10 * self.num_cycles)
     self.model.clk.value = 0
 
-    # TODO: Hacky auto clock generation
     if self.vcd:
       print >> self.o, "#%s" % ((10 * self.num_cycles) + 5)
     self.model.clk.value = 1
