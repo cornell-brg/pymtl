@@ -8,6 +8,7 @@ from simulate import SimulationTool
 class TestSource (Model):
 
   def __init__( self, n, msg_list ):
+    self.reset   = InPort( 1 )
     self.out_msg = OutPort(n)
     self.out_val = OutPort(1)
     self.out_rdy = InPort(1)
@@ -25,7 +26,10 @@ class TestSource (Model):
     if out_val.value and out_rdy.value:
       self.idx += 1
 
-    if self.idx < len(self.msg_list):
+    if self.reset.value:
+      out_msg.next = 0
+      out_val.next = 0
+    elif self.idx < len(self.msg_list):
       out_msg.next = self.msg_list[self.idx]
       out_val.next = 1
     else:
@@ -43,6 +47,7 @@ class TestSource (Model):
 class TestSink(Model):
 
   def __init__( self, n, msg_list ):
+    self.reset  = InPort( 1 )
     self.in_msg = InPort(n)
     self.in_val = InPort(1)
     self.in_rdy = OutPort(1)
@@ -52,7 +57,7 @@ class TestSink(Model):
 
   @posedge_clk
   def seq_logic( self ):
-
+    
     in_msg = self.in_msg
     in_val = self.in_val
     in_rdy = self.in_rdy
@@ -60,8 +65,10 @@ class TestSink(Model):
     if in_val.value and in_rdy.value:
       assert in_msg.value == self.msg_list[self.idx]
       self.idx += 1
-
-    if self.idx < len(self.msg_list):
+    
+    if self.reset.value:
+      in_rdy.next = 0
+    elif self.idx < len(self.msg_list):
       in_rdy.next = 1
     else:
       in_rdy.next = 0
@@ -98,6 +105,7 @@ if __name__ == '__main__':
   model.elaborate()
 
   sim = SimulationTool( model )
+  sim.reset()
 
   cycle_count = 0
   model.out_rdy.value = 1
@@ -115,6 +123,7 @@ if __name__ == '__main__':
   model.elaborate()
 
   sim = SimulationTool( model )
+  sim.reset()  
 
   cycle_count = 0
   model.in_val.value = 1
@@ -136,6 +145,8 @@ if __name__ == '__main__':
   model.elaborate()
 
   sim = SimulationTool( model )
+  sim.reset()  
+
   cycle_count = 0
   print "{0:6} {1:3} {2:3} {3:4} | {4:3} {5:3} {6:4}".format(
           '', 'val', 'rdy', 'data', 'val', 'rdy','data')
