@@ -66,6 +66,7 @@ def main():
   subpkg_pattern = re.compile(r'^(.*)_test.out$')
   failed_pattern = re.compile(r'^F .*$')
   passed_pattern = re.compile(r'^\. .*$')
+  abort_pattern  = re.compile(r'^! .*$')
   suite_case_pattern = re.compile(r'^. (([^:]*)::.*)$')
   suite_pattern = re.compile(r'^. (.*)$')
 
@@ -98,10 +99,11 @@ def main():
 
       match_passed = passed_pattern.match(line)
       match_failed = failed_pattern.match(line)
+      match_abort  = abort_pattern.match(line)
 
       # Update subpkg information appropriately
 
-      if match_passed or match_failed:
+      if match_passed or match_failed or match_abort:
 
         match_suite_case = suite_case_pattern.match(line)
         if not match_suite_case:
@@ -127,7 +129,7 @@ def main():
 
           suite_failing_cases[suite].append( case )
 
-      if match_passed or match_failed:
+      if match_passed or match_failed or match_abort:
         if len(suites) == 0 or suites[-1] != suite:
           suites.append(suite)
 
