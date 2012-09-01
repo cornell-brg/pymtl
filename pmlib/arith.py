@@ -242,3 +242,54 @@ class CmpGT( Model ):
   def comb_logic( self ):
     self.out.value = 1 if self.in0.value > self.in1.value else 0;
 
+#-------------------------------------------------------------------------
+# Sign operater
+#-------------------------------------------------------------------------
+
+class Sign( Model ):
+
+  def __init__( self, W = 16 ):
+    self.in_ = InPort( W )
+    self.out = OutPort( W )
+
+  @combinational
+  def comb_logic( self ):
+    self.out.value = ~self.in_.value + 1
+
+#-------------------------------------------------------------------------
+# UnSign operater
+#-------------------------------------------------------------------------
+
+class UnSign( Model ):
+
+  def __init__( self, nbits ):
+    self.in_ = InPort( nbits )
+    self.out = OutPort( nbits )
+
+    self.neg_in = Wire( nbits )
+    self.sign = Wire( 1 )
+    self.nbits = nbits
+
+  @combinational
+  def comb( self ):
+    self.neg_in.value = ~self.in_.value + 1
+    self.sign.value = self.in_.value >> ( self.nbits - 1)
+    
+    if self.sign.value:
+      self.out.value = self.neg_in.value
+    else:
+      self.out.value = self.in_.value
+
+#-------------------------------------------------------------------------
+# ZeroExtend operater
+#-------------------------------------------------------------------------
+
+class ZeroExtend( Model ):
+
+  def __init__( self, nbits ):
+    self.in_ = InPort( nbits )
+    self.out = OutPort( 2*nbits )
+
+  @combinational
+  def comb( self ):
+    self.out.value = self.in_.value + 0

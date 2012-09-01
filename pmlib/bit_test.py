@@ -44,43 +44,6 @@ class TestREV( unittest.TestCase ):
 #    self.hdl.translate( 'REV.v' )
 
 #-------------------------------------------------------------------------
-# Unsign unit test
-#-------------------------------------------------------------------------
-
-class TestUnsign( unittest.TestCase ):
-
-  def setUp( self ):
-    self.model = Unsign( 4 )
-    self.model.elaborate()
-    self.sim = SimulationTool( self.model )
-
-  def test_one( self ):
-    test_cases = [ [ 0b0000, 0b0000,],
-                   [ 0b0001, 0b1111,],
-                   [ 0b0101, 0b1011,],
-                   [ 0b0111, 0b1001,],
-                   [ 0b1001, 0b0111,],
-                   [ 0b1010, 0b0110,],
-                   [ 0b1101, 0b0011,],
-                   [ 0b1110, 0b0010,],
-                   [ 0b1111, 0b0001,],
-                 ]
-
-    for test in test_cases:
-      self.model.in_.value = test[0]
-      self.sim.cycle()
-
-      self.assertEquals( self.model.out.value, test[1] )
-
-  def test_vcd( self ):
-#    self.sim.dump_vcd( 'Unsign_test.vcd' )
-    self.test_one()
-
-  def test_translate( self ):
-    self.hdl = VerilogTranslationTool( self.model )
-#    self.hdl.translate( 'Unsign.v' )
-
-#-------------------------------------------------------------------------
 # MSB unit test
 #-------------------------------------------------------------------------
 

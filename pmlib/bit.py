@@ -21,20 +21,6 @@ class REV( Model ):
     self.out.value = ~self.in_.value
 
 #-------------------------------------------------------------------------
-# Unsign operater
-#-------------------------------------------------------------------------
-
-class Unsign( Model ):
-
-  def __init__( self, W = 16 ):
-    self.in_ = InPort( W )
-    self.out = OutPort( W )
-
-  @combinational
-  def comb_logic( self ):
-    self.out.value = ~self.in_.value + 1
-
-#-------------------------------------------------------------------------
 # MSB operater
 #-------------------------------------------------------------------------
 
