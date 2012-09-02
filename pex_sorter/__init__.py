@@ -8,7 +8,10 @@
 
 # List of single-class modules
 
-from SorterBehavioralLevel import SorterBehavioralLevel
-from SorterCycleLevel      import SorterCycleLevel
-from MinMax                import MinMax
+from SorterBL     import SorterBL
+# from SorterCL     import SorterCL
+# from SorterRTL    import SorterRTL
+
+# from MinMax       import MinMax
+# from SorterStruct import SorterStruct
 
