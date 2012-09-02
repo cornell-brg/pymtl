@@ -20,9 +20,10 @@
 #-------------------------------------------------------------------------
 
 subpkgs = \
+  pmlib \
   pex_regincr \
   pex_sorter \
-	plab1_imul \
+  plab1_imul \
 
 #  pymtl \
 #  pmlib \
@@ -319,6 +320,6 @@ clean :
 
 clean-src :
 	find $(src_dir) -name "*.pyc" | xargs rm
-	find $(src_dir) -name "__pycache__" | xargs rm
+	find $(src_dir) -name "__pycache__" | xargs rmdir
 
 .PHONY : clean

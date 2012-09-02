@@ -5,22 +5,21 @@
 # can also simply use the ones provides in pmlib. We would need to
 # comment out importing our own implementations, use the imports from
 # pmlib instead, and also use the appropriate instantiations in our code
-# when we want to instantiate these two models (i.e., arith.Incrementer
-# and regs.Register)
+# when we want to instantiate these two models (i.e.,
+# pmlib.arith.Incrementer and pmlib.regs.Register)
 
 from pymtl import *
 
 from Register    import Register
 from Incrementer import Incrementer
 
-# from pmlib import arith
-# from pmlib import regs
+# import pmlib
 
 class RegIncrStruct( Model ):
 
   def __init__( self ):
-    self.in_  = InPort( 16 )
-    self.out  = OutPort( 16 )
+    self.in_  = InPort  ( 16 )
+    self.out  = OutPort ( 16 )
 
     # Register
 

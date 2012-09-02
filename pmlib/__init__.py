@@ -4,10 +4,9 @@
 
 # List of collection modules
 
-import arith
 import regs
+import arith
 import muxes
-import bit
 
 # List of single-class modules
 

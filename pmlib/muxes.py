@@ -1,12 +1,9 @@
-#=========================================================================
+ #=========================================================================
 # Muxes
 #=========================================================================
-#
-# Right now can't assert if sel is out of range
-#
+# Asserting that a select value is out of range is not currently
+# translatable.
 
-import sys
-sys.path.append('..')
 from pymtl import *
 
 #-------------------------------------------------------------------------
@@ -16,19 +13,25 @@ from pymtl import *
 class Mux2( Model ):
 
   def __init__( self, nbits = 1 ):
-    self.in0 = InPort( nbits )
-    self.in1 = InPort( nbits )
-    self.sel = InPort( 1 )
-    self.out = OutPort( nbits )
+
+    self.in0 = InPort  ( nbits )
+    self.in1 = InPort  ( nbits )
+    self.sel = InPort  ( 1     )
+    self.out = OutPort ( nbits )
 
   @combinational
   def comb_logic( self ):
+    assert self.sel.value < 2
+
     if self.sel.value == 0:
       self.out.value = self.in0.value
-    elif self.sel.value == 1:
-      self.out.value = self.in1.value
     else:
-      self.out.value = 0
+      self.out.value = self.in1.value
+
+  def line_trace( self ):
+    return "{:04x} {:04x} {:01x} () {:04x}" \
+      .format( self.in0.value, self.in1.value,
+               self.sel.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Mux3
@@ -37,22 +40,28 @@ class Mux2( Model ):
 class Mux3( Model ):
 
   def __init__( self, nbits = 1 ):
-    self.in0 = InPort( nbits )
-    self.in1 = InPort( nbits )
-    self.in2 = InPort( nbits )
-    self.sel = InPort( 2 )
-    self.out = OutPort( nbits )
+
+    self.in0 = InPort  ( nbits )
+    self.in1 = InPort  ( nbits )
+    self.in2 = InPort  ( nbits )
+    self.sel = InPort  ( 2     )
+    self.out = OutPort ( nbits )
 
   @combinational
   def comb_logic( self ):
+    assert self.sel.value < 3
+
     if self.sel.value == 0:
       self.out.value = self.in0.value
     elif self.sel.value == 1:
       self.out.value = self.in1.value
-    elif self.sel.value == 2:
-      self.out.value = self.in2.value
     else:
-      self.out.value = 0
+      self.out.value = self.in2.value
+
+  def line_trace( self ):
+    return "{:04x} {:04x} {:04x} {:01x} () {:04x}" \
+      .format( self.in0.value, self.in1.value, self.in2.value,
+               self.sel.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Mux4
@@ -61,25 +70,32 @@ class Mux3( Model ):
 class Mux4( Model ):
 
   def __init__( self, nbits = 1 ):
-    self.in0 = InPort( nbits )
-    self.in1 = InPort( nbits )
-    self.in2 = InPort( nbits )
-    self.in3 = InPort( nbits )
-    self.sel = InPort( 2 )
-    self.out = OutPort( nbits )
+
+    self.in0 = InPort  ( nbits )
+    self.in1 = InPort  ( nbits )
+    self.in2 = InPort  ( nbits )
+    self.in3 = InPort  ( nbits )
+    self.sel = InPort  ( 2     )
+    self.out = OutPort ( nbits )
 
   @combinational
   def comb_logic( self ):
+    assert self.sel.value < 4
+
     if self.sel.value == 0:
       self.out.value = self.in0.value
     elif self.sel.value == 1:
       self.out.value = self.in1.value
     elif self.sel.value == 2:
       self.out.value = self.in2.value
-    elif self.sel.value == 3:
-      self.out.value = self.in3.value
     else:
-      self.out.value = 0
+      self.out.value = self.in3.value
+
+  def line_trace( self ):
+    return "{:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
+      .format( self.in0.value, self.in1.value, self.in2.value,
+               self.in3.value,
+               self.sel.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Mux5
@@ -88,16 +104,19 @@ class Mux4( Model ):
 class Mux5( Model ):
 
   def __init__( self, nbits = 1 ):
-    self.in0 = InPort( nbits )
-    self.in1 = InPort( nbits )
-    self.in2 = InPort( nbits )
-    self.in3 = InPort( nbits )
-    self.in4 = InPort( nbits )
-    self.sel = InPort( 3 )
-    self.out = OutPort( nbits )
+
+    self.in0 = InPort  ( nbits )
+    self.in1 = InPort  ( nbits )
+    self.in2 = InPort  ( nbits )
+    self.in3 = InPort  ( nbits )
+    self.in4 = InPort  ( nbits )
+    self.sel = InPort  ( 3     )
+    self.out = OutPort ( nbits )
 
   @combinational
   def comb_logic( self ):
+    assert self.sel.value < 5
+
     if self.sel.value == 0:
       self.out.value = self.in0.value
     elif self.sel.value == 1:
@@ -106,10 +125,14 @@ class Mux5( Model ):
       self.out.value = self.in2.value
     elif self.sel.value == 3:
       self.out.value = self.in3.value
-    elif self.sel.value == 4:
-      self.out.value = self.in4.value
     else:
-      self.out.value = 0
+      self.out.value = self.in4.value
+
+  def line_trace( self ):
+    return "{:04x} {:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
+      .format( self.in0.value, self.in1.value, self.in2.value,
+               self.in3.value, self.in4.value,
+               self.sel.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Mux6
@@ -118,17 +141,20 @@ class Mux5( Model ):
 class Mux6( Model ):
 
   def __init__( self, nbits = 1 ):
-    self.in0 = InPort( nbits )
-    self.in1 = InPort( nbits )
-    self.in2 = InPort( nbits )
-    self.in3 = InPort( nbits )
-    self.in4 = InPort( nbits )
-    self.in5 = InPort( nbits )
-    self.sel = InPort( 3 )
-    self.out = OutPort( nbits )
+
+    self.in0 = InPort  ( nbits )
+    self.in1 = InPort  ( nbits )
+    self.in2 = InPort  ( nbits )
+    self.in3 = InPort  ( nbits )
+    self.in4 = InPort  ( nbits )
+    self.in5 = InPort  ( nbits )
+    self.sel = InPort  ( 3     )
+    self.out = OutPort ( nbits )
 
   @combinational
   def comb_logic( self ):
+    assert self.sel.value < 6
+
     if self.sel.value == 0:
       self.out.value = self.in0.value
     elif self.sel.value == 1:
@@ -139,10 +165,14 @@ class Mux6( Model ):
       self.out.value = self.in3.value
     elif self.sel.value == 4:
       self.out.value = self.in4.value
-    elif self.sel.value == 5:
-      self.out.value = self.in5.value
     else:
-      self.out.value = 0
+      self.out.value = self.in5.value
+
+  def line_trace( self ):
+    return "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
+      .format( self.in0.value, self.in1.value, self.in2.value,
+               self.in3.value, self.in4.value, self.in5.value,
+               self.sel.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Mux7
@@ -151,18 +181,21 @@ class Mux6( Model ):
 class Mux7( Model ):
 
   def __init__( self, nbits = 1 ):
-    self.in0 = InPort( nbits )
-    self.in1 = InPort( nbits )
-    self.in2 = InPort( nbits )
-    self.in3 = InPort( nbits )
-    self.in4 = InPort( nbits )
-    self.in5 = InPort( nbits )
-    self.in6 = InPort( nbits )
-    self.sel = InPort( 3 )
-    self.out = OutPort( nbits )
+
+    self.in0 = InPort  ( nbits )
+    self.in1 = InPort  ( nbits )
+    self.in2 = InPort  ( nbits )
+    self.in3 = InPort  ( nbits )
+    self.in4 = InPort  ( nbits )
+    self.in5 = InPort  ( nbits )
+    self.in6 = InPort  ( nbits )
+    self.sel = InPort  ( 3     )
+    self.out = OutPort ( nbits )
 
   @combinational
   def comb_logic( self ):
+    assert self.sel.value < 7
+
     if self.sel.value == 0:
       self.out.value = self.in0.value
     elif self.sel.value == 1:
@@ -175,10 +208,15 @@ class Mux7( Model ):
       self.out.value = self.in4.value
     elif self.sel.value == 5:
       self.out.value = self.in5.value
-    elif self.sel.value == 6:
-      self.out.value = self.in6.value
     else:
-      self.out.value = 0
+      self.out.value = self.in6.value
+
+  def line_trace( self ):
+    return "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
+      .format( self.in0.value, self.in1.value, self.in2.value,
+               self.in3.value, self.in4.value, self.in5.value,
+               self.in6.value,
+               self.sel.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Mux8
@@ -187,19 +225,22 @@ class Mux7( Model ):
 class Mux8( Model ):
 
   def __init__( self, nbits = 1 ):
-    self.in0 = InPort( nbits )
-    self.in1 = InPort( nbits )
-    self.in2 = InPort( nbits )
-    self.in3 = InPort( nbits )
-    self.in4 = InPort( nbits )
-    self.in5 = InPort( nbits )
-    self.in6 = InPort( nbits )
-    self.in7 = InPort( nbits )
-    self.sel = InPort( 3 )
-    self.out = OutPort( nbits )
+
+    self.in0 = InPort  ( nbits )
+    self.in1 = InPort  ( nbits )
+    self.in2 = InPort  ( nbits )
+    self.in3 = InPort  ( nbits )
+    self.in4 = InPort  ( nbits )
+    self.in5 = InPort  ( nbits )
+    self.in6 = InPort  ( nbits )
+    self.in7 = InPort  ( nbits )
+    self.sel = InPort  ( 3     )
+    self.out = OutPort ( nbits )
 
   @combinational
   def comb_logic( self ):
+    assert self.sel.value < 8
+
     if self.sel.value == 0:
       self.out.value = self.in0.value
     elif self.sel.value == 1:
@@ -214,8 +255,13 @@ class Mux8( Model ):
       self.out.value = self.in5.value
     elif self.sel.value == 6:
       self.out.value = self.in6.value
-    elif self.sel.value == 7:
-      self.out.value = self.in7.value
     else:
-      self.out.value = 0
+      self.out.value = self.in7.value
+
+  def line_trace( self ):
+    return "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
+      .format( self.in0.value, self.in1.value, self.in2.value,
+               self.in3.value, self.in4.value, self.in5.value,
+               self.in6.value, self.in7.value,
+               self.sel.value, self.out.value )
 

@@ -1,21 +1,36 @@
 #=========================================================================
-# Incrementer Unit Tests
+# Incrementer Test Suite
 #=========================================================================
 
 from pymtl import *
-from pmlib import TestVectorSimulator
+import pmlib
 
 from Incrementer import Incrementer
 
 #-------------------------------------------------------------------------
-# Test Harness
+# Test basics
 #-------------------------------------------------------------------------
 
-def run_test( name, test_vectors ):
+def test_basics( dump_vcd ):
+
+  # Test vectors
+
+  test_vectors = [
+    # in   out
+    [  0,   1 ],
+    [  1,   2 ],
+    [ 13,  14 ],
+    [ 42,  43 ],
+    [ 42,  43 ],
+    [ 42,  43 ],
+    [ 42,  43 ],
+    [ 51,  52 ],
+    [ 51,  52 ],
+  ]
 
   # Instantiate and elaborate the model
 
-  model = Incrementer(17)
+  model = Incrementer(16)
   model.elaborate()
 
   # Function to set the inputs on the model
@@ -31,25 +46,8 @@ def run_test( name, test_vectors ):
 
   # Create and run the test simulation
 
-  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  sim.dump_vcd( name )
+  sim = pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pex-regincr-Incrementer_test_basics.vcd" )
   sim.run_test()
-
-#-------------------------------------------------------------------------
-# Test basics
-#-------------------------------------------------------------------------
-
-def test_basics():
-  run_test( "pex-regincr-Incrementer_test_basics", [
-    # in   out
-    [  1,   2 ],
-    [  2,   3 ],
-    [ 13,  14 ],
-    [ 42,  43 ],
-    [ 42,  43 ],
-    [ 42,  43 ],
-    [ 42,  43 ],
-    [ 51,  52 ],
-    [ 51,  52 ],
-  ])
 

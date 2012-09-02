@@ -34,8 +34,8 @@ class TestVectorSimulator:
   # dump_vcd
   #-----------------------------------------------------------------------
 
-  def dump_vcd( self, name ):
-    self.vcd_file_name = name+".vcd"
+  def dump_vcd( self, vcd_file_name ):
+    self.vcd_file_name = vcd_file_name
 
   #-----------------------------------------------------------------------
   # run_test

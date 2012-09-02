@@ -9,7 +9,8 @@
 #  --impl        Choose model implementation {flat,struct}
 #  --dump-vcd    Dump vcd to a file
 #
-# The register/incrementer simulator.
+# The register/incrementer simulator. Provide an integer on the command
+# line and the simulator will return the incremented output.
 #
 # Author : Christopher Batten
 # Date   : August 30, 2012

@@ -1,5 +1,5 @@
 #=========================================================================
-# RegIncrFlat Unit Tests
+# RegIncrFlat Test Suite
 #=========================================================================
 
 from pymtl import *
@@ -10,7 +10,7 @@ from RegIncrFlat import RegIncrFlat
 # Test basics
 #-------------------------------------------------------------------------
 
-def test_basics():
+def test_basics( dump_vcd ):
 
   # Create a list of lists to hold the test vectors
 
@@ -35,7 +35,8 @@ def test_basics():
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  sim.dump_vcd( "RegIncrFlat_test_basics.vcd" )
+  if dump_vcd:
+    sim.dump_vcd( "RegIncrFlat_test_basics.vcd" )
 
   # Iterate setting the inputs and verifying the outputs each cycle
 

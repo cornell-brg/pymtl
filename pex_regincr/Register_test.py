@@ -1,21 +1,36 @@
 #=========================================================================
-# Register Unit Tests
+# Register Test Suite
 #=========================================================================
 
 from pymtl import *
-from pmlib import TestVectorSimulator
+import pmlib
 
 from Register import Register
 
 #-------------------------------------------------------------------------
-# Test Harness
+# Test basics
 #-------------------------------------------------------------------------
 
-def run_test( name, test_vectors ):
+def test_basics( dump_vcd ):
+
+  # Test vectors
+
+  test_vectors = [
+    # in   out
+    [  0,  '?'],
+    [  1,   0 ],
+    [ 13,   1 ],
+    [ 42,  13 ],
+    [ 42,  42 ],
+    [ 42,  42 ],
+    [ 42,  42 ],
+    [ 51,  42 ],
+    [ 51,  51 ],
+  ]
 
   # Instantiate and elaborate the model
 
-  model = Register(17)
+  model = Register(16)
   model.elaborate()
 
   # Function to set the inputs on the model
@@ -31,25 +46,8 @@ def run_test( name, test_vectors ):
 
   # Create and run the test simulation
 
-  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  sim.dump_vcd( name )
+  sim = pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pex-regincr-Register_test_basics.vcd" )
   sim.run_test()
-
-#-------------------------------------------------------------------------
-# Test basics
-#-------------------------------------------------------------------------
-
-def test_basics():
-  run_test( "pex-regincr-Register_test_basics", [
-    # in   out
-    [  0,  '?'],
-    [  1,   0 ],
-    [ 13,   1 ],
-    [ 42,  13 ],
-    [ 42,  42 ],
-    [ 42,  42 ],
-    [ 42,  42 ],
-    [ 51,  42 ],
-    [ 51,  51 ],
-  ])
 

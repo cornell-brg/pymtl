@@ -2,163 +2,238 @@
 # Unit Tests for Registers
 #=========================================================================
 
-from regs import *
-import random
+from pymtl import *
+from regs  import *
+
+from TestVectorSimulator import TestVectorSimulator
 
 #-------------------------------------------------------------------------
-# Simple Register unit tests
+# Register unit tests
 #-------------------------------------------------------------------------
 
-def test_Reg():
+def test_reg( dump_vcd ):
 
-  model = Reg( 32 )
+  # Test vectors
+
+  test_vectors = [
+    # in      out
+    [ 0x0a0a, '?'    ],
+    [ 0x0b0b, 0x0a0a ],
+    [ 0x0c0c, 0x0b0b ],
+    [ 0x0d0d, 0x0c0c ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0e0e, 0x0d0d ],
+    [ 0x0e0e, 0x0e0e ],
+  ]
+
+  # Instantiate and elaborate the model
+
+  model = Reg(16)
   model.elaborate()
 
-  sim = SimulationTool( model )
-  #sim.dump_vcd( "Reg_test.vcd" )
+  # Define functions mapping the test vector to ports in model
 
-  sim.reset()
-  test_cases = [ 0, 12, 17, 42, 1024, 9001, 0x7fffffff ]
-  random_tests = [ random.randint( 0, 0x7fffffff ) for x in range( 20 ) ]
-  test_cases.extend( random_tests )
+  def tv_in( model, test_vector ):
+    model.in_.value = test_vector[0]
 
-  for i,value in enumerate( test_cases[1:] ):
-    model.in_.value = value
-    assert model.out.value == test_cases[i]
-    sim.cycle()
-    assert model.out.value == value
+  def tv_out( model, test_vector ):
+    if test_vector[1] != '?':
+      assert model.out.value == test_vector[1]
 
-  #hdl = VerilogTranslationTool( model )
-  #hdl.translate( "Reg.v" )
+  # Run the test
+
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pmlib-regs-test_reg.vcd" )
+  sim.run_test()
 
 #-------------------------------------------------------------------------
-# Register with Reset unit test
+# Register with enable signal unit tests
 #-------------------------------------------------------------------------
 
-def test_RegRst():
+def test_reg_en( dump_vcd ):
 
-  model = RegRst( 32 )
+  # Test vectors
+
+  test_vectors = [
+    # in      en out
+    [ 0x0a0a, 0, '?'    ],
+    [ 0x0b0b, 1, '?'    ],
+    [ 0x0c0c, 0, 0x0b0b ],
+    [ 0x0d0d, 1, 0x0b0b ],
+    [ 0x0d0d, 0, 0x0d0d ],
+    [ 0x0d0d, 1, 0x0d0d ],
+    [ 0x0e0e, 1, 0x0d0d ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0f0f, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+  ]
+
+  # Instantiate and elaborate the model
+
+  model = RegEn(16)
   model.elaborate()
 
-  sim = SimulationTool( model )
-  #sim.dump_vcd( "RegRst_test.vcd" )
+  # Define functions mapping the test vector to ports in model
 
-  sim.reset()
-  #              reset    in
-  test_cases = [ [ 0,     0 ], 
-                 [ 1,    12 ], 
-                 [ 0,    17 ], 
-                 [ 0,    42 ], 
-                 [ 1,   1024 ], 
-                 [ 1,   9001 ], 
-                 [ 1,  0x7fffffff ]
-               ]
-  random_tests = [ [ random.randint( 0, 1 ), random.randint( 0, 0x7fffffff ) ] 
-    for x in range( 20 ) ]
-  test_cases.extend( random_tests )
+  def tv_in( model, test_vector ):
+    model.in_.value = test_vector[0]
+    model.en.value  = test_vector[1]
 
-  for i,test in enumerate( test_cases[1:] ):
-    model.reset.value = test[0]
-    model.in_.value = test[1]
-    sim.cycle()
+  def tv_out( model, test_vector ):
+    if test_vector[2] != '?':
+      assert model.out.value == test_vector[2]
 
-    result = 0
-    if test[0]:
-      result = 0
-    else:
-      result = test[1]
+  # Run the test
 
-    assert model.out.value == result
-
-  #hdl = VerilogTranslationTool( model )
-  #hdl.translate( "RegRst.v" )
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pmlib-regs-test_reg_en.vcd" )
+  sim.run_test()
 
 #-------------------------------------------------------------------------
-# Register with Enable unit tests
+# Register with reset signal unit tests
 #-------------------------------------------------------------------------
 
-def test_RegEn():
+def run_test_reg_rst( dump_vcd, reset_value, test_vectors ):
 
-  model = RegEnRst( 32 )
+  # Instantiate and elaborate the model
+
+  model = RegRst( 16, reset_value )
   model.elaborate()
 
-  sim = SimulationTool( model )
-  #sim.dump_vcd( "RegEn_test.vcd" )
+  # Define functions mapping the test vector to ports in model
 
-  sim.reset()
-  #               en  in
-  test_cases = [ [ 1,  0 ], 
-                 [ 1, 12 ], 
-                 [ 1, 17 ], 
-                 [ 0, 42 ], 
-                 [ 1, 1024 ], 
-                 [ 1, 9001 ], 
-                 [ 0, 0x7fffffff ]
-               ]
-  random_tests = [ [ random.randint( 0, 1 ), random.randint( 0, 0x7fffffff ) ] 
-    for x in range( 20 ) ]
-  test_cases.extend( random_tests )
+  def tv_in( model, test_vector ):
+    model.in_.value = test_vector[0]
 
-  for i,test in enumerate( test_cases[1:] ):
-    model.en.value = test[0]
-    model.in_.value = test[1]
-    prev_value = model.out.value
-    sim.cycle()
+  def tv_out( model, test_vector ):
+    if test_vector[1] != '?':
+      assert model.out.value == test_vector[1]
 
-    result = 0
-    if test[0]:
-      result = test[1]
-    else:
-      result = prev_value
+  # Run the test
 
-    assert model.out.value == result
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pmlib-regs-test_reg_rst_rv" +
+                  hex(reset_value) + ".vcd" )
+  sim.run_test()
 
-  #hdl = VerilogTranslationTool( model )
-  #hdl.translate( "RegEn.v" )
+def test_reg_rst_rv0x0( dump_vcd ):
+  run_test_reg_rst( dump_vcd, 0x0000, [
+    # in      out
+    [ 0x0a0a, 0x0000 ],
+    [ 0x0b0b, 0x0a0a ],
+    [ 0x0c0c, 0x0b0b ],
+    [ 0x0d0d, 0x0c0c ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0e0e, 0x0d0d ],
+    [ 0x0e0e, 0x0e0e ],
+  ])
+
+def test_reg_rst_rv0xbeef( dump_vcd ):
+  run_test_reg_rst( dump_vcd, 0xbeef, [
+    # in      out
+    [ 0x0a0a, 0xbeef ],
+    [ 0x0b0b, 0x0a0a ],
+    [ 0x0c0c, 0x0b0b ],
+    [ 0x0d0d, 0x0c0c ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0e0e, 0x0d0d ],
+    [ 0x0e0e, 0x0e0e ],
+  ])
+
+def test_reg_rst_rv0xabcd( dump_vcd ):
+  run_test_reg_rst( dump_vcd, 0xabcd, [
+    # in      out
+    [ 0x0a0a, 0xabcd ],
+    [ 0x0b0b, 0x0a0a ],
+    [ 0x0c0c, 0x0b0b ],
+    [ 0x0d0d, 0x0c0c ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0e0e, 0x0d0d ],
+    [ 0x0e0e, 0x0e0e ],
+  ])
 
 #-------------------------------------------------------------------------
-# Register with Enable and Reset unit test
+# Register with reset signal unit tests
 #-------------------------------------------------------------------------
 
-def test_RegEnRst():
+def run_test_reg_en_rst( dump_vcd, reset_value, test_vectors ):
 
-  model = RegEnRst( 32 )
+  # Instantiate and elaborate the model
+
+  model = RegEnRst( 16, reset_value )
   model.elaborate()
 
-  sim = SimulationTool( model )
-  #sim.dump_vcd( "RegEnRst_test.vcd" )
+  # Define functions mapping the test vector to ports in model
 
-  sim.reset()
-  #              reset  en  in
-  test_cases = [ [ 0,    1,  0 ], 
-                 [ 1,    1, 12 ], 
-                 [ 0,    1, 17 ], 
-                 [ 0,    0, 42 ], 
-                 [ 1,    1, 1024 ], 
-                 [ 1,    1, 9001 ], 
-                 [ 1,    0, 0x7fffffff ]
-               ]
-  random_tests = [ [ random.randint( 0, 1 ), random.randint( 0, 1 ), 
-    random.randint( 0, 0x7fffffff ) ] for x in range( 20 ) ]
-  test_cases.extend( random_tests )
+  def tv_in( model, test_vector ):
+    model.in_.value = test_vector[0]
+    model.en.value  = test_vector[1]
 
-  for i,test in enumerate( test_cases[1:] ):
-    model.reset.value = test[0]
-    model.en.value = test[1]
-    model.in_.value = test[2]
-    prev_value = model.out.value
-    sim.cycle()
+  def tv_out( model, test_vector ):
+    if test_vector[2] != '?':
+      assert model.out.value == test_vector[2]
 
-    result = 0
-    if test[0]:
-      result = 0
-    elif test[1]:
-      result = test[2]
-    else:
-      result = prev_value
+  # Run the test
 
-    assert model.out.value == result
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pmlib-regs-test_reg_en_rst_rv" +
+                  hex(reset_value) + ".vcd" )
+  sim.run_test()
 
-  #hdl = VerilogTranslationTool( model )
-  #hdl.translate( "RegEnRst.v" )
+def test_reg_en_rst_rv0x0( dump_vcd ):
+  run_test_reg_en_rst( dump_vcd, 0x0000, [
+    # in      en out
+    [ 0x0a0a, 0, 0x0000 ],
+    [ 0x0b0b, 1, 0x0000 ],
+    [ 0x0c0c, 0, 0x0b0b ],
+    [ 0x0d0d, 1, 0x0b0b ],
+    [ 0x0d0d, 0, 0x0d0d ],
+    [ 0x0d0d, 1, 0x0d0d ],
+    [ 0x0e0e, 1, 0x0d0d ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0f0f, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+  ])
+
+def test_reg_en_rst_rv0x0( dump_vcd ):
+  run_test_reg_en_rst( dump_vcd, 0xbeef, [
+    # in      en out
+    [ 0x0a0a, 0, 0xbeef ],
+    [ 0x0b0b, 1, 0xbeef ],
+    [ 0x0c0c, 0, 0x0b0b ],
+    [ 0x0d0d, 1, 0x0b0b ],
+    [ 0x0d0d, 0, 0x0d0d ],
+    [ 0x0d0d, 1, 0x0d0d ],
+    [ 0x0e0e, 1, 0x0d0d ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0f0f, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+  ])
+
+def test_reg_en_rst_rv0x0( dump_vcd ):
+  run_test_reg_en_rst( dump_vcd, 0xabcd, [
+    # in      en out
+    [ 0x0a0a, 0, 0xabcd ],
+    [ 0x0b0b, 1, 0xabcd ],
+    [ 0x0c0c, 0, 0x0b0b ],
+    [ 0x0d0d, 1, 0x0b0b ],
+    [ 0x0d0d, 0, 0x0d0d ],
+    [ 0x0d0d, 1, 0x0d0d ],
+    [ 0x0e0e, 1, 0x0d0d ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0f0f, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+  ])
 

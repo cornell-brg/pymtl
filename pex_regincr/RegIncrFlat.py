@@ -23,8 +23,8 @@ class RegIncrFlat( Model ):
 
     # Instantiate input and output ports
 
-    self.in_ = InPort(16)
-    self.out = OutPort(16)
+    self.in_ = InPort  ( 16 )
+    self.out = OutPort ( 16 )
 
     # Instantiate intermediate wires
 
@@ -67,6 +67,6 @@ class RegIncrFlat( Model ):
   # debugging.
 
   def line_trace( self ):
-    return "{:>2} ({:>2}) {:>2}" \
+    return "{:04x} ({:04x}) {:04x}" \
       .format( self.in_.value, self.reg.value, self.out.value )
 

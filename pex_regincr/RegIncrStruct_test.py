@@ -1,17 +1,32 @@
 #=========================================================================
-# RegIncrStruct Unit Tests
+# RegIncrStruct Test Suite
 #=========================================================================
 
 from pymtl import *
-from pmlib import TestVectorSimulator
+import pmlib
 
 from RegIncrStruct import RegIncrStruct
 
 #-------------------------------------------------------------------------
-# Test Harness
+# Test basics
 #-------------------------------------------------------------------------
 
-def run_test( name, test_vectors ):
+def test_basics( dump_vcd ):
+
+  # Test vectors
+
+  test_vectors = [
+    # in   out
+    [  1,  '?'],
+    [  2,   2 ],
+    [ 13,   3 ],
+    [ 42,  14 ],
+    [ 42,  43 ],
+    [ 42,  43 ],
+    [ 42,  43 ],
+    [ 51,  43 ],
+    [ 51,  52 ],
+  ]
 
   # Instantiate and elaborate the model
 
@@ -31,25 +46,8 @@ def run_test( name, test_vectors ):
 
   # Create and run the test simulation
 
-  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  sim.dump_vcd( name )
+  sim = pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pex-regincr-RegIncrStruct_test_basics.vcd" )
   sim.run_test()
-
-#-------------------------------------------------------------------------
-# Test basics
-#-------------------------------------------------------------------------
-
-def test_basics():
-  run_test( "pex-regincr-RegIncrStruct_test_basics", [
-    # in   out
-    [  1,  '?'],
-    [  2,   2 ],
-    [ 13,   3 ],
-    [ 42,  14 ],
-    [ 42,  43 ],
-    [ 42,  43 ],
-    [ 42,  43 ],
-    [ 51,  43 ],
-    [ 51,  52 ],
-  ])
 

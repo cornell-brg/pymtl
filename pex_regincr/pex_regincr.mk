@@ -2,7 +2,7 @@
 # Modular Python Build System Subproject Makefile Fragment
 #=========================================================================
 
-pex_regincr_deps = pymtl
+pex_regincr_deps = pymtl pmlib
 
 pex_regincr_srcs = \
   RegIncrFlat.py \
