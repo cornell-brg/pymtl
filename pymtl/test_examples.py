@@ -387,6 +387,36 @@ class SignExtComb( Model ):
     for i in range(self.W):
       self.out[i].value = self.in_.value
 
+class ChildModuleSensitivity1(Model):
+  def __init__(self):
+    # Ports
+    self.in0  = InPort(32)
+    self.out  = OutPort(32)
+    # Submodules
+    self.reg0 = Register(32)
+    self.incr = Incrementer()
+    # Connections
+    connect( self.in0      , self.reg0.inp )
+    connect( self.reg0.out , self.incr.inp )
+  @combinational
+  def comb_logic( self ):
+    self.out.value = self.incr.out.value + 2
+
+class ChildModuleSensitivity2(Model):
+  def __init__(self):
+    # Ports
+    self.in0  = InPort(32)
+    self.in1  = InPort(32)
+    self.out  = OutPort(32)
+    # Submodules
+    self.reg0 = Register(32)
+    self.reg1 = Register(32)
+    # Connections
+    connect( self.in0      , self.reg0.inp )
+    connect( self.in1      , self.reg1.inp )
+  @combinational
+  def comb_logic( self ):
+    self.out.value = self.reg0.out.value + self.reg1.out.value
 
 #class RegisteredAdder1(Model):
 #  def __init__(self, bits):

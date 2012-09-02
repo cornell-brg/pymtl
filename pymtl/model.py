@@ -434,6 +434,8 @@ class Model(object):
       connect( obj.clk, obj.parent.clk )
       connect( obj.reset, obj.parent.reset )
       target._submodules += [obj]
+      # Add all the output ports of the child module to our sensitivity list
+      target._senses += [ x for x in obj._ports if isinstance(x, OutPort) ]
     # We've found a constant assigned to a global variable.
     # TODO: add support for floats?
     elif isinstance(obj, int):

@@ -579,6 +579,49 @@ class TestCombAndPosedge(unittest.TestCase):
     sim.cycle()
     self.assertEqual( model.out.value, (2**16 - 1) )
 
+  def test_child_module_sensitivity1(self):
+    # Build model and simulator
+    model = ChildModuleSensitivity1()
+    sim = self.setup_sim(model)
+    sim.reset()
+    # Declare utility function
+    def cycle( in0, reg_out, incr_out, out ):
+      model.in0.value = in0
+      sim.eval_combinational()
+      assert model.reg0.out.value == reg_out
+      assert model.incr.out.value == incr_out
+      assert model.out.value      == out
+      sim.cycle()
+      assert model.reg0.inp.value == in0
+    # Tests:  in0  reg  inc  out
+    cycle(      2,   0,   1,   3 )
+    cycle(      4,   2,   3,   5 )
+    cycle(      2,   4,   5,   7 )
+    cycle(      2,   2,   3,   5 )
+    cycle(      2,   2,   3,   5 )
+    cycle(      2,   2,   3,   5 )
+
+  def test_child_module_sensitivity2(self):
+    # Build model and simulator
+    model = ChildModuleSensitivity2()
+    sim = self.setup_sim(model)
+    sim.reset()
+    # Declare utility function
+    def cycle( in0, in1, out ):
+      model.in0.value = in0
+      model.in1.value = in1
+      sim.eval_combinational()
+      assert model.out.value      == out
+      sim.cycle()
+      assert model.reg0.inp.value == in0
+      assert model.reg1.inp.value == in1
+    # Tests:  in0  in1  out
+    cycle(      2,   2,   0 )
+    cycle(      2,   4,   4 )
+    cycle(      2,   4,   6 )
+    cycle(      2,   4,   6 )
+    cycle(      2,   4,   6 )
+
 
 if __name__ == '__main__':
   unittest.main()
