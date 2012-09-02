@@ -3,6 +3,7 @@
 #=========================================================================
 
 from pymtl import *
+from pmlib import TestVectorSimulator
 
 from Incrementer import Incrementer
 
@@ -10,30 +11,36 @@ from Incrementer import Incrementer
 # Test Harness
 #-------------------------------------------------------------------------
 
-def harness( inouts ):
+def run_test( name, test_vectors ):
 
-  model = Incrementer(16)
+  # Instantiate and elaborate the model
+
+  model = Incrementer(17)
   model.elaborate()
 
-  sim = SimulationTool( model )
-  sim.dump_vcd( "Incrementer_test.vcd" )
-  sim.reset()
+  # Function to set the inputs on the model
 
-  for inout in inouts:
-    model.in_.value = inout[0]
-    sim.cycle()
-    assert model.out.value == inout[1]
+  def tv_in( model, test_vector ):
+    model.in_.value = test_vector[0]
 
-  sim.cycle()
-  sim.cycle()
-  sim.cycle()
+  # Function to verify the outputs from the model
+
+  def tv_out( model, test_vector ):
+    if test_vector[1] != '?':
+      assert model.out.value == test_vector[1]
+
+  # Create and run the test simulation
+
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim.dump_vcd( name )
+  sim.run_test()
 
 #-------------------------------------------------------------------------
 # Test basics
 #-------------------------------------------------------------------------
 
 def test_basics():
-  harness([
+  run_test( "pex-regincr-Incrementer_test_basics", [
     # in   out
     [  1,   2 ],
     [  2,   3 ],

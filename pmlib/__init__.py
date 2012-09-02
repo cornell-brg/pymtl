@@ -4,9 +4,12 @@
 
 # List of collection modules
 
-from arith import *
-from bit   import *
-from muxes import *
-from regs  import *
+import arith
+import regs
+import muxes
+import bit
 
 # List of single-class modules
+
+from TestVectorSimulator import TestVectorSimulator
+

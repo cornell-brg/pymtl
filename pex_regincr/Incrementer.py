@@ -14,3 +14,7 @@ class Incrementer( Model ):
   def comb_logic( self ):
     self.out.value = self.in_.value + 1
 
+  def line_trace( self ):
+    return "{:>2} {:>2}" \
+      .format( self.in_.value, self.out.value )
+

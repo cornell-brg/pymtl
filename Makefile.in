@@ -145,7 +145,7 @@ $$(foreach dep,$$($(2)_deps), \
 
 # Run unit tests
 
-$(2)_test_outs := $(2)_test.out
+$(2)_test_outs := $(1)-test.out
 $(2)_test_srcs_wdir := $$(addprefix $(src_dir)/$(2)/, $$($(2)_test_srcs))
 
 $$($(2)_test_outs) : %.out : $$($(2)_srcs) $$($(2)_test_srcs) $$($(2)_deps_srcs) $$($(2)_deps_test_srcs) $$($(2)_mk)
@@ -230,7 +230,7 @@ endef
 # Call template for each subpackage
 
 $(foreach subpkg,$(subpkgs), \
-  $(eval $(call subpkg_template,$(subpkg),$(subst -,_,$(subpkg)))))
+  $(eval $(call subpkg_template,$(subst _,-,$(subpkg)),$(subpkg))))
 
 #-------------------------------------------------------------------------
 # Check
@@ -316,5 +316,9 @@ debug-% :
 
 clean :
 	rm -rf *~ \#* *.v *.vcd a.out $(junk)
+
+clean-src :
+	find $(src_dir) -name "*.pyc" | xargs rm
+	find $(src_dir) -name "__pycache__" | xargs rm
 
 .PHONY : clean
