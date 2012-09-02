@@ -8,6 +8,7 @@ class Node(object):
     self.name        = name
     self._value      = None
     self.connections = []
+    self._updating   = False
 
   def connect(self, target):
     """Connect this Node to another Node or Slice."""
@@ -34,11 +35,13 @@ class Node(object):
     return self._value
   @value.setter
   def value(self, value):
-    if self._value != value:
+    if self._value != value and not self._updating:
       self._value = value
       # TODO: notify all connections of update
+      self._updating = True
       for x in self.connections:
         x.update( self )
+      self._updating = False
 
   def update(self, caller):
     assert self.width == caller.width
