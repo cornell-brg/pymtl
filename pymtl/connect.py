@@ -1,3 +1,5 @@
+from Bits import *
+
 #------------------------------------------------------------------------
 # Node
 #------------------------------------------------------------------------
@@ -6,7 +8,8 @@ class Node(object):
     """Construct a node with Node provided width."""
     self.width       = width
     self.name        = name
-    self._value      = None
+    # TODO: Bits specific! Fix!
+    self._value      = Bits( width, None )
     self.connections = []
     self._updating   = False
 
@@ -30,14 +33,23 @@ class Node(object):
   @property
   def value(self):
     """Access the value on this Node."""
-    if self._value == None:
-      return 0
     return self._value
   @value.setter
   def value(self, value):
     if self._value != value and not self._updating:
-      self._value = value
-      # TODO: notify all connections of update
+      # TODO: this is Bits specific!
+      self._value[:] = value
+      # TODO: notify all connections of update, fix _updating
+      self._updating = True
+      for x in self.connections:
+        x.update( self )
+      self._updating = False
+
+  def update_from_slice(self, value, range):
+    if not self._updating:
+      # TODO: this is Bits specific!
+      self._value[range] = value
+      # TODO: notify all connections of update, fix _updating
       self._updating = True
       for x in self.connections:
         x.update( self )
@@ -57,21 +69,17 @@ class Slice(object):
     self.parent_ptr  = parent_ptr
     self.connections = []
     # Special case Python slice operations vs integers
+    self.addr        = addr
     if isinstance(addr, slice):
       assert not addr.step  # We dont support steps!
-      self.addr      = addr.start
       self.width     = addr.stop - addr.start
     else:
-      self.addr      = addr
       self.width     = 1
-    # TODO: replace with Bits
-    self.wmask       = (1 << self.width) - 1
-    self.pmask       = self.wmask << self.addr
     # Create the name
     if self.width == 1:
       self.suffix    = '[{0}]'.format(self.addr)
     else:
-      self.suffix    = '[{0}:{1}]'.format(self.addr+self.width-1, self.addr)
+      self.suffix    = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
 
   def connect(self, target):
     """Connect this Node to another Node or Slice."""
@@ -81,15 +89,11 @@ class Slice(object):
   @property
   def value(self):
     """Value of the bits we are slicing."""
-    # TODO: replace with Bits
-    return (self.parent_ptr.value & self.pmask) >> self.addr
+    return self.parent_ptr.value[self.addr]
   @value.setter
   def value(self, value):
-    # TODO: replace with Bits
     if self.value != value:
-      self.parent_ptr.value &= ~(self.pmask)
-      self.parent_ptr.value |= (value << self.addr)
-      # TODO: add connections
+      self.parent_ptr.update_from_slice( value, self.addr )
 
   @property
   def name(self):
