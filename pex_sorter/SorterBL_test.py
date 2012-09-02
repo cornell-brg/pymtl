@@ -7,6 +7,9 @@ import random
 
 from SorterBL import SorterBL
 
+# Fix the random seed so results are reproducible
+random.seed(0xdeadbeef)
+
 #-------------------------------------------------------------------------
 # Test Harness
 #-------------------------------------------------------------------------

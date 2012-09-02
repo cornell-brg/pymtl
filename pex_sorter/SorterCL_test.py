@@ -11,6 +11,9 @@ from SorterCL import SorterCL
 
 from SorterBL_test import run_sorter_test
 
+# Fix the random seed so results are reproducible
+random.seed(0xdeadbeef)
+
 #-------------------------------------------------------------------------
 # Test basics
 #-------------------------------------------------------------------------

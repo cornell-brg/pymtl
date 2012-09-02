@@ -31,7 +31,7 @@ class SorterCL( Model ):
   #-----------------------------------------------------------------------
 
   @posedge_clk
-  def seq_logic( self ):
+  def tick( self ):
 
     # Delay by one cycle and write outputs
 

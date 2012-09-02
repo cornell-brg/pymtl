@@ -23,7 +23,7 @@ class SorterBL( Model ):
   #-----------------------------------------------------------------------
 
   @posedge_clk
-  def seq_logic( self ):
+  def tick( self ):
 
     values = [ x.value for x in self.in_ ]
     values.sort()
