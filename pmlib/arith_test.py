@@ -530,6 +530,55 @@ class TestUnSign( unittest.TestCase ):
     self.hdl = VerilogTranslationTool( self.model )
 #    self.hdl.translate( 'UnSign.v' )
 
+#-------------------------------------------------------------------------
+# Shift Logical Left Operator Unit Test
+#-------------------------------------------------------------------------
+
+class TestShiftLogLeft( unittest.TestCase ):
+
+  def setUp( self ):
+    self.model = ShiftLogLeft( 16 )
+    self.model.elaborate()
+    self.sim = SimulationTool( self.model )
+
+  def test_one( self ):
+    test_cases = [ [ 65535, 8,  65280 ],
+                   [ 0,     15, 0     ],
+                   [ 1,     15, 32768 ],
+                   [ 33248, 4,  7680  ]
+                 ]
+
+    for test in test_cases:
+      self.model.in0.value = test[0]
+      self.model.in1.value = test[1]
+      self.sim.cycle()
+
+      self.assertEquals( self.model.out.value, test[2] )
+
+#-------------------------------------------------------------------------
+# Shift Logical Right Operator Unit Test
+#-------------------------------------------------------------------------
+
+class TestShiftLogLeft( unittest.TestCase ):
+
+  def setUp( self ):
+    self.model = ShiftLogRight( 16 )
+    self.model.elaborate()
+    self.sim = SimulationTool( self.model )
+
+  def test_one( self ):
+    test_cases = [ [ 65535, 8,  255  ],
+                   [ 0,     15, 0    ],
+                   [ 32768, 15, 1    ],
+                   [ 33248, 4,  2078 ]
+                 ]
+
+    for test in test_cases:
+      self.model.in0.value = test[0]
+      self.model.in1.value = test[1]
+      self.sim.cycle()
+
+      self.assertEquals( self.model.out.value, test[2] )
 
 if __name__ == '__main__':
   unittest.main()

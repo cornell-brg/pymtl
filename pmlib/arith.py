@@ -260,25 +260,26 @@ class Sign( Model ):
 # UnSign operater
 #-------------------------------------------------------------------------
 
-class UnSign( Model ):
-
-  def __init__( self, nbits ):
-    self.in_ = InPort( nbits )
-    self.out = OutPort( nbits )
-
-    self.neg_in = Wire( nbits )
-    self.sign = Wire( 1 )
-    self.nbits = nbits
-
-  @combinational
-  def comb( self ):
-    self.neg_in.value = ~self.in_.value + 1
-    self.sign.value = self.in_.value >> ( self.nbits - 1)
-    
-    if self.sign.value:
-      self.out.value = self.neg_in.value
-    else:
-      self.out.value = self.in_.value
+class UnSign( Model ):                                                              
+                                                                                    
+  def __init__( self, bits ):                                                       
+    self.in_ = InPort( bits )                                                       
+    self.out = OutPort( bits )                                                      
+                                                                                    
+    self.neg_in = Wire( bits )                                                      
+    self.sign = Wire( 1 )                                                           
+    self.bits = bits                                                                
+                                                                                    
+    self.mux = Mux2( bits )                                                     
+    connect( self.mux.in0, self.in_ )
+    connect( self.mux.in1, self.neg_in )
+    connect( self.mux.sel, self.sign )
+    connect( self.mux.out, self.out )                                                                      
+                                                                                    
+  @combinational                                                                    
+  def comb_logic( self ):                                                                  
+    self.sign.value = self.in_.value >> ( self.bits - 1)    
+    self.neg_in.value = ~self.in_.value + 1                                         
 
 #-------------------------------------------------------------------------
 # ZeroExtend operater
@@ -293,3 +294,33 @@ class ZeroExtend( Model ):
   @combinational
   def comb( self ):
     self.out.value = self.in_.value + 0
+
+#-------------------------------------------------------------------------
+#  Shift Logical Left Operator 
+#-------------------------------------------------------------------------
+
+class ShiftLogLeft( Model ):
+
+  def __init__( self, W = 16 ):
+    self.in0 = InPort( W )
+    self.in1 = InPort( W )
+    self.out = OutPort( W )
+
+  @combinational
+  def comb_logic( self ):
+    self.out.value = self.in0.value << self.in1.value
+
+#-------------------------------------------------------------------------
+# Shift Logical Right Operator 
+#-------------------------------------------------------------------------
+
+class ShiftLogRight( Model ):
+
+  def __init__( self, W = 16 ):
+    self.in0 = InPort( W )
+    self.in1 = InPort( W )
+    self.out = OutPort( W )
+
+  @combinational
+  def comb_logic( self ):
+    self.out.value = self.in0.value >> self.in1.value
