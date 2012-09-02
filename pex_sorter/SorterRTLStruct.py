@@ -4,7 +4,7 @@
 
 from pymtl  import *
 from pmlib  import regs
-from MaxMin import MaxMin
+from MinMax import MinMax
 
 class SorterRTLStruct( Model ):
 
@@ -27,13 +27,13 @@ class SorterRTLStruct( Model ):
     # Stage B combinational logic
     #---------------------------------------------------------------------
 
-    self.cmp_B0 = m = MaxMin()
+    self.cmp_B0 = m = MinMax()
     connect({
       m.in0 : self.reg_AB[0].out,
       m.in1 : self.reg_AB[1].out,
     })
 
-    self.cmp_B1 = m = MaxMin()
+    self.cmp_B1 = m = MinMax()
     connect({
       m.in0 : self.reg_AB[2].out,
       m.in1 : self.reg_AB[3].out,
@@ -53,19 +53,19 @@ class SorterRTLStruct( Model ):
     # Stage C combinational logic
     #---------------------------------------------------------------------
 
-    self.cmp_C0 = m = MaxMin()
+    self.cmp_C0 = m = MinMax()
     connect({
       m.in0 : self.reg_BC[0].out,
       m.in1 : self.reg_BC[2].out,
     })
 
-    self.cmp_C1 = m = MaxMin()
+    self.cmp_C1 = m = MinMax()
     connect({
       m.in0 : self.reg_BC[1].out,
       m.in1 : self.reg_BC[3].out,
     })
 
-    self.cmp_C2 = m = MaxMin()
+    self.cmp_C2 = m = MinMax()
     connect({
       m.in0 : self.cmp_C0.max,
       m.in1 : self.cmp_C1.min,
