@@ -18,7 +18,7 @@ from pymtl import *
 class TestVectorSimulator:
 
   #-----------------------------------------------------------------------
-  # constructor
+  # Constructor
   #-----------------------------------------------------------------------
 
   def __init__( self, model, test_vectors,
@@ -31,14 +31,14 @@ class TestVectorSimulator:
     self.vcd_file_name       = None
 
   #-----------------------------------------------------------------------
-  # dump_vcd
+  # Dump VCD
   #-----------------------------------------------------------------------
 
   def dump_vcd( self, vcd_file_name ):
     self.vcd_file_name = vcd_file_name
 
   #-----------------------------------------------------------------------
-  # run_test
+  # Run test
   #-----------------------------------------------------------------------
 
   def run_test( self, ):
