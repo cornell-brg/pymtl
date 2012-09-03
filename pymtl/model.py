@@ -4,79 +4,80 @@ This module contains a collection of classes that can be used to construct MTL
 (pronounced metal) models. Once constructed, a MTL model can be leveraged by
 a number of tools for various purposes (simulation, translation into HDLs, etc).
 """
+from connect import *
 
-class Slice(object):
-
-  """Hidden class implementing the ability to access sub-bits of a wire/port.
-
-  This class automatically handles reading and writing the correct subset of
-  bits in a Node. The Slice has been designed to be as
-  transparent as possible so that logic generally does not have to behave
-  differently when accessing a Slice vs. a  Port.
-  """
-
-  def __init__(self, parent_ptr, addr):
-    """Constructor for a ValueSlice object.
-
-    Parameters
-    ----------
-    parent_ptr: the port/wire instance we are slicing.
-    width: number of bits we are slicing.
-    addr: address range of bits we are slicing, either an int or slice object.
-    """
-    self.parent_ptr = parent_ptr
-    self.connections = []
-    self.inst_connection = None
-    # TODO: add asserts that check the parent width, range, etc
-    if isinstance(addr, slice):
-      assert not addr.step  # We dont support steps!
-      self.addr     = addr.start
-      self.width    = addr.stop - addr.start
-    else:
-      self.addr     = addr
-      self.width    = 1
-    self.wmask = (1 << self.width) - 1
-    self.pmask = self.wmask << self.addr
-
-  @property
-  def parent(self):
-    """Return the parent of the port/wire we are slicing."""
-    return self.parent_ptr.parent
-
-  @property
-  def name(self):
-    """Return the name and bitrange of the port/wire we are slicing."""
-    if self.width == 1:
-      suffix = '[{0}]'.format(self.addr)
-    else:
-      suffix = '[{0}:{1}]'.format(self.addr+self.width-1, self.addr)
-    return self.parent_ptr.name + suffix
-
-  #TODO: hacky...
-  @property
-  def type(self):
-    """Return the type of object we are slicing."""
-    return self.parent_ptr.type
-
-  @property
-  def value(self):
-    """Value of the bits we are slicing."""
-    temp = (self.parent_ptr.value & self.pmask) >> self.addr
-    return temp
-  @value.setter
-  def value(self, value):
-    self.parent_ptr.value &= ~(self.pmask)
-    # TODO: mask off upper bits of provided value?
-    #temp = value & self.wmask
-    self.parent_ptr.value |= (value << self.addr)
-
-  @property
-  def _value(self):
-    """The ValueNode pointed to by the port/wire we are slicing."""
-    return self.parent_ptr._value
-  @_value.setter
-  def _value(self, value):
-    self.parent_ptr._value = value
+#class Slice(object):
+#
+#  """Hidden class implementing the ability to access sub-bits of a wire/port.
+#
+#  This class automatically handles reading and writing the correct subset of
+#  bits in a Node. The Slice has been designed to be as
+#  transparent as possible so that logic generally does not have to behave
+#  differently when accessing a Slice vs. a  Port.
+#  """
+#
+#  def __init__(self, parent_ptr, addr):
+#    """Constructor for a ValueSlice object.
+#
+#    Parameters
+#    ----------
+#    parent_ptr: the port/wire instance we are slicing.
+#    width: number of bits we are slicing.
+#    addr: address range of bits we are slicing, either an int or slice object.
+#    """
+#    self.parent_ptr = parent_ptr
+#    self.connections = []
+#    self.inst_connection = None
+#    # TODO: add asserts that check the parent width, range, etc
+#    if isinstance(addr, slice):
+#      assert not addr.step  # We dont support steps!
+#      self.addr     = addr.start
+#      self.width    = addr.stop - addr.start
+#    else:
+#      self.addr     = addr
+#      self.width    = 1
+#    self.wmask = (1 << self.width) - 1
+#    self.pmask = self.wmask << self.addr
+#
+#  @property
+#  def parent(self):
+#    """Return the parent of the port/wire we are slicing."""
+#    return self.parent_ptr.parent
+#
+#  @property
+#  def name(self):
+#    """Return the name and bitrange of the port/wire we are slicing."""
+#    if self.width == 1:
+#      suffix = '[{0}]'.format(self.addr)
+#    else:
+#      suffix = '[{0}:{1}]'.format(self.addr+self.width-1, self.addr)
+#    return self.parent_ptr.name + suffix
+#
+#  #TODO: hacky...
+#  @property
+#  def type(self):
+#    """Return the type of object we are slicing."""
+#    return self.parent_ptr.type
+#
+#  @property
+#  def value(self):
+#    """Value of the bits we are slicing."""
+#    temp = (self.parent_ptr.value & self.pmask) >> self.addr
+#    return temp
+#  @value.setter
+#  def value(self, value):
+#    self.parent_ptr.value &= ~(self.pmask)
+#    # TODO: mask off upper bits of provided value?
+#    #temp = value & self.wmask
+#    self.parent_ptr.value |= (value << self.addr)
+#
+#  @property
+#  def _value(self):
+#    """The ValueNode pointed to by the port/wire we are slicing."""
+#    return self.parent_ptr._value
+#  @_value.setter
+#  def _value(self, value):
+#    self.parent_ptr._value = value
 
 
 class Port(object):
@@ -97,6 +98,7 @@ class Port(object):
     str: initializes a Port given a string containing a  port
          declaration. (TODO: remove. Only used by From.)
     """
+    self.node = Node(width)
     self.type  = type
     self.width = width
     self.name  = name
@@ -105,81 +107,59 @@ class Port(object):
     self.int_connections = []  # defined inside module implementation
     self.ext_connections = []  # defined during module instantiation
     self.inst_connection = None
-    self._value     = None
+    #self._value     = None
     self.is_reg = False
-    #if str:
-    #  self.type, self.width, self.name  = self.parse( str )
-
-  def __ne__(self, target):
-    raise Exception("The <> operator is deprecated!  Use connect() instead.")
 
   def __getitem__(self, addr):
-    """Bitfield access ([]). Returns a VeriogSlice object.
-
-    TODO: only works for connectivity, not logic?
-    """
-    #print "@__getitem__", type(addr), addr, str(addr)
-    if isinstance(addr, int):
-      assert addr < self.width
-    elif isinstance(addr, slice):
-      assert addr.start < addr.stop
-      assert addr.stop <= self.width
-    return Slice(self, addr)
+    """Bitfield access ([]). Returns a Slice object."""
+    return self.node[addr]
 
   def connect(self, target):
     """Creates a connection with a Port or Slice."""
     # TODO: throw an exception if the other object is not a Port
     # TODO: support wires?
     # TODO: do we want to use an assert here
-    if isinstance(target, int):
-      self._value          = Constant(target, self.width)
-      # TODO: make an inst_connection or regular connection?
-      self.inst_connection = Constant(target, self.width)
-    elif isinstance(target, Slice):
-      assert self.width == target.width
-      self.connections              += [ target ]
-      target.parent_ptr.connections += [ target ]
-      target.connections            += [ self ]
-      #if self._value:
-      #  raise Exception("A Port can only be attached to one slice!")
-      self._value                    = target
-    else:
-      #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)
-      assert self.width == target.width
-      self.connections   += [ target ]
-      target.connections += [ self   ]
-      # If we are connecting a port to another port which is itself a slice of
-      # another object, make our value pointer also point to the slice
-      if self.type == target.type:
-        #print "  TARGETS? {0} to {1}".format(type(self._value), type(target._value))
-        assert not (self._value and target._value)
-        if self._value:   target._value = self._value
-        else:               self._value = target._value
+    #if isinstance(target, int):
+    #  self._value          = Constant(target, self.width)
+    #  # TODO: make an inst_connection or regular connection?
+    #  self.inst_connection = Constant(target, self.width)
+    self.node.connect( target.node )
 
   @property
   def value(self):
     """Access the value on this port."""
-    if self._value: return self._value.value
-    else:           return self._value
+    return self.node.value
   @value.setter
   def value(self, value):
-    # TODO: remove this check?
-    if not self._value:
-      print "// WARNING: writing to unconnected node {0}.{1}!".format(
-            self.parent, self.name)
-      assert False
-    else:
-      self._value.value = value
+    self.node.value = value
 
   @property
   def next(self):
     """Access the shadow value on this port."""
-    assert self._value
-    return self._value.next
+    #assert self._value
+    #return self._value.next
+    return self.node.next
   @next.setter
   def next(self, value):
-    assert self._value
-    self._value.next = value
+    #assert self._value
+    #self._value.next = value
+    self.node.next = value
+
+  @property
+  def name(self):
+    """Access the value on this port."""
+    return self.node.name
+  @name.setter
+  def name(self, name):
+    self.node.name = name
+
+  @property
+  def parent(self):
+    """Access the value on this port."""
+    return self.node.parent
+  @parent.setter
+  def parent(self, parent):
+    self.node.parent = parent
 
 
 class InPort(Port):
@@ -200,7 +180,7 @@ class OutPort(Port):
   """User visible implementation of an output port."""
 
   def __init__(self, width):
-    """Constructor for an InPort object.
+    """Constructor for an OutPort object.
 
     Parameters
     ----------
@@ -209,103 +189,117 @@ class OutPort(Port):
     super(OutPort, self).__init__('output', width)
 
 
-class Wire(object):
+class Wire(Port):
 
-  """Hidden base class implementing a module port."""
+  """User visible implementation of a wire."""
 
   def __init__(self, width):
-    """Constructor for a Port object.
+    """Constructor for an Wire object.
 
     Parameters
     ----------
-    type: string indicated whether this is an 'input' or 'output' port.
-    width: bitwidth of the port.
-    name: (TODO: remove? Previously only used for intermediate values).
-    str: initializes a Port given a string containing a  port
-         declaration. (TODO: remove. Only used by From.)
+    width: bitwidth of the wire.
     """
-    self.type  = 'wire'
-    self.width = width
-    self.name  = '???'
-    self.parent = None
-    self.connections = []
-    self.int_connections = []  # defined inside module implementation
-    self.ext_connections = []  # defined during module instantiation
-    self.inst_connection = None
-    self._value     = None
-    self.is_reg = False
+    super(Wire, self).__init__('wire', width)
 
-  def __ne__(self, target):
-    raise Exception("The <> operator is deprecated!  Use connect() instead.")
 
-  def __getitem__(self, addr):
-    """Bitfield access ([]). Returns a VeriogSlice object.
-
-    TODO: only works for connectivity, not logic?
-    """
-    #print "@__getitem__", type(addr), addr, str(addr)
-    if isinstance(addr, int):
-      assert addr < self.width
-    elif isinstance(addr, slice):
-      assert addr.start < addr.stop
-      assert addr.stop <= self.width
-    return Slice(self, addr)
-
-  def connect(self, target):
-    """Creates a connection with a Port or Slice.
-
-    TODO: implement connections with a Wire?
-    """
-    # TODO: throw an exception if the other object is not a Port
-    # TODO: support wires?
-    # TODO: do we want to use an assert here
-    if isinstance(target, int):
-      self._value          = Constant(target, self.width)
-      # TODO: make an inst_connection or regular connection?
-      self.inst_connection = Constant(target, self.width)
-    elif isinstance(target, Slice):
-      assert self.width == target.width
-      self.connections              += [ target ]
-      target.parent_ptr.connections += [ target ]
-      target.connections            += [ self ]
-      self._value                    = target
-    else:
-      #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)
-      assert self.width == target.width
-      self.connections   += [ target ]
-      target.connections += [ self   ]
-      # If we are connecting a port to another port which is itself a slice of
-      # another object, make our value pointer also point to the slice
-      if self.type == target.type:
-        #print "  TARGETS? {0} to {1}".format(type(self._value), type(target._value))
-        assert not (self._value and target._value)
-        if self._value:   target._value = self._value
-        else:               self._value = target._value
-
-  @property
-  def value(self):
-    """Access the value on this port."""
-    if self._value: return self._value.value
-    else:           return self._value
-  @value.setter
-  def value(self, value):
-    # TODO: remove this check?
-    if not self._value:
-      print "// WARNING: writing to unconnected node {0}.{1}!".format(
-            self.parent, self.name)
-      assert False
-    else:
-      self._value.value = value
-
-  @property
-  def next(self):
-    """Access the shadow value on this port."""
-    assert self._value
-    return self._value.next
-  @next.setter
-  def next(self, value):
-    assert self._value
-    self._value.next = value
+#class Wire(object):
+#
+#  """Hidden base class implementing a module port."""
+#
+#  def __init__(self, width):
+#    """Constructor for a Port object.
+#
+#    Parameters
+#    ----------
+#    type: string indicated whether this is an 'input' or 'output' port.
+#    width: bitwidth of the port.
+#    name: (TODO: remove? Previously only used for intermediate values).
+#    str: initializes a Port given a string containing a  port
+#         declaration. (TODO: remove. Only used by From.)
+#    """
+#    self.type  = 'wire'
+#    self.width = width
+#    self.name  = '???'
+#    self.parent = None
+#    self.connections = []
+#    self.int_connections = []  # defined inside module implementation
+#    self.ext_connections = []  # defined during module instantiation
+#    self.inst_connection = None
+#    self._value     = None
+#    self.is_reg = False
+#
+#  def __ne__(self, target):
+#    raise Exception("The <> operator is deprecated!  Use connect() instead.")
+#
+#  def __getitem__(self, addr):
+#    """Bitfield access ([]). Returns a VeriogSlice object.
+#
+#    TODO: only works for connectivity, not logic?
+#    """
+#    #print "@__getitem__", type(addr), addr, str(addr)
+#    if isinstance(addr, int):
+#      assert addr < self.width
+#    elif isinstance(addr, slice):
+#      assert addr.start < addr.stop
+#      assert addr.stop <= self.width
+#    return Slice(self, addr)
+#
+#  def connect(self, target):
+#    """Creates a connection with a Port or Slice.
+#
+#    TODO: implement connections with a Wire?
+#    """
+#    # TODO: throw an exception if the other object is not a Port
+#    # TODO: support wires?
+#    # TODO: do we want to use an assert here
+#    if isinstance(target, int):
+#      self._value          = Constant(target, self.width)
+#      # TODO: make an inst_connection or regular connection?
+#      self.inst_connection = Constant(target, self.width)
+#    elif isinstance(target, Slice):
+#      assert self.width == target.width
+#      self.connections              += [ target ]
+#      target.parent_ptr.connections += [ target ]
+#      target.connections            += [ self ]
+#      self._value                    = target
+#    else:
+#      #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)
+#      assert self.width == target.width
+#      self.connections   += [ target ]
+#      target.connections += [ self   ]
+#      # If we are connecting a port to another port which is itself a slice of
+#      # another object, make our value pointer also point to the slice
+#      if self.type == target.type:
+#        #print "  TARGETS? {0} to {1}".format(type(self._value), type(target._value))
+#        assert not (self._value and target._value)
+#        if self._value:   target._value = self._value
+#        else:               self._value = target._value
+#
+#  @property
+#  def value(self):
+#    """Access the value on this port."""
+#    if self._value: return self._value.value
+#    else:           return self._value
+#  @value.setter
+#  def value(self, value):
+#    # TODO: remove this check?
+#    if not self._value:
+#      print "// WARNING: writing to unconnected node {0}.{1}!".format(
+#            self.parent, self.name)
+#      assert False
+#    else:
+#      self._value.value = value
+#
+#  @property
+#  def next(self):
+#    """Access the shadow value on this port."""
+#    assert self._value
+#    return self._value.next
+#  @next.setter
+#  def next(self, value):
+#    assert self._value
+#    self._value.next = value
 
 
 class Constant(object):
@@ -325,6 +319,9 @@ class Constant(object):
     self.type  = 'constant'
     self.name  = "%d'd%d" % (self.width, self.value)
     self.parent = None
+    # TODO: temporary?
+    self.node  = self
+    self.connections = []
 
 
 class ImplicitWire(object):
@@ -476,7 +473,9 @@ class Model(object):
 #------------------------------------------------------------------------
 
 def connect( port_A, port_B):
-  if isinstance(port_A, Slice):
+  if   isinstance(port_B, int):
+    port_A.connect( Constant(port_B, port_A.width) )
+  elif isinstance(port_A, Slice):
     port_B.connect( port_A )
   else:
     port_A.connect( port_B )

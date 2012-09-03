@@ -29,12 +29,14 @@ class TestSlicesSim(unittest.TestCase):
     actual = 0
     for i, port in enumerate(port_array):
       shift = i * port.width
-      actual |= (port.value << shift)
+      print port.value
+      actual |= (port.value.uint << shift)
     self.assertEqual( bin(actual), bin(expected) )
 
   def test_8_to_8x1_simplesplitter(self):
     model, sim = self.setup_splitter(8)
     model.inp.value = 0b11110000
+    print model.inp.value
     self.verify_splitter( model.out, 0b11110000 )
 
   def test_16_to_16x1_simplesplitter(self):
@@ -126,7 +128,7 @@ class TestSlicesSim(unittest.TestCase):
                  ]
     for test in test_cases:
       model.in_.value = test[0]
-      print bin(model.out.value), model.out[1].value, model.out[0].value
+      print bin(model.out.value.uint), model.out[1].value, model.out[0].value
       self.assertEquals( model.out.value, test[1] )
 
   def test_signext_comb( self ):
@@ -138,7 +140,7 @@ class TestSlicesSim(unittest.TestCase):
                  ]
     for test in test_cases:
       model.in_.value = test[0]
-      print bin(model.out.value), model.out[1].value, model.out[0].value
+      print bin(model.out.value.uint), model.out[1].value, model.out[0].value
       sim.cycle()
       self.assertEquals( model.out.value, test[1] )
 
@@ -243,6 +245,8 @@ class TestPosedgeClkSim(unittest.TestCase):
     sim.reset()
     self.assertEqual( model.out.value, 0)
     sim.cycle()
+    print model.inp.value
+    print model.out.value
     self.assertEqual( model.out.value, 8)
     model.inp.value = 9
     self.assertEqual( model.out.value, 8)
@@ -306,7 +310,7 @@ class TestPosedgeClkSim(unittest.TestCase):
     actual = 0
     for i, port in enumerate(port_array):
       shift = i * port.width
-      actual |= (port.value << shift)
+      actual |= (port.value.uint << shift)
     self.assertEqual( bin(actual), bin(expected) )
 
   def test_register_splitter(self):
