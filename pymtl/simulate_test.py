@@ -212,418 +212,420 @@ class TestCombinationalSim(unittest.TestCase):
     self.assertEqual( model.sum.value, 1 )
 
 
-#class TestPosedgeClkSim(unittest.TestCase):
-#
-#  def setup_sim(self, model):
-#    model.elaborate()
-#    sim = SimulationTool(model)
-#    if debug_verbose:
-#      debug_utils.port_walk(model)
-#    return sim
-#
-#  def test_register(self):
-#    model = Register(16)
-#    sim = self.setup_sim(model)
-#    model.inp.value = 8
-#    self.assertEqual( model.out.value, 0)
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 8)
-#    model.inp.value = 9
-#    self.assertEqual( model.out.value, 8)
-#    model.inp.value = 10
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 10)
-#    model.inp.value = -1
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 65535)
-#
-#  def test_register_reset(self):
-#    model = RegisterReset(16)
-#    sim = self.setup_sim(model)
-#    model.inp.value = 8
-#    self.assertEqual( model.out.value, 0)
-#    sim.reset()
-#    self.assertEqual( model.out.value, 0)
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 8)
-#    model.inp.value = 9
-#    self.assertEqual( model.out.value, 8)
-#    model.inp.value = 10
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 10)
-#    sim.reset()
-#    self.assertEqual( model.out.value, 0)
-#
-#  def test_register_wrapped(self):
-#    model = RegisterWrapper(16)
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.inp.value = 8
-#    self.assertEqual( model.out.value, 0)
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 8)
-#    model.inp.value = 9
-#    self.assertEqual( model.out.value, 8)
-#    model.inp.value = 10
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 10)
-#
-#  def test_register_chain(self):
-#    model = RegisterChain(16)
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.inp.value = 8
-#    self.assertEqual( model.reg1.out.value, 0)
-#    self.assertEqual( model.reg2.out.value, 0)
-#    self.assertEqual( model.reg3.out.value, 0)
-#    self.assertEqual( model.out.value,      0)
-#    sim.cycle()
-#    self.assertEqual( model.reg1.out.value, 8)
-#    self.assertEqual( model.reg2.out.value, 0)
-#    self.assertEqual( model.reg3.out.value, 0)
-#    self.assertEqual( model.out.value,      0)
-#    model.inp.value = 9
-#    self.assertEqual( model.reg1.out.value, 8)
-#    self.assertEqual( model.reg2.out.value, 0)
-#    self.assertEqual( model.reg3.out.value, 0)
-#    self.assertEqual( model.out.value,      0)
-#    model.inp.value = 10
-#    sim.cycle()
-#    self.assertEqual( model.reg1.out.value,10)
-#    self.assertEqual( model.reg2.out.value, 8)
-#    self.assertEqual( model.reg3.out.value, 0)
-#    self.assertEqual( model.out.value,      0)
-#    sim.cycle()
-#    self.assertEqual( model.reg1.out.value,10)
-#    self.assertEqual( model.reg2.out.value,10)
-#    self.assertEqual( model.reg3.out.value, 8)
-#    self.assertEqual( model.out.value,      8)
-#    sim.cycle()
-#    self.assertEqual( model.reg1.out.value,10)
-#    self.assertEqual( model.reg2.out.value,10)
-#    self.assertEqual( model.reg3.out.value,10)
-#    self.assertEqual( model.out.value,     10)
-#
-#  def verify_splitter(self, port_array, expected):
-#    actual = 0
-#    for i, port in enumerate(port_array):
-#      shift = i * port.width
-#      actual |= (port.value << shift)
-#    self.assertEqual( bin(actual), bin(expected) )
-#
-#  def test_register_splitter(self):
-#    model = RegisterSplitter(16)
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.inp.value = 0b11110000
-#    self.verify_splitter( model.out, 0b0 )
-#    self.assertEqual( model.reg0.out.value, 0b0 )
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value, 0b11110000 )
-#    self.assertEqual( model.split.inp.value, 0b11110000 )
-#    self.verify_splitter( model.split.out, 0b11110000 )
-#    self.verify_splitter( model.out, 0b11110000 )
-#    model.inp.value = 0b1111000011001010
-#    self.assertEqual( model.reg0.out.value, 0b11110000 )
-#    self.assertEqual( model.split.inp.value, 0b11110000 )
-#    self.verify_splitter( model.split.out, 0b11110000 )
-#    self.verify_splitter( model.out, 0b11110000 )
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value, 0b1111000011001010 )
-#    self.verify_splitter( model.out, 0b1111000011001010 )
-#
-#  def test_fanout_one(self):
-#    model = FanOutOne(16)
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.inp.value = 8
-#    self.assertEqual( model.reg0.out.value,  0)
-#    self.assertEqual( model.out1.value,      0)
-#    self.assertEqual( model.out2.value,      0)
-#    self.assertEqual( model.out3.value,      0)
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value,  8)
-#    self.assertEqual( model.out1.value,      8)
-#    self.assertEqual( model.out2.value,      8)
-#    self.assertEqual( model.out3.value,      8)
-#    model.inp.value = 9
-#    self.assertEqual( model.reg0.out.value,  8)
-#    self.assertEqual( model.out1.value,      8)
-#    self.assertEqual( model.out2.value,      8)
-#    self.assertEqual( model.out3.value,      8)
-#    model.inp.value = 10
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value, 10)
-#    self.assertEqual( model.out1.value,     10)
-#    self.assertEqual( model.out2.value,     10)
-#    self.assertEqual( model.out3.value,     10)
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value, 10)
-#    self.assertEqual( model.out1.value,     10)
-#    self.assertEqual( model.out2.value,     10)
-#    self.assertEqual( model.out3.value,     10)
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value, 10)
-#    self.assertEqual( model.out1.value,     10)
-#    self.assertEqual( model.out2.value,     10)
-#    self.assertEqual( model.out3.value,     10)
-#
-#  def test_fanout_two(self):
-#    model = FanOutTwo(16)
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.inp.value = 8
-#    self.assertEqual( model.reg0.out.value,  0)
-#    self.assertEqual( model.out1.value,      0)
-#    self.assertEqual( model.out2.value,      0)
-#    self.assertEqual( model.out3.value,      0)
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value,  8)
-#    self.assertEqual( model.out1.value,      0)
-#    self.assertEqual( model.out2.value,      0)
-#    self.assertEqual( model.out3.value,      0)
-#    model.inp.value = 9
-#    self.assertEqual( model.reg0.out.value,  8)
-#    self.assertEqual( model.out1.value,      0)
-#    self.assertEqual( model.out2.value,      0)
-#    self.assertEqual( model.out3.value,      0)
-#    model.inp.value = 10
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value, 10)
-#    self.assertEqual( model.out1.value,      8)
-#    self.assertEqual( model.out2.value,      8)
-#    self.assertEqual( model.out3.value,      8)
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value, 10)
-#    self.assertEqual( model.out1.value,     10)
-#    self.assertEqual( model.out2.value,     10)
-#    self.assertEqual( model.out3.value,     10)
-#    sim.cycle()
-#    self.assertEqual( model.reg0.out.value, 10)
-#    self.assertEqual( model.out1.value,     10)
-#    self.assertEqual( model.out2.value,     10)
-#    self.assertEqual( model.out3.value,     10)
-#
-#class TestCombAndPosedge(unittest.TestCase):
-#
-#  def setup_sim(self, model):
-#    model.elaborate()
-#    sim = SimulationTool(model)
-#    if debug_verbose:
-#      debug_utils.port_walk(model)
-#    return sim
-#
-#  def test_incrementer(self):
-#    model = Incrementer()
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.inp.value = 8
-#    self.assertEqual( model.out.value, 1)
-#    for i in xrange(10):
-#      model.inp.value = i
-#      sim.cycle()
-#      self.assertEqual( model.out.value, i+1)
-#
-#  def test_counter(self):
-#    model = Counter(7)
-#    sim = self.setup_sim(model)
-#    model.clear.value = 1
-#    sim.reset()
-#    model.clear.value = 0
-#    self.assertEqual( model.count.value, 0)
-#    expected = [1,2,3,4,5,6,7,0,1,2,
-#                0,1,2,3,4,5,6,7,0,1]
-#    for i in xrange(20):
-#      if i == 10:
-#        model.clear.value = 1
-#      else:
-#        model.clear.value = 0
-#      sim.cycle()
-#      self.assertEqual( model.count.value, expected[i])
-#
-#  def test_count_incr(self):
-#    model = CountIncr(7)
-#    sim = self.setup_sim(model)
-#    model.clear.value = 1
-#    sim.reset()
-#    model.clear.value = 0
-#    self.assertEqual( model.count.value, 1)
-#    expected = [1,2,3,4,5,6,7,0,1,2,
-#                0,1,2,3,4,5,6,7,0,1]
-#    for i in xrange(20):
-#      if i == 10:
-#        model.clear.value = 1
-#      else:
-#        model.clear.value = 0
-#      sim.cycle()
-#      self.assertEqual( model.count.value, expected[i]+1)
-#
-#  def test_reg_incr(self):
-#    model = RegIncr()
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.inp.value = 8
-#    self.assertEqual( model.out.value, 1)
-#    for i in xrange(20):
-#      model.inp.value = i
-#      sim.cycle()
-#      self.assertEqual( model.out.value, i+1)
-#
-#  def test_reg_incr_2(self):
-#    # Build model and simulator
-#    model = RegIncr()
-#    sim = self.setup_sim(model)
-#    # Define line_trace() add it to our model
-#    def line_trace( self ):
-#      return "in: {:4}  out: {:4}".format(self.inp.value, self.out.value)
-#    # Dynamically bind line_trace to our object
-#    import types
-#    model.line_trace = types.MethodType( line_trace, model )
-#    sim.en_line_trace()
-#    sim.reset()
-#    # Declare utility function
-#    def cycle( in_, bw, out ):
-#      model.inp.value = in_
-#      sim.eval_combinational()
-#      assert model.incr.inp.value == bw
-#      assert model.out.value      == out
-#      sim.cycle()
-#    # Tests:  in   bw  out
-#    cycle(     1,   0,   1 )
-#    cycle(     2,   1,   2 )
-#    cycle(    13,   2,   3 )
-#    cycle(    42,  13,  14 )
-#    cycle(    42,  42,  43 )
-#    cycle(    42,  42,  43 )
-#    cycle(    42,  42,  43 )
-#    cycle(    51,  42,  43 )
-#    cycle(    51,  51,  52 )
-#
-#  def test_incr_reg(self):
-#    model = IncrReg()
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.inp.value = 8
-#    self.assertEqual( model.out.value, 1)
-#    for i in xrange(20):
-#      model.inp.value = i
-#      sim.cycle()
-#      self.assertEqual( model.out.value, i+1)
-#
-#  def test_incr_reg_2(self):
-#    # Build model and simulator
-#    model = IncrReg()
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    # Declare utility function
-#    def cycle( in_, bw, out ):
-#      model.inp.value = in_
-#      sim.eval_combinational()
-#      assert model.reg0.inp.value == bw
-#      assert model.out.value      == out
-#      sim.cycle()
-#    # Tests:  in   bw  out
-#    cycle(     1,   2,   1 )
-#    cycle(     2,   3,   2 )
-#    cycle(    13,  14,   3 )
-#    cycle(    42,  43,  14 )
-#    cycle(    42,  43,  43 )
-#    cycle(    42,  43,  43 )
-#    cycle(    42,  43,  43 )
-#    cycle(    51,  52,  43 )
-#    cycle(    51,  52,  52 )
-#
-#  def test_gcd(self):
-#    model = GCD()
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    def util_test( a, b, out ):
-#      #model.line_trace()
-#      model.in_A.value   = a
-#      model.in_B.value   = b
-#      model.in_val.value = 1
-#      sim.cycle()
-#      #model.line_trace()
-#      model.in_val.value = 0
-#      done = False
-#      for i in xrange(15):
-#        #model.line_trace()
-#        sim.cycle()
-#        if model.out_val.value == True:
-#          done = True
-#          #model.line_trace()
-#          self.assertEqual( model.out.value, out )
-#          sim.cycle()
-#          break
-#      self.assertEqual( done, True )
-#    util_test( 15, 5, 5 )
-#    util_test( 5, 15, 5 )
-#    util_test( 5, 8, 1 )
-#    util_test( 12, 3, 3 )
-#    util_test( 7, 4, 1 )
-#    util_test( 7, 0, 7 )
-#
-#  def test_overflow(self):
-#    model = Overflow()
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    model.in0.value = 2
-#    model.in1.value = 1
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 1 )
-#    model.out.value
-#    model.in0.value = 2
-#    model.in1.value = 0
-#    sim.cycle()
-#    self.assertEqual( model.out.value, 2 )
-#    model.in0.value = 1
-#    model.in1.value = 2
-#    sim.cycle()
-#    self.assertEqual( model.out.value, (2**16 - 1) )
-#
-#  def test_child_module_sensitivity1(self):
-#    # Build model and simulator
-#    model = ChildModuleSensitivity1()
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    # Declare utility function
-#    def cycle( in0, reg_out, incr_out, out ):
-#      model.in0.value = in0
-#      sim.eval_combinational()
-#      assert model.reg0.out.value == reg_out
-#      assert model.incr.out.value == incr_out
-#      assert model.out.value      == out
-#      sim.cycle()
-#      assert model.reg0.inp.value == in0
-#    # Tests:  in0  reg  inc  out
-#    cycle(      2,   0,   1,   3 )
-#    cycle(      4,   2,   3,   5 )
-#    cycle(      2,   4,   5,   7 )
-#    cycle(      2,   2,   3,   5 )
-#    cycle(      2,   2,   3,   5 )
-#    cycle(      2,   2,   3,   5 )
-#
-#  def test_child_module_sensitivity2(self):
-#    # Build model and simulator
-#    model = ChildModuleSensitivity2()
-#    sim = self.setup_sim(model)
-#    sim.reset()
-#    # Declare utility function
-#    def cycle( in0, in1, out ):
-#      model.in0.value = in0
-#      model.in1.value = in1
-#      sim.eval_combinational()
-#      assert model.out.value      == out
-#      sim.cycle()
-#      assert model.reg0.inp.value == in0
-#      assert model.reg1.inp.value == in1
-#    # Tests:  in0  in1  out
-#    cycle(      2,   2,   0 )
-#    cycle(      2,   4,   4 )
-#    cycle(      2,   4,   6 )
-#    cycle(      2,   4,   6 )
-#    cycle(      2,   4,   6 )
-#
-#
+class TestPosedgeClkSim(unittest.TestCase):
+
+  def setup_sim(self, model):
+    model.elaborate()
+    sim = SimulationTool(model)
+    if debug_verbose:
+      debug_utils.port_walk(model)
+    return sim
+
+  def test_register(self):
+    model = Register(16)
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 0)
+    sim.cycle()
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 9
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.out.value, 10)
+    model.inp.value = -1
+    sim.cycle()
+    self.assertEqual( model.out.value, 65535)
+
+  def test_register_reset(self):
+    model = RegisterReset(16)
+    sim = self.setup_sim(model)
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 0)
+    sim.reset()
+    self.assertEqual( model.out.value, 0)
+    sim.cycle()
+    print model.inp.value
+    print model.out.value
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 9
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.out.value, 10)
+    sim.reset()
+    self.assertEqual( model.out.value, 0)
+
+  def test_register_wrapped(self):
+    model = RegisterWrapper(16)
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 0)
+    sim.cycle()
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 9
+    self.assertEqual( model.out.value, 8)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.out.value, 10)
+
+  def test_register_chain(self):
+    model = RegisterChain(16)
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.inp.value = 8
+    self.assertEqual( model.reg1.out.value, 0)
+    self.assertEqual( model.reg2.out.value, 0)
+    self.assertEqual( model.reg3.out.value, 0)
+    self.assertEqual( model.out.value,      0)
+    sim.cycle()
+    self.assertEqual( model.reg1.out.value, 8)
+    self.assertEqual( model.reg2.out.value, 0)
+    self.assertEqual( model.reg3.out.value, 0)
+    self.assertEqual( model.out.value,      0)
+    model.inp.value = 9
+    self.assertEqual( model.reg1.out.value, 8)
+    self.assertEqual( model.reg2.out.value, 0)
+    self.assertEqual( model.reg3.out.value, 0)
+    self.assertEqual( model.out.value,      0)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.reg1.out.value,10)
+    self.assertEqual( model.reg2.out.value, 8)
+    self.assertEqual( model.reg3.out.value, 0)
+    self.assertEqual( model.out.value,      0)
+    sim.cycle()
+    self.assertEqual( model.reg1.out.value,10)
+    self.assertEqual( model.reg2.out.value,10)
+    self.assertEqual( model.reg3.out.value, 8)
+    self.assertEqual( model.out.value,      8)
+    sim.cycle()
+    self.assertEqual( model.reg1.out.value,10)
+    self.assertEqual( model.reg2.out.value,10)
+    self.assertEqual( model.reg3.out.value,10)
+    self.assertEqual( model.out.value,     10)
+
+  def verify_splitter(self, port_array, expected):
+    actual = 0
+    for i, port in enumerate(port_array):
+      shift = i * port.width
+      actual |= (port.value << shift)
+    self.assertEqual( bin(actual), bin(expected) )
+
+  def test_register_splitter(self):
+    model = RegisterSplitter(16)
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.inp.value = 0b11110000
+    self.verify_splitter( model.out, 0b0 )
+    self.assertEqual( model.reg0.out.value, 0b0 )
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 0b11110000 )
+    self.assertEqual( model.split.inp.value, 0b11110000 )
+    self.verify_splitter( model.split.out, 0b11110000 )
+    self.verify_splitter( model.out, 0b11110000 )
+    model.inp.value = 0b1111000011001010
+    self.assertEqual( model.reg0.out.value, 0b11110000 )
+    self.assertEqual( model.split.inp.value, 0b11110000 )
+    self.verify_splitter( model.split.out, 0b11110000 )
+    self.verify_splitter( model.out, 0b11110000 )
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 0b1111000011001010 )
+    self.verify_splitter( model.out, 0b1111000011001010 )
+
+  def test_fanout_one(self):
+    model = FanOutOne(16)
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.inp.value = 8
+    self.assertEqual( model.reg0.out.value,  0)
+    self.assertEqual( model.out1.value,      0)
+    self.assertEqual( model.out2.value,      0)
+    self.assertEqual( model.out3.value,      0)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value,  8)
+    self.assertEqual( model.out1.value,      8)
+    self.assertEqual( model.out2.value,      8)
+    self.assertEqual( model.out3.value,      8)
+    model.inp.value = 9
+    self.assertEqual( model.reg0.out.value,  8)
+    self.assertEqual( model.out1.value,      8)
+    self.assertEqual( model.out2.value,      8)
+    self.assertEqual( model.out3.value,      8)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+
+  def test_fanout_two(self):
+    model = FanOutTwo(16)
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.inp.value = 8
+    self.assertEqual( model.reg0.out.value,  0)
+    self.assertEqual( model.out1.value,      0)
+    self.assertEqual( model.out2.value,      0)
+    self.assertEqual( model.out3.value,      0)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value,  8)
+    self.assertEqual( model.out1.value,      0)
+    self.assertEqual( model.out2.value,      0)
+    self.assertEqual( model.out3.value,      0)
+    model.inp.value = 9
+    self.assertEqual( model.reg0.out.value,  8)
+    self.assertEqual( model.out1.value,      0)
+    self.assertEqual( model.out2.value,      0)
+    self.assertEqual( model.out3.value,      0)
+    model.inp.value = 10
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,      8)
+    self.assertEqual( model.out2.value,      8)
+    self.assertEqual( model.out3.value,      8)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+    sim.cycle()
+    self.assertEqual( model.reg0.out.value, 10)
+    self.assertEqual( model.out1.value,     10)
+    self.assertEqual( model.out2.value,     10)
+    self.assertEqual( model.out3.value,     10)
+
+class TestCombAndPosedge(unittest.TestCase):
+
+  def setup_sim(self, model):
+    model.elaborate()
+    sim = SimulationTool(model)
+    if debug_verbose:
+      debug_utils.port_walk(model)
+    return sim
+
+  def test_incrementer(self):
+    model = Incrementer()
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 1)
+    for i in xrange(10):
+      model.inp.value = i
+      sim.cycle()
+      self.assertEqual( model.out.value, i+1)
+
+  def test_counter(self):
+    model = Counter(7)
+    sim = self.setup_sim(model)
+    model.clear.value = 1
+    sim.reset()
+    model.clear.value = 0
+    self.assertEqual( model.count.value, 0)
+    expected = [1,2,3,4,5,6,7,0,1,2,
+                0,1,2,3,4,5,6,7,0,1]
+    for i in xrange(20):
+      if i == 10:
+        model.clear.value = 1
+      else:
+        model.clear.value = 0
+      sim.cycle()
+      self.assertEqual( model.count.value, expected[i])
+
+  def test_count_incr(self):
+    model = CountIncr(7)
+    sim = self.setup_sim(model)
+    model.clear.value = 1
+    sim.reset()
+    model.clear.value = 0
+    self.assertEqual( model.count.value, 1)
+    expected = [1,2,3,4,5,6,7,0,1,2,
+                0,1,2,3,4,5,6,7,0,1]
+    for i in xrange(20):
+      if i == 10:
+        model.clear.value = 1
+      else:
+        model.clear.value = 0
+      sim.cycle()
+      self.assertEqual( model.count.value, expected[i]+1)
+
+  def test_reg_incr(self):
+    model = RegIncr()
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 1)
+    for i in xrange(20):
+      model.inp.value = i
+      sim.cycle()
+      self.assertEqual( model.out.value, i+1)
+
+  def test_reg_incr_2(self):
+    # Build model and simulator
+    model = RegIncr()
+    sim = self.setup_sim(model)
+    # Define line_trace() add it to our model
+    def line_trace( self ):
+      return "in: {:4}  out: {:4}".format(self.inp.value, self.out.value)
+    # Dynamically bind line_trace to our object
+    import types
+    model.line_trace = types.MethodType( line_trace, model )
+    sim.en_line_trace()
+    sim.reset()
+    # Declare utility function
+    def cycle( in_, bw, out ):
+      model.inp.value = in_
+      sim.eval_combinational()
+      assert model.incr.inp.value == bw
+      assert model.out.value      == out
+      sim.cycle()
+    # Tests:  in   bw  out
+    cycle(     1,   0,   1 )
+    cycle(     2,   1,   2 )
+    cycle(    13,   2,   3 )
+    cycle(    42,  13,  14 )
+    cycle(    42,  42,  43 )
+    cycle(    42,  42,  43 )
+    cycle(    42,  42,  43 )
+    cycle(    51,  42,  43 )
+    cycle(    51,  51,  52 )
+
+  def test_incr_reg(self):
+    model = IncrReg()
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.inp.value = 8
+    self.assertEqual( model.out.value, 1)
+    for i in xrange(20):
+      model.inp.value = i
+      sim.cycle()
+      self.assertEqual( model.out.value, i+1)
+
+  def test_incr_reg_2(self):
+    # Build model and simulator
+    model = IncrReg()
+    sim = self.setup_sim(model)
+    sim.reset()
+    # Declare utility function
+    def cycle( in_, bw, out ):
+      model.inp.value = in_
+      sim.eval_combinational()
+      assert model.reg0.inp.value == bw
+      assert model.out.value      == out
+      sim.cycle()
+    # Tests:  in   bw  out
+    cycle(     1,   2,   1 )
+    cycle(     2,   3,   2 )
+    cycle(    13,  14,   3 )
+    cycle(    42,  43,  14 )
+    cycle(    42,  43,  43 )
+    cycle(    42,  43,  43 )
+    cycle(    42,  43,  43 )
+    cycle(    51,  52,  43 )
+    cycle(    51,  52,  52 )
+
+  def test_gcd(self):
+    model = GCD()
+    sim = self.setup_sim(model)
+    sim.reset()
+    def util_test( a, b, out ):
+      #model.line_trace()
+      model.in_A.value   = a
+      model.in_B.value   = b
+      model.in_val.value = 1
+      sim.cycle()
+      #model.line_trace()
+      model.in_val.value = 0
+      done = False
+      for i in xrange(15):
+        #model.line_trace()
+        sim.cycle()
+        if model.out_val.value == True:
+          done = True
+          #model.line_trace()
+          self.assertEqual( model.out.value, out )
+          sim.cycle()
+          break
+      self.assertEqual( done, True )
+    util_test( 15, 5, 5 )
+    util_test( 5, 15, 5 )
+    util_test( 5, 8, 1 )
+    util_test( 12, 3, 3 )
+    util_test( 7, 4, 1 )
+    util_test( 7, 0, 7 )
+
+  def test_overflow(self):
+    model = Overflow()
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.in0.value = 2
+    model.in1.value = 1
+    sim.cycle()
+    self.assertEqual( model.out.value, 1 )
+    model.out.value
+    model.in0.value = 2
+    model.in1.value = 0
+    sim.cycle()
+    self.assertEqual( model.out.value, 2 )
+    model.in0.value = 1
+    model.in1.value = 2
+    sim.cycle()
+    self.assertEqual( model.out.value, (2**16 - 1) )
+
+  def test_child_module_sensitivity1(self):
+    # Build model and simulator
+    model = ChildModuleSensitivity1()
+    sim = self.setup_sim(model)
+    sim.reset()
+    # Declare utility function
+    def cycle( in0, reg_out, incr_out, out ):
+      model.in0.value = in0
+      sim.eval_combinational()
+      assert model.reg0.out.value == reg_out
+      assert model.incr.out.value == incr_out
+      assert model.out.value      == out
+      sim.cycle()
+      assert model.reg0.inp.value == in0
+    # Tests:  in0  reg  inc  out
+    cycle(      2,   0,   1,   3 )
+    cycle(      4,   2,   3,   5 )
+    cycle(      2,   4,   5,   7 )
+    cycle(      2,   2,   3,   5 )
+    cycle(      2,   2,   3,   5 )
+    cycle(      2,   2,   3,   5 )
+
+  def test_child_module_sensitivity2(self):
+    # Build model and simulator
+    model = ChildModuleSensitivity2()
+    sim = self.setup_sim(model)
+    sim.reset()
+    # Declare utility function
+    def cycle( in0, in1, out ):
+      model.in0.value = in0
+      model.in1.value = in1
+      sim.eval_combinational()
+      assert model.out.value      == out
+      sim.cycle()
+      assert model.reg0.inp.value == in0
+      assert model.reg1.inp.value == in1
+    # Tests:  in0  in1  out
+    cycle(      2,   2,   0 )
+    cycle(      2,   4,   4 )
+    cycle(      2,   4,   6 )
+    cycle(      2,   4,   6 )
+    cycle(      2,   4,   6 )
+
+
 if __name__ == '__main__':
   unittest.main()

@@ -305,6 +305,9 @@ class Constant(object):
     self.type  = 'constant'
     self.name  = "%d'd%d" % (self.width, self.value)
     self.parent = None
+    # TODO: temporary?
+    self.node  = self
+    self.connections = []
 
 
 class ImplicitWire(object):
@@ -456,7 +459,9 @@ class Model(object):
 #------------------------------------------------------------------------
 
 def connect( port_A, port_B):
-  if isinstance(port_A, Slice):
+  if   isinstance(port_B, int):
+    port_A.connect( Constant(port_B, port_A.width) )
+  elif isinstance(port_A, Slice):
     port_B.connect( port_A )
   else:
     port_A.connect( port_B )

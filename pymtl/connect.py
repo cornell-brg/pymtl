@@ -10,6 +10,7 @@ class Node(object):
     self.name        = name
     # TODO: Bits specific! Fix!
     self._value      = Bits( width, None )
+    self._next       = Bits( width, None )
     self.connections = []
     self._updating   = False #TODO: get rid of me
     self.sim         = None
@@ -39,7 +40,7 @@ class Node(object):
   def value(self, value):
     if self._value != value and not self._updating:
       # SIMULATOR STUFF
-      self.sim.add_event(self)
+      self.sim.add_event(self) # TODO: make hook added by simulator
       # ADD VCD HERE
       # VALUE STUFF
       # TODO: this is Bits specific!
@@ -50,6 +51,21 @@ class Node(object):
       for x in self.connections:
         x.update( self )
       self._updating = False
+
+  # TODO: make hook added by simulator?
+  @property
+  def next(self):
+    """Next value stored by node, informs attached simulator of any write."""
+    return self._next
+  @next.setter
+  def next(self, value):
+    self.sim.rnode_callbacks += [self]
+    self._next = value
+
+  # TODO: make hook added by simulator?
+  def clock(self):
+    """Update value to store contents of next. Should only be called by sim."""
+    self.value = self._next
 
   def update_from_slice(self, value, range):
     if not self._updating:
