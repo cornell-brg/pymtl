@@ -37,6 +37,8 @@ class TestRandomDelay (Model):
       connect( self.in_val, self.out_val )
       connect( self.in_rdy, self.out_rdy )
 
+    # Buffer to hold message
+
     self.buf      = 0
     self.buf_full = False
     self.counter  = 0
@@ -56,7 +58,7 @@ class TestRandomDelay (Model):
       return
 
     # At the end of the cycle, we AND together the val/rdy bits to
-    # determine if the input/output message transactions occured
+    # determine if the input/output message transactions occured.
 
     in_go  = self.in_val.value  and self.in_rdy.value
     out_go = self.out_val.value and self.out_rdy.value
@@ -70,7 +72,7 @@ class TestRandomDelay (Model):
 
     # If the input transaction occured, then write the input message into
     # our internal buffer, update the buffer full bit, and reset the
-    # counter
+    # counter.
 
     if in_go:
       self.buf      = self.in_msg.value

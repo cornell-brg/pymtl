@@ -15,6 +15,7 @@ pmlib_srcs = \
   arith.py \
   muxes.py \
   regs.py \
+  connects.py \
 
 pmlib_test_srcs = \
   TestVectorSimulator_test.py \
@@ -25,6 +26,7 @@ pmlib_test_srcs = \
   arith_test.py \
   muxes_test.py \
   regs_test.py \
+  connects_test.py \
 
 pmlib_prog_srcs = \
 

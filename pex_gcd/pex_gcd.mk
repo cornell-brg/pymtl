@@ -1,15 +1,17 @@
 #=========================================================================
-# pex_gcd Subpackage
+# Modular Python Build System Subproject Makefile Fragment
 #=========================================================================
 
-pex_gcd_deps =
+pex_gcd_deps = pymtl pmlib
 
 pex_gcd_srcs = \
-
-#  pex-Adder.v \
+  GcdUnitBL.py \
+  GcdUnitRTL.py \
 
 pex_gcd_test_srcs = \
-  gcd.t.v \
+  GcdUnitBL_test.py \
+  GcdUnitRTL_test.py \
 
 pex_gcd_prog_srcs = \
+  pex-gcd-sim \
 

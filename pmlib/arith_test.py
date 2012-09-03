@@ -272,6 +272,49 @@ def run_test_sign_extender( dump_vcd, in_nbits, out_nbits, test_vectors ):
 #   ])
 
 #-------------------------------------------------------------------------
+# ZeroComparator unit test
+#-------------------------------------------------------------------------
+
+def test_ZeroComparator( dump_vcd ):
+
+  # Test vectors
+
+  test_vectors = [
+    # in      out
+    [ 0x0000, 1 ],
+    [ 0x0001, 0 ],
+    [ 0x0000, 1 ],
+    [ 0x007f, 0 ],
+    [ 0x0141, 0 ],
+    [ 0x0400, 0 ],
+    [ 0x7fff, 0 ],
+    [ 0x8000, 0 ],
+    [ 0x8001, 0 ],
+    [ 0xffff, 0 ],
+  ]
+
+  # Instantiate and elaborate the model
+
+  model = ZeroComparator(16)
+  model.elaborate()
+
+  # Define functions mapping the test vector to ports in model
+
+  def tv_in( model, test_vector ):
+    model.in_.value = test_vector[0]
+
+  def tv_out( model, test_vector ):
+    if test_vector[1] != '?':
+      assert model.out.value == test_vector[1]
+
+  # Run the test
+
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pmlib-arith-test_ZeroComparator.vcd" )
+  sim.run_test()
+
+#-------------------------------------------------------------------------
 # EqComparator unit test
 #-------------------------------------------------------------------------
 

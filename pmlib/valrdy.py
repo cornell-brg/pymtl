@@ -19,5 +19,5 @@ def valrdy_to_str( msg, val, rdy ):
   else:
     str = "?   "
 
-  return str
+  return str[-4:len(str)]
 

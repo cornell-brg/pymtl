@@ -20,13 +20,12 @@
 #-------------------------------------------------------------------------
 
 subpkgs = \
+  pymtl \
   pmlib \
   pex_regincr \
   pex_sorter \
+  pex_gcd \
   plab1_imul \
-
-#  pymtl \
-#  pmlib \
 
 #-------------------------------------------------------------------------
 # List of subpackages to install
@@ -321,5 +320,6 @@ clean :
 clean-src :
 	find $(src_dir) -name "*.pyc" | xargs rm
 	find $(src_dir) -name "__pycache__" | xargs rmdir
+	find $(src_dir) -name ".DS_Store" | xargs rm
 
 .PHONY : clean

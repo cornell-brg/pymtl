@@ -157,6 +157,28 @@ class SignExtender( Model ):
       .format( self.in_.value, self.out.value )
 
 #-------------------------------------------------------------------------
+# Zero Comparator
+#-------------------------------------------------------------------------
+
+class ZeroComparator( Model ):
+
+  def __init__( self, nbits = 1 ):
+
+    self.in_ = InPort  ( nbits )
+    self.out = OutPort ( 1     )
+
+  @combinational
+  def comb_logic( self ):
+    if self.in_.value == 0:
+      self.out.value = 1
+    else:
+      self.out.value = 0;
+
+  def line_trace( self ):
+    return "{:04x} () {:04x}" \
+      .format( self.in_.value, self.out.value )
+
+#-------------------------------------------------------------------------
 # Equal Comparator
 #-------------------------------------------------------------------------
 
