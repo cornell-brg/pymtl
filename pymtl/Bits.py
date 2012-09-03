@@ -161,6 +161,9 @@ class Bits(object):
   # Comparison Operators
   #------------------------------------------------------------------------
 
+  def __nonzero__(self):
+    return self.uint != 0
+
   def __eq__(self,other):
     """Equality operator, special case for comparisons with integers."""
     if isinstance(other, int):
