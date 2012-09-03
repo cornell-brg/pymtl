@@ -37,6 +37,6 @@ class MinMax( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} () {:04x} {:04x}" \
-      .format( self.in0.value, self.in1.value,
-               self.min.value, self.max.value )
+      .format( self.in0.value.uint, self.in1.value.uint,
+               self.min.value.uint, self.max.value.uint )
 

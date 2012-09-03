@@ -33,12 +33,13 @@ class Adder( Model ):
 
   @combinational
   def comb_logic( self ):
-    self.temp.value = self.in0.value + self.in1.value + self.cin.value;
+    #TODO: VERY HACKY! Should do this a different way.
+    self.temp.value = self.in0.value.uint + self.in1.value.uint + self.cin.value.uint;
 
   def line_trace( self ):
     return "{:04x} {:04x} {} () {:04x} {}" \
-      .format( self.in0.value, self.in1.value, self.cin.value,
-               self.out.value, self.cout.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.cin.value.uint,
+               self.out.value.uint, self.cout.value.uint )
 
 #-------------------------------------------------------------------------
 # Subtractor
@@ -58,7 +59,7 @@ class Subtractor( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Incrementer
@@ -83,7 +84,7 @@ class Incrementer( Model ):
 
   def line_trace( self ):
     return "{:04x} () {:04x}" \
-      .format( self.in_.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # ZeroExtender
@@ -110,7 +111,7 @@ class ZeroExtender( Model ):
 
   def line_trace( self ):
     return "{:04x} () {:04x}" \
-      .format( self.in_.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # SignExtender
@@ -154,7 +155,7 @@ class SignExtender( Model ):
 
   def line_trace( self ):
     return "{:04x} () {:04x}" \
-      .format( self.in_.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Zero Comparator
@@ -176,7 +177,7 @@ class ZeroComparator( Model ):
 
   def line_trace( self ):
     return "{:04x} () {:04x}" \
-      .format( self.in_.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Equal Comparator
@@ -199,7 +200,7 @@ class EqComparator( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Less-Than Comparator
@@ -222,7 +223,7 @@ class LtComparator( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Greater-Than Comparator
@@ -245,7 +246,7 @@ class GtComparator( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # SignUnit
@@ -264,7 +265,7 @@ class SignUnit( Model ):
 
   def line_trace( self ):
     return "{:04x} () {:04x}" \
-      .format( self.in_.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # UnsignUnit
@@ -300,12 +301,13 @@ class UnsignUnit( Model ):
 
   @combinational
   def comb_logic( self ):
-    self.sign.value   = self.in_.value >> self.shift_amount
+    #TODO: VERY HACKY! Should do this a different way.
+    self.sign.value   = self.in_.value.uint >> self.shift_amount
     self.neg_in.value = ~self.in_.value + 1
 
   def line_trace( self ):
     return "{:04x} () {:04x}" \
-      .format( self.in_.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # LeftLogicalShifter
@@ -325,7 +327,7 @@ class LeftLogicalShifter( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} () {:04x}" \
-      .format( self.in_.value, self.shamt.value, self.out.value )
+      .format( self.in_.value.uint, self.shamt.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # RightLogicalShifter
@@ -345,5 +347,5 @@ class RightLogicalShifter( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} () {:04x}" \
-      .format( self.in_.value, self.shamt.value, self.out.value )
+      .format( self.in_.value.uint, self.shamt.value.uint, self.out.value.uint )
 

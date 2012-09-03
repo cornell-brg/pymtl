@@ -30,8 +30,8 @@ class Mux2( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} {:01x} () {:04x}" \
-      .format( self.in0.value, self.in1.value,
-               self.sel.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint,
+               self.sel.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Mux3
@@ -60,8 +60,8 @@ class Mux3( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} {:04x} {:01x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.in2.value,
-               self.sel.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.in2.value.uint,
+               self.sel.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Mux4
@@ -93,9 +93,9 @@ class Mux4( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.in2.value,
-               self.in3.value,
-               self.sel.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.in2.value.uint,
+               self.in3.value.uint,
+               self.sel.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Mux5
@@ -130,9 +130,9 @@ class Mux5( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.in2.value,
-               self.in3.value, self.in4.value,
-               self.sel.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.in2.value.uint,
+               self.in3.value.uint, self.in4.value.uint,
+               self.sel.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Mux6
@@ -170,9 +170,9 @@ class Mux6( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.in2.value,
-               self.in3.value, self.in4.value, self.in5.value,
-               self.sel.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.in2.value.uint,
+               self.in3.value.uint, self.in4.value.uint, self.in5.value.uint,
+               self.sel.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Mux7
@@ -213,10 +213,10 @@ class Mux7( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.in2.value,
-               self.in3.value, self.in4.value, self.in5.value,
-               self.in6.value,
-               self.sel.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.in2.value.uint,
+               self.in3.value.uint, self.in4.value.uint, self.in5.value.uint,
+               self.in6.value.uint,
+               self.sel.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Mux8
@@ -260,8 +260,8 @@ class Mux8( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:01x} () {:04x}" \
-      .format( self.in0.value, self.in1.value, self.in2.value,
-               self.in3.value, self.in4.value, self.in5.value,
-               self.in6.value, self.in7.value,
-               self.sel.value, self.out.value )
+      .format( self.in0.value.uint, self.in1.value.uint, self.in2.value.uint,
+               self.in3.value.uint, self.in4.value.uint, self.in5.value.uint,
+               self.in6.value.uint, self.in7.value.uint,
+               self.sel.value.uint, self.out.value.uint )
 

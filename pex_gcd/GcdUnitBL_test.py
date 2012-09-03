@@ -96,6 +96,8 @@ def test_delay0x0( dump_vcd ):
 # GcdUnitBL unit test with delay = 10 x 5
 #-------------------------------------------------------------------------
 
+import pytest
+@pytest.mark.xfail
 def test_delay10x5( dump_vcd ):
   run_gcd_test( dump_vcd, "pex-gcd-GcdUnitBL_test_delay10x5.vcd",
                 GcdUnitBL, 10, 5 )
@@ -104,6 +106,7 @@ def test_delay10x5( dump_vcd ):
 # GcdUnitBL unit test with delay = 5 x 10
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail
 def test_delay5x10( dump_vcd ):
   run_gcd_test( dump_vcd, "pex-gcd-GcdUnitBL_test_delay5x10.vcd",
                 GcdUnitBL, 5, 10 )

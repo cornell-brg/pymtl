@@ -20,7 +20,7 @@ class Reg( Model ):
 
   def line_trace( self ):
     return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.value, self.out.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Register with enable signal
@@ -40,7 +40,7 @@ class RegEn( Model ):
 
   def line_trace( self ):
     return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.value, self.out.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Register with reset signal
@@ -70,7 +70,7 @@ class RegRst( Model ):
 
   def line_trace( self ):
     return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.value, self.out.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint, self.out.value.uint )
 
 #-------------------------------------------------------------------------
 # Register with reset and enable
@@ -101,5 +101,5 @@ class RegEnRst( Model ):
 
   def line_trace( self ):
     return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.value, self.out.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint, self.out.value.uint )
 

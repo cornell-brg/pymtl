@@ -305,6 +305,6 @@ class GcdUnitRTL (Model):
       state_str = "D "
 
     return "{} ({:08x} {:08x} {}) {}" \
-        .format( in_str, self.dpath.a_reg.out.value,
-                 self.dpath.b_reg.out.value, state_str, out_str )
+        .format( in_str, self.dpath.a_reg.out.value.uint,
+                 self.dpath.b_reg.out.value.uint, state_str, out_str )
 

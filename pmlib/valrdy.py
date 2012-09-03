@@ -9,7 +9,7 @@ def valrdy_to_str( msg, val, rdy ):
 
   str = ""
   if val and rdy:
-    str = "{:04x}".format( msg )
+    str = "{:04x}".format( msg.uint )
   elif val and not rdy:
     str = "#   "
   elif not val and rdy:

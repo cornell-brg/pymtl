@@ -16,5 +16,5 @@ class Incrementer( Model ):
 
   def line_trace( self ):
     return "{:04x} () ({:04x})" \
-      .format( self.in_.value, self.out.value )
+      .format( self.in_.value.uint, self.out.value.uint )
 

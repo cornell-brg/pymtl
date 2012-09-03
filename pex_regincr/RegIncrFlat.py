@@ -68,5 +68,5 @@ class RegIncrFlat( Model ):
 
   def line_trace( self ):
     return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.value, self.reg.value, self.out.value )
+      .format( self.in_.value.uint, self.reg.value.uint, self.out.value.uint )
 

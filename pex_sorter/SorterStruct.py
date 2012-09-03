@@ -85,8 +85,8 @@ class SorterStruct( Model ):
 
   def line_trace( self ):
     return "{:04x} {:04x} {:04x} {:04x} () {:04x} {:04x} {:04x} {:04x}" \
-      .format( self.in_[0].value, self.in_[1].value,
-               self.in_[2].value, self.in_[3].value,
-               self.out[0].value, self.out[1].value,
-               self.out[2].value, self.out[3].value )
+      .format( self.in_[0].value.uint, self.in_[1].value.uint,
+               self.in_[2].value.uint, self.in_[3].value.uint,
+               self.out[0].value.uint, self.out[1].value.uint,
+               self.out[2].value.uint, self.out[3].value.uint )
 
