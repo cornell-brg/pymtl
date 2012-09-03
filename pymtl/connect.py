@@ -40,7 +40,9 @@ class Node(object):
   def value(self, value):
     if self._value != value and not self._updating:
       # SIMULATOR STUFF
-      self.sim.add_event(self) # TODO: make hook added by simulator
+      # TODO: temp check for connect_tests
+      if self.sim:
+        self.sim.add_event(self) # TODO: make hook added by simulator
       # ADD VCD HERE
       # VALUE STUFF
       # TODO: this is Bits specific!
@@ -59,7 +61,9 @@ class Node(object):
     return self._next
   @next.setter
   def next(self, value):
-    self.sim.rnode_callbacks += [self]
+    # TODO: temp check for connect_tests
+    if self.sim:
+      self.sim.rnode_callbacks += [self]
     self._next = value
 
   # TODO: make hook added by simulator?
