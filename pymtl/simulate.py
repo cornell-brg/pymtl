@@ -41,7 +41,7 @@ class SimulationTool():
     self.rnode_callbacks = []
     self.event_queue     = deque()
     self.posedge_clk_fns = []
-    self.node_groups     = []
+    #self.node_groups     = []
     # Set by VCDUtil
     self.vcd = False
     self.o   = None
@@ -131,20 +131,20 @@ class SimulationTool():
 
   def construct_sim(self):
     """Construct a simulator for the provided model by adding necessary hooks."""
-    # build up the node_groups data structure
+    ## build up the node_groups data structure
     self.find_node_groupings(self.model)
 
-    # create Nodes and add them to each port
-    #pprint.pprint( self.node_groups )
-    for group in self.node_groups:
-      width = max( [port.width for port in group] )
-      # TODO: handle constant
-      value = Node(width, sim=self)
-      for port in group:
-        if not port._value:
-          port._value = value
-        #if dump_vcd:
-        value.signals.add( port )
+    ## create Nodes and add them to each port
+    ##pprint.pprint( self.node_groups )
+    #for group in self.node_groups:
+    #  width = max( [port.width for port in group] )
+    #  # TODO: handle constant
+    #  value = Node(width, sim=self)
+    #  for port in group:
+    #    if not port._value:
+    #      port._value = value
+    #    #if dump_vcd:
+    #    value.signals.add( port )
 
     # walk the AST of each module to create sensitivity lists and add registers
     self.infer_sensitivity_list(self.model)
@@ -166,10 +166,12 @@ class SimulationTool():
 
     # Walk ports to add value nodes.  Do leaves or toplevel first?
     for p in model._ports:
-      self.add_to_node_groups(p)
+      #self.add_to_node_groups(p)
+      p.node.sim = self
 
     for w in model._wires:
-      self.add_to_node_groups(w)
+      #self.add_to_node_groups(w)
+      w.node.sim = self
 
     for m in model._submodules:
       self.find_node_groupings( m )
@@ -235,12 +237,13 @@ class SimulationTool():
     for func_name in comb_loads:
       func_ptr = model.__getattribute__(func_name)
       for input_port in model._senses:
-        value_ptr = input_port._value
-        if isinstance(value_ptr, Slice):
-          value_ptr = value_ptr._value
+        value_ptr = input_port.node
+        #if isinstance(value_ptr, Slice):
+        #  value_ptr = value_ptr._value
         if value_ptr not in self.vnode_callbacks:
           self.vnode_callbacks[value_ptr] = []
         self.vnode_callbacks[value_ptr] += [func_ptr]
+        print "VNODE", value_ptr, func_ptr
 
     # Add all posedge_clk functions
     for func_name in reg_stores:
@@ -297,75 +300,75 @@ class SensitivityListVisitor(ast.NodeVisitor):
       self.reg_stores.add( node.name )
 
 
-class Node(object):
-
-  """Hidden class implementing a node storing value (like a net in ).
-
-  Connected ports and wires have a pointer to the same Node
-  instance, such that reads and writes remain consistent. Can be either treated
-  as a wire or a register depending on use, but not both.
-  """
-
-  def __init__(self, width, value=None, sim=None):
-    """Constructor for a Node object.
-
-    Parameters
-    ----------
-    width: bitwidth of the node.
-    value: initial value of the node. Only set by Constant objects.
-    sim: simulation object to register events with on write.
-    """
-    self.sim = sim
-    self._width = width
-    # TODO: Initializing _value to None ensures we dont have to check for reset
-    # condition when adding to the event queue! However, without a reset() we do
-    # need to check for the None condition in the value parameter and return a 0
-    # instead, otherwise certain modules break. Better way to do this?
-    self._value = value
-    self.wmask = (1 << self.width) - 1
-    self.is_reg = False
-    self.signals = set()
-
-  @property
-  def width(self):
-    """Ensures width can only be set by constructor."""
-    return self._width
-
-  @property
-  def value(self):
-    """Value stored by node. Informs the attached simulator on any write."""
-    # TODO: get rid of this check?
-    if self._value == None:
-      return 0
-    return (self._value & self.wmask)
-  @value.setter
-  def value(self, value):
-    # TODO: this is a check that makes sure you dont write the value directly
-    #       if this is a register.  Put a helpful message here?
-    #assert not self.is_reg
-    if self._value != value:
-      self.sim.add_event(self)
-      self._value = value
-      if self.sim.vcd:
-        for signal in self.signals:
-          if not isinstance(signal, Slice):
-            if signal.width == 1:
-              print >> self.sim.o, "%d%s" % (signal.value, signal._code)
-            else:
-              print >> self.sim.o, "s%s %s" % (signal.value, signal._code)
-
-  @property
-  def next(self):
-    """Value stored by node. Informs the attached simulator on any write."""
-    return self._next
-  @next.setter
-  def next(self, value):
-    # TODO: this is a check that makes sure you dont write the value directly
-    #       if this is a register.  Put a helpful message here?
-    #assert not self.is_reg
-    self.sim.rnode_callbacks += [self]
-    self._next = value
-
-  def clock(self):
-    """Update value to store contents of next. Should only be called by sim."""
-    self.value = self._next
+#class Node(object):
+#
+#  """Hidden class implementing a node storing value (like a net in ).
+#
+#  Connected ports and wires have a pointer to the same Node
+#  instance, such that reads and writes remain consistent. Can be either treated
+#  as a wire or a register depending on use, but not both.
+#  """
+#
+#  def __init__(self, width, value=None, sim=None):
+#    """Constructor for a Node object.
+#
+#    Parameters
+#    ----------
+#    width: bitwidth of the node.
+#    value: initial value of the node. Only set by Constant objects.
+#    sim: simulation object to register events with on write.
+#    """
+#    self.sim = sim
+#    self._width = width
+#    # TODO: Initializing _value to None ensures we dont have to check for reset
+#    # condition when adding to the event queue! However, without a reset() we do
+#    # need to check for the None condition in the value parameter and return a 0
+#    # instead, otherwise certain modules break. Better way to do this?
+#    self._value = value
+#    self.wmask = (1 << self.width) - 1
+#    self.is_reg = False
+#    self.signals = set()
+#
+#  @property
+#  def width(self):
+#    """Ensures width can only be set by constructor."""
+#    return self._width
+#
+#  @property
+#  def value(self):
+#    """Value stored by node. Informs the attached simulator on any write."""
+#    # TODO: get rid of this check?
+#    if self._value == None:
+#      return 0
+#    return (self._value & self.wmask)
+#  @value.setter
+#  def value(self, value):
+#    # TODO: this is a check that makes sure you dont write the value directly
+#    #       if this is a register.  Put a helpful message here?
+#    #assert not self.is_reg
+#    if self._value != value:
+#      self.sim.add_event(self)
+#      self._value = value
+#      if self.sim.vcd:
+#        for signal in self.signals:
+#          if not isinstance(signal, Slice):
+#            if signal.width == 1:
+#              print >> self.sim.o, "%d%s" % (signal.value, signal._code)
+#            else:
+#              print >> self.sim.o, "s%s %s" % (signal.value, signal._code)
+#
+#  @property
+#  def next(self):
+#    """Value stored by node. Informs the attached simulator on any write."""
+#    return self._next
+#  @next.setter
+#  def next(self, value):
+#    # TODO: this is a check that makes sure you dont write the value directly
+#    #       if this is a register.  Put a helpful message here?
+#    #assert not self.is_reg
+#    self.sim.rnode_callbacks += [self]
+#    self._next = value
+#
+#  def clock(self):
+#    """Update value to store contents of next. Should only be called by sim."""
+#    self.value = self._next

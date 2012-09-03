@@ -27,6 +27,30 @@ def port_walk(tgt, spaces=0, o=sys.stdout):
     print >> o, spaces*' ', x.name
     port_walk(x, spaces+3, o)
 
+def print_connections(tgt, spaces=0, o=sys.stdout):
+  pw = tgt._ports + tgt._wires
+  for x in pw:
+    print >> o, spaces*' ', x.parent.name, x.name, x
+    for y in x.node.connections:
+      fullname = y.name
+      if y.parent:
+        fullname = y.parent.name+'.'+fullname
+      print >> o, spaces*' ', '   knctn: {0} {1}'.format(type(y), fullname)
+    print >> o, spaces*' ', '   value:', x.value
+    if isinstance(x.node, model.Slice):
+    #  # TODO: handle this case in VerilogSlice instead?
+    #  print >> o, x.value
+      print >> o, (spaces+1)*' ', '   slice:', x.value #, bin(x._value.pmask)
+    ## TODO: handle this case in VerilogSlice instead?
+    #else:
+    #  print >> o, x.value
+  print >> o
+  for x in tgt._submodules:
+    print >> o, spaces*' ', x.name
+    port_walk(x, spaces+3, o)
+
+port_walk = print_connections
+
 def print_ast(ast_tree):
   """Debug utility which prints the provided AST tree."""
   print "="*35, "BEGIN AST", "="*35

@@ -11,7 +11,8 @@ class Node(object):
     # TODO: Bits specific! Fix!
     self._value      = Bits( width, None )
     self.connections = []
-    self._updating   = False
+    self._updating   = False #TODO: get rid of me
+    self.sim         = None
 
   def connect(self, target):
     """Connect this Node to another Node or Slice."""
@@ -37,9 +38,14 @@ class Node(object):
   @value.setter
   def value(self, value):
     if self._value != value and not self._updating:
+      # SIMULATOR STUFF
+      self.sim.add_event(self)
+      # ADD VCD HERE
+      # VALUE STUFF
       # TODO: this is Bits specific!
       self._value[:] = value
       # TODO: notify all connections of update, fix _updating
+      # CONNECTIVITY STUFF
       self._updating = True
       for x in self.connections:
         x.update( self )
@@ -67,6 +73,7 @@ class Slice(object):
   def __init__(self, parent_ptr, addr):
     """Construct a Slice pointing to subbits of Node parent_ptr."""
     self.parent_ptr  = parent_ptr
+    self.parent      = parent_ptr # TODO: temporary, for port_walk
     self.connections = []
     # Special case Python slice operations vs integers
     self.addr        = addr
@@ -85,6 +92,11 @@ class Slice(object):
     """Connect this Node to another Node or Slice."""
     self.connections   += [ target ]
     target.connections += [ self   ]
+
+  @property
+  def node(self):
+    """This attribute makes it so we don't have to special case Slices."""
+    return self
 
   @property
   def value(self):
