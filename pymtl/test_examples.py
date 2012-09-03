@@ -351,12 +351,12 @@ class GCD(Model):
     self.IDLE   = 0
     self.ACTIVE = 1
     self.DONE   = 2
-    line  = "{0} {1} {2} ||".format( self.in_A.value, self.in_B.value,
-                                     self.in_val.value )
-    line += "{0:2} {1:2} {2}".format( self.A_reg.value, self.B_reg.value,
-                                    sdict[self.state.value] )
-    line += " A<B:{0} B!=0:{1}".format( self.is_A_lt_B.value, self.is_B_neq_0.value)
-    line += "|| {0} {1}".format( self.out.value, self.out_val.value )
+    line  = "{0} {1} {2} ||".format( self.in_A.value.uint, self.in_B.value.uint,
+                                     self.in_val.value.uint )
+    line += "{0:2} {1:2} {2}".format( self.A_reg.value.uint, self.B_reg.value.uint,
+                                    sdict[self.state.value.uint] )
+    line += " A<B:{0} B!=0:{1}".format( self.is_A_lt_B.value.uint, self.is_B_neq_0.value.uint)
+    line += "|| {0} {1}".format( self.out.value.uint, self.out_val.value.uint )
     print line
 
 

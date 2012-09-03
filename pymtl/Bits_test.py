@@ -165,7 +165,7 @@ def test_lt():
   assert y.uint < 10
   assert y < x.uint
   assert y < 10
-  #assert y < x
+  assert y < x
 
 def test_gt():
   x = Bits(4)
@@ -176,7 +176,7 @@ def test_gt():
   assert x.uint > 2
   assert x > y.uint
   assert x > 2
-  #assert x > y
+  assert x > y
 
 def test_lte():
   x = Bits(4)
@@ -193,8 +193,10 @@ def test_lte():
   assert y <= 10
   assert y <= z.uint
   assert y <= 0b0011
-  #assert x <= y
-  #assert x <= z
+  assert y <= x
+  assert y <= z
+  assert z <= x
+  assert z <= z
 
 def test_gte():
   x = Bits(4)
@@ -211,7 +213,11 @@ def test_gte():
   assert x >= 2
   assert x >= z.uint
   assert x >= 0b1100
-  #assert x > y
+  assert x >= y
+  assert x >= z
+  assert z >= y
+  assert z >= x
+  assert x >= x
 
 def test_invert():
   x = Bits(4)

@@ -186,19 +186,23 @@ class Bits(object):
   def __lt__(self,other):
     if isinstance(other, int):
       return self.uint < other
-    # TODO: default return?
+    else:
+      return self.uint < other.uint
 
   def __le__(self,other):
     if isinstance(other, int):
       return self.uint <= other
-    # TODO: default return?
+    else:
+      return self.uint <= other.uint
 
   def __gt__(self,other):
     if isinstance(other, int):
       return self.uint > other
-    # TODO: default return?
+    else:
+      return self.uint > other.uint
 
   def __ge__(self,other):
     if isinstance(other, int):
       return self.uint >= other
-    # TODO: default return?
+    else:
+      return self.uint >= other.uint
