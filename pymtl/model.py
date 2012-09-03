@@ -180,7 +180,7 @@ class OutPort(Port):
   """User visible implementation of an output port."""
 
   def __init__(self, width):
-    """Constructor for an InPort object.
+    """Constructor for an OutPort object.
 
     Parameters
     ----------
@@ -189,103 +189,117 @@ class OutPort(Port):
     super(OutPort, self).__init__('output', width)
 
 
-class Wire(object):
+class Wire(Port):
 
-  """Hidden base class implementing a module port."""
+  """User visible implementation of a wire."""
 
   def __init__(self, width):
-    """Constructor for a Port object.
+    """Constructor for an Wire object.
 
     Parameters
     ----------
-    type: string indicated whether this is an 'input' or 'output' port.
-    width: bitwidth of the port.
-    name: (TODO: remove? Previously only used for intermediate values).
-    str: initializes a Port given a string containing a  port
-         declaration. (TODO: remove. Only used by From.)
+    width: bitwidth of the wire.
     """
-    self.type  = 'wire'
-    self.width = width
-    self.name  = '???'
-    self.parent = None
-    self.connections = []
-    self.int_connections = []  # defined inside module implementation
-    self.ext_connections = []  # defined during module instantiation
-    self.inst_connection = None
-    self._value     = None
-    self.is_reg = False
+    super(Wire, self).__init__('wire', width)
 
-  def __ne__(self, target):
-    raise Exception("The <> operator is deprecated!  Use connect() instead.")
 
-  def __getitem__(self, addr):
-    """Bitfield access ([]). Returns a VeriogSlice object.
-
-    TODO: only works for connectivity, not logic?
-    """
-    #print "@__getitem__", type(addr), addr, str(addr)
-    if isinstance(addr, int):
-      assert addr < self.width
-    elif isinstance(addr, slice):
-      assert addr.start < addr.stop
-      assert addr.stop <= self.width
-    return Slice(self, addr)
-
-  def connect(self, target):
-    """Creates a connection with a Port or Slice.
-
-    TODO: implement connections with a Wire?
-    """
-    # TODO: throw an exception if the other object is not a Port
-    # TODO: support wires?
-    # TODO: do we want to use an assert here
-    if isinstance(target, int):
-      self._value          = Constant(target, self.width)
-      # TODO: make an inst_connection or regular connection?
-      self.inst_connection = Constant(target, self.width)
-    elif isinstance(target, Slice):
-      assert self.width == target.width
-      self.connections              += [ target ]
-      target.parent_ptr.connections += [ target ]
-      target.connections            += [ self ]
-      self._value                    = target
-    else:
-      #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)
-      assert self.width == target.width
-      self.connections   += [ target ]
-      target.connections += [ self   ]
-      # If we are connecting a port to another port which is itself a slice of
-      # another object, make our value pointer also point to the slice
-      if self.type == target.type:
-        #print "  TARGETS? {0} to {1}".format(type(self._value), type(target._value))
-        assert not (self._value and target._value)
-        if self._value:   target._value = self._value
-        else:               self._value = target._value
-
-  @property
-  def value(self):
-    """Access the value on this port."""
-    if self._value: return self._value.value
-    else:           return self._value
-  @value.setter
-  def value(self, value):
-    # TODO: remove this check?
-    if not self._value:
-      print "// WARNING: writing to unconnected node {0}.{1}!".format(
-            self.parent, self.name)
-      assert False
-    else:
-      self._value.value = value
-
-  @property
-  def next(self):
-    """Access the shadow value on this port."""
-    assert self._value
-    return self._value.next
-  @next.setter
-  def next(self, value):
-    assert self._value
-    self._value.next = value
+#class Wire(object):
+#
+#  """Hidden base class implementing a module port."""
+#
+#  def __init__(self, width):
+#    """Constructor for a Port object.
+#
+#    Parameters
+#    ----------
+#    type: string indicated whether this is an 'input' or 'output' port.
+#    width: bitwidth of the port.
+#    name: (TODO: remove? Previously only used for intermediate values).
+#    str: initializes a Port given a string containing a  port
+#         declaration. (TODO: remove. Only used by From.)
+#    """
+#    self.type  = 'wire'
+#    self.width = width
+#    self.name  = '???'
+#    self.parent = None
+#    self.connections = []
+#    self.int_connections = []  # defined inside module implementation
+#    self.ext_connections = []  # defined during module instantiation
+#    self.inst_connection = None
+#    self._value     = None
+#    self.is_reg = False
+#
+#  def __ne__(self, target):
+#    raise Exception("The <> operator is deprecated!  Use connect() instead.")
+#
+#  def __getitem__(self, addr):
+#    """Bitfield access ([]). Returns a VeriogSlice object.
+#
+#    TODO: only works for connectivity, not logic?
+#    """
+#    #print "@__getitem__", type(addr), addr, str(addr)
+#    if isinstance(addr, int):
+#      assert addr < self.width
+#    elif isinstance(addr, slice):
+#      assert addr.start < addr.stop
+#      assert addr.stop <= self.width
+#    return Slice(self, addr)
+#
+#  def connect(self, target):
+#    """Creates a connection with a Port or Slice.
+#
+#    TODO: implement connections with a Wire?
+#    """
+#    # TODO: throw an exception if the other object is not a Port
+#    # TODO: support wires?
+#    # TODO: do we want to use an assert here
+#    if isinstance(target, int):
+#      self._value          = Constant(target, self.width)
+#      # TODO: make an inst_connection or regular connection?
+#      self.inst_connection = Constant(target, self.width)
+#    elif isinstance(target, Slice):
+#      assert self.width == target.width
+#      self.connections              += [ target ]
+#      target.parent_ptr.connections += [ target ]
+#      target.connections            += [ self ]
+#      self._value                    = target
+#    else:
+#      #print "CONNECTING {0},{1} to {2},{3}".format(self.type, self.width, target.type, target.width)
+#      assert self.width == target.width
+#      self.connections   += [ target ]
+#      target.connections += [ self   ]
+#      # If we are connecting a port to another port which is itself a slice of
+#      # another object, make our value pointer also point to the slice
+#      if self.type == target.type:
+#        #print "  TARGETS? {0} to {1}".format(type(self._value), type(target._value))
+#        assert not (self._value and target._value)
+#        if self._value:   target._value = self._value
+#        else:               self._value = target._value
+#
+#  @property
+#  def value(self):
+#    """Access the value on this port."""
+#    if self._value: return self._value.value
+#    else:           return self._value
+#  @value.setter
+#  def value(self, value):
+#    # TODO: remove this check?
+#    if not self._value:
+#      print "// WARNING: writing to unconnected node {0}.{1}!".format(
+#            self.parent, self.name)
+#      assert False
+#    else:
+#      self._value.value = value
+#
+#  @property
+#  def next(self):
+#    """Access the shadow value on this port."""
+#    assert self._value
+#    return self._value.next
+#  @next.setter
+#  def next(self, value):
+#    assert self._value
+#    self._value.next = value
 
 
 class Constant(object):

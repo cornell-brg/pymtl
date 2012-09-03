@@ -244,7 +244,6 @@ class SimulationTool():
         if value_ptr not in self.vnode_callbacks:
           self.vnode_callbacks[value_ptr] = []
         self.vnode_callbacks[value_ptr] += [func_ptr]
-        print "VNODE", value_ptr, func_ptr
 
     # Add all posedge_clk functions
     for func_name in reg_stores:

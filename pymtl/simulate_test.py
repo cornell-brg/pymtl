@@ -4,7 +4,7 @@ from test_examples import *
 from simulate import *
 
 import debug_utils
-debug_verbose = True
+debug_verbose = False
 
 
 class TestSlicesSim(unittest.TestCase):
@@ -310,7 +310,7 @@ class TestPosedgeClkSim(unittest.TestCase):
     actual = 0
     for i, port in enumerate(port_array):
       shift = i * port.width
-      actual |= (port.value << shift)
+      actual |= (port.value.uint << shift)
     self.assertEqual( bin(actual), bin(expected) )
 
   def test_register_splitter(self):
