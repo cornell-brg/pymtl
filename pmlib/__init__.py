@@ -8,7 +8,6 @@ import regs
 import arith
 import muxes
 import valrdy
-import connects
 
 # List of single-class modules
 

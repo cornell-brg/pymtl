@@ -16,12 +16,14 @@ class TestHarness (Model):
 
   def __init__( self, nbits, msgs, src_delay, sink_delay ):
 
+    # Instantiate models
+
     self.src  = TestSource ( nbits, msgs, src_delay  )
     self.sink = TestSink   ( nbits, msgs, sink_delay )
 
-    connect( self.src.out_msg, self.sink.in_msg )
-    connect( self.src.out_val, self.sink.in_val )
-    connect( self.src.out_rdy, self.sink.in_rdy )
+    # Connect chain
+
+    connect_chain([ self.src, self.sink ])
 
   def done( self ):
     return self.src.done.value and self.sink.done.value
@@ -111,21 +113,15 @@ class TestHarnessExtraDelay (Model):
 
   def __init__( self, nbits, msgs, src_delay, sink_delay ):
 
+    # Instantiate models
+
     self.src   = TestSource      ( nbits, msgs, src_delay )
     self.delay = TestRandomDelay ( nbits, 5 )
     self.sink  = TestSink        ( nbits, msgs, sink_delay )
 
-    # Connect source to random delay
+    # Connect chain
 
-    connect( self.src.out_msg, self.delay.in_msg )
-    connect( self.src.out_val, self.delay.in_val )
-    connect( self.src.out_rdy, self.delay.in_rdy )
-
-    # Connect random delay to sink
-
-    connect( self.delay.out_msg, self.sink.in_msg )
-    connect( self.delay.out_val, self.sink.in_val )
-    connect( self.delay.out_rdy, self.sink.in_rdy )
+    connect_chain([ self.src, self.delay, self.sink ])
 
   def done( self ):
     return self.src.done.value and self.sink.done.value

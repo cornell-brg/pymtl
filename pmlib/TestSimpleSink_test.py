@@ -15,12 +15,14 @@ class TestHarness (Model):
 
   def __init__( self, nbits, msgs ):
 
+    # Instantiate models
+
     self.src  = TestSimpleSource ( nbits, msgs  )
     self.sink = TestSimpleSink   ( nbits, msgs )
 
-    connect( self.src.out_msg, self.sink.in_msg )
-    connect( self.src.out_val, self.sink.in_val )
-    connect( self.src.out_rdy, self.sink.in_rdy )
+    # Connect chain
+
+    connect_chain([ self.src, self.sink ])
 
   def done( self ):
     return self.src.done.value and self.sink.done.value

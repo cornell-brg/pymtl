@@ -277,7 +277,7 @@ class GcdUnitRTL (Model):
 
     # Connect ports with the same name in dpath and ctrl
 
-    pmlib.connects.auto_connect( s.dpath, s.ctrl )
+    connect_auto( s.dpath, s.ctrl )
 
   #-----------------------------------------------------------------------
   # Line tracing

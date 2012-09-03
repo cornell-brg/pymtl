@@ -16,21 +16,15 @@ class TestHarness (Model):
   def __init__( self, ModelType, src_msgs, sink_msgs,
                 src_delay, sink_delay ):
 
+    # Instantiate models
+
     self.src  = pmlib.TestSource ( 64, src_msgs,  src_delay  )
     self.gcd  = ModelType        ()
     self.sink = pmlib.TestSink   ( 32, sink_msgs, sink_delay )
 
-    # Connect source to gcd
+    # Connect chain
 
-    connect( self.src.out_msg, self.gcd.in_msg )
-    connect( self.src.out_val, self.gcd.in_val )
-    connect( self.src.out_rdy, self.gcd.in_rdy )
-
-    # Connect gcd to sink
-
-    connect( self.gcd.out_msg, self.sink.in_msg )
-    connect( self.gcd.out_val, self.sink.in_val )
-    connect( self.gcd.out_rdy, self.sink.in_rdy )
+    connect_chain([ self.src, self.gcd, self.sink ])
 
   def done( self ):
     return self.src.done.value and self.sink.done.value

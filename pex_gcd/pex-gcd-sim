@@ -97,7 +97,7 @@ def main():
 
   model.in_msg.value  = ( opts.in0 << 32 | opts.in1 )
   model.in_val.value  = True
-  model.out_rdy.value = False
+  model.out_rdy.value = True
 
   # Tick the simulator for a couple of cycles and print line trace
 
@@ -110,6 +110,8 @@ def main():
 
   if ( opts.verbose ):
     sim.print_line_trace()
+
+  model.out_rdy.value = False
 
   sim.cycle()
   sim.cycle()
