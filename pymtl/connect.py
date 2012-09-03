@@ -64,12 +64,14 @@ class Node(object):
     # TODO: temp check for connect_tests
     if self.sim:
       self.sim.rnode_callbacks += [self]
-    self._next = value
+    # TODO: be careful!  _next = value passes the object, want to copy the value...
+    # otherwise this fails!
+    self._next[:] = value
 
   # TODO: make hook added by simulator?
   def clock(self):
     """Update value to store contents of next. Should only be called by sim."""
-    self.value = self._next
+    self.value = self.next
 
   def update_from_slice(self, value, range):
     if not self._updating:
