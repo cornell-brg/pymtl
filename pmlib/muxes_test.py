@@ -22,7 +22,7 @@ def run_test_mux( dump_vcd, ModelType, num_inputs, test_vectors ):
 
   def tv_in( model, test_vector ):
     for i in xrange(num_inputs):
-      getattr( model, 'in'+str(i) ).value = test_vector[i]
+      model.in_[i].value = test_vector[i]
     model.sel.value = test_vector[num_inputs]
 
   def tv_out( model, test_vector ):

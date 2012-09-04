@@ -5,6 +5,19 @@
 from pymtl import *
 import pmlib
 
+# Constants
+
+A_MUX_SEL_NBITS = 2
+A_MUX_SEL_IN    = 0
+A_MUX_SEL_SUB   = 1
+A_MUX_SEL_B     = 2
+A_MUX_SEL_X     = 0
+
+B_MUX_SEL_NBITS = 1
+B_MUX_SEL_A     = 0
+B_MUX_SEL_IN    = 1
+B_MUX_SEL_X     = 0
+
 class GcdUnitDpath (Model):
 
   def __init__( s ):
@@ -21,9 +34,9 @@ class GcdUnitDpath (Model):
 
     # Control signals (ctrl -> dpath)
 
-    s.a_mux_sel = InPort  (2)
+    s.a_mux_sel = InPort  (A_MUX_SEL_NBITS)
     s.a_reg_en  = InPort  (1)
-    s.b_mux_sel = InPort  (1)
+    s.b_mux_sel = InPort  (B_MUX_SEL_NBITS)
     s.b_reg_en  = InPort  (1)
 
     # Status signals (dpath -> ctrl)
@@ -42,10 +55,10 @@ class GcdUnitDpath (Model):
 
     s.a_mux = m = pmlib.muxes.Mux3(32)
     connect({
-      m.sel : s.a_mux_sel,
-      m.in0 : s.in_msg_a,
-      m.in1 : s.sub_out,
-      m.in2 : s.b_reg_out,
+      m.sel                  : s.a_mux_sel,
+      m.in_[ A_MUX_SEL_IN  ] : s.in_msg_a,
+      m.in_[ A_MUX_SEL_SUB ] : s.sub_out,
+      m.in_[ A_MUX_SEL_B   ] : s.b_reg_out,
     })
 
     # A register
@@ -60,9 +73,9 @@ class GcdUnitDpath (Model):
 
     s.b_mux = m = pmlib.muxes.Mux2(32)
     connect({
-      m.sel : s.b_mux_sel,
-      m.in0 : s.a_reg.out,
-      m.in1 : s.in_msg_b,
+      m.sel                 : s.b_mux_sel,
+      m.in_[ B_MUX_SEL_A  ] : s.a_reg.out,
+      m.in_[ B_MUX_SEL_IN ] : s.in_msg_b,
     })
 
     # B register
@@ -126,14 +139,14 @@ class GcdUnitCtrl (Model):
 
     # Control signals (ctrl -> dpath)
 
-    s.a_mux_sel = OutPort (2)
+    s.a_mux_sel = OutPort (A_MUX_SEL_NBITS)
     s.a_reg_en  = OutPort (1)
     s.b_mux_sel = OutPort (1)
     s.b_reg_en  = OutPort (1)
 
     # Status signals (dpath -> ctrl)
 
-    s.is_b_zero = InPort  (1)
+    s.is_b_zero = InPort  (B_MUX_SEL_NBITS)
     s.is_a_lt_b = InPort  (1)
 
     # State element
@@ -188,9 +201,9 @@ class GcdUnitCtrl (Model):
     if current_state == s.STATE_IDLE:
       s.in_rdy.value    = 1
       s.out_val.value   = 0
-      s.a_mux_sel.value = 0
+      s.a_mux_sel.value = A_MUX_SEL_IN
       s.a_reg_en.value  = 1
-      s.b_mux_sel.value = 1
+      s.b_mux_sel.value = B_MUX_SEL_IN
       s.b_reg_en.value  = 1
 
     # In CALC state we iteratively swap/sub to calculate GCD
@@ -202,9 +215,9 @@ class GcdUnitCtrl (Model):
 
       s.in_rdy.value    = 0
       s.out_val.value   = 0
-      s.a_mux_sel.value = 2 if swap else 1
+      s.a_mux_sel.value = A_MUX_SEL_B if swap else A_MUX_SEL_SUB
       s.a_reg_en.value  = not done
-      s.b_mux_sel.value = 0
+      s.b_mux_sel.value = B_MUX_SEL_A
       s.b_reg_en.value  = swap and not done
 
     # In DONE state we simply wait for output transaction to occur
@@ -212,9 +225,9 @@ class GcdUnitCtrl (Model):
     elif current_state == s.STATE_DONE:
       s.in_rdy.value    = 0
       s.out_val.value   = 1
-      s.a_mux_sel.value = 0
+      s.a_mux_sel.value = A_MUX_SEL_X
       s.a_reg_en.value  = 0
-      s.b_mux_sel.value = 0
+      s.b_mux_sel.value = B_MUX_SEL_X
       s.b_reg_en.value  = 0
 
 #=========================================================================
