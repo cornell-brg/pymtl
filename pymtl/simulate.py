@@ -88,7 +88,7 @@ class SimulationTool():
   # Print out line trace
   # Framework should take care of printing cycle. -cbatten
   def print_line_trace(self):
-    print "{:>2}:".format( self.num_cycles ), self.model.line_trace()
+    print "{:>3}:".format( self.num_cycles ), self.model.line_trace()
 
   def eval_combinational(self):
     """Evaluates all events in the combinational logic event queue."""
