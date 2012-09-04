@@ -49,6 +49,11 @@ class Node(object):
       if self.sim:
         self.sim.add_event(self) # TODO: make hook added by simulator
       # ADD VCD HERE
+        if self.sim.vcd:
+          if self.width == 1:
+            print >> self.sim.o, "%d%s" % (self.value.uint, self._code)
+          else:
+            print >> self.sim.o, "s%s %s" % (self.value.uint, self._code)
       # VALUE STUFF
       # TODO: this is Bits specific!
       self._value[:] = value

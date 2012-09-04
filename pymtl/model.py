@@ -88,6 +88,15 @@ class Port(object):
   def parent(self, parent):
     self.node.parent = parent
 
+  # TODO: temporary hack for VCD
+  @property
+  def _code(self):
+    """Access the parent of this port."""
+    return self.node._code
+  @_code.setter
+  def _code(self, code):
+    self.node._code = code
+
 #-------------------------------------------------------------------------
 # InPort
 #-------------------------------------------------------------------------
