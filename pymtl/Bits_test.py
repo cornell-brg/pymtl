@@ -407,7 +407,15 @@ def test_sext():
 
 def test_str():
 
-  print Bits(  4,        0x2 ).__str__() == "2"
-  print Bits(  8,       0x1f ).__str__() == "1f"
-  print Bits( 32, 0x0000beef ).__str__() == "0000beef"
+  assert Bits(  4,        0x2 ).__str__() == "2"
+  assert Bits(  8,       0x1f ).__str__() == "1f"
+  assert Bits( 32, 0x0000beef ).__str__() == "0000beef"
+
+def test_concat():
+
+  assert concat([ Bits(4,0xf), Bits(4,0x2) ]) == Bits( 8, 0xf2 )
+  assert concat([ Bits(2,0x2), Bits(4,0xf) ]) == Bits( 6, 0x2f )
+
+  assert concat([ Bits(2,0x2), Bits(4,0), Bits(4,0xf) ]) == Bits( 10, 0x20f )
+  assert concat([ Bits(4,0x2), Bits(4,0), Bits(4,0xf) ]) == Bits( 12, 0x20f )
 

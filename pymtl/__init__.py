@@ -4,6 +4,7 @@ from simulate import SimulationTool
 from translate import VerilogTranslationTool
 from connects import connect_chain, connect_auto
 from Bits import Bits
+from Bits import concat
 #from visualize import VisualizationTool
 
 __all__ = ['Bits',
@@ -17,6 +18,7 @@ __all__ = ['Bits',
            'connect',
            'connect_chain',
            'connect_auto',
+           'concat',
            'SimulationTool',
            'VerilogTranslationTool',
 #           'VisualizationTool'

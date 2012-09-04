@@ -321,3 +321,26 @@ class Bits(object):
   def sext( self, new_width ):
     return Bits( new_width, self.int )
 
+#--------------------------------------------------------------------------
+# Helper functions
+#--------------------------------------------------------------------------
+
+def concat( bits_list ):
+
+  # First figure total new bitwidth
+
+  nbits = 0
+  for bits in bits_list:
+    nbits += bits.nbits
+
+  # Create new Bits and add each bits from bits_list to it
+
+  concat_bits = Bits( nbits )
+
+  begin = 0
+  for bits in reversed(bits_list):
+    concat_bits[ begin : begin+bits.nbits ] = bits
+    begin += bits.nbits
+
+  return concat_bits
+
