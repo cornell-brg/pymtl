@@ -1,8 +1,13 @@
+#=========================================================================
+# Connect
+#=========================================================================
+
 from Bits import *
 
-#------------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Node
-#------------------------------------------------------------------------
+#-------------------------------------------------------------------------
+
 class Node(object):
   def __init__(self, width, name='no_name'):
     """Construct a node with Node provided width."""
@@ -74,6 +79,7 @@ class Node(object):
     self.value = self.next
 
   def update_from_slice(self, value, range):
+    """Called by Slice to update its parent."""
     if not self._updating:
       # TODO: this is Bits specific!
       self._value[range] = value
@@ -84,13 +90,15 @@ class Node(object):
       self._updating = False
 
   def update(self, caller):
+    """Called by other Nodes/Slices, used to propagate values."""
     assert self.width == caller.width
     # Should automatically call update via setter
     self.value = caller.value
 
-#------------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Slice
-#------------------------------------------------------------------------
+#-------------------------------------------------------------------------
+
 class Slice(object):
   def __init__(self, parent_ptr, addr):
     """Construct a Slice pointing to subbits of Node parent_ptr."""
@@ -135,6 +143,7 @@ class Slice(object):
     return self.parent_ptr.name + self.suffix
 
   def update(self, caller):
+    """Called by other Nodes/Slices, used to propagate values."""
     # If our parent isnt the origin of the update call, write the parent
     if caller is not self.parent_ptr:
       assert caller.width == self.width
@@ -145,15 +154,12 @@ class Slice(object):
       if x is not caller:
         x.update( self )
 
-#------------------------------------------------------------------------
-# Constant
-#------------------------------------------------------------------------
-#class Constant(object):
+#-------------------------------------------------------------------------
+# Connect Utility Method
+#-------------------------------------------------------------------------
 
-#------------------------------------------------------------------------
-# Connect Method
-#------------------------------------------------------------------------
 def connect( port_A, port_B):
+  """Connect Nodes/Slices to other Nodes/Slices."""
   if isinstance(port_A, Slice):
     port_B.connect( port_A )
   else:
