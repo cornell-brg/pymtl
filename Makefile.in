@@ -315,7 +315,7 @@ debug-% :
 #-------------------------------------------------------------------------
 
 clean :
-	rm -rf *~ \#* *.v *.vcd a.out $(junk)
+	rm -rf *~ \#* *.v *.vcd *.stats a.out $(junk)
 
 clean-src :
 	find $(src_dir) -name "*.pyc" | xargs rm
