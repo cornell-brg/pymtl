@@ -3,9 +3,11 @@ from model import posedge_clk, combinational, connect
 from simulate import SimulationTool
 from translate import VerilogTranslationTool
 from connects import connect_chain, connect_auto
+from Bits import Bits
 #from visualize import VisualizationTool
 
-__all__ = ['Model',
+__all__ = ['Bits',
+           'Model',
            'Wire',
            'Port',
            'InPort',
