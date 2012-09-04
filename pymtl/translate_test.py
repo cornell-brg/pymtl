@@ -8,6 +8,8 @@ from translate import *
 import debug_utils
 debug_verbose = False
 
+import pytest
+@pytest.mark.xfail
 class TestSlicesVerilog(unittest.TestCase):
 
   def setUp(self):
@@ -63,6 +65,7 @@ class TestSlicesVerilog(unittest.TestCase):
   #  os.remove(self.temp_file)
 
 
+@pytest.mark.xfail
 class TestCombinationalVerilog(unittest.TestCase):
 
   def setUp(self):
@@ -106,6 +109,7 @@ class TestCombinationalVerilog(unittest.TestCase):
   #  os.remove(self.temp_file)
 
 
+@pytest.mark.xfail
 class TestPosedgeClkVerilog(unittest.TestCase):
 
   def setUp(self):
@@ -166,6 +170,7 @@ class TestPosedgeClkVerilog(unittest.TestCase):
   #def tearDown(self):
   #  os.remove(self.temp_file)
 
+@pytest.mark.xfail
 class TestCombAndPosedgeVerilog(unittest.TestCase):
 
   def setUp(self):
@@ -317,6 +322,7 @@ class FixCompare(Model):
       self.count.next = self.count.value + 1
 
 
+@pytest.mark.xfail
 class TestDumb(unittest.TestCase):
 
   def setUp(self):
