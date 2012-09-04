@@ -214,7 +214,7 @@ class Model(object):
 
   def elaborate(self):
     self.model_classes = set()
-    self.recurse_elaborate(self, 'toplevel')
+    self.recurse_elaborate(self, 'top')
     self.recurse_connections()
     for c in self.model_classes:
       import inspect, ast

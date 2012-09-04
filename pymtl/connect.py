@@ -44,6 +44,9 @@ class Node(object):
   @value.setter
   def value(self, value):
     if self._value != value and not self._updating:
+      # VALUE STUFF
+      # TODO: this is Bits specific!
+      self._value[:] = value
       # SIMULATOR STUFF
       # TODO: temp check for connect_tests
       if self.sim:
@@ -54,9 +57,6 @@ class Node(object):
             print >> self.sim.o, "%d%s" % (self.value.uint, self._code)
           else:
             print >> self.sim.o, "s%s %s" % (self.value.uint, self._code)
-      # VALUE STUFF
-      # TODO: this is Bits specific!
-      self._value[:] = value
       # TODO: notify all connections of update, fix _updating
       # CONNECTIVITY STUFF
       self._updating = True
