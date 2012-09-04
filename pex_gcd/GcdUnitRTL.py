@@ -7,17 +7,17 @@ import pmlib
 
 class GcdUnitDpath (Model):
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
-
   def __init__( s ):
 
+    #---------------------------------------------------------------------
     # Ports
+    #---------------------------------------------------------------------
 
-    s.in_a      = InPort  (32)
-    s.in_b      = InPort  (32)
-    s.out       = OutPort (32)
+    # Interface ports
+
+    s.in_msg_a  = InPort  (32)
+    s.in_msg_b  = InPort  (32)
+    s.out_msg   = OutPort (32)
 
     # Control signals (ctrl -> dpath)
 
@@ -43,7 +43,7 @@ class GcdUnitDpath (Model):
     s.a_mux = m = pmlib.muxes.Mux3(32)
     connect({
       m.sel : s.a_mux_sel,
-      m.in0 : s.in_a,
+      m.in0 : s.in_msg_a,
       m.in1 : s.sub_out,
       m.in2 : s.b_reg_out,
     })
@@ -62,7 +62,7 @@ class GcdUnitDpath (Model):
     connect({
       m.sel : s.b_mux_sel,
       m.in0 : s.a_reg.out,
-      m.in1 : s.in_b,
+      m.in1 : s.in_msg_b,
     })
 
     # B register
@@ -102,7 +102,7 @@ class GcdUnitDpath (Model):
 
     # Connect to output port
 
-    connect( s.sub.out, s.out )
+    connect( s.sub.out, s.out_msg )
 
 #=========================================================================
 # GCD Control
@@ -116,7 +116,7 @@ class GcdUnitCtrl (Model):
 
   def __init__( s ):
 
-    # in/out ports
+    # Interface ports
 
     s.in_val    = InPort  (1)
     s.in_rdy    = OutPort (1)
@@ -183,6 +183,8 @@ class GcdUnitCtrl (Model):
 
     current_state = s.state.out.value
 
+    # In IDLE state we simply wait for inputs to arrive and latch them in
+
     if current_state == s.STATE_IDLE:
       s.in_rdy.value    = 1
       s.out_val.value   = 0
@@ -190,6 +192,8 @@ class GcdUnitCtrl (Model):
       s.a_reg_en.value  = 1
       s.b_mux_sel.value = 1
       s.b_reg_en.value  = 1
+
+    # In CALC state we iteratively swap/sub to calculate GCD
 
     elif current_state == s.STATE_CALC:
 
@@ -202,6 +206,8 @@ class GcdUnitCtrl (Model):
       s.a_reg_en.value  = not done
       s.b_mux_sel.value = 0
       s.b_reg_en.value  = swap and not done
+
+    # In DONE state we simply wait for output transaction to occur
 
     elif current_state == s.STATE_DONE:
       s.in_rdy.value    = 0
@@ -260,18 +266,18 @@ class GcdUnitRTL (Model):
     # Ideally, we would just do this, but we can't due to the splitter
     # bug, so instead we have to have an explicit structural splitter
     #
-    # connect( s.in_msg[ 0:32], s.dpath.in_a  )
-    # connect( s.in_msg[32:64], s.dpath.in_b  )
+    # connect( s.in_msg[ 0:32], s.dpath.in_msg_a  )
+    # connect( s.in_msg[32:64], s.dpath.in_msg_b  )
 
-    connect( s.split.out_0,   s.dpath.in_a  )
-    connect( s.split.out_1,   s.dpath.in_b  )
+    connect( s.split.out_0,   s.dpath.in_msg_a  )
+    connect( s.split.out_1,   s.dpath.in_msg_b  )
 
     connect( s.in_val,        s.ctrl.in_val )
     connect( s.in_rdy,        s.ctrl.in_rdy )
 
     # Connect dpath/ctrl to output interface
 
-    connect( s.dpath.out,     s.out_msg     )
+    connect( s.dpath.out_msg, s.out_msg     )
     connect( s.ctrl.out_val,  s.out_val     )
     connect( s.ctrl.out_rdy,  s.out_rdy     )
 
@@ -304,7 +310,7 @@ class GcdUnitRTL (Model):
     if self.ctrl.state.out.value == self.ctrl.STATE_DONE:
       state_str = "D "
 
-    return "{} ({:08x} {:08x} {}) {}" \
-        .format( in_str, self.dpath.a_reg.out.value.uint,
-                 self.dpath.b_reg.out.value.uint, state_str, out_str )
+    return "{} ({} {} {}) {}" \
+        .format( in_str, self.dpath.a_reg.out.value,
+                 self.dpath.b_reg.out.value, state_str, out_str )
 
