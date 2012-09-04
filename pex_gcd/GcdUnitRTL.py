@@ -221,20 +221,6 @@ class GcdUnitCtrl (Model):
 # GCD Unit
 #=========================================================================
 
-# This is a helper until the splitter bug is fixed
-
-class SplitterHelper (Model):
-
-  def __init__( self ):
-    self.in_   = InPort  (64)
-    self.out_0 = OutPort (32)
-    self.out_1 = OutPort (32)
-
-  @combinational
-  def comb_logic( self ):
-    self.out_0.value = self.in_[ 0:32].value
-    self.out_1.value = self.in_[32:64].value
-
 class GcdUnitRTL (Model):
 
   def __init__( s ):
@@ -258,19 +244,10 @@ class GcdUnitRTL (Model):
     s.dpath = GcdUnitDpath()
     s.ctrl  = GcdUnitCtrl()
 
-    s.split = SplitterHelper()
-    connect( s.in_msg, s.split.in_ )
-
     # Connect input interface to dpath/ctrl
 
-    # Ideally, we would just do this, but we can't due to the splitter
-    # bug, so instead we have to have an explicit structural splitter
-    #
-    # connect( s.in_msg[ 0:32], s.dpath.in_msg_a  )
-    # connect( s.in_msg[32:64], s.dpath.in_msg_b  )
-
-    connect( s.split.out_0,   s.dpath.in_msg_a  )
-    connect( s.split.out_1,   s.dpath.in_msg_b  )
+    connect( s.in_msg[ 0:32], s.dpath.in_msg_a  )
+    connect( s.in_msg[32:64], s.dpath.in_msg_b  )
 
     connect( s.in_val,        s.ctrl.in_val )
     connect( s.in_rdy,        s.ctrl.in_rdy )
