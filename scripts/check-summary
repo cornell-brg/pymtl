@@ -66,7 +66,7 @@ def main():
   subpkg_pattern = re.compile(r'^(.*)-test.out$')
 
   passed_pattern  = re.compile(r'^\. .*$')
-  skipped_pattern = re.compile(r'^x .*$')
+  skipped_pattern = re.compile(r'^(x|X) .*$')
   failed_pattern  = re.compile(r'^F .*$')
   aborted_pattern = re.compile(r'^! .*$')
 
