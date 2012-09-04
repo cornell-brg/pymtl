@@ -172,6 +172,9 @@ class Constant(object):
     self.node  = self
     self.connections = []
 
+  def update(self, caller):
+    pass
+
 #-------------------------------------------------------------------------
 # ImplicitWire
 #-------------------------------------------------------------------------
@@ -303,8 +306,15 @@ class Model(object):
 
   def recurse_connections(self):
     for port in self._ports:
-      for c in port.connections:
-        if c.parent == port.parent or c.parent in self._submodules:
+      print port.name, port.node.connections
+      for c in port.node.connections:
+        # If we're connected to a Constant, propagate it's value to all
+        # indirectly connected Ports and Wires
+        if isinstance(c, Constant):
+          port.value = c.value
+        # Otherwise, determine if the connected Wire/Port was connected in our
+        # definition or during instantiation.  Used during VerilogTranslation.
+        elif c.parent == port.parent or c.parent in self._submodules:
           port.int_connections += [c]
         else:
           port.ext_connections += [c]

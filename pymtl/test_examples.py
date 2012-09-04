@@ -418,6 +418,24 @@ class ChildModuleSensitivity2(Model):
   def comb_logic( self ):
     self.out.value = self.reg0.out.value + self.reg1.out.value
 
+class ConstantSource(Model):
+  def __init__(self):
+    # Ports
+    self.out = OutPort(32)
+    connect( self.out, 4 )
+
+class MultipleWrite(Model):
+  def __init__(self):
+    # Ports
+    self.in_ = InPort(32)
+    self.out = OutPort(32)
+  @combinational
+  def comb_logic( self ):
+    self.out.value = 0
+    if self.in_.value > 4:
+      self.out.value = self.in_.value
+
+
 #class RegisteredAdder1(Model):
 #  def __init__(self, bits):
 #    # Ports

@@ -145,6 +145,11 @@ class TestSlicesSim(unittest.TestCase):
       sim.cycle()
       self.assertEquals( model.out.value, test[1] )
 
+  def test_constant_source( self ):
+    model = ConstantSource()
+    sim = self.setup_sim(model)
+    self.assertEquals( model.out.value, 4 )
+
 
 class TestCombinationalSim(unittest.TestCase):
 
@@ -213,6 +218,26 @@ class TestCombinationalSim(unittest.TestCase):
     self.assertEqual( model.sum.value, 13 )
     sim.cycle()
     self.assertEqual( model.sum.value, 1 )
+
+  def test_multiple_write(self):
+    model = MultipleWrite()
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.in_.value = 1
+    sim.cycle()
+    self.assertEqual( model.out.value, 0 )
+    model.in_.value = 2
+    sim.cycle()
+    self.assertEqual( model.out.value, 0 )
+    model.in_.value = 8
+    sim.cycle()
+    self.assertEqual( model.out.value, 8 )
+    model.in_.value = 4
+    sim.cycle()
+    self.assertEqual( model.out.value, 0 )
+    model.in_.value = 5
+    sim.cycle()
+    self.assertEqual( model.out.value, 5 )
 
 
 class TestPosedgeClkSim(unittest.TestCase):
