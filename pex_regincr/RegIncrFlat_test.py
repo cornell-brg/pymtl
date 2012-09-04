@@ -36,7 +36,7 @@ def test_basics( dump_vcd ):
 
   sim = SimulationTool( model )
   if dump_vcd:
-    sim.dump_vcd( "RegIncrFlat_test_basics.vcd" )
+    sim.dump_vcd( "pex-regincr-RegIncrFlat_test_basics.vcd" )
 
   # Iterate setting the inputs and verifying the outputs each cycle
 
