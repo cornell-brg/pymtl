@@ -60,8 +60,6 @@ def connect_chain( models ):
     model_curr = models[i]
     model_next = models[i+1]
 
-    print model_curr, ">>>", model_next
-
     # Iterate over the members in current model to get a set of port names
 
     port_names_curr = set()
@@ -86,8 +84,6 @@ def connect_chain( models ):
 
     for port_name_curr in port_names_curr:
 
-      print port_name_curr
-
       # See if the port in the current model is an out_ port
 
       match_out = out_pattern.match(port_name_curr)
@@ -97,10 +93,6 @@ def connect_chain( models ):
 
         port_name_next = "in_" + match_out.group(1)
         if port_name_next in port_names_next:
-
-          print "connecting", model_curr, ".", port_name_curr, "->", \
-                              model_next, ".", port_name_next
-
           connect( getattr( model_curr, port_name_curr ),
                    getattr( model_next, port_name_next ) )
 

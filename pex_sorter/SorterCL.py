@@ -40,7 +40,7 @@ class SorterCL( Model ):
 
     # Sort behavioral level
 
-    self.buf = [ x.value for x in self.in_ ]
+    self.buf = [ x.value[:] for x in self.in_ ]
     self.buf.sort()
 
   #-----------------------------------------------------------------------

@@ -13,6 +13,10 @@ class Adder( Model ):
 
   def __init__( self, nbits = 1 ):
 
+    # Constants
+
+    self.nbits = nbits
+
     # Ports
 
     self.in0  = InPort  ( nbits )
@@ -33,13 +37,19 @@ class Adder( Model ):
 
   @combinational
   def comb_logic( self ):
-    #TODO: VERY HACKY! Should do this a different way.
-    self.temp.value = self.in0.value.uint + self.in1.value.uint + self.cin.value.uint;
+
+    # Zero extend the inputs by one bit so we can generate an extra
+    # carry out bit
+
+    in0 = self.in0.value.zext( self.nbits + 1 )
+    in1 = self.in1.value.zext( self.nbits + 1 )
+
+    self.temp.value = in0 + in1 + self.cin.value
 
   def line_trace( self ):
-    return "{:04x} {:04x} {} () {:04x} {}" \
-      .format( self.in0.value.uint, self.in1.value.uint, self.cin.value.uint,
-               self.out.value.uint, self.cout.value.uint )
+    return "{} {} {} () {} {}" \
+      .format( self.in0.value, self.in1.value, self.cin.value,
+               self.out.value, self.cout.value )
 
 #-------------------------------------------------------------------------
 # Subtractor
@@ -58,8 +68,8 @@ class Subtractor( Model ):
     self.out.value = self.in0.value - self.in1.value;
 
   def line_trace( self ):
-    return "{:04x} {:04x} () {:04x}" \
-      .format( self.in0.value.uint, self.in1.value.uint, self.out.value.uint )
+    return "{} {} () {}" \
+      .format( self.in0.value, self.in1.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Incrementer
@@ -83,8 +93,8 @@ class Incrementer( Model ):
     self.out.value = self.in_.value + self.increment_amount
 
   def line_trace( self ):
-    return "{:04x} () {:04x}" \
-      .format( self.in_.value.uint, self.out.value.uint )
+    return "{} () {}" \
+      .format( self.in_.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # ZeroExtender
@@ -99,7 +109,8 @@ class ZeroExtender( Model ):
     self.in_ = InPort  ( in_nbits  )
     self.out = OutPort ( out_nbits )
 
-    # Wires
+    # WORKAROUND: Connecting a constant a slice directly doesn't work
+    # yet, but when it does we can remove this temporary wire.
 
     self.temp = Wire( out_nbits - in_nbits )
 
@@ -110,52 +121,38 @@ class ZeroExtender( Model ):
     connect( self.temp,                    0         )
 
   def line_trace( self ):
-    return "{:04x} () {:04x}" \
-      .format( self.in_.value.uint, self.out.value.uint )
+    return "{} () {}" \
+      .format( self.in_.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # SignExtender
 #-------------------------------------------------------------------------
-# The current implementation is not working; it is causing an infinite
-# loop in the event queue somehow. The unit tests have been commented out
-# for now.
 
 class SignExtender( Model ):
 
   def __init__( self, in_nbits = 1, out_nbits = 1 ):
+
+    # Checks
+
+    assert in_nbits <= out_nbits
 
     # Ports
 
     self.in_ = InPort  ( in_nbits  )
     self.out = OutPort ( out_nbits )
 
-    # Wires
+    # Connect input port directly to corresponding bottom bits of output
 
-    self.temp = Wire( out_nbits - in_nbits )
+    connect( self.out[0:in_nbits], self.in_  )
 
-    # Constants
+    # Connect msb of input port to each remaining bit of output port
 
-    self.temp_ones = 2**(out_nbits - in_nbits) - 1
-    print self.temp_ones
-
-    self.in_msb    = in_nbits-1
-    print self.in_msb
-
-    # Connections
-
-    connect( self.out[0:in_nbits],         self.in_  )
-    connect( self.out[in_nbits:out_nbits], self.temp )
-
-  @combinational
-  def comb_logic( self ):
-    if self.in_[self.in_msb].value:
-      self.temp.value = 0;
-    else:
-      self.temp.value = self.temp_ones;
+    for i in xrange(out_nbits - in_nbits):
+      connect( self.out[in_nbits+i], self.in_[in_nbits-1] )
 
   def line_trace( self ):
-    return "{:04x} () {:04x}" \
-      .format( self.in_.value.uint, self.out.value.uint )
+    return "{} () {}" \
+      .format( self.in_.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Zero Comparator
@@ -170,14 +167,11 @@ class ZeroComparator( Model ):
 
   @combinational
   def comb_logic( self ):
-    if self.in_.value == 0:
-      self.out.value = 1
-    else:
-      self.out.value = 0;
+    self.out.value = self.in_.value == 0
 
   def line_trace( self ):
-    return "{:04x} () {:04x}" \
-      .format( self.in_.value.uint, self.out.value.uint )
+    return "{} () {}" \
+      .format( self.in_.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Equal Comparator
@@ -193,14 +187,11 @@ class EqComparator( Model ):
 
   @combinational
   def comb_logic( self ):
-    if self.in0.value == self.in1.value:
-      self.out.value = 1
-    else:
-      self.out.value = 0;
+    self.out.value = self.in0.value == self.in1.value
 
   def line_trace( self ):
-    return "{:04x} {:04x} () {:04x}" \
-      .format( self.in0.value.uint, self.in1.value.uint, self.out.value.uint )
+    return "{} {} () {}" \
+      .format( self.in0.value, self.in1.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Less-Than Comparator
@@ -216,14 +207,11 @@ class LtComparator( Model ):
 
   @combinational
   def comb_logic( self ):
-    if self.in0.value < self.in1.value:
-      self.out.value = 1
-    else:
-      self.out.value = 0;
+    self.out.value = self.in0.value < self.in1.value
 
   def line_trace( self ):
-    return "{:04x} {:04x} () {:04x}" \
-      .format( self.in0.value.uint, self.in1.value.uint, self.out.value.uint )
+    return "{} {} () {}" \
+      .format( self.in0.value, self.in1.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # Greater-Than Comparator
@@ -239,14 +227,11 @@ class GtComparator( Model ):
 
   @combinational
   def comb_logic( self ):
-    if self.in0.value > self.in1.value:
-      self.out.value = 1
-    else:
-      self.out.value = 0;
+    self.out.value = self.in0.value > self.in1.value
 
   def line_trace( self ):
-    return "{:04x} {:04x} () {:04x}" \
-      .format( self.in0.value.uint, self.in1.value.uint, self.out.value.uint )
+    return "{} {} () {}" \
+      .format( self.in0.value, self.in1.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # SignUnit
@@ -264,8 +249,8 @@ class SignUnit( Model ):
     self.out.value = ~self.in_.value + 1
 
   def line_trace( self ):
-    return "{:04x} () {:04x}" \
-      .format( self.in_.value.uint, self.out.value.uint )
+    return "{} () {}" \
+      .format( self.in_.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # UnsignUnit
@@ -275,39 +260,25 @@ class UnsignUnit( Model ):
 
   def __init__( self, nbits ):
 
+    # Constants
+
+    self.nbits = nbits
+
     # Ports
 
     self.in_ = InPort  ( nbits )
     self.out = OutPort ( nbits )
 
-    # Wires
-
-    self.neg_in = Wire( nbits )
-    self.sign   = Wire( 1 )
-
-    # Constants
-
-    self.shift_amount = nbits - 1
-
-    # Module instantiation and connections
-
-    self.mux = m = Mux2( nbits )
-    connect({
-      m.in0 : self.in_,
-      m.in1 : self.neg_in,
-      m.sel : self.sign,
-      m.out : self.out,
-    })
-
   @combinational
   def comb_logic( self ):
-    #TODO: VERY HACKY! Should do this a different way.
-    self.sign.value   = self.in_.value.uint >> self.shift_amount
-    self.neg_in.value = ~self.in_.value + 1
+    if self.in_.value[self.nbits-1]:
+      self.out.value = ~self.in_.value + 1
+    else:
+      self.out.value = self.in_.value
 
   def line_trace( self ):
-    return "{:04x} () {:04x}" \
-      .format( self.in_.value.uint, self.out.value.uint )
+    return "{} () {}" \
+      .format( self.in_.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # LeftLogicalShifter
@@ -326,8 +297,8 @@ class LeftLogicalShifter( Model ):
     self.out.value = self.in_.value << self.shamt.value
 
   def line_trace( self ):
-    return "{:04x} {:04x} () {:04x}" \
-      .format( self.in_.value.uint, self.shamt.value.uint, self.out.value.uint )
+    return "{} {} () {}" \
+      .format( self.in_.value, self.shamt.value, self.out.value )
 
 #-------------------------------------------------------------------------
 # RightLogicalShifter
@@ -346,6 +317,6 @@ class RightLogicalShifter( Model ):
     self.out.value = self.in_.value >> self.shamt.value
 
   def line_trace( self ):
-    return "{:04x} {:04x} () {:04x}" \
-      .format( self.in_.value.uint, self.shamt.value.uint, self.out.value.uint )
+    return "{} {} () {}" \
+      .format( self.in_.value, self.shamt.value, self.out.value )
 

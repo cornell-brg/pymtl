@@ -97,8 +97,6 @@ def test_delay1( dump_vcd ):
 # TestRandomDelay unit test with delay = 5
 #-------------------------------------------------------------------------
 
-import pytest
-@pytest.mark.xfail
 def test_delay5( dump_vcd ):
   run_test_random_delay( dump_vcd, 5 )
 
@@ -106,7 +104,6 @@ def test_delay5( dump_vcd ):
 # TestRandomDelay unit test with delay = 20
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_delay20( dump_vcd ):
   run_test_random_delay( dump_vcd, 20 )
 

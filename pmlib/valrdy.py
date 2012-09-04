@@ -7,17 +7,15 @@
 
 def valrdy_to_str( msg, val, rdy ):
 
-  str = ""
-  if val and rdy:
-    str = "{:04x}".format( msg.uint )
-  elif val and not rdy:
-    str = "#   "
-  elif not val and rdy:
-    str = "    "
-  elif not val and not rdy:
-    str = ".   "
-  else:
-    str = "?   "
+  str = "{}".format( msg )
+  num_chars = len(str)
 
-  return str[-4:len(str)]
+  if val and not rdy:
+    str = "#".ljust(num_chars)
+  elif not val and rdy:
+    str = " ".ljust(num_chars)
+  elif not val and not rdy:
+    str = ".".ljust(num_chars)
+
+  return str
 

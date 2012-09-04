@@ -94,8 +94,6 @@ def test_delay1( dump_vcd ):
 # TestSource unit test with delay = 5
 #-------------------------------------------------------------------------
 
-import pytest
-@pytest.mark.xfail
 def test_delay5( dump_vcd ):
   run_test_random_delay( dump_vcd, 5 )
 
@@ -103,7 +101,6 @@ def test_delay5( dump_vcd ):
 # TestSource unit test with delay = 20
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_delay20( dump_vcd ):
   run_test_random_delay( dump_vcd, 20 )
 
@@ -183,7 +180,6 @@ def run_test_random_xdelay( dump_vcd, delay ):
 # TestSource unit test with delay = 0 and extra delay of 5
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_xdelay0( dump_vcd ):
   run_test_random_xdelay( dump_vcd, 0 )
 
@@ -191,7 +187,6 @@ def test_xdelay0( dump_vcd ):
 # TestSource unit test with delay = 1 and extra delay of 5
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_delay1( dump_vcd ):
   run_test_random_xdelay( dump_vcd, 1 )
 
@@ -199,7 +194,6 @@ def test_delay1( dump_vcd ):
 # TestSource unit test with delay = 5 and extra delay of 5
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_xdelay5( dump_vcd ):
   run_test_random_xdelay( dump_vcd, 5 )
 
@@ -207,7 +201,6 @@ def test_xdelay5( dump_vcd ):
 # TestSource unit test with delay = 20 and extra delay of 5
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_xdelay20( dump_vcd ):
   run_test_random_xdelay( dump_vcd, 20 )
 

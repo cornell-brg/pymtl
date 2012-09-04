@@ -42,14 +42,14 @@ def parse_cmdline():
 # print_passfail
 #-------------------------------------------------------------------------------
 
-def print_passfail( prefix, num_passed, num_failed, msg ):
+def print_passfail( prefix, num_passed, num_skipped, num_failed, msg ):
 
   if num_failed > 0:
     print prefix, "[ FAILED ] ",
   else:
     print prefix, "[ passed ] ",
 
-  print "P:{:3} F:{:3}  {}".format( num_passed, num_failed, msg )
+  print "P:{:3} S:{:3} F:{:3}  {}".format( num_passed, num_skipped, num_failed, msg )
 
 #-------------------------------------------------------------------------
 # Main
@@ -64,16 +64,20 @@ def main():
   # Iterate over the subpackages
 
   subpkg_pattern = re.compile(r'^(.*)-test.out$')
-  failed_pattern = re.compile(r'^F .*$')
-  passed_pattern = re.compile(r'^\. .*$')
-  abort_pattern  = re.compile(r'^! .*$')
+
+  passed_pattern  = re.compile(r'^\. .*$')
+  skipped_pattern = re.compile(r'^x .*$')
+  failed_pattern  = re.compile(r'^F .*$')
+  aborted_pattern = re.compile(r'^! .*$')
+
   suite_case_pattern = re.compile(r'^. (([^:]*)::.*)$')
   suite_pattern = re.compile(r'^. (.*)$')
 
-  total_num_subpkg = len(opts.test_outs)
-  total_num_passed = 0
-  total_num_failed = 0
-  total_num_suites = 0
+  total_num_subpkg  = len(opts.test_outs)
+  total_num_passed  = 0
+  total_num_skipped = 0
+  total_num_failed  = 0
+  total_num_suites  = 0
 
   for test_out in opts.test_outs:
 
@@ -84,12 +88,14 @@ def main():
 
     # Scan through this subpackages test output file
 
-    subpkg_num_passed = 0
-    subpkg_num_failed = 0
+    subpkg_num_passed  = 0
+    subpkg_num_skipped = 0
+    subpkg_num_failed  = 0
     subpkg_failing_cases = []
 
     suites              = []
     suite_num_passed    = {}
+    suite_num_skipped   = {}
     suite_num_failed    = {}
     suite_failing_cases = {}
 
@@ -97,13 +103,14 @@ def main():
 
       # Determine if this line contains a test case result
 
-      match_passed = passed_pattern.match(line)
-      match_failed = failed_pattern.match(line)
-      match_abort  = abort_pattern.match(line)
+      match_passed  = passed_pattern.match(line)
+      match_skipped = skipped_pattern.match(line)
+      match_failed  = failed_pattern.match(line)
+      match_aborted = aborted_pattern.match(line)
 
       # Update subpkg information appropriately
 
-      if match_passed or match_failed or match_abort:
+      if match_passed or match_skipped or match_failed or match_aborted:
 
         match_suite_case = suite_case_pattern.match(line)
         if not match_suite_case:
@@ -118,6 +125,10 @@ def main():
           suite_num_passed[suite] = suite_num_passed.get( suite, 0 ) + 1
           subpkg_num_passed += 1
 
+        elif match_skipped:
+          suite_num_skipped[suite] = suite_num_skipped.get( suite, 0 ) + 1
+          subpkg_num_skipped += 1
+
         else:
           suite_num_failed[suite] = suite_num_failed.get( suite, 0 ) + 1
           subpkg_num_failed += 1
@@ -129,7 +140,7 @@ def main():
 
           suite_failing_cases[suite].append( case )
 
-      if match_passed or match_failed or match_abort:
+      if match_passed or match_skipped or match_failed or match_aborted:
         if len(suites) == 0 or suites[-1] != suite:
           suites.append(suite)
 
@@ -141,14 +152,16 @@ def main():
 
     # Update running totals across all packages
 
-    total_num_passed += subpkg_num_passed
-    total_num_failed += subpkg_num_failed
-    total_num_suites += len(suites)
+    total_num_passed  += subpkg_num_passed
+    total_num_skipped += subpkg_num_skipped
+    total_num_failed  += subpkg_num_failed
+    total_num_suites  += len(suites)
 
     # Print non-verbose summary for this subpackage
 
     if not opts.verbose:
-      print_passfail( "", subpkg_num_passed, subpkg_num_failed, subpkg )
+      print_passfail( "", subpkg_num_passed, subpkg_num_skipped,
+                      subpkg_num_failed, subpkg )
 
       for failing_case in subpkg_failing_cases:
         print "   ", failing_case
@@ -162,6 +175,7 @@ def main():
 
       for suite in suites:
         print_passfail( "   ", suite_num_passed.get( suite, 0 ),
+                        suite_num_skipped.get( suite, 0 ),
                         suite_num_failed.get( suite, 0 ), suite )
 
         for failing_case in suite_failing_cases.get( suite, [] ):
@@ -171,10 +185,11 @@ def main():
 
   print ""
   print " Test Summary:"
-  print "  - Number of subprojects       : {:>3}".format( total_num_subpkg )
-  print "  - Number of test suites       : {:>3}".format( total_num_suites )
-  print "  - Number of test cases passed : {:>3}".format( total_num_passed )
-  print "  - Number of test cases failed : {:>3}".format( total_num_failed )
+  print "  - Number of subprojects        : {:>3}".format( total_num_subpkg  )
+  print "  - Number of test suites        : {:>3}".format( total_num_suites  )
+  print "  - Number of test cases passed  : {:>3}".format( total_num_passed  )
+  print "  - Number of test cases skipped : {:>3}".format( total_num_skipped )
+  print "  - Number of test cases failed  : {:>3}".format( total_num_failed  )
 
   print ""
 

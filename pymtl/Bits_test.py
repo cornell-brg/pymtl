@@ -8,10 +8,11 @@ def test_simple_overflow():
       (1, 1),
       (2, 2),
       (3, 3),
-      (4, 0),
-      (5, 1),
-      (6, 2),
-      (7, 3),
+     # We can't do these because they are too big! -cbatten
+     # (4, 0),
+     # (5, 1),
+     # (6, 2),
+     # (7, 3),
       ]
 
   assert x.width == width
@@ -19,13 +20,15 @@ def test_simple_overflow():
     x.uint = wr
     assert x.uint == rd
 
-def test_many_overflow():
-  for i in range(1,10):
-    x = Bits(i)
-    overflow_val = 2**i
-    for j in range(50):
-      x.uint = j
-      assert x.uint ==  j % overflow_val
+# Not allowed to write a value that is too big! -cbatten
+#
+# def test_many_overflow():
+#   for i in range(1,10):
+#     x = Bits(i)
+#     overflow_val = 2**i
+#     for j in range(50):
+#       x.uint = j
+#       assert x.uint ==  j % overflow_val
 
 def test_neg_assign():
   x = Bits(4)
@@ -33,12 +36,15 @@ def test_neg_assign():
   assert x.uint == 0b1111
   x.uint = -2
   assert x.uint == 0b1110
-  x.uint = -15
-  assert x.uint == 0b0001
-  x.uint = -16
-  assert x.uint == 0b0000
-  x.uint = -17
-  assert x.uint == 0b1111
+
+  # These are too big! -cbatten
+  #
+  # x.uint = -15
+  # assert x.uint == 0b0001
+  # x.uint = -16
+  # assert x.uint == 0b0000
+  # x.uint = -17
+  # assert x.uint == 0b1111
 
 def test_get_bit():
   x = Bits(4)
@@ -51,11 +57,13 @@ def test_get_bit():
   #assert x[-1] == 1
   # TODO: check that out of bounds is caught
   #assert x[8] == 1
-  x.uint = 22
-  assert x[3] == 0
-  assert x[2] == 1
-  assert x[1] == 1
-  assert x[0] == 0
+
+  # Too big! -cbatten
+  # x.uint = 22
+  # assert x[3] == 0
+  # assert x[2] == 1
+  # assert x[1] == 1
+  # assert x[0] == 0
 
 def test_get_slice():
   x = Bits(4)
@@ -328,3 +336,78 @@ def test_mult():
 
   y.uint = 0b10000000
   assert x * y == 0b0000000000000000111111110000000
+
+#-------------------------------------------------------------------------
+# Tests added by cbatten
+#-------------------------------------------------------------------------
+
+from Bits import _num_bits
+
+def test_num_bits():
+
+  assert _num_bits(0) == 0
+  assert _num_bits(1) == 1
+  assert _num_bits(2) == 2
+  assert _num_bits(3) == 2
+  assert _num_bits(4) == 3
+  assert _num_bits(5) == 3
+  assert _num_bits(6) == 3
+  assert _num_bits(7) == 3
+  assert _num_bits(8) == 4
+
+  assert _num_bits( 0x000f ) == 4
+  assert _num_bits( 0x00ff ) == 8
+  assert _num_bits( 0x0fff ) == 12
+  assert _num_bits( 0xffff ) == 16
+
+  assert _num_bits(-1) == 2
+  assert _num_bits(-2) == 3
+  assert _num_bits(-3) == 3
+  assert _num_bits(-4) == 4
+  assert _num_bits(-5) == 4
+  assert _num_bits(-6) == 4
+  assert _num_bits(-7) == 4
+  assert _num_bits(-8) == 5
+
+def test_constructor():
+
+  assert Bits( 4,  2 ).uint == 2
+  assert Bits( 4,  4 ).uint == 4
+  assert Bits( 4, 15 ).uint == 15
+
+  assert Bits( 4, -2 ).uint == 0b1110
+  assert Bits( 4, -4 ).uint == 0b1100
+
+def test_int():
+
+  assert Bits( 4,  2 ).uint == 2
+  assert Bits( 4,  4 ).uint == 4
+  assert Bits( 4, 15 ).uint == 15
+
+  assert Bits( 4, -2 ).int == -2
+  assert Bits( 4, -4 ).int == -4
+
+def test_zext():
+
+  assert Bits( 4,  2 ).zext(8) == Bits( 8, 0x02 )
+  assert Bits( 4,  4 ).zext(8) == Bits( 8, 0x04 )
+  assert Bits( 4, 15 ).zext(8) == Bits( 8, 0x0f )
+
+  assert Bits( 4, -2  ).zext(8) == Bits( 8, 0x0e )
+  assert Bits( 4, -4  ).zext(8) == Bits( 8, 0x0c )
+
+def test_sext():
+
+  assert Bits( 4,  2 ).sext(8) == Bits( 8, 0x02 )
+  assert Bits( 4,  4 ).sext(8) == Bits( 8, 0x04 )
+  assert Bits( 4, 15 ).sext(8) == Bits( 8, 0xff )
+
+  assert Bits( 4, -2  ).sext(8) == Bits( 8, 0xfe )
+  assert Bits( 4, -4  ).sext(8) == Bits( 8, 0xfc )
+
+def test_str():
+
+  print Bits(  4,        0x2 ).__str__() == "2"
+  print Bits(  8,       0x1f ).__str__() == "1f"
+  print Bits( 32, 0x0000beef ).__str__() == "0000beef"
+

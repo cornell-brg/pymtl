@@ -75,7 +75,7 @@ class TestRandomDelay (Model):
     # counter.
 
     if in_go:
-      self.buf      = self.in_msg.value
+      self.buf      = self.in_msg.value[:]
       self.buf_full = True
       self.counter  = random.randint( 1, self.max_random_delay )
 

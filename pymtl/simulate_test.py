@@ -79,7 +79,8 @@ class TestSlicesSim(unittest.TestCase):
   def set_ports(self, port_array, value):
     for i, port in enumerate(port_array):
       shift = i * port.width
-      port.value = (value >> shift)
+      # Truncate to ensure no width mismatches -cbatten
+      port.value = (value >> shift) & ((1 << port.width) - 1)
 
   def test_8x1_to_8_simplemerger(self):
     model, sim = self.setup_merger(8)
@@ -163,6 +164,8 @@ class TestCombinationalSim(unittest.TestCase):
     model.inp.value = 9
     model.inp.value = 10
     self.assertEqual( model.out.value, 10)
+    # I don't think we want to allow assigning negative numbers
+    # implicitly turned into bits? -cbatten
     model.inp.value = -1
     self.assertEqual( model.out.value, 65535)
 

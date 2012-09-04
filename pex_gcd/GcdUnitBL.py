@@ -56,8 +56,8 @@ class GcdUnitBL (Model):
     # our internal buffer and update the buffer full bit
 
     if in_go:
-      self.buf_a    = self.in_msg[ 0:32].value
-      self.buf_b    = self.in_msg[32:64].value
+      self.buf_a    = self.in_msg.value[ 0:32].int
+      self.buf_b    = self.in_msg.value[32:64].int
       self.buf_full = True
 
     # The output message is always the gcd of the buffer

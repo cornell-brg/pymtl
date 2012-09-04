@@ -246,30 +246,33 @@ def run_test_sign_extender( dump_vcd, in_nbits, out_nbits, test_vectors ):
                   "_i" + str(in_nbits) + "_o" + str(out_nbits) + ".vcd" )
   sim.run_test()
 
-# def test_sign_extender_i1o4( dump_vcd ):
-#   run_test_sign_extender( dump_vcd, 1, 4, [
-#     # in   out
-#     [ 0x0, 0x0 ],
-#     [ 0x1, 0xf ],
-#   ])
-#
-# def test_sign_extender_i2o4( dump_vcd ):
-#   run_test_sign_extender( dump_vcd, 2, 4, [
-#     # in   out
-#     [ 0x0, 0x0 ],
-#     [ 0x1, 0x0 ],
-#     [ 0x2, 0xe ],
-#     [ 0x3, 0xf ],
-#   ])
-#
-# def test_sign_extender_i4o16( dump_vcd ):
-#   run_test_sign_extender( dump_vcd, 4, 16, [
-#     # in   out
-#     [ 0x0, 0x0000 ],
-#     [ 0x1, 0x0001 ],
-#     [ 0x2, 0xfffe ],
-#     [ 0x3, 0xffff ],
-#   ])
+def test_sign_extender_i1o4( dump_vcd ):
+  run_test_sign_extender( dump_vcd, 1, 4, [
+    # in   out
+    [ 0x0, 0x0 ],
+    [ 0x1, 0xf ],
+  ])
+
+def test_sign_extender_i2o4( dump_vcd ):
+  run_test_sign_extender( dump_vcd, 2, 4, [
+    # in   out
+    [ 0x0, 0x0 ],
+    [ 0x1, 0x1 ],
+    [ 0x2, 0xe ],
+    [ 0x3, 0xf ],
+  ])
+
+def test_sign_extender_i4o16( dump_vcd ):
+  run_test_sign_extender( dump_vcd, 4, 16, [
+    # in   out
+    [ 0x0, 0x0000 ],
+    [ 0x1, 0x0001 ],
+    [ 0x2, 0x0002 ],
+    [ 0x3, 0x0003 ],
+    [ 0x4, 0x0004 ],
+    [ 0xa, 0xfffa ],
+    [ 0xb, 0xfffb ],
+  ])
 
 #-------------------------------------------------------------------------
 # ZeroComparator unit test

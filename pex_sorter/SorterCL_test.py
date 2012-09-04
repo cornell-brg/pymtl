@@ -2,7 +2,6 @@
 # SorterCL Test Suite
 #=========================================================================
 
-import pytest
 from pymtl import *
 import random
 
@@ -28,7 +27,6 @@ test_vectors_basics = [
   [ 12, 16,  3, 42,  3, 12, 16, 42 ],
 ]
 
-@pytest.mark.xfail
 def test_basics( dump_vcd ):
   run_sorter_test( dump_vcd, "pex-sorter-SorterCL_test_basics.vcd",
                    SorterCL, test_vectors_basics )
@@ -46,7 +44,6 @@ test_vectors_duplicates = [
   [  1,  1,  1,  1,  1,  1,  1,  1 ],
 ]
 
-@pytest.mark.xfail
 def test_duplicates( dump_vcd ):
   run_sorter_test( dump_vcd, "pex-sorter-SorterCL_test_duplicates.vcd",
                    SorterCL, test_vectors_duplicates )
@@ -83,7 +80,6 @@ for i in xrange(90):
   prev1_test_vector_random = prev0_test_vector_random
   prev0_test_vector_random = out_list[:]
 
-@pytest.mark.xfail
 def test_random( dump_vcd ):
   run_sorter_test( dump_vcd, "pex-sorter-SorterCL_test_random.vcd",
                    SorterCL, test_vectors_random )

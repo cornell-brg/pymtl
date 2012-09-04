@@ -53,10 +53,11 @@ class TestSlicesVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  def test_signext_comb(self):
-    self.translate( SignExtComb(4) )
-    x = os.system( self.compile_cmd )
-    self.assertEqual( x, 0)
+  # TODO: Add this back in? -cbatten
+  # def test_signext_comb(self):
+  #   self.translate( SignExtComb(4) )
+  #   x = os.system( self.compile_cmd )
+  #   self.assertEqual( x, 0)
 
   #def tearDown(self):
   #  os.remove(self.temp_file)
@@ -216,11 +217,12 @@ class TestCombAndPosedgeVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  def test_gcd(self):
-    model = GCD()
-    self.translate( model )
-    x = os.system( self.compile_cmd )
-    self.assertEqual( x, 0)
+  # TODO: add this back in? -cbatten
+  # def test_gcd(self):
+  #   model = GCD()
+  #   self.translate( model )
+  #   x = os.system( self.compile_cmd )
+  #   self.assertEqual( x, 0)
 
   #def tearDown(self):
   #  os.remove(self.temp_file)
