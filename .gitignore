@@ -10,4 +10,5 @@ build*/
 autom4te.cache/
 */__pycache__/
 *.pyc
+*/.DS_Store
 
