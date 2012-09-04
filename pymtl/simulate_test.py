@@ -145,10 +145,39 @@ class TestSlicesSim(unittest.TestCase):
       sim.cycle()
       self.assertEquals( model.out.value, test[1] )
 
-  def test_constant_source( self ):
-    model = ConstantSource()
+  def test_constant_port( self ):
+    model = ConstantPort()
     sim = self.setup_sim(model)
     self.assertEquals( model.out.value, 4 )
+    sim.cycle()
+    self.assertEquals( model.out.value, 4 )
+
+  import pytest
+  @pytest.mark.xfail
+  def test_constant_slice( self ):
+    model = ConstantSlice()
+    sim = self.setup_sim(model)
+    self.assertEquals( model.out.value[0:16], 4 )
+    self.assertEquals( model.out.value[16:32], 4 )
+    sim.cycle()
+    self.assertEquals( model.out.value[0:16], 4 )
+    self.assertEquals( model.out.value[16:32], 4 )
+
+  def test_constant_module( self ):
+    model = ConstantModule()
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.in_.value = 0b1111
+    sim.eval_combinational()
+    self.assertEquals( model.out.value, 0b111100 )
+    sim.cycle()
+    model.in_.value = 0b0101
+    sim.cycle()
+    self.assertEquals( model.out.value, 0b010100 )
+    model.in_.value = 0b110110
+    sim.cycle()
+    self.assertEquals( model.out.value, 0b11011000 )
+    sim.cycle()
 
 
 class TestCombinationalSim(unittest.TestCase):

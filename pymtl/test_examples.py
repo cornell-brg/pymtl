@@ -418,11 +418,41 @@ class ChildModuleSensitivity2(Model):
   def comb_logic( self ):
     self.out.value = self.reg0.out.value + self.reg1.out.value
 
-class ConstantSource(Model):
+class ConstantPort(Model):
   def __init__(self):
     # Ports
     self.out = OutPort(32)
     connect( self.out, 4 )
+
+class ConstantSlice(Model):
+  def __init__(self):
+    # Ports
+    self.out = OutPort(32)
+    connect( self.out[0:16],  4 )
+    connect( self.out[16:32], 8 )
+
+class Shifter(Model):
+  def __init__( self, inout_nbits = 1, shamt_nbits = 1 ):
+    self.in_   = InPort  ( inout_nbits )
+    self.shamt = InPort  ( shamt_nbits )
+    self.out   = OutPort ( inout_nbits )
+
+  @combinational
+  def comb_logic( self ):
+    self.out.value = self.in_.value << self.shamt.value
+
+
+class ConstantModule(Model):
+  def __init__(self):
+    self.in_   = InPort  ( 8 )
+    self.out   = OutPort ( 8 )
+
+    self.shift = m = Shifter(8,2)
+    connect({
+      m.in_   : self.in_,
+      m.shamt : 2,
+      m.out   : self.out,
+    })
 
 class MultipleWrite(Model):
   def __init__(self):

@@ -163,14 +163,19 @@ class Constant(object):
     value: value of the constant.
     width: bitwidth of the constant.
     """
-    self.value = value
-    self.width = width
-    self.type  = 'constant'
-    self.name  = "%d'd%d" % (self.width, self.value)
+    self._value = Bits( width, value )
+    self.width  = width
+    self.type   = 'constant'
+    self.name   = "%d'd%d" % (self.width, self._value.uint)
     self.parent = None
     # TODO: hack to ensure Constants can be treated as either port or node
     self.node  = self
     self.connections = []
+
+  @property
+  def value(self):
+    """Access the value of this constant. Read only!"""
+    return self._value
 
   def update(self, caller):
     pass
@@ -306,7 +311,6 @@ class Model(object):
 
   def recurse_connections(self):
     for port in self._ports:
-      print port.name, port.node.connections
       for c in port.node.connections:
         # If we're connected to a Constant, propagate it's value to all
         # indirectly connected Ports and Wires

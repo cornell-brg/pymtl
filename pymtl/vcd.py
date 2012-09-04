@@ -82,9 +82,9 @@ def _writeVcdSigs(f, hierarchy):
         #print >> f, "s%s %s %s" % (hex(s._val), s._code, s.name)
         # TODO: do real initialization
         if s.width == 1:
-          print >> f, "%d%s" % (0, s._code)
+          print >> f, "%d%s" % (s.value.uint, s._code)
         else:
-          print >> f, "s%s %s" % (hex(s._val), s._code)
+          print >> f, "s%s %s" % (s.value.uint, s._code)
     print >> f, "$end"
 
 ########################################################################
@@ -131,7 +131,7 @@ class VCDUtil():
     # get signals
     signals = model._ports + model._wires
     for signal in signals:
-      signal._val = 8  # TODO: temporary
+      signal._val = signal.value.uint  # TODO: temporary
       signal._tracing = None  # TODO: temporary
       t.sigdict[signal.name] = signal
     # add to hierarchy
