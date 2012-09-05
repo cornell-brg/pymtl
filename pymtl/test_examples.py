@@ -383,7 +383,6 @@ class SignExtComb( Model ):
     self.W = W
   @combinational
   def comb_logic( self ):
-    print self.W
     for i in range(self.W):
       self.out[i].value = self.in_.value
 
