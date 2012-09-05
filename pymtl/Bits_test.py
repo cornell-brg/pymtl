@@ -175,6 +175,25 @@ def test_ne():
   assert z.uint != 1L
   assert z != 1L
 
+import pytest
+@pytest.mark.xfail
+def test_compare_uint_neg():
+  x = Bits(4, 2)
+  assert x      != -1
+  assert x.uint != -1
+  assert x       > -1
+  assert x.uint  > -1
+  assert x      >= -1
+  assert x.uint >= -1
+
+@pytest.mark.xfail
+def test_compare_int_neg():
+  x = Bits(4, -2)
+  #assert x     == -2  # Should fail
+  assert x.int == -2
+  assert x.int  > -1
+  assert x.int >= -1
+
 def test_lt():
   x = Bits(4)
   y = Bits(4)
@@ -388,6 +407,26 @@ def test_constructor():
 
   assert Bits( 4, -2 ).uint == 0b1110
   assert Bits( 4, -4 ).uint == 0b1100
+
+  assert Bits( 4, Bits(4, -2) ).uint == 0b1110
+  assert Bits( 4, Bits(4, -4) ).uint == 0b1100
+
+  # TODO: catch assert, initializing to None not allowed
+  # assert Bits( 4, None ) != Bits( 4, 0 )
+  assert Bits( 4 ) == Bits( 4, 0 )
+  assert Bits( 4 ).uint == 0
+  # TODO: move to test_construct_from_bits
+  a = Bits( 32, 5 )
+  assert Bits( 32, ~a + 1 ).uint == 0xFFFFFFFB
+
+@pytest.mark.xfail
+def test_construct_from_bits():
+
+  a = Bits( 8, 5 )
+  assert Bits( 16, ~a + 1 ).uint == 0xFFFB
+  #assert Bits( 16, ~a + 1 ).uint == 0x00FB
+  b = Bits( 32, 0 )
+  assert Bits( 32, ~b + 1 ) + 1  == 1
 
 def test_int():
 

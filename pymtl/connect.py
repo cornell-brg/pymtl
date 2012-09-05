@@ -14,8 +14,8 @@ class Node(object):
     self.width       = width
     self.name        = name
     # TODO: Bits specific! Fix!
-    self._value      = Bits( width, None )
-    self._next       = Bits( width, None )
+    self._value      = Bits( width )
+    self._next       = Bits( width )
     self.connections = []
     self._updating   = False #TODO: get rid of me
     self.sim         = None
@@ -43,6 +43,7 @@ class Node(object):
     return self._value
   @value.setter
   def value(self, value):
+    # TODO: what to do for reset condition?
     if self._value != value and not self._updating:
       # VALUE STUFF
       # TODO: this is Bits specific!

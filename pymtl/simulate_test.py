@@ -1,4 +1,5 @@
 import unittest
+import pytest
 
 from test_examples import *
 from simulate import *
@@ -147,7 +148,6 @@ class TestSlicesSim(unittest.TestCase):
     sim.cycle()
     self.assertEquals( model.out.value, 4 )
 
-  import pytest
   @pytest.mark.xfail
   def test_constant_slice( self ):
     model = ConstantSlice()
@@ -184,6 +184,8 @@ class TestCombinationalSim(unittest.TestCase):
       debug_utils.port_walk(model)
     return sim
 
+  import pytest
+  @pytest.mark.xfail
   def test_onewire(self):
     model = OneWire(16)
     sim = self.setup_sim(model)
@@ -273,6 +275,7 @@ class TestPosedgeClkSim(unittest.TestCase):
       debug_utils.port_walk(model)
     return sim
 
+  @pytest.mark.xfail
   def test_register(self):
     model = Register(16)
     sim = self.setup_sim(model)

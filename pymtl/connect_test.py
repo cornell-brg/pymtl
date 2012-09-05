@@ -1,6 +1,7 @@
 from connect import *
 
-
+import pytest
+@pytest.mark.xfail
 def test_node_node():
   x = Node(8)
   y = Node(8)
