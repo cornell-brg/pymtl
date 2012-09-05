@@ -3,14 +3,15 @@
 # pex-gcd-sim [options] <in0> <in1>
 #=========================================================================
 #
-#  -h --help     Display this message
-#  -v --verbose  Verbose mode
+#  -h --help           Display this message
+#  -v --verbose        Verbose mode
 #
-#  --impl        Choose model implementation {bl,rtl}
-#                 bl     : behavioral-level model
-#                 rtl    : register-transfer-level model
+#  --impl              Choose model implementation (default bl)
+#                       bl     : behavioral-level model
+#                       rtl    : register-transfer-level model
 #
-#  --dump-vcd    Dump vcd to a file
+#  --dump-vcd          Dump vcd to dump.vcd
+#  --dump-vcd <fname>  Dump vcd to given file name <fname>
 #
 # The GCD simulator. Provide a list of two integers on the command line
 # and the simulator will return the greatest common divisor.
@@ -51,8 +52,11 @@ def parse_cmdline():
 
   # Additional commane line arguments for the simulator
 
-  p.add_argument( "--impl",       default="bl" )
-  p.add_argument( "--dump-vcd",   action="store_true" )
+  p.add_argument( "--impl", default="bl",
+    choices=["bl","rtl"] )
+
+  p.add_argument( "--dump-vcd", nargs='?',
+                  default=False, const="dump.vcd" )
 
   p.add_argument( "in0", type=int )
   p.add_argument( "in1", type=int )
@@ -86,8 +90,8 @@ def main():
 
   # Turn on vcd dumping
 
-  if ( opts.dump_vcd ):
-    sim.dump_vcd("pex-gcd-sim.vcd")
+  if opts.dump_vcd:
+    sim.dump_vcd(opts.dump_vcd)
 
   # Reset the simulator
 
@@ -102,13 +106,13 @@ def main():
   # Tick the simulator for a couple of cycles and print line trace
 
   while not model.out_val.value:
-    if ( opts.verbose ):
+    if opts.verbose:
       sim.print_line_trace()
     sim.cycle()
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
-  if ( opts.verbose ):
+  if opts.verbose:
     sim.print_line_trace()
 
   model.out_rdy.value = False
