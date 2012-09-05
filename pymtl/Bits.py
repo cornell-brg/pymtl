@@ -126,7 +126,7 @@ class Bits(object):
       return Bits( width, (self.uint & (mask << start)) >> start )
     else:
       assert addr < self.width
-      return (self.uint & (1 << addr)) >> addr
+      return Bits( 1, (self.uint & (1 << addr)) >> addr )
 
   def __setitem__(self, addr, value):
     """Bitfield writes([])."""
@@ -264,7 +264,7 @@ class Bits(object):
 
   def __eq__(self,other):
     """Equality operator, special case for comparisons with integers."""
-    if isinstance(other, int):
+    if isinstance(other, (int,long)):
       assert other >= 0
       return self.uint == other
     elif isinstance(other, Bits):
@@ -274,38 +274,43 @@ class Bits(object):
       return False
 
   def __ne__(self,other):
-    if isinstance(other, int):
+    if isinstance(other, (int,long)):
       # assert other >= 0
       return self.uint != other
     elif isinstance(other, Bits):
       assert self.width == other.width
       return self.uint != other.uint
     else:
-      return False
+      return True
+    # TODO: switch to below impl!!
+    #if isinstance(other, Bits):
+    #  assert self.width == other.width
+    #  otther = other.uint
+    #return self.uint != other
 
   def __lt__(self,other):
-    if isinstance(other, int):
+    if isinstance(other, (int,long)):
       # assert other >= 0
       return self.uint < other
     else:
       return self.uint < other.uint
 
   def __le__(self,other):
-    if isinstance(other, int):
+    if isinstance(other, (int,long)):
       assert other >= 0
       return self.uint <= other
     else:
       return self.uint <= other.uint
 
   def __gt__(self,other):
-    if isinstance(other, int):
+    if isinstance(other, (int,long)):
       assert other >= 0
       return self.uint > other
     else:
       return self.uint > other.uint
 
   def __ge__(self,other):
-    if isinstance(other, int):
+    if isinstance(other, (int,long)):
       assert other >= 0
       return self.uint >= other
     else:

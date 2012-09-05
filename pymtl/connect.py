@@ -115,13 +115,10 @@ class Slice(object):
     if isinstance(addr, slice):
       assert not addr.step  # We dont support steps!
       self.width     = addr.stop - addr.start
+      self.suffix    = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
     else:
       self.width     = 1
-    # Create the name
-    if self.width == 1:
       self.suffix    = '[{0}]'.format(self.addr)
-    else:
-      self.suffix    = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
 
   def connect(self, target):
     """Connect this Node to another Node or Slice."""

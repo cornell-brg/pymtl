@@ -1,5 +1,12 @@
 from Bits import *
 
+def test_get_value():
+  x = Bits(8, 0b1100)
+  assert isinstance(x.uint, int)
+  assert isinstance(x[1:2], Bits)
+  assert isinstance(x[0:4], Bits)
+  assert isinstance(x[2], Bits)
+
 def test_simple_overflow():
   width = 2
   x = Bits(width)
@@ -160,9 +167,13 @@ def test_ne():
   x.uint = 0b1100
   y = Bits(4)
   y.uint = 0b0011
+  # TODO: check width?
   assert x.uint != y.uint
   assert x != y
-  # TODO: check width?
+  # added for bug
+  z = Bits(1, 0)
+  assert z.uint != 1L
+  assert z != 1L
 
 def test_lt():
   x = Bits(4)
