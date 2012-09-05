@@ -9,11 +9,12 @@ pymtl_srcs = \
   model.py \
   simulate.py \
   test_examples.py \
-  test_source.py \
   translate.py \
   vcd.py \
   visualize.py \
   connects.py \
+  connect.py \
+  Bits.py \
 
 pymtl_test_srcs = \
   model_test.py \
@@ -21,6 +22,8 @@ pymtl_test_srcs = \
   translate_test.py \
   vcd_test.py \
   connects_test.py \
+  connect_test.py \
+  Bits_test.py \
 
 pymtl_prog_srcs = \
 
