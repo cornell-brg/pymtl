@@ -163,7 +163,7 @@ $(2)_prog_exes_real := $$(addprefix ./, $$($(2)_prog_srcs))
 $$($(2)_prog_exes) : .% : %
 	touch $$@
 	echo "#!/bin/sh" > $$*
-	echo "env PYTHONPATH=\"$(src_dir):\$$$${PYTHONPATH}\" $$< \"\$$$$@\"" >> $$*
+	echo "env PYTHONPATH=\"$(src_dir):\$$$${PYTHONPATH}\" $(src_dir)/$(2)/$$* \"\$$$$@\"" >> $$*
 	chmod a+x $$*
 
 $(2)_junk += $$($(2)_prog_exes) $$($(2)_prog_exes_real)
