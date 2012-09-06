@@ -323,7 +323,9 @@ class RightLogicalShifter( Model ):
 #-------------------------------------------------------------------------
 # Bits Counter Tree Style
 #-------------------------------------------------------------------------
-# Count how many ones are in the input
+# Count how many ones are in the input.
+# The other style is to use several small Lookup Tables and add together
+# the results.
 
 class BitsCounter_Tree32( Model ):
 
@@ -332,7 +334,7 @@ class BitsCounter_Tree32( Model ):
     # Ports
 
     self.in_  = InPort  ( 32 )
-    self.out  = OutPort ( 32 )
+    self.out  = OutPort ( 6 )
 
     # Wires
 
@@ -340,7 +342,7 @@ class BitsCounter_Tree32( Model ):
 
     # Connections
 
-    connect( self.out, self.temp )
+    connect( self.out, self.temp[0:6] )
 
   @combinational
   def comb_logic( self ):
@@ -359,4 +361,104 @@ class BitsCounter_Tree32( Model ):
   def line_trace( self ):
     return "{} ({}) {}" \
       .format( self.in_.value, self.temp.value, self.out.value )
+
+#-------------------------------------------------------------------------
+# Trailing Zero Counter
+#-------------------------------------------------------------------------
+# Counting consecutive trailing zero bits
+
+class TrailingZeroCounter( Model ):
+
+  def __init__( self ):
+
+    # Ports
+
+    self.in_  = InPort  ( 32 )
+    self.out  = OutPort ( 6 )
+
+    # Wires
+
+    self.xor_result = Wire( 32 )
+
+    # Bits counter unit
+
+    self.bits_cnt = BitsCounter_Tree32()
+    connect( self.bits_cnt.in_, self.xor_result )
+
+  @combinational
+  def comb_logic( self ):
+
+    # Count how many trailing zeros are in the input.
+    # First we take the input and minus it by 1, so the trailing zeros
+    # will become all ones and the last one will will become zero.
+    # Then we xor input with this result. Higher bits are the same so
+    # they becomes 0 and lower bits will differ, including the last
+    # one and the trailing zeros.
+
+    self.xor_result.value = self.in_.value ^ (self.in_.value - 1)
+
+    # Then we count how many ones are in the xor result.
+    # Number of zeros should be number of ones in the xor_result - 1
+
+    self.out.value = self.bits_cnt.out.value - 1 if self.in_.value != 0 else 32
+
+  def line_trace( self ):
+
+    line_trace_str = "?"
+
+    line_trace_str += "{} {}" \
+        .format( self.xor_result.value, self.bits_cnt.out.value )
+
+    return "{} ({}) {}" \
+      .format( self.in_.value, line_trace_str, self.out.value )
+
+#-------------------------------------------------------------------------
+# Trailing One Counter
+#-------------------------------------------------------------------------
+# Counting consecutive trailing one bits
+
+class TrailingOneCounter( Model ):
+
+  def __init__( self ):
+
+    # Ports
+
+    self.in_  = InPort  ( 32 )
+    self.out  = OutPort ( 6 )
+
+    # Wires
+
+    self.xor_result = Wire( 32 )
+
+    # Bits counter unit
+
+    self.bits_cnt = BitsCounter_Tree32()
+    connect( self.bits_cnt.in_, self.xor_result )
+
+  @combinational
+  def comb_logic( self ):
+
+    # Count how many trailing ones are in the input.
+    # First we take the input and add it by 1, so the trailing ones
+    # will become all zeros and the last zero will will become one.
+    # Then we xor input with this result. Higher bits are the same so
+    # they becomes 0 and lower bits will differ, including the last
+    # zero and the trailing ones.
+
+    self.xor_result.value = self.in_.value ^ (self.in_.value + 1)
+
+    # Then we count how many ones are in the xor result.
+    # Number of zeros should be number of ones in the xor_result - 1
+
+    self.out.value = self.bits_cnt.out.value - 1 if self.in_.value != 0xffffffff else 32
+
+  def line_trace( self ):
+
+    line_trace_str = "?"
+
+    line_trace_str += "{} {}" \
+        .format( self.xor_result.value, self.bits_cnt.out.value )
+
+    return "{} ({}) {}" \
+      .format( self.in_.value, line_trace_str, self.out.value )
 
