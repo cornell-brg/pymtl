@@ -654,3 +654,50 @@ def test_RightLogicalShifter( dump_vcd ):
     sim.dump_vcd( "pmlib-arith-test_RightLogicShifter.vcd" )
   sim.run_test()
 
+#-------------------------------------------------------------------------
+# Bits Counter unit test
+#-------------------------------------------------------------------------
+
+def test_bitscounter( dump_vcd ):
+
+  # Test vectors
+
+  test_vectors = [
+    # in_        out
+    [ 0x00000000, 0x00000000, ],
+    [ 0x00000001, 0x00000001, ],
+    [ 0x00000003, 0x00000002, ],
+    [ 0x00000007, 0x00000003, ],
+    [ 0x00000009, 0x00000002, ],
+    [ 0x0000000f, 0x00000004, ],
+    [ 0x00001111, 0x00000004, ],
+    [ 0x0000ffff, 0x00000010, ],
+    [ 0x11111111, 0x00000008, ],
+    [ 0x0000fffe, 0x0000000f, ],
+    [ 0xaaaaaaaa, 0x00000010, ],
+    [ 0xdeadbeef, 0x00000018, ],
+    [ 0xffffffff, 0x00000020, ]
+  ]
+
+  # Instantiate and elaborate the model
+
+  model = BitsCounter_Tree32()
+  model.elaborate()
+
+  # Define functions mapping the test vector to ports in model
+
+  def tv_in( model, test_vector ):
+    model.in_.value = test_vector[0]
+
+  def tv_out( model, test_vector ):
+    if test_vector[1] != '?':
+      assert model.out.value == test_vector[1]
+
+  # Run the test
+
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "pmlib-arith-test_bitscounter.vcd" )
+  sim.run_test()
+
+

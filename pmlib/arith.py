@@ -320,3 +320,43 @@ class RightLogicalShifter( Model ):
     return "{} {} () {}" \
       .format( self.in_.value, self.shamt.value, self.out.value )
 
+#-------------------------------------------------------------------------
+# Bits Counter Tree Style
+#-------------------------------------------------------------------------
+# Count how many ones are in the input
+
+class BitsCounter_Tree32( Model ):
+
+  def __init__( self ):
+
+    # Ports
+
+    self.in_  = InPort  ( 32 )
+    self.out  = OutPort ( 32 )
+
+    # Wires
+
+    self.temp = Wire( 32 )
+
+    # Connections
+
+    connect( self.out, self.temp )
+
+  @combinational
+  def comb_logic( self ):
+
+    # Count how many ones are in the input. Start by counting the 
+    # neighbour two bits, then count neighbour four bits, until
+    # neighbour 16 bits. Each result is stored in different space of the 
+    # data so they don't interfere with each other.
+
+    self.temp.value = ((self.in_.value  >> 1 ) & 0x55555555) + (self.in_.value  & 0x55555555)
+    self.temp.value = ((self.temp.value >> 2 ) & 0x33333333) + (self.temp.value & 0x33333333)
+    self.temp.value = ((self.temp.value >> 4 ) & 0x0f0f0f0f) + (self.temp.value & 0x0f0f0f0f)
+    self.temp.value = ((self.temp.value >> 8 ) & 0x00ff00ff) + (self.temp.value & 0x00ff00ff)
+    self.temp.value = ((self.temp.value >> 16) & 0x0000ffff) + (self.temp.value & 0x0000ffff)
+
+  def line_trace( self ):
+    return "{} ({}) {}" \
+      .format( self.in_.value, self.temp.value, self.out.value )
+
