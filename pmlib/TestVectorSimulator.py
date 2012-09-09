@@ -22,13 +22,14 @@ class TestVectorSimulator:
   #-----------------------------------------------------------------------
 
   def __init__( self, model, test_vectors,
-                set_inputs_func, verify_outputs_func ):
+                set_inputs_func, verify_outputs_func, wait_cycles = 0 ):
 
     self.model               = model
     self.set_inputs_func     = set_inputs_func
     self.verify_outputs_func = verify_outputs_func
     self.test_vectors        = test_vectors
     self.vcd_file_name       = None
+    self.wait_cycles         = wait_cycles
 
   #-----------------------------------------------------------------------
   # Dump VCD
@@ -63,7 +64,10 @@ class TestVectorSimulator:
       self.set_inputs_func( self.model, test_vector )
 
       # Evaluate combinational concurrent blocks in simulator
-      sim.eval_combinational()
+      if self.wait_cycles == 0: sim.eval_combinational()
+      else:
+        for i in xrange(self.wait_cycles):
+          sim.cycle()
 
       # Print the line trace
       sim.print_line_trace()
