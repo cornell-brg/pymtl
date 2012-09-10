@@ -45,21 +45,12 @@ class Node(object):
   def value(self, value):
     # TODO: what to do for reset condition?
     if self._value != value and not self._updating:
-      # VALUE STUFF
       # TODO: this is Bits specific!
       self._value[:] = value
-      # SIMULATOR STUFF
       # TODO: temp check for connect_tests
       if self.sim:
-        self.sim.add_event(self) # TODO: make hook added by simulator
-      # ADD VCD HERE
-        if self.sim.vcd:
-          if self.width == 1:
-            print >> self.sim.o, "%d%s" % (self.value.uint, self._code)
-          else:
-            print >> self.sim.o, "s%s %s" % (self.value.uint, self._code)
+        self.notify_sim()
       # TODO: notify all connections of update, fix _updating
-      # CONNECTIVITY STUFF
       self._updating = True
       for x in self.connections:
         x.update( self )
@@ -90,6 +81,8 @@ class Node(object):
       # TODO: this is Bits specific!
       self._value[range] = value
       # TODO: notify all connections of update, fix _updating
+      if self.sim:
+        self.notify_sim()
       self._updating = True
       for x in self.connections:
         x.update( self )
@@ -100,6 +93,19 @@ class Node(object):
     assert self.width == caller.width
     # Should automatically call update via setter
     self.value = caller.value
+
+  def notify_sim(self):
+    self.sim.add_event(self) # TODO: make hook added by simulator
+    # ADD VCD HERE
+    if self.sim.vcd:
+      if self.width == 1:
+        print >> self.sim.o, "%d%s" % (self.value.uint, self._code)
+      else:
+        print >> self.sim.o, "s%s %s" % (self.value.uint, self._code)
+
+  @property
+  def fullname(self):
+    return self.parent.name + '.' + self.name
 
 #-------------------------------------------------------------------------
 # Slice
@@ -156,6 +162,10 @@ class Slice(object):
       # TODO: needed to prevent infinite loop. Better way to handle?
       if x is not caller:
         x.update( self )
+
+  @property
+  def fullname(self):
+    return self.parent.name + '.' + self.name
 
 #-------------------------------------------------------------------------
 # Connect Utility Method
