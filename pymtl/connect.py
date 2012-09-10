@@ -23,7 +23,11 @@ class Node(object):
   def connect(self, target):
     """Connect this Node to another Node or Slice."""
     if self.width != target.width:
-      raise ConnectionError("Connecting to a port/wire with a different bitwidth!")
+      raise ConnectionError("Connecting to a Port/Wire with a different bitwidth!\n"
+                            "Connecting {0} bits to {1} bits.\n"
+                            "See traceback above for source of error."
+                            .format(self.width, target.width)
+                           )
     self.connections   += [ target ]
     target.connections += [ self   ]
 
@@ -131,6 +135,12 @@ class Slice(object):
 
   def connect(self, target):
     """Connect this Node to another Node or Slice."""
+    if self.width != target.width:
+      raise ConnectionError("Connecting to a Slice with a different bitwidth!\n"
+                            "Connecting {0} bits to {1} bits.\n"
+                            "See traceback above for source of error."
+                            .format(self.width, target.width)
+                           )
     self.connections   += [ target ]
     target.connections += [ self   ]
 

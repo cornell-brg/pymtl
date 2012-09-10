@@ -210,3 +210,11 @@ def test_slice_fanout():
 import pytest
 with pytest.raises(ConnectionError):
   connect( Node(4), Node(8) )
+
+import pytest
+with pytest.raises(ConnectionError):
+  connect( Node(4), Node(8)[0:2] )
+
+import pytest
+with pytest.raises(ConnectionError):
+  connect( Node(4)[0:2], Node(8)[0:4] )
