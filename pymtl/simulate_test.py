@@ -148,15 +148,14 @@ class TestSlicesSim(unittest.TestCase):
     sim.cycle()
     self.assertEquals( model.out.value, 4 )
 
-  @pytest.mark.xfail
   def test_constant_slice( self ):
     model = ConstantSlice()
     sim = self.setup_sim(model)
     self.assertEquals( model.out.value[0:16], 4 )
-    self.assertEquals( model.out.value[16:32], 4 )
+    self.assertEquals( model.out.value[16:32], 8 )
     sim.cycle()
     self.assertEquals( model.out.value[0:16], 4 )
-    self.assertEquals( model.out.value[16:32], 4 )
+    self.assertEquals( model.out.value[16:32], 8 )
 
   def test_constant_module( self ):
     model = ConstantModule()
