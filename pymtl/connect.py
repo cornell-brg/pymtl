@@ -22,6 +22,8 @@ class Node(object):
 
   def connect(self, target):
     """Connect this Node to another Node or Slice."""
+    if self.width != target.width:
+      raise ConnectionError("Connecting to a port/wire with a different bitwidth!")
     self.connections   += [ target ]
     target.connections += [ self   ]
 
@@ -177,3 +179,9 @@ def connect( port_A, port_B):
     port_B.connect( port_A )
   else:
     port_A.connect( port_B )
+
+#-------------------------------------------------------------------------
+# Exceptions
+#-------------------------------------------------------------------------
+class ConnectionError(Exception):
+  pass

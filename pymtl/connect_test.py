@@ -205,3 +205,8 @@ def test_slice_fanout():
   assert a.value  == 0b1001
   assert b0.value == 0b01
   assert b1.value == 0b10
+
+
+import pytest
+with pytest.raises(ConnectionError):
+  connect( Node(4), Node(8) )
