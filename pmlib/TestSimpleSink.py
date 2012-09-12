@@ -38,13 +38,6 @@ class TestSimpleSink (Model):
       self.done.next   = False
       return
 
-    # Check if we have more messages to send.
-
-    if ( self.idx == len(self.msgs) ):
-      self.in_rdy.next = False
-      self.done.next   = False
-      return
-
     # At the end of the cycle, we AND together the val/rdy bits to
     # determine if the input message transaction occured
 
