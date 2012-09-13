@@ -41,12 +41,11 @@ class TestSimpleMemory (Model):
   def comb( s ):
     for i in range( s.nports ):
 
-      if s.reset.value:
-        s.memreq_rdy[i].value = 0
-        s.memresp_val[i].value = 0
       s.memreq_rdy[i].value  = s.memresp_rdy[i].value
       if s.memresp_rdy[i].value and s.memreq_val[i].value:
         s.memresp_val[i].value = 1
+      else:
+        s.memresp_val[i].value = 0
 
   @posedge_clk
   def tick( s ):
