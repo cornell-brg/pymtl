@@ -4,7 +4,6 @@
 # This class implements a parameterized magic Test Memory Model.
 
 from pymtl import *
-import py
 from MemMsg import *
 
 def concat_bytes( byte_list ):
@@ -41,52 +40,47 @@ class TestSimpleMemory (Model):
   @combinational
   def comb( s ):
     for i in range( s.nports ):
+
+      if s.reset.value:
+        s.memreq_rdy[i].value = 0
+        s.memresp_val[i].value = 0
       s.memreq_rdy[i].value  = s.memresp_rdy[i].value
       if s.memresp_rdy[i].value and s.memreq_val[i].value:
         s.memresp_val[i].value = 1
 
   @posedge_clk
   def tick( s ):
+    for i in range( s.nports ):
 
-    if s.reset.value:
+      if s.memresp_rdy[i].value and s.memreq_val[i].value:
 
-      for i in range( s.nports ):
-        s.memreq_rdy[i].value = 0
-        s.memresp_val[i].value = 0
+        msg_len = s.memreq[i].value[REQ_LEN].uint
+        if msg_len == 0:
+          msg_len = MAX_DATA_BYTES
+        write_data = []
 
-    else:
+        memresp_msg = Bits( NRESPBITS )
+        memresp_msg[RESP_TYPE] = s.memreq[i].value[REQ_TYPE].uint
+        memresp_msg[RESP_LEN]  = s.memreq[i].value[REQ_LEN].uint
 
-      for i in range( s.nports ):
+        if s.memreq[i].value[REQ_TYPE]:
 
-        if s.memresp_rdy[i].value and s.memreq_val[i].value:
+          for pos in range( msg_len ):
+            write_data.append( s.memreq[i].value[(pos*8):((pos*8) + 8)].uint )
 
-          msg_len = s.memreq[i].value[REQ_LEN].uint
-          if msg_len == 0:
-            msg_len = MAX_DATA_BYTES
-          write_data = []
+          write_addr = slice( s.memreq[i].value[REQ_ADDR].uint,
+                        s.memreq[i].value[REQ_ADDR].uint + msg_len )
 
-          memresp_msg = Bits( NRESPBITS )
-          memresp_msg[RESP_TYPE] = s.memreq[i].value[REQ_TYPE].uint
-          memresp_msg[RESP_LEN]  = s.memreq[i].value[REQ_LEN].uint
+          s.mem[write_addr] = write_data
 
-          if s.memreq[i].value[REQ_TYPE]:
+          memresp_msg[RESP_DATA] = 0
+          s.memresp[i].value = memresp_msg
 
-            for pos in range( msg_len ):
-              write_data.append( s.memreq[i].value[(pos*8):((pos*8) + 8)].uint )
+        else:
 
-            write_addr = slice( s.memreq[i].value[REQ_ADDR].uint,
-                          s.memreq[i].value[REQ_ADDR].uint + msg_len )
+          read_addr = slice( s.memreq[i].value[REQ_ADDR].uint,
+                        s.memreq[i].value[REQ_ADDR].uint + msg_len )
 
-            s.mem[write_addr] = write_data
+          memresp_msg[RESP_DATA] = concat_bytes(s.mem[read_addr])
 
-            memresp_msg[RESP_DATA] = 0
-            s.memresp[i].value = memresp_msg
-
-          else:
-
-            read_addr = slice( s.memreq[i].value[REQ_ADDR].uint,
-                          s.memreq[i].value[REQ_ADDR].uint + msg_len )
-
-            memresp_msg[RESP_DATA] = concat_bytes(s.mem[read_addr])
-
-            s.memresp[i].value = memresp_msg
+          s.memresp[i].value = memresp_msg
