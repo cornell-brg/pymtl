@@ -12,6 +12,7 @@ pmlib_srcs = \
   TestSource.py \
   TestSink.py \
   TestSimpleMemory.py \
+  TestSimpleMemoryNPorts.py \
   valrdy.py \
   arith.py \
   muxes.py \
@@ -24,6 +25,7 @@ pmlib_test_srcs = \
   TestSource_test.py \
   TestSink_test.py \
   TestSimpleMemory_test.py \
+  TestSimpleMemoryNPorts_test.py \
   arith_test.py \
   muxes_test.py \
   regs_test.py \
