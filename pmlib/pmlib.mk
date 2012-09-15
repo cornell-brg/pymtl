@@ -11,6 +11,7 @@ pmlib_srcs = \
   TestRandomDelay.py \
   TestSource.py \
   TestSink.py \
+  TestSimpleMemory.py \
   valrdy.py \
   arith.py \
   muxes.py \
@@ -21,7 +22,8 @@ pmlib_test_srcs = \
   TestSimpleSink_test.py \
   TestRandomDelay_test.py \
   TestSource_test.py \
-  TestSink.py \
+  TestSink_test.py \
+  TestSimpleMemory_test.py \
   arith_test.py \
   muxes_test.py \
   regs_test.py \

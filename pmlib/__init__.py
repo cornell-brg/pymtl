@@ -8,6 +8,7 @@ import regs
 import arith
 import muxes
 import valrdy
+import mem_msgs
 
 # List of single-class modules
 
