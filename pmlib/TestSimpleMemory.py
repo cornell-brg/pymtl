@@ -89,6 +89,22 @@ class TestSimpleMemory (Model):
       connect( self.memreq_rdy[i], self.memresp_rdy[i] )
 
   #-----------------------------------------------------------------------
+  # load memory function
+  #-----------------------------------------------------------------------
+  # load memory function accepts a section address and a list of bytes to
+  # load the memory data structure.
+  # section_len, section_addr, section_data encapsulated in a helper
+  # function?
+
+  def load_memory( self, section_list ):
+
+    section_addr = section_list[0]
+    section_data = section_list[1]
+    section_len  = len( section_data )
+
+    self.mem[ section_addr : section_addr + section_len ] = section_data
+
+  #-----------------------------------------------------------------------
   # Tick
   #-----------------------------------------------------------------------
 

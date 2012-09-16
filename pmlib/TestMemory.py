@@ -6,7 +6,6 @@
 # delays.
 
 from pymtl import *
-import pmlib
 import mem_msgs
 
 from TestSimpleMemory import TestSimpleMemory
@@ -83,6 +82,18 @@ class TestMemory (Model):
       connect( self.delay_resps[i].out_msg, self.memresp_msg[i] )
       connect( self.delay_resps[i].out_val, self.memresp_val[i] )
       connect( self.delay_resps[i].out_rdy, self.memresp_rdy[i] )
+
+  #-----------------------------------------------------------------------
+  # load memory function
+  #-----------------------------------------------------------------------
+  # load memory function accepts a section address and a list of bytes to
+  # load the memory data structure.
+  # section_len, section_addr, section_data encapsulated in a helper
+  # function?
+
+  def load_memory( self, section_list ):
+
+    self.mem.load_memory( section_list )
 
   #-----------------------------------------------------------------------
   # Line tracing
