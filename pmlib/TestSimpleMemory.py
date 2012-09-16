@@ -1,6 +1,8 @@
 #=========================================================================
-# TestMemory
+# TestMemory with Multiple Ports
 #=========================================================================
+# This model implements a behavioral Test Memory which is parameterized
+# based on the number of memory request/response ports.
 
 from pymtl import *
 import pmlib
@@ -12,15 +14,27 @@ class TestSimpleMemory (Model):
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( self, memreq_params, memresp_params, mem_nbytes=2**20 ):
+  def __init__( self, memreq_params, memresp_params, nports,
+                mem_nbytes=2**20 ):
 
-    self.memreq_msg  = InPort  ( memreq_params.nbits )
-    self.memreq_val  = InPort  ( 1 )
-    self.memreq_rdy  = OutPort ( 1 )
+    # Local constant - store the number of ports
 
-    self.memresp_msg = OutPort ( memresp_params.nbits )
-    self.memresp_val = OutPort ( 1 )
-    self.memresp_rdy = InPort  ( 1 )
+    self.nports = nports
+
+    # List of memory request msg, val, rdy ports
+
+    self.memreq_msg  = [ InPort  ( memreq_params.nbits ) for x in
+                         xrange( nports ) ]
+    self.memreq_val  = [ InPort  ( 1 ) for x in xrange( nports ) ]
+    self.memreq_rdy  = [ OutPort ( 1 ) for x in xrange( nports ) ]
+
+    # List of memory response msg, val, rdy ports
+
+    self.memresp_msg = [ OutPort ( memresp_params.nbits ) for x in
+                         xrange( nports ) ]
+    self.memresp_val = [ OutPort ( 1 ) for x in xrange( nports ) ]
+    self.memresp_rdy = [ InPort  ( 1 ) for x in xrange( nports ) ]
+
 
     # Memory message parameters
 
@@ -32,29 +46,47 @@ class TestSimpleMemory (Model):
     assert self.memreq_params.data_nbits  % 8 == 0
     assert self.memresp_params.data_nbits % 8 == 0
 
-    # Unpack/pack models
+    # List of Unpack models
 
-    self.memreq = mem_msgs.MemReqFromBits( memreq_params )
-    connect( self.memreq_msg, self.memreq.bits )
+    self.memreq = [ mem_msgs.MemReqFromBits( memreq_params ) for x in
+                    xrange( nports ) ]
 
-    self.memresp = mem_msgs.MemRespToBits( memresp_params )
-    connect( self.memresp_msg, self.memresp.bits )
+    # Connect memreq_msg port list to Unpack port list
 
-    # Buffer to hold memory request message
+    for i in xrange( nports ):
+      connect( self.memreq_msg[i], self.memreq[i].bits )
 
-    self.memreq_type = 0
-    self.memreq_addr = 0
-    self.memreq_len  = 0
-    self.memreq_data = 0
-    self.memreq_full = False
+    # List of Pack models
+
+    self.memresp = [ mem_msgs.MemRespToBits( memresp_params ) for x in
+                     xrange( nports ) ]
+
+    # Connect memresp_msg port list to Pack port list
+
+    for i in xrange( nports ):
+      connect( self.memresp_msg[i], self.memresp[i].bits )
+
+    # Buffers to hold memory request messages
+
+    self.memreq_type = [ 0 for x in xrange( nports ) ]
+    self.memreq_addr = [ 0 for x in xrange( nports ) ]
+    self.memreq_len  = [ 0 for x in xrange( nports ) ]
+    self.memreq_data = [ 0 for x in xrange( nports ) ]
+    self.memreq_full = [ False for x in xrange( nports ) ]
+
+    # Input Output Transaction Signals
+
+    self.memreq_go  = [0]*self.nports
+    self.memresp_go = [0]*self.nports
 
     # Actual memory
 
     self.mem = bytearray( mem_nbytes )
 
-    # Connect ready signal to input to ensure pipeline behavior
+    # Connect ready signals to inputs to ensure pipeline behavior
 
-    connect( self.memreq_rdy, self.memresp_rdy )
+    for i in xrange( nports ):
+      connect( self.memreq_rdy[i], self.memresp_rdy[i] )
 
   #-----------------------------------------------------------------------
   # Tick
@@ -63,76 +95,80 @@ class TestSimpleMemory (Model):
   @posedge_clk
   def tick( self ):
 
-    # At the end of the cycle, we AND together the val/rdy bits to
-    # determine if the request/memresp message transactions occured.
+    # Iterate over the port list
 
-    memreq_go  = self.memreq_val.value  and self.memreq_rdy.value
-    memresp_go = self.memresp_val.value and self.memresp_rdy.value
+    for i in xrange( self.nports ):
 
-    # If the memresp transaction occured, then clear the buffer full bit.
-    # Note that we do this _first_ before we process the request
-    # transaction so we can essentially pipeline this control logic.
+      # At the end of the cycle, we AND together the val/rdy bits to
+      # determine if the request/memresp message transactions occured.
 
-    if memresp_go:
-      self.memreq_full = False
+      self.memreq_go[i]  = self.memreq_val[i].value  and self.memreq_rdy[i].value
+      self.memresp_go[i] = self.memresp_val[i].value and self.memresp_rdy[i].value
 
-    # If the request transaction occured, then write the request message
-    # into our internal buffer and update the buffer full bit
+      # If the memresp transaction occured, then clear the buffer full bit.
+      # Note that we do this _first_ before we process the request
+      # transaction so we can essentially pipeline this control logic.
 
-    if memreq_go:
-      self.memreq_type = self.memreq.type_.value.uint
-      self.memreq_addr = self.memreq.addr.value.uint
-      self.memreq_len  = self.memreq.len_.value.uint
-      self.memreq_data = self.memreq.data.value[:]
-      self.memreq_full = True
+      if self.memresp_go[i]:
+        self.memreq_full[i] = False
 
-    # When len is zero, then we use all of the data
+      # If the request transaction occured, then write the request message
+      # into our internal buffer and update the buffer full bit
 
-    nbytes = self.memreq_len
-    if self.memreq_len == 0:
-      nbytes = self.memreq_params.data_nbits/8
+      if self.memreq_go[i]:
+        self.memreq_type[i] = self.memreq[i].type_.value.uint
+        self.memreq_addr[i] = self.memreq[i].addr.value.uint
+        self.memreq_len[i]  = self.memreq[i].len_.value.uint
+        self.memreq_data[i] = self.memreq[i].data.value[:]
+        self.memreq_full[i] = True
 
-    # Handle a read request
+      # When len is zero, then we use all of the data
 
-    if self.memreq_type == self.memreq_params.type_read:
+      nbytes = self.memreq_len[i]
+      if self.memreq_len[i] == 0:
+        nbytes = self.memreq_params.data_nbits/8
 
-      # Copy the bytes from the bytearray into read data bits
+      # Handle a read request
 
-      read_data = Bits( self.memreq_params.data_nbits )
-      for i in xrange( nbytes ):
-        read_data[i*8:i*8+8] = self.mem[ self.memreq_addr + i ]
+      if self.memreq_type[i] == self.memreq_params.type_read:
 
-      # Create the response message
+        # Copy the bytes from the bytearray into read data bits
 
-      self.memresp.type_.next = self.memresp_params.type_read
-      self.memresp.len_.next  = self.memreq_len
-      self.memresp.data.next  = read_data
+        read_data = Bits( self.memreq_params.data_nbits )
+        for j in xrange( nbytes ):
+          read_data[j*8:j*8+8] = self.mem[ self.memreq_addr[i] + j ]
 
-    # Handle a write request
+        # Create the response message
 
-    elif self.memreq_type == self.memreq_params.type_write:
+        self.memresp[i].type_.next = self.memresp_params.type_read
+        self.memresp[i].len_.next  = self.memreq_len[i]
+        self.memresp[i].data.next  = read_data
 
-      # Copy write data bits into bytearray
+      # Handle a write request
 
-      write_data = self.memreq_data
-      for i in xrange( nbytes ):
-        self.mem[ self.memreq_addr + i ] = write_data[i*8:i*8+8].uint
+      elif self.memreq_type[i] == self.memreq_params.type_write:
 
-      # Create the response message
+        # Copy write data bits into bytearray
 
-      self.memresp.type_.next = self.memresp_params.type_write
-      self.memresp.len_.next  = 0
-      self.memresp.data.next  = 0
+        write_data = self.memreq_data[i]
+        for j in xrange( nbytes ):
+          self.mem[ self.memreq_addr[i] + j ] = write_data[j*8:j*8+8].uint
 
-    # For some reason this is causing an assert in PyMTL?
-    #
-    # else:
-    #   assert True, "Unrecognized request message type! {}" \
-    #     .format( self.memreq_type )
+        # Create the response message
 
-    # The memresp message if valid if the buffer is full
+        self.memresp[i].type_.next = self.memresp_params.type_write
+        self.memresp[i].len_.next  = 0
+        self.memresp[i].data.next  = 0
 
-    self.memresp_val.next = self.memreq_full
+      # For some reason this is causing an assert in PyMTL?
+      #
+      # else:
+      #   assert True, "Unrecognized request message type! {}" \
+      #     .format( self.memreq_type[i] )
+
+      # The memresp message if valid if the buffer is full
+
+      self.memresp_val[i].next = self.memreq_full[i]
 
   #-----------------------------------------------------------------------
   # Line tracing
@@ -140,13 +176,21 @@ class TestSimpleMemory (Model):
 
   def line_trace( self ):
 
-    memreq_str = \
-      pmlib.valrdy.valrdy_to_str( self.memreq.line_trace(),
-        self.memreq_val.value, self.memreq_rdy.value )
+    memreq_str   = ''
+    memresp_str  = ''
+    memtrace_str = ''
 
-    memresp_str = \
-      pmlib.valrdy.valrdy_to_str( self.memresp.line_trace(),
-        self.memresp_val.value, self.memresp_rdy.value )
+    for i in xrange( self.nports ):
+      memreq_str  = \
+        pmlib.valrdy.valrdy_to_str( self.memreq[i].line_trace(),
+          self.memreq_val[i].value, self.memreq_rdy[i].value )
 
-    return "{} () {}".format( memreq_str, memresp_str )
+      memresp_str = \
+        pmlib.valrdy.valrdy_to_str( self.memresp[i].line_trace(),
+          self.memresp_val[i].value, self.memresp_rdy[i].value )
+
+      memtrace_str += "| ({}): {} () {} " \
+        .format( i, memreq_str, memresp_str )
+
+    return memtrace_str
 

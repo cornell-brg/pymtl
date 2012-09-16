@@ -9,10 +9,10 @@ from pymtl import *
 import pmlib
 import mem_msgs
 
-from TestSimpleMemoryNPorts import TestSimpleMemoryNPorts
-from TestRandomDelay        import TestRandomDelay
+from TestSimpleMemory import TestSimpleMemory
+from TestRandomDelay  import TestRandomDelay
 
-class TestMemoryNPorts (Model):
+class TestMemory (Model):
 
   #-----------------------------------------------------------------------
   # Constructor
@@ -53,8 +53,8 @@ class TestMemoryNPorts (Model):
 
     # simple test memory with no delays
 
-    self.mem = TestSimpleMemoryNPorts( memreq_params, memresp_params,
-                                       nports, mem_nbytes )
+    self.mem = TestSimpleMemory( memreq_params, memresp_params,
+                                 nports, mem_nbytes )
 
     # Connect
 
