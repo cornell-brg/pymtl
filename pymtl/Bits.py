@@ -97,6 +97,10 @@ class Bits(object):
     str = "{:x}".format(self.uint).zfill(num_chars)
     return str[-num_chars:len(str)]
 
+  def bin_str(self):
+    str = "{:b}".format(self.uint).zfill(self.width)
+    return str
+
   #------------------------------------------------------------------------
   # Bitwise Access
   #------------------------------------------------------------------------

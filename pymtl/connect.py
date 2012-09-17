@@ -107,7 +107,7 @@ class Node(object):
       if self.width == 1:
         print >> self.sim.o, "%d%s" % (self.value.uint, self._code)
       else:
-        print >> self.sim.o, "s%s %s" % (self.value.uint, self._code)
+        print >> self.sim.o, "b%s %s" % (self.value.bin_str(), self._code)
 
   @property
   def fullname(self):

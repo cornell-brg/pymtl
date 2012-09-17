@@ -84,7 +84,7 @@ def _writeVcdSigs(f, hierarchy):
         if s.width == 1:
           print >> f, "%d%s" % (s.value.uint, s._code)
         else:
-          print >> f, "s%s %s" % (s.value.uint, s._code)
+          print >> f, "b%s %s" % (s.value.bin_str(), s._code)
     print >> f, "$end"
 
 ########################################################################
