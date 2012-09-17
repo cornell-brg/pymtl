@@ -148,12 +148,17 @@ class Bits(object):
       assert start < stop
       assert stop <= self.width
       width = stop - start
+      # This assert fires if the value you are trying to store is wider
+      # than the bitwidth of the slice you are writing to!
+      assert width >= _num_bits(value)
       # Clear the bits we want to set
       ones  = (1 << width) - 1
       mask = ~(ones << start)
       self.uint &= mask
       # Set the bits
-      self.uint |= (value << start)
+      # TODO: anding with ones to ensure negative value assign works!
+      #       do we want this behavior?
+      self.uint |= ((value & ones) << start)
     else:
       assert addr < self.width
       assert 0 <= value <= 1
