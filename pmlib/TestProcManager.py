@@ -23,7 +23,7 @@ class TestProcManager (Model):
     # Test Memory load done signal
 
     s.load_done    = 0
-    s.curr_section = 0
+    s.curr_label = 0
 
     # test memory pointer
     s.mem = mem
@@ -54,13 +54,13 @@ class TestProcManager (Model):
 
       if s.state == s.STATE_LOAD:
 
-        s.load_done = ( s.curr_section  == s.sparse_mem_img.num_sections() )
+        s.load_done = ( s.curr_label  == s.sparse_mem_img.num_labels() )
 
-        # load memory section
+        # load memory label
         if not s.load_done:
 
-          s.mem.load_memory( s.sparse_mem_img.read_section( s.curr_section ) )
-          s.curr_section += 1
+          s.mem.load_memory( s.sparse_mem_img.read_label( s.curr_label ) )
+          s.curr_label += 1
 
         # tranistion out of LOAD
         else:

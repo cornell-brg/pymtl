@@ -162,13 +162,13 @@ def create_sparse_mem_img():
 
   sparse_mem_img = SparseMemoryImage()
 
-  section_0 = [ 0x00001000, [0xff]*512 ]
-  section_1 = [ 0x00010000, [0xff]*256 ]
-  section_2 = [ 0x00100000, [0xff]*128 ]
+  label_0 = [ 0x00001000, [0xff]*512 ]
+  label_1 = [ 0x00010000, [0xff]*256 ]
+  label_2 = [ 0x00100000, [0xff]*128 ]
 
-  sparse_mem_img.load_section( section_0 )
-  sparse_mem_img.load_section( section_1 )
-  sparse_mem_img.load_section( section_2 )
+  sparse_mem_img.load_label( label_0 )
+  sparse_mem_img.load_label( label_1 )
+  sparse_mem_img.load_label( label_2 )
 
   return sparse_mem_img
 
