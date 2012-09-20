@@ -102,6 +102,7 @@ class TestSimpleMemory (Model):
     section_data = section_list[1]
     section_len  = len( section_data )
 
+    assert len(self.mem) > (section_addr + section_len)
     self.mem[ section_addr : section_addr + section_len ] = section_data
 
   #-----------------------------------------------------------------------
