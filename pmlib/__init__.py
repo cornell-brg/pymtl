@@ -19,4 +19,5 @@ from TestSource          import TestSource
 from TestSink            import TestSink
 from TestSimpleMemory    import TestSimpleMemory
 from TestMemory          import TestMemory
+from SparseMemoryImage   import SparseMemoryImage
 

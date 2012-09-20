@@ -72,20 +72,11 @@ _test:
 
 asm_end = """
 _pass:
-    li     $2,  1;
-    addiu  $29, $0, 0;
-    mtc0   $29, $c0_toserv;
-1:  bne    $0, $2, 1b;
-    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
-    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
-    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
-    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+    addiu  $29, $0, 1;
 
 _fail:
     li     $2,  1;
-    lui    $3,  0x8000;
-    or     $29, $29, $3;
-    mtc0   $29, $c0_toserv;
+    mtc0   $29, $21;
 1:  bne    $0, $2, 1b;
     nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
     nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
