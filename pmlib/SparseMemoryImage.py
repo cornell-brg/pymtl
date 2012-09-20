@@ -111,7 +111,7 @@ class SparseMemoryImage:
   # SparseMemoryImage instance. We could also pass a list of lists, binary
   # filename or a binary file handle.
 
-  def __init__( self, asm_str = None, labels_list = None,
+  def __init__( self, asm_str = None, asm_data_str = '', labels_list = None,
                 bin_filename = None, bin_filehandle = None,
                 dump_asm = None, dump_bin = None ):
 
@@ -208,7 +208,7 @@ class SparseMemoryImage:
 
       # assembly test
 
-      asm_test = asm_start + asm_str + asm_end
+      asm_test = asm_start + asm_str + asm_end + asm_data_str
 
       # create a temporary assembly test file
 
