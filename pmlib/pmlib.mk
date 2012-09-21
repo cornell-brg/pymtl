@@ -19,6 +19,7 @@ pmlib_srcs = \
   arith.py \
   muxes.py \
   regs.py \
+  mem_msgs.py \
 
 pmlib_test_srcs = \
   TestVectorSimulator_test.py \
@@ -33,6 +34,7 @@ pmlib_test_srcs = \
   arith_test.py \
   muxes_test.py \
   regs_test.py \
+  mem_msgs_test.py \
 
 pmlib_prog_srcs = \
 
