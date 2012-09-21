@@ -15,6 +15,6 @@ class Register( Model ):
     self.out.next = self.in_.value
 
   def line_trace( self ):
-    return "{:04x} ({:04x}) ({:04x})" \
-      .format( self.in_.value.uint, self.out.value.uint, self.out.value.uint )
+    return "{} ({}) {}" \
+      .format( self.in_.value, self.out.value, self.out.value )
 
