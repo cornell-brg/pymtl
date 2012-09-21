@@ -26,6 +26,7 @@ subpkgs = \
   pex_sorter \
   pex_gcd \
   plab1_imul \
+  plab2_proc \
 
 #-------------------------------------------------------------------------
 # List of subpackages to install

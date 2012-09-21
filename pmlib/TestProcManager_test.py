@@ -76,7 +76,7 @@ class TestHarness (Model):
                             memreq_params, memresp_params )
 
     s.mem      = TestMemory( memreq_params, memresp_params, 1,
-                             mem_delay )
+                             mem_delay, mem_nbytes = 2**24 )
 
     s.proc_mgr = TestProcManager( s.mem, sparse_mem_img )
 
