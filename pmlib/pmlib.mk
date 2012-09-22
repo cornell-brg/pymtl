@@ -15,11 +15,13 @@ pmlib_srcs = \
   TestMemory.py \
   TestProcManager.py \
 	SparseMemoryImage.py \
+	RegisterFile.py \
   valrdy.py \
   arith.py \
   muxes.py \
   regs.py \
   mem_msgs.py \
+  queues.py \
 
 pmlib_test_srcs = \
   TestVectorSimulator_test.py \
@@ -31,10 +33,12 @@ pmlib_test_srcs = \
   TestMemory_test.py \
   TestProcManager_test.py \
 	SparseMemoryImage_test.py \
+	RegisterFile_test.py \
   arith_test.py \
   muxes_test.py \
   regs_test.py \
   mem_msgs_test.py \
+  queues_test.py \
 
 pmlib_prog_srcs = \
 
