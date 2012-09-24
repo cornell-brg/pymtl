@@ -9,6 +9,7 @@ import arith
 import muxes
 import valrdy
 import mem_msgs
+import queues
 
 # List of single-class modules
 
@@ -20,4 +21,4 @@ from TestSink            import TestSink
 from TestSimpleMemory    import TestSimpleMemory
 from TestMemory          import TestMemory
 from SparseMemoryImage   import SparseMemoryImage
-
+from PipeCtrl            import PipeCtrl

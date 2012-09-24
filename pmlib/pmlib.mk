@@ -16,6 +16,7 @@ pmlib_srcs = \
   TestProcManager.py \
 	SparseMemoryImage.py \
 	RegisterFile.py \
+  PipeCtrl.py \
   valrdy.py \
   arith.py \
   muxes.py \
@@ -34,6 +35,7 @@ pmlib_test_srcs = \
   TestProcManager_test.py \
 	SparseMemoryImage_test.py \
 	RegisterFile_test.py \
+  PipeCtrl_test.py \
   arith_test.py \
   muxes_test.py \
   regs_test.py \
