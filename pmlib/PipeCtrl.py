@@ -24,8 +24,6 @@
 #               of current pipeline stage
 # pipereg_val : Combinational valid bit value of the current stage
 # pipe_go     : Go signal to perform the current pipeline stage transaction
-#
-# TODO: Line Tracing
 
 from pymtl import *
 

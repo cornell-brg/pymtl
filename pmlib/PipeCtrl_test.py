@@ -489,6 +489,53 @@ class IncrPipe (Model):
 
     connect( self.ctrl.inst_b,   self.dpath.inst_b   )
 
+  #---------------------------------------------------------------------
+  # Line Tracing
+  #---------------------------------------------------------------------
+
+  def line_trace( self ):
+
+    # Stage A
+
+    if self.ctrl.pipe_a.pipereg_val.value:
+      pipe_a_str = "{:^3d}".format( self.dpath.a_reg.out[VALUE].value.uint )
+    else:
+      pipe_a_str = " - "
+
+    # Stage B
+
+    if self.ctrl.pipe_b.pipereg_val.value:
+      pipe_b_str = "{:^3d}".format( self.dpath.b_reg.out[VALUE].value.uint )
+    else:
+      pipe_b_str = " - "
+
+    # Stage C
+
+    if self.ctrl.pipe_c.pipereg_val.value:
+      pipe_c_str = "{:^3d}".format( self.dpath.c_incr.out.value.uint )
+    else:
+      pipe_c_str = " - "
+
+    # Stage D
+
+    if self.ctrl.pipe_d.pipereg_val.value:
+      pipe_d_str = "{:^3d}".format( self.dpath.d_incr.out.value.uint )
+    else:
+      pipe_d_str = " - "
+
+    # Stage E
+
+    if self.ctrl.pipe_e.pipereg_val.value:
+      pipe_e_str = "{:^3d}".format( self.dpath.e_incr.out.value.uint )
+    else:
+      pipe_e_str = " - "
+
+
+    out_str = "{} | {} | {} | {} | {}".format( pipe_a_str, pipe_b_str,
+        pipe_c_str, pipe_d_str, pipe_e_str )
+
+    return out_str
+
 #-------------------------------------------------------------------------
 # Test Harness
 #-------------------------------------------------------------------------
@@ -518,8 +565,8 @@ class TestHarness (Model):
     return self.src.done.value and self.sink.done.value
 
   def line_trace( self ):
-    return self.src.line_trace() + " > " + \
-           self.sink.line_trace()
+    return self.src.line_trace() + " > " + self.incr_pipe.line_trace() \
+           + " > " + self.sink.line_trace()
 
 #-------------------------------------------------------------------------
 # Run test
