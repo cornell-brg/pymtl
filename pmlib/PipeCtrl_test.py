@@ -714,6 +714,7 @@ def test_stall_pipe_delay_4x9( dump_vcd ):
 #-------------------------------------------------------------------------
 # Squash Pipeline Test - no stalls
 #-------------------------------------------------------------------------
+# Squash cannot be tested with random delays currently.
 #
 # Modeling;
 #
@@ -733,28 +734,13 @@ src_squash_msgs = [
 
 sink_squash_msgs = [
     4,
-    #5,
-    #6,
+    #5, squashed
+    #6, squashed
     7,
-    #8,
+    #8, squashed
   ]
 
 def test_squash_pipe_delay_0x0( dump_vcd ):
   run_incr_pipe_test( dump_vcd, "test_squash_pipe_delay_0x0.vcd",
                       src_squash_msgs, sink_squash_msgs,
                       IncrPipe, 0, 0 )
-
-#def test_squash_pipe_delay_5x0( dump_vcd ):
-#  run_incr_pipe_test( dump_vcd, "test_squash_pipe_delay_5x0.vcd",
-#                      src_squash_msgs, sink_squash_msgs,
-#                      IncrPipe, 5, 0 )
-#
-#def test_squash_pipe_delay_0x5( dump_vcd ):
-#  run_incr_pipe_test( dump_vcd, "test_squash_pipe_delay_0x5.vcd",
-#                      src_squash_msgs, sink_squash_msgs,
-#                      IncrPipe, 0, 5 )
-#
-#def test_squash_pipe_delay_4x9( dump_vcd ):
-#  run_incr_pipe_test( dump_vcd, "test_squash_pipe_delay_4x9.vcd",
-#                      src_squash_msgs, sink_squash_msgs,
-#                      IncrPipe, 4, 9 )
