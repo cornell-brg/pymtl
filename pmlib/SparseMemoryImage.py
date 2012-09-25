@@ -112,7 +112,7 @@ class SparseMemoryImage:
   # filename or a binary file handle.
 
   def __init__( self, asm_str = None, asm_data_str = '', labels_list = None,
-                bin_filename = None, bin_filehandle = None,
+                bin_filename = None, bin_filehandle = None, vmh_filename = None,
                 dump_asm = None, dump_bin = None ):
 
     # sparse memory : list of list of lists
@@ -128,6 +128,33 @@ class SparseMemoryImage:
       # structure
 
       self.sparse_memory_img.extend( labels_list )
+
+    elif vmh_filename is not None:
+
+      vmh_fd = open(vmh_filename)
+      addr = None
+      current_list = None
+
+      for line in vmh_fd:
+
+        # Search for addr labels
+
+        if line[0] == '@':
+          hex_str, slash, label = line[1:].split()
+          addr = int(hex_str, 16)
+          current_list = []
+          print hex(addr)
+          self.sparse_memory_img.append( [ addr, current_list ] )
+
+        # We have an addr label and the line is not blank, get the data
+
+        elif addr and line.strip():
+          hex_str = line.split()[0]
+          value = int(hex_str, 16)
+          current_list.append( value )
+
+      print self.sparse_memory_img
+
 
     elif bin_filename is not None:
 
