@@ -1,3 +1,4 @@
+import math
 
 # From the web
 # http://www.velocityreviews.com/forums/t668122-number-of-bits-sizeof-int.html
@@ -52,6 +53,8 @@ class Bits(object):
     self.width = width
     self.wmask = (1 << self.width) - 1
 
+    self.shift_trunc = int( math.ceil( math.log( self.width , 2) ) )
+
     # If the value is negative then we calculate the twos complement
     # TODO: isn't this unnecessary?
     if isinstance( value, Bits ):
@@ -62,7 +65,6 @@ class Bits(object):
       value_uint = ~(-value) + 1
 
     self._uint = value_uint & self.wmask
-    assert not isinstance(self._uint, Bits) # TODO: remove me
 
   @property
   def uint(self):
@@ -212,15 +214,24 @@ class Bits(object):
   #------------------------------------------------------------------------
 
   def __lshift__(self, other):
+    # TODO: best way to handle large shift amounts?
     if isinstance(other, int):
-      return Bits( self.width, self.uint << other, trunc=True )
+      #assert other <= self.width
+      shift_val = Bits( self.shift_trunc, other, trunc=True )
+      return Bits( self.width, self.uint << shift_val.uint, trunc=True )
+      #return Bits( self.width, self.uint << other, trunc=True )
     else:
-      return Bits( self.width, self.uint << other.uint, trunc=True )
+      #assert other.uint <= self.width
+      shift_val = Bits( self.shift_trunc, other.uint, trunc=True )
+      return Bits( self.width, self.uint << shift_val.uint, trunc=True )
+      #return Bits( self.width, self.uint << other.uint, trunc=True )
 
   def __rshift__(self, other):
     if isinstance(other, int):
+      #assert other <= self.width
       return Bits(self.width, self.uint >> other)
     else:
+      #assert other.uint <= self.width
       return Bits(self.width, self.uint >> other.uint)
 
   #------------------------------------------------------------------------
