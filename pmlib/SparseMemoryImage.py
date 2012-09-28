@@ -58,34 +58,6 @@ SECTIONS
 }
 """
 
-# Test start assembly fragment
-
-asm_start = """
-    .text;
-    .align  4;
-    .global _test;
-    .ent    _test;
-_test:
-"""
-
-# Test end assembly fragment
-
-asm_end = """
-_pass:
-    addiu  $29, $0, 1;
-
-_fail:
-    li     $2,  1;
-    mtc0   $29, $21;
-1:  bne    $0, $2, 1b;
-    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
-    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
-    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
-    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
-
-    .end _test
-"""
-
 #-------------------------------------------------------------------------------
 # Utility Functions
 #-------------------------------------------------------------------------------
@@ -111,7 +83,7 @@ class SparseMemoryImage:
   # SparseMemoryImage instance. We could also pass a list of lists, binary
   # filename or a binary file handle.
 
-  def __init__( self, asm_str = None, asm_data_str = '', labels_list = None,
+  def __init__( self, asm_str = None, labels_list = None,
                 bin_filename = None, bin_filehandle = None, vmh_filename = None,
                 dump_asm = None, dump_bin = None ):
 
@@ -235,7 +207,7 @@ class SparseMemoryImage:
 
       # assembly test
 
-      asm_test = asm_start + asm_str + asm_end + asm_data_str
+      asm_test = asm_str
 
       # create a temporary assembly test file
 

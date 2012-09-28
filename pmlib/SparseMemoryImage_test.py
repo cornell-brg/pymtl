@@ -4,6 +4,35 @@
 
 from SparseMemoryImage import SparseMemoryImage
 
+# Test start assembly fragment
+
+asm_start = """
+    .text;
+    .align  4;
+    .global _test;
+    .ent    _test;
+_test:
+"""
+
+# Test end assembly fragment
+
+asm_end = """
+_pass:
+    addiu  $29, $0, 1;
+
+_fail:
+    li     $2,  1;
+    mtc0   $29, $21;
+1:  bne    $0, $2, 1b;
+    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+    nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+
+    .end _test
+"""
+
+
 #-------------------------------------------------------------------------------
 # test_smi_str_labels_list
 #-------------------------------------------------------------------------------
@@ -35,7 +64,9 @@ def test_smi_str_labels_list( dump_asm, dump_bin ):
 
   mem_img_from_labels_list = SparseMemoryImage( labels_list = labels_list )
 
-  mem_img_from_str = SparseMemoryImage( asm_str  = "addiu $3, $2, 1",
+  asm_str = asm_start + "addiu $3, $2, 1" + asm_end
+
+  mem_img_from_str = SparseMemoryImage( asm_str  = asm_str,
                                         dump_asm = asm_file,
                                         dump_bin = bin_file )
 
@@ -52,7 +83,8 @@ def test_smi_str_labels_list( dump_asm, dump_bin ):
 #def test_smi_str_bin():
 #
 #  mem_img_from_bin_file = SparseMemoryImage( bin_filename = 'simple-addiu' )
-#  mem_img_from_str = SparseMemoryImage( asm_str = "addiu $3, $2, 1" )
+#  asm_str = asm_start + "addiu $3, $2, 1" + asm_end
+#  mem_img_from_str = SparseMemoryImage( asm_str = asm_str )
 #
 #  assert mem_img_from_str == mem_img_from_bin_file
 #
