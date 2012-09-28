@@ -60,7 +60,7 @@ class PipeCtrl (Model):
 
     # current pipeline stage valid bit register
 
-    self.val_reg = pmlib.regs.RegEn( 1 )
+    self.val_reg = pmlib.regs.RegEnRst( 1, reset_value = 0 )
 
     connect( self.val_reg.in_, self.pvalid )
 
