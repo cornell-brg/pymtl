@@ -85,8 +85,8 @@ class TestSimpleMemory (Model):
 
     # Connect ready signals to inputs to ensure pipeline behavior
 
-    for i in xrange( nports ):
-      connect( self.memreq_rdy[i], self.memresp_rdy[i] )
+    #for i in xrange( nports ):
+    #  connect( self.memreq_rdy[i], self.memresp_rdy[i] )
 
   #-----------------------------------------------------------------------
   # load memory function
@@ -188,6 +188,24 @@ class TestSimpleMemory (Model):
       self.memresp_val[i].next = self.memreq_full[i]
 
   #-----------------------------------------------------------------------
+  # Combinational Logic
+  #-----------------------------------------------------------------------
+  # We model the TestSimpleMemory to behave like a normal queue. Instead of
+  # combinationally hooking up the memresp_rdy to memreq_rdy, we see if
+  # there is anything present in the buffer or not, to calculate request
+  # ready signal.
+
+  @combinational
+  def comb( self ):
+
+    # Iterate over the port list
+
+    for i in xrange( self.nports ):
+
+      self.memreq_rdy[i].value = ( not self.memreq_full[i] or
+                                       self.memresp_rdy[i].value )
+
+  #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
@@ -206,8 +224,8 @@ class TestSimpleMemory (Model):
         pmlib.valrdy.valrdy_to_str( self.memresp[i].line_trace(),
           self.memresp_val[i].value, self.memresp_rdy[i].value )
 
-      memtrace_str += "| ({}): {} () {} " \
-        .format( i, memreq_str, memresp_str )
+      memtrace_str += "|{} () {}" \
+        .format( memreq_str, memresp_str )
 
     return memtrace_str
 
