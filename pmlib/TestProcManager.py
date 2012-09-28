@@ -93,5 +93,5 @@ class TestProcManager (Model):
     if s.state == s.STATE_DONE:
       state_str = "D"
 
-    return "({}) {} {}" \
-      .format( state_str, s.proc_go.value, s.done.value )
+    return "({})" \
+      .format( state_str )
