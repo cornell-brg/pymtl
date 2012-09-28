@@ -115,7 +115,7 @@ class SparseMemoryImage:
           hex_str, slash, label = line[1:].split()
           addr = int(hex_str, 16)
           current_list = []
-          print hex(addr)
+          #print hex(addr)
           self.sparse_memory_img.append( [ addr, current_list ] )
 
         # We have an addr label and the line is not blank, get the data
@@ -125,7 +125,7 @@ class SparseMemoryImage:
           value = int(hex_str, 16)
           current_list.append( value )
 
-      print self.sparse_memory_img
+      #print self.sparse_memory_img
 
 
     elif bin_filename is not None:
