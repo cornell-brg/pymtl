@@ -37,13 +37,13 @@ ENTRY( _test )
 SECTIONS
 {
 
-  . = 0x00800000;
+  . = 0x00000004;
   .xcpthandler :
   {
     *(.xcpthandler)
   }
 
-  . = 0x00808000;
+  . = 0x00000400;
   .text :
   {
     *(.text)
