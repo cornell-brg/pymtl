@@ -497,39 +497,58 @@ class IncrPipe (Model):
 
     # Stage A
 
-    if self.ctrl.pipe_a.pipereg_val.value:
+    if not self.ctrl.pipe_a.pipereg_val.value:
+      pipe_a_str = "{:^3s}".format( ' ' )
+    elif self.ctrl.pipe_a.nsquash.value:
+      pipe_a_str = "{:^3s}".format( '-' )
+    elif self.ctrl.pipe_a.pstall.value:
+      pipe_a_str = "{:^3s}".format( '#' )
+    elif self.ctrl.pipe_a.pipereg_val.value:
       pipe_a_str = "{:^3d}".format( self.dpath.a_reg.out[VALUE].value.uint )
-    else:
-      pipe_a_str = " - "
 
     # Stage B
 
-    if self.ctrl.pipe_b.pipereg_val.value:
+    if not self.ctrl.pipe_b.pipereg_val.value:
+      pipe_b_str = "{:^3s}".format( ' ' )
+    elif self.ctrl.pipe_b.nsquash.value:
+      pipe_b_str = "{:^3s}".format( '-' )
+    elif self.ctrl.pipe_b.pstall.value:
+      pipe_b_str = "{:^3s}".format( '#' )
+    elif self.ctrl.pipe_b.pipereg_val.value:
       pipe_b_str = "{:^3d}".format( self.dpath.b_reg.out[VALUE].value.uint )
-    else:
-      pipe_b_str = " - "
 
     # Stage C
 
-    if self.ctrl.pipe_c.pipereg_val.value:
-      pipe_c_str = "{:^3d}".format( self.dpath.c_incr.out.value.uint )
-    else:
-      pipe_c_str = " - "
+    if not self.ctrl.pipe_c.pipereg_val.value:
+      pipe_c_str = "{:^3s}".format( ' ' )
+    elif self.ctrl.pipe_c.nsquash.value:
+      pipe_c_str = "{:^3s}".format( '-' )
+    elif self.ctrl.pipe_c.pstall.value:
+      pipe_c_str = "{:^3s}".format( '#' )
+    elif self.ctrl.pipe_c.pipereg_val.value:
+      pipe_c_str = "{:^3d}".format( self.dpath.c_reg.out[VALUE].value.uint )
 
     # Stage D
 
-    if self.ctrl.pipe_d.pipereg_val.value:
-      pipe_d_str = "{:^3d}".format( self.dpath.d_incr.out.value.uint )
-    else:
-      pipe_d_str = " - "
+    if not self.ctrl.pipe_d.pipereg_val.value:
+      pipe_d_str = "{:^3s}".format( ' ' )
+    elif self.ctrl.pipe_d.nsquash.value:
+      pipe_d_str = "{:^3s}".format( '-' )
+    elif self.ctrl.pipe_d.pstall.value:
+      pipe_d_str = "{:^3s}".format( '#' )
+    elif self.ctrl.pipe_d.pipereg_val.value:
+      pipe_d_str = "{:^3d}".format( self.dpath.d_reg.out[VALUE].value.uint )
 
     # Stage E
 
-    if self.ctrl.pipe_e.pipereg_val.value:
-      pipe_e_str = "{:^3d}".format( self.dpath.e_incr.out.value.uint )
-    else:
-      pipe_e_str = " - "
-
+    if not self.ctrl.pipe_e.pipereg_val.value:
+      pipe_e_str = "{:^3s}".format( ' ' )
+    elif self.ctrl.pipe_e.nsquash.value:
+      pipe_e_str = "{:^3s}".format( '-' )
+    elif self.ctrl.pipe_e.pstall.value:
+      pipe_e_str = "{:^3s}".format( '#' )
+    elif self.ctrl.pipe_e.pipereg_val.value:
+      pipe_e_str = "{:^3d}".format( self.dpath.e_reg.out[VALUE].value.uint )
 
     out_str = "{} | {} | {} | {} | {}".format( pipe_a_str, pipe_b_str,
         pipe_c_str, pipe_d_str, pipe_e_str )
