@@ -4,6 +4,7 @@
 
 parcv2_srcs += \
   parcv2-andi.S \
+  parcv2-xori.S \
   parcv2-slti.S \
   parcv2-sltiu.S \
   parcv2-sll.S \
