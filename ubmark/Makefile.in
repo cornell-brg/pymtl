@@ -68,7 +68,7 @@ install_pkcs_dir := $(DESTDIR)/share/pkgconfig
 install_exes_dir := $(DESTDIR)/bin
 
 #-------------------------------------------------------------------------
-# Programs and flags 
+# Programs and flags
 #-------------------------------------------------------------------------
 
 # Standard flags
@@ -145,7 +145,7 @@ utst_libs     ?= @utst_libs@
 # subprojects defining a certain set of make variables which are all
 # prefixed with the subproject name. Since subproject names can have
 # dashes in them (and the make variables are assumed to only use
-# underscores) the template takes two arguments - one with the regular 
+# underscores) the template takes two arguments - one with the regular
 # subproject name and one with dashes replaced with underscores.
 #
 # Arguments:
@@ -235,7 +235,7 @@ $(2)_test_outs := $$(patsubst %,      %.out,  $$($(2)_test_exes))
 $$($(2)_test_objs) : %.o : %.cc
 	$(COMPILE_CXX) $$($(2)_cppflags) $(utst_cppflags) -c $$<
 
-$$($(2)_test_exes) : %-utst : %.t.o $$($(2)_link_prereqs) $(utst_libname) 
+$$($(2)_test_exes) : %-utst : %.t.o $$($(2)_link_prereqs) $(utst_libname)
 	$(LINK_CXX) $$($(2)_ldflags) $(utst_ldflags) -o $$@ $$< \
     $$($(2)_libs) $(utst_libs)
 
@@ -263,9 +263,9 @@ $$($(2)_prog_c_objs) : %.o : %.c
 	$(COMPILE_C) $$($(2)_cppflags) -c $$<
 
 $$($(2)_prog_c_exes) : % : %.o $$($(2)_link_prereqs)
-	$(LINK_C) $$($(2)_ldflags) -o $$@ $$< $$($(2)_libs) 
+	$(LINK_C) $$($(2)_ldflags) -o $$@ $$< $$($(2)_libs)
 
-$(2)_exes += $$($(2)_prog_c_exes) 
+$(2)_exes += $$($(2)_prog_c_exes)
 $(2)_deps += $$($(2)_prog_c_deps)
 $(2)_junk += \
   $$($(2)_prog_c_objs) $$($(2)_prog_c_deps) $$($(2)_prog_c_exes)
@@ -282,9 +282,9 @@ $$($(2)_prog_cxx_objs) : %.o : %.cc
 	$(COMPILE_CXX) $$($(2)_cppflags) -c $$<
 
 $$($(2)_prog_cxx_exes) : % : %.o $$($(2)_link_prereqs)
-	$(LINK_CXX) $$($(2)_ldflags) -o $$@ $$< $$($(2)_libs) 
+	$(LINK_CXX) $$($(2)_ldflags) -o $$@ $$< $$($(2)_libs)
 
-$(2)_exes += $$($(2)_prog_cxx_exes) 
+$(2)_exes += $$($(2)_prog_cxx_exes)
 $(2)_deps += $$($(2)_prog_cxx_deps)
 $(2)_junk += \
   $$($(2)_prog_cxx_objs) $$($(2)_prog_cxx_deps) $$($(2)_prog_cxx_exes)
@@ -430,7 +430,7 @@ dist_junk += \
 # Distribution
 #-------------------------------------------------------------------------
 # The distribution tarball is named project-ver.tar.gz and it includes
-# both enabled and disabled subprojects. 
+# both enabled and disabled subprojects.
 
 dist_files = \
   $(sprojs_internal) \
@@ -481,10 +481,19 @@ junk += $(project_name)-*.tar.gz
 .PHONY : dist distcheck
 
 #-------------------------------------------------------------------------
+# Convert Script
+#-------------------------------------------------------------------------
+
+convert : conv
+	../convert
+
+.PHONY : conv
+
+#-------------------------------------------------------------------------
 # Default
 #-------------------------------------------------------------------------
 
-all : $(libs) $(exes)
+all : $(libs) $(exes) convert
 .PHONY : all
 
 #-------------------------------------------------------------------------
