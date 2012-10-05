@@ -30,7 +30,7 @@ for x in bin/*;do maven-objdump -DC --disassemble-zeroes --section=.text --secti
 mv bin/*.dump dump/
 for x in dump/*;
 do
-sed -i "" -e '
+sed -i '
 /<\_start>/ i\
 00000400 <_bootstrap>:\
 \   00400:  3c1d0007 	lui	sp,0xf\
@@ -38,7 +38,7 @@ sed -i "" -e '
 \   00408:	08000400 	j	1000\
 \
 ' $x;
-sed -i "" -e '
+sed -i '
 /1008:/ c\
 \    1008:	08000408 	j	1020
 ' $x;
