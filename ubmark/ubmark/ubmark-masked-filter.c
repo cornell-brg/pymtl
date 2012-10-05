@@ -71,11 +71,11 @@ int main( int argc, char* argv[] )
     for ( i = 0; i < size*size; i++ )
       dest[i] = 0;
 
-    //int temp = 0;
+    int temp = 0;
 
-    //test_stats_on( temp );
+    test_stats_on( temp );
     masked_filter_scalar( dest, mask, src, size, size, g_coeff );
-    //test_stats_off( temp );
+    test_stats_off( temp );
 
     verify_results( dest, ref, size );
 

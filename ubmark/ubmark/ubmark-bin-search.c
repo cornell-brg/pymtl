@@ -73,11 +73,11 @@ int main( int argc, char* argv[] )
   for ( i = 0; i < size; i++ )
     values[i] = 0;
 
-  //int temp = 0;
+  int temp = 0;
 
-  //test_stats_on( temp );
+  test_stats_on( temp );
   bin_search_scalar( values, keys, size, kv, kv_sz );
-  //test_stats_off( temp );
+  test_stats_off( temp );
 
   verify_results( values, ref, size );
 

@@ -12,7 +12,7 @@
 inline void test_fail( int temp )
 {
   asm( "li %0, 2;"
-       "mtc0 %0, $21;"
+       "mtc0 %0, $1;"
        "nop;nop;nop;nop;nop;"
        :
        : "r"(temp)
@@ -22,7 +22,7 @@ inline void test_fail( int temp )
 inline void test_pass( int temp )
 {
   asm( "li %0, 1;"
-       "mtc0 %0, $21;"
+       "mtc0 %0, $1;"
        "nop;nop;nop;nop;nop;"
        :
        : "r"(temp)

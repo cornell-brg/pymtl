@@ -36,7 +36,7 @@ _pass:                                                                  \
                                                                         \
 _fail:                                                                  \
     li     $2,  1;                                                      \
-    mtc0   $29, $21;                                                    \
+    mtc0   $29, $1;                                                     \
 1:  bne    $0, $2, 1b;                                                  \
     nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;                   \
     nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;                   \
