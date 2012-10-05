@@ -274,18 +274,21 @@ class Model(object):
 
   def check_type(self, target, name, obj):
     """Utility method to specialize elaboration actions based on object type."""
-    # If object is a port, add it to our ports list
-    if isinstance(obj, Port):
-      obj.name = name
-      obj.parent = target
-      target._ports += [obj]
-      if obj.type == 'input':
-        target._senses += [obj]
-    elif isinstance(obj, Wire):
+    # If object is a wire, add it to our sensitivity list
+    # TODO: Wires are currently subclasses of Ports, so this check must be
+    #       first.  Fix?
+    if isinstance(obj, Wire):
       obj.name = name
       obj.parent = target
       target._wires += [obj]
       target._senses += [obj]
+    # If object is a port, add it to our ports list
+    elif isinstance(obj, Port):
+      obj.name = name
+      obj.parent = target
+      target._ports += [obj]
+      if obj.type == 'input' and obj.name != 'clk':
+        target._senses += [obj]
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):

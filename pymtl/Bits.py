@@ -69,7 +69,6 @@ class Bits(object):
   @property
   def uint(self):
     """Return the unsigned integer representation of the bits."""
-    assert not isinstance(self._uint, Bits) # TODO: remove me
     return self._uint
 
   @property

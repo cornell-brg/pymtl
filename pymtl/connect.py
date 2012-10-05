@@ -49,6 +49,9 @@ class Node(object):
     return self._value
   @value.setter
   def value(self, value):
+    self.set_value( value )
+
+  def set_value(self, value):
     # TODO: what to do for reset condition?
     if self._value != value and not self._updating:
       # TODO: this is Bits specific!
@@ -61,6 +64,7 @@ class Node(object):
       for x in self.connections:
         x.update( self )
       self._updating = False
+
 
   # TODO: make hook added by simulator?
   @property
