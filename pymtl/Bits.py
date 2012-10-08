@@ -58,7 +58,7 @@ class Bits(object):
     # If the value is negative then we calculate the twos complement
     # TODO: isn't this unnecessary?
     if isinstance( value, Bits ):
-      value_uint = value.uint
+      value_uint = value._uint
     else:
       value_uint = value
     if ( value < 0 ):
@@ -76,10 +76,11 @@ class Bits(object):
     """Return the integer representation of the bits."""
     if ( self[self.nbits-1] ):
       twos_complement = ~self + 1
-      return -twos_complement.uint
+      return -twos_complement._uint
     else:
-      return self.uint
+      return self._uint
 
+  # TODO: remove
   @uint.setter
   def uint(self, value):
     assert self.width >= _num_bits(value)
@@ -91,15 +92,15 @@ class Bits(object):
     return self.width
 
   def __repr__(self):
-    return "Bits(w={0},v={1})".format(self.width, self.uint)
+    return "Bits(w={0},v={1})".format(self.width, self._uint)
 
   def __str__(self):
     num_chars = (((self.width-1)/4)+1)
-    str = "{:x}".format(self.uint).zfill(num_chars)
+    str = "{:x}".format(self._uint).zfill(num_chars)
     return str[-num_chars:len(str)]
 
   def bin_str(self):
-    str = "{:b}".format(self.uint).zfill(self.width)
+    str = "{:b}".format(self._uint).zfill(self.width)
     return str
 
   #------------------------------------------------------------------------
@@ -114,7 +115,7 @@ class Bits(object):
       stop = addr.stop
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
-        return Bits(self.width,self.uint)
+        return Bits(self.width,self._uint)
       elif start is None:
         start = 0
       elif stop is None:
@@ -124,22 +125,24 @@ class Bits(object):
       assert stop <= self.width
       width = stop - start
       mask  = (1 << width) - 1
-      return Bits( width, (self.uint & (mask << start)) >> start )
+      return Bits( width, (self._uint & (mask << start)) >> start )
     else:
       assert addr < self.width
-      return Bits( 1, (self.uint & (1 << addr)) >> addr )
+      return Bits( 1, (self._uint & (1 << addr)) >> addr )
 
   def __setitem__(self, addr, value):
     """Bitfield writes([])."""
     if isinstance(value, Bits):
-      value = value.uint
+      value = value._uint
     # TODO: clean up this logic!
     if isinstance(addr, slice):
       start = addr.start
       stop = addr.stop
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
-        self.uint = value
+        # TODO: optimize and uncomment!!!!
+        #assert self.width >= _num_bits(value)
+        self._uint = value
         return
       elif start is None:
         start = 0
@@ -151,23 +154,24 @@ class Bits(object):
       width = stop - start
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
-      assert width >= _num_bits(value)
+      # TODO: optimize and uncomment!!!!
+      #assert width >= _num_bits(value)
       # Clear the bits we want to set
       ones  = (1 << width) - 1
       mask = ~(ones << start)
-      self.uint &= mask
+      cleared_val = self._uint & mask
       # Set the bits
       # TODO: anding with ones to ensure negative value assign works!
       #       do we want this behavior?
-      self.uint |= ((value & ones) << start)
+      self._uint = cleared_val | ((value & ones) << start)
     else:
       assert addr < self.width
       assert 0 <= value <= 1
       # Clear the bits we want to set
       mask = ~(1 << addr)
-      self.uint &= mask
+      cleared_val = self._uint & mask
       # Set the bits
-      self.uint |= (value << addr)
+      self._uint = cleared_val | (value << addr)
 
   #------------------------------------------------------------------------
   # Arithmetic Operators
@@ -178,29 +182,29 @@ class Bits(object):
 
   # TODO: reflected operands?
   def __invert__(self):
-    return Bits(self.width, ~self.uint, trunc=True )
+    return Bits(self.width, ~self._uint, trunc=True )
 
   def __add__(self, other):
     if not isinstance(other, Bits):
       other = Bits( _num_bits(other), other )
     return Bits( max( self.width, other.width ),
-                 self.uint + other.uint, trunc=True )
+                 self._uint + other._uint, trunc=True )
 
   def __sub__(self, other):
     if not isinstance(other, Bits):
       other = Bits( _num_bits(other), other )
     return Bits( max( self.width, other.width ),
-                 self.uint - other.uint, trunc=True )
+                 self._uint - other._uint, trunc=True )
 
   # TODO: what about multiplying Bits object with an object of other type
   # where the bitwidth of the other type is larger than the bitwidth of the
   # Bits object? ( applies to every other oeprator as well.... )
   def __mul__(self, other):
     if isinstance(other, int):
-      return Bits(2*self.width, self.uint * other)
+      return Bits(2*self.width, self._uint * other)
     else:
       assert self.width == other.width
-      return Bits(2*self.width, self.uint * other.uint)
+      return Bits(2*self.width, self._uint * other._uint)
 
   # TODO: implement these?
   #def __floordiv__(self, other)
@@ -217,21 +221,21 @@ class Bits(object):
     if isinstance(other, int):
       #assert other <= self.width
       shift_val = Bits( self.shift_trunc, other, trunc=True )
-      return Bits( self.width, self.uint << shift_val.uint, trunc=True )
+      return Bits( self.width, self._uint << shift_val._uint, trunc=True )
       #return Bits( self.width, self.uint << other, trunc=True )
     else:
       #assert other.uint <= self.width
-      shift_val = Bits( self.shift_trunc, other.uint, trunc=True )
-      return Bits( self.width, self.uint << shift_val.uint, trunc=True )
+      shift_val = Bits( self.shift_trunc, other._uint, trunc=True )
+      return Bits( self.width, self._uint << shift_val._uint, trunc=True )
       #return Bits( self.width, self.uint << other.uint, trunc=True )
 
   def __rshift__(self, other):
     if isinstance(other, int):
       #assert other <= self.width
-      return Bits(self.width, self.uint >> other)
+      return Bits(self.width, self._uint >> other)
     else:
       #assert other.uint <= self.width
-      return Bits(self.width, self.uint >> other.uint)
+      return Bits(self.width, self._uint >> other._uint)
 
   #------------------------------------------------------------------------
   # Bitwise Operators
@@ -239,81 +243,81 @@ class Bits(object):
 
   def __and__(self, other):
     if isinstance(other, Bits):
-      other = other.uint
+      other = other._uint
     assert other >= 0
     return Bits( max( self.width, _num_bits(other) ),
-                 self.uint & other)
+                 self._uint & other)
 
   def __xor__(self, other):
     if isinstance(other, Bits):
-      other = other.uint
+      other = other._uint
     assert other >= 0
     return Bits( max( self.width, _num_bits(other) ),
-                 self.uint ^ other)
+                 self._uint ^ other)
 
   def __or__(self, other):
     if isinstance(other, Bits):
-      other = other.uint
+      other = other._uint
     assert other >= 0
     return Bits( max( self.width, _num_bits(other) ),
-                 self.uint | other)
+                 self._uint | other)
 
   #------------------------------------------------------------------------
   # Comparison Operators
   #------------------------------------------------------------------------
 
   def __nonzero__(self):
-    return self.uint != 0
+    return self._uint != 0
 
   def __eq__(self,other):
     """Equality operator, special case for comparisons with integers."""
     if isinstance(other, Bits):
       assert self.width == other.width
-      other = other.uint
+      other = other._uint
     #assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self.uint == other
+    return self._uint == other
 
   def __ne__(self,other):
     if isinstance(other, Bits):
       assert self.width == other.width
-      other = other.uint
+      other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self.uint != other
+    return self._uint != other
 
   def __lt__(self,other):
     if isinstance(other, Bits):
       assert self.width == other.width
-      other = other.uint
+      other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self.uint < other
+    return self._uint < other
 
   def __le__(self,other):
     if isinstance(other, Bits):
       assert self.width == other.width
-      other = other.uint
+      other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self.uint <= other
+    return self._uint <= other
 
   def __gt__(self,other):
     if isinstance(other, Bits):
       assert self.width == other.width
-      other = other.uint
+      other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self.uint > other
+    return self._uint > other
 
   def __ge__(self,other):
     if isinstance(other, Bits):
       assert self.width == other.width
-      other = other.uint
+      other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self.uint >= other
+    return self._uint >= other
 
   #------------------------------------------------------------------------
   # Extension
   #------------------------------------------------------------------------
 
   def zext( self, new_width ):
-    return Bits( new_width, self.uint )
+    return Bits( new_width, self._uint )
 
   def sext( self, new_width ):
     return Bits( new_width, self.int )
