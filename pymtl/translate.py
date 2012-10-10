@@ -7,12 +7,13 @@ hardware description languages, such as Verilog.
 from model import *
 import inspect
 import ast, _ast
+import sys
 
 class VerilogTranslationTool(object):
 
   """User visible class for translating MTL models into Verilog source."""
 
-  def __init__(self, model):
+  def __init__(self, model, o=sys.stdout):
     """Construct a Verilog translator from a MTL model.
 
     Parameters
@@ -25,9 +26,34 @@ class VerilogTranslationTool(object):
       msg += "Provided model has not been elaborated yet!!!"
       raise Exception(msg)
     self.model = model
-    self.translated = set()
 
-  def translate(self, o, target=None):
+    # Take either a string or a output stream
+    if isinstance(o, str):
+      o = open(o, 'w')
+
+    # Find all the modules we need to translate in the hierarchy
+    # TODO: use ordered list?
+    self.to_translate = {}
+    self.collect_modules( self.model )
+
+    # Translate each Module Class
+    for class_name, class_inst in self.to_translate.items():
+      self.module_to_verilog( o, class_inst )
+      #print
+      #print class_name
+      #for p in class_inst._ports:
+      #  print " ", p.name
+      #  print "   ", [type(x) for x in p.int_connections]
+      #  print "   ", [type(x) for x in p.ext_connections]
+
+  def collect_modules(self, target):
+    """Create an ordered set of all models we need to translate."""
+    if not target.class_name in self.to_translate:
+      self.to_translate[ target.class_name ] = target
+      for m in target._submodules:
+        self.collect_modules( m )
+
+  def module_to_verilog(self, o, target=None):
     """Generates Verilog source from a MTL model.
 
     Calls gen_port_decls(), gen_impl_wires(), gen_module_insts(), and gen_ast()
@@ -37,32 +63,32 @@ class VerilogTranslationTool(object):
     ----------
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
-    if not target:
-      target = self.model
-    if isinstance(o, str):
-      o = open(o, 'w')
+
+    # Module declaration
     print >> o, 'module %s' % target.class_name
-    # Find Registers
+
+    # Find registers
     self.get_regs( target, o )
+
     # Declare Ports
     if target._ports: self.gen_port_decls( target._ports, o )
+
     # Declare Localparams
     if target._localparams: self.gen_localparam_decls( target._localparams, o )
+
     # Wires & Instantiations
     self.gen_impl_wires( target, o )
     if target._wires: self.gen_wire_decls( target._wires, o )
     if target._submodules: self.gen_module_insts( target._submodules, o )
+
     # Logic
     self.gen_ast( target, o )
+
     # Port assignments
     self.gen_port_assigns( target, o )
+
     # End module
     print >> o, '\nendmodule\n'
-
-    self.translated.add( target.class_name )
-    for m in target._submodules:
-      if m.class_name not in self.translated:
-        self.translate(o, m)
 
   def gen_port_decls(self, ports, o):
     """Generate Verilog source for port declarations.
@@ -132,10 +158,10 @@ class VerilogTranslationTool(object):
           c = port.ext_connections[0]
           # If this submodule port connects to a port in the target, then no
           # wire should be necessary
-          if c.parent.name == target.name:
+          if c.parent == target:
             port.inst_connection = port.ext_connections[0]
           # Otherwise we need to create an implicit wire
-          else:
+          elif not isinstance(c, (Slice,Constant)):
             # Our connection has fanout, delay wire creation.  Allow the module
             # with the fanout to create the wire.
             if len(c.ext_connections) > 1:
@@ -194,32 +220,12 @@ class VerilogTranslationTool(object):
     target: a Model instance.
     o: the output object to write Verilog source to (ie. sys.stdout).
     """
-    # Utility function
-    def needs_assign(port, connection):
-      # TODO: clean this up...
-      if isinstance(connection.inst_connection, ImplicitWire):
-        return True
-      if isinstance(connection, Slice):
-        return port.parent == connection.connections[0].parent
-      else:
-        return port.parent == connection.parent
-    # Get all output ports
     output_ports = [x for x in target._ports if isinstance(x,OutPort)]
     for port in output_ports:
-      output_assigns = [x for x in port.int_connections if needs_assign(port, x)]
+      output_assigns = port.int_connections
       for assign in output_assigns:
-        # Handle the case where we are assigning to a slice of an output port
-        # instead of an entire output port
-        if isinstance(assign.inst_connection, ImplicitWire):
-          left  = port.name
-          right = assign.inst_connection.name
-        elif assign.type == 'output':
-          assert len(assign.connections) == 1
-          left  = assign.name
-          right = assign.connections[0].name
-        else:
-          left  = port.name
-          right = assign.name
+        left  = assign.get_name( port )
+        right = assign.other.name
         print  >> o, "  assign {0} = {1};".format(left, right)
 
   def gen_module_insts(self, submodules, o):
@@ -315,27 +321,6 @@ class VerilogTranslationTool(object):
       #import debug_utils
       #debug_utils.print_ast( tree )
       PyToVerilogVisitor( o ).visit(tree)
-
-
-
-def get_target_name(node):
-  # Is this a number/constant? Return it.
-  if isinstance(node, _ast.Num):
-    raise Exception("Ran into a number/constant!")
-    return node.n, True
-  # Is this an attribute? Follow it until we find a Name.
-  name = []
-  while isinstance(node, _ast.Attribute):
-    name += [node.attr]
-    node = node.value
-  # We've found the Name.
-  assert isinstance(node, _ast.Name)
-  name += [node.id]
-  # If the target does not access .value or .next, tell the code to ignore it.
-  if name[0] in ['value', 'next']:
-    return '.'.join( name[::-1][1:-1] ), True
-  else:
-    return name[0], False
 
 
 class PyToVerilogVisitor(ast.NodeVisitor):
@@ -575,4 +560,3 @@ class FindRegistersVisitor(ast.NodeVisitor):
       self.reg_stores.add( target_name )
 
 
-#req_resp_port = FromVerilog("vgen-TestMemReqRespPort.v")

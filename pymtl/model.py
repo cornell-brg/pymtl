@@ -48,10 +48,21 @@ class Port(object):
 
   def __getitem__(self, addr):
     """Bitfield access ([]). Returns a Slice object."""
-    return self.node[addr]
+    return ConnectionSlice( self, addr )
 
   def connect(self, target):
     """Creates a connection with a Port or Slice."""
+    # Port-to-Port connections, used for translation
+    # TODO: use ConnectionSlice or Connection
+    # TODO: replace
+    if isinstance( target, ConnectionSlice ):
+      self.connections               += [ Connection( target ) ]
+      target.parent_port.connections += [ Connection( self, target.addr )   ]
+    elif isinstance( target, Port ):
+      self.connections   += [ Connection( target ) ]
+      target.connections += [ Connection( self )   ]
+
+    # Node-to-Node connections, used for simulation
     self.node.connect( target.node )
 
   @property
@@ -202,6 +213,66 @@ class ImplicitWire(object):
     self.type  = "wire"
 
 #-------------------------------------------------------------------------
+# Connection
+#-------------------------------------------------------------------------
+
+class ConnectionSlice(object):
+  def __init__( self, port, addr ):
+    self.parent_port = port
+    self.node        = port.node[addr]
+    self.addr        = addr
+    if isinstance(addr, slice):
+      assert not addr.step  # We dont support steps!
+      self.width     = addr.stop - addr.start
+      self.suffix    = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
+    else:
+      self.width     = 1
+      self.suffix    = '[{0}]'.format(self.addr)
+
+  def connect(self, target):
+    if isinstance( target, ConnectionSlice ):
+      self.parent_port.connections   += [ Connection( target, self.addr    ) ]
+      target.parent_port.connections += [ Connection( self,   target.addr  ) ]
+    self.node.connect( target.node )
+
+  @property
+  def parent(self):
+    return self.parent_port.parent
+
+  @property
+  def name(self):
+    return self.parent.name + self.suffix
+
+  @property
+  def value(self):
+    """Value of the bits we are slicing."""
+    return self.node.value
+  @value.setter
+  def value(self, value):
+    self.node.value = value
+
+
+class Connection(object):
+  def __init__( self, other, addr=None ):
+    """Construct a Connection object. TODO: describe"""
+    self.other  = other
+    self.addr   = addr
+    if isinstance(addr, slice):
+      assert not addr.step  # We dont support steps!
+      self.suffix    = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
+    elif addr:
+      self.suffix    = '[{0}]'.format(self.addr)
+    else:
+      self.suffix    = ''
+
+  def get_name( self, port ):
+    return port.name + self.suffix
+
+  def test( self ):
+    return (self.other.name, self.addr, self.suffix)
+
+
+#-------------------------------------------------------------------------
 # Model
 #-------------------------------------------------------------------------
 # TODO: where to put exceptions?
@@ -325,7 +396,8 @@ class Model(object):
           c.value = c.connections[0].value
         # Otherwise, determine if the connected Wire/Port was connected in our
         # definition or during instantiation.  Used during VerilogTranslation.
-        elif c.parent == port.parent or c.parent in self._submodules:
+      for c in port.connections:
+        if c.other.parent == port.parent or c.other.parent in self._submodules:
           port.int_connections += [c]
         else:
           port.ext_connections += [c]
@@ -347,7 +419,7 @@ class Model(object):
 def connect( port_A, port_B):
   if   isinstance(port_B, int):
     port_A.connect( Constant(port_B, port_A.width) )
-  elif isinstance(port_A, Slice):
+  elif isinstance(port_A, ConnectionSlice):
     port_B.connect( port_A )
   else:
     port_A.connect( port_B )
