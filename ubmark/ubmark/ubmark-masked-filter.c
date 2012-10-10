@@ -64,7 +64,7 @@ void verify_results( uint dest[], uint ref[], int size )
 int main( int argc, char* argv[] )
 {
 
-    int size = 20;
+    int size = 10;
     uint dest[size*size];
 
     int i;
