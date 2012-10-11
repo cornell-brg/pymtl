@@ -90,6 +90,9 @@ class Port(object):
   def name(self, name):
     self.node.name = name
 
+  def verilog_name( self ):
+    return self.name
+
   @property
   def parent(self):
     """Access the parent of this port."""
@@ -212,6 +215,9 @@ class ImplicitWire(object):
     self.width = width
     self.type  = "wire"
 
+  def verilog_name(self):
+    return self.name
+
 #-------------------------------------------------------------------------
 # Connection
 #-------------------------------------------------------------------------
@@ -223,11 +229,13 @@ class ConnectionSlice(object):
     self.addr        = addr
     if isinstance(addr, slice):
       assert not addr.step  # We dont support steps!
-      self.width     = addr.stop - addr.start
-      self.suffix    = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
+      self.width       = addr.stop - addr.start
+      self.suffix      = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
+      self.vlog_suffix = '[{0}:{1}]'.format(self.addr.stop-1, self.addr.start)
     else:
-      self.width     = 1
-      self.suffix    = '[{0}]'.format(self.addr)
+      self.width       = 1
+      self.suffix      = '[{0}]'.format(self.addr)
+      self.vlog_suffix = self.suffix
 
   def connect(self, target):
     if isinstance( target, ConnectionSlice ):
@@ -241,7 +249,10 @@ class ConnectionSlice(object):
 
   @property
   def name(self):
-    return self.parent.name + self.suffix
+    return self.parent_port.name + self.suffix
+
+  def verilog_name( self ):
+    return self.parent_port.name + self.vlog_suffix
 
   @property
   def value(self):
@@ -259,14 +270,21 @@ class Connection(object):
     self.addr   = addr
     if isinstance(addr, slice):
       assert not addr.step  # We dont support steps!
-      self.suffix    = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
+      self.suffix      = '[{0}:{1}]'.format(self.addr.start, self.addr.stop)
+      self.vlog_suffix = '[{0}:{1}]'.format(self.addr.stop-1, self.addr.start)
     elif addr:
-      self.suffix    = '[{0}]'.format(self.addr)
+      self.suffix      = '[{0}]'.format(self.addr)
+      self.vlog_suffix = self.suffix
     else:
-      self.suffix    = ''
+      self.suffix      = ''
+      self.vlog_suffix = ''
 
+  # TODO: FIX this
   def get_name( self, port ):
     return port.name + self.suffix
+
+  def get_verilog_name( self, port ):
+    return port.name + self.vlog_suffix
 
   def test( self ):
     return (self.other.name, self.addr, self.suffix)

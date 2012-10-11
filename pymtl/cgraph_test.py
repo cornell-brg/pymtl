@@ -3,24 +3,33 @@
 #=========================================================================
 
 from model import *
-from translate import *
+from translate_new import *
+
+import os
 
 #-------------------------------------------------------------------------
 # Translation Test Function
 #-------------------------------------------------------------------------
 
 def run_translate_test( model_class ):
+
+  # Generate the model
   model = model_class()
   model.elaborate()
 
+  #  if debug_verbose: debug_utils.port_walk(model)
+
+  # Create the Verilog file
   temp_file = model.class_name + '.v'
   fd = open( temp_file, 'w' )
-  compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
-                  "-Wno-sensitivity-entire-array " + temp_file)
-
-  #  if debug_verbose: debug_utils.port_walk(model)
   code = VerilogTranslationTool( model, fd )
   fd.close()
+
+  # Check that it compiles cleanly with iverilog
+  compile_cmd = ("iverilog -g2005 -Wall -Werror -Wno-sensitivity-entire-vector"
+                  "-Wno-sensitivity-entire-array " + temp_file)
+  x = os.system( compile_cmd )
+  assert x == 0
 
 #-------------------------------------------------------------------------
 # InPort to OutPort
@@ -75,3 +84,30 @@ class InSL_OutSL(Model):
 
 def test_InSL_OutSL():
   run_translate_test( InSL_OutSL )
+
+#-------------------------------------------------------------------------
+# Dummy SubModel
+#-------------------------------------------------------------------------
+
+class SubMod(Model):
+  def __init__(self):
+    self.in_ = InPort ( 4 )
+    self.out = OutPort( 4 )
+
+#-------------------------------------------------------------------------
+# InPort to Submodel to OutPort
+#-------------------------------------------------------------------------
+class In_S_Out(Model):
+  def __init__(self):
+    self.in_ = InPort ( 4 )
+    self.out = OutPort( 4 )
+    self.sub = SubMod (   )
+
+    connect( self.in_, self.sub.in_ )
+    connect( self.out, self.sub.out )
+
+def test_In_S_Out():
+  run_translate_test( In_S_Out )
+
+
+
