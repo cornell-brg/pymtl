@@ -90,6 +90,10 @@ class Port(object):
   def name(self, name):
     self.node.name = name
 
+  @property
+  def fullname(self):
+    return self.node.fullname
+
   def verilog_name( self ):
     return self.name
 
@@ -251,6 +255,10 @@ class ConnectionSlice(object):
   def name(self):
     return self.parent_port.name + self.suffix
 
+  @property
+  def fullname(self):
+    return self.parent.name + '.' + self.name
+
   def verilog_name( self ):
     return self.parent_port.name + self.vlog_suffix
 
@@ -272,7 +280,7 @@ class Connection(object):
       assert not addr.step  # We dont support steps!
       self.suffix      = '[{0}:{1}]'.format(self.addr.start, self.addr.stop)
       self.vlog_suffix = '[{0}:{1}]'.format(self.addr.stop-1, self.addr.start)
-    elif addr:
+    elif isinstance(addr, int):
       self.suffix      = '[{0}]'.format(self.addr)
       self.vlog_suffix = self.suffix
     else:

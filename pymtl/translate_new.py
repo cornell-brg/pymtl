@@ -5,6 +5,7 @@
 
 from model import *
 import sys
+import collections
 
 #------------------------------------------------------------------------
 # Verilog Translation Tool
@@ -29,7 +30,7 @@ class VerilogTranslationTool(object):
       msg += "Provided model has not been elaborated yet!!!"
       raise Exception(msg)
 
-    self.to_translate = {}
+    self.to_translate = collections.OrderedDict()
 
     # Take either a string or a output stream
     if isinstance(o, str):
@@ -129,8 +130,8 @@ class VerilogTranslationTool(object):
   # Implied Wire Name
   #-----------------------------------------------------------------------
 
-  def mk_impl_wire_name( self, submodule, port ):
-    return '{0}${1}'.format( submodule.name, port.verilog_name() )
+  def mk_impl_wire_name( self, submodule_name, port_name ):
+    return '{0}${1}'.format( submodule_name, port_name )
 
   #-----------------------------------------------------------------------
   # Infer Implied Wires
@@ -146,9 +147,10 @@ class VerilogTranslationTool(object):
     from them, and then add them to the connectivity lists of the necessary
     ports.
     """
-    for submodule in target._submodules:
-      for port in submodule._ports:
-        wire_name = self.mk_impl_wire_name( submodule, port )
+    for m in target._submodules:
+      for port in m._ports:
+        wire_name = self.mk_impl_wire_name( m.name, port.verilog_name() )
+        # TODO: remove ImplicitWire?
         wire = ImplicitWire(wire_name, port.width)
         print >> o, '  %s' % self.wire_to_str(wire)
 
@@ -174,11 +176,11 @@ class VerilogTranslationTool(object):
     """Generate Verilog source for submodule port instances."""
     for p in ports[:-1]:
       #name = p.inst_connection.verilog_name() if p.inst_connection else ' '
-      wire_name = self.mk_impl_wire_name( p.parent, p )
+      wire_name = self.mk_impl_wire_name( p.parent.name, p.verilog_name() )
       print >> o , '    .%s (%s),' % (p.verilog_name(), wire_name)
     p = ports[-1]
     #name = p.inst_connection.verilog_name() if p.inst_connection else ' '
-    wire_name = self.mk_impl_wire_name( p.parent, p )
+    wire_name = self.mk_impl_wire_name( p.parent.name, p.verilog_name() )
     print >> o, '    .%s (%s)' % (p.verilog_name(), wire_name)
 
   #-----------------------------------------------------------------------
@@ -186,19 +188,19 @@ class VerilogTranslationTool(object):
   #-----------------------------------------------------------------------
 
   def gen_impl_wire_assigns(self, submodules, o):
-    print >> o, ''
     for m in submodules:
+      print >> o, ''
       input_ports  = [x for x in m._ports if isinstance(x,InPort)]
       output_ports = [x for x in m._ports if isinstance(x,OutPort)]
       for port in input_ports:
         for connect in port.ext_connections:
-          left  = self.mk_impl_wire_name( m, port )
+          left  = self.mk_impl_wire_name( m.name, connect.get_verilog_name( port ) )
           right = connect.other.verilog_name()
           print  >> o, "  assign {0} = {1};".format(left, right)
       for port in output_ports:
         for connect in port.ext_connections:
           left  = connect.other.verilog_name()
-          right = self.mk_impl_wire_name( m, port )
+          right = self.mk_impl_wire_name( m.name, connect.get_verilog_name( port ) )
           print  >> o, "  assign {0} = {1};".format(left, right)
 
   #-----------------------------------------------------------------------

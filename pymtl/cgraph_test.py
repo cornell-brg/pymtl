@@ -37,9 +37,12 @@ def run_translate_test( model_class ):
 
 class In_Out(Model):
   def __init__(self):
-    self.in_ = InPort ( 4 )
-    self.out = OutPort( 4 )
-    connect( self.in_, self.out )
+    self.in0  = InPort ( 4 )
+    self.in1  = InPort ( 1 )
+    self.out0 = OutPort( 4 )
+    self.out1 = OutPort( 1 )
+    connect( self.in0, self.out0 )
+    connect( self.in1, self.out1 )
 
 def test_In_Out():
   run_translate_test( In_Out )
@@ -50,10 +53,13 @@ def test_In_Out():
 
 class In_OutSL(Model):
   def __init__(self):
-    self.in_ = InPort ( 2 )
-    self.out = OutPort( 4 )
-    connect( self.in_, self.out[0:2] )
-    connect( self.in_, self.out[2:4] )
+    self.in0 = InPort ( 2 )
+    self.in1 = InPort ( 1 )
+    self.out = OutPort( 6 )
+    connect( self.in0, self.out[0:2] )
+    connect( self.in0, self.out[2:4] )
+    connect( self.in1, self.out[4]   )
+    connect( self.in1, self.out[5]   )
 
 def test_In_OutSL():
   run_translate_test( In_OutSL )
@@ -65,8 +71,10 @@ def test_In_OutSL():
 class InSL_Out(Model):
   def __init__(self):
     self.in_ = InPort ( 4 )
-    self.out = OutPort( 2 )
-    connect( self.in_[0:2], self.out )
+    self.out0 = OutPort( 3 )
+    self.out1 = OutPort( 1 )
+    connect( self.in_[0:3], self.out0 )
+    connect( self.in_[3],   self.out1 )
 
 def test_InSL_Out():
   run_translate_test( InSL_Out )
@@ -79,8 +87,8 @@ class InSL_OutSL(Model):
   def __init__(self):
     self.in_ = InPort ( 4 )
     self.out = OutPort( 4 )
-    connect( self.in_[0:2], self.out[2:4] )
-    connect( self.in_[2:4], self.out[0:2] )
+    connect( self.in_[0:3], self.out[1:4] )
+    connect( self.in_[3],   self.out[0]   )
 
 def test_InSL_OutSL():
   run_translate_test( InSL_OutSL )
@@ -97,7 +105,8 @@ class SubMod(Model):
 #-------------------------------------------------------------------------
 # InPort to Submodel to OutPort
 #-------------------------------------------------------------------------
-class In_S_Out(Model):
+
+class In_sub_Out(Model):
   def __init__(self):
     self.in_ = InPort ( 4 )
     self.out = OutPort( 4 )
@@ -106,8 +115,100 @@ class In_S_Out(Model):
     connect( self.in_, self.sub.in_ )
     connect( self.out, self.sub.out )
 
-def test_In_S_Out():
-  run_translate_test( In_S_Out )
+def test_In_sub_Out():
+  run_translate_test( In_sub_Out )
 
+#-------------------------------------------------------------------------
+# InPort Slice to Submodel to OutPort Slice
+#-------------------------------------------------------------------------
 
+class InSL_sub_OutSL(Model):
+  def __init__(self):
+    self.in_  = InPort ( 8 )
+    self.out  = OutPort( 8 )
+    self.sub0 = SubMod (   )
+    self.sub1 = SubMod (   )
+
+    connect( self.in_[0:4], self.sub0.in_ )
+    connect( self.out[0:4], self.sub0.out )
+    connect( self.in_[4:8], self.sub1.in_ )
+    connect( self.out[4:8], self.sub1.out )
+
+def test_InSL_sub_OutSL():
+  run_translate_test( InSL_sub_OutSL )
+
+#-------------------------------------------------------------------------
+# InPort to Submodel Slices to OutPort
+#-------------------------------------------------------------------------
+
+class In_subSL_Out(Model):
+  def __init__(self):
+    self.in0  = InPort ( 2 )
+    self.in1  = InPort ( 2 )
+    self.out0 = OutPort( 2 )
+    self.out1 = OutPort( 2 )
+    self.sub0 = SubMod (   )
+
+    connect( self.in0,  self.sub0.in_[0:2] )
+    connect( self.in1,  self.sub0.in_[2:4] )
+    connect( self.out0, self.sub0.out[2:4] )
+    connect( self.out1, self.sub0.out[0:2] )
+
+def test_In_subSL_Out():
+  run_translate_test( In_subSL_Out )
+
+#-------------------------------------------------------------------------
+# InPort Slice to Submodel Slices to OutPort Slice
+#-------------------------------------------------------------------------
+
+class InSL_subSL_OutSL(Model):
+  def __init__(self):
+    self.in_  = InPort ( 4 )
+    self.out  = OutPort( 4 )
+    self.sub0 = SubMod (   )
+
+    connect( self.in_[0:3], self.sub0.in_[1:4] )
+    connect( self.in_[3],   self.sub0.in_[0]   )
+    connect( self.out[0:3], self.sub0.out[0:3] )
+    connect( self.out[3],   self.sub0.out[3]   )
+
+def test_InSL_subSL_OutSL():
+  run_translate_test( InSL_subSL_OutSL )
+
+#-------------------------------------------------------------------------
+# InPort to Submodel to Submodel to OutPort Slice
+#-------------------------------------------------------------------------
+
+class In_sub_sub_Out(Model):
+  def __init__(self):
+    self.in_  = InPort ( 4 )
+    self.out  = OutPort( 4 )
+    self.sub0 = SubMod (   )
+    self.sub1 = SubMod (   )
+
+    connect( self.in_,        self.sub0.in_ )
+    connect( self.sub0.out,   self.sub1.in_ )
+    connect( self.out,        self.sub1.out )
+
+def test_In_sub_sub_Out():
+  run_translate_test( In_sub_sub_Out )
+
+#-------------------------------------------------------------------------
+# InPort to Submodel Slices to Submodel Slices to OutPort Slice
+#-------------------------------------------------------------------------
+
+class In_subSL_subSL_Out(Model):
+  def __init__(self):
+    self.in_  = InPort ( 4 )
+    self.out  = OutPort( 4 )
+    self.sub0 = SubMod (   )
+    self.sub1 = SubMod (   )
+
+    connect( self.in_,           self.sub0.in_      )
+    connect( self.sub0.out[1:4], self.sub1.in_[0:3] )
+    connect( self.sub0.out[0],   self.sub1.in_[3]   )
+    connect( self.out,           self.sub1.out      )
+
+def test_In_subSL_subSL_Out():
+  run_translate_test( In_subSL_subSL_Out )
 
