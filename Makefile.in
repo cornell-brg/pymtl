@@ -27,6 +27,7 @@ subpkgs = \
   pex_gcd \
   plab1_imul \
   plab2_proc \
+  plab3_mem \
 
 #-------------------------------------------------------------------------
 # List of subpackages to install
