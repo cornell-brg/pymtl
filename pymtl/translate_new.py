@@ -77,14 +77,15 @@ class VerilogTranslationTool(object):
     # Wires & Instantiations
     self.infer_impl_wires( target, o )
     #if target._wires: self.gen_wire_decls( target._wires, o )
-    if target._submodules: self.gen_module_insts( target._submodules, o )
+    for submodule in target._submodules:
+      self.gen_impl_wire_assigns( target, submodule, o )
+      self.gen_module_insts( submodule, o )
+
+    # Assignment Statments
+    if target._ports: self.gen_output_assigns( target, o )
 
     ## Logic
     #self.gen_ast( target, o )
-
-    # Assignment Statments
-    if target._submodules: self.gen_impl_wire_assigns( target._submodules, o )
-    if target._ports:      self.gen_output_assigns( target._ports, o )
 
     # End module
     print >> o, 'endmodule\n'
@@ -102,6 +103,28 @@ class VerilogTranslationTool(object):
     p = ports[-1]
     print >> o, '  %s' % self.port_to_str(p)
     print >> o, ');'
+
+  #-----------------------------------------------------------------------
+  # Make Signal String
+  #-----------------------------------------------------------------------
+
+  def mk_signal_str(self, node, addr, context):
+    """Generate Verilog source for a wire declaration."""
+    # If the node's parent module isn't the same as the current module
+    # we need to prefix the signal name with the module name
+    if node.parent != context:
+      prefix = "{}$".format( node.parent.name )
+    else:
+      prefix = ""
+
+    if isinstance( addr, slice ):
+      suffix = "[{}:{}]".format( addr.stop - 1, addr.start )
+    elif isinstance( addr, int ):
+      suffix = "[{}]".format( addr )
+    else:
+      suffix = ""
+
+    return prefix + node.name + suffix
 
   #-----------------------------------------------------------------------
   # Port To String
@@ -148,8 +171,9 @@ class VerilogTranslationTool(object):
     ports.
     """
     for m in target._submodules:
+      print >> o, '\n  // {} wires'.format( m.name )
       for port in m._ports:
-        wire_name = self.mk_impl_wire_name( m.name, port.verilog_name() )
+        wire_name = self.mk_impl_wire_name( m.name, port.name )
         # TODO: remove ImplicitWire?
         wire = ImplicitWire(wire_name, port.width)
         print >> o, '  %s' % self.wire_to_str(wire)
@@ -158,15 +182,14 @@ class VerilogTranslationTool(object):
   # Generate Module Instances
   #-----------------------------------------------------------------------
 
-  def gen_module_insts(self, submodules, o):
+  def gen_module_insts(self, submodule, o):
     """Generate Verilog source for instantiated submodules."""
-    for s in submodules:
-      print >> o, ''
-      print >> o, '  %s %s' % (s.class_name, s.name)
-      # TODO: add params
-      print >> o, '  ('
-      self.gen_port_insts(s._ports, o)
-      print >> o, '  );'
+    print >> o, ''
+    print >> o, '  %s %s' % (submodule.class_name, submodule.name)
+    # TODO: add params
+    print >> o, '  ('
+    self.gen_port_insts(submodule._ports, o)
+    print >> o, '  );'
 
   #-----------------------------------------------------------------------
   # Generate Port Instances
@@ -187,38 +210,32 @@ class VerilogTranslationTool(object):
   # Generate Assignments to Implicit Wires
   #-----------------------------------------------------------------------
 
-  def gen_impl_wire_assigns(self, submodules, o):
-    for m in submodules:
-      print >> o, ''
-      input_ports  = [x for x in m._ports if isinstance(x,InPort)]
-      output_ports = [x for x in m._ports if isinstance(x,OutPort)]
-      for port in input_ports:
-        for connect in port.ext_connections:
-          left  = self.mk_impl_wire_name( m.name, connect.get_verilog_name( port ) )
-          right = connect.other.verilog_name()
-          print  >> o, "  assign {0} = {1};".format(left, right)
-      for port in output_ports:
-        for connect in port.ext_connections:
-          left  = connect.other.verilog_name()
-          right = self.mk_impl_wire_name( m.name, connect.get_verilog_name( port ) )
-          print  >> o, "  assign {0} = {1};".format(left, right)
+  def gen_impl_wire_assigns(self, m, submodule, o):
+    print >> o, '\n  // {} input assignments'.format( submodule.name )
+    input_ports  = [x for x in submodule._ports if isinstance(x,InPort)]
+    for port in input_ports:
+      for edge in port.ext_connections:
+        left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
+        x = (submodule.parent != edge.src_node.parent)
+        right = self.mk_signal_str( edge.src_node,  edge.src_slice,  m )
+        print  >> o, "  assign {0} = {1};".format(left, right)
 
   #-----------------------------------------------------------------------
   # Generate Assignments to Output Ports
   #-----------------------------------------------------------------------
 
-  def gen_output_assigns(self, ports, o):
+  def gen_output_assigns(self, m, o):
     """Generate Verilog source for assignment statements."""
+    print >> o, '\n  // output assignments'
+    ports = m._ports
     output_ports = [x for x in ports if isinstance(x,OutPort)]
     for port in output_ports:
       # Note: multiple assigns should only occur on slicing
-      output_assigns = port.int_connections
-      for assign in output_assigns:
-        # Don't connect to submodules, handled by gen_impl_wire_assigns
-        if assign.other.parent == port.parent:
-          left  = assign.get_verilog_name( port )
-          right = assign.other.verilog_name()
-          print  >> o, "  assign {0} = {1};".format(left, right)
+      for edge in port.int_connections:
+        left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
+        right = self.mk_signal_str( edge.src_node,  edge.src_slice,  m )
+        print  >> o, "  assign {0} = {1};".format(left, right)
+    print >> o, ''
 
 
 

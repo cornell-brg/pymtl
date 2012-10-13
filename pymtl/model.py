@@ -30,6 +30,7 @@ class Port(object):
          declaration. (TODO: remove. Only used by From.)
     """
     self.node   = Node(width)
+    self.addr   = None
     self.type   = type  # TODO: remove me
     self.width  = width
     self.name   = name
@@ -53,14 +54,9 @@ class Port(object):
   def connect(self, target):
     """Creates a connection with a Port or Slice."""
     # Port-to-Port connections, used for translation
-    # TODO: use ConnectionSlice or Connection
-    # TODO: replace
-    if isinstance( target, ConnectionSlice ):
-      self.connections               += [ Connection( target ) ]
-      target.parent_port.connections += [ Connection( self, target.addr )   ]
-    elif isinstance( target, Port ):
-      self.connections   += [ Connection( target ) ]
-      target.connections += [ Connection( self )   ]
+    connection_edge = ConnectionEdge( self, target )
+    self.connections   += [ connection_edge ]
+    target.connections += [ connection_edge ]
 
     # Node-to-Node connections, used for simulation
     self.node.connect( target.node )
@@ -223,7 +219,7 @@ class ImplicitWire(object):
     return self.name
 
 #-------------------------------------------------------------------------
-# Connection
+# ConnectionSlice
 #-------------------------------------------------------------------------
 
 class ConnectionSlice(object):
@@ -242,14 +238,22 @@ class ConnectionSlice(object):
       self.vlog_suffix = self.suffix
 
   def connect(self, target):
-    if isinstance( target, ConnectionSlice ):
-      self.parent_port.connections   += [ Connection( target, self.addr    ) ]
-      target.parent_port.connections += [ Connection( self,   target.addr  ) ]
+    connection_edge = ConnectionEdge( self, target )
+    self.parent_port.connections   += [ connection_edge ]
+    target.parent_port.connections += [ connection_edge ]
     self.node.connect( target.node )
 
+  # TODO: rename parent_module
   @property
   def parent(self):
     return self.parent_port.parent
+
+  @property
+  def connections(self):
+    return self.parent_port.connections
+  @connections.setter
+  def connections(self, value):
+    self.parent_port.connections = value
 
   @property
   def name(self):
@@ -270,37 +274,46 @@ class ConnectionSlice(object):
   def value(self, value):
     self.node.value = value
 
+#-------------------------------------------------------------------------
+# ConnectionEdge
+#-------------------------------------------------------------------------
 
-class Connection(object):
-  def __init__( self, other, addr=None ):
+class ConnectionEdge(object):
+  def __init__( self, src, dest ):
     """Construct a Connection object. TODO: describe"""
-    self.other  = other
-    self.addr   = addr
-    if isinstance(addr, slice):
-      assert not addr.step  # We dont support steps!
-      self.suffix      = '[{0}:{1}]'.format(self.addr.start, self.addr.stop)
-      self.vlog_suffix = '[{0}:{1}]'.format(self.addr.stop-1, self.addr.start)
-    elif isinstance(addr, int):
-      self.suffix      = '[{0}]'.format(self.addr)
-      self.vlog_suffix = self.suffix
+    # Source Node
+    if isinstance( src, ConnectionSlice ):
+      self.src_node = src.parent_port
     else:
-      self.suffix      = ''
-      self.vlog_suffix = ''
+      self.src_node = src
+    self.src_slice  = src.addr
 
-  # TODO: FIX this
-  def get_name( self, port ):
-    return port.name + self.suffix
+    # Destination Node
+    if isinstance( dest, ConnectionSlice ):
+      self.dest_node = dest.parent_port
+    else:
+      self.dest_node = dest
+    self.dest_slice = dest.addr
 
-  def get_verilog_name( self, port ):
-    return port.name + self.vlog_suffix
+  def is_internal( self, node ):
+    assert self.src_node == node or self.dest_node == node
+    # Determine which node is the other in the connection
+    if self.src_node == node:
+      other = self.dest_node
+    else:
+      other = self.src_node
+    # Check if the connection is an internal connection for the node
+    return ((self.src_node.parent == self.dest_node.parent) or
+            (other.parent in node.parent._submodules))
 
-  def test( self ):
-    return (self.other.name, self.addr, self.suffix)
-
+  def swap_direction( self ):
+    self.src_node,  self.dest_node  = self.dest_node,  self.src_node
+    self.src_slice, self.dest_slice = self.dest_slice, self.src_slice
 
 #-------------------------------------------------------------------------
 # Model
 #-------------------------------------------------------------------------
+
 # TODO: where to put exceptions?
 class LogicSyntaxError(Exception):
   pass
@@ -316,6 +329,10 @@ class Model(object):
   Any user implemented model that wishes to make use of the various MTL tools
   should subclass this.
   """
+
+  #-----------------------------------------------------------------------
+  # Recurse Elaborate
+  #-----------------------------------------------------------------------
 
   def elaborate(self):
     self.model_classes = set()
@@ -340,6 +357,10 @@ class Model(object):
           elif isinstance( ptr, (Port,Wire) ) and a[1] == False:
             print "WARNING: reading from Port without .value.",
             print "Module: {0}  Port: {1}".format( c.class_name, ptr.name)
+
+  #-----------------------------------------------------------------------
+  # Recurse Elaborate
+  #-----------------------------------------------------------------------
 
   def recurse_elaborate(self, target, iname):
     """Elaborate a MTL model (construct hierarchy, name modules, etc.).
@@ -368,6 +389,10 @@ class Model(object):
     for name, obj in target.__dict__.items():
       if not name.startswith('_'):
         self.check_type(target, name, obj)
+
+  #-----------------------------------------------------------------------
+  # Check Type
+  #-----------------------------------------------------------------------
 
   def check_type(self, target, name, obj):
     """Utility method to specialize elaboration actions based on object type."""
@@ -409,8 +434,16 @@ class Model(object):
         item_name = "%s_%d" % (name, i)
         self.check_type(target, item_name, item)
 
+  #-----------------------------------------------------------------------
+  # Recurse Connections
+  #-----------------------------------------------------------------------
+
   def recurse_connections(self):
+
     for port in self._ports:
+
+      # ValueGraph Connections
+
       for c in port.node.connections:
         # If we're connected to a Constant, propagate it's value to all
         # indirectly connected Ports and Wires
@@ -422,17 +455,64 @@ class Model(object):
           c.value = c.connections[0].value
         # Otherwise, determine if the connected Wire/Port was connected in our
         # definition or during instantiation.  Used during VerilogTranslation.
+
+      # ConnectionGraph Connections
+
       for c in port.connections:
-        if c.other.parent == port.parent or c.other.parent in self._submodules:
+        # Set the directionality of this connection
+        self.set_edge_direction( c )
+        # Classify as either an internal or external connection
+        if c.is_internal( port ):
           port.int_connections += [c]
         else:
           port.ext_connections += [c]
+
+    # Recursively enter submodules
+
     for submodule in self._submodules:
       submodule.recurse_connections()
+
+  #-----------------------------------------------------------------------
+  # Reverse Edge
+  #-----------------------------------------------------------------------
+
+  def set_edge_direction(self, edge):
+    a = edge.src_node
+    b = edge.dest_node
+
+    # Model connecting own InPort to own OutPort
+    if   ( a.parent == b.parent and
+           isinstance( a, OutPort ) and isinstance( b, InPort  )):
+      edge.swap_direction()
+
+    # Model InPort connected to InPort of a submodule
+    elif ( a.parent in b.parent._submodules and
+           isinstance( a, InPort  ) and isinstance( b, InPort  )):
+      edge.swap_direction()
+
+    # Model OutPort connected to OutPort of a submodule
+    elif ( b.parent in a.parent._submodules and
+           isinstance( a, OutPort ) and isinstance( b, OutPort )):
+      edge.swap_direction()
+
+    # Chaining submodules together (OutPort of one to InPort of another)
+    elif ( a.parent != b.parent and a.parent.parent == b.parent.parent and
+           isinstance( a, InPort  ) and isinstance( b, OutPort )):
+      edge.swap_direction()
+
+    # TODO: add wires
+
+
+  #-----------------------------------------------------------------------
+  # Is Elaborated
+  #-----------------------------------------------------------------------
 
   def is_elaborated(self):
     return hasattr(self, 'class_name')
 
+  #-----------------------------------------------------------------------
+  # Line Trace
+  #-----------------------------------------------------------------------
   # Having a default line trace makes it easier to just always enable
   # line tracing in the test harness. -cbatten
   def line_trace(self):
