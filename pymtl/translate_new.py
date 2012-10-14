@@ -110,6 +110,10 @@ class VerilogTranslationTool(object):
 
   def mk_signal_str(self, node, addr, context):
     """Generate Verilog source for a wire declaration."""
+    # Special case constants
+    if isinstance( node, Constant ):
+      return node.name
+
     # If the node's parent module isn't the same as the current module
     # we need to prefix the signal name with the module name
     if node.parent != context:

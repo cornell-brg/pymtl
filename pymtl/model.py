@@ -177,6 +177,7 @@ class Constant(object):
     value: value of the constant.
     width: bitwidth of the constant.
     """
+    self.addr   = None
     self._value = Bits( width, value )
     self.width  = width
     self.type   = 'constant'
@@ -240,7 +241,9 @@ class ConnectionSlice(object):
   def connect(self, target):
     connection_edge = ConnectionEdge( self, target )
     self.parent_port.connections   += [ connection_edge ]
-    target.parent_port.connections += [ connection_edge ]
+    # TODO: figure out a way to get rid of this special case
+    if not isinstance( target, Constant ):
+      target.parent_port.connections += [ connection_edge ]
     self.node.connect( target.node )
 
   # TODO: rename parent_module
@@ -297,11 +300,17 @@ class ConnectionEdge(object):
 
   def is_internal( self, node ):
     assert self.src_node == node or self.dest_node == node
+
+    # InPort connections to Constants are external, else internal
+    if isinstance(self.src_node, Constant):
+      return not isinstance(self.dest_node, InPort)
+
     # Determine which node is the other in the connection
     if self.src_node == node:
       other = self.dest_node
     else:
       other = self.src_node
+
     # Check if the connection is an internal connection for the node
     return ((self.src_node.parent == self.dest_node.parent) or
             (other.parent in node.parent._submodules))
@@ -480,8 +489,12 @@ class Model(object):
     a = edge.src_node
     b = edge.dest_node
 
+    # Constants should always be the source node
+    if isinstance( b, Constant ):
+      edge.swap_direction()
+
     # Model connecting own InPort to own OutPort
-    if   ( a.parent == b.parent and
+    elif ( a.parent == b.parent and
            isinstance( a, OutPort ) and isinstance( b, InPort  )):
       edge.swap_direction()
 

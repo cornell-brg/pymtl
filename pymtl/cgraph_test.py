@@ -212,3 +212,53 @@ class In_subSL_subSL_Out(Model):
 def test_In_subSL_subSL_Out():
   run_translate_test( In_subSL_subSL_Out )
 
+#-------------------------------------------------------------------------
+# Submodel Port to Constant
+#-------------------------------------------------------------------------
+
+class In_subC_Out(Model):
+  def __init__(self):
+    self.in_  = InPort ( 1 )
+    self.out  = OutPort( 4 )
+    self.sub0 = SubMod (   )
+
+    connect( self.sub0.in_,      1              )
+    connect( self.sub0.out,      self.out       )
+
+def test_In_subC_Out():
+  run_translate_test( In_subC_Out )
+
+#-------------------------------------------------------------------------
+# Submodel Slice to Constant
+#-------------------------------------------------------------------------
+
+class In_subSLC_Out(Model):
+  def __init__(self):
+    self.in_  = InPort ( 3 )
+    self.out  = OutPort( 4 )
+    self.sub0 = SubMod (   )
+
+    connect( self.sub0.in_[0:3], self.in_       )
+    connect( self.sub0.in_[3],   1              )
+    connect( self.sub0.out,      self.out       )
+
+def test_In_subSLC_Out():
+  run_translate_test( In_subSLC_Out )
+
+#-------------------------------------------------------------------------
+# OutPort to Constant
+#-------------------------------------------------------------------------
+
+class In_OutC(Model):
+  def __init__(self):
+    self.in_   = InPort ( 2 )
+    self.out1  = OutPort( 4 )
+    self.out2  = OutPort( 4 )
+
+    connect( self.out1[0:2],   self.in_   )
+    connect( self.out1[2],     1          )
+    connect( self.out1[3],     1          )
+    connect( self.out2,        8          )
+
+def test_In_OutC():
+  run_translate_test( In_OutC )
