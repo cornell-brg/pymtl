@@ -3,7 +3,7 @@
 #=========================================================================
 
 from model import *
-from translate_new import *
+from translate import *
 
 import os
 

@@ -5,7 +5,6 @@
 
 from model import *
 import sys
-import collections
 
 import inspect
 from   translate_logic import PyToVerilogVisitor
@@ -15,86 +14,46 @@ from   translate_logic import FindRegistersVisitor
 # Verilog Translation Tool
 #-------------------------------------------------------------------------
 
-class VerilogTranslationTool(object):
+class ModuleToVerilog(object):
 
   #-----------------------------------------------------------------------
   # Constructor
   #-----------------------------------------------------------------------
 
+  # TODO: move into translate.py?
+
   def __init__(self, model, o=sys.stdout):
-    """Construct a Verilog translator from a MTL model.
-
-    Parameters
-    ----------
-    model: an instantiated MTL model (Model).
-    """
-    # TODO: call elaborate on model?
-    if not model.is_elaborated():
-      msg  = "cannot initialize {0} tool.\n".format(self.__class__.__name__)
-      msg += "Provided model has not been elaborated yet!!!"
-      raise Exception(msg)
-
-    self.to_translate = collections.OrderedDict()
-
-    # Take either a string or a output stream
-    if isinstance(o, str):
-      o = open(o, 'w')
-
-    # Find all the modules we need to translate in the hierarchy
-    # TODO: use ordered list?
-    self.collect_models( model )
-
-    # Translate each Module Class
-    for class_name, class_inst in self.to_translate.items():
-      self.module_to_verilog( o, class_inst )
-
-  #-----------------------------------------------------------------------
-  # Collect Modules
-  #-----------------------------------------------------------------------
-
-  def collect_models(self, target):
-    """Create an ordered dict of all models we need to translate."""
-    if not target.class_name in self.to_translate:
-      self.to_translate[ target.class_name ] = target
-      for m in target._submodules:
-        self.collect_models( m )
-
-  #-----------------------------------------------------------------------
-  # Module to Verilog
-  #-----------------------------------------------------------------------
-
-  def module_to_verilog(self, o, target=None):
     """Generates Verilog source from a MTL model."""
 
     # Module declaration
     print >> o, '//-{}'.format( 71*'-' )
-    print >> o, '// {}'.format( target.class_name )
+    print >> o, '// {}'.format( model.class_name )
     print >> o, '//-{}'.format( 71*'-' )
-    print >> o, 'module %s' % target.class_name
+    print >> o, 'module %s' % model.class_name
 
     # Infer registers
-    self.infer_regs( target, o )
+    self.infer_regs( model, o )
 
     # Declare Ports
-    if target._ports: self.gen_port_decls( target._ports, o )
+    if model._ports: self.gen_port_decls( model._ports, o )
 
     # Declare Localparams
     # TODO: remove localparams and just have wires instead?
-    if target._localparams:
-      self.gen_localparam_decls( target._localparams, o )
+    if model._localparams:
+      self.gen_localparam_decls( model._localparams, o )
 
     # Wires & Instantiations
-    self.infer_implicit_wires( target, o )
-    #if target._wires: self.gen_wire_decls( target._wires, o )
-    for submodule in target._submodules:
-      self.gen_impl_wire_assigns( target, submodule, o )
+    self.infer_implicit_wires( model, o )
+    #if model._wires: self.gen_wire_decls( model._wires, o )
+    for submodule in model._submodules:
+      self.gen_impl_wire_assigns( model, submodule, o )
       self.gen_module_insts( submodule, o )
 
     # Assignment Statments
-    if target._ports: self.gen_output_assigns( target, o )
+    if model._ports: self.gen_output_assigns( model, o )
 
     # Logic
-    self.gen_logic_blocks( target, o )
+    self.gen_logic_blocks( model, o )
 
     # End module
     print >> o, 'endmodule\n'

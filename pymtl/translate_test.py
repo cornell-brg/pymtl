@@ -3,7 +3,7 @@ import sys
 import os
 
 from test_examples import *
-from translate_new import *
+from translate     import *
 
 import debug_utils
 debug_verbose = False
