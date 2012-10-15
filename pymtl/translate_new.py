@@ -7,6 +7,10 @@ from model import *
 import sys
 import collections
 
+import inspect
+from   translate_logic import PyToVerilogVisitor
+from   translate_logic import FindRegistersVisitor
+
 #------------------------------------------------------------------------
 # Verilog Translation Tool
 #-------------------------------------------------------------------------
@@ -49,7 +53,7 @@ class VerilogTranslationTool(object):
   #-----------------------------------------------------------------------
 
   def collect_models(self, target):
-    """Create an ordered set of all models we need to translate."""
+    """Create an ordered dict of all models we need to translate."""
     if not target.class_name in self.to_translate:
       self.to_translate[ target.class_name ] = target
       for m in target._submodules:
@@ -63,19 +67,24 @@ class VerilogTranslationTool(object):
     """Generates Verilog source from a MTL model."""
 
     # Module declaration
-    print >> o, '\nmodule %s' % target.class_name
+    print >> o, '//-{}'.format( 71*'-' )
+    print >> o, '// {}'.format( target.class_name )
+    print >> o, '//-{}'.format( 71*'-' )
+    print >> o, 'module %s' % target.class_name
 
-    # Find registers
-    #self.get_regs( target, o )
+    # Infer registers
+    self.infer_regs( target, o )
 
     # Declare Ports
     if target._ports: self.gen_port_decls( target._ports, o )
 
-    ## Declare Localparams
-    #if target._localparams: self.gen_localparam_decls( target._localparams, o )
+    # Declare Localparams
+    # TODO: remove localparams and just have wires instead?
+    if target._localparams:
+      self.gen_localparam_decls( target._localparams, o )
 
     # Wires & Instantiations
-    self.infer_impl_wires( target, o )
+    self.infer_implicit_wires( target, o )
     #if target._wires: self.gen_wire_decls( target._wires, o )
     for submodule in target._submodules:
       self.gen_impl_wire_assigns( target, submodule, o )
@@ -84,8 +93,8 @@ class VerilogTranslationTool(object):
     # Assignment Statments
     if target._ports: self.gen_output_assigns( target, o )
 
-    ## Logic
-    #self.gen_ast( target, o )
+    # Logic
+    self.gen_logic_blocks( target, o )
 
     # End module
     print >> o, 'endmodule\n'
@@ -164,7 +173,7 @@ class VerilogTranslationTool(object):
   # Infer Implied Wires
   #-----------------------------------------------------------------------
 
-  def infer_impl_wires(self, target, o):
+  def infer_implicit_wires(self, target, o):
     """Creates a list of implied wire objects from connections in the MTL model.
 
     The MTL modeling framework allows you to make certain connections between
@@ -181,6 +190,17 @@ class VerilogTranslationTool(object):
         # TODO: remove ImplicitWire?
         wire = ImplicitWire(wire_name, port.width)
         print >> o, '  %s' % self.wire_to_str(wire)
+
+  #-----------------------------------------------------------------------
+  # Generate Local Parameter Declarations
+  #-----------------------------------------------------------------------
+
+  def gen_localparam_decls(self, params, o):
+    """Generate Verilog source for parameter declarations."""
+    print >> o, '\n  // localparams'
+    for name, val in params:
+      print >> o, '  localparam {0} = {1};'.format(name, val)
+    print >> o
 
   #-----------------------------------------------------------------------
   # Generate Module Instances
@@ -241,5 +261,35 @@ class VerilogTranslationTool(object):
         print  >> o, "  assign {0} = {1};".format(left, right)
     print >> o, ''
 
+  #-----------------------------------------------------------------------
+  # Infer Registers
+  #-----------------------------------------------------------------------
 
+  def infer_regs(self, model, o):
+    """Detect which wires/ports should be Verilog reg type."""
+    reg_stores = set()
+
+    model_class = model.__class__
+    src = inspect.getsource( model_class )
+    tree = ast.parse( src )
+    FindRegistersVisitor( reg_stores ).visit(tree)
+    for reg_name in reg_stores:
+      port_ptr = model.__getattribute__(reg_name)
+      port_ptr.is_reg = True
+
+  #-----------------------------------------------------------------------
+  # Generate Combinational and Sequential Logic Blocks
+  #-----------------------------------------------------------------------
+
+  def gen_logic_blocks(self, model, o):
+    """Generate Verilog source from decorated python functions.
+
+    Currently supports the @combinational and @posedge_clk decorators.
+    """
+    model_class = model.__class__
+    src = inspect.getsource( model_class )
+    tree = ast.parse( src )
+    #import debug_utils
+    #debug_utils.print_ast( tree )
+    PyToVerilogVisitor( o ).visit(tree)
 

@@ -3,13 +3,13 @@ import sys
 import os
 
 from test_examples import *
-from translate import *
+from translate_new import *
 
 import debug_utils
 debug_verbose = False
 
 import pytest
-@pytest.mark.xfail
+
 class TestSlicesVerilog(unittest.TestCase):
 
   def setUp(self):
@@ -21,8 +21,8 @@ class TestSlicesVerilog(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = VerilogTranslationTool(model)
-    code.translate( self.fd )
+    code = VerilogTranslationTool(model, self.fd)
+    #code.translate( self.fd )
     self.fd.close()
 
   def test_rotator(self):
@@ -65,7 +65,6 @@ class TestSlicesVerilog(unittest.TestCase):
   #  os.remove(self.temp_file)
 
 
-@pytest.mark.xfail
 class TestCombinationalVerilog(unittest.TestCase):
 
   def setUp(self):
@@ -77,8 +76,8 @@ class TestCombinationalVerilog(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = VerilogTranslationTool(model)
-    code.translate( self.fd )
+    code = VerilogTranslationTool( model, self.fd )
+    #code.translate( self.fd )
     self.fd.close()
 
   def test_onewire(self):
@@ -109,7 +108,6 @@ class TestCombinationalVerilog(unittest.TestCase):
   #  os.remove(self.temp_file)
 
 
-@pytest.mark.xfail
 class TestPosedgeClkVerilog(unittest.TestCase):
 
   def setUp(self):
@@ -121,8 +119,8 @@ class TestPosedgeClkVerilog(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = VerilogTranslationTool(model)
-    code.translate( self.fd )
+    code = VerilogTranslationTool( model, self.fd )
+    #code.translate( self.fd )
     self.fd.close()
 
   def test_register(self):
@@ -170,7 +168,6 @@ class TestPosedgeClkVerilog(unittest.TestCase):
   #def tearDown(self):
   #  os.remove(self.temp_file)
 
-@pytest.mark.xfail
 class TestCombAndPosedgeVerilog(unittest.TestCase):
 
   def setUp(self):
@@ -183,7 +180,8 @@ class TestCombAndPosedgeVerilog(unittest.TestCase):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
     code = VerilogTranslationTool(model)
-    code.translate( self.fd )
+    code = VerilogTranslationTool( model, self.fd )
+    #code.translate( self.fd )
     self.fd.close()
 
   def test_incrementer(self):
@@ -322,7 +320,6 @@ class FixCompare(Model):
       self.count.next = self.count.value + 1
 
 
-@pytest.mark.xfail
 class TestDumb(unittest.TestCase):
 
   def setUp(self):
@@ -334,8 +331,8 @@ class TestDumb(unittest.TestCase):
   def translate(self, model):
     model.elaborate()
     if debug_verbose: debug_utils.port_walk(model)
-    code = VerilogTranslationTool(model)
-    code.translate( self.fd )
+    code = VerilogTranslationTool( model, self.fd )
+    #code.translate( self.fd )
     self.fd.close()
 
   def test_dumb_a(self):
