@@ -51,3 +51,32 @@ class VerilogTranslationTool(object):
       self.to_translate[ target.class_name ] = target
       for m in target._submodules:
         self.collect_models( m )
+
+#=========================================================================
+# Main
+#=========================================================================
+
+def main():
+
+  # Get the model we want to translate from the commandline
+  model_name = sys.argv[1]
+
+  # Use some trickery to import the module containing the model
+  __import__( model_name )
+  imported_module = sys.modules[ model_name ]
+
+  # Get the model class from the module, instantiate and elaborate it
+  model_class = imported_module.__dict__[ model_name ]
+  model_inst = model_class()
+  model_inst.elaborate()
+
+  # Translate
+  # TODO: add commandline option for output file name
+  VerilogTranslationTool( model_inst )
+
+#-------------------------------------------------------------------------
+# Main Check
+#-------------------------------------------------------------------------
+
+if __name__ == "__main__":
+  main()
