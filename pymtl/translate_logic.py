@@ -28,7 +28,8 @@ class PyToVerilogVisitor(ast.NodeVisitor):
       ast.Mod      : '%',
       ast.Pow      : '**',
       ast.LShift   : '<<',
-      ast.RShift   : '>>>',
+      #ast.RShift   : '>>>',
+      ast.RShift   : '>>',
       ast.BitOr    : '|',
       ast.BitAnd   : '&',
       ast.BitXor   : '^',
@@ -255,6 +256,16 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     if self.write_names:
       print >> self.o, node.n,
 
+  #-----------------------------------------------------------------------
+  # Asserts
+  #-----------------------------------------------------------------------
+
+  def visit_Assert(self, node):
+    """Visit all asserts."""
+    pass
+    #print >> self.o, "  // assert ",
+    #self.visit( node.test )
+
 #=========================================================================
 # Python to Verilog Logic Translation
 #=========================================================================
@@ -317,9 +328,14 @@ def get_target_name(node):
 
   # Is this an attribute? Follow it until we find a Name.
   name = []
-  while isinstance(node, _ast.Attribute):
-    name += [node.attr]
-    node = node.value
+  while isinstance(node, (_ast.Attribute, _ast.Subscript)):
+    if   isinstance(node, _ast.Attribute):
+      name += [node.attr]
+      node = node.value
+    elif isinstance(node, _ast.Subscript):
+      # TODO: assumes this is an integer, not a range
+      name += [ node.slice.value.n ]
+      node = node.value
 
   # We've found the Name.
   assert isinstance(node, _ast.Name)
@@ -327,7 +343,15 @@ def get_target_name(node):
 
   # If the target does not access .value or .next, tell the code to ignore it.
   if name[0] in ['value', 'next']:
-    return '.'.join( name[::-1][1:-1] ), True
+    # TODO: very very hacky!!!! Fix me!
+    try:
+      return '.'.join( name[::-1][1:-1] ), True
+    except TypeError:
+      s = ''
+      for x in name[::-1][1:-1]:
+        if isinstance(x, str):  s += '.' + x
+        else:                   s += '_' + str(x)
+      return s[1:], True
   else:
     return name[0], False
 

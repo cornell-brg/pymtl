@@ -27,7 +27,7 @@ class ConnectionGraphToVerilog(object):
     print >> o, '//-{}'.format( 71*'-' )
     print >> o, '// {}'.format( model.class_name )
     print >> o, '//-{}'.format( 71*'-' )
-    print >> o, 'module {}'.format( model.class_name )
+    print >> o, '\nmodule {}'.format( model.class_name )
 
     # Infer registers
     self.infer_regs( model, o )
@@ -230,8 +230,11 @@ class ConnectionGraphToVerilog(object):
     tree = ast.parse( src )
     FindRegistersVisitor( reg_stores ).visit(tree)
     for reg_name in reg_stores:
-      port_ptr = model.__getattribute__(reg_name)
-      port_ptr.is_reg = True
+      # TODO: temporary, this check ensures we dont try to set is_reg
+      # for ports in submodules
+      if not '.' in reg_name:
+        port_ptr = model.__getattribute__(reg_name)
+        port_ptr.is_reg = True
 
   #-----------------------------------------------------------------------
   # Generate Combinational and Sequential Logic Blocks
