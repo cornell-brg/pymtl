@@ -6,7 +6,7 @@
 import sys
 import collections
 
-from translate_cgraph import ModuleToVerilog
+from translate_cgraph import ConnectionGraphToVerilog
 
 #------------------------------------------------------------------------
 # Verilog Translation Tool
@@ -39,7 +39,7 @@ class VerilogTranslationTool(object):
 
     # Translate each Module Class
     for class_name, class_inst in self.to_translate.items():
-      ModuleToVerilog( class_inst, o )
+      ConnectionGraphToVerilog( class_inst, o )
 
   #-----------------------------------------------------------------------
   # Collect Modules

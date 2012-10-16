@@ -14,13 +14,11 @@ from   translate_logic import FindRegistersVisitor
 # Verilog Translation Tool
 #-------------------------------------------------------------------------
 
-class ModuleToVerilog(object):
+class ConnectionGraphToVerilog(object):
 
   #-----------------------------------------------------------------------
   # Constructor
   #-----------------------------------------------------------------------
-
-  # TODO: move into translate.py?
 
   def __init__(self, model, o=sys.stdout):
     """Generates Verilog source from a MTL model."""
@@ -29,7 +27,7 @@ class ModuleToVerilog(object):
     print >> o, '//-{}'.format( 71*'-' )
     print >> o, '// {}'.format( model.class_name )
     print >> o, '//-{}'.format( 71*'-' )
-    print >> o, 'module %s' % model.class_name
+    print >> o, 'module {}'.format( model.class_name )
 
     # Infer registers
     self.infer_regs( model, o )
@@ -67,9 +65,9 @@ class ModuleToVerilog(object):
     """Generate Verilog source for port declarations."""
     print >> o, '('
     for p in ports[:-1]:
-      print >> o , '  %s,' % self.port_to_str(p)
+      print >> o , '  {},'.format( self.port_to_str(p) )
     p = ports[-1]
-    print >> o, '  %s' % self.port_to_str(p)
+    print >> o, '  {}'.format( self.port_to_str(p) )
     print >> o, ');'
 
   #-----------------------------------------------------------------------
@@ -106,9 +104,10 @@ class ModuleToVerilog(object):
     """Generate Verilog source for a port declaration."""
     reg = 'reg' if p.is_reg else ''
     if p.width == 1:
-      return "%s %s %s" % (p.type, reg, p.verilog_name())
+      return "{} {} {}".format(p.type, reg, p.verilog_name())
     else :
-      return "%s %s [%d:0] %s" % (p.type, reg, p.width-1, p.verilog_name())
+      return "{} {} [{}:0] {}".format(p.type, reg,
+                                      p.width-1, p.verilog_name())
 
   #-----------------------------------------------------------------------
   # Wire To String
@@ -117,9 +116,9 @@ class ModuleToVerilog(object):
   def wire_to_str(self, w):
     """Generate Verilog source for a wire declaration."""
     if w.width == 1:
-      return "wire %s;" % (w.verilog_name())
+      return "wire {};".format( w.verilog_name() )
     else :
-      return "wire [%d:0] %s;" % (w.width-1, w.verilog_name())
+      return "wire [{}:0] {};".format( w.width-1, w.verilog_name() )
 
   #-----------------------------------------------------------------------
   # Implied Wire Name
@@ -148,7 +147,7 @@ class ModuleToVerilog(object):
         wire_name = self.mk_impl_wire_name( m.name, port.name )
         # TODO: remove ImplicitWire?
         wire = ImplicitWire(wire_name, port.width)
-        print >> o, '  %s' % self.wire_to_str(wire)
+        print >> o, '  {}'.format( self.wire_to_str(wire) )
 
   #-----------------------------------------------------------------------
   # Generate Local Parameter Declarations
@@ -168,7 +167,7 @@ class ModuleToVerilog(object):
   def gen_module_insts(self, submodule, o):
     """Generate Verilog source for instantiated submodules."""
     print >> o, ''
-    print >> o, '  %s %s' % (submodule.class_name, submodule.name)
+    print >> o, '  {} {}'.format( submodule.class_name, submodule.name )
     # TODO: add params
     print >> o, '  ('
     self.gen_port_insts(submodule._ports, o)
@@ -181,13 +180,11 @@ class ModuleToVerilog(object):
   def gen_port_insts(self, ports, o):
     """Generate Verilog source for submodule port instances."""
     for p in ports[:-1]:
-      #name = p.inst_connection.verilog_name() if p.inst_connection else ' '
       wire_name = self.mk_impl_wire_name( p.parent.name, p.verilog_name() )
-      print >> o , '    .%s (%s),' % (p.verilog_name(), wire_name)
+      print >> o , '    .{} ({}),'.format( p.verilog_name(), wire_name )
     p = ports[-1]
-    #name = p.inst_connection.verilog_name() if p.inst_connection else ' '
     wire_name = self.mk_impl_wire_name( p.parent.name, p.verilog_name() )
-    print >> o, '    .%s (%s)' % (p.verilog_name(), wire_name)
+    print >> o, '    .{} ({})'.format( p.verilog_name(), wire_name )
 
   #-----------------------------------------------------------------------
   # Generate Assignments to Implicit Wires
