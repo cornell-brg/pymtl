@@ -33,22 +33,22 @@ class ConnectionGraphToVerilog(object):
     self.infer_regs( model, o )
 
     # Declare Ports
-    if model._ports: self.gen_port_decls( model._ports, o )
+    if model.get_ports(): self.gen_port_decls( model.get_ports(), o )
 
     # Declare Localparams
     # TODO: remove localparams and just have wires instead?
-    if model._localparams:
-      self.gen_localparam_decls( model._localparams, o )
+    if model.get_localparams():
+      self.gen_localparam_decls( model.get_localparams(), o )
 
     # Wires & Instantiations
     self.infer_implicit_wires( model, o )
     #if model._wires: self.gen_wire_decls( model._wires, o )
-    for submodule in model._submodules:
+    for submodule in model.get_submodules():
       self.gen_impl_wire_assigns( model, submodule, o )
       self.gen_module_insts( submodule, o )
 
     # Assignment Statments
-    if model._ports: self.gen_output_assigns( model, o )
+    if model.get_ports(): self.gen_output_assigns( model, o )
 
     # Logic
     self.gen_logic_blocks( model, o )
@@ -141,9 +141,9 @@ class ConnectionGraphToVerilog(object):
     from them, and then add them to the connectivity lists of the necessary
     ports.
     """
-    for m in target._submodules:
+    for m in target.get_submodules():
       print >> o, '\n  // {} wires'.format( m.name )
-      for port in m._ports:
+      for port in m.get_ports():
         wire_name = self.mk_impl_wire_name( m.name, port.name )
         # TODO: remove ImplicitWire?
         wire = ImplicitWire(wire_name, port.width)
@@ -170,7 +170,7 @@ class ConnectionGraphToVerilog(object):
     print >> o, '  {} {}'.format( submodule.class_name, submodule.name )
     # TODO: add params
     print >> o, '  ('
-    self.gen_port_insts(submodule._ports, o)
+    self.gen_port_insts( submodule.get_ports(), o )
     print >> o, '  );'
 
   #-----------------------------------------------------------------------
@@ -192,8 +192,7 @@ class ConnectionGraphToVerilog(object):
 
   def gen_impl_wire_assigns(self, m, submodule, o):
     print >> o, '\n  // {} input assignments'.format( submodule.name )
-    input_ports  = [x for x in submodule._ports if isinstance(x,InPort)]
-    for port in input_ports:
+    for port in submodule.get_inports():
       for edge in port.ext_connections:
         left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
         x = (submodule.parent != edge.src_node.parent)
@@ -207,9 +206,7 @@ class ConnectionGraphToVerilog(object):
   def gen_output_assigns(self, m, o):
     """Generate Verilog source for assignment statements."""
     print >> o, '\n  // output assignments'
-    ports = m._ports
-    output_ports = [x for x in ports if isinstance(x,OutPort)]
-    for port in output_ports:
+    for port in m.get_outports():
       # Note: multiple assigns should only occur on slicing
       for edge in port.int_connections:
         left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )

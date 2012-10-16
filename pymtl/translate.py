@@ -49,7 +49,7 @@ class VerilogTranslationTool(object):
     """Create an ordered dict of all models we need to translate."""
     if not target.class_name in self.to_translate:
       self.to_translate[ target.class_name ] = target
-      for m in target._submodules:
+      for m in target.get_submodules():
         self.collect_models( m )
 
 #=========================================================================

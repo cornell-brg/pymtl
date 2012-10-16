@@ -388,10 +388,12 @@ class Model(object):
     target._exe_seq_logic  = False
     target._exe_comb_logic = False
     target._line_trace_en  = False
-    target._wires = []
-    target._ports = []
-    target._submodules = []
-    target._senses = []
+    target._wires       = []
+    target._ports       = []
+    target._inports     = []
+    target._outports    = []
+    target._submodules  = []
+    target._senses      = []
     target._localparams = []
     # TODO: do all ports first?
     # Get the names of all ports and submodules
@@ -414,12 +416,18 @@ class Model(object):
       target._wires += [obj]
       target._senses += [obj]
     # If object is a port, add it to our ports list
-    elif isinstance(obj, Port):
+    elif isinstance(obj, InPort):
       obj.name = name
       obj.parent = target
       target._ports += [obj]
-      if obj.type == 'input' and obj.name != 'clk':
+      target._inports += [obj]
+      if obj.name != 'clk':
         target._senses += [obj]
+    elif isinstance(obj, OutPort):
+      obj.name = name
+      obj.parent = target
+      target._ports += [obj]
+      target._outports += [obj]
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):
@@ -482,7 +490,7 @@ class Model(object):
       submodule.recurse_connections()
 
   #-----------------------------------------------------------------------
-  # Reverse Edge
+  # Set Edge Direction
   #-----------------------------------------------------------------------
 
   def set_edge_direction(self, edge):
@@ -515,6 +523,31 @@ class Model(object):
 
     # TODO: add wires
 
+
+  #-----------------------------------------------------------------------
+  # Getters
+  #-----------------------------------------------------------------------
+
+  def get_inports( self ):
+    return self._inports
+
+  def get_outports( self ):
+    return self._outports
+
+  def get_ports( self ):
+    return self._inports + self._outports
+
+  def get_wires( self ):
+    return self._wires
+
+  def get_submodules( self ):
+    return self._submodules
+
+  def get_sensitivity_list( self ):
+    return self._senses
+
+  def get_localparams( self ):
+    return self._localparams
 
   #-----------------------------------------------------------------------
   # Is Elaborated
