@@ -120,10 +120,11 @@ class ConnectionGraphToVerilog(object):
 
   def wire_to_str(self, w):
     """Generate Verilog source for a wire declaration."""
+    w_type = 'reg ' if w.is_reg else 'wire'
     if w.width == 1:
-      return "wire {};".format( w.verilog_name() )
+      return "{} {};".format( w_type, w.verilog_name() )
     else :
-      return "wire [{}:0] {};".format( w.width-1, w.verilog_name() )
+      return "{} [{}:0] {};".format( w_type, w.width-1, w.verilog_name() )
 
   #-----------------------------------------------------------------------
   # Implied Wire Name
@@ -152,6 +153,8 @@ class ConnectionGraphToVerilog(object):
         wire_name = self.mk_impl_wire_name( m.name, port.name )
         # TODO: remove ImplicitWire?
         wire = ImplicitWire(wire_name, port.width)
+        # TODO: HACKY
+        wire.is_reg = (wire_name in target._tempregs)
         print >> o, '  {}'.format( self.wire_to_str(wire) )
 
   #-----------------------------------------------------------------------
@@ -261,7 +264,7 @@ class ConnectionGraphToVerilog(object):
     for reg_name in reg_stores:
       # TODO: temporary, this check ensures we dont try to set is_reg
       # for ports in submodules
-      if not '.' in reg_name:
+      if not '$' in reg_name:
         port_ptr = model.__getattribute__(reg_name)
         port_ptr.is_reg = True
 

@@ -32,8 +32,7 @@ class TemporariesVisitor(ast.NodeVisitor):
       return
 
     # Combinational and sequential logic blocks
-    if (node.decorator_list[0].id == 'combinational' or
-        node.decorator_list[0].id == 'posedge_clk'):
+    if node.decorator_list[0].id in ['posedge_clk', 'combinational']:
 
       # Visit each line in the function
       for x in node.body:
@@ -58,6 +57,7 @@ class TemporariesVisitor(ast.NodeVisitor):
       #self.visit(node.value)
 
       # TODO: only works if RHS has no logic
+      # TODO: needed to get done working
       if isinstance( node.value, _ast.Attribute ):
 
         rhs_name, rhs_debug = get_target_name(node.value)
@@ -72,14 +72,20 @@ class TemporariesVisitor(ast.NodeVisitor):
           current_width = self.model._tempwires[ target_name ].width
           assert temp_type.width == current_width
 
+    # We are trying to write to a submodule's ports, mark these as regs
+    # TODO: move to RegisterVisitor?
+    # TODO: HACKY
+    elif '$' in target_name:
+      self.model._tempregs += [ target_name ]
+
   #-----------------------------------------------------------------------
   # Get Signal Type
   #-----------------------------------------------------------------------
 
   def get_signal_type(self, signal_name):
 
-    if '.' in signal_name:
-      module_name, signal = signal_name.split('.')
+    if '$' in signal_name:
+      module_name, signal = signal_name.split('$')
       module = self.model.__dict__[ module_name ]
     else:
       signal = signal_name
@@ -434,11 +440,11 @@ def get_target_name(node):
   if name[0] in ['value', 'next']:
     # TODO: very very hacky!!!! Fix me!
     try:
-      return '.'.join( name[::-1][1:-1] ), True
+      return '$'.join( name[::-1][1:-1] ), True
     except TypeError:
       s = ''
       for x in name[::-1][1:-1]:
-        if isinstance(x, str):  s += '.' + x
+        if isinstance(x, str):  s += '$' + x
         else:                   s += '_' + str(x)
       return s[1:], True
   else:

@@ -212,9 +212,10 @@ class ImplicitWire(object):
     name: name of the wire.
     width: bitwidth of the wire.
     """
-    self.name  = name
-    self.width = width
-    self.type  = "wire"
+    self.name   = name
+    self.width  = width
+    self.type   = "wire"
+    self.is_reg = False
 
   def verilog_name(self):
     return self.name
@@ -396,6 +397,7 @@ class Model(object):
     target._senses      = []
     target._localparams = []
     target._tempwires   = {}
+    target._tempregs    = []
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
