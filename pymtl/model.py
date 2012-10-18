@@ -395,6 +395,7 @@ class Model(object):
     target._submodules  = []
     target._senses      = []
     target._localparams = []
+    target._tempwires   = {}
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():

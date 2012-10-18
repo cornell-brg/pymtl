@@ -9,6 +9,7 @@ import sys
 import inspect
 from   translate_logic import PyToVerilogVisitor
 from   translate_logic import FindRegistersVisitor
+from   translate_logic import TemporariesVisitor
 
 #------------------------------------------------------------------------
 # Verilog Translation Tool
@@ -31,6 +32,7 @@ class ConnectionGraphToVerilog(object):
 
     # Infer registers
     self.infer_regs( model, o )
+    self.infer_temps( model, o )
 
     # Declare Ports
     if model.get_ports(): self.gen_port_decls( model.get_ports(), o )
@@ -49,6 +51,9 @@ class ConnectionGraphToVerilog(object):
 
     # Assignment Statments
     if model.get_ports(): self.gen_output_assigns( model, o )
+
+    # Declare Temporary Wires
+    if model._tempwires: self.gen_temp_decls( model, o )
 
     # Logic
     self.gen_logic_blocks( model, o )
@@ -200,6 +205,33 @@ class ConnectionGraphToVerilog(object):
         print  >> o, "  assign {0} = {1};".format(left, right)
 
   #-----------------------------------------------------------------------
+  # Generate Wire Declarations
+  #-----------------------------------------------------------------------
+
+  def gen_wire_decls(self, wires, o):
+    """Generate Verilog source for wire declarations."""
+    for w in wires:
+      if w.width == 1:
+        print >> o, "  reg %s;" % (w.name)
+      else :
+        print >> o, "  reg [%d:0] %s;" % (w.width-1, w.name)
+        print >> o
+
+  #-----------------------------------------------------------------------
+  # Generate Temporary Declarations
+  #-----------------------------------------------------------------------
+
+  def gen_temp_decls(self, model, o):
+    """Generate Verilog source for temporaries used."""
+    print >> o, '\n  // temporaries'
+    for name, w in model._tempwires.items():
+      if w.width == 1:
+        print >> o, "  reg %s;" % (w.name)
+      else :
+        print >> o, "  reg [%d:0] %s;" % (w.width-1, w.name)
+    print >> o
+
+  #-----------------------------------------------------------------------
   # Generate Assignments to Output Ports
   #-----------------------------------------------------------------------
 
@@ -234,6 +266,18 @@ class ConnectionGraphToVerilog(object):
         port_ptr.is_reg = True
 
   #-----------------------------------------------------------------------
+  # Infer Temporaries
+  #-----------------------------------------------------------------------
+
+  def infer_temps(self, model, o):
+    """Detect which wires/ports should be Verilog reg type."""
+
+    model_class = model.__class__
+    src = inspect.getsource( model_class )
+    tree = ast.parse( src )
+    TemporariesVisitor( model ).visit(tree)
+
+  #-----------------------------------------------------------------------
   # Generate Combinational and Sequential Logic Blocks
   #-----------------------------------------------------------------------
 
@@ -247,5 +291,5 @@ class ConnectionGraphToVerilog(object):
     tree = ast.parse( src )
     #import debug_utils
     #debug_utils.print_ast( tree )
-    PyToVerilogVisitor( o ).visit(tree)
+    PyToVerilogVisitor( model, o ).visit( tree )
 

@@ -2,7 +2,100 @@
 # Verilog Translation Tool
 #=========================================================================
 
+from model import *
 import ast, _ast
+
+#=========================================================================
+# Python to Verilog Logic Translation
+#=========================================================================
+
+class TemporariesVisitor(ast.NodeVisitor):
+  """Walks AST looking for temporary variables, infers wires."""
+
+  #-----------------------------------------------------------------------
+  # Constructor
+  #-----------------------------------------------------------------------
+
+  def __init__(self, model):
+    """Construct a new TemporariesVisitor."""
+    self.model       = model
+    self.current_type = None
+
+  #-----------------------------------------------------------------------
+  # Function Definitions
+  #-----------------------------------------------------------------------
+
+  def visit_FunctionDef(self, node):
+    """Visit all functions, but only parse those with special decorators."""
+    # Non-decorated function, ignore
+    if not node.decorator_list:
+      return
+
+    # Combinational and sequential logic blocks
+    if (node.decorator_list[0].id == 'combinational' or
+        node.decorator_list[0].id == 'posedge_clk'):
+
+      # Visit each line in the function
+      for x in node.body:
+        self.visit(x)
+
+  #-----------------------------------------------------------------------
+  # Variable Assignments
+  #-----------------------------------------------------------------------
+
+  def visit_Assign(self, node):
+    """Visit all stores to variables."""
+
+    # TODO: implement multiple left hand targets?
+    assert len(node.targets) == 1
+    target = node.targets[0]
+    target_name, debug = get_target_name(target)
+
+    # if debug is false, this is a temporary (doesn't access .value/.next)
+    if not debug:
+
+      #print self.model.class_name, target_name, debug, node.value
+      #self.visit(node.value)
+
+      # TODO: only works if RHS has no logic
+      if isinstance( node.value, _ast.Attribute ):
+
+        rhs_name, rhs_debug = get_target_name(node.value)
+        temp_type = self.get_signal_type( rhs_name )
+
+        # If target_name is not in our dict add it
+        if target_name not in self.model._tempwires:
+          wire = ImplicitWire( target_name, temp_type.width )
+          self.model._tempwires[ target_name ] = wire
+        # If it is, assert that the inferred types are the same
+        elif not isinstance( temp_type, int ):
+          current_width = self.model._tempwires[ target_name ].width
+          assert temp_type.width == current_width
+
+  #-----------------------------------------------------------------------
+  # Get Signal Type
+  #-----------------------------------------------------------------------
+
+  def get_signal_type(self, signal_name):
+
+    if '.' in signal_name:
+      module_name, signal = signal_name.split('.')
+      module = self.model.__dict__[ module_name ]
+    else:
+      signal = signal_name
+      module = self.model
+
+    return module.__dict__[ signal ]
+
+  ##-----------------------------------------------------------------------
+  ## Variable Members
+  ##-----------------------------------------------------------------------
+
+  #def visit_Attribute(self, node):
+  #  """Visit all attributes, convert into Verilog variables."""
+  #  target_name, debug = get_target_name(node)
+  #  print "@@@", target_name
+
 
 #=========================================================================
 # Python to Verilog Logic Translation
@@ -52,18 +145,14 @@ class PyToVerilogVisitor(ast.NodeVisitor):
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__(self, o):
-    """Construct a new PyToVerilogVisitor.
-
-    Parameters
-    ----------
-    o: the output object to write to (ie. sys.stdout).
-    """
+  def __init__(self, model, o):
+    """Construct a new PyToVerilogVisitor."""
+    self.model       = model
+    self.o           = o
     self.write_names = False
     self.block_type  = None
-    self.o = o
-    self.ident = 0
-    self.elseif = False
+    self.ident       = 0
+    self.elseif      = False
 
   #-----------------------------------------------------------------------
   # Function Definitions
@@ -83,7 +172,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
       for x in node.body:
         self.visit(x)
       self.ident -= 2
-      print >> self.o, ' end\n'
+      print >> self.o, '  end\n'
     elif node.decorator_list[0].id == 'posedge_clk':
       self.block_type = node.decorator_list[0].id
       print >> self.o, '  // logic for {}()'.format( node.name )
@@ -151,15 +240,15 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     assert len(node.targets) == 1
     target = node.targets[0]
     target_name, debug = get_target_name(target)
-    if debug:
-      if self.block_type == 'combinational':
-        print >> self.o, (self.ident+2)*" " + target_name, '=',
-        self.visit(node.value)
-        print >> self.o, ';'
-      elif self.block_type == 'posedge_clk':
-        print >> self.o, (self.ident+2)*" " + target_name, '<=',
-        self.visit(node.value)
-        print >> self.o, ';'
+    #if debug:
+    if self.block_type == 'combinational':
+      print >> self.o, (self.ident+2)*" " + target_name, '=',
+      self.visit(node.value)
+      print >> self.o, ';'
+    elif self.block_type == 'posedge_clk':
+      print >> self.o, (self.ident+2)*" " + target_name, '<=',
+      self.visit(node.value)
+      print >> self.o, ';'
     self.write_names = False
 
   #-----------------------------------------------------------------------
