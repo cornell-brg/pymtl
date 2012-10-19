@@ -166,7 +166,6 @@ class ConnectionGraphToVerilog(object):
     print >> o, '\n  // localparams'
     for name, val in params:
       print >> o, '  localparam {0} = {1};'.format(name, val)
-    print >> o
 
   #-----------------------------------------------------------------------
   # Generate Module Instances

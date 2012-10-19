@@ -22,6 +22,7 @@ class TemporariesVisitor(ast.NodeVisitor):
     self.current_type = None
     self.inferring    = False
     self.type_stack   = []
+    self.func_ptr     = None
 
   #-----------------------------------------------------------------------
   # Function Definitions
@@ -35,6 +36,10 @@ class TemporariesVisitor(ast.NodeVisitor):
 
     # Combinational and sequential logic blocks
     if node.decorator_list[0].id in ['posedge_clk', 'combinational']:
+
+      # Keep a pointer to this function, need it to find global variables
+      # which will be turned into localparams
+      self.func_ptr = self.model.__getattribute__( node.name )
 
       # Visit each line in the function
       for x in node.body:
@@ -78,6 +83,10 @@ class TemporariesVisitor(ast.NodeVisitor):
     # TODO: HACKY
     elif '$' in target_name:
       self.model._tempregs += [ target_name ]
+
+    # TODO: move to RegisterVisitor?
+    # TODO: HACKY
+    self.visit( node.value )
 
   #-----------------------------------------------------------------------
   # Get Signal Type
@@ -128,6 +137,13 @@ class TemporariesVisitor(ast.NodeVisitor):
       temp_type = self.get_signal_type( rhs_name )
       self.type_stack.append( temp_type )
 
+  # TODO: move to RegisterVisitor?
+  # TODO: HACKY
+  def visit_Name(self, node):
+    # If we find global constants (all caps), make them localparams
+    if node.id.isupper():
+      node_value = self.func_ptr.func_globals[ node.id ]
+      self.model._localparams += [ (node.id, node_value) ]
 
 #=========================================================================
 # Python to Verilog Logic Translation
