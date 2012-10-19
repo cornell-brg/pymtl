@@ -69,6 +69,13 @@ class TemporariesVisitor(ast.NodeVisitor):
       assert len( self.type_stack ) == 1
       temp_type = self.type_stack.pop()
 
+      # Add a check to make sure we aren't overwriting a Port/Wire
+      ports_wires = self.model._ports + self.model._wires
+      if target_name in [x.name for x in ports_wires]:
+        raise Exception("Trying to declare a temporary variable but the "
+            "name {} is already used by a port/wire!".format(target_name)
+            )
+
       # If target_name is not in our dict add it
       if target_name not in self.model._tempwires:
         wire = ImplicitWire( target_name, temp_type.width )
