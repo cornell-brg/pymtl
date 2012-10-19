@@ -417,6 +417,7 @@ class Model(object):
       obj.name = name
       obj.parent = target
       target._wires += [obj]
+      # TODO: also add ImplicitWires to sensitivity list?
       target._senses += [obj]
     # If object is a port, add it to our ports list
     elif isinstance(obj, InPort):

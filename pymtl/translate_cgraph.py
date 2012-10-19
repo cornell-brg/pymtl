@@ -189,10 +189,10 @@ class ConnectionGraphToVerilog(object):
     """Generate Verilog source for submodule port instances."""
     for p in ports[:-1]:
       wire_name = self.mk_impl_wire_name( p.parent.name, p.verilog_name() )
-      print >> o , '    .{} ({}),'.format( p.verilog_name(), wire_name )
+      print >> o , '    .{} ( {} ),'.format( p.verilog_name(), wire_name )
     p = ports[-1]
     wire_name = self.mk_impl_wire_name( p.parent.name, p.verilog_name() )
-    print >> o, '    .{} ({})'.format( p.verilog_name(), wire_name )
+    print >> o, '    .{} ( {} )'.format( p.verilog_name(), wire_name )
 
   #-----------------------------------------------------------------------
   # Generate Assignments to Implicit Wires

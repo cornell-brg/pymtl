@@ -20,6 +20,8 @@ class TemporariesVisitor(ast.NodeVisitor):
     """Construct a new TemporariesVisitor."""
     self.model       = model
     self.current_type = None
+    self.inferring    = False
+    self.type_stack   = []
 
   #-----------------------------------------------------------------------
   # Function Definitions
@@ -53,24 +55,23 @@ class TemporariesVisitor(ast.NodeVisitor):
     # if debug is false, this is a temporary (doesn't access .value/.next)
     if not debug:
 
-      #print self.model.class_name, target_name, debug, node.value
-      #self.visit(node.value)
+      # Begin inference by walking the AST
+      self.inferring = True
+      self.visit( node.value )
+      self.inferring = False
 
-      # TODO: only works if RHS has no logic
-      # TODO: needed to get done working
-      if isinstance( node.value, _ast.Attribute ):
+      # End of walk should result in a single type
+      assert len( self.type_stack ) == 1
+      temp_type = self.type_stack.pop()
 
-        rhs_name, rhs_debug = get_target_name(node.value)
-        temp_type = self.get_signal_type( rhs_name )
-
-        # If target_name is not in our dict add it
-        if target_name not in self.model._tempwires:
-          wire = ImplicitWire( target_name, temp_type.width )
-          self.model._tempwires[ target_name ] = wire
-        # If it is, assert that the inferred types are the same
-        elif not isinstance( temp_type, int ):
-          current_width = self.model._tempwires[ target_name ].width
-          assert temp_type.width == current_width
+      # If target_name is not in our dict add it
+      if target_name not in self.model._tempwires:
+        wire = ImplicitWire( target_name, temp_type.width )
+        self.model._tempwires[ target_name ] = wire
+      # If it is, assert that the inferred types are the same
+      elif not isinstance( temp_type, int ):
+        current_width = self.model._tempwires[ target_name ].width
+        assert temp_type.width == current_width
 
     # We are trying to write to a submodule's ports, mark these as regs
     # TODO: move to RegisterVisitor?
@@ -93,14 +94,39 @@ class TemporariesVisitor(ast.NodeVisitor):
 
     return module.__dict__[ signal ]
 
-  ##-----------------------------------------------------------------------
-  ## Variable Members
-  ##-----------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+  # Variable Members
+  #-----------------------------------------------------------------------
 
-  #def visit_Attribute(self, node):
-  #  """Visit all attributes, convert into Verilog variables."""
-  #  target_name, debug = get_target_name(node)
-  #  print "@@@", target_name
+  def visit_UnaryOp(self, node):
+    if self.inferring:
+      self.visit(node.operand)
+      # DO NOTHING: type of a unary op is just type of object it was op on
+
+  def visit_BoolOp(self, node):
+    if self.inferring:
+      assert len(node.values) == 2
+      self.visit(node.values[0])
+      self.visit(node.values[1])
+      a = self.type_stack.pop()
+      b = self.type_stack.pop()
+      c = Bits( max( a.width, b.width ) )
+      self.type_stack.append( c )
+
+  def visit_BinOp(self, node):
+    if self.inferring:
+      self.visit(node.left)
+      self.visit(node.right)
+      a = self.type_stack.pop()
+      b = self.type_stack.pop()
+      c = Bits( max( a.width, b.width ) )
+      self.type_stack.append( c )
+
+  def visit_Attribute(self, node):
+    if self.inferring:
+      rhs_name, rhs_debug = get_target_name(node)
+      temp_type = self.get_signal_type( rhs_name )
+      self.type_stack.append( temp_type )
 
 
 #=========================================================================
@@ -217,9 +243,11 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     that the order of operations are preserved.
     """
     assert len(node.values) == 2
+    print >> self.o, '(',
     self.visit(node.values[0])
     print >> self.o, PyToVerilogVisitor.opmap[type(node.op)],
     self.visit(node.values[1])
+    print >> self.o, ')',
 
   #-----------------------------------------------------------------------
   # Unary Operators
