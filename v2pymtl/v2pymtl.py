@@ -46,7 +46,7 @@ if( __name__ == '__main__' ):
 \n\
 cdef extern from \"obj_dir/{1}.h\":\n\
   cdef cppclass {1}:\n\
-    int '.format('-'*72, vobj_name)
+    long long '.format('-'*72, vobj_name)
 
   for i in (in_ports + out_ports):
     pyx += i[0] + ', '
