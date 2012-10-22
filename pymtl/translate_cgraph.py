@@ -44,7 +44,7 @@ class ConnectionGraphToVerilog(object):
 
     # Wires & Instantiations
     self.infer_implicit_wires( model, o )
-    #if model._wires: self.gen_wire_decls( model._wires, o )
+    if model._wires: self.gen_wire_decls( model._wires, o )
     for submodule in model.get_submodules():
       self.gen_impl_wire_assigns( model, submodule, o )
       self.gen_module_insts( submodule, o )
@@ -202,7 +202,6 @@ class ConnectionGraphToVerilog(object):
     for port in submodule.get_inports():
       for edge in port.ext_connections:
         left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
-        x = (submodule.parent != edge.src_node.parent)
         right = self.mk_signal_str( edge.src_node,  edge.src_slice,  m )
         print  >> o, "  assign {0} = {1};".format(left, right)
 
@@ -212,12 +211,27 @@ class ConnectionGraphToVerilog(object):
 
   def gen_wire_decls(self, wires, o):
     """Generate Verilog source for wire declarations."""
+    # TODO: test register inference
+    print >> o, '\n  // explicit wires'
     for w in wires:
+
+      # Declare the wire
+      reg = 'reg' if w.is_reg else 'wire'
       if w.width == 1:
-        print >> o, "  reg %s;" % (w.name)
+        print >> o, "  {} {};".format(reg, w.name)
       else :
-        print >> o, "  reg [%d:0] %s;" % (w.width-1, w.name)
-        print >> o
+        print >> o, "  {} [{}:0] {};".format(reg, w.width-1, w.name)
+
+      # Print assignments
+      # TODO: better way to do this?
+      m = w.parent
+      for edge in w.connections:
+        if edge.is_dest( w ):
+          left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
+          right = self.mk_signal_str( edge.src_node,  edge.src_slice,  m )
+          print  >> o, "  assign {0} = {1};".format(left, right)
+
+    print >> o
 
   #-----------------------------------------------------------------------
   # Generate Temporary Declarations

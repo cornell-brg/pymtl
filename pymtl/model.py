@@ -299,6 +299,9 @@ class ConnectionEdge(object):
       self.dest_node = dest
     self.dest_slice = dest.addr
 
+  def is_dest( self, node ):
+    return self.dest_node == node
+
   def is_internal( self, node ):
     assert self.src_node == node or self.dest_node == node
 
@@ -518,6 +521,16 @@ class Model(object):
     # Model OutPort connected to OutPort of a submodule
     elif ( b.parent in a.parent._submodules and
            isinstance( a, OutPort ) and isinstance( b, OutPort )):
+      edge.swap_direction()
+
+    # Wire connected to InPort of a submodule
+    elif ( a.parent in b.parent._submodules and
+           isinstance( a, InPort  ) and isinstance( b, Wire )):
+      edge.swap_direction()
+
+    # Model OutPort connected to OutPort of a submodule
+    elif ( b.parent in a.parent._submodules and
+           isinstance( a, Wire ) and isinstance( b, OutPort )):
       edge.swap_direction()
 
     # Chaining submodules together (OutPort of one to InPort of another)
