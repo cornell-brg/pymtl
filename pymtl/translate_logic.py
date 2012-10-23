@@ -430,8 +430,8 @@ class FindRegistersVisitor(ast.NodeVisitor):
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__(self, reg_stores):
-    self.reg_stores = reg_stores
+  def __init__(self, model):
+    self.model = model
 
   #-----------------------------------------------------------------------
   # Function Definitions
@@ -456,10 +456,10 @@ class FindRegistersVisitor(ast.NodeVisitor):
     #if self.add_regs and isinstance(node.op, _ast.LShift):
     assert len(node.targets) == 1
     target = node.targets[0]
-    target_name, debug = get_target_name(target)
+    target_list, debug = get_target_list(target)
     if debug:
-      self.reg_stores.add( target_name )
-
+      x = get_target_ptr( self.model, target_list )
+      x.is_reg = True
 
 #------------------------------------------------------------------------
 # Signal Name Decoder
@@ -496,8 +496,47 @@ def get_target_name(node):
       s = ''
       for x in name[::-1][1:-1]:
         if isinstance(x, str):  s += '$' + x
-        else:                   s += '_' + str(x)
+        else:                   s += 'IDX' + str(x)
       return s[1:], True
   else:
     return name[0], False
 
+
+# TODO: SUPER HACKY, replace
+def get_target_list(node):
+
+  # Is this a number/constant? Return it.
+  if isinstance(node, _ast.Num):
+    raise Exception("Ran into a number/constant!")
+    return node.n, True
+
+  # Is this an attribute? Follow it until we find a Name.
+  name = []
+  while isinstance(node, (_ast.Attribute, _ast.Subscript)):
+    if   isinstance(node, _ast.Attribute):
+      name += [node.attr]
+      node = node.value
+    elif isinstance(node, _ast.Subscript):
+      # TODO: assumes this is an integer, not a range
+      name += [ node.slice.value.n ]
+      node = node.value
+
+  # We've found the Name.
+  assert isinstance(node, _ast.Name)
+  name += [node.id]
+
+  # If the target does not access .value or .next, tell the code to ignore it.
+  if name[0] in ['value', 'next']:
+    return name[::-1][1:-1], True
+  else:
+    return name[::-1][1:-1], False
+
+# TODO: SUPER HACKY, replace
+def get_target_ptr( model, target_list ):
+  obj = model
+  for attr in target_list:
+    if isinstance(attr, int):
+      obj = obj[ attr ]
+    else:
+      obj = obj.__getattribute__( attr )
+  return obj

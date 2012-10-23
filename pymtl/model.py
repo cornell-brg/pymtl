@@ -455,7 +455,7 @@ class Model(object):
     # recursively call the check_type() utility function
     elif isinstance(obj, list):
       for i, item in enumerate(obj):
-        item_name = "%s_%d" % (name, i)
+        item_name = "%sIDX%d" % (name, i)
         self.check_type(target, item_name, item)
 
   #-----------------------------------------------------------------------

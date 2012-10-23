@@ -268,18 +268,11 @@ class ConnectionGraphToVerilog(object):
 
   def infer_regs(self, model, o):
     """Detect which wires/ports should be Verilog reg type."""
-    reg_stores = set()
 
     model_class = model.__class__
     src = inspect.getsource( model_class )
     tree = ast.parse( src )
-    FindRegistersVisitor( reg_stores ).visit(tree)
-    for reg_name in reg_stores:
-      # TODO: temporary, this check ensures we dont try to set is_reg
-      # for ports in submodules
-      if not '$' in reg_name:
-        port_ptr = model.__getattribute__(reg_name)
-        port_ptr.is_reg = True
+    FindRegistersVisitor( model ).visit(tree)
 
   #-----------------------------------------------------------------------
   # Infer Temporaries
