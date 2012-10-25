@@ -20,6 +20,7 @@ class TemporariesVisitor(ast.NodeVisitor):
     """Construct a new TemporariesVisitor."""
     self.model       = model
     self.current_type = None
+    self.in_logic     = False
     self.inferring    = False
     self.type_stack   = []
     self.func_ptr     = None
@@ -34,6 +35,9 @@ class TemporariesVisitor(ast.NodeVisitor):
     if not node.decorator_list:
       return
 
+    #import debug_utils
+    #debug_utils.print_ast( node )
+
     # Combinational and sequential logic blocks
     if node.decorator_list[0].id in ['posedge_clk', 'combinational']:
 
@@ -42,8 +46,31 @@ class TemporariesVisitor(ast.NodeVisitor):
       self.func_ptr = self.model.__getattribute__( node.name )
 
       # Visit each line in the function
+      self.in_logic = True
       for x in node.body:
         self.visit(x)
+      self.in_logic = False
+
+  #-----------------------------------------------------------------------
+  # Function Calls
+  #-----------------------------------------------------------------------
+
+  def visit_Call(self, node):
+    if not self.inferring:
+      return
+
+    # TODO: clean this up!!!!
+    func, debug = get_target_name( node.func )
+    if func == 'zext':
+      if not isinstance(node.args[0], _ast.Attribute):
+        raise Exception("Parameter to function {}() cannot be an "
+                        "expression! Must be a constant!".format(func))
+      param, debug = get_target_name( node.args[0] )
+      param_value = self.get_signal_type( param )
+      self.type_stack.append( Bits(param_value) )
+    else:
+      raise Exception("Function {}() not supported for translation!"
+                      "".format(func) )
 
   #-----------------------------------------------------------------------
   # Variable Assignments
@@ -51,6 +78,8 @@ class TemporariesVisitor(ast.NodeVisitor):
 
   def visit_Assign(self, node):
     """Visit all stores to variables."""
+    if not self.in_logic:
+      return
 
     # TODO: implement multiple left hand targets?
     assert len(node.targets) == 1
@@ -150,7 +179,7 @@ class TemporariesVisitor(ast.NodeVisitor):
     # If we find global constants (all caps), make them localparams
     if node.id.isupper():
       node_value = self.func_ptr.func_globals[ node.id ]
-      self.model._localparams += [ (node.id, node_value) ]
+      self.model._localparams.add( (node.id, node_value) )
 
 #=========================================================================
 # Python to Verilog Logic Translation
@@ -412,6 +441,41 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     #print >> self.o, "  // assert ",
     #self.visit( node.test )
 
+  #-----------------------------------------------------------------------
+  # Function Calls
+  #-----------------------------------------------------------------------
+
+  def visit_Call(self, node):
+    if not self.write_names:
+      return
+
+    # TODO: clean this up!!!!
+    func_list, debug = get_target_list( node.func )
+    if func_list[-1] == 'zext':
+      param, debug = get_target_name( node.args[0] )
+      param_value = self.get_signal_type( param )
+      signal_type = self.get_signal_type( func_list[0] )
+      ext = param_value - signal_type.width
+      # sext
+      #print >> self.o, "{{ {{ {0} {{ {1}[{2}] }} }}, {3} }}".format(
+      print >> self.o, "{{ {{ {0} {{ 1'b0 }} }}, {1} }}".format(
+          ext, func_list[0] ),
+      #self.type_stack.append( Bits(param_value) )
+    else:
+      raise Exception("Function {}() not supported for translation!"
+                      "".format(func) )
+
+  def get_signal_type(self, signal_name):
+
+    if '$' in signal_name:
+      module_name, signal = signal_name.split('$')
+      module = self.model.__dict__[ module_name ]
+    else:
+      signal = signal_name
+      module = self.model
+
+    return module.__dict__[ signal ]
+
 #=========================================================================
 # Python to Verilog Logic Translation
 #=========================================================================
@@ -529,7 +593,7 @@ def get_target_list(node):
   if name[0] in ['value', 'next']:
     return name[::-1][1:-1], True
   else:
-    return name[::-1][1:-1], False
+    return name[::-1][1:], False
 
 # TODO: SUPER HACKY, replace
 def get_target_ptr( model, target_list ):

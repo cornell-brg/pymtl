@@ -15,7 +15,8 @@ class Adder( Model ):
 
     # Constants
 
-    self.nbits = nbits
+    self.nbits  = nbits
+    self.twidth = nbits + 1
 
     # Ports
 
@@ -41,10 +42,10 @@ class Adder( Model ):
     # Zero extend the inputs by one bit so we can generate an extra
     # carry out bit
 
-    in0 = self.in0.value.zext( self.nbits + 1 )
-    in1 = self.in1.value.zext( self.nbits + 1 )
+    t0 = self.in0.value.zext( self.twidth )
+    t1 = self.in1.value.zext( self.twidth )
 
-    self.temp.value = in0 + in1 + self.cin.value
+    self.temp.value = t0 + t1 + self.cin.value
 
   def line_trace( self ):
     return "{} {} {} () {} {}" \

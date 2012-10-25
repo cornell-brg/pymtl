@@ -398,7 +398,7 @@ class Model(object):
     target._outports    = []
     target._submodules  = []
     target._senses      = []
-    target._localparams = []
+    target._localparams = set()
     target._tempwires   = {}
     target._tempregs    = []
     # TODO: do all ports first?
@@ -450,7 +450,7 @@ class Model(object):
     # We've found a constant assigned to a global variable.
     # TODO: add support for floats?
     elif isinstance(obj, int):
-      target._localparams += [(name, obj)]
+      target._localparams.add( (name, obj) )
     # If the object is a list, iterate through each item in the list and
     # recursively call the check_type() utility function
     elif isinstance(obj, list):

@@ -87,7 +87,7 @@ class ConnectionGraphToVerilog(object):
 
     # If the node's parent module isn't the same as the current module
     # we need to prefix the signal name with the module name
-    if node.parent != context:
+    if node.parent != context and node.parent != None:
       prefix = "{}$".format( node.parent.name )
     else:
       prefix = ""
