@@ -19,7 +19,7 @@ if( __name__ == '__main__' ):
   vobj_name = 'V' + model_name
 
   # Verilate the translated module (warnings suppressed)
-  os.system('verilator -cc {0} -top-module {1} -Wno-lint -Wno-UNOPTFLAT'.format(filename_v, model_name))
+  os.system( 'verilator -cc {0} -top-module {1} -Wno-lint -Wno-UNOPTFLAT'.format( filename_v, model_name ) )
 
   # Import the specified module and get its input and output ports
   __import__( model_name )
@@ -33,22 +33,18 @@ if( __name__ == '__main__' ):
   in_ports = model_inst.get_inports()
   out_ports = model_inst.get_outports()
 
-  in_ports = [ ( p.verilog_name(), str( p.width ) ) for p in in_ports ] 
+  in_ports = [ ( p.verilog_name(), str( p.width ) ) for p in in_ports if not p.verilog_name() in [ 'clk', 'reset' ] ] 
   out_ports = [ ( p.verilog_name(), str( p.width ) ) for p in out_ports ] 
 
   # Generate the Cython source code
   f = open(filename_pyx, 'w')
 
   pyx = '\
-#{0}\n\
-# cdefs\n\
-#{0}\n\
-\n\
 cdef extern from \"obj_dir/{1}.h\":\n\
   cdef cppclass {1}:\n\
-    long long '.format('-'*72, vobj_name)
+    long long '.format( '-'*72, vobj_name )
 
-  for i in (in_ports + out_ports):
+  for i in ( [ ('clk', '') ] + in_ports + out_ports ):
     pyx += i[0] + ', '
 
   pyx = pyx[:-2]
@@ -57,22 +53,22 @@ cdef extern from \"obj_dir/{1}.h\":\n\
 \n\
 cdef {0} *{1} = new {0}()\n\n'.format(vobj_name, model_name)
 
-  for i in in_ports:
+  for i in ( in_ports + [ ('clk', '') ] ):
     pyx += '\
 def set_{0}({0}):\n\
   global {1}\n\
-  {1}.{0} = {0}\n\n'.format(i[0], model_name)
+  {1}.{0} = {0}\n\n'.format( i[0], model_name )
 
   for i in out_ports:
     pyx += '\
 def get_{0}():\n\
   global {1}\n\
-  return {1}.{0}\n\n'.format(i[0], model_name)
+  return {1}.{0}\n\n'.format( i[0], model_name )
 
   pyx += '\
 def eval():\n\
   global {0}\n\
-  {0}.eval()\n'.format(model_name)
+  {0}.eval()\n'.format( model_name )
 
   f.write(pyx)
 
@@ -81,7 +77,7 @@ def eval():\n\
   # Generate setup.py
   f = open('setup.py', 'w')
 
-  f.write('\
+  f.write( '\
 from distutils.core import setup\n\
 from distutils.extension import Extension\n\
 from Cython.Distutils import build_ext\n\
@@ -89,7 +85,7 @@ from Cython.Distutils import build_ext\n\
 setup(\n\
   ext_modules = [ Extension( \"{0}\", sources=[\"{1}\", \"obj_dir/{0}.cpp\", \"obj_dir/{0}__Syms.cpp\", \"obj_dir/verilated.cpp\"], language=\"c++\" ) ],\n\
   cmdclass = {2}\"build_ext\": build_ext{3}\n\
-)\n'.format(vobj_name, filename_pyx, '{', '}'))
+)\n'.format( vobj_name, filename_pyx, '{', '}' ) )
 
   f.close()
 
@@ -100,37 +96,42 @@ setup(\n\
   f = open(filename_w, 'w')
 
   w = '\
-#{0}\n\
-# {1}\n\
-#{0}\n\
-\n\
 import {2}\n\
 from pymtl import *\n\
 \n\
 class {1} (Model):\n\
 \n\
-  def __init__(s):\n\
-\n\
-    # Ports\n'.format('-'*72, model_name, vobj_name)
+  def __init__(s):\n\n'.format( '-'*72, model_name, vobj_name )
 
-  for i in in_ports:
-    w += '    s.' + i[0] + ' = InPort(' + i[1] + ')\n'
+  for p in [ ( in_ports, 'In' ), ( out_ports, 'Out' ) ]:
 
-  for i in out_ports:
-    w += '    s.' + i[0] + ' = OutPort(' + i[1] + ')\n'
+    k = [ ( re.sub('IDX.*', '', i[0]), i[1] ) for i in p[0] ]
+    l = [ (i[0], i[1], k.count(i)) for i in set(k) if k.count(i) > 1 ]
+    k = [ i for i in k if not k.count(i) > 1 ]
+
+    for i in l:
+      w += '    s.{0} = [ {3}Port( {1} ) for x in range( {2} ) ]\n'.format( i[0], i[1], i[2], p[1] )
+
+    for i in k:
+      w += '    s.{0} = {2}Port( {1} )\n'.format( i[0], i[1], p[1] )
 
   w += '\n\
   @combinational\n\
   def logic(s):\n\n'
 
   for i in in_ports:
-    if( i[0] != 'clk' ):
-      w += '    {0}.set_{1}(s.{1}.value.int)\n'.format(vobj_name, i[0])
+    if 'IDX' in i[0]:
+      w += '    {0}.set_{1}(s.{2}].value.int)\n'.format( vobj_name, i[0], re.sub('IDX', '[', i[0]) )
+    else:
+      w += '    {0}.set_{1}(s.{1}.value.int)\n'.format( vobj_name, i[0] )
 
-  w += '\n    {0}.eval()\n\n'.format(vobj_name)
+  w += '\n    {0}.eval()\n\n'.format( vobj_name )
 
   for i in out_ports:
-    w += '    s.{0}.value = {1}.get_{0}()\n'.format(i[0], vobj_name)
+    if 'IDX' in i[0]:
+      w += '    s.{0}].value = {1}.get_{2}()\n'.format( re.sub('IDX', '[', i[0]), vobj_name, i[0] )
+    else:
+      w += '    s.{0}.value = {1}.get_{0}()\n'.format( i[0], vobj_name )
 
   w += '\n\
   @posedge_clk\n\
@@ -141,9 +142,12 @@ class {1} (Model):\n\
     {0}.eval()\n\n'.format(vobj_name)
 
   for i in out_ports:
-    w += '    s.{0}.next = {1}.get_{0}()\n'.format(i[0], vobj_name)
+    if 'IDX' in i[0]:
+      w += '    s.{0}].next = {1}.get_{2}()\n'.format( re.sub('IDX', '[', i[0]), vobj_name, i[0] )
+    else:
+      w += '    s.{0}.next = {1}.get_{0}()\n'.format( i[0], vobj_name )
 
-  w += '    {0}.set_clk(0)'.format(vobj_name)
+  w += '\n    {0}.set_clk(0)'.format( vobj_name )
 
   f.write(w)
   f.close()
