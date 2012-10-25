@@ -522,8 +522,12 @@ class FindRegistersVisitor(ast.NodeVisitor):
     target = node.targets[0]
     target_list, debug = get_target_list(target)
     if debug:
-      x = get_target_ptr( self.model, target_list )
-      x.is_reg = True
+      if len( target_list ) == 1:
+        x = get_target_ptr( self.model, target_list )
+        x.is_reg = True
+      #else:
+      #  print "LEN > 1", target_list
+      #  self.model._tempregs += [ target_name ]
 
 #------------------------------------------------------------------------
 # Signal Name Decoder
