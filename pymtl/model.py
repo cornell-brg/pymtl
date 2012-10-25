@@ -531,12 +531,22 @@ class Model(object):
            isinstance( a, OutPort ) and isinstance( b, OutPort )):
       edge.swap_direction()
 
+    # Wire connected to InPort
+    elif ( a.parent == b.parent and
+           isinstance( a, Wire ) and isinstance( b, InPort )):
+      edge.swap_direction()
+
+    # Wire connected to OutPort
+    elif ( a.parent == b.parent and
+           isinstance( a, OutPort ) and isinstance( b, Wire )):
+      edge.swap_direction()
+
     # Wire connected to InPort of a submodule
     elif ( a.parent in b.parent._submodules and
            isinstance( a, InPort  ) and isinstance( b, Wire )):
       edge.swap_direction()
 
-    # Model OutPort connected to OutPort of a submodule
+    # Wire connected to OutPort of a submodule
     elif ( b.parent in a.parent._submodules and
            isinstance( a, Wire ) and isinstance( b, OutPort )):
       edge.swap_direction()
@@ -545,9 +555,6 @@ class Model(object):
     elif ( a.parent != b.parent and a.parent.parent == b.parent.parent and
            isinstance( a, InPort  ) and isinstance( b, OutPort )):
       edge.swap_direction()
-
-    # TODO: add wires
-
 
   #-----------------------------------------------------------------------
   # Getters
