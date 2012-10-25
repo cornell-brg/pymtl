@@ -10,6 +10,8 @@ a number of tools for various purposes (simulation, translation into HDLs, etc).
 """
 from connect import *
 
+import collections
+
 #-------------------------------------------------------------------------
 # Port
 #-------------------------------------------------------------------------
@@ -384,7 +386,7 @@ class Model(object):
     # TODO: call elaborate() in the tools?
     # TODO: better way to set the name?
     self.model_classes.add( target )
-    target.class_name = target.__class__.__name__
+    target.class_name = self.gen_class_name( target )
     target.parent = None
     target.name = iname
     target.clk   = InPort(1)
@@ -438,8 +440,6 @@ class Model(object):
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):
-      # TODO: change obj.type to obj.inst_type?
-      obj.type = obj.__class__.__name__
       self.recurse_elaborate( obj, name )
       obj.parent = target
       connect( obj.clk, obj.parent.clk )
@@ -458,6 +458,14 @@ class Model(object):
         item_name = "%sIDX%d" % (name, i)
         self.check_type(target, item_name, item)
 
+  def gen_class_name(self, model):
+    name = model.__class__.__name__
+    try:
+      for arg_name, arg_val in model._args.items():
+        name += "_{}_{}".format( arg_name, arg_val )
+      return name
+    except AttributeError:
+      return name
   #-----------------------------------------------------------------------
   # Recurse Connections
   #-----------------------------------------------------------------------
@@ -691,4 +699,39 @@ def combinational(func):
 
 def posedge_clk(func):
   return func
+
+# import functools
+import inspect
+#from itertools import chain
+def capture_args(fn):
+  "Returns a traced version of the input function."
+
+  #@functools.wraps(fn)
+  def wrapped(*v, **k):
+
+    # get the names of the functions arguments
+    argspec = inspect.getargspec( fn )
+
+    # the self pointer is always the first positional arg
+    self = v[0]
+
+    # create an argument dictionary
+    args = collections.OrderedDict()
+    # add all the positional arguments
+    for i in range(1, len(v)):
+      key = argspec.args[ i ]
+      args[ key ] = v[i]
+    # then add all the named arguments
+    for key, val in k.items():
+      args[key] = val
+
+    # add the arguments and their values to the object so it can be
+    # used during static elaboration to create the name
+    self._args = args
+
+    return_val  = fn(*v, **k)
+    return return_val
+
+  return wrapped
+
 

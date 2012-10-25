@@ -12,6 +12,7 @@ from pymtl import *
 
 class Mux2( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = [ InPort( nbits ) for x in xrange(2) ]
@@ -38,6 +39,7 @@ class Mux2( Model ):
 
 class Mux3( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = [ InPort( nbits ) for x in xrange(3) ]
@@ -66,6 +68,7 @@ class Mux3( Model ):
 
 class Mux4( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = [ InPort( nbits ) for x in xrange(4) ]
@@ -97,6 +100,7 @@ class Mux4( Model ):
 
 class Mux5( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = [ InPort( nbits ) for x in xrange(5) ]
@@ -130,6 +134,7 @@ class Mux5( Model ):
 
 class Mux6( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = [ InPort( nbits ) for x in xrange(6) ]
@@ -165,6 +170,7 @@ class Mux6( Model ):
 
 class Mux7( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = [ InPort( nbits ) for x in xrange(7) ]
@@ -203,6 +209,7 @@ class Mux7( Model ):
 
 class Mux8( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = [ InPort( nbits ) for x in xrange(8) ]

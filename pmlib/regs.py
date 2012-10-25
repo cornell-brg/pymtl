@@ -10,6 +10,7 @@ from pymtl import *
 
 class Reg( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
     self.in_ = InPort  ( nbits )
     self.out = OutPort ( nbits )
@@ -28,6 +29,7 @@ class Reg( Model ):
 
 class RegEn( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
     self.in_ = InPort  ( nbits )
     self.en  = InPort  ( 1     )
@@ -50,6 +52,7 @@ class RegEn( Model ):
 
 class RegRst( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1, reset_value = 0 ):
 
     # Ports
@@ -80,6 +83,7 @@ class RegRst( Model ):
 
 class RegEnRst( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1, reset_value = 0 ):
 
     # Ports

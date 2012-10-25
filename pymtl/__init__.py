@@ -1,5 +1,5 @@
 from model import Model, Wire, Port, InPort, OutPort
-from model import posedge_clk, combinational, connect
+from model import posedge_clk, combinational, connect, capture_args
 from simulate import SimulationTool
 from translate import VerilogTranslationTool
 from connects import connect_chain, connect_auto
@@ -16,6 +16,7 @@ __all__ = ['Bits',
            'posedge_clk',
            'combinational',
            'connect',
+           'capture_args',
            'connect_chain',
            'connect_auto',
            'concat',
