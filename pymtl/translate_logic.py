@@ -35,9 +35,6 @@ class TemporariesVisitor(ast.NodeVisitor):
     if not node.decorator_list:
       return
 
-    #import debug_utils
-    #debug_utils.print_ast( node )
-
     # Combinational and sequential logic blocks
     if node.decorator_list[0].id in ['posedge_clk', 'combinational']:
 
@@ -401,6 +398,20 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     print >> self.o, op_symbol,
     self.visit(node.comparators[0])
     print >> self.o, ")",
+
+  #-----------------------------------------------------------------------
+  # Bit Slices
+  #-----------------------------------------------------------------------
+
+  def visit_Subscript(self, node):
+    """Visit all variables, convert into Verilog variables."""
+    # TODO: add support for ranges!
+    if self.write_names:
+      target_name, debug = get_target_name(node.value)
+      print >> self.o, "{}[".format( target_name ),
+      self.visit(node.slice)
+      print >> self.o, "]",
+      #print "  @@@@@",  node.slice
 
   #-----------------------------------------------------------------------
   # Variable Names
