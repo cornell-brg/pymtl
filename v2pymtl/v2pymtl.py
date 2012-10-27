@@ -4,6 +4,7 @@ import fileinput
 import sys
 import re
 import os
+import math
 
 if( __name__ == '__main__' ):
 
@@ -40,14 +41,30 @@ if( __name__ == '__main__' ):
   f = open(filename_pyx, 'w')
 
   pyx = '\
-cdef extern from \"obj_dir/{1}.h\":\n\
-  cdef cppclass {1}:\n\
-    long long '.format( '-'*72, vobj_name )
+cdef extern from \"obj_dir/{0}.h\":\n\
+  cdef cppclass {0}:\n'.format( vobj_name )
 
-  for i in ( [ ('clk', '') ] + in_ports + out_ports ):
-    pyx += i[0] + ', '
+  for i in ( [ ('clk', '1') ] + in_ports + out_ports ):
+    s = int(i[1])
 
-  pyx = pyx[:-2]
+    if s <= 8:
+      pyx += '    char '
+    elif s <= 16:
+      pyx += '    short '
+    elif s <= 32:
+      pyx += '    long '
+    elif s <= 64:
+      pyx += '    long long '
+    else:
+      pyx += '    long '
+
+    pyx += i[0]
+
+    if s <= 64:
+      pyx += '\n'
+    else:
+      pyx += '[{0}]\n'.format( math.ceil( s / 32.0 ) )
+
   pyx += '\n\
     void eval()\n\
 \n\
