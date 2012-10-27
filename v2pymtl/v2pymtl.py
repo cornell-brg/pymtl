@@ -40,41 +40,51 @@ if( __name__ == '__main__' ):
   # Generate the Cython source code
   f = open(filename_pyx, 'w')
 
-  pyx = '\
+  pyx = 'from pymtl import *\n\n\
 cdef extern from \"obj_dir/{0}.h\":\n\
   cdef cppclass {0}:\n'.format( vobj_name )
 
   for i in ( [ ('clk', '1') ] + in_ports + out_ports ):
-    s = int(i[1])
+    s = int( i[1] )
 
     if s <= 8:
       pyx += '    char '
     elif s <= 16:
-      pyx += '    short '
+      pyx += '    unsigned short '
     elif s <= 32:
-      pyx += '    long '
+      pyx += '    unsigned long '
     elif s <= 64:
       pyx += '    long long '
     else:
-      pyx += '    long '
+      pyx += '    unsigned long '
 
     pyx += i[0]
 
     if s <= 64:
       pyx += '\n'
     else:
-      pyx += '[{0}]\n'.format( math.ceil( s / 32.0 ) )
+      pyx += '[{0}]\n'.format( int ( math.ceil( s / 32.0 ) ) )
 
   pyx += '\n\
     void eval()\n\
 \n\
 cdef {0} *{1} = new {0}()\n\n'.format(vobj_name, model_name)
 
-  for i in ( in_ports + [ ('clk', '') ] ):
-    pyx += '\
-def set_{0}({0}):\n\
-  global {1}\n\
-  {1}.{0} = {0}\n\n'.format( i[0], model_name )
+  pyx += 'def set_clk(clk):\n  global {0}\n  {0}.clk = clk\n\n'.format( model_name )
+
+  for i in in_ports:
+    pyx += 'def set_{0}({0}):\n  global {1}\n'.format( i[0], model_name )
+    s = int( i[1] )
+
+    if s <= 64:
+      pyx += '  {0}.{1} = {1}.value.int\n\n'.format( model_name, i[0] )
+    else:
+      for j in range( s / 32 ):
+        pyx += '  {0}.{1}[{2}] = {1}.value[{3}:{4}].int\n'.format( model_name, i[0], j, 32*j, 32*(j+1)-1 )
+      if s % 32 != 0:
+        pyx += '  {0}.{1}[{2}] = {1}.value[{3}:{4}].int\n'.format( model_name, i[0], int( math.ceil( s  / 32.0 ) ), s / 32, s-1  )
+
+      pyx += '\n'
 
   for i in out_ports:
     pyx += '\
@@ -138,9 +148,9 @@ class {1} (Model):\n\
 
   for i in in_ports:
     if 'IDX' in i[0]:
-      w += '    {0}.set_{1}(s.{2}].value.int)\n'.format( vobj_name, i[0], re.sub('IDX', '[', i[0]) )
+      w += '    {0}.set_{1}(s.{2}])\n'.format( vobj_name, i[0], re.sub('IDX', '[', i[0]) )
     else:
-      w += '    {0}.set_{1}(s.{1}.value.int)\n'.format( vobj_name, i[0] )
+      w += '    {0}.set_{1}(s.{1})\n'.format( vobj_name, i[0] )
 
   w += '\n    {0}.eval()\n\n'.format( vobj_name )
 
