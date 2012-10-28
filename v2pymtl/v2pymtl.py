@@ -77,12 +77,16 @@ cdef {0} *{1} = new {0}()\n\n'.format(vobj_name, model_name)
     s = int( i[1] )
 
     if s <= 64:
-      pyx += '  {0}.{1} = {1}.value.int\n\n'.format( model_name, i[0] )
+      pyx += '  {0}.{1} = {1}.value.uint\n\n'.format( model_name, i[0] )
     else:
-      for j in range( s / 32 ):
-        pyx += '  {0}.{1}[{2}] = {1}.value[{3}:{4}].int\n'.format( model_name, i[0], j, 32*j, 32*(j+1)-1 )
+      word_aligned = s/32
+      for j in range( word_aligned ):
+        pyx += '  {0}.{1}[{2}] = {1}.value[{3}:{4}].uint\n'.format( model_name, i[0], j, 32*j, 32*(j+1) )
       if s % 32 != 0:
-        pyx += '  {0}.{1}[{2}] = {1}.value[{3}:{4}].int\n'.format( model_name, i[0], int( math.ceil( s  / 32.0 ) ), s / 32, s-1  )
+        idx = word_aligned
+        start = word_aligned*32
+        end = s
+        pyx += '  {0}.{1}[{2}] = {1}.value[{3}:{4}].uint\n'.format( model_name, i[0], idx, start, end )
 
       pyx += '\n'
 
