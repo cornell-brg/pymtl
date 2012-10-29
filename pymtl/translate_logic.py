@@ -533,12 +533,17 @@ class FindRegistersVisitor(ast.NodeVisitor):
     target = node.targets[0]
     target_list, debug = get_target_list(target)
     if debug:
-      if len( target_list ) == 1:
+      # TODO: HACKY, fix me!
+      # If len() == 1 this is a signal of the current module, mark is_reg
+      # If len() > 1 this is signal either a) belongs to a submodule and
+      # should NOT be marked is_reg, or b) belongs to an array of signals
+      # and should be marked as is_reg.
+      if len( target_list ) == 1 or isinstance( target_list[-1], int ) :
         x = get_target_ptr( self.model, target_list )
         x.is_reg = True
       #else:
-      #  print "LEN > 1", target_list
-      #  self.model._tempregs += [ target_name ]
+      #  print "## LEN > 1", target_list
+      #  #self.model._tempregs += [ target_name ]
 
 #------------------------------------------------------------------------
 # Signal Name Decoder

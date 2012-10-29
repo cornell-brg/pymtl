@@ -11,6 +11,7 @@ from muxes import *
 
 class Adder( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     # Constants
@@ -58,6 +59,7 @@ class Adder( Model ):
 
 class Subtractor( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in0 = InPort  ( nbits )
@@ -78,6 +80,7 @@ class Subtractor( Model ):
 
 class Incrementer( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1, increment_amount = 1 ):
 
     # Ports
@@ -103,6 +106,7 @@ class Incrementer( Model ):
 
 class ZeroExtender( Model ):
 
+  @capture_args
   def __init__( self, in_nbits = 1, out_nbits = 1 ):
 
     # Ports
@@ -131,6 +135,7 @@ class ZeroExtender( Model ):
 
 class SignExtender( Model ):
 
+  @capture_args
   def __init__( self, in_nbits = 1, out_nbits = 1 ):
 
     # Checks
@@ -161,6 +166,7 @@ class SignExtender( Model ):
 
 class ZeroComparator( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = InPort  ( nbits )
@@ -180,6 +186,7 @@ class ZeroComparator( Model ):
 
 class EqComparator( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in0 = InPort  ( nbits )
@@ -200,6 +207,7 @@ class EqComparator( Model ):
 
 class LtComparator( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in0 = InPort  ( nbits )
@@ -220,6 +228,7 @@ class LtComparator( Model ):
 
 class GtComparator( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in0 = InPort  ( nbits )
@@ -240,6 +249,7 @@ class GtComparator( Model ):
 
 class SignUnit( Model ):
 
+  @capture_args
   def __init__( self, nbits = 1 ):
 
     self.in_ = InPort  ( nbits )
@@ -259,6 +269,7 @@ class SignUnit( Model ):
 
 class UnsignUnit( Model ):
 
+  @capture_args
   def __init__( self, nbits ):
 
     # Constants
@@ -287,6 +298,7 @@ class UnsignUnit( Model ):
 
 class LeftLogicalShifter( Model ):
 
+  @capture_args
   def __init__( self, inout_nbits = 1, shamt_nbits = 1 ):
 
     self.in_   = InPort  ( inout_nbits )
@@ -307,6 +319,7 @@ class LeftLogicalShifter( Model ):
 
 class RightLogicalShifter( Model ):
 
+  @capture_args
   def __init__( self, inout_nbits = 1, shamt_nbits = 1 ):
 
     self.in_   = InPort  ( inout_nbits )
