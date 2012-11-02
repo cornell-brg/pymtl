@@ -37,7 +37,7 @@ def run_test_queue( dump_vcd, ModelType, size, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "test_queue" + str(num_inputs) + ".vcd" )
+    sim.dump_vcd( "test_queue" + str(size) + ".vcd" )
   sim.run_test()
 
 #-------------------------------------------------------------------------
