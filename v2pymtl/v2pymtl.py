@@ -43,7 +43,7 @@ if __name__ == '__main__':
   # Generate the Cython source code
   f = open( filename_pyx, 'w' )
 
-  pyx = 'from pymtl import *\n\ncdef extern from \"obj_dir/{0}.h\":\n  cdef cppclass {0}:\n'.format( vobj_name )
+  pyx = 'from pymtl import *\n\ncdef extern from \'obj_dir/{0}.h\':\n  cdef cppclass {0}:\n'.format( vobj_name )
 
   for i in ( [ ('clk', '1') ] + in_ports + out_ports ):
     s = int( i[1] )
@@ -68,35 +68,35 @@ if __name__ == '__main__':
     else:
       pyx += '[{0}]\n'.format( int ( math.ceil( s / 32.0 ) ) )
 
-  pyx += '\n{0}void eval()\n\n'.format( qs )
+  pyx += '{0}void eval()\n\n'.format( qs )
 
   pyx += 'cdef class X{0}:\n\
   cdef {1}* {0}\n\n\
   def __cinit__(self):\n{2}self.{0} = new {1}()\n\n\
   def __dealloc__(self):\n{2}if self.{0}:\n{3}del self.{0}\n\n'.format( model_name, vobj_name, qs, hs )
 
-  pyx += '{0}def set_clk(self, clk):\n{1}self.{2}.clk = clk\n\n'.format( ds, qs, model_name )
+  pyx += '{0}property clk:\n{1}def __set__(self, clk):\n{2}self.{3}.clk = clk\n\n'.format( ds, qs, hs, model_name )
 
   for i in in_ports:
-    pyx += ds + 'def set_{0}(self, {0}):\n'.format( i[0], model_name )
+    pyx += '{0}property {1}:\n{2}def __set__(self, {1}):\n'.format( ds, i[0], qs )
     s = int( i[1] )
 
     if s <= 64:
-      pyx += qs + 'self.{0}.{1} = {1}.value.uint\n\n'.format( model_name, i[0] )
+      pyx += '{0}self.{1}.{2} = {2}.value.uint\n\n'.format( hs, model_name, i[0] )
     else:
       word_aligned = s/32
       for j in range( word_aligned ):
-        pyx += qs + 'self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint\n'.format( model_name, i[0], j, 32*j, 32*(j+1) )
+        pyx += '{0}self.{1}.{2}[{3}] = {2}.value[{4}:{5}].uint\n'.format( hs, model_name, i[0], j, 32*j, 32*(j+1) )
       if s % 32 != 0:
         idx = word_aligned
         start = word_aligned*32
         end = s
-        pyx += qs + 'self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint\n'.format( model_name, i[0], idx, start, end )
+        pyx += '{0}self.{1}.{2}[{3}] = {2}.value[{4}:{5}].uint\n'.format( hs, model_name, i[0], idx, start, end )
 
       pyx += '\n'
 
   for i in out_ports:
-    pyx += ds + 'def get_{0}(self):\n{2}return self.{1}.{0}\n\n'.format( i[0], model_name, qs )
+    pyx += '{0}property {1}:\n{2}def __get__(self):\n{3}return self.{4}.{1}\n\n'.format( ds, i[0], qs, hs, model_name )
 
   pyx += ds + 'def eval(self):\n{0}self.{1}.eval()\n'.format( qs, model_name )
 
@@ -142,27 +142,27 @@ setup(\n\
 
   for i in in_ports:
     if 'IDX' in i[0]:
-      w += '{0}self.{1}.set_{2}(self.{3}])\n'.format( qs, xobj_name, i[0], re.sub('IDX', '[', i[0]) )
+      w += '{0}self.{1}.{2} = self.{3}]\n'.format( qs, xobj_name, i[0], re.sub('IDX', '[', i[0]) )
     else:
-      w += '{0}self.{1}.set_{2}(self.{2})\n'.format( qs, xobj_name, i[0] )
+      w += '{0}self.{1}.{2} = self.{2}\n'.format( qs, xobj_name, i[0] )
 
   w += '\n{0}self.{1}.eval()\n\n'.format( qs, xobj_name )
 
   for i in out_ports:
     if 'IDX' in i[0]:
-      w += '{0}self.{1}].value = self.{2}.get_{3}()\n'.format( qs, re.sub('IDX', '[', i[0]), xobj_name, i[0] )
+      w += '{0}self.{1}].value = self.{2}.{3}\n'.format( qs, re.sub('IDX', '[', i[0]), xobj_name, i[0] )
     else:
-      w += '{0}self.{1}.value = self.{2}.get_{1}()\n'.format( qs, i[0], xobj_name )
+      w += '{0}self.{1}.value = self.{2}.{1}\n'.format( qs, i[0], xobj_name )
 
-  w += '\n{0}@posedge_clk\n{0}def tick(self):\n\n{1}self.{2}.eval()\n\n{1}self.{2}.set_clk(1)\n\n{1}self.{2}.eval()\n\n'.format( ds, qs, xobj_name )
+  w += '\n{0}@posedge_clk\n{0}def tick(self):\n\n{1}self.{2}.eval()\n\n{1}self.{2}.clk = 1\n\n{1}self.{2}.eval()\n\n'.format( ds, qs, xobj_name )
 
   for i in out_ports:
     if 'IDX' in i[0]:
-      w += '{0}self.{1}].next = self.{2}.get_{3}()\n'.format( qs, re.sub('IDX', '[', i[0]), xobj_name, i[0] )
+      w += '{0}self.{1}].next = self.{2}.{3}\n'.format( qs, re.sub('IDX', '[', i[0]), xobj_name, i[0] )
     else:
-      w += '{0}self.{1}.next = self.{2}.get_{1}()\n'.format( qs, i[0], xobj_name )
+      w += '{0}self.{1}.next = self.{2}.{1}\n'.format( qs, i[0], xobj_name )
 
-  w += '\n{0}self.{1}.set_clk(0)'.format( qs, xobj_name )
+  w += '\n{0}self.{1}.clk = 0'.format( qs, xobj_name )
 
   f.write( w )
   f.close()
