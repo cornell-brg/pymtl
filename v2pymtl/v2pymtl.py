@@ -8,7 +8,7 @@ import math
 
 if __name__ == '__main__':
 
-  if len(sys.argv) < 3:
+  if len( sys.argv ) < 3:
     print 'Usage: v2pymtl.py [model name] [verilog file]'
     sys.exit()
 
@@ -20,9 +20,7 @@ if __name__ == '__main__':
   vobj_name = 'V' + model_name
   xobj_name = 'X' + model_name
 
-  ds = 2*' '
-  qs = 2*ds
-  hs = 3*ds
+  ( ds, qs, hs ) = [ x*2*' ' for x in range( 1, 4 ) ]
 
   # Verilate the translated module (warnings suppressed)
   os.system( 'verilator -cc {0} -top-module {1} -Wno-lint -Wno-UNOPTFLAT'.format( filename_v, model_name ) )
@@ -43,7 +41,7 @@ if __name__ == '__main__':
   out_ports = [ ( p.verilog_name(), str( p.width ) ) for p in out_ports ] 
 
   # Generate the Cython source code
-  f = open(filename_pyx, 'w')
+  f = open( filename_pyx, 'w' )
 
   pyx = 'from pymtl import *\n\ncdef extern from \"obj_dir/{0}.h\":\n  cdef cppclass {0}:\n'.format( vobj_name )
 
@@ -102,12 +100,11 @@ if __name__ == '__main__':
 
   pyx += ds + 'def eval(self):\n{0}self.{1}.eval()\n'.format( qs, model_name )
 
-  f.write(pyx)
-
+  f.write( pyx )
   f.close()
 
   # Generate setup.py
-  f = open('setup.py', 'w')
+  f = open( 'setup.py', 'w' )
 
   f.write( '\
 from distutils.core import setup\n\
@@ -122,13 +119,12 @@ setup(\n\
   f.close()
 
   # Cythonize the verilated module
-  os.system('python setup.py build_ext -i -f')
+  os.system( 'python setup.py build_ext -i -f' )
 
   # Generate the PyMTL wrapper to wrap the cythonized module
-  f = open(filename_w, 'w')
+  f = open( filename_w, 'w' )
 
-  w = 'from {0} import X{1}\nfrom pymtl import *\n\nclass {1} (Model):\n\n{2}def __init__(self):\n\n'.format( vobj_name, model_name, ds )
-  w += '{0}self.{1} = {1}()\n\n'.format( qs, xobj_name )
+  w = 'from {0} import {1}\nfrom pymtl import *\n\nclass {2}(Model):\n\n{3}def __init__(self):\n\n{4}self.{1} = {1}()\n\n'.format( vobj_name, xobj_name, model_name, ds, qs )
 
   for p in [ ( in_ports, 'In' ), ( out_ports, 'Out' ) ]:
 
@@ -168,5 +164,5 @@ setup(\n\
 
   w += '\n{0}self.{1}.set_clk(0)'.format( qs, xobj_name )
 
-  f.write(w)
+  f.write( w )
   f.close()
