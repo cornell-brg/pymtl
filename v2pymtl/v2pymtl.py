@@ -6,9 +6,9 @@ import re
 import os
 import math
 
-if( __name__ == '__main__' ):
+if __name__ == '__main__':
 
-  if( len(sys.argv) < 3 ):
+  if len(sys.argv) < 3:
     print 'Usage: v2pymtl.py [model name] [verilog file]'
     sys.exit()
 
@@ -18,6 +18,11 @@ if( __name__ == '__main__' ):
   filename_pyx = model_name + '.pyx'
   filename_w = 'W' + model_name + '.py'
   vobj_name = 'V' + model_name
+  xobj_name = 'X' + model_name
+
+  ds = 2*' '
+  qs = 2*ds
+  hs = 3*ds
 
   # Verilate the translated module (warnings suppressed)
   os.system( 'verilator -cc {0} -top-module {1} -Wno-lint -Wno-UNOPTFLAT'.format( filename_v, model_name ) )
@@ -40,23 +45,23 @@ if( __name__ == '__main__' ):
   # Generate the Cython source code
   f = open(filename_pyx, 'w')
 
-  pyx = 'from pymtl import *\n\n\
-cdef extern from \"obj_dir/{0}.h\":\n\
-  cdef cppclass {0}:\n'.format( vobj_name )
+  pyx = 'from pymtl import *\n\ncdef extern from \"obj_dir/{0}.h\":\n  cdef cppclass {0}:\n'.format( vobj_name )
 
   for i in ( [ ('clk', '1') ] + in_ports + out_ports ):
     s = int( i[1] )
 
+    pyx += qs
+
     if s <= 8:
-      pyx += '    char '
+      pyx += 'char '
     elif s <= 16:
-      pyx += '    unsigned short '
+      pyx += 'unsigned short '
     elif s <= 32:
-      pyx += '    unsigned long '
+      pyx += 'unsigned long '
     elif s <= 64:
-      pyx += '    long long '
+      pyx += 'long long '
     else:
-      pyx += '    unsigned long '
+      pyx += 'unsigned long '
 
     pyx += i[0]
 
@@ -65,41 +70,37 @@ cdef extern from \"obj_dir/{0}.h\":\n\
     else:
       pyx += '[{0}]\n'.format( int ( math.ceil( s / 32.0 ) ) )
 
-  pyx += '\n\
-    void eval()\n\
-\n\
-cdef {0} *{1} = new {0}()\n\n'.format(vobj_name, model_name)
+  pyx += '\n{0}void eval()\n\n'.format( qs )
 
-  pyx += 'def set_clk(clk):\n  global {0}\n  {0}.clk = clk\n\n'.format( model_name )
+  pyx += 'cdef class X{0}:\n\
+  cdef {1}* {0}\n\n\
+  def __cinit__(self):\n{2}self.{0} = new {1}()\n\n\
+  def __dealloc__(self):\n{2}if self.{0}:\n{3}del self.{0}\n\n'.format( model_name, vobj_name, qs, hs )
+
+  pyx += '{0}def set_clk(self, clk):\n{1}self.{2}.clk = clk\n\n'.format( ds, qs, model_name )
 
   for i in in_ports:
-    pyx += 'def set_{0}({0}):\n  global {1}\n'.format( i[0], model_name )
+    pyx += ds + 'def set_{0}(self, {0}):\n'.format( i[0], model_name )
     s = int( i[1] )
 
     if s <= 64:
-      pyx += '  {0}.{1} = {1}.value.uint\n\n'.format( model_name, i[0] )
+      pyx += qs + 'self.{0}.{1} = {1}.value.uint\n\n'.format( model_name, i[0] )
     else:
       word_aligned = s/32
       for j in range( word_aligned ):
-        pyx += '  {0}.{1}[{2}] = {1}.value[{3}:{4}].uint\n'.format( model_name, i[0], j, 32*j, 32*(j+1) )
+        pyx += qs + 'self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint\n'.format( model_name, i[0], j, 32*j, 32*(j+1) )
       if s % 32 != 0:
         idx = word_aligned
         start = word_aligned*32
         end = s
-        pyx += '  {0}.{1}[{2}] = {1}.value[{3}:{4}].uint\n'.format( model_name, i[0], idx, start, end )
+        pyx += qs + 'self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint\n'.format( model_name, i[0], idx, start, end )
 
       pyx += '\n'
 
   for i in out_ports:
-    pyx += '\
-def get_{0}():\n\
-  global {1}\n\
-  return {1}.{0}\n\n'.format( i[0], model_name )
+    pyx += ds + 'def get_{0}(self):\n{2}return self.{1}.{0}\n\n'.format( i[0], model_name, qs )
 
-  pyx += '\
-def eval():\n\
-  global {0}\n\
-  {0}.eval()\n'.format( model_name )
+  pyx += ds + 'def eval(self):\n{0}self.{1}.eval()\n'.format( qs, model_name )
 
   f.write(pyx)
 
@@ -126,13 +127,8 @@ setup(\n\
   # Generate the PyMTL wrapper to wrap the cythonized module
   f = open(filename_w, 'w')
 
-  w = '\
-import {2}\n\
-from pymtl import *\n\
-\n\
-class {1} (Model):\n\
-\n\
-  def __init__(s):\n\n'.format( '-'*72, model_name, vobj_name )
+  w = 'from {0} import X{1}\nfrom pymtl import *\n\nclass {1} (Model):\n\n{2}def __init__(self):\n\n'.format( vobj_name, model_name, ds )
+  w += '{0}self.{1} = {1}()\n\n'.format( qs, xobj_name )
 
   for p in [ ( in_ports, 'In' ), ( out_ports, 'Out' ) ]:
 
@@ -141,44 +137,36 @@ class {1} (Model):\n\
     k = [ i for i in k if not k.count(i) > 1 ]
 
     for i in l:
-      w += '    s.{0} = [ {3}Port( {1} ) for x in range( {2} ) ]\n'.format( i[0], i[1], i[2], p[1] )
+      w += '{0}self.{1} = [ {4}Port( {2} ) for x in range( {3} ) ]\n'.format( qs, i[0], i[1], i[2], p[1] )
 
     for i in k:
-      w += '    s.{0} = {2}Port( {1} )\n'.format( i[0], i[1], p[1] )
+      w += '{0}self.{1} = {3}Port( {2} )\n'.format( qs, i[0], i[1], p[1] )
 
-  w += '\n\
-  @combinational\n\
-  def logic(s):\n\n'
+  w += '\n  @combinational\n  def logic(self):\n\n'
 
   for i in in_ports:
     if 'IDX' in i[0]:
-      w += '    {0}.set_{1}(s.{2}])\n'.format( vobj_name, i[0], re.sub('IDX', '[', i[0]) )
+      w += '{0}self.{1}.set_{2}(self.{3}])\n'.format( qs, xobj_name, i[0], re.sub('IDX', '[', i[0]) )
     else:
-      w += '    {0}.set_{1}(s.{1})\n'.format( vobj_name, i[0] )
+      w += '{0}self.{1}.set_{2}(self.{2})\n'.format( qs, xobj_name, i[0] )
 
-  w += '\n    {0}.eval()\n\n'.format( vobj_name )
+  w += '\n{0}self.{1}.eval()\n\n'.format( qs, xobj_name )
 
   for i in out_ports:
     if 'IDX' in i[0]:
-      w += '    s.{0}].value = {1}.get_{2}()\n'.format( re.sub('IDX', '[', i[0]), vobj_name, i[0] )
+      w += '{0}self.{1}].value = self.{2}.get_{3}()\n'.format( qs, re.sub('IDX', '[', i[0]), xobj_name, i[0] )
     else:
-      w += '    s.{0}.value = {1}.get_{0}()\n'.format( i[0], vobj_name )
+      w += '{0}self.{1}.value = self.{2}.get_{1}()\n'.format( qs, i[0], xobj_name )
 
-  w += '\n\
-  @posedge_clk\n\
-  def tick(s):\n\
-\n\
-    {0}.eval()\n\n\
-    {0}.set_clk(1)\n\n\
-    {0}.eval()\n\n'.format(vobj_name)
+  w += '\n{0}@posedge_clk\n{0}def tick(self):\n\n{1}self.{2}.eval()\n\n{1}self.{2}.set_clk(1)\n\n{1}self.{2}.eval()\n\n'.format( ds, qs, xobj_name )
 
   for i in out_ports:
     if 'IDX' in i[0]:
-      w += '    s.{0}].next = {1}.get_{2}()\n'.format( re.sub('IDX', '[', i[0]), vobj_name, i[0] )
+      w += '{0}self.{1}].next = self.{2}.get_{3}()\n'.format( qs, re.sub('IDX', '[', i[0]), xobj_name, i[0] )
     else:
-      w += '    s.{0}.next = {1}.get_{0}()\n'.format( i[0], vobj_name )
+      w += '{0}self.{1}.next = self.{2}.get_{1}()\n'.format( qs, i[0], xobj_name )
 
-  w += '\n    {0}.set_clk(0)'.format( vobj_name )
+  w += '\n{0}self.{1}.set_clk(0)'.format( qs, xobj_name )
 
   f.write(w)
   f.close()
