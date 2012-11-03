@@ -24,3 +24,4 @@ from SparseMemoryImage   import SparseMemoryImage
 from PipeCtrl            import PipeCtrl
 from TestProcManager     import TestProcManager
 from TestCacheResp32Sink import TestCacheResp32Sink
+from TestMemManager      import TestMemManager
