@@ -14,6 +14,7 @@ pmlib_srcs = \
   TestSimpleMemory.py \
   TestMemory.py \
   TestProcManager.py \
+  TestMemManager.py \
   TestCacheResp32Sink.py \
 	SparseMemoryImage.py \
 	RegisterFile.py \
