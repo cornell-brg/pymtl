@@ -8,6 +8,68 @@ import pmlib
 from math import ceil, log
 
 #-------------------------------------------------------------------------------
+# Single-Element Normal Queue
+#-------------------------------------------------------------------------------
+
+class NormalQueue ( Model ):
+
+  @capture_args
+  def __init__( self, size, nbits ):
+
+    # TODO: add check to prevent instantiation of single element queue
+
+    # Interface Ports
+
+    self.enq_bits = InPort  ( nbits )
+    self.enq_val  = InPort  ( 1 )
+    self.enq_rdy  = OutPort ( 1 )
+
+    self.deq_bits = OutPort ( nbits )
+    self.deq_val  = OutPort ( 1 )
+    self.deq_rdy  = InPort  ( 1 )
+
+    # Ctrl and Dpath unit instantiation
+
+    self.ctrl  = NormalQueueCtrl( size, nbits )
+    self.dpath = NormalQueueDpath( size, nbits )
+
+    # Ctrl unit connections
+
+    connect( self.ctrl.enq_val, self.enq_val )
+    connect( self.ctrl.enq_rdy, self.enq_rdy )
+    connect( self.ctrl.deq_val, self.deq_val )
+    connect( self.ctrl.deq_rdy, self.deq_rdy )
+
+    # Dpath unit connections
+
+    connect( self.dpath.enq_bits, self.enq_bits )
+    connect( self.dpath.deq_bits, self.deq_bits )
+
+    # Control Signal connections (ctrl -> dpath)
+
+    connect( self.dpath.wen,      self.ctrl.wen   )
+    connect( self.dpath.waddr,    self.ctrl.waddr )
+    connect( self.dpath.raddr,    self.ctrl.raddr )
+
+  #-----------------------------------------------------------------------
+  # Line tracing
+  #-----------------------------------------------------------------------
+
+  def line_trace( self ):
+
+    in_str = \
+      pmlib.valrdy.valrdy_to_str( self.enq_bits.value,
+        self.enq_val.value, self.enq_rdy.value )
+
+    out_str = \
+      pmlib.valrdy.valrdy_to_str( self.deq_bits.value,
+        self.deq_val.value, self.deq_rdy.value )
+
+    return "{} () {}"\
+      .format( in_str, out_str )
+
+
+#-------------------------------------------------------------------------------
 # Normal Queue Datapath
 #-------------------------------------------------------------------------------
 
@@ -152,65 +214,4 @@ class NormalQueueCtrl (Model):
     else:
       self.full.next    = self.full.value
 
-
-#-------------------------------------------------------------------------------
-# Single-Element Normal Queue
-#-------------------------------------------------------------------------------
-
-class NormalQueue ( Model ):
-
-  @capture_args
-  def __init__( self, size, nbits ):
-
-    # TODO: add check to prevent instantiation of single element queue
-
-    # Interface Ports
-
-    self.enq_bits = InPort  ( nbits )
-    self.enq_val  = InPort  ( 1 )
-    self.enq_rdy  = OutPort ( 1 )
-
-    self.deq_bits = OutPort ( nbits )
-    self.deq_val  = OutPort ( 1 )
-    self.deq_rdy  = InPort  ( 1 )
-
-    # Ctrl and Dpath unit instantiation
-
-    self.ctrl  = NormalQueueCtrl( size, nbits )
-    self.dpath = NormalQueueDpath( size, nbits )
-
-    # Ctrl unit connections
-
-    connect( self.ctrl.enq_val, self.enq_val )
-    connect( self.ctrl.enq_rdy, self.enq_rdy )
-    connect( self.ctrl.deq_val, self.deq_val )
-    connect( self.ctrl.deq_rdy, self.deq_rdy )
-
-    # Dpath unit connections
-
-    connect( self.dpath.enq_bits, self.enq_bits )
-    connect( self.dpath.deq_bits, self.deq_bits )
-
-    # Control Signal connections (ctrl -> dpath)
-
-    connect( self.dpath.wen,      self.ctrl.wen   )
-    connect( self.dpath.waddr,    self.ctrl.waddr )
-    connect( self.dpath.raddr,    self.ctrl.raddr )
-
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
-
-  def line_trace( self ):
-
-    in_str = \
-      pmlib.valrdy.valrdy_to_str( self.enq_bits.value,
-        self.enq_val.value, self.enq_rdy.value )
-
-    out_str = \
-      pmlib.valrdy.valrdy_to_str( self.deq_bits.value,
-        self.deq_val.value, self.deq_rdy.value )
-
-    return "{} () {}"\
-      .format( in_str, out_str )
 
