@@ -92,7 +92,7 @@ class TestCacheResp32Sink (Model):
 
       # Handle Write Responses
 
-      elif self.delay.out_msg[ self.mem_params.len_slice ].value == WR:
+      elif self.delay.out_msg[ self.mem_params.type_slice ].value == WR:
         pass
 
       self.idx = self.idx + 1
