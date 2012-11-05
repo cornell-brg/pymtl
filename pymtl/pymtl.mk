@@ -15,6 +15,8 @@ pymtl_srcs = \
   connects.py \
   connect.py \
   Bits.py \
+  translate_cgraph.py \
+  translate_logic.py \
 
 pymtl_test_srcs = \
   model_test.py \
