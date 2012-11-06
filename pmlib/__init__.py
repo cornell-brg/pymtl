@@ -10,6 +10,7 @@ import muxes
 import valrdy
 import mem_msgs
 import queues
+import arbiters
 
 # List of single-class modules
 

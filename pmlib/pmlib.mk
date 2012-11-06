@@ -25,6 +25,7 @@ pmlib_srcs = \
   regs.py \
   mem_msgs.py \
   queues.py \
+  arbiters.py \
 
 pmlib_test_srcs = \
   TestVectorSimulator_test.py \
@@ -43,6 +44,7 @@ pmlib_test_srcs = \
   regs_test.py \
   mem_msgs_test.py \
   queues_test.py \
+  arbiters_test.py \
 
 pmlib_prog_srcs = \
 
