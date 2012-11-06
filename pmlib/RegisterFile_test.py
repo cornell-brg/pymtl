@@ -27,9 +27,9 @@ def test_regfile_1R1W( dump_vcd ):
     [       7,   0x0090,     1,       3,   0x0007 ],
     # Write to zero
     [       0,   0x0000,     1,       0,   0x0FFF ],
-    [       0,   0x0000,     1,       4,   0x0FFF ],
-    [       0,   0x0000,     0,       4,   0x0BBB ],
-    [       0,   0x0000,     0,       4,   0x0FFF ],
+    [       0,   0x0FFF,     1,       4,   0x0FFF ],
+    [       0,   0x0FFF,     0,       4,   0x0BBB ],
+    [       0,   0x0FFF,     0,       4,   0x0FFF ],
     [       4,   0x0FFF,     0,       0,   0x0000 ],
   ]
 
