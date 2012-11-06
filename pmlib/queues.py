@@ -364,38 +364,33 @@ class NormalQueueCtrl (Model):
   @capture_args
   def __init__( self, num_entries ):
 
-    self.num_entries  = num_entries
+    self.num_entries      = num_entries
+    addr_nbits            = int( ceil( log( num_entries, 2 ) ) )
 
     # Interface Ports
 
-    self.enq_val      = InPort  ( 1 )
-    self.enq_rdy      = OutPort ( 1 )
-    self.deq_val      = OutPort ( 1 )
-    self.deq_rdy      = InPort  ( 1 )
+    self.enq_val          = InPort  ( 1 )
+    self.enq_rdy          = OutPort ( 1 )
+    self.deq_val          = OutPort ( 1 )
+    self.deq_rdy          = InPort  ( 1 )
+    self.num_free_entries = OutPort ( addr_nbits )
 
     # Control signal (ctrl -> dpath)
 
-    self.wen          = OutPort ( 1 )
-
-    addr_nbits        = int( ceil( log( num_entries, 2 ) ) )
-
-    self.waddr        = OutPort ( addr_nbits )
-    self.raddr        = OutPort ( addr_nbits )
+    self.wen              = OutPort ( 1 )
+    self.waddr            = OutPort ( addr_nbits )
+    self.raddr            = OutPort ( addr_nbits )
 
     # Wires
 
-    self.full         = Wire ( 1 )
-    self.empty        = Wire ( 1 )
-
-    self.do_enq       = Wire ( 1 )
-    self.do_deq       = Wire ( 1 )
-
-    self.enq_ptr      = Wire ( addr_nbits )
-    self.deq_ptr      = Wire ( addr_nbits )
-
-    self.enq_ptr_next = Wire ( addr_nbits )
-    self.deq_ptr_next = Wire ( addr_nbits )
-
+    self.full             = Wire ( 1 )
+    self.empty            = Wire ( 1 )
+    self.do_enq           = Wire ( 1 )
+    self.do_deq           = Wire ( 1 )
+    self.enq_ptr          = Wire ( addr_nbits )
+    self.deq_ptr          = Wire ( addr_nbits )
+    self.enq_ptr_next     = Wire ( addr_nbits )
+    self.deq_ptr_next     = Wire ( addr_nbits )
 
   @combinational
   def comb( self ):
@@ -445,6 +440,21 @@ class NormalQueueCtrl (Model):
     self.waddr.value   = self.enq_ptr.value
     self.raddr.value   = self.deq_ptr.value
 
+    # number of free entries calculation
+
+    if   self.reset.value:
+      self.num_free_entries.value = self.num_entries
+    elif self.full.value:
+      self.num_free_entries.value = 0
+    elif self.empty.value:
+      self.num_free_entries.value = self.num_entries
+    elif self.enq_ptr.value > self.deq_ptr.value:
+      self.num_free_entries.value = \
+        self.num_entries - ( self.enq_ptr.value.uint - self.deq_ptr.value.uint )
+    elif self.deq_ptr.value > self.enq_ptr.value:
+      self.num_free_entries.value = \
+        self.deq_ptr.value - self.enq_ptr.value
+
   @posedge_clk
   def seq( self ):
 
@@ -465,7 +475,6 @@ class NormalQueueCtrl (Model):
     else:
       self.full.next    = self.full.value
 
-
 #-------------------------------------------------------------------------------
 # Single-Element Normal Queue
 #-------------------------------------------------------------------------------
@@ -477,15 +486,20 @@ class NormalQueue ( Model ):
 
     # TODO: add check to prevent instantiation of single element queue
 
+    self.num_entries      = num_entries
+    addr_nbits            = int( ceil( log( num_entries, 2 ) ) )
+
     # Interface Ports
 
-    self.enq_bits = InPort  ( data_nbits )
-    self.enq_val  = InPort  ( 1 )
-    self.enq_rdy  = OutPort ( 1 )
+    self.enq_bits         = InPort  ( data_nbits )
+    self.enq_val          = InPort  ( 1 )
+    self.enq_rdy          = OutPort ( 1 )
 
-    self.deq_bits = OutPort ( data_nbits )
-    self.deq_val  = OutPort ( 1 )
-    self.deq_rdy  = InPort  ( 1 )
+    self.deq_bits         = OutPort ( data_nbits )
+    self.deq_val          = OutPort ( 1 )
+    self.deq_rdy          = InPort  ( 1 )
+
+    self.num_free_entries = OutPort ( addr_nbits )
 
     # Ctrl and Dpath unit instantiation
 
@@ -494,10 +508,11 @@ class NormalQueue ( Model ):
 
     # Ctrl unit connections
 
-    connect( self.ctrl.enq_val,   self.enq_val   )
-    connect( self.ctrl.enq_rdy,   self.enq_rdy   )
-    connect( self.ctrl.deq_val,   self.deq_val   )
-    connect( self.ctrl.deq_rdy,   self.deq_rdy   )
+    connect( self.ctrl.enq_val,          self.enq_val          )
+    connect( self.ctrl.enq_rdy,          self.enq_rdy          )
+    connect( self.ctrl.deq_val,          self.deq_val          )
+    connect( self.ctrl.deq_rdy,          self.deq_rdy          )
+    connect( self.ctrl.num_free_entries, self.num_free_entries )
 
     # Dpath unit connections
 
@@ -524,6 +539,6 @@ class NormalQueue ( Model ):
       pmlib.valrdy.valrdy_to_str( self.deq_bits.value,
         self.deq_val.value, self.deq_rdy.value )
 
-    return "{} () {}"\
-      .format( in_str, out_str )
+    return "{} ({}) {}"\
+      .format( in_str, self.num_free_entries.value, out_str )
 
