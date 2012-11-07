@@ -19,6 +19,7 @@ pmlib_srcs = \
 	SparseMemoryImage.py \
 	RegisterFile.py \
   PipeCtrl.py \
+  TestNetSink.py \
   valrdy.py \
   arith.py \
   muxes.py \
@@ -26,6 +27,7 @@ pmlib_srcs = \
   mem_msgs.py \
   queues.py \
   arbiters.py \
+  net_msgs.py \
 
 pmlib_test_srcs = \
   TestVectorSimulator_test.py \
@@ -39,12 +41,14 @@ pmlib_test_srcs = \
 	SparseMemoryImage_test.py \
 	RegisterFile_test.py \
   PipeCtrl_test.py \
+  TestNetSink_test.py \
   arith_test.py \
   muxes_test.py \
   regs_test.py \
   mem_msgs_test.py \
   queues_test.py \
   arbiters_test.py \
+  net_msgs_test.py \
 
 pmlib_prog_srcs = \
 

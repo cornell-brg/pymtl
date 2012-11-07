@@ -11,6 +11,7 @@ import valrdy
 import mem_msgs
 import queues
 import arbiters
+import net_msgs
 
 # List of single-class modules
 
@@ -27,3 +28,4 @@ from TestProcManager     import TestProcManager
 from TestCacheResp32Sink import TestCacheResp32Sink
 from TestMemManager      import TestMemManager
 from RegisterFile        import RegisterFile
+from TestNetSink         import TestNetSink
