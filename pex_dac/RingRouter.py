@@ -5,6 +5,9 @@
 from pymtl import *
 import pmlib
 
+from pmlib.NormalQueue import NormalQueue
+from pmlib.arbiters    import RoundRobinArbiterEn
+
 from math import ceil, log
 
 # TODO: better way to set this parameter?
@@ -20,8 +23,7 @@ class RingRouter ( Model ):
 
     self.id     = id
     self.nodes  = num_nodes
-    srcdest_nbits = int( ceil( log( num_nodes, 2 ) ) )
-    self.msg = pmlib.net_msgs.NetMsgParams( srcdest_nbits, payload_nbits )
+    self.msg = pmlib.net_msgs.NetMsgParams( num_nodes, 2, payload_nbits )
 
     #---------------------------------------------------------------------
     # Line tracing
@@ -41,8 +43,8 @@ class RingRouter ( Model ):
     # Static Elaboration
     #---------------------------------------------------------------------
 
-    self.dpath = RingRouterDpath ( id, num_nodes, payload_nbits ):
-    self.ctrl  = RingRouterCtrl  ( id, num_nodes, payload_nbits ):
+    self.dpath = RingRouterDpath ( id, num_nodes, payload_nbits )
+    self.ctrl  = RingRouterCtrl  ( id, num_nodes, payload_nbits )
 
     dest = self.msg.dest_slice
 
@@ -55,7 +57,7 @@ class RingRouter ( Model ):
 
       connect( self.ctrl.in_deq_msg_dest[i], self.in_msg[i][dest]     )
       connect( self.ctrl.in_credit[i],       self.in_val[i]           )
-      connect( self.ctrl.out_credit[i],      self.out_msg[i]          )
+      connect( self.ctrl.out_credit[i],      self.out_credit[i]       )
 
       connect( self.dpath.in_deq_val[i],     self.ctrl.in_deq_val[i]  )
       connect( self.dpath.in_deq_rdy[i],     self.ctrl.in_deq_rdy[i]  )
@@ -66,18 +68,27 @@ class RingRouter ( Model ):
   # Line tracing
   #-----------------------------------------------------------------------
 
-  #def line_trace( self ):
+  def line_trace( self ):
 
-  #  in_str = \
-  #    pmlib.valrdy.valrdy_to_str( self.enq_bits.value,
-  #      self.enq_val.value, self.enq_rdy.value )
+    traces = []
+    for i in range( 3 ):
+      in_str = \
+        pmlib.valrdy.valrdy_to_str( self.in_msg[i].value,
+          self.in_val[i].value, 1 )
 
-  #  out_str = \
-  #    pmlib.valrdy.valrdy_to_str( self.deq_bits.value,
-  #      self.deq_val.value, self.deq_rdy.value )
+      in_credit = '+' if self.in_credit[i].value else ' '
 
-  #  return "{} () {}"\
-  #    .format( in_str, out_str )
+      out_str = \
+        pmlib.valrdy.valrdy_to_str( self.out_msg[i].value,
+          self.out_val[i].value, 1 )
+
+      out_credit = '+' if self.out_credit[i].value else ' '
+
+      traces += ["{} {} () {} {}"\
+        .format( in_str, in_credit, out_str, out_credit )]
+
+
+    return ' | '.join( traces )
 
 
 #=========================================================================
@@ -90,8 +101,7 @@ class RingRouterDpath (Model):
 
     self.id     = id
     self.nodes  = num_nodes
-    srcdest_nbits = int( ceil( log( num_nodes, 2 ) ) )
-    self.msg = pmlib.net_msgs.NetMsgParams( srcdest_nbits, payload_nbits )
+    self.msg = pmlib.net_msgs.NetMsgParams( num_nodes, 2, payload_nbits )
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -116,7 +126,7 @@ class RingRouterDpath (Model):
 
     self.in_queues  = [ NormalQueue( BUFFERING, msg_sz ) for x in range(3) ]
     self.out_queues = [ NormalQueue( BUFFERING, msg_sz ) for x in range(3) ]
-    self.xbar       = Crossbar( 3, msg_sz )
+    self.xbar       = pmlib.Crossbar( 3, msg_sz )
 
     for i in range(3):
 
@@ -153,31 +163,30 @@ class RingRouterCtrl (Model):
 
     self.id     = id
     self.nodes  = num_nodes
-    srcdest_nbits = int( ceil( log( num_nodes, 2 ) ) )
-    self.msg = pmlib.net_msgs.NetMsgParams( srcdest_nbits, payload_nbits )
+    self.msg = pmlib.net_msgs.NetMsgParams( num_nodes, 2, payload_nbits )
 
     #---------------------------------------------------------------------
     # Interface Ports
     #---------------------------------------------------------------------
 
-    msg_sz = self.msg.srcdest_nbits
+    dest_sz = self.msg.srcdest_nbits
 
-    self.in_deq_msg_dest = [ InPort  ( msg_sz ) for x in range(3) ]
-    self.in_credit       = [ OutPort ( 1 )      for x in range(3) ]
+    self.in_deq_msg_dest = [ InPort  ( dest_sz ) for x in range(3) ]
+    self.in_credit       = [ OutPort ( 1 )       for x in range(3) ]
 
-    self.out_credit      = [ InPort  ( 1 )      for x in range(3) ]
+    self.out_credit      = [ InPort  ( 1 )       for x in range(3) ]
 
-    self.in_deq_val      = [ InPort  ( 1 )      for x in range(3) ]
-    self.in_deq_rdy      = [ OutPort ( 1 )      for x in range(3) ]
-    self.out_enq_val     = [ OutPort ( 1 )      for x in range(3) ]
-    self.xbar_sel        = [ OutPort ( 2 )      for x in range(3) ]
+    self.in_deq_val      = [ InPort  ( 1 )       for x in range(3) ]
+    self.in_deq_rdy      = [ OutPort ( 1 )       for x in range(3) ]
+    self.out_enq_val     = [ OutPort ( 1 )       for x in range(3) ]
+    self.xbar_sel        = [ OutPort ( 2 )       for x in range(3) ]
 
     #---------------------------------------------------------------------
     # Static Elaboration
     #---------------------------------------------------------------------
 
-    self.ictrl = [ InputCtrl  ( ? ) for x in range(3) ]
-    self.octrl = [ OutputCtrl ( ? ) for x in range(3) ]
+    self.ictrl = [ InputCtrl  ( id, num_nodes, dest_sz ) for x in range(3) ]
+    self.octrl = [ OutputCtrl ( )                        for x in range(3) ]
 
     for i in range(3):
 
@@ -189,17 +198,17 @@ class RingRouterCtrl (Model):
       connect( self.octrl[i].out_enq_val,     self.out_enq_val[i]     )
       connect( self.octrl[i].out_credit,      self.out_credit[i]      )
 
-   # TODO: bubble flow control, credit_count signal!
-   # connect( self.ictrl[1].credit_count[0], self.octrl[0].credit_count )
-   # connect( self.ictrl[1].credit_count[1], self.octrl[2].credit_count )
+    # TODO: bubble flow control, credit_count signal!
+    # connect( self.ictrl[1].credit_count[0], self.octrl[0].credit_count )
+    # connect( self.ictrl[1].credit_count[1], self.octrl[2].credit_count )
 
-   @combinational
-   def assign_reqs_grants( self ):
+  @combinational
+  def assign_reqs_grants( self ):
 
-     for i in range(3):
-       for j in range(3):
-         self.octrl[i].reqs.value[j]   = self.ictrl[j].reqs.value[i]
-         self.ictrl[i].grants.value[j] = self.octrl[j].grants.value[i]
+    for i in range(3):
+      for j in range(3):
+        self.octrl[i].reqs[j].value   = self.ictrl[j].reqs[i].value
+        self.ictrl[i].grants[j].value = self.octrl[j].grants[i].value
 
 
 #=========================================================================
@@ -208,19 +217,24 @@ class RingRouterCtrl (Model):
 
 class InputCtrl(Model):
 
-  def __init__( self, size, nbits ):
+  def __init__( self, id, num_nodes, dest_sz ):
+
+    self.id    = id
+    self.nodes = num_nodes
 
     #---------------------------------------------------------------------
     # Interface Ports
     #---------------------------------------------------------------------
 
-    self.in_deq_msg_dest = InPort  ( ??? )
+    self.in_deq_msg_dest = InPort  ( dest_sz )
     self.in_deq_val      = InPort  ( 1 )
     self.in_deq_rdy      = OutPort ( 1 )
     self.in_credit       = OutPort ( 1 )
 
     self.reqs            = OutPort ( 3 )
     self.grants          = InPort  ( 3 )
+
+    self.dest            = Wire    ( 2 )
 
     self.WEST = 0
     self.THIS = 1
@@ -240,11 +254,11 @@ class InputCtrl(Model):
       dist_west = id + ( nodes - dest )
 
     if ( dest == id ):
-      return THIS
+      return self.THIS
     elif ( dist_east < dist_west ):
-      return EAST
+      return self.EAST
     else:
-      return WEST
+      return self.WEST
 
   #-----------------------------------------------------------------------
   # Combinational Logic
@@ -253,15 +267,19 @@ class InputCtrl(Model):
   @combinational
   def comb_logic( self ):
 
-    dest = route( self.in_deq_msg_dest.value, self.id, self.nodes )
+    self.dest.value = self.route( self.in_deq_msg_dest.value.uint, self.id, self.nodes )
 
-    self.reqs.value[0] = self.in_deq_val.value and ( dest == self.WEST )
-    self.reqs.value[1] = self.in_deq_val.value and ( dest == self.THIS )
-    self.reqs.value[2] = self.in_deq_val.value and ( dest == self.EAST )
+    # TODO: self.reqs.value[x] is what we want, but this fails
+    #       to update the VCD correctly!
+    self.reqs[0].value = self.in_deq_val.value and ( self.dest.value == self.WEST )
+    self.reqs[1].value = self.in_deq_val.value and ( self.dest.value == self.THIS )
+    self.reqs[2].value = self.in_deq_val.value and ( self.dest.value == self.EAST )
 
-    self.in_deq_rdy.value = ( ( self.grants.value[0] & self.reqs.value[0] )
-                            | ( self.grants.value[1] & self.reqs.value[1] )
-                            | ( self.grants.value[2] & self.reqs.value[2] ))
+    self.in_deq_rdy.value = ( ( self.grants[0].value & self.reqs[0].value )
+                            | ( self.grants[1].value & self.reqs[1].value )
+                            | ( self.grants[2].value & self.reqs[2].value ))
+
+    #print "DEQRDY", self.name, "r", self.reqs.value.uint, "g", self.grants.value.uint, self.in_deq_rdy.value.uint
 
   #-----------------------------------------------------------------------
   # Sequential Logic
@@ -279,7 +297,7 @@ class InputCtrl(Model):
 
 class OutputCtrl(Model):
 
-  def __init__( self, size, nbits ):
+  def __init__( self ):
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -296,23 +314,34 @@ class OutputCtrl(Model):
     # Submodules
     #---------------------------------------------------------------------
 
-    self.arb             = RoundRobinArbiter( 3 )
+    max_credits_nbits    = int( ceil( log( BUFFERING+1, 2 ) ) )
+
+    self.credits         = Wire( max_credits_nbits )
+    self.arb_en          = Wire( 1 )
+
+    self.arb             = RoundRobinArbiterEn( 3 )
+
+    connect( self.reqs,   self.arb.reqs   )
+    connect( self.grants, self.arb.grants )
+    connect( self.arb_en, self.arb.en     )
 
   #-----------------------------------------------------------------------
   # Credit Counter
   #-----------------------------------------------------------------------
 
   @posedge_clk
-  def counter( self ):
+  def credit_logic( self ):
 
     if self.reset.value:
-      self.counter.value = BUFFERING
+      self.credits.next = BUFFERING
     elif self.out_credit.value and not self.out_enq_val.value:
-      self.counter.value = self.counter.value + 1
+      assert self.credits.value < BUFFERING
+      self.credits.next = self.credits.value + 1
     elif self.out_enq_val.value and not self.out_credit.value:
-      self.counter.value = self.counter.value - 1
+      assert self.credits.value > 0
+      self.credits.next = self.credits.value - 1
     else:
-      self.counter.value = self.counter.value
+      self.credits.next = self.credits.value
 
   #-----------------------------------------------------------------------
   # Arbitation/Crossbar Signals
@@ -322,25 +351,28 @@ class OutputCtrl(Model):
   def logic( self ):
 
     # Set arbiter request signals
+    self.arb_en.value = ( self.credits.value != 0 )
 
-    if self.counter.value == 0:
-      self.arb.reqs.value = 0
-      self.grants.value   = 0
-    else:
-      self.arb.reqs.value = self.reqs.value
-      self.grants.value   = self.arb.grants.value
+    #if self.credits.value == 0:
+    #  self.arb.reqs.value = 0
+    #  self.grants.value   = 0
+    #else:
+    #  self.arb.reqs.value = self.reqs.value
+    #  self.grants.value   = self.arb.grants.value
 
     # Set valid signal
 
-    self.out_enq_val.value = ( ( self.grants.value[0] & self.reqs.value[0] )
-                             | ( self.grants.value[1] & self.reqs.value[1] )
-                             | ( self.grants.value[2] & self.reqs.value[2] ))
+    self.out_enq_val.value = ( ( self.grants[0].value & self.reqs[0].value )
+                             | ( self.grants[1].value & self.reqs[1].value )
+                             | ( self.grants[2].value & self.reqs[2].value ))
+
+    #print "ENQRDY", self.name, "r", self.reqs.value.uint, "g", self.grants.value.uint, self.out_enq_val.value.uint
 
     # Set crossbar select
 
-    if   self.grants.value[0]:
+    if   self.grants[0].value:
       self.xbar_sel.value = 0
-    elif self.grants.value[1]:
+    elif self.grants[1].value:
       self.xbar_sel.value = 1
     else:
       self.xbar_sel.value = 2

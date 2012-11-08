@@ -87,8 +87,8 @@ class ValRdyToValCredit( Model ):
 
     credit  = self.credits.value
 
-    return "{} () {} - [{}]"\
-      .format( in_str, out_str, credit )
+    return "{} ({}) {}"\
+      .format( in_str, credit, out_str )
 
 
 #=========================================================================
@@ -146,12 +146,12 @@ class ValCreditToValRdy( Model ):
       pmlib.valrdy.valrdy_to_str( self.from_msg.value,
         self.from_val.value, 1 )
 
-    full = self.queue.ctrl.full.value
+    full = 'F' if self.queue.ctrl.full.value else ' '
 
     out_str = \
       pmlib.valrdy.valrdy_to_str( self.to_msg.value,
         self.to_val.value, self.to_rdy.value )
 
-    return "{} - [{}] () {}"\
+    return "{} ({}) {}"\
       .format( in_str, full, out_str )
 
