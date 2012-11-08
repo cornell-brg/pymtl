@@ -373,7 +373,7 @@ class NormalQueueCtrl (Model):
     self.enq_rdy          = OutPort ( 1 )
     self.deq_val          = OutPort ( 1 )
     self.deq_rdy          = InPort  ( 1 )
-    self.num_free_entries = OutPort ( addr_nbits )
+    self.num_free_entries = OutPort ( addr_nbits + 1 )
 
     # Control signal (ctrl -> dpath)
 
@@ -453,7 +453,7 @@ class NormalQueueCtrl (Model):
         self.num_entries - ( self.enq_ptr.value.uint - self.deq_ptr.value.uint )
     elif self.deq_ptr.value > self.enq_ptr.value:
       self.num_free_entries.value = \
-        self.deq_ptr.value - self.enq_ptr.value
+        self.deq_ptr.value.uint - self.enq_ptr.value.uint
 
   @posedge_clk
   def seq( self ):
@@ -499,7 +499,7 @@ class NormalQueue ( Model ):
     self.deq_val          = OutPort ( 1 )
     self.deq_rdy          = InPort  ( 1 )
 
-    self.num_free_entries = OutPort ( addr_nbits )
+    self.num_free_entries = OutPort ( addr_nbits + 1 )
 
     # Ctrl and Dpath unit instantiation
 
