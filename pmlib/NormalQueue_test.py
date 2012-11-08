@@ -5,7 +5,7 @@
 from pymtl import *
 
 from pmlib       import TestVectorSimulator
-from Queue       import NormalQueue
+from NormalQueue import NormalQueue
 
 #-------------------------------------------------------------------------
 # Test Harness

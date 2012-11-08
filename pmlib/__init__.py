@@ -12,6 +12,7 @@ import mem_msgs
 import queues
 import arbiters
 import net_msgs
+import adapters
 
 # List of single-class modules
 
