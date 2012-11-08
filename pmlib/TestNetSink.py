@@ -28,7 +28,6 @@ class TestSimpleNetSink (Model):
     self.msgs        = msgs
     self.idx         = 0
     self.msgs_len    = len( msgs )
-    print self.msgs_len
 
   #-----------------------------------------------------------------------
   # Tick
@@ -62,7 +61,6 @@ class TestSimpleNetSink (Model):
       self.in_rdy.next = True
       self.done.next   = False
     else:
-      print "DONE"
       self.in_rdy.next = False
       self.done.next   = True
 
