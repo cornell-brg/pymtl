@@ -12,6 +12,7 @@ def _num_bits( x ):
   # negative versions? -cbatten
 
   n = 1
+  # TODO: shouldn't this return 1, not zero?
   if x == 0:
     return 0
   elif x < 0:
@@ -141,7 +142,7 @@ class Bits(object):
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
         # TODO: optimize and uncomment!!!!
-        #assert self.width >= _num_bits(value)
+        assert self.width >= _num_bits(value)
         self._uint = value
         return
       elif start is None:
@@ -155,7 +156,7 @@ class Bits(object):
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
       # TODO: optimize and uncomment!!!!
-      #assert width >= _num_bits(value)
+      assert width >= _num_bits(value)
       # Clear the bits we want to set
       ones  = (1 << width) - 1
       mask = ~(ones << start)
