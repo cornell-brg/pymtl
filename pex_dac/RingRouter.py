@@ -56,7 +56,7 @@ class RingRouter ( Model ):
       connect( self.dpath.out_deq_val[i],    self.out_val[i]          )
 
       connect( self.ctrl.in_deq_msg_dest[i], self.in_msg[i][dest]     )
-      connect( self.ctrl.in_credit[i],       self.in_val[i]           )
+      connect( self.ctrl.in_credit[i],       self.in_credit[i]        )
       connect( self.ctrl.out_credit[i],      self.out_credit[i]       )
 
       connect( self.dpath.in_deq_val[i],     self.ctrl.in_deq_val[i]  )
@@ -197,18 +197,15 @@ class RingRouterCtrl (Model):
 
       connect( self.octrl[i].out_enq_val,     self.out_enq_val[i]     )
       connect( self.octrl[i].out_credit,      self.out_credit[i]      )
+      connect( self.octrl[i].xbar_sel,        self.xbar_sel[i]        )
 
     # TODO: bubble flow control, credit_count signal!
     # connect( self.ictrl[1].credit_count[0], self.octrl[0].credit_count )
     # connect( self.ictrl[1].credit_count[1], self.octrl[2].credit_count )
 
-  @combinational
-  def assign_reqs_grants( self ):
-
-    for i in range(3):
       for j in range(3):
-        self.octrl[i].reqs[j].value   = self.ictrl[j].reqs[i].value
-        self.ictrl[i].grants[j].value = self.octrl[j].grants[i].value
+        connect( self.octrl[i].reqs[j],   self.ictrl[j].reqs[i]   )
+        connect( self.ictrl[i].grants[j], self.octrl[j].grants[i] )
 
 
 #=========================================================================
@@ -279,8 +276,6 @@ class InputCtrl(Model):
                             | ( self.grants[1].value & self.reqs[1].value )
                             | ( self.grants[2].value & self.reqs[2].value ))
 
-    #print "DEQRDY", self.name, "r", self.reqs.value.uint, "g", self.grants.value.uint, self.in_deq_rdy.value.uint
-
   #-----------------------------------------------------------------------
   # Sequential Logic
   #-----------------------------------------------------------------------
@@ -305,7 +300,7 @@ class OutputCtrl(Model):
 
     self.out_enq_val     = OutPort ( 1 )
     self.out_credit      = InPort  ( 1 )
-    self.xbar_sel        = InPort  ( 2 )
+    self.xbar_sel        = OutPort ( 2 )
 
     self.reqs            = InPort  ( 3 )
     self.grants          = OutPort ( 3 )
@@ -361,12 +356,9 @@ class OutputCtrl(Model):
     #  self.grants.value   = self.arb.grants.value
 
     # Set valid signal
-
     self.out_enq_val.value = ( ( self.grants[0].value & self.reqs[0].value )
                              | ( self.grants[1].value & self.reqs[1].value )
                              | ( self.grants[2].value & self.reqs[2].value ))
-
-    #print "ENQRDY", self.name, "r", self.reqs.value.uint, "g", self.grants.value.uint, self.out_enq_val.value.uint
 
     # Set crossbar select
 

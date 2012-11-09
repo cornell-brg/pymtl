@@ -41,7 +41,6 @@ class TestHarness (Model):
       self.sink += [ pmlib.TestSink   ( msg.nbits, sink_msgs[i], sink_delay ) ]
 
     # TODO: why aren't the src's getting proper names with IDX suffix?
-    print self.src
 
     # Connect modules
 
@@ -76,7 +75,7 @@ class TestHarness (Model):
     for i in range( 3 ):
       trace += self.v2c[i].line_trace() + ' '
 
-    trace += '>>> ' + self.router.line_trace() + '>>> '
+    trace += '|| ' + self.router.line_trace() + ' ||'
 
     for i in range( 3 ):
       trace += self.c2v[i].line_trace() + ' '
@@ -104,15 +103,13 @@ def run_router_test( dump_vcd, vcd_file_name, id, num_nodes,
     src_msgs[ src ]       += [ msg ]
     sink_msgs[ sink_idx ] += [ msg ]
 
-  import pprint
-  pprint.pprint( src_msgs )
-  pprint.pprint( sink_msgs )
-
   # Instantiate and elaborate the model
 
   model = TestHarness( id, num_nodes, src_msgs, sink_msgs,
                        src_delay, sink_delay )
   model.elaborate()
+
+  #print_connections( model.v2c[0] )
 
   # Create a simulator using the simulation tool
 
@@ -171,6 +168,9 @@ def test_rr_0_4_d0( dump_vcd ):
                      [  0,    WEST,   0x01  ],
                      [  0,    TERM,   0x02  ],
                      [  0,    EAST,   0x03  ],
+                     #[  0,    WEST,   0x01  ],
+                     #[  1,    TERM,   0x02  ],
+                     #[  2,    EAST,   0x03  ],
                      #[  1,    WEST,   0x04  ],
                      #[  1,    TERM,   0x05  ],
                      #[  1,    EAST,   0x06  ],
