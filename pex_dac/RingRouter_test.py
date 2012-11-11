@@ -28,7 +28,7 @@ class TestHarness (Model):
 
     # Instantiate models
 
-    self.router = RingRouter( id, num_nodes, 8 )
+    self.router = RingRouter( id, num_nodes, 2, 8 )
 
     self.src  = []
     self.v2c  = []
@@ -69,7 +69,6 @@ class TestHarness (Model):
     return all_done
 
   def line_trace( self ):
-    # TODO: only line tracing one port
     trace = ''
 
     for i in range( 3 ):

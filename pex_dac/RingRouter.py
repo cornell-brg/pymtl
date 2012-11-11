@@ -19,11 +19,11 @@ BUFFERING = 3
 
 class RingRouter ( Model ):
 
-  def __init__( self, id, num_nodes, payload_nbits ):
+  def __init__( self, id, num_nodes, num_msgs, payload_nbits ):
 
-    self.id     = id
-    self.nodes  = num_nodes
-    self.msg = pmlib.net_msgs.NetMsgParams( num_nodes, 2, payload_nbits )
+    self.id    = id
+    self.nodes = num_nodes
+    self.msg   = pmlib.net_msgs.NetMsgParams( num_nodes, num_msgs, payload_nbits )
 
     #---------------------------------------------------------------------
     # Line tracing
@@ -43,8 +43,8 @@ class RingRouter ( Model ):
     # Static Elaboration
     #---------------------------------------------------------------------
 
-    self.dpath = RingRouterDpath ( id, num_nodes, payload_nbits )
-    self.ctrl  = RingRouterCtrl  ( id, num_nodes, payload_nbits )
+    self.dpath = RingRouterDpath ( id, num_nodes, num_msgs, payload_nbits )
+    self.ctrl  = RingRouterCtrl  ( id, num_nodes, num_msgs, payload_nbits )
 
     dest = self.msg.dest_slice
 
@@ -97,11 +97,11 @@ class RingRouter ( Model ):
 
 class RingRouterDpath (Model):
 
-  def __init__( self, id, num_nodes, payload_nbits ):
+  def __init__( self, id, num_nodes, num_msgs, payload_nbits ):
 
-    self.id     = id
-    self.nodes  = num_nodes
-    self.msg = pmlib.net_msgs.NetMsgParams( num_nodes, 2, payload_nbits )
+    self.id    = id
+    self.nodes = num_nodes
+    self.msg   = pmlib.net_msgs.NetMsgParams( num_nodes, num_msgs, payload_nbits )
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -159,11 +159,11 @@ class RingRouterDpath (Model):
 
 class RingRouterCtrl (Model):
 
-  def __init__( self, id, num_nodes, payload_nbits ):
+  def __init__( self, id, num_nodes, num_msgs, payload_nbits ):
 
-    self.id     = id
-    self.nodes  = num_nodes
-    self.msg = pmlib.net_msgs.NetMsgParams( num_nodes, 2, payload_nbits )
+    self.id    = id
+    self.nodes = num_nodes
+    self.msg   = pmlib.net_msgs.NetMsgParams( num_nodes, num_msgs, payload_nbits )
 
     #---------------------------------------------------------------------
     # Interface Ports
