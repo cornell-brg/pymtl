@@ -50,19 +50,19 @@ class RingRouter ( Model ):
 
     for i in range(3):
 
-      connect( self.dpath.in_enq_msg[i],     self.in_msg[i]           )
-      connect( self.dpath.in_enq_val[i],     self.in_val[i]           )
-      connect( self.dpath.out_deq_msg[i],    self.out_msg[i]          )
-      connect( self.dpath.out_deq_val[i],    self.out_val[i]          )
+      connect( self.dpath.in_enq_msg[i],        self.in_msg[i]               )
+      connect( self.dpath.in_enq_val[i],        self.in_val[i]               )
+      connect( self.dpath.out_deq_msg[i],       self.out_msg[i]              )
+      connect( self.dpath.out_deq_val[i],       self.out_val[i]              )
 
-      connect( self.ctrl.in_deq_msg_dest[i], self.in_msg[i][dest]     )
-      connect( self.ctrl.in_credit[i],       self.in_credit[i]        )
-      connect( self.ctrl.out_credit[i],      self.out_credit[i]       )
+      connect( self.ctrl.in_credit[i],          self.in_credit[i]            )
+      connect( self.ctrl.out_credit[i],         self.out_credit[i]           )
 
-      connect( self.dpath.in_deq_val[i],     self.ctrl.in_deq_val[i]  )
-      connect( self.dpath.in_deq_rdy[i],     self.ctrl.in_deq_rdy[i]  )
-      connect( self.dpath.out_enq_val[i],    self.ctrl.out_enq_val[i] )
-      connect( self.dpath.xbar_sel[i],       self.ctrl.xbar_sel[i]    )
+      connect( self.dpath.in_deq_msg[i][dest],  self.ctrl.in_deq_msg_dest[i] )
+      connect( self.dpath.in_deq_val[i],        self.ctrl.in_deq_val[i]      )
+      connect( self.dpath.in_deq_rdy[i],        self.ctrl.in_deq_rdy[i]      )
+      connect( self.dpath.out_enq_val[i],       self.ctrl.out_enq_val[i]     )
+      connect( self.dpath.xbar_sel[i],          self.ctrl.xbar_sel[i]        )
 
   #-----------------------------------------------------------------------
   # Line tracing
@@ -115,6 +115,7 @@ class RingRouterDpath (Model):
     self.out_deq_msg     = [ OutPort ( msg_sz ) for x in range(3) ]
     self.out_deq_val     = [ OutPort ( 1 )      for x in range(3) ]
 
+    self.in_deq_msg      = [ OutPort ( msg_sz ) for x in range(3) ]
     self.in_deq_val      = [ OutPort ( 1 )      for x in range(3) ]
     self.in_deq_rdy      = [ InPort  ( 1 )      for x in range(3) ]
     self.out_enq_val     = [ InPort  ( 1 )      for x in range(3) ]
@@ -135,9 +136,11 @@ class RingRouterDpath (Model):
       connect( self.in_queues[i].enq_bits,  self.in_enq_msg[i]  )
       connect( self.in_queues[i].enq_val,   self.in_enq_val[i]  )
 
-      connect( self.in_queues[i].deq_bits,  self.xbar.in_[i]    )
+      connect( self.in_queues[i].deq_bits,  self.in_deq_msg[i]  )
       connect( self.in_queues[i].deq_val,   self.in_deq_val[i]  )
       connect( self.in_queues[i].deq_rdy,   self.in_deq_rdy[i]  )
+
+      connect( self.in_queues[i].deq_bits,  self.xbar.in_[i]    )
 
       # Output Queues (enq_rdy left floating)
 

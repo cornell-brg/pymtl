@@ -160,12 +160,12 @@ def basic_msgs():
   mk_net_msg( west, west, 0,   0,  1,       0xdd )
   mk_net_msg( east, term, 1,   2,  1,       0xee )
   mk_net_msg( term, east, 2,   1,  1,       0xff )
-  #mk_net_msg( west, east, 2,   0,  2,       0x01 )
-  #mk_net_msg( term, east, 2,   1,  2,       0x02 )
-  #mk_net_msg( east, east, 2,   2,  2,       0x03 )
-  #mk_net_msg( east, west, 0,   7,  3,       0x10 )
-  #mk_net_msg( term, west, 0,   1,  3,       0x20 )
-  #mk_net_msg( east, west, 0,   6,  3,       0x30 )
+  mk_net_msg( west, east, 2,   0,  2,       0x01 )
+  mk_net_msg( term, east, 2,   1,  2,       0x02 )
+  mk_net_msg( east, east, 2,   2,  2,       0x03 )
+  mk_net_msg( east, west, 0,   7,  3,       0x10 )
+  mk_net_msg( term, west, 0,   1,  3,       0x20 )
+  mk_net_msg( east, west, 0,   6,  3,       0x30 )
 
   return [ src_msgs, sink_msgs ]
 
