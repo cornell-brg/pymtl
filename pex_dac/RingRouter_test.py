@@ -1,16 +1,20 @@
 #=========================================================================
-# Queue Test Suite
+# Router Unit Tests
 #=========================================================================
 
-from pymtl import *
-
+from   pymtl import *
 import pmlib
-from   pmlib.adapters import ValRdyToValCredit
-from   pmlib.adapters import ValCreditToValRdy
 
-from RingRouter  import RingRouter
+import pmlib.valrdy     as valrdy
+import pmlib.net_msgs   as net_msgs
 
-from math import ceil, log
+#from Router import Router
+from RingRouter import RingRouter
+
+from pmlib.adapters import ValRdyToValCredit, ValCreditToValRdy
+
+from pmlib.TestSource  import TestSource
+from pmlib.TestNetSink import TestNetSink
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -18,55 +22,51 @@ from math import ceil, log
 
 class TestHarness (Model):
 
-  def __init__( self, id, num_nodes, src_msgs, sink_msgs,
-                src_delay, sink_delay ):
-
-    # Parameters
+  def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay,
+                router_id, num_routers, num_messages, payload_nbits, num_entries ):
 
     credits = 3  # TODO: this is hardcoded in RingRouter, fix later
-    msg = pmlib.net_msgs.NetMsgParams( num_nodes, 2, 8 )
 
-    # Instantiate models
+    # Instantiate Models
 
-    self.router = RingRouter( id, num_nodes, 2, 8 )
+    s.src    = [ TestSource  ( netmsg_params.nbits, src_msgs[x], src_delay   )
+                 for x in xrange( 3 ) ]
+    #s.router = Router ( router_id, num_routers, num_messages,
+    #                    payload_nbits, num_entries )
+    s.router = RingRouter ( router_id, num_routers, num_messages, payload_nbits )
+    s.sink   = [ TestNetSink ( netmsg_params.nbits, sink_msgs[x], sink_delay )
+                 for x in xrange( 3 ) ]
 
-    self.src  = []
-    self.v2c  = []
-    self.c2v  = []
-    self.sink = []
+    s.v2c  = []
+    s.c2v  = []
     for i in range(3):
-      self.src  += [ pmlib.TestSource ( msg.nbits, src_msgs[i],  src_delay  ) ]
-      self.v2c  += [ ValRdyToValCredit( msg.nbits, credits )               ]
-      self.c2v  += [ ValCreditToValRdy( msg.nbits, credits )               ]
-      self.sink += [ pmlib.TestSink   ( msg.nbits, sink_msgs[i], sink_delay ) ]
+      s.v2c  += [ ValRdyToValCredit( netmsg_params.nbits, credits ) ]
+      s.c2v  += [ ValCreditToValRdy( netmsg_params.nbits, credits ) ]
 
-    # TODO: why aren't the src's getting proper names with IDX suffix?
-
-    # Connect modules
+    # connect
 
     for i in range( 3 ):
-      connect( self.src[i].out_msg,        self.v2c[i].from_msg     )
-      connect( self.src[i].out_val,        self.v2c[i].from_val     )
-      connect( self.src[i].out_rdy,        self.v2c[i].from_rdy     )
+      connect( s.src[i].out_msg,        s.v2c[i].from_msg     )
+      connect( s.src[i].out_val,        s.v2c[i].from_val     )
+      connect( s.src[i].out_rdy,        s.v2c[i].from_rdy     )
 
-      connect( self.v2c[i].to_msg,         self.router.in_msg[i]    )
-      connect( self.v2c[i].to_val,         self.router.in_val[i]    )
-      connect( self.v2c[i].to_credit,      self.router.in_credit[i] )
+      connect( s.v2c[i].to_msg,         s.router.in_msg[i]    )
+      connect( s.v2c[i].to_val,         s.router.in_val[i]    )
+      connect( s.v2c[i].to_credit,      s.router.in_credit[i] )
 
-      connect( self.router.out_msg[i],     self.c2v[i].from_msg     )
-      connect( self.router.out_val[i],     self.c2v[i].from_val     )
-      connect( self.router.out_credit[i],  self.c2v[i].from_credit  )
+      connect( s.router.out_msg[i],     s.c2v[i].from_msg     )
+      connect( s.router.out_val[i],     s.c2v[i].from_val     )
+      connect( s.router.out_credit[i],  s.c2v[i].from_credit  )
 
-      connect( self.c2v[i].to_msg,         self.sink[i].in_msg      )
-      connect( self.c2v[i].to_val,         self.sink[i].in_val      )
-      connect( self.c2v[i].to_rdy,         self.sink[i].in_rdy      )
+      connect( s.c2v[i].to_msg,         s.sink[i].in_msg      )
+      connect( s.c2v[i].to_val,         s.sink[i].in_val      )
+      connect( s.c2v[i].to_rdy,         s.sink[i].in_rdy      )
 
-
-  def done( self ):
-    all_done = True
-    for i in range( 3 ):
-      all_done = all_done and self.src[i].done.value and self.sink[i].done.value
-    return all_done
+  def done( s ):
+    done_flag = 1
+    for i in xrange( 3 ):
+      done_flag &= s.src[i].done.value.uint and s.sink[i].done.value.uint
+    return done_flag
 
   def line_trace( self ):
     trace = ''
@@ -85,30 +85,21 @@ class TestHarness (Model):
 # Run test
 #-------------------------------------------------------------------------
 
-def run_router_test( dump_vcd, vcd_file_name, id, num_nodes,
-                     src_delay, sink_delay, test_msgs ):
+def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
+                 test_msgs, router_id, num_routers, num_messages,
+                 payload_nbits, num_entries ):
 
-  params = pmlib.net_msgs.NetMsgParams( num_nodes, 2, 8 )
+  # src/sink msgs
 
-  src_msgs  = [[], [], []]
-  sink_msgs = [[], [], []]
-  for test in test_msgs:
-    dest     = test[0]
-    src      = test[1]
-    payload  = test[2]
-    sink_idx = route( dest, id, num_nodes )
-
-    msg = params.mk_msg( dest, src, 0, payload )
-    src_msgs[ src ]       += [ msg ]
-    sink_msgs[ sink_idx ] += [ msg ]
+  src_msgs  = test_msgs[0]
+  sink_msgs = test_msgs[1]
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( id, num_nodes, src_msgs, sink_msgs,
-                       src_delay, sink_delay )
+  model = TestHarness( src_msgs, sink_msgs, src_delay, sink_delay,
+                       router_id, num_routers, num_messages,
+                       payload_nbits, num_entries )
   model.elaborate()
-
-  #print_connections( model.v2c[0] )
 
   # Create a simulator using the simulation tool
 
@@ -121,11 +112,9 @@ def run_router_test( dump_vcd, vcd_file_name, id, num_nodes,
   print ""
 
   sim.reset()
-  while not model.done() and sim.num_cycles < 20:
+  while not model.done():
     sim.print_line_trace()
     sim.cycle()
-
-  assert model.done()
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
@@ -134,51 +123,80 @@ def run_router_test( dump_vcd, vcd_file_name, id, num_nodes,
   sim.cycle()
 
 #-------------------------------------------------------------------------
-# Utility Functions
+# Test Messages
 #-------------------------------------------------------------------------
 
-WEST = 0
-TERM = 1
-EAST = 2
+num_routers   = 8
+num_messages  = 128
+payload_nbits = 8
 
-def route( dest, id, nodes ):
+netmsg_params = net_msgs.NetMsgParams( num_routers, num_messages,
+                                       payload_nbits )
 
-  if ( dest < id ):
-    dist_east = dest + ( nodes - id )
-    dist_west = id - dest
-  else:
-    dist_east = dest - id
-    dist_west = id + ( nodes - dest )
+def basic_msgs():
 
-  if ( dest == id ):
-    return TERM
-  elif ( dist_east < dist_west ):
-    return EAST
-  else:
-    return WEST
+  src_msgs  = [ [] for x in xrange( 3 ) ]
+  sink_msgs = [ [] for x in xrange( 3 ) ]
+
+  # Syntax helpers
+
+  mk_msg = netmsg_params.mk_msg
+
+  def mk_net_msg( src_, sink, dest, src, seq_num, payload ):
+    msg = mk_msg( dest, src, seq_num, payload )
+    src_msgs[src_].append( msg )
+    sink_msgs[sink].append( msg )
+
+  # constants
+
+  term = 1
+  west = 0
+  east = 2
+
+  #           src_  sink  dest src seq_num, payload
+  mk_net_msg( west, west, 0,   0,  0,       0xaa )
+  mk_net_msg( east, term, 1,   2,  0,       0xbb )
+  mk_net_msg( term, east, 2,   1,  0,       0xcc )
+  mk_net_msg( west, west, 0,   0,  1,       0xdd )
+  mk_net_msg( east, term, 1,   2,  1,       0xee )
+  mk_net_msg( term, east, 2,   1,  1,       0xff )
+  mk_net_msg( west, east, 2,   0,  2,       0x01 )
+  mk_net_msg( term, east, 2,   1,  2,       0x02 )
+  mk_net_msg( east, east, 2,   2,  2,       0x03 )
+  mk_net_msg( east, west, 0,   7,  3,       0x10 )
+  mk_net_msg( term, west, 0,   1,  3,       0x20 )
+  mk_net_msg( east, west, 0,   6,  3,       0x30 )
+
+  return [ src_msgs, sink_msgs ]
 
 #-------------------------------------------------------------------------
-# 4 Node Ring, Router 0
+# Router basic unit test with delay = 0 x 0, id = 1
 #-------------------------------------------------------------------------
 
-def test_rr_0_4_d0( dump_vcd ):
-  run_router_test( dump_vcd, "pex-dac-RingRouter-0-4-d0.vcd", 0, 4 ,0, 0,
-                   [ #  dest  src     payload
-                     [  0,    WEST,   0x01  ],
-                     [  0,    TERM,   0x02  ],
-                     [  0,    EAST,   0x03  ],
-                     #[  0,    WEST,   0x01  ],
-                     #[  1,    TERM,   0x02  ],
-                     #[  2,    EAST,   0x03  ],
-                     #[  1,    WEST,   0x04  ],
-                     #[  1,    TERM,   0x05  ],
-                     #[  1,    EAST,   0x06  ],
-                     #[  2,    WEST,   0x07  ],
-                     #[  2,    TERM,   0x08  ],
-                     #[  2,    EAST,   0x09  ],
-                     #[  3,    WEST,   0x0A  ],
-                     #[  3,    TERM,   0x0B  ],
-                     #[  3,    EAST,   0x0C  ],
-                   ])
+def test_router_basic_delay0x0( dump_vcd ):
+  run_net_test( dump_vcd, "RouterBasic_delay0x0.vcd", 0, 0,
+                basic_msgs(), 1, num_routers, num_messages, payload_nbits, 2 )
 
+#-------------------------------------------------------------------------
+# Router basic unit test with delay = 5 x 0, id = 1
+#-------------------------------------------------------------------------
 
+def test_router_basic_delay5x0( dump_vcd ):
+  run_net_test( dump_vcd, "RouterBasic_delay5x0.vcd", 5, 0,
+                basic_msgs(), 1, num_routers, num_messages, payload_nbits, 2 )
+
+#-------------------------------------------------------------------------
+# Router basic unit test with delay = 0 x 5, id = 1
+#-------------------------------------------------------------------------
+
+def test_router_basic_delay0x5( dump_vcd ):
+  run_net_test( dump_vcd, "RouterBasic_delay0x5.vcd", 0, 5,
+                basic_msgs(), 1, num_routers, num_messages, payload_nbits, 2 )
+
+#-------------------------------------------------------------------------
+# Router basic unit test with delay = 3 x 8, id = 1
+#-------------------------------------------------------------------------
+
+def test_router_basic_delay3x8( dump_vcd ):
+  run_net_test( dump_vcd, "RouterBasic_delay3x8.vcd", 3, 8,
+                basic_msgs(), 1, num_routers, num_messages, payload_nbits, 2 )
