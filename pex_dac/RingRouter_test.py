@@ -25,23 +25,20 @@ class TestHarness (Model):
   def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay,
                 router_id, num_routers, num_messages, payload_nbits, num_entries ):
 
-    credits = 3  # TODO: this is hardcoded in RingRouter, fix later
-
     # Instantiate Models
 
     s.src    = [ TestSource  ( netmsg_params.nbits, src_msgs[x], src_delay   )
                  for x in xrange( 3 ) ]
-    #s.router = Router ( router_id, num_routers, num_messages,
-    #                    payload_nbits, num_entries )
-    s.router = RingRouter ( router_id, num_routers, num_messages, payload_nbits )
+    s.router = RingRouter ( router_id, num_routers, num_messages,
+                            payload_nbits, num_entries )
     s.sink   = [ TestNetSink ( netmsg_params.nbits, sink_msgs[x], sink_delay )
                  for x in xrange( 3 ) ]
 
     s.v2c  = []
     s.c2v  = []
     for i in range(3):
-      s.v2c  += [ ValRdyToValCredit( netmsg_params.nbits, credits ) ]
-      s.c2v  += [ ValCreditToValRdy( netmsg_params.nbits, credits ) ]
+      s.v2c  += [ ValRdyToValCredit( netmsg_params.nbits, num_entries ) ]
+      s.c2v  += [ ValCreditToValRdy( netmsg_params.nbits, num_entries ) ]
 
     # connect
 

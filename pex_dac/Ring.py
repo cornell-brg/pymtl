@@ -37,8 +37,8 @@ class Ring (Model):
 
     # Instantiate Routers
 
-    s.routers = [ RingRouter( x, num_routers, num_messages, payload_nbits )
-                          #payload_nbits, num_entries )
+    s.routers = [ RingRouter( x, num_routers, num_messages,
+                              payload_nbits, num_entries )
                   for x in xrange( num_routers ) ]
 
     # Instantiate Channel Queues

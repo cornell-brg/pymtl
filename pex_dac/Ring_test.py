@@ -301,27 +301,27 @@ def adaptive_non_minimal_msgs():
 
 def test_ring_terminal_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_terminal_delay0x0.vcd", 0, 0,
-                terminal_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                terminal_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_east_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_east_delay0x0.vcd", 0, 0,
-                east_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                east_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_west_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_west_delay0x0.vcd", 0, 0,
-                west_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                west_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_deadlock_east_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_deadlock_east_delay0x0.vcd", 0, 0,
-                deadlock_east_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                deadlock_east_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_deadlock_west_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_deadlock_west_delay0x0.vcd", 0, 0,
-                deadlock_west_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                deadlock_west_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_adaptive_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_adaptive_delay0x0.vcd", 0, 0,
-                adaptive_non_minimal_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                adaptive_non_minimal_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 #-------------------------------------------------------------------------
 # Ring unit tests with delay = 5 x 0
@@ -329,27 +329,27 @@ def test_ring_adaptive_delay0x0( dump_vcd ):
 
 def test_ring_terminal_delay5x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_terminal_delay5x0.vcd", 5, 0,
-                terminal_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                terminal_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_east_delay5x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_east_delay5x0.vcd", 5, 0,
-                east_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                east_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_west_delay5x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_west_delay5x0.vcd", 5, 0,
-                west_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                west_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_deadlock_east_delay5x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_deadlock_east_delay5x0.vcd", 5, 0,
-                deadlock_east_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                deadlock_east_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_deadlock_west_delay5x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_deadlock_west_delay5x0.vcd", 5, 0,
-                deadlock_west_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                deadlock_west_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_adaptive_delay5x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_adaptive_delay5x0.vcd", 5, 0,
-                adaptive_non_minimal_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                adaptive_non_minimal_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 #-------------------------------------------------------------------------
 # Ring unit tests with delay = 0 x 5
@@ -357,27 +357,27 @@ def test_ring_adaptive_delay5x0( dump_vcd ):
 
 def test_ring_terminal_delay0x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_terminal_delay0x5.vcd", 0, 5,
-                terminal_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                terminal_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_east_delay0x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_east_delay0x5.vcd", 0, 5,
-                east_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                east_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_west_delay0x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_west_delay0x5.vcd", 0, 5,
-                west_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                west_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_deadlock_east_delay0x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_deadlock_east_delay0x5.vcd", 0, 5,
-                deadlock_east_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                deadlock_east_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_deadlock_west_delay0x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_deadlock_west_delay0x5.vcd", 0, 5,
-                deadlock_west_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                deadlock_west_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_adaptive_delay0x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_adaptive_delay0x5.vcd", 0, 5,
-                adaptive_non_minimal_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                adaptive_non_minimal_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 #-------------------------------------------------------------------------
 # Ring unit tests with delay = 8 x 5
@@ -385,24 +385,24 @@ def test_ring_adaptive_delay0x5( dump_vcd ):
 
 def test_ring_terminal_delay8x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_terminal_delay8x5.vcd", 8, 5,
-                terminal_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                terminal_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_east_delay8x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_east_delay8x5.vcd", 8, 5,
-                east_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                east_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_west_delay8x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_west_delay8x5.vcd", 8, 5,
-                west_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                west_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_deadlock_east_delay8x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_deadlock_east_delay8x5.vcd", 8, 5,
-                deadlock_east_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                deadlock_east_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_deadlock_west_delay8x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_deadlock_west_delay8x5.vcd", 8, 5,
-                deadlock_west_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                deadlock_west_msgs(), num_routers, num_messages, payload_nbits, 2 )
 
 def test_ring_adaptive_delay8x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_adaptive_delay8x5.vcd", 8, 5,
-                adaptive_non_minimal_msgs(), num_routers, num_messages, payload_nbits, 3 )
+                adaptive_non_minimal_msgs(), num_routers, num_messages, payload_nbits, 2 )

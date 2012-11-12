@@ -10,16 +10,13 @@ from pmlib.arbiters    import RoundRobinArbiterEn
 
 from math import ceil, log
 
-# TODO: better way to set this parameter?
-BUFFERING = 3
-
 #=========================================================================
 # Ring Router
 #=========================================================================
 
 class RingRouter ( Model ):
 
-  def __init__( self, id, num_nodes, num_msgs, payload_nbits ):
+  def __init__( self, id, num_nodes, num_msgs, payload_nbits, buffering ):
 
     self.id    = id
     self.nodes = num_nodes
@@ -43,8 +40,8 @@ class RingRouter ( Model ):
     # Static Elaboration
     #---------------------------------------------------------------------
 
-    self.dpath = RingRouterDpath ( id, num_nodes, num_msgs, payload_nbits )
-    self.ctrl  = RingRouterCtrl  ( id, num_nodes, num_msgs, payload_nbits )
+    self.dpath = RingRouterDpath ( id, num_nodes, num_msgs, payload_nbits, buffering )
+    self.ctrl  = RingRouterCtrl  ( id, num_nodes, num_msgs, payload_nbits, buffering )
 
     dest = self.msg.dest_slice
 
@@ -97,7 +94,7 @@ class RingRouter ( Model ):
 
 class RingRouterDpath (Model):
 
-  def __init__( self, id, num_nodes, num_msgs, payload_nbits ):
+  def __init__( self, id, num_nodes, num_msgs, payload_nbits, buffering ):
 
     self.id    = id
     self.nodes = num_nodes
@@ -125,8 +122,8 @@ class RingRouterDpath (Model):
     # Static Elaboration
     #---------------------------------------------------------------------
 
-    self.in_queues  = [ NormalQueue( BUFFERING, msg_sz ) for x in range(3) ]
-    self.out_queues = [ NormalQueue( BUFFERING, msg_sz ) for x in range(3) ]
+    self.in_queues  = [ NormalQueue( buffering, msg_sz ) for x in range(3) ]
+    self.out_queues = [ NormalQueue( buffering, msg_sz ) for x in range(3) ]
     self.xbar       = pmlib.Crossbar( 3, msg_sz )
 
     for i in range(3):
@@ -162,7 +159,7 @@ class RingRouterDpath (Model):
 
 class RingRouterCtrl (Model):
 
-  def __init__( self, id, num_nodes, num_msgs, payload_nbits ):
+  def __init__( self, id, num_nodes, num_msgs, payload_nbits, buffering ):
 
     self.id    = id
     self.nodes = num_nodes
@@ -189,7 +186,7 @@ class RingRouterCtrl (Model):
     #---------------------------------------------------------------------
 
     self.ictrl = [ InputCtrl  ( id, num_nodes, dest_sz ) for x in range(3) ]
-    self.octrl = [ OutputCtrl ( )                        for x in range(3) ]
+    self.octrl = [ OutputCtrl ( buffering )              for x in range(3) ]
 
     for i in range(3):
 
@@ -295,7 +292,9 @@ class InputCtrl(Model):
 
 class OutputCtrl(Model):
 
-  def __init__( self ):
+  def __init__( self, buffering ):
+
+    self.BUFFERING = buffering
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -312,7 +311,7 @@ class OutputCtrl(Model):
     # Submodules
     #---------------------------------------------------------------------
 
-    max_credits_nbits    = int( ceil( log( BUFFERING+1, 2 ) ) )
+    max_credits_nbits    = int( ceil( log( buffering+1, 2 ) ) )
 
     self.credits         = Wire( max_credits_nbits )
     self.arb_en          = Wire( 1 )
@@ -331,9 +330,9 @@ class OutputCtrl(Model):
   def credit_logic( self ):
 
     if self.reset.value:
-      self.credits.next = BUFFERING
+      self.credits.next = self.BUFFERING
     elif self.out_credit.value and not self.out_enq_val.value:
-      assert self.credits.value < BUFFERING
+      assert self.credits.value < self.BUFFERING
       self.credits.next = self.credits.value + 1
     elif self.out_enq_val.value and not self.out_credit.value:
       assert self.credits.value > 0
