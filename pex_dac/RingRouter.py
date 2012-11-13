@@ -185,8 +185,11 @@ class RingRouterCtrl (Model):
     # Static Elaboration
     #---------------------------------------------------------------------
 
-    self.ictrl = [ InputCtrl  ( id, num_nodes, dest_sz ) for x in range(3) ]
-    self.octrl = [ OutputCtrl ( buffering )              for x in range(3) ]
+    # The 1st InputCtrl in the array (x == 1) will be the terminal Port
+    self.ictrl = [ InputCtrl  ( id, num_nodes, dest_sz, buffering, (x == 1))
+                   for x in range(3) ]
+    #self.ictrl = [ InputCtrl  ( id, num_nodes, dest_sz, buffering ) for x in range(3) ]
+    self.octrl = [ OutputCtrl ( buffering ) for x in range(3) ]
 
     for i in range(3):
 
@@ -199,13 +202,14 @@ class RingRouterCtrl (Model):
       connect( self.octrl[i].out_credit,      self.out_credit[i]      )
       connect( self.octrl[i].xbar_sel,        self.xbar_sel[i]        )
 
-    # TODO: bubble flow control, credit_count signal!
-    # connect( self.ictrl[1].credit_count[0], self.octrl[0].credit_count )
-    # connect( self.ictrl[1].credit_count[1], self.octrl[2].credit_count )
-
       for j in range(3):
         connect( self.octrl[i].reqs[j],   self.ictrl[j].reqs[i]   )
         connect( self.ictrl[i].grants[j], self.octrl[j].grants[i] )
+
+    # bubble flow control, credit_count signal!
+    connect( self.ictrl[1].out_west_credits, self.octrl[0].credits )
+    connect( self.ictrl[1].out_east_credits, self.octrl[2].credits )
+
 
 
 #=========================================================================
@@ -214,10 +218,13 @@ class RingRouterCtrl (Model):
 
 class InputCtrl(Model):
 
-  def __init__( self, id, num_nodes, dest_sz ):
+  def __init__( self, id, num_nodes, dest_sz, buffering, terminal=False ):
 
-    self.id    = id
-    self.nodes = num_nodes
+    self.id      = id
+    self.nodes   = num_nodes
+    buffer_nbits = int( ceil( log( buffering+1, 2 ) ) )
+
+    self.terminal = terminal
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -232,6 +239,28 @@ class InputCtrl(Model):
     self.grants          = InPort  ( 3 )
 
     self.dest            = Wire    ( 2 )
+
+    # TODO: major bug!!!
+    #self.bubble_cond_west = Wire( 1 )
+    #self.bubble_cond_east = Wire( 1 )
+    self.bubble_cond_west = InPort( 1 )
+    self.bubble_cond_east = InPort( 1 )
+
+    if ( terminal ):
+      self.out_west_credits = InPort( buffer_nbits )
+      self.out_east_credits = InPort( buffer_nbits )
+      self.west_cmp         = pmlib.arith.GtComparator( buffer_nbits )
+      self.east_cmp         = pmlib.arith.GtComparator( buffer_nbits )
+
+      connect( self.west_cmp.in0, self.out_west_credits )
+      connect( self.east_cmp.in0, self.out_east_credits )
+      connect( self.west_cmp.in1, 1 )
+      connect( self.east_cmp.in1, 1 )
+      connect( self.west_cmp.out, self.bubble_cond_west )
+      connect( self.east_cmp.out, self.bubble_cond_east )
+    else:
+      connect( self.bubble_cond_west, 1 )
+      connect( self.bubble_cond_east, 1 )
 
     self.WEST = 0
     self.THIS = 1
@@ -268,9 +297,12 @@ class InputCtrl(Model):
 
     # TODO: self.reqs.value[x] is what we want, but this fails
     #       to update the VCD correctly!
-    self.reqs[0].value = self.in_deq_val.value and ( self.dest.value == self.WEST )
+    self.reqs[0].value = ( self.in_deq_val.value and ( self.dest.value == self.WEST )
+                           and self.bubble_cond_west.value )
     self.reqs[1].value = self.in_deq_val.value and ( self.dest.value == self.THIS )
-    self.reqs[2].value = self.in_deq_val.value and ( self.dest.value == self.EAST )
+    self.reqs[2].value = ( self.in_deq_val.value and ( self.dest.value == self.EAST )
+                           and self.bubble_cond_east.value )
+
 
     self.in_deq_rdy.value = ( ( self.grants[0].value & self.reqs[0].value )
                             | ( self.grants[1].value & self.reqs[1].value )
@@ -294,7 +326,8 @@ class OutputCtrl(Model):
 
   def __init__( self, buffering ):
 
-    self.BUFFERING = buffering
+    self.BUFFERING    = buffering
+    max_credits_nbits = int( ceil( log( buffering+1, 2 ) ) )
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -304,16 +337,14 @@ class OutputCtrl(Model):
     self.out_credit      = InPort  ( 1 )
     self.xbar_sel        = OutPort ( 2 )
 
+    self.credits         = OutPort ( max_credits_nbits )
     self.reqs            = InPort  ( 3 )
     self.grants          = OutPort ( 3 )
 
     #---------------------------------------------------------------------
-    # Submodules
+    # Static Elaboration
     #---------------------------------------------------------------------
 
-    max_credits_nbits    = int( ceil( log( buffering+1, 2 ) ) )
-
-    self.credits         = Wire( max_credits_nbits )
     self.arb_en          = Wire( 1 )
 
     self.arb             = RoundRobinArbiterEn( 3 )
@@ -328,6 +359,8 @@ class OutputCtrl(Model):
 
   @posedge_clk
   def credit_logic( self ):
+
+    #print self.parent.parent.name, self.name
 
     if self.reset.value:
       self.credits.next = self.BUFFERING
@@ -370,4 +403,3 @@ class OutputCtrl(Model):
       self.xbar_sel.value = 1
     else:
       self.xbar_sel.value = 2
-

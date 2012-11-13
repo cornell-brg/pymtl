@@ -18,6 +18,7 @@ class Ring (Model):
     # Local Parameters
 
     netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
+    s.netmsg      = netmsg_params
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -88,5 +89,44 @@ class Ring (Model):
       connect( s.routers[i].out_msg[2],    s.routers[i + 1].in_msg[0]     )
       connect( s.routers[i].out_val[2],    s.routers[i + 1].in_val[0]     )
       connect( s.routers[i].out_credit[2], s.routers[i + 1].in_credit[0]  )
+
+  #-----------------------------------------------------------------------
+  # Line tracing
+  #-----------------------------------------------------------------------
+
+  def line_trace( self ):
+
+    seqnum = self.netmsg.seqnum_slice
+
+    def trace( val, msg ):
+      if val:
+        return '{}'.format( msg[ seqnum ].uint )
+      else:
+        return ' '
+
+    def one_router( r ):
+      west = "{}{}{}{}".format( trace( r.in_val[0].value, r.in_msg[0].value ),
+                                '+' if r.in_credit[0].value else ' ',
+                                trace( r.out_val[0].value, r.out_msg[0].value ),
+                                #'<' if r.out_val[0].value else ' ',
+                                '+' if r.out_credit[0].value else ' ' )
+
+      term = "{}{}{}{}".format( trace( r.in_val[1].value, r.in_msg[1].value ),
+                                '+' if r.in_credit[1].value else ' ',
+                                trace( r.out_val[1].value, r.out_msg[1].value ),
+                                '+' if r.out_credit[1].value else ' ' )
+
+      east = "{}{}{}{}".format( trace( r.in_val[2].value, r.in_msg[2].value ),
+                                '+' if r.in_credit[2].value else ' ',
+                                trace( r.out_val[2].value, r.out_msg[2].value ),
+                                '+' if r.out_credit[2].value else ' ' )
+
+      return ' ' + west + term + east + ' |'
+
+    s = ''
+    for router in self.routers:
+      s += one_router( router )
+
+    return  s
 
 

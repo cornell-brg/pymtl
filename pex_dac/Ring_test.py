@@ -54,6 +54,9 @@ class TestHarness (Model):
       done_flag &= s.src[i].done.value.uint and s.sink[i].done.value.uint
     return done_flag
 
+  def line_trace( s ):
+    return s.ring.line_trace()
+
 #-------------------------------------------------------------------------
 # Run test
 #-------------------------------------------------------------------------
