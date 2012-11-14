@@ -498,7 +498,6 @@ class FindRegistersVisitor(ast.NodeVisitor):
   to declare certain wires as registers.  This visitor looks for all ports
   written in @posedge_clk blocks so they can be declared as reg types.
 
-  TODO: factor this and SensitivityListVisitor into same file?
   """
 
   #-----------------------------------------------------------------------

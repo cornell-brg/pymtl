@@ -639,11 +639,9 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
   In order to translate synchronous @posedge_clk blocks into Verilog, we need
   to declare certain wires as registers.  This visitor looks for all ports
   written in @posedge_clk blocks so they can be declared as reg types.
-
-  TODO: factor this and SensitivityListVisitor into same file?
   """
   def __init__(self, accesses):
-    """Construct a new SensitivityListVisitor."""
+    """Construct a new CheckSyntaxVisitor."""
     self.accesses = accesses
     self.decorator = None
 

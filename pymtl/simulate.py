@@ -148,7 +148,7 @@ class SimulationTool():
     #    value.signals.add( port )
 
     # walk the AST of each module to create sensitivity lists and add registers
-    self.infer_sensitivity_list(self.model)
+    self.register_decorated_functions(self.model)
 
   def find_node_groupings(self, model):
     """Walk all connections to find where Node objects should be placed.
@@ -177,6 +177,7 @@ class SimulationTool():
     for m in model._submodules:
       self.find_node_groupings( m )
 
+  # DEPRECATED, UNUSED!!!
   def add_to_node_groups(self, port):
     """Add the port to a node group, merge groups if necessary.
 
@@ -198,23 +199,12 @@ class SimulationTool():
     self.node_groups[:] = [x for x in self.node_groups if disjoint(group, x)]
     self.node_groups += [ group ]
 
-  def infer_sensitivity_list(self, model):
+  def register_decorated_functions(self, model):
     """Utility method which detects the sensitivity list of annotated functions.
 
     This method uses the SensitivityListVisitor class to walk the AST of the
     provided model and register any functions annotated with special
     decorators.
-
-    For @combinational decorators, the SensitivityListVisitor attempts to
-    construct a signal sensitivity list based on loads performed inside the
-    annotated function.
-
-    For @posedge_clk decorators, the SensitivityListVisitor replaces the
-    Nodes of written ports/wires with RegisterNodes.
-
-    Parameters
-    ----------
-    model: a VerilogModel instance
     """
 
     # Create an AST Tree
@@ -222,20 +212,20 @@ class SimulationTool():
     src = inspect.getsource( model_class )
     tree = ast.parse( src )
     #print
-    #import debug_utils
-    #debug_utils.print_ast(tree)
-    comb_loads = set()
-    reg_stores = set()
+    import debug_utils
+    debug_utils.print_ast(tree)
+    comb_funcs    = set()
+    posedge_funcs = set()
 
     # Walk the tree to inspect a given modules combinational blocks and
     # build a sensitivity list from it,
     # only gives us function names... still need function pointers
-    SensitivityListVisitor( comb_loads, reg_stores ).visit( tree )
-    #print "COMB", comb_loads
-    #print "REGS", reg_stores
+    SensitivityListVisitor( comb_funcs, posedge_funcs ).visit( tree )
 
-    # Iterate through all comb_loads, add function_pointers to vnode_callbacks
-    for func_name in comb_loads:
+    # Iterate through all @combinational decorated function names we detected,
+    # retrieve their associated function pointer, then add entries for each
+    # item in the function's sensitivity list to vnode_callbacks
+    for func_name in comb_funcs:
       func_ptr = model.__getattribute__(func_name)
       for input_port in model._senses:
         value_ptr = input_port.node
@@ -246,7 +236,7 @@ class SimulationTool():
         self.vnode_callbacks[value_ptr] += [func_ptr]
 
     # Add all posedge_clk functions
-    for func_name in reg_stores:
+    for func_name in posedge_funcs:
       func_ptr = model.__getattribute__(func_name)
       self.posedge_clk_fns += [func_ptr]
 
@@ -260,7 +250,7 @@ class SimulationTool():
     #  pass
 
     for m in model._submodules:
-      self.infer_sensitivity_list( m )
+      self.register_decorated_functions( m )
 
 
 class SensitivityListVisitor(ast.NodeVisitor):
@@ -271,21 +261,12 @@ class SensitivityListVisitor(ast.NodeVisitor):
   loads in these functions are added to the sensitivity list (registry).
   """
   # http://docs.python.org/library/ast.html#abstract-grammar
-  def __init__(self, comb_loads, reg_stores):
-    """Construct a new SensitivityListVisitor.
-
-    Parameters
-    ----------
-    comb_loads: a set() object, (var_name, func_name) tuples will be added to
-                this set for all variables loaded inside @combinational blocks
-    reg_stores: a set() object, (var_name, func_name) tuples will be added to
-                this set for all variables updated inside @posedge_clk blocks
-                (via the <<= operator)
-    """
-    self.current_fn = None
-    self.comb_loads = comb_loads
-    self.reg_stores = reg_stores
-    self.add_regs   = False
+  def __init__(self, comb_funcs, posedge_funcs ):
+    """Construct a new SensitivityListVisitor."""
+    self.current_fn    = None
+    self.comb_funcs    = comb_funcs
+    self.posedge_funcs = posedge_funcs
+    self.add_regs      = False
 
   def visit_FunctionDef(self, node):
     """Visit all functions, but only parse those with special decorators."""
@@ -295,80 +276,6 @@ class SensitivityListVisitor(ast.NodeVisitor):
       return
     decorator_names = [x.id for x in node.decorator_list]
     if 'combinational' in decorator_names:
-      self.comb_loads.add( node.name )
+      self.comb_funcs.add( node.name )
     elif 'posedge_clk' in decorator_names:
-      self.reg_stores.add( node.name )
-
-
-#class Node(object):
-#
-#  """Hidden class implementing a node storing value (like a net in ).
-#
-#  Connected ports and wires have a pointer to the same Node
-#  instance, such that reads and writes remain consistent. Can be either treated
-#  as a wire or a register depending on use, but not both.
-#  """
-#
-#  def __init__(self, width, value=None, sim=None):
-#    """Constructor for a Node object.
-#
-#    Parameters
-#    ----------
-#    width: bitwidth of the node.
-#    value: initial value of the node. Only set by Constant objects.
-#    sim: simulation object to register events with on write.
-#    """
-#    self.sim = sim
-#    self._width = width
-#    # TODO: Initializing _value to None ensures we dont have to check for reset
-#    # condition when adding to the event queue! However, without a reset() we do
-#    # need to check for the None condition in the value parameter and return a 0
-#    # instead, otherwise certain modules break. Better way to do this?
-#    self._value = value
-#    self.wmask = (1 << self.width) - 1
-#    self.is_reg = False
-#    self.signals = set()
-#
-#  @property
-#  def width(self):
-#    """Ensures width can only be set by constructor."""
-#    return self._width
-#
-#  @property
-#  def value(self):
-#    """Value stored by node. Informs the attached simulator on any write."""
-#    # TODO: get rid of this check?
-#    if self._value == None:
-#      return 0
-#    return (self._value & self.wmask)
-#  @value.setter
-#  def value(self, value):
-#    # TODO: this is a check that makes sure you dont write the value directly
-#    #       if this is a register.  Put a helpful message here?
-#    #assert not self.is_reg
-#    if self._value != value:
-#      self.sim.add_event(self)
-#      self._value = value
-#      if self.sim.vcd:
-#        for signal in self.signals:
-#          if not isinstance(signal, Slice):
-#            if signal.width == 1:
-#              print >> self.sim.o, "%d%s" % (signal.value, signal._code)
-#            else:
-#              print >> self.sim.o, "s%s %s" % (signal.value, signal._code)
-#
-#  @property
-#  def next(self):
-#    """Value stored by node. Informs the attached simulator on any write."""
-#    return self._next
-#  @next.setter
-#  def next(self, value):
-#    # TODO: this is a check that makes sure you dont write the value directly
-#    #       if this is a register.  Put a helpful message here?
-#    #assert not self.is_reg
-#    self.sim.rnode_callbacks += [self]
-#    self._next = value
-#
-#  def clock(self):
-#    """Update value to store contents of next. Should only be called by sim."""
-#    self.value = self._next
+      self.posedge_funcs.add( node.name )
