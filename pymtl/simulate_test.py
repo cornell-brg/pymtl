@@ -199,6 +199,19 @@ class TestCombinationalSim(unittest.TestCase):
     model.inp.value = -1
     self.assertEqual( model.out.value, 65535)
 
+  def test_constant_wires(self):
+    model = ConstantWires(16)
+    sim = self.setup_sim(model)
+    assert model.out0.value  == 2
+    assert model.wire3.value == 1
+    assert model.out1.value  == 4
+    assert model.wire2.value == 6
+    sim.eval_combinational()
+    assert model.out0.value  == 2
+    assert model.wire3.value == 1
+    assert model.out1.value  == 4
+    assert model.wire2.value == 6
+
   def test_onewire_wrapped(self):
     model = OneWireWrapped(16)
     sim = self.setup_sim(model)

@@ -1,5 +1,19 @@
 from model import *
 
+class ConstantWires(Model):
+  def __init__(self, bits):
+    self.out0  = OutPort(8)
+    self.out1  = OutPort(8)
+    self.wire1 = Wire(8)
+    self.wire2 = Wire(8)
+    self.wire3 = Wire(1)
+
+    connect( self.out0,  2 )
+    connect( self.wire1, 4 )
+    connect( self.wire1, self.out1 )
+    connect( self.wire2, 6 )
+    connect( self.wire3, 1 )
+
 class Rotator(Model):
   def __init__(self, bits):
     # Ports

@@ -499,6 +499,14 @@ class Model(object):
         else:
           port.ext_connections += [c]
 
+    # ValueGraph Connections: Hanging Wires
+    # If we create a wire and connect it to a constant, we need to make sure
+    # we apply their values!
+    for wire in self._wires:
+      for c in wire.node.connections:
+        if isinstance(c, Constant):
+          wire.value = c.value
+
     # Recursively enter submodules
 
     for submodule in self._submodules:
