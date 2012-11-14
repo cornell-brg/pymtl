@@ -480,6 +480,24 @@ class TestCombAndPosedge(unittest.TestCase):
       debug_utils.port_walk(model)
     return sim
 
+  def test_sensitivity_list(self):
+    model = SensitivityList()
+    sim = self.setup_sim(model)
+    sim.reset()
+    model.in_.value = 7
+    assert model.outD1.value == 0
+    assert model.outD2.value == 0
+    sim.cycle()
+    assert model.outA.value  == 7
+    assert model.outB.value  == 7
+    assert model.outC1.value == 7
+    assert model.outC2.value == 7
+    assert model.outD1.value == 1
+    assert model.outD2.value == 1
+    sim.cycle()
+    assert model.outD1.value == 2
+    assert model.outD2.value == 2
+
   def test_incrementer(self):
     model = Incrementer()
     sim = self.setup_sim(model)

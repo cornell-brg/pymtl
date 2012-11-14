@@ -14,6 +14,48 @@ class ConstantWires(Model):
     connect( self.wire2, 6 )
     connect( self.wire3, 1 )
 
+class SensitivityList(Model):
+  def __init__(self):
+    self.in_   = InPort(8)
+    self.outA  = OutPort(8)
+    self.wireB = Wire(8)
+    self.outB  = OutPort(8)
+    self.outC1 = OutPort(8)
+    self.outC2 = OutPort(8)
+    self.outD1 = OutPort(8)
+    self.outD2 = OutPort(8)
+
+  @combinational
+  def combA( self ):
+    print "A"
+    self.outA.value = self.in_.value
+
+  @combinational
+  def combB( self ):
+    print "B"
+    self.outB.value = self.wireB.value
+
+  @combinational
+  def combC( self ):
+    print "C"
+    self.outC2.value = self.outC1.value
+
+  @combinational
+  def combD( self ):
+    print "D"
+    self.outD2.value = self.outD1.value
+
+  @posedge_clk
+  def seq_logic( self ):
+    print "seq"
+    self.wireB.next = self.in_.value
+    self.outC1.next = self.in_.value
+    if self.reset.value == 1:
+      self.outD1.next = 0
+    else:
+      self.outD1.next = self.outD1.value + 1
+
+
 class Rotator(Model):
   def __init__(self, bits):
     # Ports
