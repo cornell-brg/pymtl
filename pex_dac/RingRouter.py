@@ -343,12 +343,14 @@ class OutputCtrl(Model):
     #---------------------------------------------------------------------
 
     self.arb_en          = Wire( 1 )
+    self.credit_count    = Wire( max_credits_nbits )
 
     self.arb             = RoundRobinArbiterEn( 3 )
 
-    connect( self.reqs,   self.arb.reqs   )
-    connect( self.grants, self.arb.grants )
-    connect( self.arb_en, self.arb.en     )
+    connect( self.reqs,    self.arb.reqs     )
+    connect( self.grants,  self.arb.grants   )
+    connect( self.arb_en,  self.arb.en       )
+    connect( self.credits, self.credit_count )
 
   #-----------------------------------------------------------------------
   # Credit Counter
@@ -358,15 +360,15 @@ class OutputCtrl(Model):
   def credit_logic( self ):
 
     if self.reset.value:
-      self.credits.next = self.BUFFERING
+      self.credit_count.next = self.BUFFERING
     elif self.out_credit.value and not self.out_enq_val.value:
-      assert self.credits.value < self.BUFFERING
-      self.credits.next = self.credits.value + 1
+      assert self.credit_count.value < self.BUFFERING
+      self.credit_count.next = self.credit_count.value + 1
     elif self.out_enq_val.value and not self.out_credit.value:
-      assert self.credits.value > 0
-      self.credits.next = self.credits.value - 1
+      assert self.credit_count.value > 0
+      self.credit_count.next = self.credit_count.value - 1
     else:
-      self.credits.next = self.credits.value
+      self.credit_count.next = self.credit_count.value
 
   #-----------------------------------------------------------------------
   # Arbitation/Crossbar Signals
@@ -376,7 +378,7 @@ class OutputCtrl(Model):
   def logic( self ):
 
     # Set arbiter request signals
-    self.arb_en.value = ( self.credits.value != 0 )
+    self.arb_en.value = ( self.credit_count.value != 0 )
 
     #if self.credits.value == 0:
     #  self.arb.reqs.value = 0
