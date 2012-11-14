@@ -240,11 +240,8 @@ class InputCtrl(Model):
 
     self.dest            = Wire    ( 2 )
 
-    # TODO: major bug!!!
-    #self.bubble_cond_west = Wire( 1 )
-    #self.bubble_cond_east = Wire( 1 )
-    self.bubble_cond_west = InPort( 1 )
-    self.bubble_cond_east = InPort( 1 )
+    self.bubble_cond_west = Wire( 1 )
+    self.bubble_cond_east = Wire( 1 )
 
     if ( terminal ):
       self.out_west_credits = InPort( buffer_nbits )
@@ -359,8 +356,6 @@ class OutputCtrl(Model):
 
   @posedge_clk
   def credit_logic( self ):
-
-    #print self.parent.parent.name, self.name
 
     if self.reset.value:
       self.credits.next = self.BUFFERING
