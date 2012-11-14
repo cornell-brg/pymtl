@@ -1,3 +1,6 @@
+#=========================================================================
+# Simulation Tool
+#=========================================================================
 """Tool for simulating MTL models.
 
 This module contains classes which construct a simulator given a MTL model
@@ -15,6 +18,10 @@ from vcd import VCDUtil
 # TODO: make commandline parameter
 debug_hierarchy = False
 
+#=========================================================================
+# SimulationTool
+#=========================================================================
+
 class SimulationTool():
 
   """User visible class implementing a tool for simulating MTL models.
@@ -22,6 +29,10 @@ class SimulationTool():
   This class takes a MTL model instance and creates a simulator for execution
   in the python interpreter.
   """
+
+  #-----------------------------------------------------------------------
+  # Constructor
+  #-----------------------------------------------------------------------
 
   def __init__(self, model):
     """Construct a simulator from a MTL model.
@@ -48,6 +59,10 @@ class SimulationTool():
 
     # Actually construct the simulator
     self.construct_sim()
+
+  #-----------------------------------------------------------------------
+  # Cycle
+  #-----------------------------------------------------------------------
 
   def cycle(self):
     """Execute a single cycle in the simulator.
@@ -85,16 +100,27 @@ class SimulationTool():
 
     self.num_cycles += 1
 
-  # Print out line trace
+  #-----------------------------------------------------------------------
+  # Print Line Trace
+  #-----------------------------------------------------------------------
   # Framework should take care of printing cycle. -cbatten
+
   def print_line_trace(self):
     print "{:>3}:".format( self.num_cycles ), self.model.line_trace()
+
+  #-----------------------------------------------------------------------
+  # Eval
+  #-----------------------------------------------------------------------
 
   def eval_combinational(self):
     """Evaluates all events in the combinational logic event queue."""
     while self.event_queue:
       func = self.event_queue.pop()
       func()
+
+  #-----------------------------------------------------------------------
+  # Reset
+  #-----------------------------------------------------------------------
 
   def reset(self):
     """Sets the reset signal high and cycles the simulator."""
@@ -103,13 +129,25 @@ class SimulationTool():
     self.cycle()
     self.model.reset.value = 0
 
+  #-----------------------------------------------------------------------
+  # Dump VCD
+  #-----------------------------------------------------------------------
+
   def dump_vcd(self, outfile=None):
     """Configure the simulator to dump VCD output during simulation."""
     VCDUtil(self, outfile)
 
+  #-----------------------------------------------------------------------
+  # Enable Line Trace
+  #-----------------------------------------------------------------------
+
   def en_line_trace(self, enabled=True):
-    """Configure the simulator to dump VCD output during simulation."""
+    """Configure the simulator to dump line trace during simulation."""
     self.model._line_trace_en = enabled
+
+  #-----------------------------------------------------------------------
+  # Add Callback Event
+  #-----------------------------------------------------------------------
 
   def add_event(self, value_node):
     """Add an event to the simulator event queue for later execution.
@@ -117,10 +155,6 @@ class SimulationTool():
     This function will check if the written Node instance has any
     registered events (functions decorated with @combinational), and if so, adds
     them to the event queue.
-
-    Parameters
-    ----------
-    value_node: the Node instance which was written and called add_event().
     """
     # TODO: debug_event
     #print "    ADDEVENT: VALUE", value_node, value_node.value, value_node in self.vnode_callbacks
@@ -130,33 +164,26 @@ class SimulationTool():
         if func not in self.event_queue:
           self.event_queue.appendleft(func)
 
+  #-----------------------------------------------------------------------
+  # Construct Simulator
+  #-----------------------------------------------------------------------
+
   def construct_sim(self):
     """Construct a simulator for the provided model by adding necessary hooks."""
-    ## build up the node_groups data structure
+    # build up the node_groups data structure
     self.find_node_groupings(self.model)
-
-    ## create Nodes and add them to each port
-    ##pprint.pprint( self.node_groups )
-    #for group in self.node_groups:
-    #  width = max( [port.width for port in group] )
-    #  # TODO: handle constant
-    #  value = Node(width, sim=self)
-    #  for port in group:
-    #    if not port._value:
-    #      port._value = value
-    #    #if dump_vcd:
-    #    value.signals.add( port )
 
     # walk the AST of each module to create sensitivity lists and add registers
     self.register_decorated_functions(self.model)
 
-  def find_node_groupings(self, model):
-    """Walk all connections to find where Node objects should be placed.
+  #-----------------------------------------------------------------------
+  # Find Node Groupings
+  #-----------------------------------------------------------------------
+  # TODO: this is a hacky way to connect the ConnectionGraph and the
+  # ValueGraph. This is also poorly named.  Fixed later.
 
-    Parameters
-    ----------
-    model: a Model instance.
-    """
+  def find_node_groupings(self, model):
+    """Walk all connections to find where Node objects should be placed."""
     if debug_hierarchy:
       print 70*'-'
       print "Model:", model
@@ -177,7 +204,11 @@ class SimulationTool():
     for m in model._submodules:
       self.find_node_groupings( m )
 
+  #-----------------------------------------------------------------------
+  # Add to Node Groups
+  #-----------------------------------------------------------------------
   # DEPRECATED, UNUSED!!!
+
   def add_to_node_groups(self, port):
     """Add the port to a node group, merge groups if necessary.
 
@@ -199,10 +230,14 @@ class SimulationTool():
     self.node_groups[:] = [x for x in self.node_groups if disjoint(group, x)]
     self.node_groups += [ group ]
 
+  #-----------------------------------------------------------------------
+  # Register Decorated Functions
+  #-----------------------------------------------------------------------
+
   def register_decorated_functions(self, model):
     """Utility method which detects the sensitivity list of annotated functions.
 
-    This method uses the SensitivityListVisitor class to walk the AST of the
+    This method uses the DecoratedFunctionVisitor class to walk the AST of the
     provided model and register any functions annotated with special
     decorators.
     """
@@ -212,15 +247,15 @@ class SimulationTool():
     src = inspect.getsource( model_class )
     tree = ast.parse( src )
     #print
-    import debug_utils
-    debug_utils.print_ast(tree)
+    #import debug_utils
+    #debug_utils.print_ast(tree)
     comb_funcs    = set()
     posedge_funcs = set()
 
     # Walk the tree to inspect a given modules combinational blocks and
     # build a sensitivity list from it,
     # only gives us function names... still need function pointers
-    SensitivityListVisitor( comb_funcs, posedge_funcs ).visit( tree )
+    DecoratedFunctionVisitor( comb_funcs, posedge_funcs ).visit( tree )
 
     # Iterate through all @combinational decorated function names we detected,
     # retrieve their associated function pointer, then add entries for each
@@ -240,20 +275,15 @@ class SimulationTool():
       func_ptr = model.__getattribute__(func_name)
       self.posedge_clk_fns += [func_ptr]
 
-    # Add all register objects
-    # TODO: better way to do this
-    #try:
-    #  for reg in model._regs:
-    #    reg._value.is_reg = True
-    #    self.rnode_callbacks += [reg._value]
-    #except:
-    #  pass
-
+    # Add all posedge_clk functions
     for m in model._submodules:
       self.register_decorated_functions( m )
 
+#=========================================================================
+# Decorated Function Visitor
+#=========================================================================
 
-class SensitivityListVisitor(ast.NodeVisitor):
+class DecoratedFunctionVisitor(ast.NodeVisitor):
   """Hidden class for building a sensitivity list from the AST of a MTL model.
 
   This class takes the AST tree of a Model class and looks for any
@@ -261,8 +291,8 @@ class SensitivityListVisitor(ast.NodeVisitor):
   loads in these functions are added to the sensitivity list (registry).
   """
   # http://docs.python.org/library/ast.html#abstract-grammar
-  def __init__(self, comb_funcs, posedge_funcs ):
-    """Construct a new SensitivityListVisitor."""
+  def __init__(self, comb_funcs, posedge_funcs):
+    """Construct a new Decorated Function Visitor."""
     self.current_fn    = None
     self.comb_funcs    = comb_funcs
     self.posedge_funcs = posedge_funcs
@@ -279,3 +309,4 @@ class SensitivityListVisitor(ast.NodeVisitor):
       self.comb_funcs.add( node.name )
     elif 'posedge_clk' in decorator_names:
       self.posedge_funcs.add( node.name )
+
