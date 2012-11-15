@@ -783,7 +783,8 @@ class SensitivityListVisitor(ast.NodeVisitor):
         node = node.value
       elif isinstance(node, _ast.Subscript):
         # TODO: assumes this is an integer, not a range
-        if isinstance( node.slice.value, _ast.Num ):
+        if (isinstance( node.slice, _ast.Index) and
+            isinstance( node.slice.value, _ast.Num )):
           name += [ node.slice.value.n ]
           node = node.value
         else:
@@ -795,10 +796,10 @@ class SensitivityListVisitor(ast.NodeVisitor):
     name += [node.id]
 
     # If the target does not access .value or .next, tell the code to ignore it.
-    if name[0] in ['value', 'next']:
+    if   name[0] in ['value', 'next']:
       return self.get_target_ptr( name[::-1][1:-1] )
     # Special case Bits methods
-    if name[0] in ['uint', 'int', 'sext', 'zext']:
+    elif name[0] in ['uint', 'int', 'sext', 'zext']:
       return self.get_target_ptr( name[::-1][1:-2] )
     else:
       #print "BAD",  '.'.join( name[::-1] )
@@ -813,17 +814,17 @@ class SensitivityListVisitor(ast.NodeVisitor):
       obj = self.model
     for i, attr in enumerate(target_list):
       # This is an index into an array of objects, get there right object
-      if isinstance(attr, int):
+      if isinstance(attr, int) and isinstance( obj, list ):
         obj = obj[ attr ]
       # This is an index into an array of objects, but we can't determine
-      # which object.  Get ALL the objects in the array.
+      # which object.  Return ALL the objects in the array.
       elif attr == '?' and isinstance( obj, list ):
         x = []
         for subobj in obj:
           x.append( self.get_target_ptr( target_list[i+1:], subobj ) )
         return x
       # This is an index into a slice! Just return the object.
-      elif attr == '?':
+      elif attr == '?' or isinstance(attr, int):
         return obj
       # This is an attribute, get the object with this attribute name
       else:
