@@ -753,7 +753,10 @@ class SensitivityListVisitor(ast.NodeVisitor):
     if isinstance( node.ctx, _ast.Load ):
 
       signal_ptr = self.get_target( node )
-      if signal_ptr:
+      print signal_ptr
+      if   isinstance( signal_ptr, list ):
+        self.model._newsenses[ self.func_name ].extend( signal_ptr )
+      elif signal_ptr:
         self.model._newsenses[ self.func_name ] += [ signal_ptr ]
       #if target_name in vars( self.model ):
       #  signal_ptr = self.model.__getattribute__( target_name )
@@ -781,8 +784,12 @@ class SensitivityListVisitor(ast.NodeVisitor):
         node = node.value
       elif isinstance(node, _ast.Subscript):
         # TODO: assumes this is an integer, not a range
-        name += [ node.slice.value.n ]
-        node = node.value
+        if isinstance( node.slice.value, _ast.Num ):
+          name += [ node.slice.value.n ]
+          node = node.value
+        else:
+          name += [ '?' ]
+          node = node.value
 
     # We've found the Name.
     assert isinstance(node, _ast.Name)
@@ -799,11 +806,22 @@ class SensitivityListVisitor(ast.NodeVisitor):
   # Get Pointer to Target Signal
   #----------------------------------------------------------------------
 
-  def get_target_ptr(self, target_list):
-    obj = self.model
-    for attr in target_list:
+  def get_target_ptr(self, target_list, obj = None):
+    if not obj:
+      obj = self.model
+    for i, attr in enumerate(target_list):
+      # This is an index into an array of objects, get there right object
       if isinstance(attr, int):
         obj = obj[ attr ]
+      # This is an index into an array of objects, but we can't determine
+      # which object.  Get ALL the objects in the array.
+      elif attr == '?':
+        x = []
+        for subobj in obj:
+          x.append( self.get_target_ptr( target_list[i+1:], subobj ) )
+        print x
+        return x
+      # This is an attribute, get the object with this attribute name
       else:
         obj = obj.__getattribute__( attr )
     return obj
