@@ -753,7 +753,6 @@ class SensitivityListVisitor(ast.NodeVisitor):
     if isinstance( node.ctx, _ast.Load ):
 
       signal_ptr = self.get_target( node )
-      print signal_ptr
       if   isinstance( signal_ptr, list ):
         self.model._newsenses[ self.func_name ].extend( signal_ptr )
       elif signal_ptr:
@@ -798,6 +797,9 @@ class SensitivityListVisitor(ast.NodeVisitor):
     # If the target does not access .value or .next, tell the code to ignore it.
     if name[0] in ['value', 'next']:
       return self.get_target_ptr( name[::-1][1:-1] )
+    # Special case Bits methods
+    if name[0] in ['uint', 'int', 'sext', 'zext']:
+      return self.get_target_ptr( name[::-1][1:-2] )
     else:
       #print "BAD",  '.'.join( name[::-1] )
       return None
@@ -815,12 +817,14 @@ class SensitivityListVisitor(ast.NodeVisitor):
         obj = obj[ attr ]
       # This is an index into an array of objects, but we can't determine
       # which object.  Get ALL the objects in the array.
-      elif attr == '?':
+      elif attr == '?' and isinstance( obj, list ):
         x = []
         for subobj in obj:
           x.append( self.get_target_ptr( target_list[i+1:], subobj ) )
-        print x
         return x
+      # This is an index into a slice! Just return the object.
+      elif attr == '?':
+        return obj
       # This is an attribute, get the object with this attribute name
       else:
         obj = obj.__getattribute__( attr )

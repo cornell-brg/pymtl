@@ -88,6 +88,9 @@ class TestSimpleMemory (Model):
     #for i in xrange( nports ):
     #  connect( self.memreq_rdy[i], self.memresp_rdy[i] )
 
+    # TODO: hack to force comb logic to fire!
+    self.fire_comb = Wire( 1 )
+
   #-----------------------------------------------------------------------
   # load memory function
   #-----------------------------------------------------------------------
@@ -187,6 +190,9 @@ class TestSimpleMemory (Model):
 
       self.memresp_val[i].next = self.memreq_full[i]
 
+      # TODO: hack to force comb logic to fire!
+      self.fire_comb.next = not self.fire_comb.value
+
   #-----------------------------------------------------------------------
   # Combinational Logic
   #-----------------------------------------------------------------------
@@ -204,6 +210,9 @@ class TestSimpleMemory (Model):
 
       self.memreq_rdy[i].value = ( not self.memreq_full[i] or
                                        self.memresp_rdy[i].value )
+
+    # TODO: hack to force comb logic to fire!
+    self.fire_comb.value
 
   #-----------------------------------------------------------------------
   # Line tracing
