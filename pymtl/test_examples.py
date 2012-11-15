@@ -27,27 +27,22 @@ class SensitivityList(Model):
 
   @combinational
   def combA( self ):
-    print "A"
     self.outA.value = self.in_.value
 
   @combinational
   def combB( self ):
-    print "B"
     self.outB.value = self.wireB.value
 
   @combinational
   def combC( self ):
-    print "C"
     self.outC2.value = self.outC1.value
 
   @combinational
   def combD( self ):
-    print "D"
     self.outD2.value = self.outD1.value
 
   @posedge_clk
   def seq_logic( self ):
-    print "seq"
     self.wireB.next = self.in_.value
     self.outC1.next = self.in_.value
     if self.reset.value == 1:
