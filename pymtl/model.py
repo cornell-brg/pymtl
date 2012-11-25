@@ -9,6 +9,7 @@ This module contains a collection of classes that can be used to construct MTL
 a number of tools for various purposes (simulation, translation into HDLs, etc).
 """
 from connect import *
+import PortBundle
 
 import collections
 import inspect
@@ -447,6 +448,9 @@ class Model(object):
       obj.parent = target
       target._ports += [obj]
       target._outports += [obj]
+    elif isinstance(obj, PortBundle.PortBundle):
+      for port_name, obj in obj.__dict__.items():
+        self.check_type(target, name+'.'+port_name, obj)
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):
@@ -754,9 +758,12 @@ class SensitivityListVisitor(ast.NodeVisitor):
 
       signal_ptr = self.get_target( node )
       if   isinstance( signal_ptr, list ):
+        # TODO: this will allow duplicate entries to be in the _newsenses
+        #       list, do we need to fix this?
         self.model._newsenses[ self.func_name ].extend( signal_ptr )
       elif signal_ptr:
-        self.model._newsenses[ self.func_name ] += [ signal_ptr ]
+        if signal_ptr not in self.model._newsenses[ self.func_name ]:
+          self.model._newsenses[ self.func_name ] += [ signal_ptr ]
       #if target_name in vars( self.model ):
       #  signal_ptr = self.model.__getattribute__( target_name )
       #  self.model._newsenses[ self.func_name ] += [signal_ptr]
