@@ -2,11 +2,15 @@
 # PortBundle Test Suite
 #=========================================================================
 
-from simulate   import *
 from model      import *
+from simulate   import *
+from translate  import *
+
 from PortBundle import PortBundle
 
 import pmlib
+
+import os
 
 #-------------------------------------------------------------------------
 # Example PortBundle
@@ -121,12 +125,35 @@ def test_portbundle_queue_sim( dump_vcd ):
 
   sim = pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "PortBundle.vcd" )
+    sim.dump_vcd( "PortBundle_test.vcd" )
   sim.run_test()
 
 #-------------------------------------------------------------------------
 # Test Translation
 #-------------------------------------------------------------------------
 
-# TODO
+def test_portbundle_queue_translation( ):
+
+    # Create temporary file to write out Verilog
+
+    temp_file = "PortBundle_test.v"
+    compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
+                    "-Wno-sensitivity-entire-array " + temp_file)
+    fd = open( temp_file, 'w' )
+
+    # Instantiate and elaborate model
+
+    model = PortBundleQueue( 16 )
+    model.elaborate()
+
+    # Translate
+
+    code = VerilogTranslationTool( model, fd )
+    fd.close()
+
+    # Make sure translation compiles
+    # TODO: figure out a way to group PortBundles during translation?
+
+    x = os.system( compile_cmd )
+    assert x == 0
 

@@ -3,6 +3,7 @@
 #=========================================================================
 
 from model import *
+from PortBundle import PortBundle
 import ast, _ast
 
 #=========================================================================
@@ -536,8 +537,10 @@ class FindRegistersVisitor(ast.NodeVisitor):
       # If len() == 1 this is a signal of the current module, mark is_reg
       # If len() > 1 this is signal either a) belongs to a submodule and
       # should NOT be marked is_reg, or b) belongs to an array of signals
-      # and should be marked as is_reg.
-      if len( target_list ) == 1 or isinstance( target_list[-1], int ) :
+      # and should be marked as is_reg, or c) belongs to a PortBundle and
+      # should be markes as is_reg.
+      if (len( target_list ) == 1 or isinstance( target_list[-1], int )
+         or isinstance( get_target_ptr( self.model, target_list[:-1] ), PortBundle )):
         x = get_target_ptr( self.model, target_list )
         x.is_reg = True
       #else:

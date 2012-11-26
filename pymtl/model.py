@@ -450,7 +450,8 @@ class Model(object):
       target._outports += [obj]
     elif isinstance(obj, PortBundle.PortBundle):
       for port_name, obj in obj.__dict__.items():
-        self.check_type(target, name+'.'+port_name, obj)
+        # TODO: change from $ separator to _
+        self.check_type(target, name+'$'+port_name, obj)
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):
