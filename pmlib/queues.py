@@ -542,3 +542,154 @@ class NormalQueue ( Model ):
     return "{} ({}) {}"\
       .format( in_str, self.num_free_entries.value, out_str )
 
+#=========================================================================
+# Single-Element Pipelined Queue
+#=========================================================================
+
+#-------------------------------------------------------------------------
+# Single-Element Pipelined Queue Datapath
+#-------------------------------------------------------------------------
+
+class SingleElementPipelinedQueueDpath (Model):
+
+  def __init__( self, data_nbits ):
+
+    # Interface Ports
+
+    self.enq_bits  = InPort  ( data_nbits )
+    self.deq_bits  = OutPort ( data_nbits )
+
+    # Control signal (ctrl -> dpath)
+
+    self.wen       = InPort  ( 1     )
+
+    # Queue storage
+
+    self.queue     = pmlib.regs.RegEn( data_nbits )
+
+    # Connect queue storage
+
+    connect( self.queue.en,  self.wen      )
+    connect( self.queue.in_, self.enq_bits )
+    connect( self.queue.out, self.deq_bits )
+
+#-------------------------------------------------------------------------
+# Single-Element Pipelined Queue Control
+#-------------------------------------------------------------------------
+
+class SingleElementPipelinedQueueCtrl (Model):
+
+  def __init__( self ):
+
+    # Interface Ports
+
+    self.enq_val        = InPort  ( 1 )
+    self.enq_rdy        = OutPort ( 1 )
+    self.deq_val        = OutPort ( 1 )
+    self.deq_rdy        = InPort  ( 1 )
+
+    # Control signal (ctrl -> dpath)
+
+    self.wen            = OutPort ( 1 )
+
+    # Full bit storage
+
+    self.full           = Wire ( 1 )
+
+  @combinational
+  def comb( self ):
+
+    # enq_rdy signal is asserted when the single element queue storage is
+    # empty
+
+    self.enq_rdy.value        = ~self.full.value | ( self.full.value &
+                                self.deq_rdy.value )
+
+    # deq_val signal is asserted when the single element queue storage is
+    # full or when the queue is empty but we are bypassing
+
+    self.deq_val.value        = self.full.value
+
+    # wen control signal: set the write enable signal if the storage queue
+    # is empty and a valid enqueue request is present
+
+    self.wen.value            = ( ~self.full.value | ( self.full.value &
+                                  self.deq_rdy.value ) ) & self.enq_val.value
+
+  @posedge_clk
+  def seq( self ):
+
+    # helper signals
+
+    do_deq  = self.deq_rdy.value and self.deq_val.value
+    do_enq  = self.enq_rdy.value and self.enq_val.value
+    do_pipe = self.full.value and do_deq and do_enq
+
+    # full bit calculation: the full bit is cleared when a dequeue
+    # transaction occurs; the full bit is set when the queue storage is
+    # empty and a enqueue transaction occurs and when we are not bypassing
+
+    if self.reset.value:
+      self.full.next = 0
+    elif   do_deq and not do_pipe:
+      self.full.next = 0
+    elif   do_enq:
+      self.full.next = 1
+    else:
+      self.full.next = self.full.value
+
+#-------------------------------------------------------------------------
+# Single-Element Pipelined Queue
+#-------------------------------------------------------------------------
+
+class SingleElementPipelinedQueue (Model):
+
+  def __init__( self, data_nbits ):
+
+    # Interface Ports
+
+    self.enq_bits = InPort  ( data_nbits )
+    self.enq_val  = InPort  ( 1 )
+    self.enq_rdy  = OutPort ( 1 )
+
+    self.deq_bits = OutPort ( data_nbits )
+    self.deq_val  = OutPort ( 1 )
+    self.deq_rdy  = InPort  ( 1 )
+
+    # Ctrl and Dpath unit instantiation
+
+    self.ctrl  = SingleElementPipelinedQueueCtrl ()
+    self.dpath = SingleElementPipelinedQueueDpath( data_nbits )
+
+    # Ctrl unit connections
+
+    connect( self.ctrl.enq_val, self.enq_val )
+    connect( self.ctrl.enq_rdy, self.enq_rdy )
+    connect( self.ctrl.deq_val, self.deq_val )
+    connect( self.ctrl.deq_rdy, self.deq_rdy )
+
+    # Dpath unit connections
+
+    connect( self.dpath.enq_bits, self.enq_bits )
+    connect( self.dpath.deq_bits, self.deq_bits )
+
+    # Control Signal connections (ctrl -> dpath)
+
+    connect( self.dpath.wen,            self.ctrl.wen            )
+
+  #-----------------------------------------------------------------------
+  # Line tracing
+  #-----------------------------------------------------------------------
+
+  def line_trace( self ):
+
+    in_str = \
+      pmlib.valrdy.valrdy_to_str( self.enq_bits.value,
+        self.enq_val.value, self.enq_rdy.value )
+
+    out_str = \
+      pmlib.valrdy.valrdy_to_str( self.deq_bits.value,
+        self.deq_val.value, self.deq_rdy.value )
+
+    return "{} () {}"\
+      .format( in_str, out_str )
