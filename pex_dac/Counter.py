@@ -48,7 +48,7 @@ class Counter (Model):
 
 # Unit tests for the counter
 
-def test_reg( dump_vcd ):
+def test_counter( dump_vcd ):
 
   # Test vectors
 
