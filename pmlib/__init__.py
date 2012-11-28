@@ -31,3 +31,4 @@ from TestMemManager      import TestMemManager
 from RegisterFile        import RegisterFile
 from TestNetSink         import TestNetSink
 from Crossbar            import Crossbar
+from NormalQueue         import NormalQueue

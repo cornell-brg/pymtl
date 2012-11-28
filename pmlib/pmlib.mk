@@ -20,6 +20,8 @@ pmlib_srcs = \
 	RegisterFile.py \
   PipeCtrl.py \
   TestNetSink.py \
+  Crossbar.py \
+  NormalQueue.py \
   valrdy.py \
   arith.py \
   muxes.py \
@@ -28,6 +30,7 @@ pmlib_srcs = \
   queues.py \
   arbiters.py \
   net_msgs.py \
+  adapters.py \
 
 pmlib_test_srcs = \
   TestVectorSimulator_test.py \
@@ -42,6 +45,8 @@ pmlib_test_srcs = \
 	RegisterFile_test.py \
   PipeCtrl_test.py \
   TestNetSink_test.py \
+  Crossbar_test.py \
+  NormalQueue_test.py \
   arith_test.py \
   muxes_test.py \
   regs_test.py \
@@ -49,6 +54,7 @@ pmlib_test_srcs = \
   queues_test.py \
   arbiters_test.py \
   net_msgs_test.py \
+  adapters_test.py \
 
 pmlib_prog_srcs = \
 
