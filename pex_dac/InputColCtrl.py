@@ -37,7 +37,7 @@ class InputColCtrl (Model):
     # route computation
 
     s.routecomp = RouteCompute( router_id, num_routers, netmsg_params )
-    connect( s.routecompute.dest, s.dest )
+    connect( s.routecomp.dest, s.dest )
 
     # in_credit buffer
 

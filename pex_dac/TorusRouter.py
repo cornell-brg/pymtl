@@ -230,10 +230,10 @@ class TorusRouterCtrl (Model):
     connect( s.inctrl_south.out3_credit_cnt, s.outctrl_west.credit_count )
 
     connect( s.inctrl_east.out0_credit_cnt, s.outctrl_north.credit_count )
-    connect( s.inctrl_east.out1_credit_cnt, s.outctrl_south.credit_count )
+    connect( s.inctrl_east.out2_credit_cnt, s.outctrl_south.credit_count )
 
     connect( s.inctrl_west.out0_credit_cnt, s.outctrl_north.credit_count )
-    connect( s.inctrl_west.out1_credit_cnt, s.outctrl_south.credit_count )
+    connect( s.inctrl_west.out2_credit_cnt, s.outctrl_south.credit_count )
 
     # requests / grants connections
 
@@ -459,9 +459,9 @@ class TorusRouterDpath (Model):
     # north
     s.out0_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
     connect({
-      m.enq_msg  : s.crossbar.out[0],
+      m.enq_bits : s.crossbar.out[0],
       m.enq_val  : s.out0_enq_val,
-      m.deq_msg  : s.out0_deq_msg,
+      m.deq_bits : s.out0_deq_msg,
       m.deq_val  : s.out0_deq_val,
       m.deq_rdy  : 1
     })
@@ -469,9 +469,9 @@ class TorusRouterDpath (Model):
     # east
     s.out1_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
     connect({
-      m.enq_msg  : s.crossbar.out[1],
+      m.enq_bits : s.crossbar.out[1],
       m.enq_val  : s.out1_enq_val,
-      m.deq_msg  : s.out1_deq_msg,
+      m.deq_bits : s.out1_deq_msg,
       m.deq_val  : s.out1_deq_val,
       m.deq_rdy  : 1
     })
@@ -479,9 +479,9 @@ class TorusRouterDpath (Model):
     # south
     s.out2_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
     connect({
-      m.enq_msg  : s.crossbar.out[2],
+      m.enq_bits : s.crossbar.out[2],
       m.enq_val  : s.out2_enq_val,
-      m.deq_msg  : s.out2_deq_msg,
+      m.deq_bits : s.out2_deq_msg,
       m.deq_val  : s.out2_deq_val,
       m.deq_rdy  : 1
     })
@@ -489,9 +489,9 @@ class TorusRouterDpath (Model):
     # west
     s.out3_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
     connect({
-      m.enq_msg  : s.crossbar.out[3],
+      m.enq_bits : s.crossbar.out[3],
       m.enq_val  : s.out3_enq_val,
-      m.deq_msg  : s.out3_deq_msg,
+      m.deq_bits : s.out3_deq_msg,
       m.deq_val  : s.out3_deq_val,
       m.deq_rdy  : 1
     })
@@ -499,9 +499,9 @@ class TorusRouterDpath (Model):
     # term
     s.out4_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
     connect({
-      m.enq_msg  : s.crossbar.out[4],
+      m.enq_bits : s.crossbar.out[4],
       m.enq_val  : s.out4_enq_val,
-      m.deq_msg  : s.out4_deq_msg,
+      m.deq_bits : s.out4_deq_msg,
       m.deq_val  : s.out4_deq_val,
       m.deq_rdy  : 1
     })
@@ -519,93 +519,55 @@ class TorusRouter (Model):
     # Interface Ports
     #---------------------------------------------------------------------
 
-    # Input Port 0 - North
-
-    s.in0_msg     = InPort  ( s.netmsg_params.nbits )
-    s.in0_val     = InPort  ( 1 )
-    s.in0_credit  = OutPort ( 1 )
-    s.out0_credit = InPort  ( 1 )
-    s.out0_msg    = OutPort ( s.netmsg_params.nbits )
-    s.out0_val    = OutPort ( 1 )
-
-    # Input Port 1 - East
-
-    s.in1_msg     = InPort  ( s.netmsg_params.nbits )
-    s.in1_val     = InPort  ( 1 )
-    s.in1_credit  = OutPort ( 1 )
-    s.out1_credit = InPort  ( 1 )
-    s.out1_msg    = OutPort ( s.netmsg_params.nbits )
-    s.out1_val    = OutPort ( 1 )
-
-    # Input Port 2 - South
-
-    s.in2_msg     = InPort  ( s.netmsg_params.nbits )
-    s.in2_val     = InPort  ( 1 )
-    s.in2_credit  = OutPort ( 1 )
-    s.out2_credit = InPort  ( 1 )
-    s.out2_msg    = OutPort ( s.netmsg_params.nbits )
-    s.out2_val    = OutPort ( 1 )
-
-    # Input Port 3 - West
-
-    s.in3_msg     = InPort  ( s.netmsg_params.nbits )
-    s.in3_val     = InPort  ( 1 )
-    s.in3_credit  = OutPort ( 1 )
-    s.out3_credit = InPort  ( 1 )
-    s.out3_msg    = OutPort ( s.netmsg_params.nbits )
-    s.out3_val    = OutPort ( 1 )
-
-    # Input Port 4 - Terminal
-
-    s.in4_msg     = InPort  ( s.netmsg_params.nbits )
-    s.in4_val     = InPort  ( 1 )
-    s.in4_credit  = OutPort ( 1 )
-    s.out4_credit = InPort  ( 1 )
-    s.out4_msg    = OutPort ( s.netmsg_params.nbits )
-    s.out4_val    = OutPort ( 1 )
+    s.in_msg     = [ InPort  ( s.netmsg_params.nbits ) for x in xrange(5) ]
+    s.in_val     = [ InPort  ( 1 ) for x in xrange(5) ]
+    s.in_credit  = [ OutPort ( 1 ) for x in xrange(5) ]
+    s.out_credit = [ InPort  ( 1 ) for x in xrange(5) ]
+    s.out_msg    = [ OutPort ( s.netmsg_params.nbits ) for x in xrange(5) ]
+    s.out_val    = [ OutPort ( 1 ) for x in xrange(5) ]
 
     #---------------------------------------------------------------------
     # Static elaboration
     #---------------------------------------------------------------------
 
-    s.ctrl  = RouterCtrl  ( s.router_id, num_routers, s.netmsg_params, num_entries )
-    s.dpath = RouterDpath ( s.netmsg_params, num_entries )
+    s.ctrl  = TorusRouterCtrl  ( s.router_id, num_routers, s.netmsg_params, num_entries )
+    s.dpath = TorusRouterDpath ( s.netmsg_params, num_entries )
 
     # ctrl unit connections
 
-    connect( s.ctrl.in0_credit,  s.in0_credit  )
-    connect( s.ctrl.out0_credit, s.out0_credit )
-    connect( s.ctrl.in1_credit,  s.in1_credit  )
-    connect( s.ctrl.out1_credit, s.out1_credit )
-    connect( s.ctrl.in2_credit,  s.in2_credit  )
-    connect( s.ctrl.out2_credit, s.out2_credit )
-    connect( s.ctrl.in3_credit,  s.in3_credit  )
-    connect( s.ctrl.out3_credit, s.out3_credit )
-    connect( s.ctrl.in4_credit,  s.in4_credit  )
-    connect( s.ctrl.out4_credit, s.out4_credit )
+    connect( s.ctrl.in0_credit,  s.in_credit[0]  )
+    connect( s.ctrl.out0_credit, s.out_credit[0] )
+    connect( s.ctrl.in1_credit,  s.in_credit[1]  )
+    connect( s.ctrl.out1_credit, s.out_credit[1] )
+    connect( s.ctrl.in2_credit,  s.in_credit[2]  )
+    connect( s.ctrl.out2_credit, s.out_credit[2] )
+    connect( s.ctrl.in3_credit,  s.in_credit[3]  )
+    connect( s.ctrl.out3_credit, s.out_credit[3] )
+    connect( s.ctrl.in4_credit,  s.in_credit[4]  )
+    connect( s.ctrl.out4_credit, s.out_credit[4] )
 
     # dpath unit connections
 
-    connect( s.dpath.in0_enq_msg,  s.in0_msg  )
-    connect( s.dpath.in0_enq_val,  s.in0_val  )
-    connect( s.dpath.out0_deq_msg, s.out0_msg )
-    connect( s.dpath.out0_deq_val, s.out0_val )
-    connect( s.dpath.in1_enq_msg,  s.in1_msg  )
-    connect( s.dpath.in1_enq_val,  s.in1_val  )
-    connect( s.dpath.out1_deq_msg, s.out1_msg )
-    connect( s.dpath.out1_deq_val, s.out1_val )
-    connect( s.dpath.in2_enq_msg,  s.in2_msg  )
-    connect( s.dpath.in2_enq_val,  s.in2_val  )
-    connect( s.dpath.out2_deq_msg, s.out2_msg )
-    connect( s.dpath.out2_deq_val, s.out2_val )
-    connect( s.dpath.in3_enq_msg,  s.in3_msg  )
-    connect( s.dpath.in3_enq_val,  s.in3_val  )
-    connect( s.dpath.out3_deq_msg, s.out3_msg )
-    connect( s.dpath.out3_deq_val, s.out3_val )
-    connect( s.dpath.in4_enq_msg,  s.in4_msg  )
-    connect( s.dpath.in4_enq_val,  s.in4_val  )
-    connect( s.dpath.out4_deq_msg, s.out4_msg )
-    connect( s.dpath.out4_deq_val, s.out4_val )
+    connect( s.dpath.in0_enq_msg,  s.in_msg[0]  )
+    connect( s.dpath.in0_enq_val,  s.in_val[0]  )
+    connect( s.dpath.out0_deq_msg, s.out_msg[0] )
+    connect( s.dpath.out0_deq_val, s.out_val[0] )
+    connect( s.dpath.in1_enq_msg,  s.in_msg[1]  )
+    connect( s.dpath.in1_enq_val,  s.in_val[1]  )
+    connect( s.dpath.out1_deq_msg, s.out_msg[1] )
+    connect( s.dpath.out1_deq_val, s.out_val[1] )
+    connect( s.dpath.in2_enq_msg,  s.in_msg[2]  )
+    connect( s.dpath.in2_enq_val,  s.in_val[2]  )
+    connect( s.dpath.out2_deq_msg, s.out_msg[2] )
+    connect( s.dpath.out2_deq_val, s.out_val[2] )
+    connect( s.dpath.in3_enq_msg,  s.in_msg[3]  )
+    connect( s.dpath.in3_enq_val,  s.in_val[3]  )
+    connect( s.dpath.out3_deq_msg, s.out_msg[3] )
+    connect( s.dpath.out3_deq_val, s.out_val[3] )
+    connect( s.dpath.in4_enq_msg,  s.in_msg[4]  )
+    connect( s.dpath.in4_enq_val,  s.in_val[4]  )
+    connect( s.dpath.out4_deq_msg, s.out_msg[4] )
+    connect( s.dpath.out4_deq_val, s.out_val[4] )
 
     # control signal connections (ctrl -> dpath )
 
