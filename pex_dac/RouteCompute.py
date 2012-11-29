@@ -9,7 +9,7 @@
 from   pymtl import *
 import pmlib
 
-from   math import log,ceil
+from   math import log,ceil,sqrt
 
 import pmlib.net_msgs   as net_msgs
 from   pmlib.TestVectorSimulator import TestVectorSimulator
@@ -28,13 +28,13 @@ class RouteCompute (Model):
     # CHANGED: Assuming that we pass in the x,y mapping to the router and
     # preserve it once it has been statically elaborated
 
-    s.dim_nbits     = netmsg_params.srcdest_nbits / 2
-    #s.dim_mask      = 2**s.dim_nbits - 1
+    s.dim_nbits      = int( sqrt( netmsg_params.srcdest_nbits ) )
+    s.num_routers_1D = int( sqrt( num_routers ) )
 
     # Interface Ports
 
     s.dest          = InPort  ( netmsg_params.srcdest_nbits )
-    s.route         = OutPort ( netmsg_params.srcdest_nbits )
+    s.route         = OutPort ( 3 )
 
     # Temporary Wires
 
@@ -51,8 +51,8 @@ class RouteCompute (Model):
     connect( s.x_self, router_x_id )
     connect( s.y_self, router_y_id )
 
-    connect( s.x_dest, s.dest[ 0           :   s.dim_nbits ] )
-    connect( s.y_dest, s.dest[ s.dim_nbits : 2*s.dim_nbits ] )
+    #connect( s.x_dest, s.dest[ 0           :   s.dim_nbits ] )
+    #connect( s.y_dest, s.dest[ s.dim_nbits : 2*s.dim_nbits ] )
 
     # Route Constants
 
@@ -69,6 +69,11 @@ class RouteCompute (Model):
 
     #s.x_self.value = s.router_id & s.dim_mask
     #s.y_self.value = s.router_id >> s.dim_nbits
+
+    # self coordinates
+
+    s.x_dest.value = s.dest.value.uint % s.num_routers_1D
+    s.y_dest.value = s.dest.value.uint / s.num_routers_1D
 
     # north, east, south & west dist calculations
 
