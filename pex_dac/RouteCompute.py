@@ -16,19 +16,20 @@ from   pmlib.TestVectorSimulator import TestVectorSimulator
 
 class RouteCompute (Model):
 
-  def __init__( s, router_id, num_routers, netmsg_params ):
+  def __init__( s, router_x_id, router_y_id, num_routers, netmsg_params ):
 
     # Local Constants
 
-    s.router_id     = router_id
     s.netmsg_params = netmsg_params
 
     # Note: Currently, converting a linear router_id into the x and y
     # dimensions assumes square torus networks with the number of nodes to
     # be a power of 2**n
+    # CHANGED: Assuming that we pass in the x,y mapping to the router and
+    # preserve it once it has been statically elaborated
 
     s.dim_nbits     = netmsg_params.srcdest_nbits / 2
-    s.dim_mask      = 2**s.dim_nbits - 1
+    #s.dim_mask      = 2**s.dim_nbits - 1
 
     # Interface Ports
 
@@ -47,6 +48,9 @@ class RouteCompute (Model):
     s.x_self        = Wire    ( s.dim_nbits )
     s.y_self        = Wire    ( s.dim_nbits )
 
+    connect( s.x_self, router_x_id )
+    connect( s.y_self, router_y_id )
+
     connect( s.x_dest, s.dest[ 0           :   s.dim_nbits ] )
     connect( s.y_dest, s.dest[ s.dim_nbits : 2*s.dim_nbits ] )
 
@@ -63,8 +67,8 @@ class RouteCompute (Model):
 
     # self coordinates
 
-    s.x_self.value = s.router_id & s.dim_mask
-    s.y_self.value = s.router_id >> s.dim_nbits
+    #s.x_self.value = s.router_id & s.dim_mask
+    #s.y_self.value = s.router_id >> s.dim_nbits
 
     # north, east, south & west dist calculations
 
@@ -129,7 +133,8 @@ def test_routecompute( dump_vcd ):
   west  = 3
   term  = 4
 
-  router_id = 0
+  router_x_id = 0
+  router_y_id = 0
 
   # Test vectors
 
@@ -146,7 +151,7 @@ def test_routecompute( dump_vcd ):
 
   # Instantiate and elaborate the model
 
-  model = RouteCompute( router_id, num_routers, netmsg_params )
+  model = RouteCompute( router_x_id, router_y_id, num_routers, netmsg_params )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

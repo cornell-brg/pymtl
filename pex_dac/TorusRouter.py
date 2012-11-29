@@ -8,7 +8,6 @@ import pmlib
 from math import ceil, log
 
 from pmlib.net_msgs    import NetMsgParams
-#from pmlib.queues      import NormalQueue
 from pmlib.NormalQueue import NormalQueue
 from pmlib.queues      import SingleElementPipelinedQueue
 from InputTermCtrl     import InputTermCtrl
@@ -19,12 +18,11 @@ from pmlib.Crossbar    import Crossbar
 
 class TorusRouterCtrl (Model):
 
-  def __init__( s, router_id, num_routers,  netmsg_params, num_entries ):
+  def __init__( s, router_x_id, router_y_id,  num_routers,  netmsg_params, num_entries ):
 
     # Local Parameters
 
     credit_nbits    = int( ceil( log( num_entries+1, 2 ) ) )
-    s.router_id     = router_id
     s.netmsg_params = netmsg_params
 
     #---------------------------------------------------------------------
@@ -113,7 +111,7 @@ class TorusRouterCtrl (Model):
 
     # InputCtrl - North Port
 
-    s.inctrl_north = m = InputColCtrl( router_id, num_routers,
+    s.inctrl_north = m = InputColCtrl( router_x_id, router_y_id, num_routers,
                            netmsg_params, credit_nbits )
     connect({
       m.dest      : s.dest0,
@@ -124,7 +122,7 @@ class TorusRouterCtrl (Model):
 
     # InputCtrl - East Port
 
-    s.inctrl_east = m = InputRowCtrl( router_id, num_routers,
+    s.inctrl_east = m = InputRowCtrl( router_x_id, router_y_id, num_routers,
                           netmsg_params, credit_nbits )
     connect({
       m.dest      : s.dest1,
@@ -135,7 +133,7 @@ class TorusRouterCtrl (Model):
 
     # InputCtrl - South Port
 
-    s.inctrl_south = m = InputColCtrl( router_id, num_routers,
+    s.inctrl_south = m = InputColCtrl( router_x_id, router_y_id, num_routers,
                            netmsg_params, credit_nbits )
     connect({
       m.dest      : s.dest2,
@@ -146,7 +144,7 @@ class TorusRouterCtrl (Model):
 
     # InputCtrl - West Port
 
-    s.inctrl_west = m = InputRowCtrl( router_id, num_routers,
+    s.inctrl_west = m = InputRowCtrl( router_x_id, router_y_id, num_routers,
                           netmsg_params, credit_nbits )
     connect({
       m.dest      : s.dest3,
@@ -157,7 +155,7 @@ class TorusRouterCtrl (Model):
 
     # InputCtrl - Terminal Port
 
-    s.inctrl_term = m = InputTermCtrl( router_id, num_routers,
+    s.inctrl_term = m = InputTermCtrl( router_x_id, router_y_id, num_routers,
                           netmsg_params, credit_nbits )
     connect({
       m.dest      : s.dest4,
@@ -508,12 +506,11 @@ class TorusRouterDpath (Model):
 
 class TorusRouter (Model):
 
-  def __init__( s, router_id, num_routers, num_messages, payload_nbits, num_entries ):
+  def __init__( s, router_x_id, router_y_id, num_routers, num_messages, payload_nbits, num_entries ):
 
     # Local Parameters
 
     s.netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
-    s.router_id     = router_id
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -530,7 +527,7 @@ class TorusRouter (Model):
     # Static elaboration
     #---------------------------------------------------------------------
 
-    s.ctrl  = TorusRouterCtrl  ( s.router_id, num_routers, s.netmsg_params, num_entries )
+    s.ctrl  = TorusRouterCtrl  ( router_x_id, router_y_id, num_routers, s.netmsg_params, num_entries )
     s.dpath = TorusRouterDpath ( s.netmsg_params, num_entries )
 
     # ctrl unit connections

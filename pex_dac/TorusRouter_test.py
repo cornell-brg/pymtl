@@ -22,14 +22,15 @@ from pmlib.TestNetSink import TestNetSink
 class TestHarness (Model):
 
   def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay,
-                router_id, num_routers, num_messages, payload_nbits, num_entries ):
+                router_x_id, router_y_id, num_routers, num_messages,
+                payload_nbits, num_entries ):
 
     # Instantiate Models
 
     s.src    = [ TestSource  ( netmsg_params.nbits, src_msgs[x], src_delay   )
                  for x in xrange( 5 ) ]
-    s.router = TorusRouter ( router_id, num_routers, num_messages,
-                            payload_nbits, num_entries )
+    s.router = TorusRouter ( router_x_id, router_y_id, num_routers, num_messages,
+                             payload_nbits, num_entries )
     s.sink   = [ TestNetSink ( netmsg_params.nbits, sink_msgs[x], sink_delay )
                  for x in xrange( 5 ) ]
 
@@ -82,7 +83,7 @@ class TestHarness (Model):
 #-------------------------------------------------------------------------
 
 def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
-                 test_msgs, router_id, num_routers, num_messages,
+                 test_msgs, router_x_id, router_y_id, num_routers, num_messages,
                  payload_nbits, num_entries ):
 
   # src/sink msgs
@@ -93,7 +94,7 @@ def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
   # Instantiate and elaborate the model
 
   model = TestHarness( src_msgs, sink_msgs, src_delay, sink_delay,
-                       router_id, num_routers, num_messages,
+                       router_x_id, router_y_id, num_routers, num_messages,
                        payload_nbits, num_entries )
   model.elaborate()
 
@@ -157,6 +158,11 @@ def basic_msgs():
   mk_net_msg( west,  west,  4,   4,  0,       0xcc )
   mk_net_msg( north, north, 1,   1,  0,       0xdd )
   mk_net_msg( south, south, 9,   9,  0,       0xee )
+  mk_net_msg( term,  term,  5,   5,  1,       0xaa )
+  mk_net_msg( east,  west,  4,   6,  1,       0xbb )
+  mk_net_msg( west,  east,  6,   4,  1,       0xcc )
+  mk_net_msg( north, south, 9,   1,  1,       0xdd )
+  mk_net_msg( south, north, 1,   9,  1,       0xee )
 
   return [ src_msgs, sink_msgs ]
 
@@ -166,7 +172,7 @@ def basic_msgs():
 
 def test_router_basic_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "TRouterBasic_delay0x0.vcd", 0, 0,
-                basic_msgs(), 5, num_routers, num_messages, payload_nbits, 4 )
+                basic_msgs(), 1, 1, num_routers, num_messages, payload_nbits, 4 )
 
 #-------------------------------------------------------------------------
 # Router basic unit test with delay = 5 x 0, id = 1
@@ -174,7 +180,7 @@ def test_router_basic_delay0x0( dump_vcd ):
 
 def test_router_basic_delay5x0( dump_vcd ):
   run_net_test( dump_vcd, "TRouterBasic_delay5x0.vcd", 5, 0,
-                basic_msgs(), 5, num_routers, num_messages, payload_nbits, 4 )
+                basic_msgs(), 1, 1, num_routers, num_messages, payload_nbits, 4 )
 
 #-------------------------------------------------------------------------
 # Router basic unit test with delay = 0 x 5, id = 1
@@ -182,7 +188,7 @@ def test_router_basic_delay5x0( dump_vcd ):
 
 def test_router_basic_delay0x5( dump_vcd ):
   run_net_test( dump_vcd, "TRouterBasic_delay0x5.vcd", 0, 5,
-                basic_msgs(), 5, num_routers, num_messages, payload_nbits, 4 )
+                basic_msgs(), 1, 1, num_routers, num_messages, payload_nbits, 4 )
 
 #-------------------------------------------------------------------------
 # Router basic unit test with delay = 3 x 8, id = 1
@@ -190,4 +196,4 @@ def test_router_basic_delay0x5( dump_vcd ):
 
 def test_router_basic_delay3x8( dump_vcd ):
   run_net_test( dump_vcd, "TRouterBasic_delay3x8.vcd", 3, 8,
-                basic_msgs(), 5, num_routers, num_messages, payload_nbits, 4 )
+                basic_msgs(), 1, 1, num_routers, num_messages, payload_nbits, 4 )

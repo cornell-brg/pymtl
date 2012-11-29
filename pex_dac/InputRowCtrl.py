@@ -10,11 +10,10 @@ from RouteCompute import RouteCompute
 
 class InputRowCtrl (Model):
 
-  def __init__( s, router_id, num_routers, netmsg_params, credit_nbits ):
+  def __init__( s, router_x_id, router_y_id, num_routers, netmsg_params, credit_nbits ):
 
     # Local Constants
 
-    s.router_id       = router_id
     s.netmsg_params   = netmsg_params
 
     # Interface Ports
@@ -37,7 +36,7 @@ class InputRowCtrl (Model):
 
     # route computation
 
-    s.routecomp = RouteCompute( router_id, num_routers, netmsg_params )
+    s.routecomp = RouteCompute( router_x_id, router_y_id, num_routers, netmsg_params )
     connect( s.routecomp.dest, s.dest )
 
     # in_credit buffer
