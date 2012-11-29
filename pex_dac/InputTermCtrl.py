@@ -53,10 +53,10 @@ class InputTermCtrl (Model):
 
     # bubble condition calculations
 
-    s.bubble_north.value = out0_credit_cnt.value > 1
-    s.bubble_east.value  = out1_credit_cnt.value > 1
-    s.bubble_south.value = out2_credit_cnt.value > 1
-    s.bubble_west.value  = out3_credit_cnt.value > 1
+    s.bubble_north.value = s.out0_credit_cnt.value > 1
+    s.bubble_east.value  = s.out1_credit_cnt.value > 1
+    s.bubble_south.value = s.out2_credit_cnt.value > 1
+    s.bubble_west.value  = s.out3_credit_cnt.value > 1
 
     # reqs calculation
 

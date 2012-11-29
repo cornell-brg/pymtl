@@ -50,8 +50,8 @@ class InputRowCtrl (Model):
 
     # bubble condition calculations
 
-    s.bubble_north.value = out0_credit_cnt.value > 1
-    s.bubble_south.value = out2_credit_cnt.value > 1
+    s.bubble_north.value = s.out0_credit_cnt.value > 1
+    s.bubble_south.value = s.out2_credit_cnt.value > 1
 
     # reqs calculation
 
