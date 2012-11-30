@@ -278,9 +278,14 @@ def tornado_msgs( size ):
     src_msgs[src].append( msg )
     sink_msgs[dest].append( msg )
 
+  num_routers_1D = int( sqrt( num_routers ) )
+
   for i in xrange( num_routers ):
     for j in xrange( size ):
-      dest = ( i + ( (int( num_routers / 2 ) ) - 1 ) )% num_routers
+      x = ( (i%num_routers_1D) + int( num_routers_1D/2 ) - 1 ) % num_routers_1D
+      y = ( (i/num_routers_1D) + int( num_routers_1D/2 ) - 1 ) % num_routers_1D
+
+      dest = x + num_routers_1D * y
       data_roll = random.randint( 0, pow( 2, 32 ) - 1 )
       mk_net_msg( dest, i, j, data_roll )
 
