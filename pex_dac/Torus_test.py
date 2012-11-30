@@ -108,7 +108,7 @@ def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
 # Test Messages
 #-------------------------------------------------------------------------
 
-num_routers   = 4
+num_routers   = 16
 num_messages  = 128
 payload_nbits = 32
 num_entries   = 4
@@ -117,7 +117,7 @@ netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
 
 def terminal_msgs():
 
-  size = 1
+  size = 8
 
   src_msgs  = [ [] for x in xrange( num_routers ) ]
   sink_msgs = [ [] for x in xrange( num_routers ) ]
@@ -307,7 +307,7 @@ def test_torus_nearest_neighbor_west_delay0x0( dump_vcd ):
 
 def test_torus_hotspot_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "Torus_hotspot_delay0x0.vcd", 0, 0,
-                hotspot_msgs(1), num_routers, num_messages,
+                hotspot_msgs(3), num_routers, num_messages,
                 payload_nbits, num_entries )
 
 def test_torus_partition_delay0x0( dump_vcd ):

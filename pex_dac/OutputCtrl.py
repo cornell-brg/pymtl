@@ -27,6 +27,7 @@ class OutputCtrl (Model):
 
     s.credits_counter = Counter( max_credit_count )
     connect( s.credits_counter.increment, s.credit       )
+    connect( s.credits_counter.decrement, s.out_val      )
     connect( s.credits_counter.count,     s.credit_count )
 
     # arbiter
