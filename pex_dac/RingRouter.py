@@ -8,6 +8,8 @@ import pmlib
 from pmlib.NormalQueue import NormalQueue
 from pmlib.arbiters    import RoundRobinArbiterEn
 
+from pmlib.queues import SingleElementPipelinedQueue
+
 from math import ceil, log
 
 #=========================================================================
@@ -123,7 +125,7 @@ class RingRouterDpath (Model):
     #---------------------------------------------------------------------
 
     self.in_queues  = [ NormalQueue( buffering, msg_sz ) for x in range(3) ]
-    self.out_queues = [ NormalQueue( buffering, msg_sz ) for x in range(3) ]
+    self.out_queues = [ SingleElementPipelinedQueue( msg_sz ) for x in range(3) ]
     self.xbar       = pmlib.Crossbar( 3, msg_sz )
 
     for i in range(3):

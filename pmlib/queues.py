@@ -596,6 +596,12 @@ class SingleElementPipelinedQueueCtrl (Model):
 
     self.full           = Wire ( 1 )
 
+    # Temporary Wires
+
+    self.do_enq  = Wire( 1 )
+    self.do_deq  = Wire( 1 )
+    self.do_pipe = Wire( 1 )
+
   @combinational
   def comb( self ):
 
@@ -616,14 +622,14 @@ class SingleElementPipelinedQueueCtrl (Model):
     self.wen.value            = ( ~self.full.value | ( self.full.value &
                                   self.deq_rdy.value ) ) & self.enq_val.value
 
-  @posedge_clk
-  def seq( self ):
-
     # helper signals
 
-    do_deq  = self.deq_rdy.value and self.deq_val.value
-    do_enq  = self.enq_rdy.value and self.enq_val.value
-    do_pipe = self.full.value and do_deq and do_enq
+    self.do_deq.value  = self.deq_rdy.value & self.deq_val.value
+    self.do_enq.value  = self.enq_rdy.value & self.enq_val.value
+    self.do_pipe.value = self.full.value & self.do_deq.value & self.do_enq.value
+
+  @posedge_clk
+  def seq( self ):
 
     # full bit calculation: the full bit is cleared when a dequeue
     # transaction occurs; the full bit is set when the queue storage is
@@ -631,9 +637,9 @@ class SingleElementPipelinedQueueCtrl (Model):
 
     if self.reset.value:
       self.full.next = 0
-    elif   do_deq and not do_pipe:
+    elif   self.do_deq.value & ~self.do_pipe.value:
       self.full.next = 0
-    elif   do_enq:
+    elif   self.do_enq.value:
       self.full.next = 1
     else:
       self.full.next = self.full.value
