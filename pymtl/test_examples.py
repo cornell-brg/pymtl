@@ -515,6 +515,22 @@ class MultipleWrite(Model):
     if self.in_.value > 4:
       self.out.value = self.in_.value
 
+from math import log, ceil
+class MuxRegister( Model ):
+  def __init__( s, nports, nbits ):
+    s.in_ = [InPort( nbits ) for x in range( nports )]
+    s.sel = InPort ( int( ceil( log( nports, 2 ) ) ))
+    s.out = OutPort( nbits )
+    s.mux = Wire( nbits )
+  @combinational
+  def comb_logic( s ):
+    assert s.sel.value.uint < len( s.in_ )
+    s.mux.value = s.in_[ s.sel.value.uint ].value
+  @posedge_clk
+  def sync_logic( s ):
+    s.out.next = s.mux.value
+
+
 
 #class RegisteredAdder1(Model):
 #  def __init__(self, bits):

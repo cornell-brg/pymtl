@@ -710,6 +710,33 @@ class TestCombAndPosedge(unittest.TestCase):
     cycle(      2,   4,   6 )
     cycle(      2,   4,   6 )
 
+def setup_sim(model):
+  model.elaborate()
+  sim = SimulationTool(model)
+  if debug_verbose:
+    debug_utils.port_walk(model)
+  return sim
+
+def test_mux_register():
+  model = MuxRegister( 3, 2 )
+  sim = setup_sim( model )
+  sim.reset()
+  model.in_[0].value = 1
+  model.in_[1].value = 2
+  model.in_[2].value = 0
+  model.sel.value    = 0
+  sim.cycle()
+  assert model.out.value == 1
+  model.sel.value    = 1
+  sim.cycle()
+  assert model.out.value == 2
+  model.sel.value    = 2
+  sim.cycle()
+  assert model.out.value == 0
+  #model.sel.value    = 3
+  #sim.cycle()
+  #assert model.out.value == 0
+
 
 if __name__ == '__main__':
   unittest.main()
