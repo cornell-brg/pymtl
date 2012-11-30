@@ -565,9 +565,12 @@ def get_target_name(node):
       name += [node.attr]
       node = node.value
     elif isinstance(node, _ast.Subscript):
-      # TODO: assumes this is an integer, not a range
-      name += [ node.slice.value.n ]
-      node = node.value
+      # assumes this is an integer, not a range
+      if isinstance( node.slice.value, _ast.Num ):
+        name += [ node.slice.value.n ]
+        node = node.value
+      else:
+        raise Exception("Untranslatable array/slice index!")
 
   # We've found the Name.
   assert isinstance(node, _ast.Name)
