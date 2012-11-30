@@ -107,10 +107,10 @@ class RouteCompute (Model):
           and ( s.y_dest.value == s.y_self.value ) ):
       s.route.value = s.term
     elif ( s.x_dest.value != s.x_self.value ):
-      if ( s.dist_east.value < s.dist_west.value ):
-        s.route.value = s.east
-      else:
+      if ( s.dist_west.value < s.dist_east.value ):
         s.route.value = s.west
+      else:
+        s.route.value = s.east
     else:
       if ( s.dist_south.value < s. dist_north.value ):
         s.route.value = s.south
