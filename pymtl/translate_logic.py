@@ -170,6 +170,10 @@ class TemporariesVisitor(ast.NodeVisitor):
       rhs_name, rhs_debug = get_target_name(node)
       temp_type = self.get_signal_type( rhs_name )
       self.type_stack.append( temp_type )
+    # TODO: HACKY, this is how we detect subscripts...
+    #       see visit_Subscript()
+    else:
+      self.visit( node.value )
 
   # TODO: move to RegisterVisitor?
   # TODO: HACKY
@@ -178,6 +182,15 @@ class TemporariesVisitor(ast.NodeVisitor):
     if node.id.isupper():
       node_value = self.func_ptr.func_globals[ node.id ]
       self.model._localparams.add( (node.id, node_value) )
+
+  # TODO: move to TemporaryArrayVisitor?
+  # TODO: HACKY
+  def visit_Subscript(self, node):
+    # If we find any attributes that have subscripts (array indexing)
+    # we need to create a temporary array and then assign each individual
+    # input port to the array
+    if node.value.attr not in self.model._temparrays:
+      self.model._temparrays += [ node.value.attr ]
 
 #=========================================================================
 # Python to Verilog Logic Translation
@@ -569,6 +582,10 @@ def get_target_name(node):
       if isinstance( node.slice.value, _ast.Num ):
         name += [ node.slice.value.n ]
         node = node.value
+      elif isinstance( node.slice.value, _ast.Attribute ):
+        slice_idx, debug = get_target_name( node.slice.value )
+        name += [ [slice_idx] ]
+        node = node.value
       else:
         raise Exception("Untranslatable array/slice index!")
 
@@ -581,6 +598,17 @@ def get_target_name(node):
     # TODO: very very hacky!!!! Fix me!
     try:
       return '$'.join( name[::-1][1:-1] ), True
+    except TypeError:
+      s = ''
+      for x in name[::-1][1:-1]:
+        if   isinstance(x, str):  s += '$' + x
+        elif isinstance(x, list): s += 'IDX[' + x[0] + ']'
+        else:                     s += 'IDX' + str(x)
+      return s[1:], True
+  elif name[0] in ['uint', 'int', 'sext', 'zext']:
+    # TODO: very very hacky!!!! Fix me!
+    try:
+      return '$'.join( name[::-1][1:-2] ), True
     except TypeError:
       s = ''
       for x in name[::-1][1:-1]:

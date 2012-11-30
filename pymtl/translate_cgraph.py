@@ -52,7 +52,10 @@ class ConnectionGraphToVerilog(object):
     # Assignment Statments
     if model.get_ports(): self.gen_output_assigns( model, o )
 
-    # Declare Temporary Wires
+    # Declare Temporary Arrays
+    if model._temparrays: self.gen_temparrays( model, o )
+
+    # Declare Temporary Arrays
     if model._tempwires: self.gen_temp_decls( model, o )
 
     # Logic
@@ -232,6 +235,29 @@ class ConnectionGraphToVerilog(object):
           print  >> o, "  assign {0} = {1};".format(left, right)
 
     print >> o
+
+  #-----------------------------------------------------------------------
+  # Generate Temporary Arrays
+  #-----------------------------------------------------------------------
+
+  def gen_temparrays(self, model, o):
+    """Generate Verilog source for temporaries used."""
+
+    print >> o, '\n  // temporary input arrays'
+    for name in model._temparrays:
+      port_list = model.__dict__[ name ]
+      width  = port_list[0].width
+      nports = len( port_list )
+      # TODO: implement OutPort array assignments
+      if isinstance( port_list[0], InPort ):
+        if width == 1:
+          print >> o, "  wire %sIDX [0:%d];" % (name, nports-1 )
+        else :
+          print >> o, "  wire [%d:0] %sIDX [0:%d];" % (width-1, name, nports-1)
+        for i in range( nports ):
+          print >> o, "  assign %sIDX[%d] = %sIDX%d;" % (name, i, name, i)
+
+      print >> o
 
   #-----------------------------------------------------------------------
   # Generate Temporary Declarations

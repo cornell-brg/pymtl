@@ -409,6 +409,7 @@ class Model(object):
     target._newsenses   = collections.defaultdict( list )
     target._localparams = set()
     target._tempwires   = {}
+    target._temparrays  = []
     target._tempregs    = []
     # TODO: do all ports first?
     # Get the names of all ports and submodules

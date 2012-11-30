@@ -356,10 +356,7 @@ class TestDumb(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  import pytest
-  @pytest.mark.xfail
   def test_mux_register(self):
-
     model = MuxRegister( 3, 8 )
     self.translate( model )
     x = os.system( self.compile_cmd )
