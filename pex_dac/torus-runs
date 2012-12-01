@@ -1,0 +1,6 @@
+#!/bin/sh
+for ((i=80;i>=10;i-=10))
+do
+  echo "Injection rate is ${i}"
+  time ./pex-dac-sim --impl torus --stats --inj $i >> 4x4_torus.txt
+done
