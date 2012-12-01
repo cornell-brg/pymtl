@@ -718,7 +718,7 @@ def setup_sim(model):
   return sim
 
 def test_mux_register():
-  model = MuxRegister( 3, 2 )
+  model = MuxRegister( 3, 8 )
   sim = setup_sim( model )
   sim.reset()
   model.in_[0].value = 1
@@ -736,6 +736,27 @@ def test_mux_register():
   #model.sel.value    = 3
   #sim.cycle()
   #assert model.out.value == 0
+
+def test_demux_register():
+  model = Demux( 3, 8 )
+  sim = setup_sim( model )
+  sim.reset()
+  model.in_.value = 5
+  model.sel.value = 0
+  sim.cycle()
+  assert model.out[0].value == 5
+  assert model.out[1].value == 0
+  assert model.out[2].value == 0
+  model.sel.value = 2
+  sim.cycle()
+  assert model.out[0].value == 0
+  assert model.out[1].value == 0
+  assert model.out[2].value == 5
+  model.sel.value = 1
+  sim.cycle()
+  assert model.out[0].value == 0
+  assert model.out[1].value == 5
+  assert model.out[2].value == 0
 
 
 if __name__ == '__main__':
