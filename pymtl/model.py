@@ -9,6 +9,7 @@ This module contains a collection of classes that can be used to construct MTL
 a number of tools for various purposes (simulation, translation into HDLs, etc).
 """
 from connect import *
+from physical import PhysicalDimensions
 import PortBundle
 
 import collections
@@ -411,6 +412,7 @@ class Model(object):
     target._tempwires   = {}
     target._temparrays  = []
     target._tempregs    = []
+    target._dim = PhysicalDimensions()
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
@@ -604,6 +606,20 @@ class Model(object):
 
   def get_localparams( self ):
     return self._localparams
+
+  #-----------------------------------------------------------------------
+  # Dump Physical Design
+  #-----------------------------------------------------------------------
+  def dump_physical_design(self, prefix=''):
+    if prefix:
+      fullname = prefix + '.' + self.name
+    else:
+      fullname = self.name
+
+    print fullname, self._dim.get_rectangle()
+    for rect in self.get_submodules():
+      rect.dump_physical_design( fullname )
+
 
   #-----------------------------------------------------------------------
   # Is Elaborated
