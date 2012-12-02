@@ -1,0 +1,12 @@
+# Format:
+# module name (x-coord, y-coord, width, height)
+# Note that I can also dump the bounding box (the coordinates of all for corners of each module) if you prefer
+top (0, 0, 2000, 1000)
+top.routersIDX0 (0, 0, 200, 300)
+top.routersIDX1 (600, 0, 200, 300)
+top.routersIDX2 (1200, 0, 200, 300)
+top.routersIDX3 (1800, 0, 200, 300)
+top.routersIDX4 (1800, 700, 200, 300)
+top.routersIDX5 (1200, 700, 200, 300)
+top.routersIDX6 (600, 700, 200, 300)
+top.routersIDX7 (0, 700, 200, 300)
