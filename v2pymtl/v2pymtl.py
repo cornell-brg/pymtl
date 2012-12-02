@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
   pyx = 'from pymtl import *\n\ncdef extern from \'obj_dir/{0}.h\':\n  cdef cppclass {0}:\n'.format( vobj_name )
 
-  for i in ( [ ('clk', '1') ] + in_ports + out_ports ):
+  for i in ( [ ('clk', '1') ] + [ ('reset', '1') ] + in_ports + out_ports ):
     s = int( i[1] )
 
     pyx += qs
@@ -76,6 +76,8 @@ if __name__ == '__main__':
   def __dealloc__(self):\n{2}if self.{0}:\n{3}del self.{0}\n\n'.format( model_name, vobj_name, qs, hs )
 
   pyx += '{0}property clk:\n{1}def __set__(self, clk):\n{2}self.{3}.clk = clk\n\n'.format( ds, qs, hs, model_name )
+
+  pyx += '{0}property reset:\n{1}def __set__(self, reset):\n{2}self.{3}.reset = reset\n\n'.format( ds, qs, hs, model_name )
 
   for i in in_ports:
     pyx += '{0}property {1}:\n{2}def __set__(self, {1}):\n'.format( ds, i[0], qs )
@@ -139,6 +141,8 @@ setup(\n\
       w += '{0}self.{1} = {3}Port( {2} )\n'.format( qs, i[0], i[1], p[1] )
 
   w += '\n  @combinational\n  def logic(self):\n\n'
+
+  w += '    self.{0}.reset = self.reset.value\n\n'.format( xobj_name )
 
   for i in in_ports:
     if 'IDX' in i[0]:
