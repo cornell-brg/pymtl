@@ -112,7 +112,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - North Port
 
     s.inctrl_north = m = InputColCtrl( router_x_id, router_y_id, num_routers,
-                           netmsg_params, credit_nbits )
+                           netmsg_params, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest0,
       m.deq_val   : s.in0_deq_val,
@@ -123,7 +123,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - East Port
 
     s.inctrl_east = m = InputRowCtrl( router_x_id, router_y_id, num_routers,
-                          netmsg_params, credit_nbits )
+                          netmsg_params, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest1,
       m.deq_val   : s.in1_deq_val,
@@ -134,7 +134,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - South Port
 
     s.inctrl_south = m = InputColCtrl( router_x_id, router_y_id, num_routers,
-                           netmsg_params, credit_nbits )
+                           netmsg_params, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest2,
       m.deq_val   : s.in2_deq_val,
@@ -145,7 +145,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - West Port
 
     s.inctrl_west = m = InputRowCtrl( router_x_id, router_y_id, num_routers,
-                          netmsg_params, credit_nbits )
+                          netmsg_params, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest3,
       m.deq_val   : s.in3_deq_val,
@@ -156,7 +156,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - Terminal Port
 
     s.inctrl_term = m = InputTermCtrl( router_x_id, router_y_id, num_routers,
-                          netmsg_params, credit_nbits )
+                          netmsg_params, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest4,
       m.deq_val   : s.in4_deq_val,

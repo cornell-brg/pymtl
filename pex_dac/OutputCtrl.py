@@ -13,6 +13,10 @@ class OutputCtrl (Model):
 
   def __init__( s, netmsg_params, max_credit_count, credit_nbits ):
 
+    # Local Constants
+
+    s.max_credit_count = max_credit_count
+
     # Interface Ports
 
     s.reqs         = InPort  ( 5 )
@@ -25,9 +29,9 @@ class OutputCtrl (Model):
 
     # credit count
 
-    s.credits_counter = Counter( max_credit_count )
-    connect( s.credits_counter.increment, s.credit       )
-    connect( s.credits_counter.decrement, s.out_val      )
+    s.credits_counter = Counter( max_count=max_credit_count )
+    connect( s.credits_counter.decrement, s.credit       )
+    connect( s.credits_counter.increment, s.out_val      )
     connect( s.credits_counter.count,     s.credit_count )
 
     # arbiter
@@ -42,7 +46,8 @@ class OutputCtrl (Model):
 
     # arbiter enable connection
 
-    s.arbiter.en.value = ~s.credits_counter.zero.value
+    s.arbiter.en.value = \
+      ( s.credits_counter.count.value < s.max_credit_count )
 
     # out val calculations
 

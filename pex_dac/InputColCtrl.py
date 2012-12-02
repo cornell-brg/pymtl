@@ -9,11 +9,13 @@ from RouteCompute import RouteCompute
 
 class InputColCtrl (Model):
 
-  def __init__( s, router_x_id, router_y_id, num_routers, netmsg_params, credit_nbits ):
+  def __init__( s, router_x_id, router_y_id, num_routers, netmsg_params,
+    credit_nbits, max_credit_count ):
 
     # Local Constants
 
-    s.netmsg_params   = netmsg_params
+    s.netmsg_params    = netmsg_params
+    s.max_credit_count = max_credit_count
 
     # Interface Ports
 
@@ -48,8 +50,8 @@ class InputColCtrl (Model):
 
     # bubble condition calculations
 
-    s.bubble_east.value  = s.out1_credit_cnt.value > 1
-    s.bubble_west.value  = s.out3_credit_cnt.value > 1
+    s.bubble_east.value  = ( s.out1_credit_cnt.value < (s.max_credit_count - 1 ) )
+    s.bubble_west.value  = ( s.out3_credit_cnt.value < (s.max_credit_count - 1 ) )
 
     # reqs calculation
 

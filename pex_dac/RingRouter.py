@@ -248,13 +248,13 @@ class InputCtrl(Model):
     if ( terminal ):
       self.out_west_credits = InPort( buffer_nbits )
       self.out_east_credits = InPort( buffer_nbits )
-      self.west_cmp         = pmlib.arith.GtComparator( buffer_nbits )
-      self.east_cmp         = pmlib.arith.GtComparator( buffer_nbits )
+      self.west_cmp         = pmlib.arith.LtComparator( buffer_nbits )
+      self.east_cmp         = pmlib.arith.LtComparator( buffer_nbits )
 
       connect( self.west_cmp.in0, self.out_west_credits )
       connect( self.east_cmp.in0, self.out_east_credits )
-      connect( self.west_cmp.in1, 1 )
-      connect( self.east_cmp.in1, 1 )
+      connect( self.west_cmp.in1, (buffering-1) )
+      connect( self.east_cmp.in1, (buffering-1) )
       connect( self.west_cmp.out, self.bubble_cond_west )
       connect( self.east_cmp.out, self.bubble_cond_east )
     else:
@@ -362,13 +362,11 @@ class OutputCtrl(Model):
   def credit_logic( self ):
 
     if self.reset.value:
-      self.credit_count.next = self.BUFFERING
+      self.credit_count.next = 0
     elif self.out_credit.value and not self.out_enq_val.value:
-      assert self.credit_count.value < self.BUFFERING
-      self.credit_count.next = self.credit_count.value + 1
-    elif self.out_enq_val.value and not self.out_credit.value:
-      assert self.credit_count.value > 0
       self.credit_count.next = self.credit_count.value - 1
+    elif self.out_enq_val.value and not self.out_credit.value:
+      self.credit_count.next = self.credit_count.value + 1
     else:
       self.credit_count.next = self.credit_count.value
 
@@ -380,7 +378,7 @@ class OutputCtrl(Model):
   def logic( self ):
 
     # Set arbiter request signals
-    self.arb_en.value = ( self.credit_count.value != 0 )
+    self.arb_en.value = ( self.credit_count.value < self.BUFFERING )
 
     #if self.credits.value == 0:
     #  self.arb.reqs.value = 0
