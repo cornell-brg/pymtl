@@ -5,7 +5,8 @@
 from pymtl import *
 import pmlib
 
-from RegisterFile import RegisterFile
+#from RegisterFile import RegisterFile
+from WRegisterFile import RegisterFile
 
 #-------------------------------------------------------------------------
 # Test 1R1W Register File
@@ -35,7 +36,7 @@ def test_regfile_1R1W( dump_vcd ):
 
   # Instantiate and elaborate the model
 
-  model = RegisterFile( nbits=16 )
+  model = RegisterFile()
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
