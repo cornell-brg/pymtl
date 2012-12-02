@@ -23,7 +23,8 @@ import math
 
 class Crossbar5 ( Model ):
 
-  def __init__( self, nports=5, nbits=16 ):
+  @capture_args
+  def __init__( self, router_x_id, router_y_id, nports=5, nbits=16 ):
 
     # Local Constant
 

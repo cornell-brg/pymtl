@@ -16,11 +16,13 @@ from   pmlib.TestVectorSimulator import TestVectorSimulator
 
 class RouteCompute (Model):
 
-  def __init__( s, router_x_id, router_y_id, num_routers, netmsg_params ):
+  @capture_args
+  def __init__( s, router_x_id, router_y_id, num_routers, srcdest_nbits ):
 
     # Local Constants
 
-    s.netmsg_params = netmsg_params
+    s.router_x_id = router_x_id
+    s.router_y_id = router_y_id
 
     # Note: Currently, converting a linear router_id into the x and y
     # dimensions assumes square torus networks with the number of nodes to
@@ -28,12 +30,12 @@ class RouteCompute (Model):
     # CHANGED: Assuming that we pass in the x,y mapping to the router and
     # preserve it once it has been statically elaborated
 
-    s.dim_nbits      = int( sqrt( netmsg_params.srcdest_nbits ) )
+    s.dim_nbits      = ( srcdest_nbits )
     s.num_routers_1D = int( sqrt( num_routers ) )
 
     # Interface Ports
 
-    s.dest          = InPort  ( netmsg_params.srcdest_nbits )
+    s.dest          = InPort  ( srcdest_nbits )
     s.route         = OutPort ( 3 )
 
     # Temporary Wires
@@ -48,8 +50,8 @@ class RouteCompute (Model):
     s.x_self        = Wire    ( s.dim_nbits )
     s.y_self        = Wire    ( s.dim_nbits )
 
-    connect( s.x_self, router_x_id )
-    connect( s.y_self, router_y_id )
+    #connect( s.x_self, s.router_x_id )
+    #connect( s.y_self, s.router_y_id )
 
     #connect( s.x_dest, s.dest[ 0           :   s.dim_nbits ] )
     #connect( s.y_dest, s.dest[ s.dim_nbits : 2*s.dim_nbits ] )
@@ -67,13 +69,15 @@ class RouteCompute (Model):
 
     # self coordinates
 
-    #s.x_self.value = s.router_id & s.dim_mask
-    #s.y_self.value = s.router_id >> s.dim_nbits
+    s.x_self.value = s.router_x_id
+    s.y_self.value = s.router_y_id
 
     # self coordinates
 
-    s.x_dest.value = s.dest.value.uint % s.num_routers_1D
-    s.y_dest.value = s.dest.value.uint / s.num_routers_1D
+    # HACKY: Remove .uint for translation
+
+    s.x_dest.value = s.dest.value % s.num_routers_1D
+    s.y_dest.value = s.dest.value / s.num_routers_1D
 
     # north, east, south & west dist calculations
 
@@ -156,7 +160,8 @@ def test_routecompute( dump_vcd ):
 
   # Instantiate and elaborate the model
 
-  model = RouteCompute( router_x_id, router_y_id, num_routers, netmsg_params )
+  model = RouteCompute( router_x_id, router_y_id, num_routers,
+            netmsg_params.srcdest_nbits )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

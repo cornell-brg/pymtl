@@ -5,13 +5,13 @@
 from   pymtl import *
 import pmlib
 
-from   pmlib.arbiters import RoundRobinArbiterEn
+from   RoundRobinArbiterEn5x5 import RoundRobinArbiterEn5x5
 
 from   Counter import Counter
 
 class OutputCtrl (Model):
 
-  def __init__( s, netmsg_params, max_credit_count, credit_nbits ):
+  def __init__( s, max_credit_count, credit_nbits ):
 
     # Local Constants
 
@@ -27,16 +27,20 @@ class OutputCtrl (Model):
     s.out_val      = OutPort ( 1 )
     s.credit_count = OutPort ( credit_nbits )
 
+    # Wire
+
+    s.incr = Wire( 1 )
+
     # credit count
 
     s.credits_counter = Counter( max_count=max_credit_count )
     connect( s.credits_counter.decrement, s.credit       )
-    connect( s.credits_counter.increment, s.out_val      )
+    connect( s.credits_counter.increment, s.incr      )
     connect( s.credits_counter.count,     s.credit_count )
 
     # arbiter
 
-    s.arbiter = RoundRobinArbiterEn( 5 )
+    s.arbiter = RoundRobinArbiterEn5x5( )
 
     connect( s.arbiter.reqs,   s.reqs    )
     connect( s.arbiter.grants, s.grants  )
@@ -52,6 +56,9 @@ class OutputCtrl (Model):
     # out val calculations
 
     s.out_val.value = \
+      ( s.grants.value & s.reqs.value ) != 0
+
+    s.incr.value = \
       ( s.grants.value & s.reqs.value ) != 0
 
     # xbar sel

@@ -8,6 +8,7 @@ import math
 
 class RegisterFile( Model ):
 
+  @capture_args
   def __init__( self, nbits = 32):
 
     addr_bits     = 3

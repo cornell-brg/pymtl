@@ -10,18 +10,18 @@ from RouteCompute import RouteCompute
 
 class InputRowCtrl (Model):
 
-  def __init__( s, router_x_id, router_y_id, num_routers, netmsg_params,
+  @capture_args
+  def __init__( s, router_x_id, router_y_id, num_routers, srcdest_nbits,
     credit_nbits, max_credit_count ):
 
     # Local Constants
 
-    s.netmsg_params    = netmsg_params
     s.max_credit_count = max_credit_count
 
     # Interface Ports
 
     s.deq_val         = InPort  ( 1 )
-    s.dest            = InPort  ( netmsg_params.srcdest_nbits )
+    s.dest            = InPort  ( srcdest_nbits )
     s.grants          = InPort  ( 5 )
 
     s.out0_credit_cnt = InPort  ( credit_nbits )
@@ -38,7 +38,8 @@ class InputRowCtrl (Model):
 
     # route computation
 
-    s.routecomp = RouteCompute( router_x_id, router_y_id, num_routers, netmsg_params )
+    s.routecomp = RouteCompute( router_x_id, router_y_id, num_routers,
+                    srcdest_nbits )
     connect( s.routecomp.dest, s.dest )
 
     # in_credit buffer
@@ -58,12 +59,12 @@ class InputRowCtrl (Model):
 
     if   s.deq_val.value and ( s.routecomp.route.value == 4 ):
       s.reqs.value = 0b10000
-    elif (    s.deq_val.value and ( s.routecomp.route.value == 0 )
+    elif (   ( s.deq_val.value and ( s.routecomp.route.value == 0 ) )
           and s.bubble_north.value ):
       s.reqs.value = 0b00001
     elif s.deq_val.value and ( s.routecomp.route.value == 1 ):
       s.reqs.value = 0b00010
-    elif (    s.deq_val.value and ( s.routecomp.route.value == 2 )
+    elif (   ( s.deq_val.value and ( s.routecomp.route.value == 2 ) )
           and s.bubble_south.value ):
       s.reqs.value = 0b00100
     elif s.deq_val.value and ( s.routecomp.route.value == 3 ):

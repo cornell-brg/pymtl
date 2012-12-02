@@ -8,22 +8,24 @@ import pmlib
 from math import ceil, log
 
 from pmlib.net_msgs    import NetMsgParams
-from pmlib.NormalQueue import NormalQueue
+from NormalQueue       import NormalQueue
 from pmlib.queues      import SingleElementPipelinedQueue
 from InputTermCtrl     import InputTermCtrl
 from InputRowCtrl      import InputRowCtrl
 from InputColCtrl      import InputColCtrl
 from OutputCtrl        import OutputCtrl
-from pmlib.Crossbar    import Crossbar
+from Crossbar5         import Crossbar5
 
 class TorusRouterCtrl (Model):
 
-  def __init__( s, router_x_id, router_y_id,  num_routers,  netmsg_params, num_entries ):
+  @capture_args
+  def __init__( s, router_x_id, router_y_id,  num_routers,  num_messages,
+    payload_nbits, num_entries ):
 
     # Local Parameters
 
     credit_nbits    = int( ceil( log( num_entries+1, 2 ) ) )
-    s.netmsg_params = netmsg_params
+    s.netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -112,7 +114,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - North Port
 
     s.inctrl_north = m = InputColCtrl( router_x_id, router_y_id, num_routers,
-                           netmsg_params, credit_nbits, num_entries )
+                          s.netmsg_params.srcdest_nbits, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest0,
       m.deq_val   : s.in0_deq_val,
@@ -123,7 +125,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - East Port
 
     s.inctrl_east = m = InputRowCtrl( router_x_id, router_y_id, num_routers,
-                          netmsg_params, credit_nbits, num_entries )
+                          s.netmsg_params.srcdest_nbits, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest1,
       m.deq_val   : s.in1_deq_val,
@@ -134,7 +136,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - South Port
 
     s.inctrl_south = m = InputColCtrl( router_x_id, router_y_id, num_routers,
-                           netmsg_params, credit_nbits, num_entries )
+                           s.netmsg_params.srcdest_nbits, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest2,
       m.deq_val   : s.in2_deq_val,
@@ -145,7 +147,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - West Port
 
     s.inctrl_west = m = InputRowCtrl( router_x_id, router_y_id, num_routers,
-                          netmsg_params, credit_nbits, num_entries )
+                          s.netmsg_params.srcdest_nbits, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest3,
       m.deq_val   : s.in3_deq_val,
@@ -156,7 +158,7 @@ class TorusRouterCtrl (Model):
     # InputCtrl - Terminal Port
 
     s.inctrl_term = m = InputTermCtrl( router_x_id, router_y_id, num_routers,
-                          netmsg_params, credit_nbits, num_entries )
+                          s.netmsg_params.srcdest_nbits, credit_nbits, num_entries )
     connect({
       m.dest      : s.dest4,
       m.deq_val   : s.in4_deq_val,
@@ -166,7 +168,7 @@ class TorusRouterCtrl (Model):
 
     # Output Ctrl - North Port
 
-    s.outctrl_north = m = OutputCtrl( netmsg_params, num_entries,
+    s.outctrl_north = m = OutputCtrl(  num_entries,
                             credit_nbits )
     connect({
       m.credit   : s.out0_credit,
@@ -176,7 +178,7 @@ class TorusRouterCtrl (Model):
 
     # Output Ctrl - East Port
 
-    s.outctrl_east = m = OutputCtrl( netmsg_params, num_entries,
+    s.outctrl_east = m = OutputCtrl(  num_entries,
                            credit_nbits )
     connect({
       m.credit   : s.out1_credit,
@@ -186,7 +188,7 @@ class TorusRouterCtrl (Model):
 
     # Output Ctrl - South Port
 
-    s.outctrl_south = m = OutputCtrl( netmsg_params, num_entries,
+    s.outctrl_south = m = OutputCtrl(  num_entries,
                             credit_nbits )
     connect({
       m.credit   : s.out2_credit,
@@ -196,7 +198,7 @@ class TorusRouterCtrl (Model):
 
     # Output Ctrl - West Port
 
-    s.outctrl_west = m = OutputCtrl( netmsg_params, num_entries,
+    s.outctrl_west = m = OutputCtrl(  num_entries,
                            credit_nbits )
     connect({
       m.credit   : s.out3_credit,
@@ -206,7 +208,7 @@ class TorusRouterCtrl (Model):
 
     # Output Ctrl - Terminal Port
 
-    s.outctrl_term = m = OutputCtrl( netmsg_params, num_entries,
+    s.outctrl_term = m = OutputCtrl( num_entries,
                            credit_nbits )
     connect({
       m.credit   : s.out4_credit,
@@ -297,9 +299,11 @@ class TorusRouterCtrl (Model):
 
 class TorusRouterDpath (Model):
 
-  def __init__( s, netmsg_params, num_entries ):
+  @capture_args
+  def __init__( s, router_x_id, router_y_id, num_routers, num_messages, payload_nbits, num_entries ):
 
     # Local Parameters
+    s.netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -307,72 +311,72 @@ class TorusRouterDpath (Model):
 
     # Port 0 - North
 
-    s.in0_enq_msg   = InPort  ( netmsg_params.nbits )
+    s.in0_enq_msg   = InPort  ( s.netmsg_params.nbits )
     s.in0_enq_val   = InPort  ( 1 )
 
-    s.in0_dest      = OutPort ( netmsg_params.srcdest_nbits )
+    s.in0_dest      = OutPort ( s.netmsg_params.srcdest_nbits )
     s.in0_deq_val   = OutPort ( 1 )
     s.in0_deq_rdy   = InPort  ( 1 )
 
     s.xbar_sel0     = InPort  ( 3 )
     s.out0_enq_val  = InPort  ( 1 )
-    s.out0_deq_msg  = OutPort ( netmsg_params.nbits )
+    s.out0_deq_msg  = OutPort ( s.netmsg_params.nbits )
     s.out0_deq_val  = OutPort ( 1 )
 
     # Port 1 - East
 
-    s.in1_enq_msg   = InPort  ( netmsg_params.nbits )
+    s.in1_enq_msg   = InPort  ( s.netmsg_params.nbits )
     s.in1_enq_val   = InPort  ( 1 )
 
-    s.in1_dest      = OutPort ( netmsg_params.srcdest_nbits )
+    s.in1_dest      = OutPort ( s.netmsg_params.srcdest_nbits )
     s.in1_deq_val   = OutPort ( 1 )
     s.in1_deq_rdy   = InPort  ( 1 )
 
     s.xbar_sel1     = InPort  ( 3 )
     s.out1_enq_val  = InPort  ( 1 )
-    s.out1_deq_msg  = OutPort ( netmsg_params.nbits )
+    s.out1_deq_msg  = OutPort ( s.netmsg_params.nbits )
     s.out1_deq_val  = OutPort ( 1 )
 
     # Port 2 - South
 
-    s.in2_enq_msg   = InPort  ( netmsg_params.nbits )
+    s.in2_enq_msg   = InPort  ( s.netmsg_params.nbits )
     s.in2_enq_val   = InPort  ( 1 )
 
-    s.in2_dest      = OutPort ( netmsg_params.srcdest_nbits )
+    s.in2_dest      = OutPort ( s.netmsg_params.srcdest_nbits )
     s.in2_deq_val   = OutPort ( 1 )
     s.in2_deq_rdy   = InPort  ( 1 )
 
     s.xbar_sel2     = InPort  ( 3 )
     s.out2_enq_val  = InPort  ( 1 )
-    s.out2_deq_msg  = OutPort ( netmsg_params.nbits )
+    s.out2_deq_msg  = OutPort ( s.netmsg_params.nbits )
     s.out2_deq_val  = OutPort ( 1 )
 
     # Port 3 - West
 
-    s.in3_enq_msg   = InPort  ( netmsg_params.nbits )
+    s.in3_enq_msg   = InPort  ( s.netmsg_params.nbits )
     s.in3_enq_val   = InPort  ( 1 )
 
-    s.in3_dest      = OutPort ( netmsg_params.srcdest_nbits )
+    s.in3_dest      = OutPort ( s.netmsg_params.srcdest_nbits )
     s.in3_deq_val   = OutPort ( 1 )
     s.in3_deq_rdy   = InPort  ( 1 )
 
     s.xbar_sel3     = InPort  ( 3 )
     s.out3_enq_val  = InPort  ( 1 )
-    s.out3_deq_msg  = OutPort ( netmsg_params.nbits )
+    s.out3_deq_msg  = OutPort ( s.netmsg_params.nbits )
     s.out3_deq_val  = OutPort ( 1 )
 
     # Port 4 - Terminal
 
-    s.in4_enq_msg   = InPort  ( netmsg_params.nbits )
+    s.in4_enq_msg   = InPort  ( s.netmsg_params.nbits )
     s.in4_enq_val   = InPort  ( 1 )
 
-    s.in4_dest      = OutPort ( netmsg_params.srcdest_nbits )
+    s.in4_dest      = OutPort ( s.netmsg_params.srcdest_nbits )
     s.in4_deq_val   = OutPort ( 1 )
     s.in4_deq_rdy   = InPort  ( 1 )
 
     s.xbar_sel4     = InPort  ( 3 )
     s.out4_enq_val  = InPort  ( 1 )
-    s.out4_deq_msg  = OutPort ( netmsg_params.nbits )
+    s.out4_deq_msg  = OutPort ( s.netmsg_params.nbits )
     s.out4_deq_val  = OutPort ( 1 )
 
     #---------------------------------------------------------------------
@@ -382,7 +386,7 @@ class TorusRouterDpath (Model):
     # Input Queues
 
     # north
-    s.in0_queue = m = NormalQueue( num_entries, netmsg_params.nbits )
+    s.in0_queue = m = NormalQueue( nbits= s.netmsg_params.nbits )
     connect({
       m.enq_bits         : s.in0_enq_msg,
       m.enq_val          : s.in0_enq_val,
@@ -390,10 +394,10 @@ class TorusRouterDpath (Model):
       m.deq_rdy          : s.in0_deq_rdy
     })
 
-    connect( s.in0_queue.deq_bits[ netmsg_params.dest_slice ], s.in0_dest )
+    connect( s.in0_queue.deq_bits[ s.netmsg_params.dest_slice ], s.in0_dest )
 
     # east
-    s.in1_queue = m = NormalQueue( num_entries, netmsg_params.nbits )
+    s.in1_queue = m = NormalQueue( nbits=s.netmsg_params.nbits )
     connect({
       m.enq_bits         : s.in1_enq_msg,
       m.enq_val          : s.in1_enq_val,
@@ -401,10 +405,10 @@ class TorusRouterDpath (Model):
       m.deq_rdy          : s.in1_deq_rdy
     })
 
-    connect( s.in1_queue.deq_bits[ netmsg_params.dest_slice ], s.in1_dest )
+    connect( s.in1_queue.deq_bits[ s.netmsg_params.dest_slice ], s.in1_dest )
 
     # south
-    s.in2_queue = m = NormalQueue( num_entries, netmsg_params.nbits )
+    s.in2_queue = m = NormalQueue( nbits=s.netmsg_params.nbits )
     connect({
       m.enq_bits         : s.in2_enq_msg,
       m.enq_val          : s.in2_enq_val,
@@ -412,10 +416,10 @@ class TorusRouterDpath (Model):
       m.deq_rdy          : s.in2_deq_rdy
     })
 
-    connect( s.in2_queue.deq_bits[ netmsg_params.dest_slice ], s.in2_dest )
+    connect( s.in2_queue.deq_bits[ s.netmsg_params.dest_slice ], s.in2_dest )
 
     # west
-    s.in3_queue = m = NormalQueue( num_entries, netmsg_params.nbits )
+    s.in3_queue = m = NormalQueue( nbits= s.netmsg_params.nbits )
     connect({
       m.enq_bits         : s.in3_enq_msg,
       m.enq_val          : s.in3_enq_val,
@@ -423,10 +427,10 @@ class TorusRouterDpath (Model):
       m.deq_rdy          : s.in3_deq_rdy
     })
 
-    connect( s.in3_queue.deq_bits[ netmsg_params.dest_slice ], s.in3_dest )
+    connect( s.in3_queue.deq_bits[ s.netmsg_params.dest_slice ], s.in3_dest )
 
     # terminal
-    s.in4_queue = m = NormalQueue( num_entries, netmsg_params.nbits )
+    s.in4_queue = m = NormalQueue( nbits=s.netmsg_params.nbits )
     connect({
       m.enq_bits         : s.in4_enq_msg,
       m.enq_val          : s.in4_enq_val,
@@ -434,30 +438,30 @@ class TorusRouterDpath (Model):
       m.deq_rdy          : s.in4_deq_rdy
     })
 
-    connect( s.in4_queue.deq_bits[ netmsg_params.dest_slice ], s.in4_dest )
+    connect( s.in4_queue.deq_bits[ s.netmsg_params.dest_slice ], s.in4_dest )
 
     # Crossbar
 
-    s.crossbar = m = Crossbar( 5, netmsg_params.nbits )
+    s.crossbar = m = Crossbar5( router_x_id, router_y_id, nbits=s.netmsg_params.nbits )
     connect({
-      m.in_[0] : s.in0_queue.deq_bits,
-      m.sel[0] : s.xbar_sel0,
-      m.in_[1] : s.in1_queue.deq_bits,
-      m.sel[1] : s.xbar_sel1,
-      m.in_[2] : s.in2_queue.deq_bits,
-      m.sel[2] : s.xbar_sel2,
-      m.in_[3] : s.in3_queue.deq_bits,
-      m.sel[3] : s.xbar_sel3,
-      m.in_[4] : s.in4_queue.deq_bits,
-      m.sel[4] : s.xbar_sel4,
+      m.in0 : s.in0_queue.deq_bits,
+      m.sel0 : s.xbar_sel0,
+      m.in1 : s.in1_queue.deq_bits,
+      m.sel1 : s.xbar_sel1,
+      m.in2 : s.in2_queue.deq_bits,
+      m.sel2 : s.xbar_sel2,
+      m.in3 : s.in3_queue.deq_bits,
+      m.sel3 : s.xbar_sel3,
+      m.in4 : s.in4_queue.deq_bits,
+      m.sel4 : s.xbar_sel4,
     })
 
     # Channel piped queues
 
     # north
-    s.out0_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
+    s.out0_q = m = SingleElementPipelinedQueue( s.netmsg_params.nbits )
     connect({
-      m.enq_bits : s.crossbar.out[0],
+      m.enq_bits : s.crossbar.out0,
       m.enq_val  : s.out0_enq_val,
       m.deq_bits : s.out0_deq_msg,
       m.deq_val  : s.out0_deq_val,
@@ -465,9 +469,9 @@ class TorusRouterDpath (Model):
     })
 
     # east
-    s.out1_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
+    s.out1_q = m = SingleElementPipelinedQueue( s.netmsg_params.nbits )
     connect({
-      m.enq_bits : s.crossbar.out[1],
+      m.enq_bits : s.crossbar.out1,
       m.enq_val  : s.out1_enq_val,
       m.deq_bits : s.out1_deq_msg,
       m.deq_val  : s.out1_deq_val,
@@ -475,9 +479,9 @@ class TorusRouterDpath (Model):
     })
 
     # south
-    s.out2_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
+    s.out2_q = m = SingleElementPipelinedQueue( s.netmsg_params.nbits )
     connect({
-      m.enq_bits : s.crossbar.out[2],
+      m.enq_bits : s.crossbar.out2,
       m.enq_val  : s.out2_enq_val,
       m.deq_bits : s.out2_deq_msg,
       m.deq_val  : s.out2_deq_val,
@@ -485,9 +489,9 @@ class TorusRouterDpath (Model):
     })
 
     # west
-    s.out3_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
+    s.out3_q = m = SingleElementPipelinedQueue( s.netmsg_params.nbits )
     connect({
-      m.enq_bits : s.crossbar.out[3],
+      m.enq_bits : s.crossbar.out3,
       m.enq_val  : s.out3_enq_val,
       m.deq_bits : s.out3_deq_msg,
       m.deq_val  : s.out3_deq_val,
@@ -495,9 +499,9 @@ class TorusRouterDpath (Model):
     })
 
     # term
-    s.out4_q = m = SingleElementPipelinedQueue( netmsg_params.nbits )
+    s.out4_q = m = SingleElementPipelinedQueue( s.netmsg_params.nbits )
     connect({
-      m.enq_bits : s.crossbar.out[4],
+      m.enq_bits : s.crossbar.out4,
       m.enq_val  : s.out4_enq_val,
       m.deq_bits : s.out4_deq_msg,
       m.deq_val  : s.out4_deq_val,
@@ -506,6 +510,7 @@ class TorusRouterDpath (Model):
 
 class TorusRouter (Model):
 
+  @capture_args
   def __init__( s, router_x_id, router_y_id, num_routers, num_messages, payload_nbits, num_entries ):
 
     # Local Parameters
@@ -527,8 +532,10 @@ class TorusRouter (Model):
     # Static elaboration
     #---------------------------------------------------------------------
 
-    s.ctrl  = TorusRouterCtrl  ( router_x_id, router_y_id, num_routers, s.netmsg_params, num_entries )
-    s.dpath = TorusRouterDpath ( s.netmsg_params, num_entries )
+    s.ctrl  = TorusRouterCtrl  ( router_x_id, router_y_id, num_routers,
+                num_messages, payload_nbits, num_entries )
+    s.dpath = TorusRouterDpath ( router_x_id, router_y_id, num_routers,
+                num_messages, payload_nbits, num_entries )
 
     # ctrl unit connections
 
