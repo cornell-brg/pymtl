@@ -35,10 +35,10 @@ class QueueGL( Model ):
       for j in range( s.nbits ):
         reg = s.regs[ i * s.nbits + j ]
         reg.physical_elaboration()
-        reg._dim.x = i * reg._dim.h
-        reg._dim.y = j * reg._dim.w
-    s._dim.x = s.entries * reg._dim.w
-    s._dim.y = s.nbits   * reg._dim.h
+        reg._dim.x = i * reg._dim.w
+        reg._dim.y = j * reg._dim.h
+    s._dim.w = s.entries * reg._dim.w
+    s._dim.h = s.nbits   * reg._dim.h
 
 
 #-------------------------------------------------------------------------
