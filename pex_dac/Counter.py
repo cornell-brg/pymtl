@@ -13,7 +13,7 @@ from   pmlib.TestVectorSimulator import TestVectorSimulator
 
 class Counter (Model):
 
-  def __init__( s, max_count ):
+  def __init__( s, max_count=4 ):
 
     # Local Constants
 
@@ -29,16 +29,16 @@ class Counter (Model):
 
     # credit count register
 
-    s.count_reg = pmlib.regs.RegRst( s.nbits, reset_value = max_count )
+    s.count_reg = pmlib.regs.RegRst( s.nbits )
     connect( s.count_reg.out, s.count )
 
   @combinational
   def comb( s ):
 
-    if   ( s.increment.value and ~s.decrement.value
+    if   ( ( s.increment.value and (~s.decrement.value) )
          and ( s.count_reg.out.value < s.max_count ) ):
       s.count_reg.in_.value = s.count_reg.out.value + 1
-    elif ( ~s.increment.value and s.decrement.value
+    elif ( ( (~s.increment.value ) and s.decrement.value )
          and ( s.count_reg.out.value > 0 ) ):
       s.count_reg.in_.value = s.count_reg.out.value - 1
     else:
@@ -48,14 +48,20 @@ class Counter (Model):
 
 # Unit tests for the counter
 
-def test_counter( dump_vcd ):
+def test_reg( dump_vcd ):
 
   # Test vectors
 
   test_vectors = [
     # incr decr count zero
-    [ 0,   0,   4,    0   ],
-    [ 1,   1,   4,    0   ],
+    [ 0,   0,   0,    1   ],
+    [ 1,   1,   0,    1   ],
+    [ 1,   0,   0,    1   ],
+    [ 1,   0,   1,    0   ],
+    [ 1,   0,   2,    0   ],
+    [ 1,   0,   3,    0   ],
+    [ 1,   0,   4,    0   ],
+    [ 1,   0,   4,    0   ],
     [ 0,   1,   4,    0   ],
     [ 0,   1,   3,    0   ],
     [ 0,   1,   2,    0   ],
@@ -64,20 +70,13 @@ def test_counter( dump_vcd ):
     [ 0,   1,   0,    1   ],
     [ 1,   0,   0,    1   ],
     [ 1,   0,   1,    0   ],
+    [ 1,   1,   2,    0   ],
     [ 1,   0,   2,    0   ],
-    [ 1,   0,   3,    0   ],
-    [ 1,   0,   4,    0   ],
-    [ 1,   0,   4,    0   ],
-    [ 0,   1,   4,    0   ],
-    [ 1,   1,   3,    0   ],
-    [ 0,   0,   3,    0   ],
-    [ 0,   1,   3,    0   ],
-    [ 0,   1,   2,    0   ],
   ]
 
   # Instantiate and elaborate the model
 
-  model = Counter(4)
+  model = Counter()
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
