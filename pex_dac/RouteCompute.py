@@ -31,7 +31,7 @@ class RouteCompute (Model):
     # preserve it once it has been statically elaborated
 
     s.num_routers_1D = int( sqrt( num_routers ) )
-    s.dim_nbits      = int( ceil( log( num_routers, 2 ) ) )
+    s.dim_nbits      = int( ceil( log( num_routers_1D, 2 ) ) )
 
     # Interface Ports
 
