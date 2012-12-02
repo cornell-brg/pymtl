@@ -63,11 +63,11 @@ initialize_floorplan \\\n\
         -core_width {0} \\\n\
         -core_height {1} \\\n\
         -row_core_ratio 1 \\\n\
-        -left_io2core 30 \\\n\
-        -bottom_io2core 30 \\\n\
-        -right_io2core 30 \\\n\
-        -top_io2core 30 \\\n\
-        -start_first_row\n\n'.format( core_width, core_height )
+        -left_io2core {2} \\\n\
+        -bottom_io2core {2} \\\n\
+        -right_io2core {2} \\\n\
+        -top_io2core {2} \\\n\
+        -start_first_row\n\n'.format( core_width, core_height, io_spacing )
 
   for m in modules:
     coords = m[1]
