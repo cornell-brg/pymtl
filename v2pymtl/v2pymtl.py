@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
   pyx += '{0}property clk:\n{1}def __set__(self, clk):\n{2}self.{3}.clk = clk\n\n'.format( ds, qs, hs, model_name )
 
-  pyx += '{0}property reset:\n{1}def __set__(self, reset):\n{2}self.{3}.reset = reset\n\n'.format( ds, qs, hs, model_name )
+  pyx += '{0}property reset:\n{1}def __set__(self, reset):\n{2}self.{3}.reset = reset.value.uint\n\n'.format( ds, qs, hs, model_name )
 
   for i in in_ports:
     pyx += '{0}property {1}:\n{2}def __set__(self, {1}):\n'.format( ds, i[0], qs )
