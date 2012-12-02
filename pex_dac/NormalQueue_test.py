@@ -15,7 +15,7 @@ def run_test_queue( dump_vcd, ModelType, size, test_vectors ):
 
   # Instantiate and elaborate the model
 
-  model = ModelType( 16 )
+  model = ModelType()
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
