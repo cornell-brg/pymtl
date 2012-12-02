@@ -17,9 +17,9 @@ class Torus4x4(Model):
 
     # Local Parameters
     num_routers    = 16
-    num_messages   = 128
-    payload_nbits  = 32
-    num_entries    = 4
+    num_messages   = 16
+    payload_nbits  = 22
+    num_entries    = 8
     netmsg_params  = NetMsgParams( num_routers, num_messages, payload_nbits )
     s.netmsg       = netmsg_params
     num_routers_1D = int( sqrt( num_routers ) )

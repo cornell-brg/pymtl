@@ -25,6 +25,7 @@ subpkgs = \
   pex_regincr \
   pex_sorter \
   pex_gcd \
+  pex_dac \
   plab1_imul \
   plab2_proc \
   plab3_mem \

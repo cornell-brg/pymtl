@@ -1,4 +1,4 @@
-#!/usr/bin/env pypy
+#!/usr/bin/env python
 #=========================================================================
 # pex-dac-sim [options]
 #=========================================================================
@@ -7,7 +7,8 @@
 #  -v --verbose        Verbose mode
 #
 #  --impl <impl>       Choose model implementation
-#                       torus   : torus with greedy routing
+#                       torus4  : torus with greedy routing
+#                       torus8  : torus with greedy routing
 #                       ring    : ring  with greedy routing
 #
 #  --pattern <pattern> Traffic pattern (default urandom)
@@ -41,9 +42,10 @@ from   pymtl import *
 import pmlib
 
 from pmlib.net_msgs import NetMsgParams
+from pmlib.adapters import ValRdyToValCredit, ValCreditToValRdy
 
-from Ring  import Ring
-from Torus import Torus
+from Ring      import Ring
+from WTorus4x4 import Torus4x4
 
 # Fix the random seed so results are reproducible
 random.seed(0xdeadbeef)
@@ -72,7 +74,7 @@ def parse_cmdline():
   # Additional command line arguments for the simulator
 
   p.add_argument( "--impl",
-    choices=["torus","ring"] )
+    choices=["torus4","torus8","ring"] )
 
   p.add_argument( "--pattern", default="urandom",
     choices=["tornado","urandom"] )
@@ -105,6 +107,36 @@ INVALID_TIMESTAMP   = 0
 # simulate
 #--------------------------------------------------------------------------
 
+class SimHarness (Model):
+
+  def __init__( s, ModelType, num_routers, num_entries, netmsg_params ):
+
+    # Local Constants
+
+    s.num_routers = num_routers
+
+    # Instantiate Models
+
+    s.network = ModelType( )
+    s.v2c     = [ ValRdyToValCredit( netmsg_params.nbits, num_entries )
+                  for x in xrange( num_routers ) ]
+
+    s.c2v     = [ ValCreditToValRdy( netmsg_params.nbits, num_entries )
+                  for x in xrange( num_routers ) ]
+
+    # connect
+
+    for i in xrange( s.num_routers ):
+
+      connect( s.v2c[i].to_msg,        s.network.in_msg[i]    )
+      connect( s.v2c[i].to_val,        s.network.in_val[i]    )
+      connect( s.v2c[i].to_credit,     s.network.in_credit[i] )
+
+      connect( s.network.out_msg[i],     s.c2v[i].from_msg    )
+      connect( s.network.out_val[i],     s.c2v[i].from_val    )
+      connect( s.network.out_credit[i],  s.c2v[i].from_credit )
+
+
 def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
 
   # Simulation Variables
@@ -116,7 +148,7 @@ def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
   packets_received    = 0
   total_received      = 0
   total_latency       = 0
-  drain_cycles        = 2500
+  drain_cycles        = 10000
   sim_done            = False
 
   # Network Parameters
@@ -130,7 +162,7 @@ def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
 
   # Instantiate and elaborate a ring network
 
-  model = ModelType( NUM_ROUTERS, NUM_MESSAGES, PAYLOAD_NBITS, NUM_ENTRIES )
+  model = SimHarness( ModelType, NUM_ROUTERS, NUM_ENTRIES, netmsg_params )
   model.elaborate()
 
   # Source Queues - Modeled as Bypass Queues
@@ -144,7 +176,7 @@ def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
   # Turn on vcd dumping
 
   if dump_vcd:
-    sim.dump_vcd(opts.dump_vcd)
+    sim.dump_vcd(dump_vcd)
 
   # Reset the simulator
 
@@ -153,7 +185,7 @@ def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
   # Run the simulation
 
   for i in xrange( NUM_ROUTERS ):
-    model.out_rdy[i].value = 1
+    model.c2v[i].to_rdy.value = 1
 
   while not sim_done:
     for i in xrange( NUM_ROUTERS ):
@@ -188,16 +220,16 @@ def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
       # Inject from source queue
 
       if ( len( src[i] ) > 0 ):
-        model.in_msg[i].value = src[i][0]
-        model.in_val[i].value = 1
+        model.v2c[i].from_msg.value = src[i][0]
+        model.v2c[i].from_val.value = 1
       else:
-        model.in_val[i].value = 0
+        model.v2c[i].from_val.value = 0
 
       # Receive a packet
 
-      if ( model.out_val[i].value == 1 ):
+      if ( model.c2v[i].to_val.value == 1 ):
         timestamp = \
-          model.out_msg[i].value[ netmsg_params.payload_slice ]
+          model.c2v[i].to_msg.value[ netmsg_params.payload_slice ]
 
         # collect data for measurement packets
 
@@ -207,7 +239,6 @@ def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
         if ( timestamp != INVALID_TIMESTAMP ):
           total_latency    += ( sim.num_cycles - timestamp.uint )
           packets_received += 1
-          average_latency = total_latency / float( packets_received )
 
       # Check if finished - drain phase
 
@@ -219,7 +250,7 @@ def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
 
       # Pop the source queue
 
-      if ( model.in_rdy[i].value == 1 ) and ( len( src[i] ) > 0 ):
+      if ( model.v2c[i].from_rdy.value == 1 ) and ( len( src[i] ) > 0 ):
         src[i].pop(0)
 
     # advance simulation
@@ -233,7 +264,7 @@ def simulate( ModelType, injection_rate, route_compute, dump_vcd, verbose ):
 
   # return the calculated average_latency and count of packets received
 
-  return [ observed_thput, total_received, average_latency, packets_received, max_queue ]
+  return [ observed_thput, total_received, average_latency, packets_received, max_queue, sim.num_cycles ]
 
 #-------------------------------------------------------------------------------
 # Main
@@ -255,8 +286,8 @@ def main():
   # Determine which model to use in the simulator
 
   impl_dict = {
-    'ring'  : Ring,
-    'torus' : Torus,
+    'ring'   : Ring,
+    'torus4' : Torus4x4,
   }
 
   # Determine which pattern to use and create the pattern
@@ -288,7 +319,7 @@ def main():
   # Handle stats if enabled
 
   if opts.stats:
-    print >> os, "{:>2d} {} {} {} {} {}".format( i, results[0], results[1],
-                                    results[2], results[3], results[4] )
+    print >> os, "{:>2d} {} {} {} {} {} {}".format( i, results[0], results[1],
+                                    results[2], results[3], results[4], results[5] )
 
 main()

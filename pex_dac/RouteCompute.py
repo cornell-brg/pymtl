@@ -30,8 +30,8 @@ class RouteCompute (Model):
     # CHANGED: Assuming that we pass in the x,y mapping to the router and
     # preserve it once it has been statically elaborated
 
-    s.dim_nbits      = ( srcdest_nbits )
     s.num_routers_1D = int( sqrt( num_routers ) )
+    s.dim_nbits      = int( ceil( log( num_routers, 2 ) ) )
 
     # Interface Ports
 
