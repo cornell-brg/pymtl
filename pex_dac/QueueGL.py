@@ -24,7 +24,7 @@ class Register( Model ):
 
 class QueueGL( Model ):
 
-  def __init__( s, entries, nbits, cell_sz ):
+  def __init__( s, entries=8, nbits=16, cell_sz=(5,10) ):
     s.entries = entries
     s.nbits   = nbits
     s.regs    = [ Register( cell_sz )

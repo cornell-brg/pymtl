@@ -24,7 +24,7 @@ class Router( Model ):
 
 class RingAL( Model ):
 
-  def __init__( s, num_routers, router_sz, link_len ):
+  def __init__( s, num_routers=8, router_sz=(20,20), link_len=40 ):
     s.router_sz = router_sz
     s.link_len  = link_len
     s.routers   = [ Router( router_sz )

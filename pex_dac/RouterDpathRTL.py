@@ -38,7 +38,7 @@ class Register( Model ):
 
 class RouterDpathRTL( Model ):
 
-  def __init__( s, nary, mux_sz, reg_sz):
+  def __init__( s, nary=4, mux_sz=(20,40), reg_sz=(15,30)):
     s.nary    = nary
     s.regs    = [ Register( mux_sz ) for x in range( nary ) ]
     s.muxs    = [ Mux( reg_sz )      for x in range( nary ) ]
