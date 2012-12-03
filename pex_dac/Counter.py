@@ -18,7 +18,7 @@ class Counter (Model):
     # Local Constants
 
     s.max_count = max_count
-    s.nbits     = int( ceil( log( max_count + 1, 2 ) ) )
+    s.nbits     = int( ceil( log( max_count, 2 ) ) ) + 1
 
     # Interface
 

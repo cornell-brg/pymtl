@@ -10,11 +10,15 @@ import random
 
 import pmlib.valrdy     as valrdy
 
-from Ring import Ring
+from Ring4 import Ring4
 from pmlib.net_msgs import NetMsgParams
 
+from pmlib.adapters import ValRdyToValCredit, ValCreditToValRdy
 from pmlib.TestSource  import TestSource
 from pmlib.TestNetSink import TestNetSink
+
+# Fix the random seed so results are reproducible
+random.seed(0xdeadbeef)
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -35,21 +39,34 @@ class TestHarness (Model):
 
     s.src    = [ TestSource  ( netmsg_params.nbits, src_msgs[x], src_delay   )
                  for x in xrange( s.num_routers ) ]
-    s.ring = Ring( num_routers, num_messages, payload_nbits, num_entries )
+    s.ring = Ring4( )
     s.sink   = [ TestNetSink ( netmsg_params.nbits, sink_msgs[x], sink_delay )
                  for x in xrange( s.num_routers ) ]
+    s.v2c = [ ValRdyToValCredit( netmsg_params.nbits, num_entries )
+              for x in xrange( num_routers ) ]
+
+    s.c2v = [ ValCreditToValRdy( netmsg_params.nbits, num_entries )
+              for x in xrange( num_routers ) ]
 
     # connect
 
     for i in xrange( s.num_routers ):
 
-      connect( s.ring.in_msg[i], s.src[i].out_msg )
-      connect( s.ring.in_val[i], s.src[i].out_val )
-      connect( s.ring.in_rdy[i], s.src[i].out_rdy )
+      connect( s.src[i].out_msg,       s.v2c[i].from_msg         )
+      connect( s.src[i].out_val,       s.v2c[i].from_val         )
+      connect( s.src[i].out_rdy,       s.v2c[i].from_rdy         )
 
-      connect( s.ring.out_msg[i], s.sink[i].in_msg )
-      connect( s.ring.out_val[i], s.sink[i].in_val )
-      connect( s.ring.out_rdy[i], s.sink[i].in_rdy )
+      connect( s.v2c[i].to_msg,        s.ring.in_msg[i]    )
+      connect( s.v2c[i].to_val,        s.ring.in_val[i]    )
+      connect( s.v2c[i].to_credit,     s.ring.in_credit[i] )
+
+      connect( s.ring.out_msg[i],     s.c2v[i].from_msg         )
+      connect( s.ring.out_val[i],     s.c2v[i].from_val         )
+      connect( s.ring.out_credit[i],  s.c2v[i].from_credit      )
+
+      connect( s.c2v[i].to_msg,             s.sink[i].in_msg       )
+      connect( s.c2v[i].to_val,             s.sink[i].in_val       )
+      connect( s.c2v[i].to_rdy,             s.sink[i].in_rdy       )
 
   def done( s ):
     done_flag = 1
@@ -90,7 +107,7 @@ def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
   print ""
 
   sim.reset()
-  while not model.done() and sim.num_cycles < 100:
+  while not model.done() and sim.num_cycles < 1000:
     sim.print_line_trace()
     sim.cycle()
 
@@ -106,10 +123,10 @@ def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
 # Test Messages
 #-------------------------------------------------------------------------
 
-num_routers   = 8
-num_messages  = 128
-payload_nbits = 32
-num_entries   = 4
+num_routers   = 4
+num_messages  = 16
+payload_nbits = 26
+num_entries   = 8
 
 netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
 
@@ -128,14 +145,10 @@ def terminal_msgs():
     sink_msgs[dest].append( msg )
 
   #           dest src seq_num, payload
-  mk_net_msg( 0,   0,  0,       0xaaaaaaaa )
-  mk_net_msg( 1,   1,  0,       0xbbbbbbbb )
-  mk_net_msg( 2,   2,  0,       0xcccccccc )
-  mk_net_msg( 3,   3,  0,       0xdddddddd )
-  mk_net_msg( 4,   4,  0,       0xeeeeeeee )
-  mk_net_msg( 5,   5,  0,       0xffffffff )
-  mk_net_msg( 6,   6,  0,       0x11111111 )
-  mk_net_msg( 7,   7,  0,       0x22222222 )
+  mk_net_msg( 0,   0,  0,       0x0aaaaaa )
+  mk_net_msg( 1,   1,  0,       0x0bbbbbb )
+  mk_net_msg( 2,   2,  0,       0x0cccccc )
+  mk_net_msg( 3,   3,  0,       0x0dddddd )
 
   return [ src_msgs, sink_msgs ]
 
@@ -154,15 +167,10 @@ def east_msgs():
     sink_msgs[dest].append( msg )
 
   #           dest src seq_num, payload
-  mk_net_msg( 1,   0,  0,       0xaaaaaaaa )
-  mk_net_msg( 2,   1,  0,       0xbbbbbbbb )
-  mk_net_msg( 3,   2,  0,       0xcccccccc )
-  mk_net_msg( 4,   3,  0,       0xdddddddd )
-  mk_net_msg( 5,   4,  0,       0xeeeeeeee )
-  mk_net_msg( 6,   5,  0,       0xffffffff )
-  mk_net_msg( 7,   6,  0,       0x11111111 )
-  mk_net_msg( 0,   7,  0,       0x22222222 )
-
+  mk_net_msg( 1,   0,  0,       0x0aaaaa )
+  mk_net_msg( 2,   1,  0,       0x0bbbbb )
+  mk_net_msg( 3,   2,  0,       0x0ccccc )
+  mk_net_msg( 0,   3,  0,       0x0ddddd )
   return [ src_msgs, sink_msgs ]
 
 def west_msgs():
@@ -180,14 +188,10 @@ def west_msgs():
     sink_msgs[dest].append( msg )
 
   #           dest src seq_num, payload
-  mk_net_msg( 0,   1,  0,       0xaaaaaaaa )
-  mk_net_msg( 1,   2,  0,       0xbbbbbbbb )
-  mk_net_msg( 2,   3,  0,       0xcccccccc )
-  mk_net_msg( 3,   4,  0,       0xdddddddd )
-  mk_net_msg( 4,   5,  0,       0xeeeeeeee )
-  mk_net_msg( 5,   6,  0,       0xffffffff )
-  mk_net_msg( 6,   7,  0,       0x11111111 )
-  mk_net_msg( 7,   0,  0,       0x22222222 )
+  mk_net_msg( 0,   1,  0,       0x0aaaaa )
+  mk_net_msg( 1,   2,  0,       0x0bbbbb )
+  mk_net_msg( 2,   3,  0,       0x0ccccc )
+  mk_net_msg( 3,   0,  0,       0x0ddddd )
 
   return [ src_msgs, sink_msgs ]
 
@@ -323,8 +327,8 @@ def nearest_neighbor_east_msgs( size ):
       else:
         dest = i + 1
 
-      data_roll = random.randint( 0, pow( 2, 32 ) - 1 )
-      mk_net_msg( dest, i, j, data_roll )
+      data_roll = random.randint( 0, pow( 2, 26 ) - 1 )
+      mk_net_msg( dest, i, 0, data_roll )
 
   return [ src_msgs, sink_msgs ]
 
@@ -349,8 +353,8 @@ def nearest_neighbor_west_msgs( size ):
       else:
         dest = i - 1
 
-      data_roll = random.randint( 0, pow( 2, 32 ) - 1 )
-      mk_net_msg( dest, i, j, data_roll )
+      data_roll = random.randint( 0, pow( 2, 26 ) - 1 )
+      mk_net_msg( dest, i, 0, data_roll )
 
   return [ src_msgs, sink_msgs ]
 
@@ -373,8 +377,8 @@ def hotspot_msgs( size ):
 
       # all routers send to node 0
       dest = 0
-      data_roll = random.randint( 0, pow( 2, 32 ) - 1 )
-      mk_net_msg( dest, i, j, data_roll )
+      data_roll = random.randint( 0, pow( 2, 26 ) - 1 )
+      mk_net_msg( dest, i, 0, data_roll )
 
   return [ src_msgs, sink_msgs ]
 
@@ -401,8 +405,8 @@ def partition_msgs( size ):
         dest_roll = random.randint( 0, partition_edge - 1 )
       else:
         dest_roll = random.randint( partition_edge, num_routers - 1 )
-      data_roll = random.randint( 0, pow( 2, 32 ) - 1 )
-      mk_net_msg( dest_roll, i, j, data_roll )
+      data_roll = random.randint( 0, pow( 2, 26 ) - 1 )
+      mk_net_msg( dest_roll, i, 0, data_roll )
 
   return [ src_msgs, sink_msgs ]
 
@@ -423,8 +427,8 @@ def uniform_random_msgs( size ):
   for i in xrange( num_routers ):
     for j in xrange( size ):
       dest_roll = random.randint( 0, num_routers - 1 )
-      data_roll = random.randint( 0, pow( 2, 32 ) - 1 )
-      mk_net_msg( dest_roll, i, j, data_roll )
+      data_roll = random.randint( 0, pow( 2, 26 ) - 1 )
+      mk_net_msg( dest_roll, i, 0, data_roll )
 
   return [ src_msgs, sink_msgs ]
 
@@ -444,9 +448,9 @@ def tornado_msgs( size ):
 
   for i in xrange( num_routers ):
     for j in xrange( size ):
-      dest = ( i + int( num_routers / 2 ) ) % num_routers
-      data_roll = random.randint( 0, pow( 2, 32 ) - 1 )
-      mk_net_msg( dest, i, j, data_roll )
+      dest = ( i + int( num_routers / 2 )-1 ) % num_routers
+      data_roll = random.randint( 0, pow( 2, 26 ) - 1 )
+      mk_net_msg( dest, i, 0, data_roll )
 
   return [ src_msgs, sink_msgs ]
 
@@ -469,22 +473,22 @@ def test_ring_west_delay0x0( dump_vcd ):
                 west_msgs(), num_routers, num_messages, payload_nbits,
                 num_entries )
 
-def test_ring_deadlock_east_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_deadlock_east_delay0x0.vcd", 0, 0,
-                deadlock_east_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
-
-@pytest.mark.xfail
-def test_ring_deadlock_west_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_deadlock_west_delay0x0.vcd", 0, 0,
-                deadlock_west_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
-
-@pytest.mark.xfail
-def test_ring_adaptive_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_adaptive_delay0x0.vcd", 0, 0,
-                adaptive_non_minimal_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
+#def test_ring_deadlock_east_delay0x0( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_deadlock_east_delay0x0.vcd", 0, 0,
+#                deadlock_east_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
+#
+#@pytest.mark.xfail
+#def test_ring_deadlock_west_delay0x0( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_deadlock_west_delay0x0.vcd", 0, 0,
+#                deadlock_west_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
+#
+#@pytest.mark.xfail
+#def test_ring_adaptive_delay0x0( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_adaptive_delay0x0.vcd", 0, 0,
+#                adaptive_non_minimal_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
 
 def test_ring_nearest_neighbor_east_delay0x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_nearest_neighbor_east_delay0x0.vcd", 0, 0,
@@ -535,22 +539,22 @@ def test_ring_west_delay5x0( dump_vcd ):
                 west_msgs(), num_routers, num_messages, payload_nbits,
                 num_entries )
 
-def test_ring_deadlock_east_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_deadlock_east_delay5x0.vcd", 5, 0,
-                deadlock_east_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
-
-@pytest.mark.xfail
-def test_ring_deadlock_west_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_deadlock_west_delay5x0.vcd", 5, 0,
-                deadlock_west_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
-
-@pytest.mark.xfail
-def test_ring_adaptive_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_adaptive_delay5x0.vcd", 5, 0,
-                adaptive_non_minimal_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
+#def test_ring_deadlock_east_delay5x0( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_deadlock_east_delay5x0.vcd", 5, 0,
+#                deadlock_east_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
+#
+#@pytest.mark.xfail
+#def test_ring_deadlock_west_delay5x0( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_deadlock_west_delay5x0.vcd", 5, 0,
+#                deadlock_west_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
+#
+#@pytest.mark.xfail
+#def test_ring_adaptive_delay5x0( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_adaptive_delay5x0.vcd", 5, 0,
+#                adaptive_non_minimal_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
 
 def test_ring_nearest_neighbor_east_delay5x0( dump_vcd ):
   run_net_test( dump_vcd, "Ring_nearest_neighbor_east_delay5x0.vcd", 5, 0,
@@ -601,22 +605,22 @@ def test_ring_west_delay0x5( dump_vcd ):
                 west_msgs(), num_routers, num_messages, payload_nbits,
                 num_entries )
 
-def test_ring_deadlock_east_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_deadlock_east_delay0x5.vcd", 0, 5,
-                deadlock_east_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
-
-@pytest.mark.xfail
-def test_ring_deadlock_west_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_deadlock_west_delay0x5.vcd", 0, 5,
-                deadlock_west_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
-
-@pytest.mark.xfail
-def test_ring_adaptive_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_adaptive_delay0x5.vcd", 0, 5,
-                adaptive_non_minimal_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
+#def test_ring_deadlock_east_delay0x5( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_deadlock_east_delay0x5.vcd", 0, 5,
+#                deadlock_east_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
+#
+#@pytest.mark.xfail
+#def test_ring_deadlock_west_delay0x5( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_deadlock_west_delay0x5.vcd", 0, 5,
+#                deadlock_west_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
+#
+#@pytest.mark.xfail
+#def test_ring_adaptive_delay0x5( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_adaptive_delay0x5.vcd", 0, 5,
+#                adaptive_non_minimal_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
 
 def test_ring_nearest_neighbor_east_delay0x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_nearest_neighbor_east_delay0x5.vcd", 0, 5,
@@ -667,22 +671,22 @@ def test_ring_west_delay8x5( dump_vcd ):
                 west_msgs(), num_routers, num_messages, payload_nbits,
                 num_entries )
 
-def test_ring_deadlock_east_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_deadlock_east_delay8x5.vcd", 8, 5,
-                deadlock_east_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
-
-@pytest.mark.xfail
-def test_ring_deadlock_west_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_deadlock_west_delay8x5.vcd", 8, 5,
-                deadlock_west_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
-
-@pytest.mark.xfail
-def test_ring_adaptive_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, "Ring_adaptive_delay8x5.vcd", 8, 5,
-                adaptive_non_minimal_msgs(), num_routers, num_messages,
-                payload_nbits, num_entries )
+#def test_ring_deadlock_east_delay8x5( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_deadlock_east_delay8x5.vcd", 8, 5,
+#                deadlock_east_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
+#
+#@pytest.mark.xfail
+#def test_ring_deadlock_west_delay8x5( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_deadlock_west_delay8x5.vcd", 8, 5,
+#                deadlock_west_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
+#
+#@pytest.mark.xfail
+#def test_ring_adaptive_delay8x5( dump_vcd ):
+#  run_net_test( dump_vcd, "Ring_adaptive_delay8x5.vcd", 8, 5,
+#                adaptive_non_minimal_msgs(), num_routers, num_messages,
+#                payload_nbits, num_entries )
 
 def test_ring_nearest_neighbor_east_delay8x5( dump_vcd ):
   run_net_test( dump_vcd, "Ring_nearest_neighbor_east_delay8x5.vcd", 8, 5,
