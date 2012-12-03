@@ -146,8 +146,8 @@ def basic_msgs():
 
   # constants
 
-  term = 1
-  west = 0
+  term = 0
+  west = 1
   east = 2
 
   #           src_  sink  dest src seq_num, payload

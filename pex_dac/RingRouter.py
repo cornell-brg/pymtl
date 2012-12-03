@@ -5,398 +5,366 @@
 from pymtl import *
 import pmlib
 
-from pmlib.NormalQueue import NormalQueue
-from pmlib.arbiters    import RoundRobinArbiterEn
-
-from pmlib.queues import SingleElementPipelinedQueue
+from pmlib.net_msgs    import NetMsgParams
+from NormalQueue       import NormalQueue
+from pmlib.queues      import SingleElementPipelinedQueue
+from InputTerminalCtrl import InputTerminalCtrl
+from InputCtrl         import InputCtrl
+from RingOutputCtrl    import RingOutputCtrl
+from Crossbar3         import Crossbar3
 
 from math import ceil, log
 
-#=========================================================================
-# Ring Router
-#=========================================================================
+class RingRouterCtrl (Model):
 
-class RingRouter ( Model ):
+  @capture_args
+  def __init__( s, router_id, num_routers,  num_messages,
+    payload_nbits, num_entries ):
 
-  def __init__( self, id, num_nodes, num_msgs, payload_nbits, buffering ):
+    # Local Parameters
 
-    self.id    = id
-    self.nodes = num_nodes
-    self.msg   = pmlib.net_msgs.NetMsgParams( num_nodes, num_msgs, payload_nbits )
-
-    #---------------------------------------------------------------------
-    # Line tracing
-    #---------------------------------------------------------------------
-
-    msg_sz = self.msg.nbits
-
-    self.in_msg     = [ InPort  ( msg_sz ) for x in range(3) ]
-    self.in_val     = [ InPort  ( 1 )      for x in range(3) ]
-    self.in_credit  = [ OutPort ( 1 )      for x in range(3) ]
-
-    self.out_msg    = [ OutPort ( msg_sz ) for x in range(3) ]
-    self.out_val    = [ OutPort ( 1 )      for x in range(3) ]
-    self.out_credit = [ InPort  ( 1 )      for x in range(3) ]
+    credit_nbits    = int( ceil( log( num_entries+1, 2 ) ) )
+    s.netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
 
     #---------------------------------------------------------------------
-    # Static Elaboration
+    # Interface Ports
     #---------------------------------------------------------------------
 
-    self.dpath = RingRouterDpath ( id, num_nodes, num_msgs, payload_nbits, buffering )
-    self.ctrl  = RingRouterCtrl  ( id, num_nodes, num_msgs, payload_nbits, buffering )
+    # Port 0 - Terminal
 
-    dest = self.msg.dest_slice
+    s.dest0         = InPort  ( s.netmsg_params.srcdest_nbits )
+    s.in0_deq_val   = InPort  ( 1 )
+    s.in0_deq_rdy   = OutPort ( 1 )
+    s.in0_credit    = OutPort ( 1 )
+    s.out0_val      = OutPort ( 1 )
+    s.xbar_sel0     = OutPort ( 2 )
+    s.out0_credit   = InPort  ( 1 )
 
-    for i in range(3):
+    # Port 1 - West
 
-      connect( self.dpath.in_enq_msg[i],        self.in_msg[i]               )
-      connect( self.dpath.in_enq_val[i],        self.in_val[i]               )
-      connect( self.dpath.out_deq_msg[i],       self.out_msg[i]              )
-      connect( self.dpath.out_deq_val[i],       self.out_val[i]              )
+    s.dest1         = InPort  ( s.netmsg_params.srcdest_nbits )
+    s.in1_deq_val   = InPort  ( 1 )
+    s.in1_deq_rdy   = OutPort ( 1 )
+    s.in1_credit    = OutPort ( 1 )
+    s.out1_val      = OutPort ( 1 )
+    s.xbar_sel1     = OutPort ( 2 )
+    s.out1_credit   = InPort  ( 1 )
 
-      connect( self.ctrl.in_credit[i],          self.in_credit[i]            )
-      connect( self.ctrl.out_credit[i],         self.out_credit[i]           )
+    # Port 2 - East
 
-      connect( self.dpath.in_deq_msg[i][dest],  self.ctrl.in_deq_msg_dest[i] )
-      connect( self.dpath.in_deq_val[i],        self.ctrl.in_deq_val[i]      )
-      connect( self.dpath.in_deq_rdy[i],        self.ctrl.in_deq_rdy[i]      )
-      connect( self.dpath.out_enq_val[i],       self.ctrl.out_enq_val[i]     )
-      connect( self.dpath.xbar_sel[i],          self.ctrl.xbar_sel[i]        )
+    s.dest2         = InPort  ( s.netmsg_params.srcdest_nbits )
+    s.in2_deq_val   = InPort  ( 1 )
+    s.in2_deq_rdy   = OutPort ( 1 )
+    s.in2_credit    = OutPort ( 1 )
+    s.out2_val      = OutPort ( 1 )
+    s.xbar_sel2     = OutPort ( 2 )
+    s.out2_credit   = InPort  ( 1 )
 
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
+    #---------------------------------------------------------------------
+    # Static elaboration
+    #---------------------------------------------------------------------
 
-  def line_trace( self ):
+    # InputCtrl - Terminal Port
 
-    traces = []
-    for i in range( 3 ):
-      in_str = \
-        pmlib.valrdy.valrdy_to_str( self.in_msg[i].value,
-          self.in_val[i].value, 1 )
+    s.inctrl_term = m = InputTerminalCtrl( router_id, num_routers,
+                          s.netmsg_params.srcdest_nbits, credit_nbits, num_entries )
+    connect({
+      m.dest      : s.dest0,
+      m.deq_val   : s.in0_deq_val,
+      m.deq_rdy   : s.in0_deq_rdy,
+      m.in_credit : s.in0_credit,
+    })
 
-      in_credit = '+' if self.in_credit[i].value else ' '
+    # InputCtrl - West Port
 
-      out_str = \
-        pmlib.valrdy.valrdy_to_str( self.out_msg[i].value,
-          self.out_val[i].value, 1 )
+    s.inctrl_west = m = InputCtrl( router_id, num_routers,
+                          s.netmsg_params.srcdest_nbits, credit_nbits, num_entries )
+    connect({
+      m.dest      : s.dest1,
+      m.deq_val   : s.in1_deq_val,
+      m.deq_rdy   : s.in1_deq_rdy,
+      m.in_credit : s.in1_credit,
+    })
 
-      out_credit = '+' if self.out_credit[i].value else ' '
+    # InputCtrl - East Port
 
-      traces += ["{} {} () {} {}"\
-        .format( in_str, in_credit, out_str, out_credit )]
+    s.inctrl_east = m = InputCtrl( router_id, num_routers,
+                          s.netmsg_params.srcdest_nbits, credit_nbits, num_entries )
+    connect({
+      m.dest      : s.dest2,
+      m.deq_val   : s.in2_deq_val,
+      m.deq_rdy   : s.in2_deq_rdy,
+      m.in_credit : s.in2_credit,
+    })
 
+    # Output Ctrl - Terminal Port
 
-    return ' | '.join( traces )
+    s.outctrl_term = m = RingOutputCtrl( num_entries,
+                           credit_nbits )
+    connect({
+      m.credit   : s.out0_credit,
+      m.xbar_sel : s.xbar_sel0,
+      m.out_val  : s.out0_val
+    })
 
+    # Output Ctrl - West Port
 
-#=========================================================================
-# Ring Router Datapath
-#=========================================================================
+    s.outctrl_west = m = RingOutputCtrl(  num_entries,
+                           credit_nbits )
+    connect({
+      m.credit   : s.out1_credit,
+      m.xbar_sel : s.xbar_sel1,
+      m.out_val  : s.out1_val
+    })
+
+    # Output Ctrl - East Port
+
+    s.outctrl_east = m = RingOutputCtrl(  num_entries,
+                           credit_nbits )
+    connect({
+      m.credit   : s.out2_credit,
+      m.xbar_sel : s.xbar_sel2,
+      m.out_val  : s.out2_val
+    })
+
+    # credit count connections
+
+    connect( s.inctrl_term.out1_credit_cnt, s.outctrl_west.credit_count  )
+    connect( s.inctrl_term.out2_credit_cnt, s.outctrl_east.credit_count  )
+
+    # requests / grants connections
+
+    connect( s.outctrl_term.reqs[0], s.inctrl_term.reqs[0] )
+    connect( s.outctrl_term.reqs[1], s.inctrl_west.reqs[0] )
+    connect( s.outctrl_term.reqs[2], s.inctrl_east.reqs[0] )
+
+    connect( s.outctrl_west.reqs[0], s.inctrl_term.reqs[1] )
+    connect( s.outctrl_west.reqs[1], s.inctrl_west.reqs[1] )
+    connect( s.outctrl_west.reqs[2], s.inctrl_east.reqs[1] )
+
+    connect( s.outctrl_east.reqs[0], s.inctrl_term.reqs[2] )
+    connect( s.outctrl_east.reqs[1], s.inctrl_west.reqs[2] )
+    connect( s.outctrl_east.reqs[2], s.inctrl_east.reqs[2] )
+
+    connect( s.inctrl_term.grants[0], s.outctrl_term.grants[0] )
+    connect( s.inctrl_term.grants[1], s.outctrl_west.grants[0] )
+    connect( s.inctrl_term.grants[2], s.outctrl_east.grants[0] )
+
+    connect( s.inctrl_west.grants[0], s.outctrl_term.grants[1] )
+    connect( s.inctrl_west.grants[1], s.outctrl_west.grants[1] )
+    connect( s.inctrl_west.grants[2], s.outctrl_east.grants[1] )
+
+    connect( s.inctrl_east.grants[0], s.outctrl_term.grants[2] )
+    connect( s.inctrl_east.grants[1], s.outctrl_west.grants[2] )
+    connect( s.inctrl_east.grants[2], s.outctrl_east.grants[2] )
 
 class RingRouterDpath (Model):
 
-  def __init__( self, id, num_nodes, num_msgs, payload_nbits, buffering ):
+  @capture_args
+  def __init__( s, router_id, num_routers, num_messages, payload_nbits, num_entries ):
 
-    self.id    = id
-    self.nodes = num_nodes
-    self.msg   = pmlib.net_msgs.NetMsgParams( num_nodes, num_msgs, payload_nbits )
-
-    #---------------------------------------------------------------------
-    # Interface Ports
-    #---------------------------------------------------------------------
-
-    msg_sz = self.msg.nbits
-
-    self.in_enq_msg      = [ InPort  ( msg_sz ) for x in range(3) ]
-    self.in_enq_val      = [ InPort  ( 1 )      for x in range(3) ]
-
-    self.out_deq_msg     = [ OutPort ( msg_sz ) for x in range(3) ]
-    self.out_deq_val     = [ OutPort ( 1 )      for x in range(3) ]
-
-    self.in_deq_msg      = [ OutPort ( msg_sz ) for x in range(3) ]
-    self.in_deq_val      = [ OutPort ( 1 )      for x in range(3) ]
-    self.in_deq_rdy      = [ InPort  ( 1 )      for x in range(3) ]
-    self.out_enq_val     = [ InPort  ( 1 )      for x in range(3) ]
-    self.xbar_sel        = [ InPort  ( 2 )      for x in range(3) ]
-
-    #---------------------------------------------------------------------
-    # Static Elaboration
-    #---------------------------------------------------------------------
-
-    self.in_queues  = [ NormalQueue( buffering, msg_sz ) for x in range(3) ]
-    self.out_queues = [ SingleElementPipelinedQueue( msg_sz ) for x in range(3) ]
-    self.xbar       = pmlib.Crossbar( 3, msg_sz )
-
-    for i in range(3):
-
-      # Input Queues (enq_rdy left floating)
-
-      connect( self.in_queues[i].enq_bits,  self.in_enq_msg[i]  )
-      connect( self.in_queues[i].enq_val,   self.in_enq_val[i]  )
-
-      connect( self.in_queues[i].deq_bits,  self.in_deq_msg[i]  )
-      connect( self.in_queues[i].deq_val,   self.in_deq_val[i]  )
-      connect( self.in_queues[i].deq_rdy,   self.in_deq_rdy[i]  )
-
-      connect( self.in_queues[i].deq_bits,  self.xbar.in_[i]    )
-
-      # Output Queues (enq_rdy left floating)
-
-      connect( self.out_queues[i].enq_bits, self.xbar.out[i]    )
-      connect( self.out_queues[i].enq_val,  self.out_enq_val[i] )
-
-      connect( self.out_queues[i].deq_bits, self.out_deq_msg[i] )
-      connect( self.out_queues[i].deq_val,  self.out_deq_val[i] )
-      connect( self.out_queues[i].deq_rdy,  1                   )
-
-      # Crossbar
-
-      connect( self.xbar.sel[i],            self.xbar_sel[i]    )
-
-
-#=========================================================================
-# Ring Router Control
-#=========================================================================
-
-class RingRouterCtrl (Model):
-
-  def __init__( self, id, num_nodes, num_msgs, payload_nbits, buffering ):
-
-    self.id    = id
-    self.nodes = num_nodes
-    self.msg   = pmlib.net_msgs.NetMsgParams( num_nodes, num_msgs, payload_nbits )
+    # Local Parameters
+    s.netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
 
     #---------------------------------------------------------------------
     # Interface Ports
     #---------------------------------------------------------------------
 
-    dest_sz = self.msg.srcdest_nbits
+    # Port 0 - Terminal
 
-    self.in_deq_msg_dest = [ InPort  ( dest_sz ) for x in range(3) ]
-    self.in_credit       = [ OutPort ( 1 )       for x in range(3) ]
+    s.in0_enq_msg   = InPort  ( s.netmsg_params.nbits )
+    s.in0_enq_val   = InPort  ( 1 )
 
-    self.out_credit      = [ InPort  ( 1 )       for x in range(3) ]
+    s.in0_dest      = OutPort ( s.netmsg_params.srcdest_nbits )
+    s.in0_deq_val   = OutPort ( 1 )
+    s.in0_deq_rdy   = InPort  ( 1 )
 
-    self.in_deq_val      = [ InPort  ( 1 )       for x in range(3) ]
-    self.in_deq_rdy      = [ OutPort ( 1 )       for x in range(3) ]
-    self.out_enq_val     = [ OutPort ( 1 )       for x in range(3) ]
-    self.xbar_sel        = [ OutPort ( 2 )       for x in range(3) ]
+    s.xbar_sel0     = InPort  ( 2 )
+    s.out0_enq_val  = InPort  ( 1 )
+    s.out0_deq_msg  = OutPort ( s.netmsg_params.nbits )
+    s.out0_deq_val  = OutPort ( 1 )
 
-    #---------------------------------------------------------------------
-    # Static Elaboration
-    #---------------------------------------------------------------------
+    # Port 1 - West
 
-    # The 1st InputCtrl in the array (x == 1) will be the terminal Port
-    self.ictrl = [ InputCtrl  ( id, num_nodes, dest_sz, buffering, (x == 1))
-                   for x in range(3) ]
-    #self.ictrl = [ InputCtrl  ( id, num_nodes, dest_sz, buffering ) for x in range(3) ]
-    self.octrl = [ OutputCtrl ( buffering ) for x in range(3) ]
+    s.in1_enq_msg   = InPort  ( s.netmsg_params.nbits )
+    s.in1_enq_val   = InPort  ( 1 )
 
-    for i in range(3):
+    s.in1_dest      = OutPort ( s.netmsg_params.srcdest_nbits )
+    s.in1_deq_val   = OutPort ( 1 )
+    s.in1_deq_rdy   = InPort  ( 1 )
 
-      connect( self.ictrl[i].in_deq_msg_dest, self.in_deq_msg_dest[i] )
-      connect( self.ictrl[i].in_deq_val,      self.in_deq_val[i]      )
-      connect( self.ictrl[i].in_deq_rdy,      self.in_deq_rdy[i]      )
-      connect( self.ictrl[i].in_credit,       self.in_credit[i]       )
+    s.xbar_sel1     = InPort  ( 2 )
+    s.out1_enq_val  = InPort  ( 1 )
+    s.out1_deq_msg  = OutPort ( s.netmsg_params.nbits )
+    s.out1_deq_val  = OutPort ( 1 )
 
-      connect( self.octrl[i].out_enq_val,     self.out_enq_val[i]     )
-      connect( self.octrl[i].out_credit,      self.out_credit[i]      )
-      connect( self.octrl[i].xbar_sel,        self.xbar_sel[i]        )
+    # Port 2 - East
 
-      for j in range(3):
-        connect( self.octrl[i].reqs[j],   self.ictrl[j].reqs[i]   )
-        connect( self.ictrl[i].grants[j], self.octrl[j].grants[i] )
+    s.in2_enq_msg   = InPort  ( s.netmsg_params.nbits )
+    s.in2_enq_val   = InPort  ( 1 )
 
-    # bubble flow control, credit_count signal!
-    connect( self.ictrl[1].out_west_credits, self.octrl[0].credits )
-    connect( self.ictrl[1].out_east_credits, self.octrl[2].credits )
+    s.in2_dest      = OutPort ( s.netmsg_params.srcdest_nbits )
+    s.in2_deq_val   = OutPort ( 1 )
+    s.in2_deq_rdy   = InPort  ( 1 )
 
-
-
-#=========================================================================
-# Input Terminal Control
-#=========================================================================
-
-class InputCtrl(Model):
-
-  def __init__( self, id, num_nodes, dest_sz, buffering, terminal=False ):
-
-    self.id      = id
-    self.nodes   = num_nodes
-    buffer_nbits = int( ceil( log( buffering+1, 2 ) ) )
-
-    self.terminal = terminal
+    s.xbar_sel2     = InPort  ( 2 )
+    s.out2_enq_val  = InPort  ( 1 )
+    s.out2_deq_msg  = OutPort ( s.netmsg_params.nbits )
+    s.out2_deq_val  = OutPort ( 1 )
 
     #---------------------------------------------------------------------
-    # Interface Ports
+    # Static elaboration
     #---------------------------------------------------------------------
 
-    self.in_deq_msg_dest = InPort  ( dest_sz )
-    self.in_deq_val      = InPort  ( 1 )
-    self.in_deq_rdy      = OutPort ( 1 )
-    self.in_credit       = OutPort ( 1 )
+    # Input Queues
 
-    self.reqs            = OutPort ( 3 )
-    self.grants          = InPort  ( 3 )
+    # terminal
+    s.in0_queue = m = NormalQueue( nbits= s.netmsg_params.nbits )
+    connect({
+      m.enq_bits         : s.in0_enq_msg,
+      m.enq_val          : s.in0_enq_val,
+      m.deq_val          : s.in0_deq_val,
+      m.deq_rdy          : s.in0_deq_rdy
+    })
 
-    self.dest            = Wire    ( 2 )
+    connect( s.in0_queue.deq_bits[ s.netmsg_params.dest_slice ], s.in0_dest )
 
-    self.bubble_cond_west = Wire( 1 )
-    self.bubble_cond_east = Wire( 1 )
+    # west
+    s.in1_queue = m = NormalQueue( nbits=s.netmsg_params.nbits )
+    connect({
+      m.enq_bits         : s.in1_enq_msg,
+      m.enq_val          : s.in1_enq_val,
+      m.deq_val          : s.in1_deq_val,
+      m.deq_rdy          : s.in1_deq_rdy
+    })
 
-    if ( terminal ):
-      self.out_west_credits = InPort( buffer_nbits )
-      self.out_east_credits = InPort( buffer_nbits )
-      self.west_cmp         = pmlib.arith.LtComparator( buffer_nbits )
-      self.east_cmp         = pmlib.arith.LtComparator( buffer_nbits )
+    connect( s.in1_queue.deq_bits[ s.netmsg_params.dest_slice ], s.in1_dest )
 
-      connect( self.west_cmp.in0, self.out_west_credits )
-      connect( self.east_cmp.in0, self.out_east_credits )
-      connect( self.west_cmp.in1, (buffering-1) )
-      connect( self.east_cmp.in1, (buffering-1) )
-      connect( self.west_cmp.out, self.bubble_cond_west )
-      connect( self.east_cmp.out, self.bubble_cond_east )
-    else:
-      connect( self.bubble_cond_west, 1 )
-      connect( self.bubble_cond_east, 1 )
+    # east
+    s.in2_queue = m = NormalQueue( nbits=s.netmsg_params.nbits )
+    connect({
+      m.enq_bits         : s.in2_enq_msg,
+      m.enq_val          : s.in2_enq_val,
+      m.deq_val          : s.in2_deq_val,
+      m.deq_rdy          : s.in2_deq_rdy
+    })
 
-    self.WEST = 0
-    self.THIS = 1
-    self.EAST = 2
+    connect( s.in2_queue.deq_bits[ s.netmsg_params.dest_slice ], s.in2_dest )
 
-  #-----------------------------------------------------------------------
-  # Route Computation
-  #-----------------------------------------------------------------------
+    # Crossbar
 
-  def route( self, dest, id, nodes ):
+    s.crossbar = m = Crossbar3( router_id, nbits=s.netmsg_params.nbits )
+    connect({
+      m.in0 : s.in0_queue.deq_bits,
+      m.sel0 : s.xbar_sel0,
+      m.in1 : s.in1_queue.deq_bits,
+      m.sel1 : s.xbar_sel1,
+      m.in2 : s.in2_queue.deq_bits,
+      m.sel2 : s.xbar_sel2,
+    })
 
-    if ( dest < id ):
-      dist_east = dest + ( nodes - id )
-      dist_west = id - dest
-    else:
-      dist_east = dest - id
-      dist_west = id + ( nodes - dest )
+    # Channel piped queues
 
-    if ( dest == id ):
-      return self.THIS
-    elif ( dist_east < dist_west ):
-      return self.EAST
-    else:
-      return self.WEST
+    # terminal
+    s.out0_q = m = SingleElementPipelinedQueue( s.netmsg_params.nbits )
+    connect({
+      m.enq_bits : s.crossbar.out0,
+      m.enq_val  : s.out0_enq_val,
+      m.deq_bits : s.out0_deq_msg,
+      m.deq_val  : s.out0_deq_val,
+      m.deq_rdy  : 1
+    })
 
-  #-----------------------------------------------------------------------
-  # Combinational Logic
-  #-----------------------------------------------------------------------
+    # west
+    s.out1_q = m = SingleElementPipelinedQueue( s.netmsg_params.nbits )
+    connect({
+      m.enq_bits : s.crossbar.out1,
+      m.enq_val  : s.out1_enq_val,
+      m.deq_bits : s.out1_deq_msg,
+      m.deq_val  : s.out1_deq_val,
+      m.deq_rdy  : 1
+    })
 
-  @combinational
-  def comb_logic( self ):
+    # east
+    s.out2_q = m = SingleElementPipelinedQueue( s.netmsg_params.nbits )
+    connect({
+      m.enq_bits : s.crossbar.out2,
+      m.enq_val  : s.out2_enq_val,
+      m.deq_bits : s.out2_deq_msg,
+      m.deq_val  : s.out2_deq_val,
+      m.deq_rdy  : 1
+    })
 
-    self.dest.value = self.route( self.in_deq_msg_dest.value.uint, self.id, self.nodes )
+class RingRouter (Model):
 
-    # TODO: self.reqs.value[x] is what we want, but this fails
-    #       to update the VCD correctly!
-    self.reqs[0].value = ( self.in_deq_val.value and ( self.dest.value == self.WEST )
-                           and self.bubble_cond_west.value )
-    self.reqs[1].value = self.in_deq_val.value and ( self.dest.value == self.THIS )
-    self.reqs[2].value = ( self.in_deq_val.value and ( self.dest.value == self.EAST )
-                           and self.bubble_cond_east.value )
+  @capture_args
+  def __init__( s, router_id, num_routers, num_messages, payload_nbits, num_entries ):
 
+    # Local Parameters
 
-    self.in_deq_rdy.value = ( ( self.grants[0].value & self.reqs[0].value )
-                            | ( self.grants[1].value & self.reqs[1].value )
-                            | ( self.grants[2].value & self.reqs[2].value ))
-
-  #-----------------------------------------------------------------------
-  # Sequential Logic
-  #-----------------------------------------------------------------------
-
-  @posedge_clk
-  def seq_logic( self ):
-
-    self.in_credit.next = self.in_deq_rdy.value
-
-
-#=========================================================================
-# Output Terminal Control
-#=========================================================================
-
-class OutputCtrl(Model):
-
-  def __init__( self, buffering ):
-
-    self.BUFFERING    = buffering
-    max_credits_nbits = int( ceil( log( buffering+1, 2 ) ) )
+    s.netmsg_params = NetMsgParams( num_routers, num_messages, payload_nbits )
 
     #---------------------------------------------------------------------
     # Interface Ports
     #---------------------------------------------------------------------
 
-    self.out_enq_val     = OutPort ( 1 )
-    self.out_credit      = InPort  ( 1 )
-    self.xbar_sel        = OutPort ( 2 )
-
-    self.credits         = OutPort ( max_credits_nbits )
-    self.reqs            = InPort  ( 3 )
-    self.grants          = OutPort ( 3 )
+    s.in_msg     = [ InPort  ( s.netmsg_params.nbits ) for x in xrange(3) ]
+    s.in_val     = [ InPort  ( 1 ) for x in xrange(3) ]
+    s.in_credit  = [ OutPort ( 1 ) for x in xrange(3) ]
+    s.out_credit = [ InPort  ( 1 ) for x in xrange(3) ]
+    s.out_msg    = [ OutPort ( s.netmsg_params.nbits ) for x in xrange(3) ]
+    s.out_val    = [ OutPort ( 1 ) for x in xrange(3) ]
 
     #---------------------------------------------------------------------
-    # Static Elaboration
+    # Static elaboration
     #---------------------------------------------------------------------
 
-    self.arb_en          = Wire( 1 )
-    self.credit_count    = Wire( max_credits_nbits )
+    s.ctrl  = RingRouterCtrl  ( router_id, num_routers,
+                num_messages, payload_nbits, num_entries )
+    s.dpath = RingRouterDpath ( router_id, num_routers,
+                num_messages, payload_nbits, num_entries )
 
-    self.arb             = RoundRobinArbiterEn( 3 )
+    # ctrl unit connections
 
-    connect( self.reqs,    self.arb.reqs     )
-    connect( self.grants,  self.arb.grants   )
-    connect( self.arb_en,  self.arb.en       )
-    connect( self.credits, self.credit_count )
+    connect( s.ctrl.in0_credit,  s.in_credit[0]  )
+    connect( s.ctrl.out0_credit, s.out_credit[0] )
+    connect( s.ctrl.in1_credit,  s.in_credit[1]  )
+    connect( s.ctrl.out1_credit, s.out_credit[1] )
+    connect( s.ctrl.in2_credit,  s.in_credit[2]  )
+    connect( s.ctrl.out2_credit, s.out_credit[2] )
 
-  #-----------------------------------------------------------------------
-  # Credit Counter
-  #-----------------------------------------------------------------------
+    # dpath unit connections
 
-  @posedge_clk
-  def credit_logic( self ):
+    connect( s.dpath.in0_enq_msg,  s.in_msg[0]  )
+    connect( s.dpath.in0_enq_val,  s.in_val[0]  )
+    connect( s.dpath.out0_deq_msg, s.out_msg[0] )
+    connect( s.dpath.out0_deq_val, s.out_val[0] )
+    connect( s.dpath.in1_enq_msg,  s.in_msg[1]  )
+    connect( s.dpath.in1_enq_val,  s.in_val[1]  )
+    connect( s.dpath.out1_deq_msg, s.out_msg[1] )
+    connect( s.dpath.out1_deq_val, s.out_val[1] )
+    connect( s.dpath.in2_enq_msg,  s.in_msg[2]  )
+    connect( s.dpath.in2_enq_val,  s.in_val[2]  )
+    connect( s.dpath.out2_deq_msg, s.out_msg[2] )
+    connect( s.dpath.out2_deq_val, s.out_val[2] )
 
-    if self.reset.value:
-      self.credit_count.next = 0
-    elif self.out_credit.value and not self.out_enq_val.value:
-      self.credit_count.next = self.credit_count.value - 1
-    elif self.out_enq_val.value and not self.out_credit.value:
-      self.credit_count.next = self.credit_count.value + 1
-    else:
-      self.credit_count.next = self.credit_count.value
+    # control signal connections (ctrl -> dpath )
 
-  #-----------------------------------------------------------------------
-  # Arbitation/Crossbar Signals
-  #-----------------------------------------------------------------------
+    connect( s.ctrl.in0_deq_rdy, s.dpath.in0_deq_rdy  )
+    connect( s.ctrl.out0_val,    s.dpath.out0_enq_val )
+    connect( s.ctrl.xbar_sel0,   s.dpath.xbar_sel0    )
+    connect( s.ctrl.in1_deq_rdy, s.dpath.in1_deq_rdy  )
+    connect( s.ctrl.out1_val,    s.dpath.out1_enq_val )
+    connect( s.ctrl.xbar_sel1,   s.dpath.xbar_sel1    )
+    connect( s.ctrl.in2_deq_rdy, s.dpath.in2_deq_rdy  )
+    connect( s.ctrl.out2_val,    s.dpath.out2_enq_val )
+    connect( s.ctrl.xbar_sel2,   s.dpath.xbar_sel2    )
 
-  @combinational
-  def logic( self ):
+    # status signal connections (ctrl <- dpath)
 
-    # Set arbiter request signals
-    self.arb_en.value = ( self.credit_count.value < self.BUFFERING )
-
-    #if self.credits.value == 0:
-    #  self.arb.reqs.value = 0
-    #  self.grants.value   = 0
-    #else:
-    #  self.arb.reqs.value = self.reqs.value
-    #  self.grants.value   = self.arb.grants.value
-
-    # Set valid signal
-    self.out_enq_val.value = ( ( self.grants[0].value & self.reqs[0].value )
-                             | ( self.grants[1].value & self.reqs[1].value )
-                             | ( self.grants[2].value & self.reqs[2].value ))
-
-    # Set crossbar select
-
-    if   self.grants[0].value:
-      self.xbar_sel.value = 0
-    elif self.grants[1].value:
-      self.xbar_sel.value = 1
-    else:
-      self.xbar_sel.value = 2
+    connect( s.ctrl.in0_deq_val, s.dpath.in0_deq_val )
+    connect( s.ctrl.dest0,       s.dpath.in0_dest    )
+    connect( s.ctrl.in1_deq_val, s.dpath.in1_deq_val )
+    connect( s.ctrl.dest1,       s.dpath.in1_dest    )
+    connect( s.ctrl.in2_deq_val, s.dpath.in2_deq_val )
+    connect( s.ctrl.dest2,       s.dpath.in2_dest    )
