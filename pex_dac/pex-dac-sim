@@ -44,7 +44,7 @@ import pmlib
 from pmlib.net_msgs import NetMsgParams
 from pmlib.adapters import ValRdyToValCredit, ValCreditToValRdy
 
-from Ring      import Ring
+from WRing4    import Ring4
 from WTorus4x4 import Torus4x4
 from WTorus8x8 import Torus8x8
 
@@ -287,7 +287,7 @@ def main():
   # Determine which model to use in the simulator
 
   impl_dict = {
-    'ring'   : Ring,
+    'ring'   : Ring4,
     'torus4' : Torus4x4,
     'torus8' : Torus8x8,
   }
@@ -303,6 +303,9 @@ def main():
   elif opts.impl == 'torus8':
     NUM_ROUTERS   = 64
     PAYLOAD_NBITS = 18
+  elif opts.impl == 'ring':
+    NUM_ROUTERS   = 4
+    PAYLOAD_NBITS = 26
 
   # Determine which pattern to use and create the pattern
 
