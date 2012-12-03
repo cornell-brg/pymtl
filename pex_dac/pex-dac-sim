@@ -46,6 +46,7 @@ from pmlib.adapters import ValRdyToValCredit, ValCreditToValRdy
 
 from Ring      import Ring
 from WTorus4x4 import Torus4x4
+from WTorus8x8 import Torus8x8
 
 # Fix the random seed so results are reproducible
 random.seed(0xdeadbeef)
@@ -288,7 +289,20 @@ def main():
   impl_dict = {
     'ring'   : Ring,
     'torus4' : Torus4x4,
+    'torus8' : Torus8x8,
   }
+
+  # set the global network parameters
+
+  global NUM_ROUTERS
+  global PAYLOAD_NBITS
+
+  if   opts.impl == 'torus4':
+    NUM_ROUTERS   = 16
+    PAYLOAD_NBITS = 22
+  elif opts.impl == 'torus8':
+    NUM_ROUTERS   = 64
+    PAYLOAD_NBITS = 18
 
   # Determine which pattern to use and create the pattern
 
