@@ -5,8 +5,8 @@
 from pymtl import *
 
 from pmlib     import TestVectorSimulator
-#from Crossbar5 import Crossbar5
-from WCrossbar5 import Crossbar5
+from Crossbar5 import Crossbar5
+#from WCrossbar5 import Crossbar5
 
 #-------------------------------------------------------------------------
 # Test Harness
@@ -16,7 +16,8 @@ def run_test_crossbar( dump_vcd, ModelType, num_inputs, test_vectors ):
 
   # Instantiate and elaborate the model
 
-  model = ModelType()
+  #model = ModelType()
+  model = ModelType(0,0)
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

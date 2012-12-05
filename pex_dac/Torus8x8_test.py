@@ -11,7 +11,8 @@ from   math import ceil, log, sqrt
 
 import pmlib.valrdy     as valrdy
 
-from WTorus8x8      import Torus8x8
+#from WTorus8x8      import Torus8x8
+from Torus8x8      import Torus8x8
 from pmlib.net_msgs import NetMsgParams
 from pmlib.adapters import ValRdyToValCredit, ValCreditToValRdy
 

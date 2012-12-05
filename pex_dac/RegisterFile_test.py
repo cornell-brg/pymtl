@@ -5,8 +5,8 @@
 from pymtl import *
 import pmlib
 
-#from RegisterFile import RegisterFile
-from WRegisterFile import RegisterFile
+from RegisterFile import RegisterFile
+#from WRegisterFile import RegisterFile
 
 #-------------------------------------------------------------------------
 # Test 1R1W Register File
