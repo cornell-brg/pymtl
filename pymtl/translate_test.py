@@ -56,10 +56,10 @@ class TestSlicesVerilog(unittest.TestCase):
     self.assertEqual( x, 0)
 
   # TODO: Add this back in? -cbatten
-  # def test_signext_comb(self):
-  #   self.translate( SignExtComb(4) )
-  #   x = os.system( self.compile_cmd )
-  #   self.assertEqual( x, 0)
+  #def test_signext_comb(self):
+  #  self.translate( SignExtComb(4) )
+  #  x = os.system( self.compile_cmd )
+  #  self.assertEqual( x, 0)
 
   #def tearDown(self):
   #  os.remove(self.temp_file)
@@ -352,6 +352,21 @@ class TestDumb(unittest.TestCase):
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
+
+  def test_mux_register(self):
+    model = MuxRegister( 3, 8 )
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
+  import pytest
+  @pytest.mark.xfail
+  def test_demux(self):
+    model = Demux( 3, 8 )
+    self.translate( model )
+    x = os.system( self.compile_cmd )
+    self.assertEqual( x, 0)
+
 
 if __name__ == '__main__':
   unittest.main()

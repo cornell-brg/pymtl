@@ -7,7 +7,7 @@ This module contains classes which construct a simulator given a MTL model
 for execution in the python interpreter.
 """
 
-from collections import deque
+from collections import deque, defaultdict
 import ast, _ast
 import inspect
 import pprint
@@ -48,7 +48,7 @@ class SimulationTool():
       raise Exception(msg)
     self.model = model
     self.num_cycles      = 0
-    self.vnode_callbacks = {}
+    self.vnode_callbacks = defaultdict(list)
     self.rnode_callbacks = []
     self.event_queue     = deque()
     self.posedge_clk_fns = []
@@ -260,15 +260,28 @@ class SimulationTool():
     # Iterate through all @combinational decorated function names we detected,
     # retrieve their associated function pointer, then add entries for each
     # item in the function's sensitivity list to vnode_callbacks
-    for func_name in comb_funcs:
+    for func_name, sensitivity_list in model._newsenses.items():
+      #print '@@@', func_name, [(x.parent.name, x.name) for x in sensitivity_list]
       func_ptr = model.__getattribute__(func_name)
-      for input_port in model._senses:
-        value_ptr = input_port.node
-        #if isinstance(value_ptr, Slice):
-        #  value_ptr = value_ptr._value
-        if value_ptr not in self.vnode_callbacks:
-          self.vnode_callbacks[value_ptr] = []
+      for signal in sensitivity_list:
+        value_ptr = signal.node
         self.vnode_callbacks[value_ptr] += [func_ptr]
+        # Prime the simulation by putting all events on the event_queue
+        # This will make sure all nodes come out of reset in a consistent
+        # state. TODO: put this in reset() instead?
+        if func_ptr not in self.event_queue:
+          self.event_queue.appendleft(func_ptr)
+
+    # TODO: old implementation, remove me!
+    #for func_name in comb_funcs:
+    #  func_ptr = model.__getattribute__(func_name)
+    #  for input_port in model._senses:
+    #    value_ptr = input_port.node
+    #    #if isinstance(value_ptr, Slice):
+    #    #  value_ptr = value_ptr._value
+    #    if value_ptr not in self.vnode_callbacks:
+    #      self.vnode_callbacks[value_ptr] = []
+    #    self.vnode_callbacks[value_ptr] += [func_ptr]
 
     # Add all posedge_clk functions
     for func_name in posedge_funcs:

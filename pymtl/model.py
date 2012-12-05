@@ -9,8 +9,12 @@ This module contains a collection of classes that can be used to construct MTL
 a number of tools for various purposes (simulation, translation into HDLs, etc).
 """
 from connect import *
+from physical import PhysicalDimensions
+import PortBundle
 
 import collections
+import inspect
+import ast
 
 #-------------------------------------------------------------------------
 # Port
@@ -353,8 +357,11 @@ class Model(object):
     self.model_classes = set()
     self.recurse_elaborate(self, 'top')
     self.recurse_connections()
+    # TODO: this only checks one instance of each model_class, it is
+    #       theoretically possible that several instances of a given
+    #       model_class could each have different types assigned to the
+    #       same variable name...
     for c in self.model_classes:
-      import inspect, ast
       src = inspect.getsource( c.__class__ )
       tree = ast.parse( src )
       accesses = set()
@@ -400,14 +407,21 @@ class Model(object):
     target._outports    = []
     target._submodules  = []
     target._senses      = []
+    target._newsenses   = collections.defaultdict( list )
     target._localparams = set()
     target._tempwires   = {}
+    target._temparrays  = []
     target._tempregs    = []
+    target._dim = PhysicalDimensions()
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
       if not name.startswith('_'):
         self.check_type(target, name, obj)
+    # Infer the sensitivity list for combinational blocks
+    src = inspect.getsource( target.__class__ )
+    tree = ast.parse( src )
+    SensitivityListVisitor( target ).visit(tree)
 
   #-----------------------------------------------------------------------
   # Check Type
@@ -437,6 +451,10 @@ class Model(object):
       obj.parent = target
       target._ports += [obj]
       target._outports += [obj]
+    elif isinstance(obj, PortBundle.PortBundle):
+      for port_name, obj in obj.__dict__.items():
+        # TODO: change from $ separator to _
+        self.check_type(target, name+'$'+port_name, obj)
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):
@@ -590,6 +608,20 @@ class Model(object):
     return self._localparams
 
   #-----------------------------------------------------------------------
+  # Dump Physical Design
+  #-----------------------------------------------------------------------
+  def dump_physical_design(self, prefix=''):
+    if prefix:
+      fullname = prefix + '.' + self.name
+    else:
+      fullname = self.name
+
+    print fullname, self._dim.get_rectangle()
+    for rect in self.get_submodules():
+      rect.dump_physical_design( fullname )
+
+
+  #-----------------------------------------------------------------------
   # Is Elaborated
   #-----------------------------------------------------------------------
 
@@ -629,7 +661,7 @@ def connect( left, right=None ):
    _connect_ports( left, right )
 
 #------------------------------------------------------------------------
-# Visitors
+# Check Syntax Visitor
 #------------------------------------------------------------------------
 
 import ast, _ast
@@ -699,6 +731,130 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
       return '.'.join( name[::-1][1:-1] ), name[0]
     else:
       return name[0], False
+
+#------------------------------------------------------------------------
+# Sensitivity List Visitor
+#------------------------------------------------------------------------
+
+class SensitivityListVisitor(ast.NodeVisitor):
+  """Hidden class detecting the sensitivity list of @combinational blocks"""
+
+  #----------------------------------------------------------------------
+  # Constructor
+  #----------------------------------------------------------------------
+
+  def __init__(self, model ):
+    """Construct a new CheckSyntaxVisitor."""
+    self.func_name = None
+    self.model     = model
+
+  #----------------------------------------------------------------------
+  # Visit Functions
+  #----------------------------------------------------------------------
+
+  def visit_FunctionDef(self, node):
+    """Visit all functions, but only parse those with special decorators."""
+    if not node.decorator_list:
+      return
+    elif node.decorator_list[0].id == 'combinational':
+      # Visit each line in the function, translate one at a time.
+      self.func_name = node.name
+      for x in node.body:
+        self.visit(x)
+      self.func_name = None
+
+  #----------------------------------------------------------------------
+  # Visit Attributes
+  #----------------------------------------------------------------------
+
+  def visit_Attribute(self, node):
+    """Visit all attributes, convert into Verilog variables."""
+    if not self.func_name:
+      return
+
+    if isinstance( node.ctx, _ast.Load ):
+
+      signal_ptr = self.get_target( node )
+      if   isinstance( signal_ptr, list ):
+        # TODO: this will allow duplicate entries to be in the _newsenses
+        #       list, do we need to fix this?
+        self.model._newsenses[ self.func_name ].extend( signal_ptr )
+      elif signal_ptr:
+        if signal_ptr not in self.model._newsenses[ self.func_name ]:
+          self.model._newsenses[ self.func_name ] += [ signal_ptr ]
+      #if target_name in vars( self.model ):
+      #  signal_ptr = self.model.__getattribute__( target_name )
+      #  self.model._newsenses[ self.func_name ] += [signal_ptr]
+      #else:
+      #  print "BAD", node.attr, node.value, target_name
+
+
+  #----------------------------------------------------------------------
+  # Create a List to Target
+  #----------------------------------------------------------------------
+
+  def get_target(self, node):
+
+    # Is this a number/constant? Return it.
+    if isinstance(node, _ast.Num):
+      raise Exception("Ran into a number/constant!")
+      return node.n, True
+
+    # Is this an attribute? Follow it until we find a Name.
+    name = []
+    while isinstance(node, (_ast.Attribute, _ast.Subscript)):
+      if   isinstance(node, _ast.Attribute):
+        name += [node.attr]
+        node = node.value
+      elif isinstance(node, _ast.Subscript):
+        # TODO: assumes this is an integer, not a range
+        if (isinstance( node.slice, _ast.Index) and
+            isinstance( node.slice.value, _ast.Num )):
+          name += [ node.slice.value.n ]
+          node = node.value
+        else:
+          name += [ '?' ]
+          node = node.value
+
+    # We've found the Name.
+    assert isinstance(node, _ast.Name)
+    name += [node.id]
+
+    # If the target does not access .value or .next, tell the code to ignore it.
+    if   name[0] in ['value', 'next']:
+      return self.get_target_ptr( name[::-1][1:-1] )
+    # Special case Bits methods
+    elif name[0] in ['uint', 'int', 'sext', 'zext']:
+      return self.get_target_ptr( name[::-1][1:-2] )
+    else:
+      #print "BAD",  '.'.join( name[::-1] )
+      return None
+
+  #----------------------------------------------------------------------
+  # Get Pointer to Target Signal
+  #----------------------------------------------------------------------
+
+  def get_target_ptr(self, target_list, obj = None):
+    if not obj:
+      obj = self.model
+    for i, attr in enumerate(target_list):
+      # This is an index into an array of objects, get there right object
+      if isinstance(attr, int) and isinstance( obj, list ):
+        obj = obj[ attr ]
+      # This is an index into an array of objects, but we can't determine
+      # which object.  Return ALL the objects in the array.
+      elif attr == '?' and isinstance( obj, list ):
+        x = []
+        for subobj in obj:
+          x.append( self.get_target_ptr( target_list[i+1:], subobj ) )
+        return x
+      # This is an index into a slice! Just return the object.
+      elif attr == '?' or isinstance(attr, int):
+        return obj
+      # This is an attribute, get the object with this attribute name
+      else:
+        obj = obj.__getattribute__( attr )
+    return obj
 
 #------------------------------------------------------------------------
 # Decorators

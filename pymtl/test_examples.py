@@ -27,27 +27,22 @@ class SensitivityList(Model):
 
   @combinational
   def combA( self ):
-    print "A"
     self.outA.value = self.in_.value
 
   @combinational
   def combB( self ):
-    print "B"
     self.outB.value = self.wireB.value
 
   @combinational
   def combC( self ):
-    print "C"
     self.outC2.value = self.outC1.value
 
   @combinational
   def combD( self ):
-    print "D"
     self.outD2.value = self.outD1.value
 
   @posedge_clk
   def seq_logic( self ):
-    print "seq"
     self.wireB.next = self.in_.value
     self.outC1.next = self.in_.value
     if self.reset.value == 1:
@@ -258,11 +253,11 @@ class FullAdder(Model):
 
   @combinational
   def logic(self):
-    in0 = self.in0.value
-    in1 = self.in1.value
-    cin = self.cin.value
-    self.sum.value  = (self.in0.value ^ self.in1.value) ^ self.cin.value
-    self.cout.value = (in0 & in1) | (in0 & cin) | (in1 & cin)
+    a = self.in0.value
+    b = self.in1.value
+    c = self.cin.value
+    self.sum.value  = (a ^ b) ^ c
+    self.cout.value = (a & b) | (a & c) | (b & c)
 
 
 class RippleCarryAdder(Model):
@@ -519,6 +514,36 @@ class MultipleWrite(Model):
     self.out.value = 0
     if self.in_.value > 4:
       self.out.value = self.in_.value
+
+from math import log, ceil
+class MuxRegister( Model ):
+  def __init__( s, nports, nbits ):
+    s.in_ = [InPort( nbits ) for x in range( nports )]
+    s.sel = InPort ( int( ceil( log( nports, 2 ) ) ))
+    s.out = OutPort( nbits )
+    s.mux = Wire( nbits )
+  @combinational
+  def comb_logic( s ):
+    assert s.sel.value.uint < len( s.in_ )
+    s.mux.value = s.in_[ s.sel.value.uint ].value
+  @posedge_clk
+  def sync_logic( s ):
+    s.out.next = s.mux.value
+
+class Demux( Model ):
+  def __init__( s, nports, nbits ):
+    s.in_ = InPort( nbits )
+    s.sel = InPort ( int( ceil( log( nports, 2 ) ) ))
+    s.out = [OutPort( nbits ) for x in range( nports )]
+  @combinational
+  def demux_logic( s ):
+    #assert s.sel.value.uint < len( s.in_ )
+    for i in range( 3 ):
+      if i == s.sel.value:
+        s.out[ i ].value = s.in_.value
+      else:
+        s.out[ i ].value = 0
+
 
 
 #class RegisteredAdder1(Model):

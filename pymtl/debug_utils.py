@@ -101,6 +101,9 @@ class PrintVisitor(ast.NodeVisitor):
       print node.args
     elif isinstance(node, _ast.If):
       print node.test, node.body, node.orelse
+    elif isinstance(node, _ast.Subscript):
+      #print node.value
+      print type(node.slice), '=>', type(node.slice.value)
     else:
       print node._attributes,
       print
@@ -108,13 +111,14 @@ class PrintVisitor(ast.NodeVisitor):
 
     self.indent += 3
 
-
-    for field, value in ast.iter_fields(node):
-      if isinstance(value, list):
-        for item in value:
-          if isinstance(item, ast.AST):
-            self.visit(item)
-      elif isinstance(value, ast.AST):
-        self.visit(value)
+    for item in ast.iter_child_nodes(node):
+      self.visit(item)
+    #for field, value in ast.iter_fields(node):
+    #  if isinstance(value, list):
+    #    for item in value:
+    #      if isinstance(item, ast.AST):
+    #        self.visit(item)
+    #  elif isinstance(value, ast.AST):
+    #    self.visit(value)
 
     self.indent -= 3

@@ -142,6 +142,9 @@ class NormalQueueCtrl (Model):
     self.enq_ptr      = Wire( addr_nbits )
     self.deq_ptr      = Wire( addr_nbits )
 
+    self.enq_ptr_inc  = Wire( addr_nbits )
+    self.deq_ptr_inc  = Wire( addr_nbits )
+
     self.enq_ptr_next = Wire( addr_nbits )
     self.deq_ptr_next = Wire( addr_nbits )
 
@@ -157,26 +160,26 @@ class NormalQueueCtrl (Model):
     # enq ptr incrementer
 
     if self.enq_ptr.value == (self.size - 1):
-      enq_ptr_inc = 0
+      self.enq_ptr_inc.value = 0
     else:
-      enq_ptr_inc = self.enq_ptr.value + 1
+      self.enq_ptr_inc.value = self.enq_ptr.value + 1
 
     # deq ptr incrementer
 
     if self.deq_ptr.value == (self.size - 1):
-      deq_ptr_inc = 0
+      self.deq_ptr_inc.value = 0
     else:
-      deq_ptr_inc = self.deq_ptr.value + 1
+      self.deq_ptr_inc.value = self.deq_ptr.value + 1
 
     # set the next ptr value
 
     if self.do_enq.value:
-      self.enq_ptr_next.value = enq_ptr_inc
+      self.enq_ptr_next.value = self.enq_ptr_inc.value
     else:
       self.enq_ptr_next.value = self.enq_ptr.value
 
     if self.do_deq.value:
-      self.deq_ptr_next.value = deq_ptr_inc
+      self.deq_ptr_next.value = self.deq_ptr_inc.value
     else:
       self.deq_ptr_next.value = self.deq_ptr.value
 
@@ -206,7 +209,7 @@ class NormalQueueCtrl (Model):
 
     if self.reset.value:
       self.full.next    = 0
-    elif (self.do_enq.value and not self.do_deq.value and
+    elif (self.do_enq.value &  ~self.do_deq.value &
           (self.enq_ptr_next.value == self.deq_ptr.value)):
       self.full.next    = 1
     elif (self.do_deq.value and self.full.value):

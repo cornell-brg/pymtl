@@ -183,8 +183,6 @@ class TestCombinationalSim(unittest.TestCase):
       debug_utils.port_walk(model)
     return sim
 
-  import pytest
-  @pytest.mark.xfail
   def test_onewire(self):
     model = OneWire(16)
     sim = self.setup_sim(model)
@@ -196,8 +194,8 @@ class TestCombinationalSim(unittest.TestCase):
     self.assertEqual( model.out.value, 10)
     # I don't think we want to allow assigning negative numbers
     # implicitly turned into bits? -cbatten
-    model.inp.value = -1
-    self.assertEqual( model.out.value, 65535)
+    #model.inp.value = -1
+    #self.assertEqual( model.out.value, 65535)
 
   def test_constant_wires(self):
     model = ConstantWires(16)
@@ -287,7 +285,7 @@ class TestPosedgeClkSim(unittest.TestCase):
       debug_utils.port_walk(model)
     return sim
 
-  @pytest.mark.xfail
+  #@pytest.mark.xfail
   def test_register(self):
     model = Register(16)
     sim = self.setup_sim(model)
@@ -300,9 +298,9 @@ class TestPosedgeClkSim(unittest.TestCase):
     model.inp.value = 10
     sim.cycle()
     self.assertEqual( model.out.value, 10)
-    model.inp.value = -1
-    sim.cycle()
-    self.assertEqual( model.out.value, 65535)
+    #model.inp.value = -1
+    #sim.cycle()
+    #self.assertEqual( model.out.value, 65535)
 
   def test_register_reset(self):
     model = RegisterReset(16)
@@ -569,8 +567,6 @@ class TestCombAndPosedge(unittest.TestCase):
     # Declare utility function
     def cycle( in_, bw, out ):
       model.inp.value = in_
-      sim.eval_combinational()
-      assert model.incr.inp.value == bw
       assert model.out.value      == out
       sim.cycle()
     # Tests:  in   bw  out
@@ -588,12 +584,17 @@ class TestCombAndPosedge(unittest.TestCase):
     model = IncrReg()
     sim = self.setup_sim(model)
     sim.reset()
+    assert model.inp.value      == 0
+    assert model.incr.out.value == 1
+    assert model.out.value      == 1
     model.inp.value = 8
-    self.assertEqual( model.out.value, 1)
+    sim.eval_combinational()
+    assert model.incr.out.value ==  9
+    assert model.out.value      ==  1
     for i in xrange(20):
       model.inp.value = i
       sim.cycle()
-      self.assertEqual( model.out.value, i+1)
+      assert model.out.value == i+1
 
   def test_incr_reg_2(self):
     # Build model and simulator
@@ -708,6 +709,54 @@ class TestCombAndPosedge(unittest.TestCase):
     cycle(      2,   4,   6 )
     cycle(      2,   4,   6 )
     cycle(      2,   4,   6 )
+
+def setup_sim(model):
+  model.elaborate()
+  sim = SimulationTool(model)
+  if debug_verbose:
+    debug_utils.port_walk(model)
+  return sim
+
+def test_mux_register():
+  model = MuxRegister( 3, 8 )
+  sim = setup_sim( model )
+  sim.reset()
+  model.in_[0].value = 1
+  model.in_[1].value = 2
+  model.in_[2].value = 0
+  model.sel.value    = 0
+  sim.cycle()
+  assert model.out.value == 1
+  model.sel.value    = 1
+  sim.cycle()
+  assert model.out.value == 2
+  model.sel.value    = 2
+  sim.cycle()
+  assert model.out.value == 0
+  #model.sel.value    = 3
+  #sim.cycle()
+  #assert model.out.value == 0
+
+def test_demux_register():
+  model = Demux( 3, 8 )
+  sim = setup_sim( model )
+  sim.reset()
+  model.in_.value = 5
+  model.sel.value = 0
+  sim.cycle()
+  assert model.out[0].value == 5
+  assert model.out[1].value == 0
+  assert model.out[2].value == 0
+  model.sel.value = 2
+  sim.cycle()
+  assert model.out[0].value == 0
+  assert model.out[1].value == 0
+  assert model.out[2].value == 5
+  model.sel.value = 1
+  sim.cycle()
+  assert model.out[0].value == 0
+  assert model.out[1].value == 5
+  assert model.out[2].value == 0
 
 
 if __name__ == '__main__':
