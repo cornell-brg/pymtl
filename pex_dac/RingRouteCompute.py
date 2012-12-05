@@ -46,19 +46,31 @@ class RingRouteCompute (Model):
     # HACKY Remove .uints for translation to work
     # east & west dist calculations
 
+    #if ( s.dest.value < s.router_id ):
+    #  s.dist_east.value = \
+    #    s.dest.value + ( s.end_node - s.router_id ) + 1
+    #else:
+    #  s.dist_east.value = \
+    #    s.dest.value - s.router_id
     if ( s.dest.value < s.router_id ):
       s.dist_east.value = \
-        s.dest.value + ( s.end_node - s.router_id ) + 1
+        s.dest.value.uint + ( s.end_node - s.router_id ) + 1
     else:
       s.dist_east.value = \
-        s.dest.value - s.router_id
+        s.dest.value.uint - s.router_id
 
+    #if   ( s.dest.value > s.router_id ):
+    #  s.dist_west.value = \
+    #    s.router_id + ( s.end_node - s.dest.value ) + 1
+    #else:
+    #  s.dist_west.value = \
+    #    s.router_id + ~s.dest.value + 1
     if   ( s.dest.value > s.router_id ):
       s.dist_west.value = \
-        s.router_id + ( s.end_node - s.dest.value ) + 1
+        s.router_id + ( s.end_node - s.dest.value.uint ) + 1
     else:
       s.dist_west.value = \
-        s.router_id + ~s.dest.value + 1
+        s.router_id + ~s.dest.value.uint + 1
 
     if   ( s.dest.value == s.router_id ):
       s.route.value = s.term

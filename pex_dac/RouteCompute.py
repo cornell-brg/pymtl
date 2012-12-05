@@ -76,8 +76,10 @@ class RouteCompute (Model):
 
     # HACKY: Remove .uint for translation
 
-    s.x_dest.value = s.dest.value % s.num_routers_1D
-    s.y_dest.value = s.dest.value / s.num_routers_1D
+    s.x_dest.value = s.dest.value.uint % s.num_routers_1D
+    s.y_dest.value = s.dest.value.uint / s.num_routers_1D
+    #s.x_dest.value = s.dest.value % s.num_routers_1D
+    #s.y_dest.value = s.dest.value / s.num_routers_1D
 
     # north, east, south & west dist calculations
 
