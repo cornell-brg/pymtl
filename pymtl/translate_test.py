@@ -92,15 +92,12 @@ class TestCombinationalVerilog(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  import pytest
-  @pytest.mark.xfail
   def test_full_adder(self):
     model = FullAdder()
     self.translate( model )
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  @pytest.mark.xfail
   def test_ripple_carry(self):
     model = RippleCarryAdder(4)
     self.translate( model )
@@ -362,6 +359,7 @@ class TestDumb(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
+  import pytest
   @pytest.mark.xfail
   def test_demux(self):
     model = Demux( 3, 8 )

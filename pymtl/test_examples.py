@@ -253,11 +253,11 @@ class FullAdder(Model):
 
   @combinational
   def logic(self):
-    in0 = self.in0.value
-    in1 = self.in1.value
-    cin = self.cin.value
-    self.sum.value  = (self.in0.value ^ self.in1.value) ^ self.cin.value
-    self.cout.value = (in0 & in1) | (in0 & cin) | (in1 & cin)
+    a = self.in0.value
+    b = self.in1.value
+    c = self.cin.value
+    self.sum.value  = (a ^ b) ^ c
+    self.cout.value = (a & b) | (a & c) | (b & c)
 
 
 class RippleCarryAdder(Model):
