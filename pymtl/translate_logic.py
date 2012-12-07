@@ -607,14 +607,14 @@ def get_target_name(node):
       return s[1:], True
   elif name[0] in ['uint', 'int', 'sext', 'zext']:
     # TODO: very very hacky!!!! Fix me!
-    try:
-      return '$'.join( name[::-1][1:-2] ), True
-    except TypeError:
-      s = ''
-      for x in name[::-1][1:-1]:
-        if isinstance(x, str):  s += '$' + x
-        else:                   s += 'IDX' + str(x)
-      return s[1:], True
+    return name[0], True
+      #return '$'.join( name[::-1][1:-2] ), True
+    #except TypeError:
+    #  s = ''
+    #  for x in name[::-1][1:-1]:
+    #    if isinstance(x, str):  s += '$' + x
+    #    else:                   s += 'IDX' + str(x)
+    #  return s[1:], True
   else:
     return name[0], False
 
