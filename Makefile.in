@@ -25,11 +25,12 @@ subpkgs = \
   pex_regincr \
   pex_sorter \
   pex_gcd \
-  pex_dac \
   plab1_imul \
-  plab2_proc \
-  plab3_mem \
-  plab4_net \
+
+#  pex_dac \
+#  plab2_proc \
+#  plab3_mem \
+#  plab4_net \
 
 #-------------------------------------------------------------------------
 # List of subpackages to install
@@ -320,6 +321,7 @@ debug-% :
 
 clean :
 	rm -rf *~ \#* *.v *.vcd *.stats a.out $(junk)
+	rm -rf *~ \#* *.pyx *.cpp *.so *.pyc W*.py obj_dir build
 
 clean-src :
 	find $(src_dir) -name "*.pyc" | xargs rm
