@@ -195,8 +195,15 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
     for i in k:
       w += '    self.{0} = {2}( {1} )\n'.format( i[0], i[1], ptype )
 
-  w += ("\n  @combinational"
-        "\n  def logic(self):\n\n")
+  # Register the sensitivity list.
+  # Must be done explicitly since we dont access .value!
+  w += "\n    self.register_combinational( 'logic', [\n"
+  for name, bitwidth in in_ports:
+    w += "                                 self.{},\n".format(name)
+  w += "                                   ])\n\n"
+
+  #w += ("\n  @combinational"
+  w += ("\n  def logic(self):\n\n")
 
   w += ('    self.{0}.reset = self.reset.value.uint\n'
         '\n'.format( xobj_name ))

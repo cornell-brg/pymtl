@@ -7,6 +7,12 @@ import pmlib
 
 from GcdUnitRTL import GcdUnitRTL
 
+# Verilate and simulate the verilated model
+verilator_sim.verilate( GcdUnitRTL, 'GcdUnitRTL.v' )
+import sys
+sys.path.append('../build')
+from WGcdUnitRTL import GcdUnitRTL
+
 # We can use the same test harness from the behavioral-level model
 
 from GcdUnitBL_test import run_gcd_test

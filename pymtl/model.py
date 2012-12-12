@@ -407,7 +407,8 @@ class Model(object):
     target._outports    = []
     target._submodules  = []
     target._senses      = []
-    target._newsenses   = collections.defaultdict( list )
+    if not hasattr( target, '_newsenses' ):
+      target._newsenses   = collections.defaultdict( list )
     target._localparams = set()
     target._tempwires   = {}
     target._temparrays  = []
@@ -608,6 +609,14 @@ class Model(object):
     return self._localparams
 
   #-----------------------------------------------------------------------
+  # Register Combinational
+  #-----------------------------------------------------------------------
+
+  def register_combinational( self, func_name, sensitivity_list ):
+    self._newsenses = collections.defaultdict( list )
+    self._newsenses[ func_name ] = sensitivity_list
+
+  #-----------------------------------------------------------------------
   # Dump Physical Design
   #-----------------------------------------------------------------------
   def dump_physical_design(self, prefix=''):
@@ -697,6 +706,7 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
         self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
       elif self.decorator == 'combinational' and debug == 'next':
         self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
+      # TODO: why are we checking syntax of non-annotated blocks...
       else:
         self.accesses.add( (target_name, debug, node.lineno) )
 
