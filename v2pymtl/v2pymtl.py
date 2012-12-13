@@ -199,8 +199,11 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   # Must be done explicitly since we dont access .value!
   w += "\n    self.register_combinational( 'logic', [\n"
   for name, bitwidth in in_ports:
+    if 'IDX' in name:
+      prefix, idx = name.split('IDX')
+      name = '{}[{}]'.format( prefix, idx )
     w += "                                 self.{},\n".format(name)
-  w += "                                   ])\n\n"
+  w += "                               ])\n\n"
 
   #w += ("\n  @combinational"
   w += ("\n  def logic(self):\n\n")
