@@ -586,7 +586,11 @@ def get_target_name(node):
         slice_idx, debug = get_target_name( node.slice.value )
         name += [ [slice_idx] ]
         node = node.value
+      elif isinstance( node.slice.value, _ast.Name ):
+        name += [ [node.slice.value.id] ]
+        node = node.value
       else:
+        print type( node.slice.value )
         raise Exception("Untranslatable array/slice index!")
 
   # We've found the Name.
@@ -605,16 +609,20 @@ def get_target_name(node):
         elif isinstance(x, list): s += 'IDX[' + x[0] + ']'
         else:                     s += 'IDX' + str(x)
       return s[1:], True
-  elif name[0] in ['uint', 'int', 'sext', 'zext']:
+  elif name[0] in ['sext', 'zext']:
     # TODO: very very hacky!!!! Fix me!
     return name[0], True
-      #return '$'.join( name[::-1][1:-2] ), True
-    #except TypeError:
-    #  s = ''
-    #  for x in name[::-1][1:-1]:
-    #    if isinstance(x, str):  s += '$' + x
-    #    else:                   s += 'IDX' + str(x)
-    #  return s[1:], True
+  elif name[0] in ['uint', 'int']:
+    # TODO: very very hacky!!!! Fix me!
+    try:
+      return '$'.join( name[::-1][1:-2] ), True
+    except TypeError:
+      s = ''
+      for x in name[::-1][1:-2]:
+        if   isinstance(x, str):  s += '$' + x
+        elif isinstance(x, list): s += 'IDX[' + x[0] + ']'
+        else:                     s += 'IDX' + str(x)
+      return s[1:], True
   else:
     return name[0], False
 
@@ -635,8 +643,13 @@ def get_target_list(node):
       node = node.value
     elif isinstance(node, _ast.Subscript):
       # TODO: assumes this is an integer, not a range
-      name += [ node.slice.value.n ]
-      node = node.value
+      if (isinstance( node.slice, _ast.Index) and
+          isinstance( node.slice.value, _ast.Num )):
+        name += [ node.slice.value.n ]
+        node = node.value
+      else:
+        name += [ '?' ]
+        node = node.value
 
   # We've found the Name.
   assert isinstance(node, _ast.Name)
