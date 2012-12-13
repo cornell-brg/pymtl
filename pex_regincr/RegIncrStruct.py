@@ -23,15 +23,15 @@ class RegIncrStruct( Model ):
 
     # Register
 
-    self.reg = Register( 16 )
-    connect( self.in_, self.reg.in_ )
+    self.reg_ = Register( 16 )
+    connect( self.in_, self.reg_.in_ )
 
     # Incrementer
 
     self.incr = Incrementer( 16 )
-    connect( self.reg.out,  self.incr.in_ )
+    connect( self.reg_.out, self.incr.in_ )
     connect( self.incr.out, self.out      )
 
   def line_trace( self ):
-    return self.reg.line_trace() + " | " + self.incr.line_trace()
+    return self.reg_.line_trace() + " | " + self.incr.line_trace()
 
