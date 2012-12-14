@@ -784,9 +784,11 @@ class SensitivityListVisitor(ast.NodeVisitor):
     if not self.func_name:
       return
 
+    # Hacky way to get subscripts of stores to port lists
+    signal_ptr = self.get_target( node )
+
     if isinstance( node.ctx, _ast.Load ):
 
-      signal_ptr = self.get_target( node )
       if   isinstance( signal_ptr, list ):
         # TODO: this will allow duplicate entries to be in the _newsenses
         #       list, do we need to fix this?
@@ -819,6 +821,8 @@ class SensitivityListVisitor(ast.NodeVisitor):
         name += [node.attr]
         node = node.value
       elif isinstance(node, _ast.Subscript):
+        # Visit the index, if its a variable want to add to sensitivity
+        self.visit( node.slice )
         # TODO: assumes this is an integer, not a range
         if (isinstance( node.slice, _ast.Index) and
             isinstance( node.slice.value, _ast.Num )):

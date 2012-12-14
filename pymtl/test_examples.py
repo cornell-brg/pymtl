@@ -539,6 +539,7 @@ class DemuxNoLoop( Model ):
   @combinational
   def demux_logic( s ):
     s.out[ s.sel.value.uint ].value = s.in_.value
+    # Workaround for sensitivity list bug (FIXED)
     #a = s.sel.value
     #s.out[ a.uint ].value = s.in_.value
 

@@ -737,7 +737,6 @@ def test_mux_register():
   #sim.cycle()
   #assert model.out.value == 0
 
-@pytest.mark.xfail
 def test_demux_no_loop():
   model = DemuxNoLoop( 3, 8 )
   sim = setup_sim( model )
@@ -755,9 +754,9 @@ def test_demux_no_loop():
   assert model.out[2].value == 5
   model.sel.value = 1
   sim.cycle()
-  assert model.out[0].value == 0
+  assert model.out[0].value == 5
   assert model.out[1].value == 5
-  assert model.out[2].value == 0
+  assert model.out[2].value == 5
 
 
 def test_demux():
