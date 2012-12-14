@@ -183,15 +183,6 @@ class TemporariesVisitor(ast.NodeVisitor):
       node_value = self.func_ptr.func_globals[ node.id ]
       self.model._localparams.add( (node.id, node_value) )
 
-  # TODO: move to TemporaryArrayVisitor?
-  # TODO: HACKY
-  def visit_Subscript(self, node):
-    # If we find any attributes that have subscripts (array indexing)
-    # we need to create a temporary array and then assign each individual
-    # input port to the array
-    if node.value.attr not in self.model._temparrays:
-      self.model._temparrays += [ node.value.attr ]
-
 #=========================================================================
 # Python to Verilog Logic Translation
 #=========================================================================

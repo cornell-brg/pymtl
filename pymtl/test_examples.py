@@ -530,6 +530,18 @@ class MuxRegister( Model ):
   def sync_logic( s ):
     s.out.next = s.mux.value
 
+
+class DemuxNoLoop( Model ):
+  def __init__( s, nports, nbits ):
+    s.in_ = InPort( nbits )
+    s.sel = InPort ( int( ceil( log( nports, 2 ) ) ))
+    s.out = [OutPort( nbits ) for x in range( nports )]
+  @combinational
+  def demux_logic( s ):
+    s.out[ s.sel.value.uint ].value = s.in_.value
+    #a = s.sel.value
+    #s.out[ a.uint ].value = s.in_.value
+
 class Demux( Model ):
   def __init__( s, nports, nbits ):
     s.in_ = InPort( nbits )

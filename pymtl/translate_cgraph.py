@@ -243,19 +243,24 @@ class ConnectionGraphToVerilog(object):
   def gen_temparrays(self, model, o):
     """Generate Verilog source for temporaries used."""
 
-    print >> o, '\n  // temporary input arrays'
+    print >> o, '\n  // temporary arrays for port lists'
     for name in model._temparrays:
       port_list = model.__dict__[ name ]
       width  = port_list[0].width
       nports = len( port_list )
+      # Declare the array
+      t = 'reg' if isinstance( port_list[0], OutPort ) else 'wire'
+      if width == 1:
+        print >> o, "  %s %sIDX [0:%d];" % (t, name, nports-1 )
+      else :
+        print >> o, "  %s [%d:0] %sIDX [0:%d];" % (t, width-1, name, nports-1)
       # TODO: implement OutPort array assignments
-      if isinstance( port_list[0], InPort ):
-        if width == 1:
-          print >> o, "  wire %sIDX [0:%d];" % (name, nports-1 )
-        else :
-          print >> o, "  wire [%d:0] %sIDX [0:%d];" % (width-1, name, nports-1)
+      if   isinstance( port_list[0], InPort ):
         for i in range( nports ):
           print >> o, "  assign %sIDX[%d] = %sIDX%d;" % (name, i, name, i)
+      elif isinstance( port_list[0], OutPort ):
+        for i in range( nports ):
+          print >> o, "  assign %sIDX%d = %sIDX[%d];" % (name, i, name, i)
 
       print >> o
 

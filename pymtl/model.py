@@ -473,6 +473,8 @@ class Model(object):
     # If the object is a list, iterate through each item in the list and
     # recursively call the check_type() utility function
     elif isinstance(obj, list):
+      if isinstance(obj[0], Port):
+        target._temparrays.append( name )
       for i, item in enumerate(obj):
         item_name = "%sIDX%d" % (name, i)
         self.check_type(target, item_name, item)
