@@ -52,11 +52,14 @@ class ConnectionGraphToVerilog(object):
     # Assignment Statments
     if model.get_ports(): self.gen_output_assigns( model, o )
 
-    # Declare Temporary Arrays
+    # Declare Wire Arrays
     if model._temparrays: self.gen_temparrays( model, o )
 
-    # Declare Temporary Arrays
+    # Declare Temporary Wires
     if model._tempwires: self.gen_temp_decls( model, o )
+
+    # Declare Loop Variables
+    if model._loopvars: self.gen_loopvar_decls( model, o )
 
     # Logic
     self.gen_logic_blocks( model, o )
@@ -276,6 +279,17 @@ class ConnectionGraphToVerilog(object):
         print >> o, "  reg %s;" % (w.name)
       else :
         print >> o, "  reg [%d:0] %s;" % (w.width-1, w.name)
+    print >> o
+
+  #-----------------------------------------------------------------------
+  # Generate Loop Variable Declarations
+  #-----------------------------------------------------------------------
+
+  def gen_loopvar_decls(self, model, o):
+    """Generate Verilog source for temporaries used."""
+    print >> o, '  // loop variables'
+    for name in model._loopvars:
+      print >> o, "  integer {};".format( name )
     print >> o
 
   #-----------------------------------------------------------------------

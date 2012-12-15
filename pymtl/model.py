@@ -413,6 +413,7 @@ class Model(object):
     target._tempwires   = {}
     target._temparrays  = []
     target._tempregs    = []
+    target._loopvars    = []
     target._dim = PhysicalDimensions()
     # TODO: do all ports first?
     # Get the names of all ports and submodules

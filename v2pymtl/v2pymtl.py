@@ -32,19 +32,23 @@ def cythonize_model():
 #-------------------------------------------------------------------------
 
 def get_model_ports( model_name ):
+  # TODO: clean this up, this is getting really messy...
   # Import the specified module
   # If we received a module name from the commandline, we need to import
   if isinstance( model_name, str ):
     __import__( model_name )
     imported_module = sys.modules[ model_name ]
     model_class = imported_module.__dict__[ model_name ]
-    model_name = model
-  # Otherwise we received a model class definition (not an instance!)
-  else:
+    model_inst = model_class()
+    model_inst.elaborate()
+  # We received a model class definition (not an instance!)
+  elif isinstance( model_name, type ):
     model_class = model_name
-
-  model_inst = model_class()
-  model_inst.elaborate()
+    model_inst = model_class()
+    model_inst.elaborate()
+  # Otherwise we received a model instance!
+  else:
+    model_inst = model_name
 
   # Collect the input/output ports
   in_ports = model_inst.get_inports()
@@ -255,11 +259,13 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
 def verilog_to_pymtl( model, filename_v ):
 
   # TODO: clean this up
-  if isinstance( model, str ):
+  if   isinstance( model, str ):
     model_name = model
-  else:
+  elif isinstance( model, type ):
     x = model()
     model_name = x.__class__.__name__
+  else:
+    model_name = model.class_name
 
   # Output file names
   filename_pyx = model_name + '.pyx'

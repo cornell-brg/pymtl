@@ -365,8 +365,6 @@ class TestDumb(unittest.TestCase):
     x = os.system( self.compile_cmd )
     self.assertEqual( x, 0)
 
-  import pytest
-  @pytest.mark.xfail
   def test_demux(self):
     model = Demux( 3, 8 )
     self.translate( model )
