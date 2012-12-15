@@ -423,14 +423,16 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     #if self.write_names:
     i = node.target.id
     iter = node.iter
-    print iter, iter.func, iter.args
-    st = 0
-    end = 0
     assert iter.func.id == 'range'
     assert len( iter.args ) == 1
     start = 0
-    end   = iter.args[0].n
     step  = 1
+    if   isinstance(iter.args[0], _ast.Num):
+      end   = iter.args[0].n
+    elif isinstance(iter.args[0], _ast.Attribute):
+      end   = iter.args[0].attr
+    else:
+      raise Exception("Unsupported parameter to range()!")
     templ = "    for( {0} = {1}; {0} < {2}; {0} = {0} + {3} )"
     #print >> self.o, "    integer {};".format( i ) # TODO: move above
     print >> self.o, templ.format( i, start, end, step )

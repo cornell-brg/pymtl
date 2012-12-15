@@ -545,13 +545,14 @@ class DemuxNoLoop( Model ):
 
 class Demux( Model ):
   def __init__( s, nports, nbits ):
+    s.nports = nports
     s.in_ = InPort( nbits )
     s.sel = InPort ( int( ceil( log( nports, 2 ) ) ))
     s.out = [OutPort( nbits ) for x in range( nports )]
   @combinational
   def demux_logic( s ):
     #assert s.sel.value.uint < len( s.in_ )
-    for i in range( 3 ):
+    for i in range( s.nports ):
       if i == s.sel.value:
         s.out[ i ].value = s.in_.value
       else:
