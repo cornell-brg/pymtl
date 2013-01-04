@@ -58,7 +58,8 @@ class TemporariesVisitor(ast.NodeVisitor):
       return
     # TODO: create new list of iterators?
     var_name = node.target.id
-    self.model._loopvars.append( var_name )
+    if var_name not in self.model._loopvars:
+      self.model._loopvars.append( var_name )
 
   #-----------------------------------------------------------------------
   # Function Calls
@@ -307,11 +308,12 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     Parenthesis are placed around every operator along with its args to ensure
     that the order of operations are preserved.
     """
-    assert len(node.values) == 2
     print >> self.o, '(',
-    self.visit(node.values[0])
-    print >> self.o, PyToVerilogVisitor.opmap[type(node.op)],
-    self.visit(node.values[1])
+    num_nodes = len(node.values)
+    for i in range( num_nodes - 1 ):
+      self.visit( node.values[i] )
+      print >> self.o, PyToVerilogVisitor.opmap[type(node.op)],
+    self.visit( node.values[ num_nodes - 1 ] )
     print >> self.o, ')',
 
   #-----------------------------------------------------------------------
@@ -613,18 +615,18 @@ def get_target_name(node):
       node = node.value
     elif isinstance(node, _ast.Subscript):
       # assumes this is an integer, not a range
-      if isinstance( node.slice.value, _ast.Num ):
-        name += [ node.slice.value.n ]
+      if isinstance( node.slice, _ast.Index ):
+        name += [ [node_to_str( node.slice.value )] ]
         node = node.value
-      elif isinstance( node.slice.value, _ast.Attribute ):
-        slice_idx, debug = get_target_name( node.slice.value )
-        name += [ [slice_idx] ]
-        node = node.value
-      elif isinstance( node.slice.value, _ast.Name ):
-        name += [ [node.slice.value.id] ]
+      elif isinstance( node.slice, _ast.Slice):
+        if node.slice.step:
+          raise Exception("Slice ranges are not supported for translation!")
+        first  = node_to_str( node.slice.upper )
+        second = node_to_str( node.slice.lower )
+        idx = '{}:{}'.format( first, second )
+        name += [ [idx] ]
         node = node.value
       else:
-        print type( node.slice.value )
         raise Exception("Untranslatable array/slice index!")
 
   # We've found the Name.
@@ -639,9 +641,14 @@ def get_target_name(node):
     except TypeError:
       s = ''
       for x in name[::-1][1:-1]:
-        if   isinstance(x, str):  s += '$' + x
-        elif isinstance(x, list): s += 'IDX[' + x[0] + ']'
-        else:                     s += 'IDX' + str(x)
+        if   isinstance(x, str):
+          s += '$' + x
+        elif isinstance(x, list):
+          print "******", s[1:]
+          s += '[' + x[0] + ']'
+        #else:                     s += 'IDX' + str(x)
+        else:
+          raise Exception("Not supposed to reach here!")
       return s[1:], True
   elif name[0] in ['sext', 'zext']:
     # TODO: very very hacky!!!! Fix me!
@@ -653,12 +660,34 @@ def get_target_name(node):
     except TypeError:
       s = ''
       for x in name[::-1][1:-2]:
-        if   isinstance(x, str):  s += '$' + x
-        elif isinstance(x, list): s += 'IDX[' + x[0] + ']'
-        else:                     s += 'IDX' + str(x)
+        if   isinstance(x, str):
+          s += '$' + x
+        elif isinstance(x, list):
+          s += '[' + x[0] + ']'
+        #else:                     s += 'IDX' + str(x)
+        else:
+          raise Exception("Not supposed to reach here!")
       return s[1:], True
   else:
     return name[0], False
+
+def node_to_str( node ):
+  if isinstance( node, _ast.Num ):
+    return str( node.n )
+  elif isinstance( node, _ast.Attribute ):
+    slice_idx, debug = get_target_name( node)
+    return slice_idx
+  elif isinstance( node, _ast.Name ):
+    return node.id
+  else:
+    import StringIO
+    x = StringIO.StringIO()
+    y = PyToVerilogVisitor( None, x )
+    y.write_names = True
+    y.visit( node )
+    print x.getvalue()
+    return x.getvalue()
+    #raise Exception("Untranslatable array/slice index!")
 
 
 # TODO: SUPER HACKY, replace

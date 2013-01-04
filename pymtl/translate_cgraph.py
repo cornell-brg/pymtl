@@ -254,16 +254,16 @@ class ConnectionGraphToVerilog(object):
       # Declare the array
       t = 'reg' if isinstance( port_list[0], OutPort ) else 'wire'
       if width == 1:
-        print >> o, "  %s %sIDX [0:%d];" % (t, name, nports-1 )
+        print >> o, "  %s %s [0:%d];" % (t, name, nports-1 )
       else :
-        print >> o, "  %s [%d:0] %sIDX [0:%d];" % (t, width-1, name, nports-1)
+        print >> o, "  %s [%d:0] %s [0:%d];" % (t, width-1, name, nports-1)
       # TODO: implement OutPort array assignments
       if   isinstance( port_list[0], InPort ):
         for i in range( nports ):
-          print >> o, "  assign %sIDX[%d] = %sIDX%d;" % (name, i, name, i)
+          print >> o, "  assign %s[%d] = %sIDX%d;" % (name, i, name, i)
       elif isinstance( port_list[0], OutPort ):
         for i in range( nports ):
-          print >> o, "  assign %sIDX%d = %sIDX[%d];" % (name, i, name, i)
+          print >> o, "  assign %sIDX%d = %s[%d];" % (name, i, name, i)
 
       print >> o
 
