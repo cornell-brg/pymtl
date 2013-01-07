@@ -589,9 +589,11 @@ class FindRegistersVisitor(ast.NodeVisitor):
       # and should be marked as is_reg, or c) belongs to a PortBundle and
       # should be markes as is_reg.
       if (len( target_list ) == 1 or isinstance( target_list[-1], int )
-         or isinstance( get_target_ptr( self.model, target_list[:-1] ), PortBundle )):
+         or isinstance( get_target_ptr( self.model, target_list[:-1] ), PortBundle )
+         or target_list[-1] == '?'):
         x = get_target_ptr( self.model, target_list )
-        x.is_reg = True
+        if not isinstance( x, list ):
+          x.is_reg = True
       #else:
       #  print "## LEN > 1", target_list
       #  #self.model._tempregs += [ target_name ]
@@ -623,7 +625,7 @@ def get_target_name(node):
           raise Exception("Slice ranges are not supported for translation!")
         first  = node_to_str( node.slice.upper )
         second = node_to_str( node.slice.lower )
-        idx = '{}:{}'.format( first, second )
+        idx = '({} - 1):{}'.format( first, second )
         name += [ [idx] ]
         node = node.value
       else:
@@ -644,7 +646,6 @@ def get_target_name(node):
         if   isinstance(x, str):
           s += '$' + x
         elif isinstance(x, list):
-          print "******", s[1:]
           s += '[' + x[0] + ']'
         #else:                     s += 'IDX' + str(x)
         else:
@@ -685,7 +686,6 @@ def node_to_str( node ):
     y = PyToVerilogVisitor( None, x )
     y.write_names = True
     y.visit( node )
-    print x.getvalue()
     return x.getvalue()
     #raise Exception("Untranslatable array/slice index!")
 
@@ -728,8 +728,11 @@ def get_target_list(node):
 def get_target_ptr( model, target_list ):
   obj = model
   for attr in target_list:
+    # TODO: ? support
     if isinstance(attr, int):
-      obj = obj[ attr ]
+      if not isinstance( obj[attr], ConnectionSlice):
+        obj = obj[ attr ]
     else:
-      obj = obj.__getattribute__( attr )
+      if not attr == '?':
+        obj = obj.__getattribute__( attr )
   return obj
