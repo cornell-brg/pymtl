@@ -1,7 +1,7 @@
-// -*- C++ -*-
+// -*- mode: C++; c-file-style: "cc-mode" -*-
 //*************************************************************************
 //
-// Copyright 2003-2010 by Wilson Snyder. This program is free software; you can
+// Copyright 2003-2012 by Wilson Snyder. This program is free software; you can
 // redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License.
 // Version 2.0.
@@ -220,6 +220,18 @@ typedef unsigned long long	vluint64_t;	///< 64-bit unsigned type
 #define VL_BITWORD_I(bit)	((bit)/VL_WORDSIZE)	///< Word number for a wide quantity
 #define VL_BITBIT_I(bit)	((bit)&VL_SIZEBITS_I)	///< Bit number for a bit in a long
 #define VL_BITBIT_Q(bit)	((bit)&VL_SIZEBITS_Q)	///< Bit number for a bit in a quad
+
+//=========================================================================
+// Floating point
+// #defines, to avoid requiring math.h on all compile runs
+
+#ifdef _MSC_VER
+# define VL_TRUNC(n) (((n)<0) ? ceil((n))     : floor((n)))
+# define VL_ROUND(n) (((n)<0) ? ceil((n)-0.5) : floor((n)+0.5))
+#else
+# define VL_TRUNC(n) trunc(n)
+# define VL_ROUND(n) round(n)
+#endif
 
 //=========================================================================
 
