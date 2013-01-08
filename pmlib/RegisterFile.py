@@ -35,11 +35,14 @@ class RegisterFile( Model ):
   @posedge_clk
   def seq_logic( self ):
     if self.wr_en.value:
-      waddr = self.wr_addr.value.uint
-      assert waddr < self.nregs
-      # TODO: will this translate and synthesize to what we want?
-      #       Or does the read need to have this check?
-      self.regs[ waddr ].next = self.wr_data.value
+
+      # TODO: this won't simulate correctly when translated/verilated!!!
+      #       mismatch between Verilog and PyMTL sim semantics...
+      #waddr = self.wr_addr.value.uint
+      #assert waddr < self.nregs
+      #self.regs[ waddr ].next = self.wr_data.value
+
+      self.regs[ self.wr_addr.value.uint ].next = self.wr_data.value
 
   def line_trace( self ):
     return [x.value.uint for x in self.regs]
