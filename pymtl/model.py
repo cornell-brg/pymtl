@@ -475,7 +475,7 @@ class Model(object):
     # recursively call the check_type() utility function
     elif isinstance(obj, list):
       # TODO: fix to handle Wire lists properly
-      if isinstance(obj[0], Port):
+      if obj and isinstance(obj[0], Port):
         target._temparrays.append( name )
       for i, item in enumerate(obj):
         if isinstance( item, Wire ):
