@@ -909,11 +909,20 @@ def capture_args(fn):
     args = collections.OrderedDict()
     # add all the positional arguments
     for i in range(1, len(v)):
+      if isinstance( v[i], int ):
+        value = v[i]
+      else:
+        #raise Exception("Untranslatable param type!")
+        value = hex( id( v[i] ) )
       key = argspec.args[ i ]
-      args[ key ] = v[i]
+      args[ key ] = value
     # then add all the named arguments
     for key, val in k.items():
-      args[key] = val
+      if isinstance( val, int ):
+        value = val
+      else:
+        value = hex( id( val ) )
+      args[key] = value
 
     # add the arguments and their values to the object so it can be
     # used during static elaboration to create the name
