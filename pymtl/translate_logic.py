@@ -197,14 +197,14 @@ class TemporariesVisitor(ast.NodeVisitor):
   # TODO: move to RegisterVisitor?
   # TODO: HACKY
   def visit_Name(self, node):
-    # We found a temporary being referenced by another temporary
-    #if self.inferring:
-    #  rhs_name, rhs_debug = get_target_name(node)
-    #  temp_type = self.model._tempwires[ rhs_name ]
-    #  self.type_stack.append( temp_type )
-
+    # We found a temporary being referenced by another temporary,
+    # add it to our type_stack
+    if self.inferring:
+      rhs_name, rhs_debug = get_target_name(node)
+      temp_type = self.model._tempwires[ rhs_name ]
+      self.type_stack.append( temp_type )
     # If we find global constants (all caps), make them localparams
-    if node.id.isupper():
+    elif node.id.isupper():
       node_value = self.func_ptr.func_globals[ node.id ]
       self.model._localparams.add( (node.id, node_value) )
 
