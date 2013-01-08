@@ -188,9 +188,10 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
 
   for port, ptype in [ ( in_ports, 'InPort' ), ( out_ports, 'OutPort' ) ]:
 
-    k = [ ( re.sub('IDX.*', '', i[0]), i[1] ) for i in port ]
-    l = [ (i[0], i[1], k.count(i)) for i in set(k) if k.count(i) > 1 ]
-    k = [ i for i in k if not k.count(i) > 1 ]
+    k = [ ( re.sub('IDX.*', 'IDX', i[0]), i[1] ) for i in port ]
+    l = [ (re.sub('IDX', '', i[0]), i[1], k.count(i)) for i in set(k)
+          if (k.count(i) > 1 or 'IDX' in i[0]) ]
+    k = [ i for i in k if (not k.count(i) > 1 and not 'IDX' in i[0])]
 
     for i in l:
       w += ('    self.{0} = [ {3}( {1} ) for x in range( {2} ) ]'
