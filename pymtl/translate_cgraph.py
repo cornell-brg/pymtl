@@ -49,11 +49,11 @@ class ConnectionGraphToVerilog(object):
       self.gen_impl_wire_assigns( model, submodule, o )
       self.gen_module_insts( submodule, o )
 
-    # Assignment Statments
-    if model.get_ports(): self.gen_output_assigns( model, o )
-
     # Declare Wire Arrays
     if model._temparrays: self.gen_temparrays( model, o )
+
+    # Assignment Statments
+    if model.get_ports(): self.gen_output_assigns( model, o )
 
     # Declare Temporary Wires
     if model._tempwires: self.gen_temp_decls( model, o )
@@ -220,6 +220,9 @@ class ConnectionGraphToVerilog(object):
     # TODO: test register inference
     print >> o, '\n  // explicit wires'
     for w in wires:
+
+      if '[' in w.name:
+        continue
 
       # Declare the wire
       reg = 'reg' if w.is_reg else 'wire'
