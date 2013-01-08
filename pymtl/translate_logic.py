@@ -60,6 +60,9 @@ class TemporariesVisitor(ast.NodeVisitor):
     var_name = node.target.id
     if var_name not in self.model._loopvars:
       self.model._loopvars.append( var_name )
+    # TODO: add support for temporaries declared in for loop
+    for x in node.body:
+      self.visit(x)
 
   #-----------------------------------------------------------------------
   # Function Calls
@@ -143,6 +146,10 @@ class TemporariesVisitor(ast.NodeVisitor):
     if '$' in signal_name:
       module_name, signal = signal_name.split('$')
       module = self.model.__dict__[ module_name ]
+    elif '[' in signal_name:
+      signal_list_name, idx = signal_name.split('[')
+      signal_list = self.model.__dict__[ signal_list_name ]
+      return signal_list[0]
     else:
       signal = signal_name
       module = self.model
@@ -190,6 +197,12 @@ class TemporariesVisitor(ast.NodeVisitor):
   # TODO: move to RegisterVisitor?
   # TODO: HACKY
   def visit_Name(self, node):
+    # We found a temporary being referenced by another temporary
+    #if self.inferring:
+    #  rhs_name, rhs_debug = get_target_name(node)
+    #  temp_type = self.model._tempwires[ rhs_name ]
+    #  self.type_stack.append( temp_type )
+
     # If we find global constants (all caps), make them localparams
     if node.id.isupper():
       node_value = self.func_ptr.func_globals[ node.id ]
@@ -425,7 +438,7 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     #if self.write_names:
     i = node.target.id
     iter = node.iter
-    assert iter.func.id == 'range'
+    assert iter.func.id in ['range', 'xrange']
     assert len( iter.args ) == 1
     start = 0
     step  = 1

@@ -255,7 +255,7 @@ class ConnectionGraphToVerilog(object):
       width  = port_list[0].width
       nports = len( port_list )
       # Declare the array
-      t = 'reg' if isinstance( port_list[0], OutPort ) else 'wire'
+      t = 'wire' if isinstance( port_list[0], InPort ) else 'reg'
       if width == 1:
         print >> o, "  %s %s [0:%d];" % (t, name, nports-1 )
       else :
