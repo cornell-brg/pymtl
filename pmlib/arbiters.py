@@ -15,6 +15,7 @@ import pmlib
 
 class RoundRobinArbiter(Model):
 
+  @capture_args
   def __init__(s, nreqs ):
 
     s.nreqs        = nreqs
@@ -87,6 +88,7 @@ class RoundRobinArbiter(Model):
 
 class RoundRobinArbiterEn(Model):
 
+  @capture_args
   def __init__(s, nreqs ):
 
     # Local Constants
