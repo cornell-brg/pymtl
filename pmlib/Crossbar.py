@@ -23,6 +23,7 @@ import math
 
 class Crossbar ( Model ):
 
+  @capture_args
   def __init__( self, nports, nbits ):
 
     # Local Constant
@@ -41,8 +42,16 @@ class Crossbar ( Model ):
   def comb_logic( self ):
 
     for i in range( self.nports ):
-      sel = self.sel[ i ].value.uint
-      self.out[i].value = self.in_[ sel ].value
+
+      self.out[i].value = self.in_[ self.sel[ i ].value.uint ].value
+
+      # DOES NOT TRANSLATE!
+      #sel = self.sel[ i ].value.uint
+      #self.out[i].value = self.in_[ sel ].value
+
+      # DOES NOT TRANSLATE!
+      #sel = self.sel[ i ].value
+      #self.out[i].value = self.in_[ sel.uint ].value
 
   def line_trace( self ):
     s = ''
