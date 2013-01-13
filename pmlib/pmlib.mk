@@ -56,5 +56,10 @@ pmlib_test_srcs = \
   net_msgs_test.py \
   adapters_test.py \
 
+pmlib_vtest_srcs = \
+  RegisterFile_v_test.py \
+  queues_v_test.py \
+  arbiters_v_test.py \
+
 pmlib_prog_srcs = \
 

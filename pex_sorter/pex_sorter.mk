@@ -18,6 +18,9 @@ pex_sorter_test_srcs = \
   MinMax_test.py \
   SorterStruct_test.py \
 
+pex_sorter_vtest_srcs = \
+  SorterRTL_v_test.py \
+
 pex_sorter_prog_srcs = \
   pex-sorter-sim
 
