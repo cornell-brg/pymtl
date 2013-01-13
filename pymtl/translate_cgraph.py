@@ -133,6 +133,16 @@ class ConnectionGraphToVerilog(object):
       return "{} [{}:0] {};".format( w_type, w.width-1, w.verilog_name() )
 
   #-----------------------------------------------------------------------
+  # Connection Sort: Sort Connections Based on Destination Node Name
+  #-----------------------------------------------------------------------
+
+  def connect_sort( self, x, y ):
+    if x.dest_node.name == y.dest_node.name:
+      return cmp( x.dest_slice, y.dest_slice )
+    else:
+      return cmp( x.dest_node.name, y.dest_node.name )
+
+  #-----------------------------------------------------------------------
   # Implied Wire Name
   #-----------------------------------------------------------------------
 
@@ -206,7 +216,11 @@ class ConnectionGraphToVerilog(object):
   def gen_impl_wire_assigns(self, m, submodule, o):
     print >> o, '\n  // {} input assignments'.format( submodule.name )
     for port in submodule.get_inports():
-      for edge in port.ext_connections:
+      # Note: sorting the connections helps ensures translations are
+      #       deterministic, which is needed by our caching mechanism.
+      sorted_ext = sorted( port.ext_connections, cmp=self.connect_sort )
+      #for edge in port.ext_connections:
+      for edge in sorted_ext:
         left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
         right = self.mk_signal_str( edge.src_node,  edge.src_slice,  m )
         print  >> o, "  assign {0} = {1};".format(left, right)
@@ -303,8 +317,12 @@ class ConnectionGraphToVerilog(object):
     """Generate Verilog source for assignment statements."""
     print >> o, '\n  // output assignments'
     for port in m.get_outports():
+      # Note: sorting the connections helps ensures translations are
+      #       deterministic, which is needed by our caching mechanism.
+      sorted_int = sorted( port.int_connections, cmp=self.connect_sort )
       # Note: multiple assigns should only occur on slicing
-      for edge in port.int_connections:
+      #for edge in port.int_connections:
+      for edge in sorted_int:
         left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
         right = self.mk_signal_str( edge.src_node,  edge.src_slice,  m )
         print  >> o, "  assign {0} = {1};".format(left, right)
