@@ -913,7 +913,8 @@ def capture_args(fn):
         value = v[i]
       else:
         #raise Exception("Untranslatable param type!")
-        value = hex( id( v[i] ) )
+        # WARNING: taking abs() of hash, increases chance of collision?
+        value = hex( abs( hash( v[i] )) )
       key = argspec.args[ i ]
       args[ key ] = value
     # then add all the named arguments
@@ -921,7 +922,8 @@ def capture_args(fn):
       if isinstance( val, int ):
         value = val
       else:
-        value = hex( id( val ) )
+        # WARNING: taking abs() of hash, increases chance of collision?
+        value = hex( abs( hash( val )) )
       args[key] = value
 
     # add the arguments and their values to the object so it can be

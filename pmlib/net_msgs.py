@@ -40,6 +40,8 @@ class NetMsgParams:
 
   def __init__( self, num_routers, num_messages, payload_nbits ):
 
+    self.hash = hash(( num_routers, num_messages, payload_nbits ))
+
     # Specify the size of each field
 
     self.srcdest_nbits = int( math.ceil( math.log( num_routers, 2 ) ) )
@@ -78,6 +80,9 @@ class NetMsgParams:
     bits[ self.payload_slice ] = payload
 
     return bits
+
+  def __hash__( self ):
+    return self.hash
 
 #-------------------------------------------------------------------------
 # NetMsgFromBits
