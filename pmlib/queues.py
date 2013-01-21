@@ -571,6 +571,7 @@ class NormalQueue ( Model ):
 
 class SingleElementPipelinedQueueDpath (Model):
 
+  @capture_args
   def __init__( self, data_nbits ):
 
     # Interface Ports
@@ -598,6 +599,7 @@ class SingleElementPipelinedQueueDpath (Model):
 
 class SingleElementPipelinedQueueCtrl (Model):
 
+  @capture_args
   def __init__( self ):
 
     # Interface Ports
@@ -669,6 +671,7 @@ class SingleElementPipelinedQueueCtrl (Model):
 
 class SingleElementPipelinedQueue (Model):
 
+  @capture_args
   def __init__( self, data_nbits ):
 
     # Interface Ports
