@@ -16,6 +16,7 @@ from   pmlib.TestVectorSimulator import TestVectorSimulator
 
 class RouteCompute (Model):
 
+  @capture_args
   def __init__( s, router_x_id, router_y_id, num_routers, netmsg_params ):
 
     # Local Constants
@@ -150,7 +151,7 @@ def test_routecompute( dump_vcd ):
     [ 3,   west  ],
     [ 12,  north ],
     [ 4,   south ],
-    [ 10,  west  ],
+    [ 10,  east  ],
     [ 8,   north ]
       ]
 

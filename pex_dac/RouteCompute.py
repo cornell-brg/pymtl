@@ -156,7 +156,7 @@ def test_routecompute( dump_vcd ):
     [ 3,   west  ],
     [ 12,  north ],
     [ 4,   south ],
-    [ 10,  west  ],
+    [ 10,  east  ],
     [ 8,   north ]
       ]
 
