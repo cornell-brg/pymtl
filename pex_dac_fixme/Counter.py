@@ -11,6 +11,7 @@ from   math import ceil, log
 
 class Counter (Model):
 
+  @capture_args
   def __init__( s, max_count ):
 
     # Local Constants

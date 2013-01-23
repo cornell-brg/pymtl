@@ -18,6 +18,7 @@ from pmlib.Crossbar    import Crossbar
 
 class TorusRouterCtrl (Model):
 
+  @capture_args
   def __init__( s, router_x_id, router_y_id,  num_routers,  netmsg_params, num_entries ):
 
     # Local Parameters
@@ -297,6 +298,7 @@ class TorusRouterCtrl (Model):
 
 class TorusRouterDpath (Model):
 
+  @capture_args
   def __init__( s, netmsg_params, num_entries ):
 
     # Local Parameters
@@ -506,6 +508,7 @@ class TorusRouterDpath (Model):
 
 class TorusRouter (Model):
 
+  @capture_args
   def __init__( s, router_x_id, router_y_id, num_routers, num_messages, payload_nbits, num_entries ):
 
     # Local Parameters
