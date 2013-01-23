@@ -371,7 +371,7 @@ class Model(object):
           ptr = c.__getattribute__( a[0] )
           # Check InPort vs OutPort?
           if   isinstance( ptr, (Port,Wire) ) and a[1] == 'wr_value':
-            raise LogicSyntaxError("Writing .value in an @posedge_clk block!")
+            raise LogicSyntaxError("Writing .value in an @tick or @posedge_clk block!")
           elif isinstance( ptr, (Port,Wire) ) and a[1] == 'wr_next':
             raise LogicSyntaxError("Writing .next in an @combinational block!")
           elif isinstance( ptr, (Port,Wire) ) and a[1] == 'rd_next':
@@ -697,7 +697,7 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     """Visit all functions, but only parse those with special decorators."""
     if not node.decorator_list:
       return
-    elif node.decorator_list[0].id in ['posedge_clk', 'combinational']:
+    elif node.decorator_list[0].id in ['tick','posedge_clk', 'combinational']:
       # Visit each line in the function, translate one at a time.
       self.decorator = node.decorator_list[0].id
       for x in node.body:
@@ -709,7 +709,7 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     #target_name, debug = self.get_target_name(node)
     if self.decorator:
       target_name, debug = self.get_target_name(node)
-      if  self.decorator == 'posedge_clk' and debug == 'value':
+      if  self.decorator in ['tick', 'posedge_clk'] and debug == 'value':
         self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
       elif self.decorator == 'combinational' and debug == 'next':
         self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
@@ -724,7 +724,7 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     target = node.targets[0]
     target_name, debug = self.get_target_name(target)
     # We are writing value inside of a posedge_clk, raise exception
-    if   self.decorator == 'posedge_clk' and debug == 'value':
+    if   self.decorator in ['tick', 'posedge_clk'] and debug == 'value':
       self.accesses.add( (target_name, 'wr_'+debug, node.lineno) )
     # We are writing next inside of a combinational, raise exception
     elif self.decorator == 'combinational' and debug == 'next':
@@ -888,6 +888,9 @@ def combinational(func):
   return func
 
 def posedge_clk(func):
+  return func
+
+def tick(func):
   return func
 
 # import functools

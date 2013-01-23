@@ -322,4 +322,6 @@ class DecoratedFunctionVisitor(ast.NodeVisitor):
       self.comb_funcs.add( node.name )
     elif 'posedge_clk' in decorator_names:
       self.posedge_funcs.add( node.name )
+    elif 'tick' in decorator_names:
+      self.posedge_funcs.add( node.name )
 
