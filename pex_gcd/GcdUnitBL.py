@@ -36,8 +36,8 @@ class GcdUnitBL (Model):
   # Tick
   #-----------------------------------------------------------------------
 
-  @posedge_clk
-  def tick( self ):
+  @tick
+  def logic( self ):
 
     # At the end of the cycle, we AND together the val/rdy bits to
     # determine if the input/output message transactions occured.
