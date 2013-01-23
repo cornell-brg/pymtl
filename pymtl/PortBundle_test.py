@@ -18,14 +18,19 @@ import os
 
 class ValRdyBundle( PortBundle ):
 
-  def __init__( self, nbits, dir='out' ):
+  def __init__( self, nbits ):
 
-    self.msg = OutPort ( nbits )
-    self.val = OutPort ( 1 )
-    self.rdy = InPort  ( 1 )
+    self.msg = InPort  ( nbits )
+    self.val = InPort  ( 1 )
+    self.rdy = OutPort ( 1 )
 
-    if dir=='in':
-      self.reverse()
+    super(ValRdyBundle, self).__init__()
+
+class InValRdyBundle( ValRdyBundle ):
+  pass
+
+class OutValRdyBundle( ValRdyBundle ):
+  pass
 
 #-------------------------------------------------------------------------
 # Example Module using PortBundle
@@ -35,8 +40,8 @@ class PortBundleQueue(Model):
 
   def __init__( self, nbits ):
 
-    self.enq   = ValRdyBundle( nbits, dir='in'  )
-    self.deq   = ValRdyBundle( nbits, dir='out' )
+    self.enq   = InValRdyBundle( nbits )
+    self.deq   = OutValRdyBundle( nbits )
 
     self.full  = Wire( 1 )
     self.wen   = Wire( 1 )

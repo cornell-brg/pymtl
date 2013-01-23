@@ -12,13 +12,20 @@ class PortBundle( object ):
   #-----------------------------------------------------------------------
 
   def __init__( self ):
-    pass
+    classname = self.__class__.__name__
+
+    if       classname.startswith('Out'):
+      print self.__reverse__()
+    elif not classname.startswith('In'):
+      raise Exception("ERROR: Bundle should be declared with the form "
+                      "In<BundleName> or Out<BundleName>.")
+
 
   #-----------------------------------------------------------------------
   # Reverse Bundle Direction
   #-----------------------------------------------------------------------
 
-  def reverse( self ):
+  def __reverse__( self ):
 
     for var_name, var_obj in self.__dict__.items():
 
@@ -40,4 +47,5 @@ class PortBundle( object ):
     for var_name, var_obj in self.__dict__.items():
       target_obj = target.__dict__[ var_name ]
       var_obj.connect( target_obj )
+
 
