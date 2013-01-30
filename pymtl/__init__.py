@@ -5,6 +5,7 @@ from translate import VerilogTranslationTool
 from connects import connect_chain, connect_auto
 from Bits import Bits
 from Bits import concat
+from PortBundle import PortBundle, create_PortBundles
 import verilator_sim
 #from visualize import VisualizationTool
 
@@ -14,6 +15,8 @@ __all__ = ['Bits',
            'Port',
            'InPort',
            'OutPort',
+           'PortBundle',
+           'create_PortBundles',
            'tick',
            'posedge_clk',
            'combinational',
