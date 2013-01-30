@@ -6,7 +6,7 @@ from model      import *
 from simulate   import *
 from translate  import *
 
-from PortBundle import PortBundle
+from PortBundle import PortBundle, create_PortBundles
 
 import pmlib
 
@@ -17,20 +17,12 @@ import os
 #-------------------------------------------------------------------------
 
 class ValRdyBundle( PortBundle ):
-
   def __init__( self, nbits ):
-
     self.msg = InPort  ( nbits )
     self.val = InPort  ( 1 )
     self.rdy = OutPort ( 1 )
 
-    super(ValRdyBundle, self).__init__()
-
-class InValRdyBundle( ValRdyBundle ):
-  pass
-
-class OutValRdyBundle( ValRdyBundle ):
-  pass
+InValRdyBundle, OutValRdyBundle = create_PortBundles( ValRdyBundle )
 
 #-------------------------------------------------------------------------
 # Example Module using PortBundle
