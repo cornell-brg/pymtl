@@ -94,7 +94,7 @@ class ConnectionGraphToVerilog(object):
     # If the node's parent module isn't the same as the current module
     # we need to prefix the signal name with the module name
     if node.parent != context and node.parent != None:
-      prefix = "{}$".format( node.parent.name )
+      prefix = "{}_M_".format( node.parent.name )
     else:
       prefix = ""
 
@@ -147,7 +147,7 @@ class ConnectionGraphToVerilog(object):
   #-----------------------------------------------------------------------
 
   def mk_impl_wire_name( self, submodule_name, port_name ):
-    return '{0}${1}'.format( submodule_name, port_name )
+    return '{0}_M_{1}'.format( submodule_name, port_name )
 
   #-----------------------------------------------------------------------
   # Infer Implied Wires

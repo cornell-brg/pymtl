@@ -130,7 +130,7 @@ class TemporariesVisitor(ast.NodeVisitor):
     # We are trying to write to a submodule's ports, mark these as regs
     # TODO: move to RegisterVisitor?
     # TODO: HACKY
-    elif '$' in target_name:
+    elif '_M_' in target_name:
       self.model._tempregs += [ target_name ]
 
     # TODO: move to RegisterVisitor?
@@ -143,8 +143,8 @@ class TemporariesVisitor(ast.NodeVisitor):
 
   def get_signal_type(self, signal_name):
 
-    if '$' in signal_name:
-      module_name, signal = signal_name.split('$')
+    if '_M_' in signal_name:
+      module_name, signal = signal_name.split('_M_')
       module = self.model.__dict__[ module_name ]
     elif '[' in signal_name:
       signal_list_name, idx = signal_name.split('[')
@@ -541,8 +541,8 @@ class PyToVerilogVisitor(ast.NodeVisitor):
 
   def get_signal_type(self, signal_name):
 
-    if '$' in signal_name:
-      module_name, signal = signal_name.split('$')
+    if '_M_' in signal_name:
+      module_name, signal = signal_name.split('_M_')
       module = self.model.__dict__[ module_name ]
     else:
       signal = signal_name
@@ -652,36 +652,36 @@ def get_target_name(node):
   if name[0] in ['value', 'next']:
     # TODO: very very hacky!!!! Fix me!
     try:
-      return '$'.join( name[::-1][1:-1] ), True
+      return '_M_'.join( name[::-1][1:-1] ), True
     except TypeError:
       s = ''
       for x in name[::-1][1:-1]:
         if   isinstance(x, str):
-          s += '$' + x
+          s += '_M_' + x
         elif isinstance(x, list):
           s += '[' + x[0] + ']'
         #else:                     s += 'IDX' + str(x)
         else:
           raise Exception("Not supposed to reach here!")
-      return s[1:], True
+      return s[3:], True
   elif name[0] in ['sext', 'zext']:
     # TODO: very very hacky!!!! Fix me!
     return name[0], True
   elif name[0] in ['uint', 'int']:
     # TODO: very very hacky!!!! Fix me!
     try:
-      return '$'.join( name[::-1][1:-2] ), True
+      return '_M_'.join( name[::-1][1:-2] ), True
     except TypeError:
       s = ''
       for x in name[::-1][1:-2]:
         if   isinstance(x, str):
-          s += '$' + x
+          s += '_M_' + x
         elif isinstance(x, list):
           s += '[' + x[0] + ']'
         #else:                     s += 'IDX' + str(x)
         else:
           raise Exception("Not supposed to reach here!")
-      return s[1:], True
+      return s[3:], True
   else:
     return name[0], False
 
