@@ -47,8 +47,14 @@ class ValRdyQueue(Model):
 
   def line_trace( self ):
 
-    return "{} () {}"\
-      .format( self.enq.line_trace(), self.deq.line_trace() )
+    # This is what we'd like, but verilated version doesn't have
+    # the line_trace() function!  Use the crappier version to match
+    # verilated versions output.
+    #return "{} () {}"\
+    #  .format( self.enq.line_trace(), self.deq.line_trace() )
+    return "{} {} {} () {} {} {}"\
+      .format( self.enq.msg.value, self.enq.val.value, self.enq.rdy.value,
+               self.deq.msg.value, self.deq.val.value, self.deq.rdy.value )
 
 
 #-------------------------------------------------------------------------
