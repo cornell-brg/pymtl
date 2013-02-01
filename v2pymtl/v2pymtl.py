@@ -179,6 +179,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
 
   f = open( filename_w, 'w' )
 
+  # Create module imports and the declaration for the PyMTL wrapper.
   w = ("from {0} import {1}\n"
        "from pymtl import *\n\n"
        "class {2}(Model):\n\n"
@@ -186,7 +187,23 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
        "    self.{1} = {1}()\n"
        "\n".format( vobj_name, xobj_name, model_name ))
 
+  # Any signals with an _M_ in the name are part of bundles, handle these
+  # specially by creating 'fake' PortBundle inner classes.
+  from collections import defaultdict
+  bundles = set()
+  for name, width in in_ports + out_ports:
+    if '_M_' in name:
+      bundle_name, port_name = name.split('_M_')
+      bundles.add( bundle_name )
+  for b in bundles:
+    w += ("    class {1}( PortBundle ): flip = False\n"
+          "    self.{0} = {1}()\n\n".format( b, b.capitalize() ) )
+
+
+  # Create the interface ports for the wrapper class.
   for port, ptype in [ ( in_ports, 'InPort' ), ( out_ports, 'OutPort' ) ]:
+
+    port = [ ( i[0].replace('_M_', '.'), i[1] ) for i in port ]
 
     k = [ ( re.sub('IDX.*', 'IDX', i[0]), i[1] ) for i in port ]
     l = [ (re.sub('IDX', '', i[0]), i[1], k.count(i)) for i in set(k)
@@ -204,6 +221,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   # Must be done explicitly since we dont access .value!
   w += "\n    self.register_combinational( 'logic', [\n"
   for name, bitwidth in in_ports:
+    name = name.replace('_M_', '.')
     if 'IDX' in name:
       prefix, idx = name.split('IDX')
       name = '{}[{}]'.format( prefix, idx )
@@ -217,22 +235,24 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
         '\n'.format( xobj_name ))
 
   for i in in_ports:
+    temp = i[0].replace('_M_', '.')
     if 'IDX' in i[0]:
       w += ('    self.{0}.{1} = self.{2}]'
-            '\n'.format( xobj_name, i[0], re.sub('IDX', '[', i[0]) ))
+            '\n'.format( xobj_name, i[0], re.sub('IDX', '[', temp) ))
     else:
-      w += ('    self.{0}.{1} = self.{1}'
-           '\n'.format( xobj_name, i[0] ))
+      w += ('    self.{0}.{1} = self.{2}'
+           '\n'.format( xobj_name, i[0], temp ))
 
   w += '\n    self.{0}.eval()\n\n'.format( xobj_name )
 
   for i in out_ports:
+    temp = i[0].replace('_M_', '.')
     if 'IDX' in i[0]:
       w += ('    self.{0}].value = self.{1}.{2}'
-            '\n'.format( re.sub('IDX', '[', i[0]), xobj_name, i[0] ))
+            '\n'.format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
     else:
-      w += ('    self.{0}.value = self.{1}.{0}'
-            '\n'.format( i[0], xobj_name ))
+      w += ('    self.{0}.value = self.{1}.{2}'
+            '\n'.format( temp, xobj_name, i[0] ))
 
   w += ("\n  @posedge_clk"
         "\n  def tick(self):\n"
@@ -241,12 +261,13 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
         "\n    self.{0}.eval()\n\n".format( xobj_name ))
 
   for i in out_ports:
+    temp = i[0].replace('_M_', '.')
     if 'IDX' in i[0]:
       w += ('    self.{0}].next = self.{1}.{2}'
-            '\n'.format( re.sub('IDX', '[', i[0]), xobj_name, i[0] ))
+            '\n'.format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
     else:
-      w += ('    self.{0}.next = self.{1}.{0}'
-            '\n'.format( i[0], xobj_name ))
+      w += ('    self.{0}.next = self.{1}.{2}'
+            '\n'.format( temp, xobj_name, i[0] ))
 
   w += '\n    self.{0}.clk = 0'.format( xobj_name )
 
