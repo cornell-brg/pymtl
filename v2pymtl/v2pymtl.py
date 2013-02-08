@@ -112,7 +112,7 @@ def create_cython( in_ports, out_ports, model_name,
           "    self.{0} = new {1}()\n"
           "    self.tfp = new VerilatedVcdC()\n"
           "    self.main_time = 0\n"
-          "    self.GcdUnitRTL.trace( self.tfp, 99 )\n"
+          "    self.{0}.trace( self.tfp, 99 )\n"
           "    self.tfp.open( 'vlt_dump.vcd' )\n\n"
           "  def __dealloc__(self):\n"
           "    if self.{0}:\n"
@@ -157,7 +157,9 @@ def create_cython( in_ports, out_ports, model_name,
             "      return self.{1}.{0}\n\n".format( signal_name, model_name ))
 
   pyx += ("  def eval(self):\n"
-          "    self.{}.eval()\n".format( model_name ))
+          "    self.{}.eval()\n"
+          "    self.tfp.dump( self.main_time )\n"
+          "    self.main_time = self.main_time + 1".format( model_name ))
 
   f.write( pyx )
   f.close()
