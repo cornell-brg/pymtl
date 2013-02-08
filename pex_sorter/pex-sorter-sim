@@ -128,5 +128,7 @@ def main():
   print model.out[0].value, model.out[1].value, \
         model.out[2].value, model.out[3].value
 
+  print "num_cycles = {}".format( sim.num_cycles  )
+
 main()
 

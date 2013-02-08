@@ -8,6 +8,7 @@ import math
 
 class RegisterFile( Model ):
 
+  @capture_args
   def __init__( self, nbits = 32, nregs = 32, rd_ports = 1 ):
 
     self.rd_ports = rd_ports
@@ -27,18 +28,21 @@ class RegisterFile( Model ):
     for i in xrange( self.rd_ports ):
       # TODO: complains if no uint, list indices must be integers.
       #       How do we make this translatable?
-      addr = self.rd_addr[i].value.uint
-      assert addr < self.nregs
-      self.rd_data[i].value = self.regs[ addr ].value
+      raddr = self.rd_addr[i].value.uint
+      assert raddr < self.nregs
+      self.rd_data[i].value = self.regs[ raddr ].value
 
   @posedge_clk
   def seq_logic( self ):
     if self.wr_en.value:
-      addr = self.wr_addr.value.uint
-      assert addr < self.nregs
-      # TODO: will this translate and synthesize to what we want?
-      #       Or does the read need to have this check?
-      self.regs[ addr ].next = self.wr_data.value
+
+      # TODO: this won't simulate correctly when translated/verilated!!!
+      #       mismatch between Verilog and PyMTL sim semantics...
+      #waddr = self.wr_addr.value.uint
+      #assert waddr < self.nregs
+      #self.regs[ waddr ].next = self.wr_data.value
+
+      self.regs[ self.wr_addr.value.uint ].next = self.wr_data.value
 
   def line_trace( self ):
     return [x.value.uint for x in self.regs]

@@ -12,6 +12,9 @@ pex_gcd_test_srcs = \
   GcdUnitBL_test.py \
   GcdUnitRTL_test.py \
 
+pex_gcd_vtest_srcs = \
+  GcdUnitRTL_v_test.py \
+
 pex_gcd_prog_srcs = \
   pex-gcd-sim \
 

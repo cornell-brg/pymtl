@@ -213,6 +213,10 @@ class SingleElementBypassQueueCtrl (Model):
     # Full bit storage
 
     self.full           = Wire ( 1 )
+    # TODO: figure out how to make these work as temporaries
+    self.do_deq         = Wire ( 1 )
+    self.do_enq         = Wire ( 1 )
+    self.do_bypass      = Wire ( 1 )
 
   @combinational
   def comb( self ):
@@ -237,14 +241,24 @@ class SingleElementBypassQueueCtrl (Model):
     self.deq_val.value        = self.full.value | ( ~self.full.value &
                                 self.enq_val.value )
 
+    # TODO: figure out how to make these work as temporaries
+    # helper signals
+
+    self.do_deq.value    = self.deq_rdy.value and self.deq_val.value
+    self.do_enq.value    = self.enq_rdy.value and self.enq_val.value
+    self.do_bypass.value = (~self.full.value and self.do_deq.value
+                            and self.do_enq.value)
+
   @posedge_clk
   def seq( self ):
 
-    # helper signals
+    # TODO: can't use temporaries here, verilog simulation semantics
+    #       don't match the Python semantics!
+    ## helper signals
 
-    do_deq    = self.deq_rdy.value and self.deq_val.value
-    do_enq    = self.enq_rdy.value and self.enq_val.value
-    do_bypass = ~self.full.value and do_deq and do_enq
+    #do_deq    = self.deq_rdy.value and self.deq_val.value
+    #do_enq    = self.enq_rdy.value and self.enq_val.value
+    #do_bypass = ~self.full.value and do_deq and do_enq
 
     # full bit calculation: the full bit is cleared when a dequeue
     # transaction occurs; the full bit is set when the queue storage is
@@ -252,9 +266,11 @@ class SingleElementBypassQueueCtrl (Model):
 
     if self.reset.value:
       self.full.next = 0
-    elif   do_deq:
+    #elif   do_deq:
+    elif   self.do_deq.value:
       self.full.next = 0
-    elif   do_enq and not do_bypass:
+    #elif   do_enq and not do_bypass:
+    elif   self.do_enq.value and not self.do_bypass.value:
       self.full.next = 1
     else:
       self.full.next = self.full.value
@@ -391,6 +407,9 @@ class NormalQueueCtrl (Model):
     self.deq_ptr          = Wire ( addr_nbits )
     self.enq_ptr_next     = Wire ( addr_nbits )
     self.deq_ptr_next     = Wire ( addr_nbits )
+    # TODO: can't infer these temporaries due to if statement, fix
+    self.enq_ptr_inc      = Wire ( addr_nbits )
+    self.deq_ptr_inc      = Wire ( addr_nbits )
 
   @combinational
   def comb( self ):
@@ -403,26 +422,26 @@ class NormalQueueCtrl (Model):
     # enq ptr incrementer
 
     if self.enq_ptr.value == (self.num_entries - 1):
-      enq_ptr_inc = 0
+      self.enq_ptr_inc.value = 0
     else:
-      enq_ptr_inc = self.enq_ptr.value + 1
+      self.enq_ptr_inc.value = self.enq_ptr.value + 1
 
     # deq ptr incrementer
 
     if self.deq_ptr.value == (self.num_entries - 1):
-      deq_ptr_inc = 0
+      self.deq_ptr_inc.value = 0
     else:
-      deq_ptr_inc = self.deq_ptr.value + 1
+      self.deq_ptr_inc.value = self.deq_ptr.value + 1
 
     # set the next ptr value
 
     if self.do_enq.value:
-      self.enq_ptr_next.value = enq_ptr_inc
+      self.enq_ptr_next.value = self.enq_ptr_inc.value
     else:
       self.enq_ptr_next.value = self.enq_ptr.value
 
     if self.do_deq.value:
-      self.deq_ptr_next.value = deq_ptr_inc
+      self.deq_ptr_next.value = self.deq_ptr_inc.value
     else:
       self.deq_ptr_next.value = self.deq_ptr.value
 
@@ -552,6 +571,7 @@ class NormalQueue ( Model ):
 
 class SingleElementPipelinedQueueDpath (Model):
 
+  @capture_args
   def __init__( self, data_nbits ):
 
     # Interface Ports
@@ -579,6 +599,7 @@ class SingleElementPipelinedQueueDpath (Model):
 
 class SingleElementPipelinedQueueCtrl (Model):
 
+  @capture_args
   def __init__( self ):
 
     # Interface Ports
@@ -650,6 +671,7 @@ class SingleElementPipelinedQueueCtrl (Model):
 
 class SingleElementPipelinedQueue (Model):
 
+  @capture_args
   def __init__( self, data_nbits ):
 
     # Interface Ports

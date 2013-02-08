@@ -50,6 +50,21 @@ class TemporariesVisitor(ast.NodeVisitor):
       self.in_logic = False
 
   #-----------------------------------------------------------------------
+  # For Loops
+  #-----------------------------------------------------------------------
+
+  def visit_For(self, node):
+    if not self.in_logic:
+      return
+    # TODO: create new list of iterators?
+    var_name = node.target.id
+    if var_name not in self.model._loopvars:
+      self.model._loopvars.append( var_name )
+    # TODO: add support for temporaries declared in for loop
+    for x in node.body:
+      self.visit(x)
+
+  #-----------------------------------------------------------------------
   # Function Calls
   #-----------------------------------------------------------------------
 
@@ -115,7 +130,7 @@ class TemporariesVisitor(ast.NodeVisitor):
     # We are trying to write to a submodule's ports, mark these as regs
     # TODO: move to RegisterVisitor?
     # TODO: HACKY
-    elif '$' in target_name:
+    elif '_M_' in target_name:
       self.model._tempregs += [ target_name ]
 
     # TODO: move to RegisterVisitor?
@@ -128,9 +143,13 @@ class TemporariesVisitor(ast.NodeVisitor):
 
   def get_signal_type(self, signal_name):
 
-    if '$' in signal_name:
-      module_name, signal = signal_name.split('$')
+    if '_M_' in signal_name:
+      module_name, signal = signal_name.split('_M_')
       module = self.model.__dict__[ module_name ]
+    elif '[' in signal_name:
+      signal_list_name, idx = signal_name.split('[')
+      signal_list = self.model.__dict__[ signal_list_name ]
+      return signal_list[0]
     else:
       signal = signal_name
       module = self.model
@@ -178,19 +197,16 @@ class TemporariesVisitor(ast.NodeVisitor):
   # TODO: move to RegisterVisitor?
   # TODO: HACKY
   def visit_Name(self, node):
+    # We found a temporary being referenced by another temporary,
+    # add it to our type_stack
+    if self.inferring:
+      rhs_name, rhs_debug = get_target_name(node)
+      temp_type = self.model._tempwires[ rhs_name ]
+      self.type_stack.append( temp_type )
     # If we find global constants (all caps), make them localparams
-    if node.id.isupper():
+    elif node.id.isupper():
       node_value = self.func_ptr.func_globals[ node.id ]
       self.model._localparams.add( (node.id, node_value) )
-
-  # TODO: move to TemporaryArrayVisitor?
-  # TODO: HACKY
-  def visit_Subscript(self, node):
-    # If we find any attributes that have subscripts (array indexing)
-    # we need to create a temporary array and then assign each individual
-    # input port to the array
-    if node.value.attr not in self.model._temparrays:
-      self.model._temparrays += [ node.value.attr ]
 
 #=========================================================================
 # Python to Verilog Logic Translation
@@ -305,11 +321,12 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     Parenthesis are placed around every operator along with its args to ensure
     that the order of operations are preserved.
     """
-    assert len(node.values) == 2
     print >> self.o, '(',
-    self.visit(node.values[0])
-    print >> self.o, PyToVerilogVisitor.opmap[type(node.op)],
-    self.visit(node.values[1])
+    num_nodes = len(node.values)
+    for i in range( num_nodes - 1 ):
+      self.visit( node.values[i] )
+      print >> self.o, PyToVerilogVisitor.opmap[type(node.op)],
+    self.visit( node.values[ num_nodes - 1 ] )
     print >> self.o, ')',
 
   #-----------------------------------------------------------------------
@@ -414,6 +431,38 @@ class PyToVerilogVisitor(ast.NodeVisitor):
     print >> self.o, ")",
 
   #-----------------------------------------------------------------------
+  # For Loops
+  #-----------------------------------------------------------------------
+
+  def visit_For(self, node):
+    #if self.write_names:
+    i = node.target.id
+    iter = node.iter
+    assert iter.func.id in ['range', 'xrange']
+    assert len( iter.args ) == 1
+    start = 0
+    step  = 1
+    if   isinstance(iter.args[0], _ast.Num):
+      end   = iter.args[0].n
+    elif isinstance(iter.args[0], _ast.Attribute):
+      end   = iter.args[0].attr
+    else:
+      raise Exception("Unsupported parameter to range()!")
+    templ = "    for( {0} = {1}; {0} < {2}; {0} = {0} + {3} )"
+    #print >> self.o, "    integer {};".format( i ) # TODO: move above
+    print >> self.o, templ.format( i, start, end, step )
+    print >> self.o, "    begin"
+    for x in node.body:
+      self.visit(x)
+    print >> self.o, "    end"
+    #if self.write_names:
+    #  #target_name, debug = get_target_name(node.value)
+    #  #print >> self.o, "{}[".format( target_name ),
+    #  #self.visit(node.slice)
+    #  #print >> self.o, "]",
+    #  ##print "  @@@@@",  node.slice
+
+  #-----------------------------------------------------------------------
   # Bit Slices
   #-----------------------------------------------------------------------
 
@@ -492,8 +541,8 @@ class PyToVerilogVisitor(ast.NodeVisitor):
 
   def get_signal_type(self, signal_name):
 
-    if '$' in signal_name:
-      module_name, signal = signal_name.split('$')
+    if '_M_' in signal_name:
+      module_name, signal = signal_name.split('_M_')
       module = self.model.__dict__[ module_name ]
     else:
       signal = signal_name
@@ -553,9 +602,11 @@ class FindRegistersVisitor(ast.NodeVisitor):
       # and should be marked as is_reg, or c) belongs to a PortBundle and
       # should be markes as is_reg.
       if (len( target_list ) == 1 or isinstance( target_list[-1], int )
-         or isinstance( get_target_ptr( self.model, target_list[:-1] ), PortBundle )):
+         or isinstance( get_target_ptr( self.model, target_list[:-1] ), PortBundle )
+         or target_list[-1] == '?'):
         x = get_target_ptr( self.model, target_list )
-        x.is_reg = True
+        if not isinstance( x, list ):
+          x.is_reg = True
       #else:
       #  print "## LEN > 1", target_list
       #  #self.model._tempregs += [ target_name ]
@@ -579,12 +630,16 @@ def get_target_name(node):
       node = node.value
     elif isinstance(node, _ast.Subscript):
       # assumes this is an integer, not a range
-      if isinstance( node.slice.value, _ast.Num ):
-        name += [ node.slice.value.n ]
+      if isinstance( node.slice, _ast.Index ):
+        name += [ [node_to_str( node.slice.value )] ]
         node = node.value
-      elif isinstance( node.slice.value, _ast.Attribute ):
-        slice_idx, debug = get_target_name( node.slice.value )
-        name += [ [slice_idx] ]
+      elif isinstance( node.slice, _ast.Slice):
+        if node.slice.step:
+          raise Exception("Slice ranges are not supported for translation!")
+        first  = node_to_str( node.slice.upper )
+        second = node_to_str( node.slice.lower )
+        idx = '({} - 1):{}'.format( first, second )
+        name += [ [idx] ]
         node = node.value
       else:
         raise Exception("Untranslatable array/slice index!")
@@ -597,26 +652,55 @@ def get_target_name(node):
   if name[0] in ['value', 'next']:
     # TODO: very very hacky!!!! Fix me!
     try:
-      return '$'.join( name[::-1][1:-1] ), True
+      return '_M_'.join( name[::-1][1:-1] ), True
     except TypeError:
       s = ''
       for x in name[::-1][1:-1]:
-        if   isinstance(x, str):  s += '$' + x
-        elif isinstance(x, list): s += 'IDX[' + x[0] + ']'
-        else:                     s += 'IDX' + str(x)
-      return s[1:], True
-  elif name[0] in ['uint', 'int', 'sext', 'zext']:
+        if   isinstance(x, str):
+          s += '_M_' + x
+        elif isinstance(x, list):
+          s += '[' + x[0] + ']'
+        #else:                     s += 'IDX' + str(x)
+        else:
+          raise Exception("Not supposed to reach here!")
+      return s[3:], True
+  elif name[0] in ['sext', 'zext']:
+    # TODO: very very hacky!!!! Fix me!
+    return name[0], True
+  elif name[0] in ['uint', 'int']:
     # TODO: very very hacky!!!! Fix me!
     try:
-      return '$'.join( name[::-1][1:-2] ), True
+      return '_M_'.join( name[::-1][1:-2] ), True
     except TypeError:
       s = ''
-      for x in name[::-1][1:-1]:
-        if isinstance(x, str):  s += '$' + x
-        else:                   s += 'IDX' + str(x)
-      return s[1:], True
+      for x in name[::-1][1:-2]:
+        if   isinstance(x, str):
+          s += '_M_' + x
+        elif isinstance(x, list):
+          s += '[' + x[0] + ']'
+        #else:                     s += 'IDX' + str(x)
+        else:
+          raise Exception("Not supposed to reach here!")
+      return s[3:], True
   else:
     return name[0], False
+
+def node_to_str( node ):
+  if isinstance( node, _ast.Num ):
+    return str( node.n )
+  elif isinstance( node, _ast.Attribute ):
+    slice_idx, debug = get_target_name( node)
+    return slice_idx
+  elif isinstance( node, _ast.Name ):
+    return node.id
+  else:
+    import StringIO
+    x = StringIO.StringIO()
+    y = PyToVerilogVisitor( None, x )
+    y.write_names = True
+    y.visit( node )
+    return x.getvalue()
+    #raise Exception("Untranslatable array/slice index!")
 
 
 # TODO: SUPER HACKY, replace
@@ -635,8 +719,13 @@ def get_target_list(node):
       node = node.value
     elif isinstance(node, _ast.Subscript):
       # TODO: assumes this is an integer, not a range
-      name += [ node.slice.value.n ]
-      node = node.value
+      if (isinstance( node.slice, _ast.Index) and
+          isinstance( node.slice.value, _ast.Num )):
+        name += [ node.slice.value.n ]
+        node = node.value
+      else:
+        name += [ '?' ]
+        node = node.value
 
   # We've found the Name.
   assert isinstance(node, _ast.Name)
@@ -652,8 +741,11 @@ def get_target_list(node):
 def get_target_ptr( model, target_list ):
   obj = model
   for attr in target_list:
+    # TODO: ? support
     if isinstance(attr, int):
-      obj = obj[ attr ]
+      if not isinstance( obj[attr], ConnectionSlice):
+        obj = obj[ attr ]
     else:
-      obj = obj.__getattribute__( attr )
+      if not attr == '?':
+        obj = obj.__getattribute__( attr )
   return obj

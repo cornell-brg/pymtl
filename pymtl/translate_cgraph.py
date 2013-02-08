@@ -49,14 +49,17 @@ class ConnectionGraphToVerilog(object):
       self.gen_impl_wire_assigns( model, submodule, o )
       self.gen_module_insts( submodule, o )
 
+    # Declare Wire Arrays
+    if model._temparrays: self.gen_temparrays( model, o )
+
     # Assignment Statments
     if model.get_ports(): self.gen_output_assigns( model, o )
 
-    # Declare Temporary Arrays
-    if model._temparrays: self.gen_temparrays( model, o )
-
-    # Declare Temporary Arrays
+    # Declare Temporary Wires
     if model._tempwires: self.gen_temp_decls( model, o )
+
+    # Declare Loop Variables
+    if model._loopvars: self.gen_loopvar_decls( model, o )
 
     # Logic
     self.gen_logic_blocks( model, o )
@@ -91,7 +94,7 @@ class ConnectionGraphToVerilog(object):
     # If the node's parent module isn't the same as the current module
     # we need to prefix the signal name with the module name
     if node.parent != context and node.parent != None:
-      prefix = "{}$".format( node.parent.name )
+      prefix = "{}_M_".format( node.parent.name )
     else:
       prefix = ""
 
@@ -130,11 +133,21 @@ class ConnectionGraphToVerilog(object):
       return "{} [{}:0] {};".format( w_type, w.width-1, w.verilog_name() )
 
   #-----------------------------------------------------------------------
+  # Connection Sort: Sort Connections Based on Destination Node Name
+  #-----------------------------------------------------------------------
+
+  def connect_sort( self, x, y ):
+    if x.dest_node.name == y.dest_node.name:
+      return cmp( x.dest_slice, y.dest_slice )
+    else:
+      return cmp( x.dest_node.name, y.dest_node.name )
+
+  #-----------------------------------------------------------------------
   # Implied Wire Name
   #-----------------------------------------------------------------------
 
   def mk_impl_wire_name( self, submodule_name, port_name ):
-    return '{0}${1}'.format( submodule_name, port_name )
+    return '{0}_M_{1}'.format( submodule_name, port_name )
 
   #-----------------------------------------------------------------------
   # Infer Implied Wires
@@ -203,7 +216,11 @@ class ConnectionGraphToVerilog(object):
   def gen_impl_wire_assigns(self, m, submodule, o):
     print >> o, '\n  // {} input assignments'.format( submodule.name )
     for port in submodule.get_inports():
-      for edge in port.ext_connections:
+      # Note: sorting the connections helps ensures translations are
+      #       deterministic, which is needed by our caching mechanism.
+      sorted_ext = sorted( port.ext_connections, cmp=self.connect_sort )
+      #for edge in port.ext_connections:
+      for edge in sorted_ext:
         left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
         right = self.mk_signal_str( edge.src_node,  edge.src_slice,  m )
         print  >> o, "  assign {0} = {1};".format(left, right)
@@ -217,6 +234,9 @@ class ConnectionGraphToVerilog(object):
     # TODO: test register inference
     print >> o, '\n  // explicit wires'
     for w in wires:
+
+      if '[' in w.name:
+        continue
 
       # Declare the wire
       reg = 'reg' if w.is_reg else 'wire'
@@ -243,19 +263,24 @@ class ConnectionGraphToVerilog(object):
   def gen_temparrays(self, model, o):
     """Generate Verilog source for temporaries used."""
 
-    print >> o, '\n  // temporary input arrays'
+    print >> o, '\n  // temporary arrays for port lists'
     for name in model._temparrays:
       port_list = model.__dict__[ name ]
       width  = port_list[0].width
       nports = len( port_list )
+      # Declare the array
+      t = 'wire' if isinstance( port_list[0], InPort ) else 'reg'
+      if width == 1:
+        print >> o, "  %s %s [0:%d];" % (t, name, nports-1 )
+      else :
+        print >> o, "  %s [%d:0] %s [0:%d];" % (t, width-1, name, nports-1)
       # TODO: implement OutPort array assignments
-      if isinstance( port_list[0], InPort ):
-        if width == 1:
-          print >> o, "  wire %sIDX [0:%d];" % (name, nports-1 )
-        else :
-          print >> o, "  wire [%d:0] %sIDX [0:%d];" % (width-1, name, nports-1)
+      if   isinstance( port_list[0], InPort ):
         for i in range( nports ):
-          print >> o, "  assign %sIDX[%d] = %sIDX%d;" % (name, i, name, i)
+          print >> o, "  assign %s[%d] = %sIDX%d;" % (name, i, name, i)
+      elif isinstance( port_list[0], OutPort ):
+        for i in range( nports ):
+          print >> o, "  assign %sIDX%d = %s[%d];" % (name, i, name, i)
 
       print >> o
 
@@ -274,6 +299,17 @@ class ConnectionGraphToVerilog(object):
     print >> o
 
   #-----------------------------------------------------------------------
+  # Generate Loop Variable Declarations
+  #-----------------------------------------------------------------------
+
+  def gen_loopvar_decls(self, model, o):
+    """Generate Verilog source for temporaries used."""
+    print >> o, '  // loop variables'
+    for name in model._loopvars:
+      print >> o, "  integer {};".format( name )
+    print >> o
+
+  #-----------------------------------------------------------------------
   # Generate Assignments to Output Ports
   #-----------------------------------------------------------------------
 
@@ -281,8 +317,12 @@ class ConnectionGraphToVerilog(object):
     """Generate Verilog source for assignment statements."""
     print >> o, '\n  // output assignments'
     for port in m.get_outports():
+      # Note: sorting the connections helps ensures translations are
+      #       deterministic, which is needed by our caching mechanism.
+      sorted_int = sorted( port.int_connections, cmp=self.connect_sort )
       # Note: multiple assigns should only occur on slicing
-      for edge in port.int_connections:
+      #for edge in port.int_connections:
+      for edge in sorted_int:
         left  = self.mk_signal_str( edge.dest_node, edge.dest_slice, m )
         right = self.mk_signal_str( edge.src_node,  edge.src_slice,  m )
         print  >> o, "  assign {0} = {1};".format(left, right)

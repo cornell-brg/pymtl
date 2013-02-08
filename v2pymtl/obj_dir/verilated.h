@@ -1,7 +1,7 @@
-// -*- C++ -*-
+// -*- mode: C++; c-file-style: "cc-mode" -*-
 //*************************************************************************
 //
-// Copyright 2003-2010 by Wilson Snyder. This program is free software; you can
+// Copyright 2003-2012 by Wilson Snyder. This program is free software; you can
 // redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License.
 // Version 2.0.
@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 // <iostream> avoided to reduce compile time
 // <string> avoided and instead in verilated_heavy.h to reduce compile time
 using namespace std;
@@ -218,14 +219,18 @@ struct Verilated {
     // MEMBERS
 private:
     // Slow path variables
-    static int		s_randReset;		///< Random reset: 0=all 0s, 1=all 1s, 2=random
     static VerilatedVoidCb  s_flushCb;		///< Flush callback function
 
-    // Fast path
-    static int		s_debug;		///< See accessors... only when VL_DEBUG set
-    static bool		s_calcUnusedSigs;	///< Waves file on, need all signals calculated
-    static bool		s_gotFinish;		///< A $finish statement executed
-    static bool		s_assertOn;		///< Assertions are enabled
+    static struct Serialized {   // All these members serialized/deserialized
+	// Slow path
+	int		s_randReset;		///< Random reset: 0=all 0s, 1=all 1s, 2=random
+	// Fast path
+	int		s_debug;		///< See accessors... only when VL_DEBUG set
+	bool		s_calcUnusedSigs;	///< Waves file on, need all signals calculated
+	bool		s_gotFinish;		///< A $finish statement executed
+	bool		s_assertOn;		///< Assertions are enabled
+	Serialized();
+    } s_s;
 
     static VL_THREAD const VerilatedScope* t_dpiScopep;	///< DPI context scope
     static VL_THREAD const char*	t_dpiFilename;	///< DPI context filename
@@ -240,29 +245,29 @@ public:
     /// 0 = Set to zeros
     /// 1 = Set all bits to one
     /// 2 = Randomize all bits
-    static void randReset(int val) { s_randReset=val; }
-    static int  randReset() { return s_randReset; }	///< Return randReset value
+    static void randReset(int val) { s_s.s_randReset=val; }
+    static int  randReset() { return s_s.s_randReset; }	///< Return randReset value
 
     /// Enable debug of internal verilated code
-    static inline void debug(int level) { s_debug = level; }
+    static inline void debug(int level) { s_s.s_debug = level; }
 #ifdef VL_DEBUG
-    static inline int  debug() { return s_debug; }	///< Return debug value
+    static inline int  debug() { return s_s.s_debug; }	///< Return debug value
 #else
     static inline int  debug() { return 0; }		///< Constant 0 debug, so C++'s optimizer rips up
 #endif
     /// Enable calculation of unused signals
-    static void calcUnusedSigs(bool flag) { s_calcUnusedSigs=flag; }
-    static bool calcUnusedSigs() { return s_calcUnusedSigs; }	///< Return calcUnusedSigs value
+    static void calcUnusedSigs(bool flag) { s_s.s_calcUnusedSigs=flag; }
+    static bool calcUnusedSigs() { return s_s.s_calcUnusedSigs; }	///< Return calcUnusedSigs value
     /// Did the simulation $finish?
-    static void gotFinish(bool flag) { s_gotFinish=flag; }
-    static bool gotFinish() { return s_gotFinish; }	///< Return if got a $finish
+    static void gotFinish(bool flag) { s_s.s_gotFinish=flag; }
+    static bool gotFinish() { return s_s.s_gotFinish; }	///< Return if got a $finish
     /// Allow traces to at some point be enabled (disables some optimizations)
     static void traceEverOn(bool flag) {
 	if (flag) { calcUnusedSigs(flag); }
     }
     /// Enable/disable assertions
-    static void assertOn(bool flag) { s_assertOn=flag; }
-    static bool assertOn() { return s_assertOn; }
+    static void assertOn(bool flag) { s_s.s_assertOn=flag; }
+    static bool assertOn() { return s_s.s_assertOn; }
     /// Flush callback for VCD waves
     static void flushCb(VerilatedVoidCb cb);
     static void flushCall() { if (s_flushCb) (*s_flushCb)(); }
@@ -270,6 +275,7 @@ public:
     /// Record command line arguments, for retrieval by $test$plusargs/$value$plusargs
     static void commandArgs(int argc, const char** argv);
     static void commandArgs(int argc, char** argv) { commandArgs(argc,(const char**)argv); }
+    static const char* commandArgsPlusMatch(const char* prefixp);
 
     /// For debugging, print text list of all scope names with
     /// dpiImport/Export context.  This function may change in future
@@ -291,6 +297,8 @@ public:
     static const char* dpiFilenamep() { return t_dpiFilename; }
     static int dpiLineno() { return t_dpiLineno; }
     static int exportFuncNum(const char* namep);
+    static size_t serializedSize() { return sizeof(s_s); }
+    static void* serializedPtr() { return &s_s; }
 };
 
 //=========================================================================
@@ -321,11 +329,14 @@ extern WDataOutP VL_ZERO_RESET_W(int obits, WDataOutP outwp);	///< Zero reset a 
 extern WDataOutP _vl_moddiv_w(int lbits, WDataOutP owp, WDataInP lwp, WDataInP rwp, bool is_modulus);
 
 /// File I/O
-extern IData VL_FGETS_IXQ(int obits, void* destp, QData fpq);
+extern IData VL_FGETS_IXI(int obits, void* destp, IData fpi);
 
-extern QData VL_FOPEN_WI(int fnwords, WDataInP ofilename, IData mode);
-extern QData VL_FOPEN_QI(QData ofilename, IData mode);
-inline QData VL_FOPEN_II(IData ofilename, IData mode) { return VL_FOPEN_QI(ofilename,mode); }
+extern IData VL_FOPEN_S(const char* filenamep, const char* mode);
+extern IData VL_FOPEN_WI(int fnwords, WDataInP ofilename, IData mode);
+extern IData VL_FOPEN_QI(QData ofilename, IData mode);
+inline IData VL_FOPEN_II(IData ofilename, IData mode) { return VL_FOPEN_QI(ofilename,mode); }
+
+extern void VL_FCLOSE_I(IData fdi);
 
 extern void VL_READMEM_W(bool hex, int width, int depth, int array_lsb, int fnwords,
 			 WDataInP ofilename, void* memp, IData start, IData end);
@@ -336,14 +347,18 @@ inline void VL_READMEM_I(bool hex, int width, int depth, int array_lsb, int fnwo
     VL_READMEM_Q(hex, width,depth,array_lsb,fnwords, ofilename,memp,start,end); }
 
 extern void VL_WRITEF(const char* formatp, ...);
-extern void VL_FWRITEF(QData fpq, const char* formatp, ...);
+extern void VL_FWRITEF(IData fpi, const char* formatp, ...);
 
-extern IData VL_FSCANF_IX(QData fpq, const char* formatp, ...);
+extern IData VL_FSCANF_IX(IData fpi, const char* formatp, ...);
 extern IData VL_SSCANF_IIX(int lbits, IData ld, const char* formatp, ...);
 extern IData VL_SSCANF_IQX(int lbits, QData ld, const char* formatp, ...);
 extern IData VL_SSCANF_IWX(int lbits, WDataInP lwp, const char* formatp, ...);
 
 extern void VL_SFORMAT_X(int obits, void* destp, const char* formatp, ...);
+
+extern IData VL_SYSTEM_IW(int lhsnwords, WDataInP lhs);
+extern IData VL_SYSTEM_IQ(QData lhs);
+inline IData VL_SYSTEM_II(IData lhs) { return VL_SYSTEM_IQ(lhs); }
 
 extern IData VL_TESTPLUSARGS_I(const char* formatp);
 extern IData VL_VALUEPLUSARGS_IW(int rbits, const char* prefixp, char fmt, WDataOutP rwp);
@@ -364,15 +379,24 @@ extern const char* vl_mc_scan_plusargs(const char* prefixp);  // PLIish
 #define VL_SET_QW(lwp)		( ((QData)(lwp[0])) | ((QData)(lwp[1])<<((QData)(VL_WORDSIZE)) ))
 #define _VL_SET_QII(ld,rd)      ( ((QData)(ld)<<VL_ULL(32)) | (QData)(rd) )
 
+/// Return FILE* from IData
+extern FILE*  VL_CVT_I_FP(IData lhs);
+
 // Use a union to avoid cast-to-different-size warnings
-/// Return FILE* from QData
-static inline FILE*  VL_CVT_Q_FP(QData lhs) { union { FILE* fp; QData q; } u; u.q=lhs; return u.fp; }
 /// Return void* from QData
 static inline void*  VL_CVT_Q_VP(QData lhs) { union { void* fp; QData q; } u; u.q=lhs; return u.fp; }
-/// Return QData from FILE*
-static inline QData  VL_CVT_FP_Q(FILE* fp) { union { FILE* fp; QData q; } u; u.q=0; u.fp=fp; return u.q; }
 /// Return QData from void*
 static inline QData  VL_CVT_VP_Q(void* fp) { union { void* fp; QData q; } u; u.q=0; u.fp=fp; return u.q; }
+/// Return double from QData (bits, not numerically)
+static inline double VL_CVT_D_Q(QData lhs) { union { double d; QData q; } u; u.q=lhs; return u.d; }
+/// Return QData from double (bits, not numerically)
+static inline QData  VL_CVT_Q_D(double lhs) { union { double d; QData q; } u; u.d=lhs; return u.q; }
+/// Return double from QData (numeric)
+static inline double VL_ITOR_D_I(IData lhs) { return ((double)((vlsint32_t)(lhs))); }
+/// Return QData from double (numeric)
+static inline IData  VL_RTOI_I_D(double lhs) { return ((vlsint32_t)(VL_TRUNC(lhs))); }
+/// Return QData from double (numeric)
+static inline IData  VL_RTOIROUND_I_D(double lhs) { return ((vlsint32_t)(VL_ROUND(lhs))); }
 
 // Sign extend such that if MSB set, we get ffff_ffff, else 0s
 // (Requires clean input)
@@ -391,6 +415,9 @@ void _VL_DEBUG_PRINT_W(int lbits, WDataInP iwp);
 //=========================================================================
 // Pli macros
 
+#ifndef VL_TIME_PRECISION
+# define VL_TIME_PRECISION -12	///< Timescale units only for for VPI return - picoseconds
+#endif
 #ifndef VL_TIME_MULTIPLIER
 # define VL_TIME_MULTIPLIER 1
 #endif
@@ -399,9 +426,11 @@ void _VL_DEBUG_PRINT_W(int lbits, WDataInP iwp);
 #if defined(SYSTEMC_VERSION) && (SYSTEMC_VERSION>20011000)
 # define VL_TIME_I() ((IData)(sc_time_stamp().to_default_time_units()*VL_TIME_MULTIPLIER))
 # define VL_TIME_Q() ((QData)(sc_time_stamp().to_default_time_units()*VL_TIME_MULTIPLIER))
+# define VL_TIME_D() ((double)(sc_time_stamp().to_default_time_units()*VL_TIME_MULTIPLIER))
 #else
 # define VL_TIME_I() ((IData)(sc_time_stamp()*VL_TIME_MULTIPLIER))
 # define VL_TIME_Q() ((QData)(sc_time_stamp()*VL_TIME_MULTIPLIER))
+# define VL_TIME_D() ((double)(sc_time_stamp()*VL_TIME_MULTIPLIER))
 extern double sc_time_stamp();
 #endif
 
@@ -942,16 +971,13 @@ static inline WDataOutP VL_SUB_W(int words, WDataOutP owp,WDataInP lwp,WDataInP 
     return(owp);
 }
 
-// Optimization bug in GCC 2.96 and presumably all-pre GCC 3 versions need this workaround
-#if 1 //defined(__GNUC__) && __GNUC__ < 3
-static inline IData  VL_UNARYMIN_I(IData data) { return -data; }
-static inline QData  VL_UNARYMIN_Q(QData data) { return -data; }
-#else
-# define VL_UNARYMIN_I(IData data) (-(data))
-# define VL_UNARYMIN_Q(QData data) (-(data))
-#endif
+// Optimization bug in GCC 2.96 and presumably all-pre GCC 3 versions need this workaround,
+// we can't just
+//# define VL_NEGATE_I(data) (-(data))
+static inline IData  VL_NEGATE_I(IData data) { return -data; }
+static inline QData  VL_NEGATE_Q(QData data) { return -data; }
 
-static inline WDataOutP VL_UNARYMIN_W(int words, WDataOutP owp,WDataInP lwp){
+static inline WDataOutP VL_NEGATE_W(int words, WDataOutP owp,WDataInP lwp){
     QData carry = 0;
     for (int i=0; i<words; i++) {
 	carry = carry + (QData)(IData)(~lwp[i]);
@@ -998,18 +1024,18 @@ static inline WDataOutP VL_MULS_WWW(int,int lbits,int, WDataOutP owp,WDataInP lw
     IData lneg = VL_SIGN_I(lbits,lwp[words-1]);
     if (lneg) { // Negate lhs
 	lwusp = lwstore;
-	VL_UNARYMIN_W(words, lwstore, lwp);
+	VL_NEGATE_W(words, lwstore, lwp);
 	lwstore[words-1] &= VL_MASK_I(lbits);  // Clean it
     }
     IData rneg = VL_SIGN_I(lbits,rwp[words-1]);
     if (rneg) { // Negate rhs
 	rwusp = rwstore;
-	VL_UNARYMIN_W(words, rwstore, rwp);
+	VL_NEGATE_W(words, rwstore, rwp);
 	rwstore[words-1] &= VL_MASK_I(lbits);  // Clean it
     }
     VL_MUL_W(words,owp,lwusp,rwusp);
     owp[words-1] &= VL_MASK_I(lbits);  // Clean.  Note it's ok for the multiply to overflow into the sign bit
-    if ((lneg ^ rneg) & 1) {      // Negate output  (not using UNARYMIN, as owp==lwp)
+    if ((lneg ^ rneg) & 1) {      // Negate output  (not using NEGATE, as owp==lwp)
 	QData carry = 0;
 	for (int i=0; i<words; i++) {
 	    carry = carry + (QData)(IData)(~owp[i]);
@@ -1056,12 +1082,12 @@ static inline WDataOutP VL_DIVS_WWW(int lbits, WDataOutP owp,WDataInP lwp,WDataI
     IData rwstore[VL_MULS_MAX_WORDS];
     WDataInP ltup = lwp;
     WDataInP rtup = rwp;
-    if (lsign) { ltup = _VL_CLEAN_INPLACE_W(lbits, VL_UNARYMIN_W(VL_WORDS_I(lbits), lwstore, lwp)); }
-    if (rsign) { rtup = _VL_CLEAN_INPLACE_W(lbits, VL_UNARYMIN_W(VL_WORDS_I(lbits), rwstore, rwp)); }
+    if (lsign) { ltup = _VL_CLEAN_INPLACE_W(lbits, VL_NEGATE_W(VL_WORDS_I(lbits), lwstore, lwp)); }
+    if (rsign) { rtup = _VL_CLEAN_INPLACE_W(lbits, VL_NEGATE_W(VL_WORDS_I(lbits), rwstore, rwp)); }
     if ((lsign && !rsign) || (!lsign && rsign)) {
 	IData qNoSign[VL_MULS_MAX_WORDS];
 	VL_DIV_WWW(lbits,qNoSign,ltup,rtup);
-	_VL_CLEAN_INPLACE_W(lbits, VL_UNARYMIN_W(VL_WORDS_I(lbits), owp, qNoSign));
+	_VL_CLEAN_INPLACE_W(lbits, VL_NEGATE_W(VL_WORDS_I(lbits), owp, qNoSign));
 	return owp;
     } else {
 	return VL_DIV_WWW(lbits,owp,ltup,rtup);
@@ -1075,12 +1101,12 @@ static inline WDataOutP VL_MODDIVS_WWW(int lbits, WDataOutP owp,WDataInP lwp,WDa
     IData rwstore[VL_MULS_MAX_WORDS];
     WDataInP ltup = lwp;
     WDataInP rtup = rwp;
-    if (lsign) { ltup = _VL_CLEAN_INPLACE_W(lbits, VL_UNARYMIN_W(VL_WORDS_I(lbits), lwstore, lwp)); }
-    if (rsign) { rtup = _VL_CLEAN_INPLACE_W(lbits, VL_UNARYMIN_W(VL_WORDS_I(lbits), rwstore, rwp)); }
+    if (lsign) { ltup = _VL_CLEAN_INPLACE_W(lbits, VL_NEGATE_W(VL_WORDS_I(lbits), lwstore, lwp)); }
+    if (rsign) { rtup = _VL_CLEAN_INPLACE_W(lbits, VL_NEGATE_W(VL_WORDS_I(lbits), rwstore, rwp)); }
     if (lsign) {  // Only dividend sign matters for modulus
 	IData qNoSign[VL_MULS_MAX_WORDS];
 	VL_MODDIV_WWW(lbits,qNoSign,ltup,rtup);
-	_VL_CLEAN_INPLACE_W(lbits, VL_UNARYMIN_W(VL_WORDS_I(lbits), owp, qNoSign));
+	_VL_CLEAN_INPLACE_W(lbits, VL_NEGATE_W(VL_WORDS_I(lbits), owp, qNoSign));
 	return owp;
     } else {
 	return VL_MODDIV_WWW(lbits,owp,ltup,rtup);
@@ -1633,6 +1659,6 @@ static inline WDataOutP VL_CONST_W_9X(int obits, WDataOutP o,
 
 #undef _END
 
-// Debugging
+//======================================================================
 
 #endif /*_VERILATED_H_*/

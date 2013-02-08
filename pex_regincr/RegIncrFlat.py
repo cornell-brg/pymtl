@@ -28,7 +28,7 @@ class RegIncrFlat( Model ):
 
     # Instantiate intermediate wires
 
-    self.reg = Wire(16)
+    self.reg_ = Wire(16)
 
   #-----------------------------------------------------------------------
   # Register
@@ -42,7 +42,7 @@ class RegIncrFlat( Model ):
 
   @posedge_clk
   def register( self ):
-    self.reg.next = self.in_.value
+    self.reg_.next = self.in_.value
 
   #-----------------------------------------------------------------------
   # Incrementer
@@ -56,7 +56,7 @@ class RegIncrFlat( Model ):
 
   @combinational
   def incrementer( self ):
-    self.out.value = self.reg.value + 1
+    self.out.value = self.reg_.value + 1
 
   #-----------------------------------------------------------------------
   # line_trace
@@ -68,5 +68,5 @@ class RegIncrFlat( Model ):
 
   def line_trace( self ):
     return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.value.uint, self.reg.value.uint, self.out.value.uint )
+      .format( self.in_.value.uint, self.reg_.value.uint, self.out.value.uint )
 

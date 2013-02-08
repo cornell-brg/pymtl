@@ -1,10 +1,347 @@
 #!/usr/bin/env python
+#=========================================================================
+# Verilate and Cythonize Translated PyMTL Models
+#=========================================================================
 
 import fileinput
 import sys
 import re
 import os
 import math
+
+
+#-------------------------------------------------------------------------
+# Verilate Translated PyMTL Model
+#-------------------------------------------------------------------------
+
+def verilate_model( filename, model_name ):
+  # Verilate the translated module (warnings suppressed)
+  os.system( 'verilator -cc {0} -top-module {1} -trace -Wno-lint '
+             '-Wno-UNOPTFLAT'.format( filename, model_name ) )
+
+#-------------------------------------------------------------------------
+# Cythonize Verilated Model
+#-------------------------------------------------------------------------
+
+def cythonize_model():
+  # Cythonize the verilated module
+  os.system( 'python setup.py build_ext -i -f' )
+
+#-------------------------------------------------------------------------
+# Get PyMTL Model Ports
+#-------------------------------------------------------------------------
+
+def get_model_ports( model_name ):
+  # TODO: clean this up, this is getting really messy...
+  # Import the specified module
+  # If we received a module name from the commandline, we need to import
+  if isinstance( model_name, str ):
+    __import__( model_name )
+    imported_module = sys.modules[ model_name ]
+    model_class = imported_module.__dict__[ model_name ]
+    model_inst = model_class()
+    model_inst.elaborate()
+  # We received a model class definition (not an instance!)
+  elif isinstance( model_name, type ):
+    model_class = model_name
+    model_inst = model_class()
+    model_inst.elaborate()
+  # Otherwise we received a model instance!
+  else:
+    model_inst = model_name
+
+  # Collect the input/output ports
+  in_ports = model_inst.get_inports()
+  out_ports = model_inst.get_outports()
+
+  in_ports = [ ( p.verilog_name(), str( p.width ) )
+               for p in in_ports
+               if not p.verilog_name() in [ 'clk', 'reset' ] ]
+  out_ports = [ ( p.verilog_name(), str( p.width ) ) for p in out_ports ]
+
+  return in_ports, out_ports
+
+#-------------------------------------------------------------------------
+# Create Cython File
+#-------------------------------------------------------------------------
+
+def create_cython( in_ports, out_ports, model_name,
+                   filename_pyx, vobj_name ):
+  # Generate the Cython source code
+  f = open( filename_pyx, 'w' )
+
+  pyx = ("from pymtl import *\n\n"
+         "cdef extern from 'verilated_vcd_c.h':\n"
+         "  cdef cppclass VerilatedVcdC:\n"
+         "    void open( char* )\n"
+         "    void dump( int )\n"
+         "    void close()\n\n"
+         "cdef extern from 'obj_dir/{0}.h':\n"
+         "  cdef cppclass {0}:\n".format( vobj_name ))
+
+  ports = [ ('clk', '1'), ('reset', '1') ] + in_ports + out_ports
+  for signal_name, bitwidth in ports:
+    # TODO: change bitwidth to not be turned into a string above...
+    bitwidth = int( bitwidth )
+
+    pyx += '    '
+
+    if   bitwidth <= 8:  pyx += 'char '
+    elif bitwidth <= 16: pyx += 'unsigned short '
+    elif bitwidth <= 32: pyx += 'unsigned long '
+    elif bitwidth <= 64: pyx += 'long long '
+    else:                pyx += 'unsigned long '
+
+    pyx += signal_name
+
+    if bitwidth <= 64:
+      pyx += '\n'
+    else:
+      pyx += '[{0}]\n'.format( int ( math.ceil( bitwidth / 32.0 ) ) )
+
+  pyx += '    void eval()\n    void trace( VerilatedVcdC*, int )\n\n'
+
+  pyx += "cdef extern from 'verilated.h' namespace 'Verilated':\n  void traceEverOn( bool )\n\n"
+  pyx += "def XTraceEverOn():\n  traceEverOn( 1 )\n\n"
+
+  pyx += ("cdef class X{0}:\n"
+          "  cdef {1}* {0}\n"
+          "  cdef VerilatedVcdC* tfp\n"
+          "  cdef int main_time\n\n"
+          "  def __cinit__(self):\n"
+          "    self.{0} = new {1}()\n"
+          "    self.tfp = new VerilatedVcdC()\n"
+          "    self.main_time = 0\n"
+          "    self.GcdUnitRTL.trace( self.tfp, 99 )\n"
+          "    self.tfp.open( 'vlt_dump.vcd' )\n\n"
+          "  def __dealloc__(self):\n"
+          "    if self.{0}:\n"
+          "      del self.{0}\n"
+          "    if self.tfp:\n"
+          "      self.tfp.close()\n"
+          "      del self.tfp\n\n".format( model_name, vobj_name ))
+
+  pyx += ("  property clk:\n"
+          "    def __set__(self, clk):\n"
+          "      self.{}.clk = clk\n\n".format( model_name ))
+
+  pyx += ("  property reset:\n"
+          "    def __set__(self, reset):\n"
+          "      self.{}.reset = reset\n\n".format( model_name ))
+
+  for signal_name, bitwidth in in_ports:
+    pyx += ("  property {0}:\n"
+            "    def __set__(self, {0}):\n".format( signal_name ))
+    bitwidth = int( bitwidth )
+
+    if bitwidth <= 64:
+      pyx += ("      self.{0}.{1} = {1}.value.uint\n"
+              "\n".format( model_name, signal_name ))
+    else:
+      word_aligned = bitwidth/32
+      for j in range( word_aligned ):
+        pyx += ("      self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint"
+                "\n".format( model_name, signal_name, j, 32*j, 32*(j+1) ))
+      if bitwidth % 32 != 0:
+        idx = word_aligned
+        start = word_aligned*32
+        end = bitwidth
+        pyx += ("      self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint"
+                "\n".format( model_name, signal_name, idx, start, end ))
+
+      pyx += '\n'
+
+  for signal_name, bitwidth in out_ports:
+    pyx += ("  property {0}:\n"
+            "    def __get__(self):\n"
+            "      return self.{1}.{0}\n\n".format( signal_name, model_name ))
+
+  pyx += ("  def eval(self):\n"
+          "    self.{}.eval()\n".format( model_name ))
+
+  f.write( pyx )
+  f.close()
+
+#-------------------------------------------------------------------------
+# Create Setup File
+#-------------------------------------------------------------------------
+
+def create_setup( filename_pyx, vobj_name ):
+  # Generate setup.py
+  verilator_include = '/usr/share/verilator/include'
+  sources = [ '\"obj_dir/' + x + '\",' for x in os.listdir('obj_dir') if '.cpp' in x ]
+  sources = ' '.join(sources)
+
+  f = open( 'setup.py', 'w' )
+
+  f.write( "from distutils.core import setup\n"
+           "from distutils.extension import Extension\n"
+           "from Cython.Distutils import build_ext\n"
+           "\n"
+           "setup(\n"
+           "  ext_modules = [ Extension( '{0}',\n"
+           "                             sources=['{1}',\n"
+           "                             {5}\n"
+           "                             '{4}/verilated.cpp', '{4}/verilated_vcd_c.cpp'],\n"
+           "                             include_dirs=['{4}'],\n"
+           "                             language='c++' ) ],\n"
+           "  cmdclass = {2}'build_ext': build_ext{3}\n"
+           ")\n".format( vobj_name, filename_pyx, '{', '}', verilator_include, sources ) )
+
+  f.close()
+
+#-------------------------------------------------------------------------
+# Create PyMTL Wrapper for Cythonized Verilog
+#-------------------------------------------------------------------------
+
+def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
+                          vobj_name, xobj_name ):
+
+  f = open( filename_w, 'w' )
+
+  # Create module imports and the declaration for the PyMTL wrapper.
+  w = ("from {0} import {1}\n"
+       "from {0} import XTraceEverOn\n"
+       "from pymtl import *\n\n"
+       "class {2}(Model):\n\n"
+       "  def __init__(self):\n\n"
+       "    self.{1} = {1}()\n"
+       "\n".format( vobj_name, xobj_name, model_name ))
+
+  # Any signals with an _M_ in the name are part of bundles, handle these
+  # specially by creating 'fake' PortBundle inner classes.
+  from collections import defaultdict
+  bundles = set()
+  for name, width in in_ports + out_ports:
+    if '_M_' in name:
+      bundle_name, port_name = name.split('_M_')
+      bundles.add( bundle_name )
+  for b in bundles:
+    w += ("    class {1}( PortBundle ): flip = False\n"
+          "    self.{0} = {1}()\n\n".format( b, b.capitalize() ) )
+
+
+  # Create the interface ports for the wrapper class.
+  for port, ptype in [ ( in_ports, 'InPort' ), ( out_ports, 'OutPort' ) ]:
+
+    port = [ ( i[0].replace('_M_', '.'), i[1] ) for i in port ]
+
+    k = [ ( re.sub('IDX.*', 'IDX', i[0]), i[1] ) for i in port ]
+    l = [ (re.sub('IDX', '', i[0]), i[1], k.count(i)) for i in set(k)
+          if (k.count(i) > 1 or 'IDX' in i[0]) ]
+    k = [ i for i in k if (not k.count(i) > 1 and not 'IDX' in i[0])]
+
+    for i in l:
+      w += ('    self.{0} = [ {3}( {1} ) for x in range( {2} ) ]'
+            '\n'.format( i[0], i[1], i[2], ptype ))
+
+    for i in k:
+      w += '    self.{0} = {2}( {1} )\n'.format( i[0], i[1], ptype )
+
+  # Register the sensitivity list.
+  # Must be done explicitly since we dont access .value!
+  w += "\n    self.register_combinational( 'logic', [\n"
+  for name, bitwidth in in_ports:
+    name = name.replace('_M_', '.')
+    if 'IDX' in name:
+      prefix, idx = name.split('IDX')
+      name = '{}[{}]'.format( prefix, idx )
+    w += "                                 self.{},\n".format(name)
+  w += "                               ])\n\n"
+
+  #w += ("\n  @combinational"
+  w += ("\n  def logic(self):\n\n")
+
+  w += ('    self.{0}.reset = self.reset.value.uint\n'
+        '\n'.format( xobj_name ))
+
+  for i in in_ports:
+    temp = i[0].replace('_M_', '.')
+    if 'IDX' in i[0]:
+      w += ('    self.{0}.{1} = self.{2}]'
+            '\n'.format( xobj_name, i[0], re.sub('IDX', '[', temp) ))
+    else:
+      w += ('    self.{0}.{1} = self.{2}'
+           '\n'.format( xobj_name, i[0], temp ))
+
+  w += '\n    self.{0}.eval()\n\n'.format( xobj_name )
+
+  for i in out_ports:
+    temp = i[0].replace('_M_', '.')
+    if 'IDX' in i[0]:
+      w += ('    self.{0}].value = self.{1}.{2}'
+            '\n'.format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
+    else:
+      w += ('    self.{0}.value = self.{1}.{2}'
+            '\n'.format( temp, xobj_name, i[0] ))
+
+  w += ("\n  @posedge_clk"
+        "\n  def tick(self):\n"
+        "\n    self.{0}.eval()\n"
+        "\n    self.{0}.clk = 1\n"
+        "\n    self.{0}.eval()\n\n".format( xobj_name ))
+
+  for i in out_ports:
+    temp = i[0].replace('_M_', '.')
+    if 'IDX' in i[0]:
+      w += ('    self.{0}].next = self.{1}.{2}'
+            '\n'.format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
+    else:
+      w += ('    self.{0}.next = self.{1}.{2}'
+            '\n'.format( temp, xobj_name, i[0] ))
+
+  w += '\n    self.{0}.clk = 0\n\n'.format( xobj_name )
+
+  w += 'XTraceEverOn()'
+
+  f.write( w )
+  f.close()
+
+#-------------------------------------------------------------------------
+# Create PyMTL Wrapper for Cythonized Verilog
+#-------------------------------------------------------------------------
+
+def verilog_to_pymtl( model, filename_v ):
+
+  # TODO: clean this up
+  if   isinstance( model, str ):
+    model_name = model
+  elif isinstance( model, type ):
+    x = model()
+    model_name = x.__class__.__name__
+  else:
+    model_name = model.class_name
+
+  # Output file names
+  filename_pyx = model_name + '.pyx'
+  filename_w = 'W' + model_name + '.py'
+  vobj_name = 'V' + model_name
+  xobj_name = 'X' + model_name
+
+  # Verilate the model
+  # TODO: clean this up
+  verilate_model( filename_v, model_name )
+
+  # Get the ports of the module
+  in_ports, out_ports = get_model_ports( model )
+
+  # Create Cython
+  create_cython( in_ports, out_ports, model_name,
+                 filename_pyx, vobj_name )
+
+  # Create setup.py
+  create_setup( filename_pyx, vobj_name )
+
+  # Cythonize the model
+  cythonize_model()
+
+  # Create PyMTL wrapper for Cynthonized module
+  create_pymtl_wrapper( in_ports, out_ports, model_name,
+                        filename_w, vobj_name, xobj_name )
+
+#-------------------------------------------------------------------------
+# Main
+#-------------------------------------------------------------------------
 
 if __name__ == '__main__':
 
@@ -15,178 +352,5 @@ if __name__ == '__main__':
   model_name = sys.argv[1]
   filename_v = sys.argv[2]
 
-  filename_pyx = model_name + '.pyx'
-  filename_w = 'W' + model_name + '.py'
-  vobj_name = 'V' + model_name
-  xobj_name = 'X' + model_name
+  verilog_to_pymtl( model_name, filename_v )
 
-  ( ds, qs, hs ) = [ x*2*' ' for x in range( 1, 4 ) ]
-
-  # Verilate the translated module (warnings suppressed)
-  os.system( 'verilator -cc {0} -top-module {1} -trace -Wno-lint -Wno-UNOPTFLAT'.format( filename_v, model_name ) )
-
-  # Import the specified module and get its input and output ports
-  __import__( model_name )
-
-  imported_module = sys.modules[ model_name ]
-
-  model_class = imported_module.__dict__[ model_name ]
-  model_inst = model_class()
-  model_inst.elaborate()
-
-  in_ports = model_inst.get_inports()
-  out_ports = model_inst.get_outports()
-
-  in_ports = [ ( p.verilog_name(), str( p.width ) ) for p in in_ports if not p.verilog_name() in [ 'clk', 'reset' ] ] 
-  out_ports = [ ( p.verilog_name(), str( p.width ) ) for p in out_ports ] 
-
-  # Generate the Cython source code
-  f = open( filename_pyx, 'w' )
-
-  pyx = 'from pymtl import *\n\n'
-
-  pyx += 'cdef extern from \'verilated_vcd_c.h\':\n\
-  cdef cppclass VerilatedVcdC:\n\
-    void open( char* )\n\
-    void dump( int )\n\
-    void close()\n\n'
-
-  pyx += 'cdef extern from \'obj_dir/{0}.h\':\n  cdef cppclass {0}:\n'.format( vobj_name )
-
-  for i in ( [ ('clk', '1') ] + [ ('reset', '1') ] + in_ports + out_ports ):
-    s = int( i[1] )
-
-    pyx += qs
-
-    if s <= 8:
-      pyx += 'char '
-    elif s <= 16:
-      pyx += 'unsigned short '
-    elif s <= 32:
-      pyx += 'unsigned long '
-    elif s <= 64:
-      pyx += 'long long '
-    else:
-      pyx += 'unsigned long '
-
-    pyx += i[0]
-
-    if s <= 64:
-      pyx += '\n'
-    else:
-      pyx += '[{0}]\n'.format( int ( math.ceil( s / 32.0 ) ) )
-
-  pyx += '{0}void eval()\n{0}void trace( VerilatedVcdC*, int )\n\n'.format( qs )
-
-  pyx += 'cdef extern from \'verilated.h\' namespace \'Verilated\':\n  void traceEverOn( bool )\n\n'
-  pyx += 'def XTraceEverOn():\n  traceEverOn( 1 )\n\n'
-
-  pyx += 'cdef class X{0}:\n\
-  cdef {1}* {0}\n\
-  cdef VerilatedVcdC* tfp\n\
-  cdef int main_time\n\n\
-  def __cinit__(self):\n{2}self.main_time = 0\n{2}self.{0} = new {1}()\n{2}self.tfp = new VerilatedVcdC()\n{2}self.GcdUnitRTL.trace( self.tfp, 99 )\n{2}self.tfp.open( \'vlt_dump.vcd\' )\n\n\
-  def __dealloc__(self):\n{2}if self.{0}:\n{3}del self.{0}\n{2}if self.tfp:\n{3}tfp.close()\n{3}del self.tfp\n\n'.format( model_name, vobj_name, qs, hs )
-
-  pyx += '{0}property clk:\n{1}def __set__(self, clk):\n{2}self.{3}.clk = clk\n\n'.format( ds, qs, hs, model_name )
-
-  pyx += '{0}property reset:\n{1}def __set__(self, reset):\n{2}self.{3}.reset = reset\n\n'.format( ds, qs, hs, model_name )
-
-  for i in in_ports:
-    pyx += '{0}property {1}:\n{2}def __set__(self, {1}):\n'.format( ds, i[0], qs )
-    s = int( i[1] )
-
-    if s <= 64:
-      pyx += '{0}self.{1}.{2} = {2}.value.uint\n\n'.format( hs, model_name, i[0] )
-    else:
-      word_aligned = s/32
-      for j in range( word_aligned ):
-        pyx += '{0}self.{1}.{2}[{3}] = {2}.value[{4}:{5}].uint\n'.format( hs, model_name, i[0], j, 32*j, 32*(j+1) )
-      if s % 32 != 0:
-        idx = word_aligned
-        start = word_aligned*32
-        end = s
-        pyx += '{0}self.{1}.{2}[{3}] = {2}.value[{4}:{5}].uint\n'.format( hs, model_name, i[0], idx, start, end )
-
-      pyx += '\n'
-
-  for i in out_ports:
-    pyx += '{0}property {1}:\n{2}def __get__(self):\n{3}return self.{4}.{1}\n\n'.format( ds, i[0], qs, hs, model_name )
-
-  pyx += ds + 'def eval(self):\n{0}self.{1}.eval()\n{0}self.tfp.dump( self.main_time )\n{0}self.main_time = self.main_time + 1'.format( qs, model_name )
-
-  f.write( pyx )
-  f.close()
-
-  # Generate setup.py
-
-  verilator_include = '/usr/share/verilator/include'
-  sources = [ '\"obj_dir/' + x + '\",' for x in os.listdir('obj_dir') if '.cpp' in x ]
-  sources = ' '.join(sources)
-  f = open( 'setup.py', 'w' )
-
-  f.write( '\
-from distutils.core import setup\n\
-from distutils.extension import Extension\n\
-from Cython.Distutils import build_ext\n\
-\n\
-setup(\n\
-  ext_modules = [ Extension( \"{0}\", sources=[\"{1}\", {5}\"{4}/verilated.cpp\", \"{4}/verilated_vcd_c.cpp\"], include_dirs=[\"{4}\"], language=\"c++\" ) ],\n\
-  cmdclass = {2}\"build_ext\": build_ext{3}\n\
-)\n'.format( vobj_name, filename_pyx, '{', '}', verilator_include, sources ) )
-
-#  ext_modules = [ Extension( \"{0}\", sources=[\"{1}\", {5}\"obj_dir/{0}.cpp\", \"obj_dir/{0}__Syms.cpp\", \"{4}/verilated.cpp\", \"{4}/verilated_vcd_c.cpp\"], include_dirs=[\"{4}\"], language=\"c++\" ) ],\n\
-  f.close()
-
-  # Cythonize the verilated module
-  os.system( 'python setup.py build_ext -i -f' )
-
-  # Generate the PyMTL wrapper to wrap the cythonized module
-  f = open( filename_w, 'w' )
-
-  w = 'from {0} import {1}\nfrom {0} import XTraceEverOn\nfrom pymtl import *\n\nclass {2}(Model):\n\n{3}def __init__(self):\n\n{4}self.{1} = {1}()\n\n'.format( vobj_name, xobj_name, model_name, ds, qs )
-
-  for p in [ ( in_ports, 'In' ), ( out_ports, 'Out' ) ]:
-
-    k = [ ( re.sub('IDX.*', '', i[0]), i[1] ) for i in p[0] ]
-    l = [ (i[0], i[1], k.count(i)) for i in set(k) if k.count(i) > 1 ]
-    k = [ i for i in k if not k.count(i) > 1 ]
-
-    for i in l:
-      w += '{0}self.{1} = [ {4}Port( {2} ) for x in range( {3} ) ]\n'.format( qs, i[0], i[1], i[2], p[1] )
-
-    for i in k:
-      w += '{0}self.{1} = {3}Port( {2} )\n'.format( qs, i[0], i[1], p[1] )
-
-  w += '\n  @combinational\n  def logic(self):\n\n'
-
-  w += '    self.{0}.reset = self.reset.value.uint\n\n'.format( xobj_name )
-
-  for i in in_ports:
-    if 'IDX' in i[0]:
-      w += '{0}self.{1}.{2} = self.{3}]\n'.format( qs, xobj_name, i[0], re.sub('IDX', '[', i[0]) )
-    else:
-      w += '{0}self.{1}.{2} = self.{2}\n'.format( qs, xobj_name, i[0] )
-
-  w += '\n{0}self.{1}.eval()\n\n'.format( qs, xobj_name )
-
-  for i in out_ports:
-    if 'IDX' in i[0]:
-      w += '{0}self.{1}].value = self.{2}.{3}\n'.format( qs, re.sub('IDX', '[', i[0]), xobj_name, i[0] )
-    else:
-      w += '{0}self.{1}.value = self.{2}.{1}\n'.format( qs, i[0], xobj_name )
-
-  w += '\n{0}@posedge_clk\n{0}def tick(self):\n\n{1}self.{2}.eval()\n\n{1}self.{2}.clk = 1\n\n{1}self.{2}.eval()\n\n'.format( ds, qs, xobj_name )
-
-  for i in out_ports:
-    if 'IDX' in i[0]:
-      w += '{0}self.{1}].next = self.{2}.{3}\n'.format( qs, re.sub('IDX', '[', i[0]), xobj_name, i[0] )
-    else:
-      w += '{0}self.{1}.next = self.{2}.{1}\n'.format( qs, i[0], xobj_name )
-
-  w += '\n{0}self.{1}.clk = 0\n\n'.format( qs, xobj_name )
-
-  w += 'XTraceEverOn( 1 )'
-
-  f.write( w )
-  f.close()

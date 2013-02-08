@@ -25,11 +25,13 @@ subpkgs = \
   pex_regincr \
   pex_sorter \
   pex_gcd \
-  pex_dac \
   plab1_imul \
-  plab2_proc \
-  plab3_mem \
   plab4_net \
+
+#  pex_dac \
+#  plab2_proc \
+#  plab3_mem \
+#  plab4_net \
 
 #-------------------------------------------------------------------------
 # List of subpackages to install
@@ -157,6 +159,16 @@ $$($(2)_test_outs) : %.out : $$($(2)_srcs) $$($(2)_test_srcs) $$($(2)_deps_srcs)
 
 $(2)_junk += $$($(2)_test_outs)
 
+# Run verilated unit tests
+
+$(2)_vtest_outs := $(1)-v-test.out
+$(2)_vtest_srcs_wdir := $$(addprefix $(src_dir)/$(2)/, $$($(2)_vtest_srcs))
+
+$$($(2)_vtest_outs) : %.out : $$($(2)_srcs) $$($(2)_vtest_srcs) $$($(2)_deps_srcs) $$($(2)_deps_vtest_srcs) $$($(2)_mk)
+	-$(PYTEST) --tb=no --resultlog=$$@ $$($(2)_vtest_srcs_wdir)
+
+$(2)_junk += $$($(2)_vtest_outs)
+
 # Build programs - we create a wrapper shell script which sets the
 # PYTHONPATH appropriately to be able to run python programs that are in
 # the modules from the build directory.
@@ -216,6 +228,9 @@ all-$(1) : $$($(2)_prog_exes)
 check-$(1) : $$($(2)_test_outs) $(utst_exe)
 	$(scripts_dir)/check-summary --verbose $$($(2)_test_outs)
 
+vcheck-$(1) : $$($(2)_vtest_outs) $(utst_exe)
+	$(scripts_dir)/check-summary --verbose $$($(2)_vtest_outs)
+
 install-$(1) : install-libs-$(1) install-exes-$(1)
 
 clean-$(1) :
@@ -225,9 +240,10 @@ clean-$(1) :
 
 # Update running variables
 
-exes += $$($(2)_prog_exes)
-outs += $$($(2)_test_outs)
-junk += $$($(2)_junk)
+exes  += $$($(2)_prog_exes)
+outs  += $$($(2)_test_outs)
+vouts += $$($(2)_vtest_outs)
+junk  += $$($(2)_junk)
 
 endef
 
@@ -243,7 +259,10 @@ $(foreach subpkg,$(subpkgs), \
 check : $(outs)
 	$(scripts_dir)/check-summary $(outs)
 
-.PHONY : check
+vcheck : $(vouts)
+	$(scripts_dir)/check-summary $(vouts)
+
+.PHONY : check vcheck
 
 #-------------------------------------------------------------------------
 # Installation
@@ -320,6 +339,7 @@ debug-% :
 
 clean :
 	rm -rf *~ \#* *.v *.vcd *.stats a.out $(junk)
+	rm -rf *~ \#* *.pyx *.cpp *.so *.pyc W*.py obj_dir build
 
 clean-src :
 	find $(src_dir) -name "*.pyc" | xargs rm

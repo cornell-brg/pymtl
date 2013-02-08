@@ -218,17 +218,14 @@ class Bits(object):
   #------------------------------------------------------------------------
 
   def __lshift__(self, other):
-    # TODO: best way to handle large shift amounts?
     if isinstance(other, int):
-      #assert other <= self.width
-      shift_val = Bits( self.shift_trunc, other, trunc=True )
-      return Bits( self.width, self._uint << shift_val._uint, trunc=True )
-      #return Bits( self.width, self.uint << other, trunc=True )
+      # If the shift amount is greater than the width, just return 0
+      if other >= self.width: return Bits( self.width, 0 )
+      return Bits( self.width, self._uint << other, trunc=True )
     else:
-      #assert other.uint <= self.width
-      shift_val = Bits( self.shift_trunc, other._uint, trunc=True )
-      return Bits( self.width, self._uint << shift_val._uint, trunc=True )
-      #return Bits( self.width, self.uint << other.uint, trunc=True )
+      # If the shift amount is greater than the width, just return 0
+      if other._uint >= self.width: return Bits( self.width, 0 )
+      return Bits( self.width, self._uint << other._uint, trunc=True )
 
   def __rshift__(self, other):
     if isinstance(other, int):

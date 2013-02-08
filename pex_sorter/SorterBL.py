@@ -22,8 +22,8 @@ class SorterBL( Model ):
   # Tick
   #-----------------------------------------------------------------------
 
-  @posedge_clk
-  def tick( self ):
+  @tick
+  def logic( self ):
 
     values = [ x.value for x in self.in_ ]
     values.sort()

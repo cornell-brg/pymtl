@@ -371,7 +371,7 @@ class Model(object):
           ptr = c.__getattribute__( a[0] )
           # Check InPort vs OutPort?
           if   isinstance( ptr, (Port,Wire) ) and a[1] == 'wr_value':
-            raise LogicSyntaxError("Writing .value in an @posedge_clk block!")
+            raise LogicSyntaxError("Writing .value in an @tick or @posedge_clk block!")
           elif isinstance( ptr, (Port,Wire) ) and a[1] == 'wr_next':
             raise LogicSyntaxError("Writing .next in an @combinational block!")
           elif isinstance( ptr, (Port,Wire) ) and a[1] == 'rd_next':
@@ -407,11 +407,13 @@ class Model(object):
     target._outports    = []
     target._submodules  = []
     target._senses      = []
-    target._newsenses   = collections.defaultdict( list )
+    if not hasattr( target, '_newsenses' ):
+      target._newsenses   = collections.defaultdict( list )
     target._localparams = set()
     target._tempwires   = {}
     target._temparrays  = []
     target._tempregs    = []
+    target._loopvars    = []
     target._dim = PhysicalDimensions()
     # TODO: do all ports first?
     # Get the names of all ports and submodules
@@ -453,8 +455,7 @@ class Model(object):
       target._outports += [obj]
     elif isinstance(obj, PortBundle.PortBundle):
       for port_name, obj in obj.__dict__.items():
-        # TODO: change from $ separator to _
-        self.check_type(target, name+'$'+port_name, obj)
+        self.check_type(target, name+'_M_'+port_name, obj)
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):
@@ -472,8 +473,14 @@ class Model(object):
     # If the object is a list, iterate through each item in the list and
     # recursively call the check_type() utility function
     elif isinstance(obj, list):
+      # TODO: fix to handle Wire lists properly
+      if obj and isinstance(obj[0], Port):
+        target._temparrays.append( name )
       for i, item in enumerate(obj):
-        item_name = "%sIDX%d" % (name, i)
+        if isinstance( item, Wire ):
+          item_name = "%s[%d]" % (name, i)
+        else:
+          item_name = "%sIDX%d" % (name, i)
         self.check_type(target, item_name, item)
 
   def gen_class_name(self, model):
@@ -608,6 +615,14 @@ class Model(object):
     return self._localparams
 
   #-----------------------------------------------------------------------
+  # Register Combinational
+  #-----------------------------------------------------------------------
+
+  def register_combinational( self, func_name, sensitivity_list ):
+    self._newsenses = collections.defaultdict( list )
+    self._newsenses[ func_name ] = sensitivity_list
+
+  #-----------------------------------------------------------------------
   # Dump Physical Design
   #-----------------------------------------------------------------------
   def dump_physical_design(self, prefix=''):
@@ -681,7 +696,7 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     """Visit all functions, but only parse those with special decorators."""
     if not node.decorator_list:
       return
-    elif node.decorator_list[0].id in ['posedge_clk', 'combinational']:
+    elif node.decorator_list[0].id in ['tick','posedge_clk', 'combinational']:
       # Visit each line in the function, translate one at a time.
       self.decorator = node.decorator_list[0].id
       for x in node.body:
@@ -693,10 +708,11 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     #target_name, debug = self.get_target_name(node)
     if self.decorator:
       target_name, debug = self.get_target_name(node)
-      if  self.decorator == 'posedge_clk' and debug == 'value':
+      if  self.decorator in ['tick', 'posedge_clk'] and debug == 'value':
         self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
       elif self.decorator == 'combinational' and debug == 'next':
         self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
+      # TODO: why are we checking syntax of non-annotated blocks...
       else:
         self.accesses.add( (target_name, debug, node.lineno) )
 
@@ -707,7 +723,7 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
     target = node.targets[0]
     target_name, debug = self.get_target_name(target)
     # We are writing value inside of a posedge_clk, raise exception
-    if   self.decorator == 'posedge_clk' and debug == 'value':
+    if   self.decorator in ['tick', 'posedge_clk'] and debug == 'value':
       self.accesses.add( (target_name, 'wr_'+debug, node.lineno) )
     # We are writing next inside of a combinational, raise exception
     elif self.decorator == 'combinational' and debug == 'next':
@@ -772,9 +788,11 @@ class SensitivityListVisitor(ast.NodeVisitor):
     if not self.func_name:
       return
 
+    # Hacky way to get subscripts of stores to port lists
+    signal_ptr = self.get_target( node )
+
     if isinstance( node.ctx, _ast.Load ):
 
-      signal_ptr = self.get_target( node )
       if   isinstance( signal_ptr, list ):
         # TODO: this will allow duplicate entries to be in the _newsenses
         #       list, do we need to fix this?
@@ -807,6 +825,8 @@ class SensitivityListVisitor(ast.NodeVisitor):
         name += [node.attr]
         node = node.value
       elif isinstance(node, _ast.Subscript):
+        # Visit the index, if its a variable want to add to sensitivity
+        self.visit( node.slice )
         # TODO: assumes this is an integer, not a range
         if (isinstance( node.slice, _ast.Index) and
             isinstance( node.slice.value, _ast.Num )):
@@ -869,6 +889,9 @@ def combinational(func):
 def posedge_clk(func):
   return func
 
+def tick(func):
+  return func
+
 # import functools
 import inspect
 #from itertools import chain
@@ -888,11 +911,22 @@ def capture_args(fn):
     args = collections.OrderedDict()
     # add all the positional arguments
     for i in range(1, len(v)):
+      if isinstance( v[i], int ):
+        value = v[i]
+      else:
+        #raise Exception("Untranslatable param type!")
+        # WARNING: taking abs() of hash, increases chance of collision?
+        value = hex( abs( hash( v[i] )) )
       key = argspec.args[ i ]
-      args[ key ] = v[i]
+      args[ key ] = value
     # then add all the named arguments
     for key, val in k.items():
-      args[key] = val
+      if isinstance( val, int ):
+        value = val
+      else:
+        # WARNING: taking abs() of hash, increases chance of collision?
+        value = hex( abs( hash( val )) )
+      args[key] = value
 
     # add the arguments and their values to the object so it can be
     # used during static elaboration to create the name

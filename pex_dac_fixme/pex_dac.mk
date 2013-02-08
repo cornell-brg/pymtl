@@ -17,5 +17,9 @@ pex_dac_test_srcs = \
   TorusRouter_test.py \
   Torus_test.py \
 
+pex_gcd_vtest_srcs = \
+  Counter_v_test.py \
+  RouteCompute_v_test.py \
+
 pex_dac_prog_srcs = \
   pex-dac-sim \

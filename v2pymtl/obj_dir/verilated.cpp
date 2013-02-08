@@ -1,7 +1,7 @@
-// -*- C++ -*-
+// -*- mode: C++; c-file-style: "cc-mode" -*-
 //*************************************************************************
 //
-// Copyright 2003-2010 by Wilson Snyder. This program is free software; you can
+// Copyright 2003-2012 by Wilson Snyder. This program is free software; you can
 // redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License.
 // Version 2.0.
@@ -26,22 +26,17 @@
 #define _VERILATED_CPP_
 #include "verilated_imp.h"
 #include <cctype>
-#include <vector>
 
-#define VL_VALUE_STRING_MAX_WIDTH 1024	///< Max static char array for VL_VALUE_STRING
+#define VL_VALUE_STRING_MAX_WIDTH 8192	///< Max static char array for VL_VALUE_STRING
 
 //===========================================================================
 // Global variables
 
 // Slow path variables
-int  Verilated::s_randReset = 0;
 VerilatedVoidCb Verilated::s_flushCb = NULL;
 
 // Keep below together in one cache line
-int  Verilated::s_debug = 0;
-bool Verilated::s_calcUnusedSigs = false;
-bool Verilated::s_gotFinish = false;
-bool Verilated::s_assertOn = true;
+Verilated::Serialized Verilated::s_s;
 VL_THREAD const VerilatedScope* Verilated::t_dpiScopep = NULL;
 VL_THREAD const char* Verilated::t_dpiFilename = "";
 VL_THREAD int Verilated::t_dpiLineno = 0;
@@ -81,6 +76,17 @@ void vl_fatal (const char* filename, int linenum, const char* hier, const char* 
     abort();
 }
 #endif
+
+//===========================================================================
+// Overall class init
+
+Verilated::Serialized::Serialized() {
+    s_randReset = 0;
+    s_debug = 0;
+    s_calcUnusedSigs = false;
+    s_gotFinish = false;
+    s_assertOn = true;
+}
 
 //===========================================================================
 // Random reset -- Only called at init time, so don't inline.
@@ -285,12 +291,15 @@ void _vl_vsformat(string& output, const char* formatp, va_list ap) {
     // Note also assumes variables < 64 are not wide, this assumption is
     // sometimes not true in low-level routines written here in verilated.cpp
     static VL_THREAD char tmp[VL_VALUE_STRING_MAX_WIDTH];
+    static VL_THREAD char tmpf[VL_VALUE_STRING_MAX_WIDTH];
+    const char* pctp = NULL;  // Most recent %##.##g format
     bool inPct = false;
     bool widthSet = false;
     int width = 0;
     const char* pos = formatp;
     for (; *pos; ++pos) {
 	if (!inPct && pos[0]=='%') {
+	    pctp = pos;
 	    inPct = true;
 	    widthSet = false;
 	    width = 0;
@@ -312,6 +321,9 @@ void _vl_vsformat(string& output, const char* formatp, va_list ap) {
 		widthSet = true;
 		width = width*10 + (fmt - '0');
 		break;
+	    case '.':
+		inPct = true;  // Get more digits
+		break;
 	    case '%':
 		output += '%';
 		break;
@@ -323,6 +335,18 @@ void _vl_vsformat(string& output, const char* formatp, va_list ap) {
 	    case 'S': { // "C" string
 		const char* cstrp = va_arg(ap, const char*);
 		output += cstrp;
+		break;
+	    }
+	    case 'e':
+	    case 'f':
+	    case 'g': {
+		const int lbits = va_arg(ap, int);
+		double d = va_arg(ap, double);
+		if (lbits) {}  // UNUSED - always 64
+		strncpy(tmpf, pctp, pos-pctp+1);
+		tmpf[pos-pctp+1] = '\0';
+		sprintf(tmp, tmpf, d);
+		output += tmp;
 		break;
 	    }
 	    default: {
@@ -358,14 +382,26 @@ void _vl_vsformat(string& output, const char* formatp, va_list ap) {
 		case 'd': { // Signed decimal
 		    int digits=sprintf(tmp,"%" VL_PRI64 "d",(vlsint64_t)(VL_EXTENDS_QQ(lbits,lbits,ld)));
 		    int needmore = width-digits;
-		    if (needmore>0) output.append(needmore,' '); // Pre-pad spaces
+		    if (needmore>0) {
+			if (pctp && pctp[0] && pctp[1]=='0') { //%0
+			    output.append(needmore,'0'); // Pre-pad zero
+			} else {
+			    output.append(needmore,' '); // Pre-pad spaces
+			}
+		    }
 		    output += tmp;
 		    break;
 		}
 		case 'u': { // Unsigned decimal
 		    int digits=sprintf(tmp,"%" VL_PRI64 "u",ld);
 		    int needmore = width-digits;
-		    if (needmore>0) output.append(needmore,' '); // Pre-pad spaces
+		    if (needmore>0) {
+			if (pctp && pctp[0] && pctp[1]=='0') { //%0
+			    output.append(needmore,'0'); // Pre-pad zero
+			} else {
+			    output.append(needmore,' '); // Pre-pad spaces
+			}
+		    }
 		    output += tmp;
 		    break;
 		}
@@ -569,6 +605,17 @@ IData _vl_vsscanf(FILE* fp,  // If a fscanf
 		    VL_SET_WQ(owp,ld);
 		    break;
 		}
+		case 'f':
+		case 'e':
+		case 'g': { // Real number
+		    _vl_vsss_skipspace(fp,floc,fromp);
+		    _vl_vsss_read(fp,floc,fromp, tmp, "+-.0123456789eE");
+		    if (!tmp[0]) goto done;
+		    union { double r; vlsint64_t ld; } u;
+		    u.r = strtod(tmp, NULL);
+		    VL_SET_WQ(owp,u.ld);
+		    break;
+		}
 		case 't': // FALLTHRU  // Time
 		case 'u': { // Unsigned decimal
 		    _vl_vsss_skipspace(fp,floc,fromp);
@@ -628,6 +675,10 @@ IData _vl_vsscanf(FILE* fp,  // If a fscanf
 //===========================================================================
 // File I/O
 
+FILE* VL_CVT_I_FP(IData lhs) {
+    return VerilatedImp::fdToFp(lhs);
+}
+
 void _VL_VINT_TO_STRING(int obits, char* destoutp, WDataInP sourcep) {
     // See also VL_DATA_TO_STRING_NW
     int lsb=obits-1;
@@ -655,8 +706,8 @@ void _VL_STRING_TO_VINT(int obits, void* destp, int srclen, const char* srcp) {
     for (; i<bytes; i++) { *op++ = 0; }
 }
 
-IData VL_FGETS_IXQ(int obits, void* destp, QData fpq) {
-    FILE* fp = VL_CVT_Q_FP(fpq);
+IData VL_FGETS_IXI(int obits, void* destp, IData fpi) {
+    FILE* fp = VL_CVT_I_FP(fpi);
     if (VL_UNLIKELY(!fp)) return 0;
 
     // The string needs to be padded with 0's in unused spaces in front of
@@ -683,16 +734,26 @@ IData VL_FGETS_IXQ(int obits, void* destp, QData fpq) {
     return got;
 }
 
-QData VL_FOPEN_QI(QData filename, IData mode) {
+IData VL_FOPEN_QI(QData filename, IData mode) {
     IData fnw[2];  VL_SET_WQ(fnw, filename);
     return VL_FOPEN_WI(2, fnw, mode);
 }
-QData VL_FOPEN_WI(int fnwords, WDataInP filenamep, IData mode) {
+IData VL_FOPEN_WI(int fnwords, WDataInP filenamep, IData mode) {
     char filenamez[VL_TO_STRING_MAX_WORDS*VL_WORDSIZE+1];
     _VL_VINT_TO_STRING(fnwords*VL_WORDSIZE, filenamez, filenamep);
     char modez[5];
     _VL_VINT_TO_STRING(VL_WORDSIZE, modez, &mode);
-    return VL_CVT_FP_Q(fopen(filenamez,modez));
+    return VL_FOPEN_S(filenamez,modez);
+}
+IData VL_FOPEN_S(const char* filenamep, const char* modep) {
+    return VerilatedImp::fdNew(fopen(filenamep,modep));
+}
+
+void VL_FCLOSE_I(IData fdi) {
+    FILE* fp = VL_CVT_I_FP(fdi);
+    if (VL_UNLIKELY(!fp)) return;
+    fclose(fp);
+    VerilatedImp::fdDelete(fdi);
 }
 
 void VL_SFORMAT_X(int obits, void* destp, const char* formatp, ...) {
@@ -726,8 +787,8 @@ void VL_WRITEF(const char* formatp, ...) {
     VL_PRINTF("%s", output.c_str());
 }
 
-void VL_FWRITEF(QData fpq, const char* formatp, ...) {
-    FILE* fp = VL_CVT_Q_FP(fpq);
+void VL_FWRITEF(IData fpi, const char* formatp, ...) {
+    FILE* fp = VL_CVT_I_FP(fpi);
     if (VL_UNLIKELY(!fp)) return;
 
     va_list ap;
@@ -739,8 +800,8 @@ void VL_FWRITEF(QData fpq, const char* formatp, ...) {
     fputs(output.c_str(), fp);
 }
 
-IData VL_FSCANF_IX(QData fpq, const char* formatp, ...) {
-    FILE* fp = VL_CVT_Q_FP(fpq);
+IData VL_FSCANF_IX(IData fpi, const char* formatp, ...) {
+    FILE* fp = VL_CVT_I_FP(fpi);
     if (VL_UNLIKELY(!fp)) return 0;
 
     va_list ap;
@@ -883,6 +944,17 @@ void VL_READMEM_W(bool hex, int width, int depth, int array_lsb, int fnwords,
     }
 }
 
+IData VL_SYSTEM_IQ(QData lhs) {
+    IData lhsw[2];  VL_SET_WQ(lhsw, lhs);
+    return VL_SYSTEM_IW(2, lhsw);
+}
+IData VL_SYSTEM_IW(int lhswords, WDataInP filenamep) {
+    char filenamez[VL_TO_STRING_MAX_WORDS*VL_WORDSIZE+1];
+    _VL_VINT_TO_STRING(lhswords*VL_WORDSIZE, filenamez, filenamep);
+    int code = system(filenamez);
+    return code >> 8;  // Want exit status
+}
+
 IData VL_TESTPLUSARGS_I(const char* formatp) {
     string match = VerilatedImp::argPlusMatch(formatp);
     if (match == "") return 0;
@@ -991,6 +1063,10 @@ void Verilated::commandArgs(int argc, const char** argv) {
     VerilatedImp::commandArgs(argc,argv);
 }
 
+const char* Verilated::commandArgsPlusMatch(const char* prefixp) {
+    return VerilatedImp::argPlusMatch(prefixp).c_str();
+}
+
 void Verilated::scopesDump() {
     VerilatedImp::scopesDump();
 }
@@ -1038,6 +1114,7 @@ VerilatedScope::VerilatedScope() {
     m_callbacksp = NULL;
     m_namep = NULL;
     m_funcnumMax = 0;
+    m_symsp = NULL;
     m_varsp = NULL;
 }
 

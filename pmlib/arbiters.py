@@ -15,64 +15,69 @@ import pmlib
 
 class RoundRobinArbiter(Model):
 
-  def __init__(self, nreqs ):
+  @capture_args
+  def __init__(s, nreqs ):
 
-    self.nreqs        = nreqs
+    s.nreqs        = nreqs
+    s.nreqsX2       = nreqs * 2
 
     # Interface Ports
 
-    self.reqs         = InPort  (nreqs)
-    self.grants       = OutPort (nreqs)
+    s.reqs         = InPort  (nreqs)
+    s.grants       = OutPort (nreqs)
 
     # priority enable
 
-    self.priority_en  = Wire( 1     )
+    s.priority_en  = Wire( 1     )
 
     # priority register
 
-    self.priority_reg = m = pmlib.regs.RegEnRst( nreqs,
+    s.priority_reg = m = pmlib.regs.RegEnRst( nreqs,
                               reset_value = 1 )
     connect({
-      m.en           : self.priority_en,
-      m.in_[1:nreqs] : self.grants[0:nreqs-1],
-      m.in_[0]       : self.grants[nreqs-1]
+      m.en           : s.priority_en,
+      m.in_[1:nreqs] : s.grants[0:nreqs-1],
+      m.in_[0]       : s.grants[nreqs-1]
     })
 
+    s.kills        = Wire( 2*s.nreqs + 1 )
+    s.priority_int = Wire( 2*s.nreqs )
+    s.reqs_int     = Wire( 2*s.nreqs )
+    s.grants_int   = Wire( 2*s.nreqs )
+
   @combinational
-  def comb(self):
+  def comb(s):
 
-    nreqs = self.nreqs
+    #2x_nreqs = 2 * s.nreqs
 
-    kills        = Bits( 2*nreqs + 1 )
-    priority_int = Bits( 2*nreqs )
-    reqs_int     = Bits( 2*nreqs )
-    grants_int   = Bits( 2*nreqs )
+    s.kills[0].value                        = 1
+    s.priority_int[0:s.nreqs].value         = s.priority_reg.out.value
+    s.priority_int[s.nreqs:s.nreqsX2].value = 0
+    #s.priority_int[s.nreqs:2*s.nreqs].value = 0
+    s.reqs_int[0:s.nreqs].value             = s.reqs.value
+    s.reqs_int[s.nreqs:s.nreqsX2].value     = s.reqs.value
+    #s.reqs_int[s.nreqs:2*s.nreqs].value     = s.reqs.value
 
-    kills[0] = 1;
-    priority_int[0:nreqs]       = self.priority_reg.out.value
-    priority_int[nreqs:2*nreqs] = 0
-    reqs_int[0:nreqs]           = self.reqs.value
-    reqs_int[nreqs:2*nreqs]     = self.reqs.value
+    for i in range(s.nreqsX2):
+    #for i in range(2*s.nreqs):
 
-    for i in range(2*nreqs):
-
-      if priority_int[i]:
-        grants_int[i] = reqs_int[i]
+      if s.priority_int[i].value:
+        s.grants_int[i].value = s.reqs_int[i].value
       else:
-        grants_int[i] = ~kills[i] & reqs_int[i]
+        s.grants_int[i].value = ~s.kills[i].value & s.reqs_int[i].value
 
-      if priority_int[i]:
-        kills[i+1] = grants_int[i]
+      if s.priority_int[i].value:
+        s.kills[i+1].value = s.grants_int[i].value
       else:
-        kills[i+1] = kills[i] | grants_int[i]
+        s.kills[i+1].value = s.kills[i].value | s.grants_int[i].value
 
-    for i in range( nreqs ):
-      self.grants[i].value = grants_int[i] | grants_int[nreqs+i]
+    for i in range( s.nreqs ):
+      s.grants[i].value = s.grants_int[i].value | s.grants_int[s.nreqs+i].value
 
-    self.priority_en.value = ( self.grants.value != 0 )
+    s.priority_en.value = ( s.grants.value != 0 )
 
-  def line_trace(self):
-    return "{:04b} | {:04b}".format( self.reqs.value.uint, self.grants.value.uint )
+  def line_trace(s):
+    return "{:04b} | {:04b}".format( s.reqs.value.uint, s.grants.value.uint )
 
 #-------------------------------------------------------------------------
 # Round Robin Arbiter with Enable
@@ -83,7 +88,8 @@ class RoundRobinArbiter(Model):
 
 class RoundRobinArbiterEn(Model):
 
-  def __init__(self, nreqs ):
+  @capture_args
+  def __init__(s, nreqs ):
 
     # Local Constants
 
@@ -92,25 +98,25 @@ class RoundRobinArbiterEn(Model):
 
     # Interface Ports
 
-    self.en         = InPort  ( 1 )
-    self.reqs       = InPort  ( nreqs )
-    self.grants     = OutPort ( nreqs )
+    s.en         = InPort  ( 1 )
+    s.reqs       = InPort  ( nreqs )
+    s.grants     = OutPort ( nreqs )
 
     # reqs_mux
 
-    self.reqs_mux   = m = pmlib.muxes.Mux2( nreqs )
+    s.reqs_mux   = m = pmlib.muxes.Mux2( nreqs )
     connect({
       m.in_[NO_ARB] : 0,
-      m.in_[ARB]    : self.reqs,
-      m.sel         : self.en
+      m.in_[ARB]    : s.reqs,
+      m.sel         : s.en
     })
 
     # round robin arbiter
 
-    self.rr_arbiter = RoundRobinArbiter( nreqs )
+    s.rr_arbiter = RoundRobinArbiter( nreqs )
 
-    connect( self.rr_arbiter.reqs,   self.reqs_mux.out )
-    connect( self.rr_arbiter.grants, self.grants       )
+    connect( s.rr_arbiter.reqs,   s.reqs_mux.out )
+    connect( s.rr_arbiter.grants, s.grants       )
 
-  def line_trace(self):
-    return "{:04b} | {:04b}".format( self.reqs.value.uint, self.grants.value.uint )
+  def line_trace(s):
+    return "{:04b} | {:04b}".format( s.reqs.value.uint, s.grants.value.uint )

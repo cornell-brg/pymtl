@@ -30,8 +30,8 @@ class SorterCL( Model ):
   # Sequential logic
   #-----------------------------------------------------------------------
 
-  @posedge_clk
-  def tick( self ):
+  @tick
+  def logic( self ):
 
     # Delay by one cycle and write outputs
 

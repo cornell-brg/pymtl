@@ -9,6 +9,7 @@ from RouteCompute import RouteCompute
 
 class InputTermCtrl (Model):
 
+  @capture_args
   def __init__( s, router_x_id, router_y_id, num_routers, netmsg_params, credit_nbits ):
 
     # Local Constants

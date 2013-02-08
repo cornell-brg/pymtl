@@ -11,6 +11,7 @@ from   Counter import Counter
 
 class OutputCtrl (Model):
 
+  @capture_args
   def __init__( s, netmsg_params, max_credit_count, credit_nbits ):
 
     # Interface Ports
@@ -23,11 +24,17 @@ class OutputCtrl (Model):
     s.out_val      = OutPort ( 1 )
     s.credit_count = OutPort ( credit_nbits )
 
+    # TODO: needed because of translation bugs when an output port is
+    #       also used as the input to a submodule!
+    s.credit_decr  = Wire ( 1 )
+    connect( s.out_val,        s.credit_decr )
+
     # credit count
 
     s.credits_counter = Counter( max_credit_count )
     connect( s.credits_counter.increment, s.credit       )
-    connect( s.credits_counter.decrement, s.out_val      )
+    connect( s.credits_counter.decrement, s.credit_decr  )
+    #connect( s.credits_counter.decrement, s.out_val      )
     connect( s.credits_counter.count,     s.credit_count )
 
     # arbiter
@@ -46,7 +53,8 @@ class OutputCtrl (Model):
 
     # out val calculations
 
-    s.out_val.value = \
+    #s.out_val.value = \
+    s.credit_decr.value = \
       ( s.grants.value & s.reqs.value ) != 0
 
     # xbar sel
