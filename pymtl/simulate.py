@@ -7,7 +7,7 @@ This module contains classes which construct a simulator given a MTL model
 for execution in the python interpreter.
 """
 
-from collections import deque, defaultdict, Counter
+import collections
 import ast, _ast
 import inspect
 import pprint
@@ -48,9 +48,9 @@ class SimulationTool():
       raise Exception(msg)
     self.model = model
     self.num_cycles      = 0
-    self.vnode_callbacks = defaultdict(list)
+    self.vnode_callbacks = collections.defaultdict(list)
     self.rnode_callbacks = []
-    self.event_queue     = deque()
+    self.event_queue     = collections.deque()
     self.posedge_clk_fns = []
     #self.node_groups     = []
     # Set by VCDUtil
@@ -307,7 +307,7 @@ class SimulationTool():
 
 class PerfStats( object ):
   def __init__( self ):
-    self.eval_stats = defaultdict( Counter )
+    self.eval_stats = collections.defaultdict( collections.Counter )
 
   def add_eval_call( self, func, cycle ):
     self.eval_stats[ func ][ cycle ] += 1
