@@ -24,20 +24,19 @@ class Port(object):
 
   """Hidden base class implementing a module port."""
 
-  def __init__(self, type, width, name='???'):
+  def __init__(self, width, name='???'):
     """Constructor for a Port object.
 
     Parameters
     ----------
-    type: string indicated whether this is an 'input' or 'output' port.
     width: bitwidth of the port.
     name: (TODO: remove? Previously only used for intermediate values).
     str: initializes a Port given a string containing a  port
          declaration. (TODO: remove. Only used by From.)
     """
+    # TODO: replace width with nbits!!!
     self.node   = Node(width)
     self.addr   = None
-    self.type   = type  # TODO: remove me
     self.width  = width
     self.name   = name
     self.parent = None
@@ -131,7 +130,7 @@ class InPort(Port):
     ----------
     width: bitwidth of the port.
     """
-    super(InPort, self).__init__('input', width)
+    super(InPort, self).__init__( width )
 
 #-------------------------------------------------------------------------
 # OutPort
@@ -148,7 +147,7 @@ class OutPort(Port):
     ----------
     width: bitwidth of the port.
     """
-    super(OutPort, self).__init__('output', width)
+    super(OutPort, self).__init__( width )
 
 #-------------------------------------------------------------------------
 # Wire
@@ -165,7 +164,7 @@ class Wire(Port):
     ----------
     width: bitwidth of the wire.
     """
-    super(Wire, self).__init__('wire', width)
+    super(Wire, self).__init__( width )
 
 #-------------------------------------------------------------------------
 # Constant
