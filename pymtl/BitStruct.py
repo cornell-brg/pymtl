@@ -48,66 +48,11 @@ class MetaBitStruct( type ):
       nbits += width
     # Set total width
     setattr( inst, 'width', nbits )
-    setattr( inst, 'value', Bits( 64, 0x0f0f0f0f0f ) )
     return inst
 
 class BitStruct( object ):
   __metaclass__ = MetaBitStruct
 
-
-#-------------------------------------------------------------------------
-# Memory Example
-#-------------------------------------------------------------------------
-
-class mem_type( object ):
-  rd = 0
-  wr = 1
-
-class mem_len( object ):
-  byte  = 1
-  half  = 2
-  word  = 0
-
-class MemMsg( BitStruct ):
-
-  def __init__( self, addr_nbits, data_nbits ):
-
-    assert data_nbits % 8 == 0
-
-    # Calculate number of bits needed to store msg len
-    len = int( math.ceil( math.log( data_nbits/8, 2 ) ) )
-
-    # Declare the MemoryMsg fields
-    self.type = Field( 1 )
-    self.len  = Field( len )
-    self.addr = Field( addr_nbits )
-    self.data = Field( data_nbits )
-
-x = MemMsg( 16, 16 )
-print 'type',  x.type
-print 'len',   x.len
-print 'addr',  x.addr
-print 'data',  x.data
-print 'width', x.width
-
-x.type = mem_type.rd
-print x.type
-
-# Field( width )
-# Field( start, width )
-# Field( start, stop )  # Excl, like python range
-
-# USAGE
-# def __init__( self ):
-#   my_msg = MemMsg.MemMsg( 16, 32 )
-#   self.in_ = InPort ( my_msg )
-#   self.out = OutPort( my_msg )
-#
-#   connect( self.in_.addr, some_other_thing )
-#
-# @combinational
-# def logic( self ):
-#   self.out.data.value = self.in_.data.value
 
 #-------------------------------------------------------------------------
 # Inst Example
@@ -136,4 +81,3 @@ print x.type
 #    self.func  = slice(  0,  6 )
 #    self.imm   = slice(  0, 16 )
 #    self.tgt   = slice(  0, 26 )
-
