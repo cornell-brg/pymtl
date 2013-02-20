@@ -51,27 +51,29 @@ def test_bitstruct_fields():
   x = MemMsg( 16, 32 )
 
   # Hacky assignment of value for testing
-  x.value = Bits( 64, 0x5f0cd0f0f0f0f )
-  #print bin( x.value.uint )
+  x._signal = InPort( x.width )
+  assert x._signal.value == 0
+  x._signal.value = 0x5f0cd0f0f0f0f
+  assert x._signal.value == 0x5f0cd0f0f0f0f
 
   # Test access to attributes
-  assert x.type == 1
-  assert x.len  == 1
-  assert x.addr == 0xf0cd
-  assert x.data == 0x0f0f0f0f
+  assert x.type.value == 1
+  assert x.len.value  == 1
+  assert x.addr.value == 0xf0cd
+  assert x.data.value == 0x0f0f0f0f
   assert x.width == 1 + 2 + 16 + 32
 
-  x.type = MemMsg.rd
-  assert x.type == 0
+  x.type.value = MemMsg.rd
+  assert x.type.value == 0
 
-  x.len = MemMsg.half
-  assert x.len == 2
+  x.len.value = MemMsg.half
+  assert x.len.value == 2
 
-  x.addr = 0xbeef
-  assert x.addr == 0xbeef
+  x.addr.value = 0xbeef
+  assert x.addr.value == 0xbeef
 
-  x.data = 0xabcd1234
-  assert x.data == 0xabcd1234
+  x.data.value = 0xabcd1234
+  assert x.data.value == 0xabcd1234
 
 #-------------------------------------------------------------------------
 # Check Connectivity

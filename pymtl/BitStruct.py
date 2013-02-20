@@ -41,14 +41,16 @@ class MetaBitStruct( type ):
       # Create a getter to assign to the property
       def create_getter( nbits, width ):
         addr = slice( nbits, nbits + width )
-        return lambda self : self.value.__getitem__( addr )
+        return lambda self : self._signal.__getitem__( addr )
       # Create a setter to assign to the property
-      def create_setter( nbits, width ):
-        addr = slice( nbits, nbits + width )
-        return lambda self, value: self.value.__setitem__( addr, value )
+      # TODO: not needed when returning ConnectionSlice and accessing .value
+      #def create_setter( nbits, width ):
+      #  addr = slice( nbits, nbits + width )
+      #  return lambda self, value: self._signal.__setitem__( addr, value )
       # Create the property
-      setattr( inst.__class__, name, property( create_getter( nbits, width ),
-                                               create_setter( nbits, width ) ))
+      setattr( inst.__class__, name,
+               property( create_getter( nbits, width ) )
+             )
       nbits += width
     # Set total width
     setattr( inst, 'width', nbits )

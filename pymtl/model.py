@@ -40,11 +40,10 @@ class Port(object):
       self._msg    = None
       self.node   = Node(width)
     else:
-      self.width     = width.width
-      self.node      = Node(width.width)
-      self._msg       = width
-      # TODO: needs to be a property
-      self._msg.value = self.node.value
+      self.width        = width.width
+      self.node         = Node(width.width)
+      self._msg         = width
+      self._msg._signal = self
     self._addr  = None
     self.name   = name
     self.parent = None
