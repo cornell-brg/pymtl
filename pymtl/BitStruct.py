@@ -25,6 +25,10 @@ class MetaBitStruct( type ):
 
   def __call__( self, *args, **kwargs ):
     inst = super(MetaBitStruct, self).__call__(*args, **kwargs)
+    # HACKY: change class to be unique, this is necessary so that
+    # each instance of the message has its properties set
+    # http://stackoverflow.com/a/1633363
+    inst.__class__ = type( inst.__class__.__name__, ( inst.__class__, object ), {} )
     # Get all the members of type Field, sort them by order of declaration
     fields = [(name, obj) for name, obj in
               inst.__dict__.items() if isinstance(obj, Field)]

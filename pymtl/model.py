@@ -35,9 +35,17 @@ class Port(object):
          declaration. (TODO: remove. Only used by From.)
     """
     # TODO: replace width with nbits!!!
-    self.node   = Node(width)
-    self.addr   = None
-    self.width  = width
+    if isinstance( width, int ):
+      self.width  = width
+      self._msg    = None
+      self.node   = Node(width)
+    else:
+      self.width     = width.width
+      self.node      = Node(width.width)
+      self._msg       = width
+      # TODO: needs to be a property
+      self._msg.value = self.node.value
+    self._addr  = None
     self.name   = name
     self.parent = None
     # Connections used by Simulation Tool
@@ -51,6 +59,9 @@ class Port(object):
     self.ext_connections = []
     # Needed by VerilogTranslationTool
     self.is_reg = False
+
+  def __getattr__(self, item):
+    return self._msg.__getattribute__( item )
 
   def __getitem__(self, addr):
     """Bitfield access ([]). Returns a Slice object."""
@@ -182,7 +193,7 @@ class Constant(object):
     value: value of the constant.
     width: bitwidth of the constant.
     """
-    self.addr   = None
+    self._addr  = None
     self._value = Bits( width, value )
     self.width  = width
     self.type   = 'constant'
@@ -233,15 +244,15 @@ class ConnectionSlice(object):
   def __init__( self, port, addr ):
     self.parent_port = port
     self.node        = port.node[addr]
-    self.addr        = addr
+    self._addr       = addr
     if isinstance(addr, slice):
       assert not addr.step  # We dont support steps!
       self.width       = addr.stop - addr.start
-      self.suffix      = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
-      self.vlog_suffix = '[{0}:{1}]'.format(self.addr.stop-1, self.addr.start)
+      self.suffix      = '[{0}:{1}]'.format(self._addr.stop, self._addr.start)
+      self.vlog_suffix = '[{0}:{1}]'.format(self._addr.stop-1, self._addr.start)
     else:
       self.width       = 1
-      self.suffix      = '[{0}]'.format(self.addr)
+      self.suffix      = '[{0}]'.format(self._addr)
       self.vlog_suffix = self.suffix
 
   def connect(self, target):
@@ -295,14 +306,14 @@ class ConnectionEdge(object):
       self.src_node = src.parent_port
     else:
       self.src_node = src
-    self.src_slice  = src.addr
+    self.src_slice  = src._addr
 
     # Destination Node
     if isinstance( dest, ConnectionSlice ):
       self.dest_node = dest.parent_port
     else:
       self.dest_node = dest
-    self.dest_slice = dest.addr
+    self.dest_slice = dest._addr
 
   def is_dest( self, node ):
     return self.dest_node == node
