@@ -51,6 +51,8 @@ class MetaBitStruct( type ):
       setattr( inst.__class__, name,
                property( create_getter( nbits, width ) )
              )
+      # Add attribute '<field>_nbits' so we can query the size of fields.
+      setattr( inst, name+'_nbits', width )
       nbits += width
     # Set total width
     setattr( inst, 'width', nbits )

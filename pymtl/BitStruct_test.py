@@ -86,41 +86,75 @@ class PortMsgModel( Model ):
     self.in_ = InPort ( msg )
     self.out = OutPort( msg )
 
-    #self.type = Wire( msg.type.width )
-    #self.len  = Wire( msg.len.width  )
-    #self.addr = Wire( msg.addr.width )
-    #self.data = Wire( msg.data.width )
+    # TODO: msg.type.width generates a slice object, attached to the
+    #       port, but with no other connections.
+    #       Probably want to remove this in elaboration?
+    # TODO: Would like to do msg.type.width, but this doesn't work since
+    #       signal attachment done to copies of msg, not msg itself.
+    #       However, self.in_.width works.
+    self.type = Wire( msg.type_nbits )
+    self.len  = Wire( msg.len_nbits  )
+    self.addr = Wire( msg.addr_nbits )
+    self.data = Wire( msg.data_nbits )
 
-    #connect( self.in_.type, self.type )
-    #connect( self.in_.len,  self.len  )
-    #connect( self.in_.addr, self.addr )
-    #connect( self.in_.data, self.data )
+    connect( self.in_.type, self.type )
+    connect( self.in_.len,  self.len  )
+    connect( self.in_.addr, self.addr )
+    connect( self.in_.data, self.data )
 
-    #connect( self.out.type, self.type )
-    #connect( self.out.len,  self.type )
-    #connect( self.out.addr, self.addr )
-    #connect( self.out.data, self.data )
+    connect( self.out.type, self.type )
+    connect( self.out.len,  self.len  )
+    connect( self.out.addr, self.addr )
+    connect( self.out.data, self.data )
 
 def test_msg_ports():
 
+  print
   model = PortMsgModel()
   model.elaborate()
 
+  sim = SimulationTool(model)
+  import debug_utils
+  debug_utils.port_walk(model)
+
   assert model.in_.width      == 1 + 2 + 16 + 32
-  assert model.in_.type.width == 1
-  assert model.in_.len.width  == 2
-  assert model.in_.addr.width == 16
-  assert model.in_.data.width == 32
+  assert model.in_.type_nbits == 1
+  assert model.in_.len_nbits  == 2
+  assert model.in_.addr_nbits == 16
+  assert model.in_.data_nbits == 32
 
+  # TODO: Doing port_walk here shows all temporary slices generated
+  #       above as connections!  Fix this somehow?
+  #debug_utils.port_walk(model)
 
-# def __init__( self ):
-#   my_msg = MemMsg.MemMsg( 16, 32 )
-#   self.in_ = InPort ( my_msg )
-#   self.out = OutPort( my_msg )
-#
-#   # self.in_ returns an InPort, not a MemMsg!
-#   # How do we get it to retrieve the attribute from the MemMsg?
-#   connect( self.in_.addr, some_other_thing )
+  assert model.type.value == 0
+  assert model.len.value  == 0
+  assert model.addr.value == 0
+  assert model.data.value == 0
+
+  assert model.out.type.value == 0
+  assert model.out.len.value  == 0
+  assert model.out.addr.value == 0
+  assert model.out.data.value == 0
+
+  model.in_.value = 0x5f0cd0f0f0f0f
+  assert model.in_.value == 0x5f0cd0f0f0f0f
+
+  sim.eval_combinational()
+
+  assert model.type.value == 1
+  assert model.len.value  == 1
+  assert model.addr.value == 0xf0cd
+  assert model.data.value == 0x0f0f0f0f
+
+  assert model.out.type.value == 1
+  assert model.out.len.value  == 1
+  assert model.out.addr.value == 0xf0cd
+  assert model.out.data.value == 0x0f0f0f0f
+  assert model.out.value      == 0x5f0cd0f0f0f0f
+
+  model.len.value = MemMsg.half
+  assert model.out.len.value == MemMsg.half
 
 #-------------------------------------------------------------------------
 # Check Logic

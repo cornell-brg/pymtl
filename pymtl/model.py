@@ -15,6 +15,7 @@ import PortBundle
 import collections
 import inspect
 import ast
+import copy
 
 #-------------------------------------------------------------------------
 # Port
@@ -42,7 +43,8 @@ class Port(object):
     else:
       self.width        = width.width
       self.node         = Node(width.width)
-      self._msg         = width
+      # TODO: better way without creating a copy? different interface?
+      self._msg         = copy.copy( width )
       self._msg._signal = self
     self._addr  = None
     self.name   = name
@@ -511,12 +513,18 @@ class Model(object):
       # ValueGraph Connections
 
       for c in port.node.connections:
+        # Remove temporary slices?  Not sure about this.
+        if not c.connections:
+          port.node.connections.remove( c )
         # If we're connected to a Constant, propagate it's value to all
         # indirectly connected Ports and Wires
-        if isinstance(c, Constant):
+        elif isinstance(c, Constant):
           port.value = c.value
+        #  If this connection doesnt have connections, remove it
+        #  (Hanging Slices)
         # Do the same for Constants connected to Slices
-        if isinstance(c, Slice) and isinstance(c.connections[0], Constant):
+        elif ( isinstance(c, Slice) and c.connections and
+             isinstance(c.connections[0], Constant) ):
           assert len(c.connections) == 1
           c.value = c.connections[0].value
         # Otherwise, determine if the connected Wire/Port was connected in our

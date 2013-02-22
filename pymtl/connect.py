@@ -39,7 +39,7 @@ class Node(object):
       assert addr.start < addr.stop
       assert addr.stop <= self.width
     s = Slice(self, addr)
-    # TODO: do we want this here?
+    # TODO: do we want this here? another way?
     self.connections += [ s ]
     return s
 
