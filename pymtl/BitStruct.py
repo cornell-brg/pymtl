@@ -53,9 +53,11 @@ class MetaBitStruct( type ):
              )
       # Add attribute '<field>_nbits' so we can query the size of fields.
       setattr( inst, name+'_nbits', width )
+      setattr( inst, name+'_slice', slice( nbits, nbits + width ) )
       nbits += width
     # Set total width
     setattr( inst, 'width', nbits )
+    setattr( inst, 'nbits', nbits )
     return inst
 
 class BitStruct( object ):

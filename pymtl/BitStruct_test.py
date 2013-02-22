@@ -32,8 +32,8 @@ class MemMsg( BitStruct ):
 
     # Declare the MemoryMsg fields
     self.type = Field( 1 )
-    self.len  = Field( len )
     self.addr = Field( addr_nbits )
+    self.len  = Field( len )
     self.data = Field( data_nbits )
 
     # TODO: test other Field types (for overlapping fields)
@@ -51,17 +51,30 @@ def test_bitstruct_fields():
   x = MemMsg( 16, 32 )
 
   # Hacky assignment of value for testing
-  x._signal = InPort( x.width )
+  x._signal = InPort( x.nbits )
   assert x._signal.value == 0
   x._signal.value = 0x5f0cd0f0f0f0f
   assert x._signal.value == 0x5f0cd0f0f0f0f
 
-  # Test access to attributes
+  # Test field nbits attributes
+  assert x.type_nbits == 1
+  assert x.addr_nbits == 16
+  assert x.len_nbits  == 2
+  assert x.data_nbits == 32
+
+  # Test field slices attributes
+  assert x.type_slice == slice( 50, 51 )
+  assert x.addr_slice == slice( 34, 50 )
+  assert x.len_slice  == slice( 32, 34 )
+  assert x.data_slice == slice(  0, 32 )
+
+  # Test access to values
   assert x.type.value == 1
+  assert x.addr.value == 0x7c33
   assert x.len.value  == 1
-  assert x.addr.value == 0xf0cd
   assert x.data.value == 0x0f0f0f0f
   assert x.width == 1 + 2 + 16 + 32
+  assert x.nbits == 1 + 2 + 16 + 32
 
   x.type.value = MemMsg.rd
   assert x.type.value == 0
@@ -117,9 +130,10 @@ def test_msg_ports():
   #debug_utils.port_walk(model)
 
   assert model.in_.width      == 1 + 2 + 16 + 32
+  assert model.in_.nbits      == 1 + 2 + 16 + 32
   assert model.in_.type_nbits == 1
-  assert model.in_.len_nbits  == 2
   assert model.in_.addr_nbits == 16
+  assert model.in_.len_nbits  == 2
   assert model.in_.data_nbits == 32
 
   # TODO: Doing port_walk here shows all temporary slices generated
@@ -127,13 +141,13 @@ def test_msg_ports():
   #debug_utils.port_walk(model)
 
   assert model.type.value == 0
-  assert model.len.value  == 0
   assert model.addr.value == 0
+  assert model.len.value  == 0
   assert model.data.value == 0
 
   assert model.out.type.value == 0
-  assert model.out.len.value  == 0
   assert model.out.addr.value == 0
+  assert model.out.len.value  == 0
   assert model.out.data.value == 0
 
   model.in_.value = 0x5f0cd0f0f0f0f
@@ -142,13 +156,13 @@ def test_msg_ports():
   sim.eval_combinational()
 
   assert model.type.value == 1
+  assert model.addr.value == 0x7c33
   assert model.len.value  == 1
-  assert model.addr.value == 0xf0cd
   assert model.data.value == 0x0f0f0f0f
 
   assert model.out.type.value == 1
   assert model.out.len.value  == 1
-  assert model.out.addr.value == 0xf0cd
+  assert model.out.addr.value == 0x7c33
   assert model.out.data.value == 0x0f0f0f0f
   assert model.out.value      == 0x5f0cd0f0f0f0f
 
@@ -204,7 +218,7 @@ def test_msg_logic():
 
   assert model.out.type.value == 1
   assert model.out.len.value  == 1
-  assert model.out.addr.value == 0xf0cd
+  assert model.out.addr.value == 0x7c33
   assert model.out.data.value == 0x0f0f0f0f
   assert model.out.value      == 0x5f0cd0f0f0f0f
 
