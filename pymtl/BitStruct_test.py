@@ -166,8 +166,6 @@ class LogicMsgModel( Model ):
     self.in_ = InPort ( msg )
     self.out = OutPort( msg )
 
-    self.register_combinational( 'logic', [self.in_] )
-
   @combinational
   def logic( self ):
 
