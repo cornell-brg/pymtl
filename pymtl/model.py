@@ -890,7 +890,16 @@ class SensitivityListVisitor(ast.NodeVisitor):
         return obj
       # This is an attribute, get the object with this attribute name
       else:
-        obj = obj.__getattribute__( attr )
+        # Hacky handling for BitStructs.  We hack ports to implement
+        # __getattr__ to allow message fields to be accessed with the
+        # <portname>.<fieldname> syntax.  Unfortunately, other components
+        # do NOT implement __getattr__, so the default behavior should be
+        # to call __getattribute__ first...
+        try:
+          obj = obj.__getattribute__( attr )
+        except AttributeError:
+          obj = obj.__getattr__( attr )
+
     return obj
 
 #------------------------------------------------------------------------

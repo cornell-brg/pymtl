@@ -109,13 +109,12 @@ class PortMsgModel( Model ):
 
 def test_msg_ports():
 
-  print
   model = PortMsgModel()
   model.elaborate()
 
   sim = SimulationTool(model)
-  import debug_utils
-  debug_utils.port_walk(model)
+  #import debug_utils
+  #debug_utils.port_walk(model)
 
   assert model.in_.width      == 1 + 2 + 16 + 32
   assert model.in_.type_nbits == 1
@@ -153,17 +152,64 @@ def test_msg_ports():
   assert model.out.data.value == 0x0f0f0f0f
   assert model.out.value      == 0x5f0cd0f0f0f0f
 
-  model.len.value = MemMsg.half
+  model.in_.len.value = MemMsg.half
   assert model.out.len.value == MemMsg.half
 
 #-------------------------------------------------------------------------
 # Check Logic
 #-------------------------------------------------------------------------
-#
-# @combinational
-# def logic( self ):
-#   # self.out returns an OutPort, not a MemMsg!
-#   # How do we get it to retrieve the attribute from the MemMsg?
-#   self.out.data.value = self.in_.data.value
+
+class LogicMsgModel( Model ):
+  def __init__( self ):
+    msg = MemMsg( 16, 32 )
+
+    self.in_ = InPort ( msg )
+    self.out = OutPort( msg )
+
+    self.register_combinational( 'logic', [self.in_] )
+
+  @combinational
+  def logic( self ):
+
+    self.out.type.value = self.in_.type.value
+    self.out.len.value  = self.in_.len.value
+    self.out.addr.value = self.in_.addr.value
+    self.out.data.value = self.in_.data.value
 
 
+def test_msg_logic():
+
+  model = LogicMsgModel()
+  model.elaborate()
+
+  sim = SimulationTool(model)
+  #import debug_utils
+  #debug_utils.port_walk(model)
+  #print model._newsenses
+
+  assert model.in_.width      == 1 + 2 + 16 + 32
+  assert model.in_.type_nbits == 1
+  assert model.in_.len_nbits  == 2
+  assert model.in_.addr_nbits == 16
+  assert model.in_.data_nbits == 32
+
+  model.in_.value = 1
+  sim.eval_combinational()
+  assert model.out.value == 1
+
+  model.in_.value = 2
+  sim.eval_combinational()
+  assert model.out.value == 2
+
+  model.in_.value = 0x5f0cd0f0f0f0f
+  sim.eval_combinational()
+
+  assert model.out.type.value == 1
+  assert model.out.len.value  == 1
+  assert model.out.addr.value == 0xf0cd
+  assert model.out.data.value == 0x0f0f0f0f
+  assert model.out.value      == 0x5f0cd0f0f0f0f
+
+  model.in_.len.value = MemMsg.byte
+  sim.eval_combinational()
+  assert model.out.len.value == MemMsg.byte
