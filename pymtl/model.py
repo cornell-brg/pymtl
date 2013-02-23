@@ -128,6 +128,9 @@ class Port(object):
   def _code(self, code):
     self.node._code = code
 
+  def line_trace( self ):
+    return self._msg.line_trace()
+
 #-------------------------------------------------------------------------
 # InPort
 #-------------------------------------------------------------------------
@@ -294,6 +297,14 @@ class ConnectionSlice(object):
   @value.setter
   def value(self, value):
     self.node.value = value
+
+  @property
+  def next(self):
+    """Shadow value of the bits we are slicing, for sequential logic."""
+    return self.node.next
+  @next.setter
+  def next(self, value):
+    self.node.next = value
 
 #-------------------------------------------------------------------------
 # ConnectionEdge

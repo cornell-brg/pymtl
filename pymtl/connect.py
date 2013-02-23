@@ -80,6 +80,11 @@ class Node(object):
     # otherwise this fails!
     self._next[:] = value
 
+  def update_next_from_slice(self, value, range):
+    if self.sim:
+      self.sim.rnode_callbacks += [self]
+    self._next[range] = value
+
   # TODO: make hook added by simulator?
   def clock(self):
     """Update value to store contents of next. Should only be called by sim."""
@@ -165,6 +170,14 @@ class Slice(object):
   def value(self, value):
     if self.value != value:
       self.parent_ptr.update_from_slice( value, self.addr )
+
+  @property
+  def next(self):
+    """Shado value of the bits we are slicing."""
+    return self.parent_ptr.next[self.addr]
+  @next.setter
+  def next(self, value):
+    self.parent_ptr.update_next_from_slice( value, self.addr )
 
   @property
   def name(self):

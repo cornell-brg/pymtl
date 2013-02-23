@@ -170,10 +170,10 @@ def test_msg_ports():
   assert model.out.len.value == MemMsg.half
 
 #-------------------------------------------------------------------------
-# Check Logic
+# Check Combinational Logic
 #-------------------------------------------------------------------------
 
-class LogicMsgModel( Model ):
+class CombLogicMsgModel( Model ):
   def __init__( self ):
     msg = MemMsg( 16, 32 )
 
@@ -189,9 +189,9 @@ class LogicMsgModel( Model ):
     self.out.data.value = self.in_.data.value
 
 
-def test_msg_logic():
+def test_msg_comb_logic():
 
-  model = LogicMsgModel()
+  model = CombLogicMsgModel()
   model.elaborate()
 
   sim = SimulationTool(model)
@@ -225,3 +225,66 @@ def test_msg_logic():
   model.in_.len.value = MemMsg.byte
   sim.eval_combinational()
   assert model.out.len.value == MemMsg.byte
+
+#-------------------------------------------------------------------------
+# Check Sequential Logic
+#-------------------------------------------------------------------------
+
+class SeqLogicMsgModel( Model ):
+  def __init__( self ):
+    msg = MemMsg( 16, 32 )
+
+    self.in_ = InPort ( msg )
+    self.out = OutPort( msg )
+
+    #self.temp = Wire( 1 )
+    #connect( self.temp, self.out[1] )
+
+  @posedge_clk
+  def logic( self ):
+
+    self.out.type.next = self.in_.type.value
+    self.out.len.next  = self.in_.len.value
+    self.out.addr.next = self.in_.addr.value
+    self.out.data.next = self.in_.data.value
+
+
+def test_msg_seq_logic():
+
+  model = SeqLogicMsgModel()
+  model.elaborate()
+
+  sim = SimulationTool(model)
+  #import debug_utils
+  #debug_utils.port_walk(model)
+  #print model._newsenses
+
+  assert model.in_.width      == 1 + 2 + 16 + 32
+  assert model.in_.type_nbits == 1
+  assert model.in_.len_nbits  == 2
+  assert model.in_.addr_nbits == 16
+  assert model.in_.data_nbits == 32
+
+  sim.reset()
+
+  model.in_.value = 1
+  assert model.out.value == 0
+  sim.cycle()
+  assert model.out.value == 1
+
+  model.in_.value = 2
+  sim.eval_combinational()
+  assert model.out.value == 1
+  sim.cycle()
+  assert model.out.value == 2
+
+  model.in_.value = 0x5f0cd0f0f0f0f
+  sim.cycle()
+  assert model.out.value == 0x5f0cd0f0f0f0f
+
+  model.in_.len.value = MemMsg.half
+  sim.cycle()
+  assert model.out.len.value == MemMsg.half
+  assert model.out.value     == 0x5f0ce0f0f0f0f
+
+
