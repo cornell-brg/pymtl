@@ -67,9 +67,15 @@ class PortBundle( object ):
     for var_name, var_obj in self.__dict__.items():
 
       if   isinstance( var_obj, model.InPort ):
-        self.__dict__[var_name] = model.OutPort ( var_obj.width )
+        if var_obj._msg:
+          self.__dict__[var_name] = model.OutPort ( var_obj._msg )
+        else:
+          self.__dict__[var_name] = model.OutPort ( var_obj.width )
       elif isinstance( var_obj, model.OutPort ):
-        self.__dict__[var_name] = model.InPort  ( var_obj.width )
+        if var_obj._msg:
+          self.__dict__[var_name] = model.InPort  ( var_obj._msg )
+        else:
+          self.__dict__[var_name] = model.InPort  ( var_obj.width )
 
     return self
 
