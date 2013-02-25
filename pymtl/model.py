@@ -15,6 +15,7 @@ import PortBundle
 import collections
 import inspect
 import ast
+import copy
 
 #-------------------------------------------------------------------------
 # Port
@@ -24,21 +25,28 @@ class Port(object):
 
   """Hidden base class implementing a module port."""
 
-  def __init__(self, type, width, name='???'):
+  def __init__(self, width, name='???'):
     """Constructor for a Port object.
 
     Parameters
     ----------
-    type: string indicated whether this is an 'input' or 'output' port.
     width: bitwidth of the port.
     name: (TODO: remove? Previously only used for intermediate values).
     str: initializes a Port given a string containing a  port
          declaration. (TODO: remove. Only used by From.)
     """
-    self.node   = Node(width)
-    self.addr   = None
-    self.type   = type  # TODO: remove me
-    self.width  = width
+    # TODO: replace width with nbits!!!
+    if isinstance( width, int ):
+      self.width  = width
+      self._msg    = None
+      self.node   = Node(width)
+    else:
+      self.width        = width.width
+      self.node         = Node(width.width)
+      # TODO: better way without creating a copy? different interface?
+      self._msg         = copy.copy( width )
+      self._msg._signal = self
+    self._addr  = None
     self.name   = name
     self.parent = None
     # Connections used by Simulation Tool
@@ -52,6 +60,9 @@ class Port(object):
     self.ext_connections = []
     # Needed by VerilogTranslationTool
     self.is_reg = False
+
+  def __getattr__(self, item):
+    return self._msg.__getattribute__( item )
 
   def __getitem__(self, addr):
     """Bitfield access ([]). Returns a Slice object."""
@@ -117,6 +128,9 @@ class Port(object):
   def _code(self, code):
     self.node._code = code
 
+  def line_trace( self ):
+    return self._msg.line_trace()
+
 #-------------------------------------------------------------------------
 # InPort
 #-------------------------------------------------------------------------
@@ -131,7 +145,7 @@ class InPort(Port):
     ----------
     width: bitwidth of the port.
     """
-    super(InPort, self).__init__('input', width)
+    super(InPort, self).__init__( width )
 
 #-------------------------------------------------------------------------
 # OutPort
@@ -148,7 +162,7 @@ class OutPort(Port):
     ----------
     width: bitwidth of the port.
     """
-    super(OutPort, self).__init__('output', width)
+    super(OutPort, self).__init__( width )
 
 #-------------------------------------------------------------------------
 # Wire
@@ -165,7 +179,7 @@ class Wire(Port):
     ----------
     width: bitwidth of the wire.
     """
-    super(Wire, self).__init__('wire', width)
+    super(Wire, self).__init__( width )
 
 #-------------------------------------------------------------------------
 # Constant
@@ -183,7 +197,7 @@ class Constant(object):
     value: value of the constant.
     width: bitwidth of the constant.
     """
-    self.addr   = None
+    self._addr  = None
     self._value = Bits( width, value )
     self.width  = width
     self.type   = 'constant'
@@ -234,15 +248,15 @@ class ConnectionSlice(object):
   def __init__( self, port, addr ):
     self.parent_port = port
     self.node        = port.node[addr]
-    self.addr        = addr
+    self._addr       = addr
     if isinstance(addr, slice):
       assert not addr.step  # We dont support steps!
       self.width       = addr.stop - addr.start
-      self.suffix      = '[{0}:{1}]'.format(self.addr.stop, self.addr.start)
-      self.vlog_suffix = '[{0}:{1}]'.format(self.addr.stop-1, self.addr.start)
+      self.suffix      = '[{0}:{1}]'.format(self._addr.stop, self._addr.start)
+      self.vlog_suffix = '[{0}:{1}]'.format(self._addr.stop-1, self._addr.start)
     else:
       self.width       = 1
-      self.suffix      = '[{0}]'.format(self.addr)
+      self.suffix      = '[{0}]'.format(self._addr)
       self.vlog_suffix = self.suffix
 
   def connect(self, target):
@@ -284,6 +298,14 @@ class ConnectionSlice(object):
   def value(self, value):
     self.node.value = value
 
+  @property
+  def next(self):
+    """Shadow value of the bits we are slicing, for sequential logic."""
+    return self.node.next
+  @next.setter
+  def next(self, value):
+    self.node.next = value
+
 #-------------------------------------------------------------------------
 # ConnectionEdge
 #-------------------------------------------------------------------------
@@ -296,14 +318,14 @@ class ConnectionEdge(object):
       self.src_node = src.parent_port
     else:
       self.src_node = src
-    self.src_slice  = src.addr
+    self.src_slice  = src._addr
 
     # Destination Node
     if isinstance( dest, ConnectionSlice ):
       self.dest_node = dest.parent_port
     else:
       self.dest_node = dest
-    self.dest_slice = dest.addr
+    self.dest_slice = dest._addr
 
   def is_dest( self, node ):
     return self.dest_node == node
@@ -502,12 +524,18 @@ class Model(object):
       # ValueGraph Connections
 
       for c in port.node.connections:
+        # Remove temporary slices?  Not sure about this.
+        if not c.connections:
+          port.node.connections.remove( c )
         # If we're connected to a Constant, propagate it's value to all
         # indirectly connected Ports and Wires
-        if isinstance(c, Constant):
+        elif isinstance(c, Constant):
           port.value = c.value
+        #  If this connection doesnt have connections, remove it
+        #  (Hanging Slices)
         # Do the same for Constants connected to Slices
-        if isinstance(c, Slice) and isinstance(c.connections[0], Constant):
+        elif ( isinstance(c, Slice) and c.connections and
+             isinstance(c.connections[0], Constant) ):
           assert len(c.connections) == 1
           c.value = c.connections[0].value
         # Otherwise, determine if the connected Wire/Port was connected in our
@@ -873,7 +901,21 @@ class SensitivityListVisitor(ast.NodeVisitor):
         return obj
       # This is an attribute, get the object with this attribute name
       else:
-        obj = obj.__getattribute__( attr )
+        # Handling for BitStructs.  Python checks __getattribute__
+        # first when trying to find a class member.  After that, it
+        # checks __getattr__,  a method implemented by developers to
+        # provide alternate checks for members.  In our case, we modify
+        # Ports to use __getattr__ to provide access to BitStructs fields
+        # assoiated with the port when using the syntax
+        # <portname>.<fieldname>.  Other components do NOT implement
+        # __getattr__, so check __getattribute__ first, then check
+        # __getattr__ as a sanity check to ensure the field name is valid,
+        # although we simply discard the returned object.
+        try:
+          obj = obj.__getattribute__( attr )
+        except AttributeError:
+          discard_me = obj.__getattr__( attr )
+
     return obj
 
 #------------------------------------------------------------------------

@@ -375,7 +375,7 @@ from Bits import _num_bits
 
 def test_num_bits():
 
-  assert _num_bits(0) == 0
+  assert _num_bits(0) == 1
   assert _num_bits(1) == 1
   assert _num_bits(2) == 2
   assert _num_bits(3) == 2

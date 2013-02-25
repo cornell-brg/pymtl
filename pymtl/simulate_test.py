@@ -780,6 +780,25 @@ def test_demux():
   assert model.out[1].value == 5
   assert model.out[2].value == 0
 
+def test_next_slices():
+  model = NextSlices()
+  sim = setup_sim( model )
+  sim.reset()
+
+  model.in_.value = 0xAB
+  assert model.out0.value == 0x00
+  assert model.out1.value == 0x00
+  sim.cycle()
+  assert model.out0.value == 0xBA
+  assert model.out1.value == 0xBA
+  model.in_.value = 0x12
+  sim.eval_combinational()
+  assert model.out0.value == 0xBA
+  assert model.out1.value == 0x21
+  sim.cycle()
+  assert model.out0.value == 0x21
+  assert model.out1.value == 0x21
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -7,7 +7,7 @@ This module contains classes which construct a simulator given a MTL model
 for execution in the python interpreter.
 """
 
-from collections import deque, defaultdict
+import collections
 import ast, _ast
 import inspect
 import pprint
@@ -48,14 +48,16 @@ class SimulationTool():
       raise Exception(msg)
     self.model = model
     self.num_cycles      = 0
-    self.vnode_callbacks = defaultdict(list)
+    self.vnode_callbacks = collections.defaultdict(list)
     self.rnode_callbacks = []
-    self.event_queue     = deque()
+    self.event_queue     = collections.deque()
     self.posedge_clk_fns = []
     #self.node_groups     = []
     # Set by VCDUtil
     self.vcd = False
     self.o   = None
+
+    self.pstats = PerfStats()
 
     # Actually construct the simulator
     self.construct_sim()
@@ -116,6 +118,7 @@ class SimulationTool():
     """Evaluates all events in the combinational logic event queue."""
     while self.event_queue:
       func = self.event_queue.pop()
+      self.pstats.add_eval_call( func, self.num_cycles )
       func()
 
   #-----------------------------------------------------------------------
@@ -291,6 +294,55 @@ class SimulationTool():
     # Add all posedge_clk functions
     for m in model._submodules:
       self.register_decorated_functions( m )
+
+  #-----------------------------------------------------------------------
+  # Dump Stats
+  #-----------------------------------------------------------------------
+  def dump_pstats(self):
+    return self.pstats.print_evals_per_func( self.num_cycles )
+
+#=========================================================================
+# Performance Stats
+#=========================================================================
+
+class PerfStats( object ):
+  def __init__( self ):
+    self.eval_stats = collections.defaultdict( collections.Counter )
+
+  def add_eval_call( self, func, cycle ):
+    self.eval_stats[ func ][ cycle ] += 1
+
+  def print_evals_per_func( self, num_cycles ):
+    s = ''
+    # Calculate max label width
+    labels = ["{}.{}".format( x.__self__.name, x.func_name)
+              for x in self.eval_stats ]
+    if not labels:
+      return "No evals called!"
+    lfill = max( [ len( x ) for x in labels ] ) + 2
+    # Get number of total eval calls
+    total_calls = float( self.total_evals() )
+    calls_per_cycle = total_calls / num_cycles
+    cfill = len( "{:,}".format( int(total_calls) ) )
+    dfill = len( "{:.1f}".format( calls_per_cycle ) )
+    # Print out stats for each eval function
+    for key, value in self.eval_stats.items():
+      # key.im_class.__name__ ( to get class! )
+      label = key.__self__.name + '.' + key.func_name + ':'
+      s += "{:{lf}}".format( label, lf=lfill )
+      x = sum( value )
+      y = x / num_cycles
+      s += "{:{cf},}  {:{df}.1f}  ({:6.2%})\n".format( x, y, x / total_calls, cf=cfill, df=dfill )
+    s += 20*"=" + "\n"
+    s += "{:{lf}}{:{cf},}  {:{df}.1f}\n".format( "Total:", int(total_calls), calls_per_cycle, lf=lfill, cf=cfill, df=dfill )
+    return s
+
+  def total_evals( self ):
+    total = 0
+    for key, value in self.eval_stats.items():
+      total += sum( value )
+    return total
+
 
 #=========================================================================
 # Decorated Function Visitor

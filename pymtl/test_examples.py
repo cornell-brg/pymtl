@@ -558,6 +558,19 @@ class Demux( Model ):
       else:
         s.out[ i ].value = 0
 
+class NextSlices( Model ):
+  def __init__( s ):
+    s.in_  = InPort ( 8 )
+    s.out0 = OutPort( 8 )
+    s.out1 = OutPort( 8 )
+  @posedge_clk
+  def seq_logic( s ):
+    s.out0[0:4].next  = s.in_[4:8].value
+    s.out0[4:8].next  = s.in_[0:4].value
+  @combinational
+  def comb_logic( s ):
+    s.out1[0:4].value = s.in_[4:8].value
+    s.out1[4:8].value = s.in_[0:4].value
 
 
 #class RegisteredAdder1(Model):

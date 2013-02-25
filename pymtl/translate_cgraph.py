@@ -114,10 +114,11 @@ class ConnectionGraphToVerilog(object):
   def port_to_str(self, p):
     """Generate Verilog source for a port declaration."""
     reg = 'reg' if p.is_reg else ''
+    direction = 'input' if isinstance( p, InPort ) else 'output'
     if p.width == 1:
-      return "{} {} {}".format(p.type, reg, p.verilog_name())
+      return "{} {} {}".format(direction, reg, p.verilog_name())
     else :
-      return "{} {} [{}:0] {}".format(p.type, reg,
+      return "{} {} [{}:0] {}".format(direction, reg,
                                       p.width-1, p.verilog_name())
 
   #-----------------------------------------------------------------------

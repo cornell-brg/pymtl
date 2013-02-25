@@ -14,7 +14,7 @@ def _num_bits( x ):
   n = 1
   # TODO: shouldn't this return 1, not zero?
   if x == 0:
-    return 0
+    return 1
   elif x < 0:
     x = -x
     n += 1
