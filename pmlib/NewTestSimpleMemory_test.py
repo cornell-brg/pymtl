@@ -33,13 +33,13 @@ class TestHarness (Model):
     # connect
 
     for i in xrange( nports ):
-      connect( self.src[i].out_msg, self.mem.memreq_msg[i]  )
-      connect( self.src[i].out_val, self.mem.memreq_val[i]  )
-      connect( self.src[i].out_rdy, self.mem.memreq_rdy[i]  )
+      connect( self.src[i].out_msg, self.mem.memreq[i].msg  )
+      connect( self.src[i].out_val, self.mem.memreq[i].val  )
+      connect( self.src[i].out_rdy, self.mem.memreq[i].rdy  )
 
-      connect( self.sink[i].in_msg, self.mem.memresp_msg[i] )
-      connect( self.sink[i].in_val, self.mem.memresp_val[i] )
-      connect( self.sink[i].in_rdy, self.mem.memresp_rdy[i] )
+      connect( self.sink[i].in_msg, self.mem.memresp[i].msg )
+      connect( self.sink[i].in_val, self.mem.memresp[i].val )
+      connect( self.sink[i].in_rdy, self.mem.memresp[i].rdy )
 
   def done( self ):
 

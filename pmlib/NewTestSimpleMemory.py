@@ -6,7 +6,8 @@
 
 from pymtl import *
 import pmlib
-import mem_struct
+
+from valrdy import InValRdyBundle, OutValRdyBundle
 
 class TestSimpleMemory (Model):
 
@@ -23,17 +24,13 @@ class TestSimpleMemory (Model):
 
     # List of memory request msg, val, rdy ports
 
-    self.memreq_msg  = [ InPort  ( memreq_params ) for x in
-                         xrange( nports ) ]
-    self.memreq_val  = [ InPort  ( 1 ) for x in xrange( nports ) ]
-    self.memreq_rdy  = [ OutPort ( 1 ) for x in xrange( nports ) ]
+    self.memreq  = [ InValRdyBundle( memreq_params ) for x in
+                     xrange( nports ) ]
 
     # List of memory response msg, val, rdy ports
 
-    self.memresp_msg = [ OutPort ( memresp_params ) for x in
-                         xrange( nports ) ]
-    self.memresp_val = [ OutPort ( 1 ) for x in xrange( nports ) ]
-    self.memresp_rdy = [ InPort  ( 1 ) for x in xrange( nports ) ]
+    self.memresp = [ OutValRdyBundle( memresp_params ) for x in
+                     xrange( nports ) ]
 
 
     # Memory message parameters
@@ -61,7 +58,7 @@ class TestSimpleMemory (Model):
     # Connect ready signals to inputs to ensure pipeline behavior
 
     #for i in xrange( nports ):
-    #  connect( self.memreq_rdy[i], self.memresp_rdy[i] )
+    #  connect( self.memreq.rdy[i], self.memresp.rdy[i] )
 
     # TODO: hack to force comb logic to fire!
     self.fire_comb = Wire( 1 )
@@ -97,8 +94,8 @@ class TestSimpleMemory (Model):
       # At the end of the cycle, we AND together the val/rdy bits to
       # determine if the request/memresp message transactions occured.
 
-      self.memreq_go[i]  = self.memreq_val[i].value  and self.memreq_rdy[i].value
-      self.memresp_go[i] = self.memresp_val[i].value and self.memresp_rdy[i].value
+      self.memreq_go[i]  = self.memreq[i].val.value  and self.memreq[i].rdy.value
+      self.memresp_go[i] = self.memresp[i].val.value and self.memresp[i].rdy.value
 
       # If the memresp transaction occured, then clear the buffer full bit.
       # Note that we do this _first_ before we process the request
@@ -111,7 +108,7 @@ class TestSimpleMemory (Model):
       # into our internal buffer and update the buffer full bit
 
       if self.memreq_go[i]:
-        self.memreq_buf[i].value  = self.memreq_msg[i].value
+        self.memreq_buf[i].value  = self.memreq[i].msg.value
         self.memreq_full[i]       = True
 
       # When len is zero, then we use all of the data
@@ -132,9 +129,9 @@ class TestSimpleMemory (Model):
 
         # Create the response message
 
-        self.memresp_msg[i].type.next = self.memresp_params.rd
-        self.memresp_msg[i].len.next  = self.memreq_buf[i].len.value
-        self.memresp_msg[i].data.next = read_data
+        self.memresp[i].msg.type.next = self.memresp_params.rd
+        self.memresp[i].msg.len.next  = self.memreq_buf[i].len.value
+        self.memresp[i].msg.data.next = read_data
 
       # Handle a write request
 
@@ -148,9 +145,9 @@ class TestSimpleMemory (Model):
 
         # Create the response message
 
-        self.memresp_msg[i].type.next = self.memresp_params.wr
-        self.memresp_msg[i].len.next  = 0
-        self.memresp_msg[i].data.next = 0
+        self.memresp[i].msg.type.next = self.memresp_params.wr
+        self.memresp[i].msg.len.next  = 0
+        self.memresp[i].msg.data.next = 0
 
       # For some reason this is causing an assert in PyMTL?
       #
@@ -160,8 +157,7 @@ class TestSimpleMemory (Model):
 
       # The memresp message if valid if the buffer is full
 
-      #self.memresp_val[i].next = self.memreq_full[i]
-      self.memresp_val[i].next = self.memreq_full[i]
+      self.memresp[i].val.next = self.memreq_full[i]
 
       # TODO: hack to force comb logic to fire!
       self.fire_comb.next = not self.fire_comb.value
@@ -170,7 +166,7 @@ class TestSimpleMemory (Model):
   # Combinational Logic
   #-----------------------------------------------------------------------
   # We model the TestSimpleMemory to behave like a normal queue. Instead of
-  # combinationally hooking up the memresp_rdy to memreq_rdy, we see if
+  # combinationally hooking up the memresp.rdy to memreq.rdy, we see if
   # there is anything present in the buffer or not, to calculate request
   # ready signal.
 
@@ -181,8 +177,8 @@ class TestSimpleMemory (Model):
 
     for i in xrange( self.nports ):
 
-      self.memreq_rdy[i].value = ( not self.memreq_full[i] or
-                                       self.memresp_rdy[i].value )
+      self.memreq[i].rdy.value = ( not self.memreq_full[i] or
+                                       self.memresp[i].rdy.value )
 
     # TODO: hack to force comb logic to fire!
     self.fire_comb.value
@@ -199,12 +195,12 @@ class TestSimpleMemory (Model):
 
     for i in xrange( self.nports ):
       memreq_str  = \
-        pmlib.valrdy.valrdy_to_str( self.memreq_msg[i].line_trace(),
-          self.memreq_val[i].value, self.memreq_rdy[i].value )
+        pmlib.valrdy.valrdy_to_str( self.memreq[i].msg.line_trace(),
+          self.memreq[i].val.value, self.memreq[i].rdy.value )
 
       memresp_str = \
-        pmlib.valrdy.valrdy_to_str( self.memresp_msg[i].line_trace(),
-          self.memresp_val[i].value, self.memresp_rdy[i].value )
+        pmlib.valrdy.valrdy_to_str( self.memresp[i].msg.line_trace(),
+          self.memresp[i].val.value, self.memresp[i].rdy.value )
 
       memtrace_str += "|{} () {}" \
         .format( memreq_str, memresp_str )
