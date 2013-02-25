@@ -6,7 +6,6 @@
 
 from pymtl import *
 import pmlib
-#import mem_msgs
 import mem_struct
 
 class TestSimpleMemory (Model):
@@ -47,32 +46,6 @@ class TestSimpleMemory (Model):
     assert self.memreq_params.data_nbits  % 8 == 0
     assert self.memresp_params.data_nbits % 8 == 0
 
-    # List of Unpack models
-
-    #self.memreq = [ mem_msgs.MemReqFromBits( memreq_params ) for x in
-    #                xrange( nports ) ]
-
-    # Connect memreq_msg port list to Unpack port list
-
-    #for i in xrange( nports ):
-    #  connect( self.memreq_msg[i], self.memreq[i].bits )
-
-    # List of Pack models
-
-    #self.memresp = [ mem_msgs.MemRespToBits( memresp_params ) for x in
-    #                 xrange( nports ) ]
-
-    # Connect memresp_msg port list to Pack port list
-
-    #for i in xrange( nports ):
-    #  connect( self.memresp_msg[i], self.memresp[i].bits )
-
-    # Buffers to hold memory request messages
-
-    #self.memreq_type = [ 0 for x in xrange( nports ) ]
-    #self.memreq_addr = [ 0 for x in xrange( nports ) ]
-    #self.memreq_len  = [ 0 for x in xrange( nports ) ]
-    #self.memreq_data = [ 0 for x in xrange( nports ) ]
     self.memreq_buf  = [ Wire( memreq_params ) for x in xrange( nports ) ]
     self.memreq_full = [ False for x in xrange( nports ) ]
 
@@ -138,64 +111,43 @@ class TestSimpleMemory (Model):
       # into our internal buffer and update the buffer full bit
 
       if self.memreq_go[i]:
-        #self.memreq_type[i] = self.memreq[i].type_.value.uint
-        #self.memreq_addr[i] = self.memreq[i].addr.value.uint
-        #self.memreq_len[i]  = self.memreq[i].len_.value.uint
-        #self.memreq_data[i] = self.memreq[i].data.value[:]
         self.memreq_buf[i].value  = self.memreq_msg[i].value
         self.memreq_full[i]       = True
 
       # When len is zero, then we use all of the data
 
-      #nbytes = self.memreq_len[i]
-      #if self.memreq_len[i] == 0:
-      #  nbytes = self.memreq_params.data_nbits/8
       nbytes = self.memreq_buf[i].len.value.uint
       if nbytes == 0:
         nbytes = self.memreq_params.data_nbits/8
 
       # Handle a read request
 
-      #if self.memreq_type[i] == self.memreq_params.type_read:
       if self.memreq_buf[i].type.value == self.memreq_params.rd:
 
         # Copy the bytes from the bytearray into read data bits
 
-        #read_data = Bits( self.memreq_params.data_nbits )
-        #for j in xrange( nbytes ):
-        #  read_data[j*8:j*8+8] = self.mem[ self.memreq_addr[i] + j ]
         read_data = Bits( self.memreq_params.data_nbits )
         for j in xrange( nbytes ):
           read_data[j*8:j*8+8] = self.mem[ self.memreq_buf[i].addr.value.uint + j ]
 
         # Create the response message
 
-        #self.memresp[i].type_.next = self.memresp_params.type_read
-        #self.memresp[i].len_.next  = self.memreq_len[i]
-        #self.memresp[i].data.next  = read_data
         self.memresp_msg[i].type.next = self.memresp_params.rd
         self.memresp_msg[i].len.next  = self.memreq_buf[i].len.value
         self.memresp_msg[i].data.next = read_data
 
       # Handle a write request
 
-      #elif self.memreq_type[i] == self.memreq_params.type_write:
       elif self.memreq_buf[i].type.value == self.memreq_params.wr:
 
         # Copy write data bits into bytearray
 
-        #write_data = self.memreq_data[i]
-        #for j in xrange( nbytes ):
-        #  self.mem[ self.memreq_addr[i] + j ] = write_data[j*8:j*8+8].uint
         write_data = self.memreq_buf[i].data.value
         for j in xrange( nbytes ):
           self.mem[ self.memreq_buf[i].addr.value.uint + j ] = write_data[j*8:j*8+8].uint
 
         # Create the response message
 
-        #self.memresp[i].type_.next = self.memresp_params.type_write
-        #self.memresp[i].len_.next  = 0
-        #self.memresp[i].data.next  = 0
         self.memresp_msg[i].type.next = self.memresp_params.wr
         self.memresp_msg[i].len.next  = 0
         self.memresp_msg[i].data.next = 0
@@ -246,12 +198,10 @@ class TestSimpleMemory (Model):
     memtrace_str = ''
 
     for i in xrange( self.nports ):
-        #pmlib.valrdy.valrdy_to_str( self.memreq[i].line_trace(),
       memreq_str  = \
         pmlib.valrdy.valrdy_to_str( self.memreq_msg[i].line_trace(),
           self.memreq_val[i].value, self.memreq_rdy[i].value )
 
-        #pmlib.valrdy.valrdy_to_str( self.memresp[i].line_trace(),
       memresp_str = \
         pmlib.valrdy.valrdy_to_str( self.memresp_msg[i].line_trace(),
           self.memresp_val[i].value, self.memresp_rdy[i].value )
