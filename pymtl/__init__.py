@@ -6,6 +6,7 @@ from connects import connect_chain, connect_auto
 from Bits import Bits
 from Bits import concat
 from PortBundle import PortBundle, create_PortBundles
+from BitStruct import BitStruct, Field
 import verilator_sim
 #from visualize import VisualizationTool
 
@@ -16,6 +17,8 @@ __all__ = ['Bits',
            'InPort',
            'OutPort',
            'PortBundle',
+           'BitStruct',
+           'Field',
            'create_PortBundles',
            'tick',
            'posedge_clk',
