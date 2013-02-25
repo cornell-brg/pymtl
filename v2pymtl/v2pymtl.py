@@ -121,6 +121,16 @@ def create_cython( in_ports, out_ports, model_name,
           "      self.tfp.close()\n"
           "      del self.tfp\n\n".format( model_name, vobj_name ))
 
+  pyx += ("  def dump(self):\n"
+          "      self.main_time = self.main_time + 1\n"
+          "      self.tfp.dump( self.main_time )\n\n")
+
+  pyx += ("  property the_time:\n"
+          "    def __set__(self, time):\n"
+          "      self.main_time = time\n"
+          "    def __get__(self):\n"
+          "      return self.main_time\n\n".format( model_name ))
+
   pyx += ("  property clk:\n"
           "    def __set__(self, clk):\n"
           "      self.{}.clk = clk\n\n".format( model_name ))
@@ -156,10 +166,13 @@ def create_cython( in_ports, out_ports, model_name,
             "    def __get__(self):\n"
             "      return self.{1}.{0}\n\n".format( signal_name, model_name ))
 
+#  pyx += ("  def eval(self):\n"
+#          "    self.{}.eval()\n"
+#          "    self.tfp.dump( self.main_time )\n"
+#          "    self.main_time = self.main_time + 1".format( model_name ))
+
   pyx += ("  def eval(self):\n"
-          "    self.{}.eval()\n"
-          "    self.tfp.dump( self.main_time )\n"
-          "    self.main_time = self.main_time + 1".format( model_name ))
+          "    self.{}.eval()\n".format( model_name ))
 
   f.write( pyx )
   f.close()
@@ -280,8 +293,24 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   w += ("\n  @posedge_clk"
         "\n  def tick(self):\n"
         "\n    self.{0}.eval()\n"
+        "\n    self.{0}.dump()\n"
+        "\n    self.{0}.dump()\n"
+        "\n    self.{0}.dump()\n"
+        "\n    self.{0}.dump()\n"
+        "\n    self.{0}.dump()\n"
         "\n    self.{0}.clk = 1\n"
-        "\n    self.{0}.eval()\n\n".format( xobj_name ))
+        "\n    self.{0}.eval()\n"
+        "\n    self.{0}.dump()\n"
+        "\n    self.{0}.dump()\n"
+        "\n    self.{0}.dump()\n"
+        "\n    self.{0}.dump()\n"
+        "\n    self.{0}.dump()\n\n".format( xobj_name ))
+
+#  w += ("\n  @posedge_clk"
+#        "\n  def tick(self):\n"
+#        "\n    self.{0}.eval()\n"
+#        "\n    self.{0}.clk = 1\n"
+#        "\n    self.{0}.eval()\n\n".format( xobj_name ))
 
   for i in out_ports:
     temp = i[0].replace('_M_', '.')
