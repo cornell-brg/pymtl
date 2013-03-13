@@ -2,7 +2,6 @@
 # Signals
 #=========================================================================
 
-from Bits import Bits
 from new_connection_graph import ConnectionSlice, ConnectionEdge
 
 #-------------------------------------------------------------------------
@@ -22,10 +21,8 @@ class Port( object ):
     # TODO: replace width with nbits!!!
     if isinstance( msg_type, int ):
       self.nbits  = msg_type
-      self._value = Bits( msg_type )
     else:
       self.nbits  = msg_type.nbits
-      self._value = msg_type
     self._addr  = None
     self.name   = "NO NAME: not elaborated yet!"
     self.parent = None

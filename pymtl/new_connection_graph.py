@@ -19,7 +19,7 @@ class Constant( object ):
     nbits: bitwidth of the constant.
     """
     self._addr  = None
-    self._value = Bits( nbits, value )
+    self._value = value
     self.nbits  = nbits
     self.type   = 'constant'
     self.name   = "%d'd%d" % (self.nbits, self._value.uint)
@@ -73,6 +73,8 @@ class ConnectionEdge(object):
     """Construct a Connection object. TODO: describe"""
     if src.nbits != dest.nbits:
       raise ConnectionError("Connecting signals with different bitwidths!")
+
+    self.nbits = src.nbits
 
     # Source Node
     if isinstance( src, ConnectionSlice ):
