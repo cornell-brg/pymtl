@@ -8,7 +8,7 @@
 #a number of tools for various purposes (simulation, translation into HDLs, etc).
 
 from new_connection_graph import ConnectionSlice, Constant
-from new_signals import InPort, OutPort, Wire
+from new_signals import Port, InPort, OutPort, Wire
 
 from physical import PhysicalDimensions
 import PortBundle
@@ -255,6 +255,16 @@ class Model(object):
     elif ( a.parent != b.parent and a.parent.parent == b.parent.parent and
            isinstance( a, InPort  ) and isinstance( b, OutPort )):
       edge.swap_direction()
+
+  #-----------------------------------------------------------------------
+  # Set Attr
+  #-----------------------------------------------------------------------
+
+  #def __setattr__( self, name, value ):
+  #  if name in self.__dict__ and isinstance( self.__dict__[ name ], Bits):
+  #    self.__dict__[ name ].uint = value
+  #  else:
+  #    self.__dict__[ name ] = value
 
   #-----------------------------------------------------------------------
   # Getters

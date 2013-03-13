@@ -87,6 +87,15 @@ class Bits(object):
     assert self.width >= _num_bits(value)
     self._uint = (value & self.wmask)
 
+  @property
+  def v( self ):
+    return self
+
+  @v.setter
+  def v( self, value ):
+    assert self.width >= _num_bits(value)
+    self._uint = (value & self.wmask)
+
   # This matches the nbits syntax we have been using in our models
   @property
   def nbits(self):
@@ -103,6 +112,20 @@ class Bits(object):
   def bin_str(self):
     str = "{:b}".format(self._uint).zfill(self.width)
     return str
+
+  #------------------------------------------------------------------------
+  # Descriptor Object Methods
+  #------------------------------------------------------------------------
+  # http://www.rafekettler.com/magicmethods.html#descriptor
+  # Doesn't work :(
+  # http://stackoverflow.com/a/1004254
+
+  #def __get__(self, instance, owner ):
+  #  return self._uint
+
+  #def __set__(self, instance, value ):
+  #  print "HERE"
+  #  self._uint = ( value & self.wmask )
 
   #------------------------------------------------------------------------
   # Bitwise Access
