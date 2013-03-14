@@ -51,14 +51,19 @@ class SimulationTool():
   def group_connection_nodes( self, model ):
 
     # DEBUG
-    print 70*'-'
-    print "Model:", model
-    print "Ports:"
-    pprint.pprint( model.get_ports(), indent=3 )
-    print "Submodules:"
-    pprint.pprint( model.get_submodules(), indent=3 )
-    print "Connections:"
-    pprint.pprint( model.get_connections(), indent=3 )
+    #print 70*'-'
+    #print "Model:", model
+    #print "Ports:"
+    #pprint.pprint( model.get_ports(), indent=3 )
+    #print "Submodules:"
+    #pprint.pprint( model.get_submodules(), indent=3 )
+
+    #def a_printer( some_set ):
+    #  return [ x.parent.name + '.' + x.name for x in some_set ]
+    #t = [ a_printer( [ x.src_node, x.dest_node] ) for x in model.get_connections() ]
+    #print "Connections:"
+    #pprint.pprint( model.get_connections(), indent=3 )
+    #pprint.pprint( t, indent=3 )
 
     for m in model.get_submodules():
       self.group_connection_nodes( m )
@@ -99,7 +104,7 @@ class SimulationTool():
     print
     print "NODE SETS"
     for set in self.value_sets:
-      print '    ', [ x.name for x in set ]
+      print '    ', [ x.parent.name + '.' + x.name for x in set ]
 
     # Each grouping is a bits object, make all ports pointing to
     # it point to the Bits object instead

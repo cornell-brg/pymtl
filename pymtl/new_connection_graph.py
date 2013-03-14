@@ -97,8 +97,8 @@ class ConnectionEdge(object):
     assert self.src_node == node or self.dest_node == node
 
     # InPort connections to Constants are external, else internal
-    if isinstance(self.src_node, Constant):
-      return not isinstance(self.dest_node, InPort)
+    if isinstance( self.src_node, Constant ):
+      return not isinstance( self.dest_node, InPort )
 
     # Determine which node is the other in the connection
     if self.src_node == node:
@@ -107,8 +107,8 @@ class ConnectionEdge(object):
       other = self.src_node
 
     # Check if the connection is an internal connection for the node
-    return ((self.src_node.parent == self.dest_node.parent) or
-            (other.parent in node.parent._submodules))
+    return (( self.src_node.parent == self.dest_node.parent ) or
+            ( other.parent in node.parent._submodules ))
 
   def swap_direction( self ):
     self.src_node,  self.dest_node  = self.dest_node,  self.src_node

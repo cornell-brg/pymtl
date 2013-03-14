@@ -196,9 +196,12 @@ class Model(object):
         # Classify as either an internal or external connection
         if c.is_internal( port ):
           port.int_connections += [c]
-          self._connections.add(c )
+          self._connections.add( c )
         else:
           port.ext_connections += [c]
+          self.parent._connections.add( c )
+        # TODO: make connect a self.connect() method instead, add to
+        #       self._connections then instead?
 
     # Recursively enter submodules
 
