@@ -1,4 +1,5 @@
 import math
+from new_ValueNode import *
 
 # From the web
 # http://www.velocityreviews.com/forums/t668122-number-of-bits-sizeof-int.html
@@ -40,7 +41,7 @@ def _num_bits( x ):
 
   return a
 
-class Bits(object):
+class Bits( ValueNode ):
   """Class emulating limited precision values of a set bitwidth."""
 
   def __init__(self, width, value = 0, trunc = False ):
@@ -87,12 +88,7 @@ class Bits(object):
     assert self.width >= _num_bits(value)
     self._uint = (value & self.wmask)
 
-  @property
-  def v( self ):
-    return self
-
-  @v.setter
-  def v( self, value ):
+  def write( self, value ):
     assert self.width >= _num_bits(value)
     self._uint = (value & self.wmask)
 

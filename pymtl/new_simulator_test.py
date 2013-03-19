@@ -11,6 +11,21 @@ def setup_sim( model ):
   return sim
 
 #-------------------------------------------------------------------------
+# PassThrough Tester
+#-------------------------------------------------------------------------
+
+def passthrough_tester( model_type ):
+  model = model_type( 16 )
+  sim = setup_sim( model )
+  model.in_.v = 8
+  # Note: no need to call cycle, no @combinational block
+  assert model.out   == 8
+  assert model.out.v == 8
+  model.in_.v = 9
+  model.in_.v = 10
+  assert model.out == 10
+
+#-------------------------------------------------------------------------
 # PassThrough
 #-------------------------------------------------------------------------
 
@@ -23,15 +38,7 @@ class PassThrough( Model ):
     connect( self.in_, self.out )
 
 def test_PassThrough():
-  model = PassThrough( 16 )
-  sim = setup_sim( model )
-  model.in_.v = 8
-  # Note: no need to call cycle, no @combinational block
-  assert model.out   == 8
-  assert model.out.v == 8
-  model.in_.v = 9
-  model.in_.v = 10
-  assert model.out == 10
+  passthrough_tester( PassThrough )
 
 #-------------------------------------------------------------------------
 # PassThroughList
@@ -74,15 +81,7 @@ class PassThroughWrapped( Model ):
     connect( self.out, self.pt.out )
 
 def test_PassThroughWrapped():
-  model = PassThroughWrapped( 16 )
-  sim = setup_sim( model )
-  model.in_.v = 8
-  # Note: no need to call cycle, no @combinational block
-  assert model.out   == 8
-  assert model.out.v == 8
-  model.in_.v = 9
-  model.in_.v = 10
-  assert model.out == 10
+  passthrough_tester( PassThroughWrapped )
 
 #-------------------------------------------------------------------------
 # PassThroughWrappedChain
@@ -102,15 +101,7 @@ class PassThroughWrappedChain( Model ):
     connect( self.out,     self.pt1.out )
 
 def test_PassThroughWrappedChain():
-  model = PassThroughWrappedChain( 16 )
-  sim = setup_sim( model )
-  model.in_.v = 8
-  # Note: no need to call cycle, no @combinational block
-  assert model.out   == 8
-  assert model.out.v == 8
-  model.in_.v = 9
-  model.in_.v = 10
-  assert model.out == 10
+  passthrough_tester( PassThroughWrappedChain )
 
 #-------------------------------------------------------------------------
 # Utility Test Function for Splitter

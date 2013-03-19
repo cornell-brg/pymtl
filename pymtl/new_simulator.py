@@ -7,6 +7,7 @@
 # for execution in the python interpreter.
 
 import pprint
+import collections
 
 from new_Bits import Bits
 
@@ -31,24 +32,24 @@ class SimulationTool():
       msg += "Provided model has not been elaborated yet!!!"
       raise Exception(msg)
 
-    self.model      = model
-    self.value_sets = []
+    self.model            = model
+    self.value_sets       = []
 
     # Actually construct the simulator
-    self.construct_sim()
+    self._construct_sim()
 
   #-----------------------------------------------------------------------
   # Construct Simulator
   #-----------------------------------------------------------------------
   # Construct a simulator for the provided model.
-  def construct_sim(self):
-    self.group_connection_nodes( self.model )
-    self.insert_value_nodes()
+  def _construct_sim(self):
+    self._group_connection_nodes( self.model )
+    self._insert_value_nodes()
 
   #-----------------------------------------------------------------------
   # Find Node Groupings
   #-----------------------------------------------------------------------
-  def group_connection_nodes( self, model ):
+  def _group_connection_nodes( self, model ):
 
     # DEBUG
     #print 70*'-'
@@ -66,7 +67,7 @@ class SimulationTool():
     #pprint.pprint( t, indent=3 )
 
     for m in model.get_submodules():
-      self.group_connection_nodes( m )
+      self._group_connection_nodes( m )
 
     # Create value nodes starting at the leaves, should simplify
     # ConnectionGraph minimization?
@@ -84,6 +85,7 @@ class SimulationTool():
       # so, return the union of that group and see if the union
       # has overlap with other sets.   Otherwise add the new grouping
       # to the collection of value sets.
+      # TODO: super inefficient!  Replace by walking value graphs?
       while updated:
         updated = False
         for group in self.value_sets:
@@ -98,13 +100,13 @@ class SimulationTool():
   #-----------------------------------------------------------------------
   # Replace Ports with Value Nodes
   #-----------------------------------------------------------------------
-  def insert_value_nodes( self ):
+  def _insert_value_nodes( self ):
 
     # DEBUG
-    print
-    print "NODE SETS"
-    for set in self.value_sets:
-      print '    ', [ x.parent.name + '.' + x.name for x in set ]
+    #print
+    #print "NODE SETS"
+    #for set in self.value_sets:
+    #  print '    ', [ x.parent.name + '.' + x.name for x in set ]
 
     # Each grouping is a bits object, make all ports pointing to
     # it point to the Bits object instead
