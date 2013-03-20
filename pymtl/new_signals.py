@@ -63,6 +63,36 @@ class Port( object ):
     """Temporary"""
     return self.nbits
 
+  #-----------------------------------------------------------------------
+  # Unaccessible attributes
+  #-----------------------------------------------------------------------
+  # Prevent reading/writing the following attributes to prevent
+  # confusion between Ports (Signals? Channels?) and Values
+  @property
+  def v( self ):
+    raise AttributeError( "ports/wires have no .v attribute!" )
+  @v.setter
+  def v( self, value ):
+    raise AttributeError( "ports/wires have no .v attribute!" )
+  @property
+  def value( self ):
+    raise AttributeError( "ports/wires have no .value attribute!" )
+  @value.setter
+  def value( self, value ):
+    raise AttributeError( "ports/wires have no .value attribute!" )
+  @property
+  def n( self ):
+    raise AttributeError( "ports/wires have no .n attribute!" )
+  @n.setter
+  def n( self, value ):
+    raise AttributeError( "ports/wires have no .n attribute!" )
+  @property
+  def next( self ):
+    raise AttributeError( "ports/wires have no .next attribute!" )
+  @next.setter
+  def next( self, value ):
+    raise AttributeError( "ports/wires have no .next attribute!" )
+
   #def line_trace( self ):
   #  return self._msg.line_trace()
 
