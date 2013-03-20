@@ -19,10 +19,10 @@ class Constant( object ):
     nbits: bitwidth of the constant.
     """
     self._addr  = None
-    self._value = value
+    self.value  = value
     self.nbits  = nbits
     self.type   = 'constant'
-    self.name   = "%d'd%d" % (self.nbits, self._value.uint)
+    self.name   = "%d'd%d" % ( nbits, value )
     self.parent = None
     # TODO: hack to ensure Constants can be treated as either port or node
     self.connections = []
@@ -98,6 +98,8 @@ class ConnectionEdge(object):
 
     # InPort connections to Constants are external, else internal
     if isinstance( self.src_node, Constant ):
+      # TODO: HACKY WORKAROUND TO CIRCULAR DEPS, FIX
+      from new_signals import InPort
       return not isinstance( self.dest_node, InPort )
 
     # Determine which node is the other in the connection

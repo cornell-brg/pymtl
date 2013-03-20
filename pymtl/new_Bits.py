@@ -89,6 +89,9 @@ class Bits( ValueNode ):
     self._uint = (value & self.wmask)
 
   def write( self, value ):
+    # TODO... performance impact of this? A way to get around this?
+    if isinstance( value, Bits ):
+      value = value._uint
     assert self.width >= _num_bits(value)
     self._uint = (value & self.wmask)
 

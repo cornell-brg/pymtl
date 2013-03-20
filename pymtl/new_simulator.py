@@ -11,6 +11,7 @@ import collections
 import inspect
 
 from new_Bits import Bits
+from new_connection_graph import Constant
 
 #=========================================================================
 # SimulationTool
@@ -164,6 +165,8 @@ class SimulationTool():
         if 'IDX' in x.name:
           name, idx = x.name.split('IDX')
           x.parent.__dict__[ name ][ int (idx) ] = vnode
+        elif isinstance( x, Constant ):
+          vnode.write( x.value )
         else:
           x.parent.__dict__[ x.name ] = vnode
 
