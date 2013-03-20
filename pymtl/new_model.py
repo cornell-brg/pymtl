@@ -428,6 +428,7 @@ class CheckSyntaxVisitor(ast.NodeVisitor):
 #------------------------------------------------------------------------
 # Sensitivity List Visitor
 #------------------------------------------------------------------------
+# TODO: add to simulator instead of model?
 class SensitivityListVisitor(ast.NodeVisitor):
   """Hidden class detecting the sensitivity list of @combinational blocks"""
 
