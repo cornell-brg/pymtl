@@ -11,56 +11,44 @@ from connection_graph import ConnectionSlice, ConnectionEdge
 #
 class Port( object ):
 
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
+  #  msg_type: msg type on the port.
   def __init__( self, msg_type ):
-    """Constructor for a Port object.
-
-    Parameters
-    ----------
-    msg_type: msg type on the port.
-    """
-    # TODO: replace width with nbits!!!
     if isinstance( msg_type, int ):
-      self.nbits  = msg_type
+      self.nbits         = msg_type
     else:
-      self.nbits  = msg_type.nbits
-    self._addr  = None
-    self.name   = "NO NAME: not elaborated yet!"
-    self.parent = None
-    # Connections used by Simulation Tool
+      self.nbits         = msg_type.nbits
+    self._addr           = None
+    self.name            = "NO NAME: not elaborated yet!"
+    self.parent          = None
     self.connections     = []
-    # Connections used by VerilogTranslationTool
-    # TODO: merge these different types of connections?
-    self.inst_connection = None
-    # Connections defined inside a module implementation
     self.int_connections = []
-    # Connections defined when instantiating a model
     self.ext_connections = []
-    # Needed by VerilogTranslationTool
-    self.is_reg = False
 
+  #-----------------------------------------------------------------------
+  # __getitem__
+  #-----------------------------------------------------------------------
+  # Bitfield access ([]). Returns a Slice object.
   def __getitem__( self, addr ):
-    """Bitfield access ([]). Returns a Slice object."""
     return ConnectionSlice( self, addr )
 
+  #-----------------------------------------------------------------------
+  # connect
+  #-----------------------------------------------------------------------
+  # Creates a connection with a Port or Slice.
   def connect( self, target ):
-    """Creates a connection with a Port or Slice."""
-    # Port-to-Port connections, used for translation
     connection_edge     = ConnectionEdge( self, target )
     self.connections   += [ connection_edge ]
     target.connections += [ connection_edge ]
 
-  # TODO: temporary hack for VCD
-  @property
-  def _code( self ):
-    """Access the parent of this port."""
-    return self.node._code
-  @_code.setter
-  def _code( self, code ):
-    self.node._code = code
-
+  #-----------------------------------------------------------------------
+  # width
+  #-----------------------------------------------------------------------
+  # TEMPORARY: for backwards compatibility
   @property
   def width( self ):
-    """Temporary"""
     return self.nbits
 
   #-----------------------------------------------------------------------
@@ -102,14 +90,12 @@ class Port( object ):
 # User visible implementation of an input port.
 class InPort( Port ):
 
-  def __init__( self, nbits ):
-    """Constructor for an InPort object.
-
-    Parameters
-    ----------
-    nbits: bitwidth of the port.
-    """
-    super( InPort, self ).__init__( nbits )
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
+  #  msg_type: msg type on the port.
+  def __init__( self, msg_type ):
+    super( InPort, self ).__init__( msg_type )
 
 #-------------------------------------------------------------------------
 # OutPort
@@ -117,14 +103,12 @@ class InPort( Port ):
 # User visible implementation of an output port.
 class OutPort( Port ):
 
-  def __init__( self, nbits ):
-    """Constructor for an OutPort object.
-
-    Parameters
-    ----------
-    nbits: bitwidth of the port.
-    """
-    super( OutPort, self ).__init__( nbits )
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
+  #  msg_type: msg type on the port.
+  def __init__( self, msg_type ):
+    super( OutPort, self ).__init__( msg_type )
 
 #-------------------------------------------------------------------------
 # Wire
@@ -132,36 +116,9 @@ class OutPort( Port ):
 # User visible implementation of a wire.
 class Wire( Port ):
 
-  def __init__( self, nbits ):
-    """Constructor for an Wire object.
-
-    Parameters
-    ----------
-    nbits: bitwidth of the wire.
-    """
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
+  #  msg_type: msg type on the port.
+  def __init__( self, msg_type ):
     super( Wire, self ).__init__( nbits )
-
-#-------------------------------------------------------------------------
-# ImplicitWire
-#-------------------------------------------------------------------------
-# TODO: remove?
-
-#class ImplicitWire(object):
-#
-#  """Hidden class to represent wires implicitly generated from connections."""
-#
-#  def __init__(self, name, width):
-#    """Constructor for a ImplicitWire object.
-#
-#    Parameters
-#    ----------
-#    name: name of the wire.
-#    width: bitwidth of the wire.
-#    """
-#    self.name   = name
-#    self.width  = width
-#    self.type   = "wire"
-#    self.is_reg = False
-#
-#  def verilog_name(self):
-#    return self.name

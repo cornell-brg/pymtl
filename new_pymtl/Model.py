@@ -15,8 +15,6 @@ from signals          import Port, InPort, OutPort, Wire
 
 import collections
 import inspect
-import ast
-import copy
 
 #-------------------------------------------------------------------------
 # Logic Syntax Exception
@@ -42,42 +40,19 @@ class Model(object):
   #-----------------------------------------------------------------------
   # Elaborate
   #-----------------------------------------------------------------------
+  # Elaborate a MTL model (construct hierarchy, name modules, etc.).
+  #
+  # The elaborate() function must be called on an instantiated toplevel 
+  # module before it is passed to any MTL tools!
   def elaborate(self):
     self.model_classes = set()
     self.recurse_elaborate(self, 'top')
     self.recurse_connections()
-    # TODO: this only checks one instance of each model_class, it is
-    #       theoretically possible that several instances of a given
-    #       model_class could each have different types assigned to the
-    #       same variable name...
-    for c in self.model_classes:
-      src = inspect.getsource( c.__class__ )
-      tree = ast.parse( src )
-      accesses = set()
-      CheckSyntaxVisitor(accesses).visit(tree)
-      for a in accesses:
-        if a[0] in vars(c):
-          ptr = c.__getattribute__( a[0] )
-          # Check InPort vs OutPort?
-          if   isinstance( ptr, (Port,Wire) ) and a[1] == 'wr_value':
-            raise LogicSyntaxError("Writing .value in an @tick or @posedge_clk block!")
-          elif isinstance( ptr, (Port,Wire) ) and a[1] == 'wr_next':
-            raise LogicSyntaxError("Writing .next in an @combinational block!")
-          elif isinstance( ptr, (Port,Wire) ) and a[1] == 'rd_next':
-            raise LogicSyntaxError("Reading .next inside logic block not allowed!")
-          elif isinstance( ptr, (Port,Wire) ) and a[1] == False:
-            print "WARNING: reading from Port without .value.",
-            print "Module: {0}  Port: {1}".format( c.class_name, ptr.name)
 
   #-----------------------------------------------------------------------
   # Recurse Elaborate
   #-----------------------------------------------------------------------
   def recurse_elaborate(self, target, iname):
-    """Elaborate a MTL model (construct hierarchy, name modules, etc.).
-
-    The elaborate() function must be called on an instantiated toplevel module
-    before it is passed to any MTL tools!
-    """
     # TODO: call elaborate() in the tools?
     # TODO: better way to set the name?
     self.model_classes.add( target )
@@ -86,15 +61,12 @@ class Model(object):
     target.name = iname
     target.clk   = InPort(1)
     target.reset = InPort(1)
-    target._exe_seq_logic  = False
-    target._exe_comb_logic = False
     target._line_trace_en  = False
     target._wires       = []
     target._ports       = []
     target._inports     = []
     target._outports    = []
     target._submodules  = []
-    target._senses      = []
     if not hasattr( target, '_newsenses' ):
       target._newsenses   = collections.defaultdict( list )
     target._localparams = set()
@@ -103,7 +75,6 @@ class Model(object):
     target._temparrays  = []
     target._tempregs    = []
     target._loopvars    = []
-    #target._dim = PhysicalDimensions()
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
@@ -117,8 +88,8 @@ class Model(object):
   #-----------------------------------------------------------------------
   # Check Type
   #-----------------------------------------------------------------------
+  # Utility method to specialize elaboration actions based on object type.
   def check_type(self, target, name, obj):
-    """Utility method to specialize elaboration actions based on object type."""
     # If object is a wire, add it to our sensitivity list
     # TODO: Wires are currently subclasses of Ports, so this check must be
     #       first.  Fix?
@@ -126,16 +97,12 @@ class Model(object):
       obj.name = name
       obj.parent = target
       target._wires += [obj]
-      # TODO: also add ImplicitWires to sensitivity list?
-      target._senses += [obj]
     # If object is a port, add it to our ports list
     elif isinstance(obj, InPort):
       obj.name = name
       obj.parent = target
       target._ports += [obj]
       target._inports += [obj]
-      if obj.name != 'clk':
-        target._senses += [obj]
     elif isinstance(obj, OutPort):
       obj.name = name
       obj.parent = target
@@ -152,8 +119,6 @@ class Model(object):
       connect( obj.clk, obj.parent.clk )
       connect( obj.reset, obj.parent.reset )
       target._submodules += [obj]
-      # Add all the output ports of the child module to our sensitivity list
-      target._senses += [ x for x in obj._ports if isinstance(x, OutPort) ]
     # We've found a constant assigned to a global variable.
     # TODO: add support for floats?
     elif isinstance(obj, int):
@@ -288,9 +253,6 @@ class Model(object):
   def get_submodules( self ):
     return self._submodules
 
-  def get_sensitivity_list( self ):
-    return self._senses
-
   def get_localparams( self ):
     return self._localparams
 
@@ -308,14 +270,7 @@ class Model(object):
   # Dump Physical Design
   #-----------------------------------------------------------------------
   #def dump_physical_design(self, prefix=''):
-  #  if prefix:
-  #    fullname = prefix + '.' + self.name
-  #  else:
-  #    fullname = self.name
-
-  #  print fullname, self._dim.get_rectangle()
-  #  for rect in self.get_submodules():
-  #    rect.dump_physical_design( fullname )
+  #  pass
 
   #-----------------------------------------------------------------------
   # Is Elaborated
@@ -353,77 +308,8 @@ def connect( left, right=None ):
  else:
    connect_ports( left, right )
 
+
 import ast, _ast
-#------------------------------------------------------------------------
-# Check Syntax Visitor
-#------------------------------------------------------------------------
-# Hidden class checking the validity of port and wire accesses.
-#
-# In order to translate synchronous @posedge_clk blocks into Verilog, we need
-# to declare certain wires as registers.  This visitor looks for all ports
-# written in @posedge_clk blocks so they can be declared as reg types.
-class CheckSyntaxVisitor(ast.NodeVisitor):
-
-  def __init__(self, accesses):
-    """Construct a new CheckSyntaxVisitor."""
-    self.accesses = accesses
-    self.decorator = None
-
-  def visit_FunctionDef(self, node):
-    """Visit all functions, but only parse those with special decorators."""
-    if not node.decorator_list:
-      return
-    elif node.decorator_list[0].id in ['tick','posedge_clk', 'combinational']:
-      # Visit each line in the function, translate one at a time.
-      self.decorator = node.decorator_list[0].id
-      for x in node.body:
-        self.visit(x)
-      self.decorator = None
-
-  def visit_Attribute(self, node):
-    """Visit all attributes, convert into Verilog variables."""
-    #target_name, debug = self.get_target_name(node)
-    if self.decorator:
-      target_name, debug = self.get_target_name(node)
-      if  self.decorator in ['tick', 'posedge_clk'] and debug == 'value':
-        self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
-      elif self.decorator == 'combinational' and debug == 'next':
-        self.accesses.add( (target_name, 'rd_'+debug, node.lineno) )
-      # TODO: why are we checking syntax of non-annotated blocks...
-      else:
-        self.accesses.add( (target_name, debug, node.lineno) )
-
-  def visit_Assign(self, node):
-    """Visit all assigns, searches for synchronous (registered) stores."""
-    # Only works for one lefthand target
-    assert len(node.targets) == 1
-    target = node.targets[0]
-    target_name, debug = self.get_target_name(target)
-    # We are writing value inside of a posedge_clk, raise exception
-    if   self.decorator in ['tick', 'posedge_clk'] and debug == 'value':
-      self.accesses.add( (target_name, 'wr_'+debug, node.lineno) )
-    # We are writing next inside of a combinational, raise exception
-    elif self.decorator == 'combinational' and debug == 'next':
-      self.accesses.add( (target_name, 'wr_'+debug, node.lineno) )
-    self.visit( node.value )
-
-  def get_target_name(self, node):
-    # Is this an attribute? Follow it until we find a Name.
-    name = []
-    while isinstance(node, _ast.Attribute):
-      name += [node.attr]
-      node = node.value
-    # Subscript, do nothing
-    if isinstance(node, _ast.Subscript):
-      return None, False
-    # We've found the Name.
-    assert isinstance(node, _ast.Name)
-    name += [node.id]
-    # If the target does not access .value or .next, tell the code to ignore it.
-    if name[0] in ['value', 'next']:
-      return '.'.join( name[::-1][1:-1] ), name[0]
-    else:
-      return name[0], False
 
 #------------------------------------------------------------------------
 # Sensitivity List Visitor
@@ -578,11 +464,9 @@ def posedge_clk(func):
 def tick(func):
   return func
 
-# import functools
 import inspect
-#from itertools import chain
+# Returns a traced version of the input function.
 def capture_args(fn):
-  "Returns a traced version of the input function."
 
   #@functools.wraps(fn)
   def wrapped(*v, **k):
