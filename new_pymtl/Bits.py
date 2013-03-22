@@ -1,5 +1,5 @@
 import math
-from new_ValueNode import *
+from ValueNode import *
 
 # From the web
 # http://www.velocityreviews.com/forums/t668122-number-of-bits-sizeof-int.html

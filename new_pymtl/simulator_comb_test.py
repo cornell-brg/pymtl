@@ -1,5 +1,5 @@
-from new_model import *
-from new_simulator import *
+from Model import *
+from simulator import *
 
 #-------------------------------------------------------------------------
 # Setup Sim

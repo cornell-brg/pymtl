@@ -2,7 +2,7 @@
 # Signals
 #=========================================================================
 
-from new_connection_graph import ConnectionSlice, ConnectionEdge
+from connection_graph import ConnectionSlice, ConnectionEdge
 
 #-------------------------------------------------------------------------
 # Port Base Class

@@ -10,8 +10,8 @@ import pprint
 import collections
 import inspect
 
-from new_Bits import Bits
-from new_connection_graph import Constant
+from Bits             import Bits
+from connection_graph import Constant
 
 #=========================================================================
 # SimulationTool

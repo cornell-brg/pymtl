@@ -7,11 +7,11 @@
 #(pronounced metal) models. Once constructed, a MTL model can be leveraged by
 #a number of tools for various purposes (simulation, translation into HDLs, etc).
 
-from new_connection_graph import ConnectionSlice, Constant
-from new_signals import Port, InPort, OutPort, Wire
+from connection_graph import ConnectionSlice, Constant
+from signals          import Port, InPort, OutPort, Wire
 
-from physical import PhysicalDimensions
-import PortBundle
+#from physical import PhysicalDimensions
+#import PortBundle
 
 import collections
 import inspect
@@ -103,7 +103,7 @@ class Model(object):
     target._temparrays  = []
     target._tempregs    = []
     target._loopvars    = []
-    target._dim = PhysicalDimensions()
+    #target._dim = PhysicalDimensions()
     # TODO: do all ports first?
     # Get the names of all ports and submodules
     for name, obj in target.__dict__.items():
@@ -141,9 +141,9 @@ class Model(object):
       obj.parent = target
       target._ports += [obj]
       target._outports += [obj]
-    elif isinstance(obj, PortBundle.PortBundle):
-      for port_name, obj in obj.__dict__.items():
-        self.check_type(target, name+'_M_'+port_name, obj)
+    #elif isinstance(obj, PortBundle.PortBundle):
+    #  for port_name, obj in obj.__dict__.items():
+    #    self.check_type(target, name+'_M_'+port_name, obj)
     # If object is a submodule, add it to our submodules list and recursively
     # call elaborate() on it
     elif isinstance(obj, Model):
@@ -307,15 +307,15 @@ class Model(object):
   #-----------------------------------------------------------------------
   # Dump Physical Design
   #-----------------------------------------------------------------------
-  def dump_physical_design(self, prefix=''):
-    if prefix:
-      fullname = prefix + '.' + self.name
-    else:
-      fullname = self.name
+  #def dump_physical_design(self, prefix=''):
+  #  if prefix:
+  #    fullname = prefix + '.' + self.name
+  #  else:
+  #    fullname = self.name
 
-    print fullname, self._dim.get_rectangle()
-    for rect in self.get_submodules():
-      rect.dump_physical_design( fullname )
+  #  print fullname, self._dim.get_rectangle()
+  #  for rect in self.get_submodules():
+  #    rect.dump_physical_design( fullname )
 
   #-----------------------------------------------------------------------
   # Is Elaborated

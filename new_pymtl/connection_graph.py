@@ -99,7 +99,7 @@ class ConnectionEdge(object):
     # InPort connections to Constants are external, else internal
     if isinstance( self.src_node, Constant ):
       # TODO: HACKY WORKAROUND TO CIRCULAR DEPS, FIX
-      from new_signals import InPort
+      from signals import InPort
       return not isinstance( self.dest_node, InPort )
 
     # Determine which node is the other in the connection

@@ -3,9 +3,9 @@
 #=========================================================================
 # TODO: Add comments!
 
-from new_model import Model, connect
-from new_signals import InPort, OutPort, Wire
-from new_connection_graph import ConnectionEdge
+from Model            import Model, connect
+from signals          import InPort, OutPort, Wire
+from connection_graph import ConnectionEdge
 
 #-------------------------------------------------------------------------
 # Utility Functions

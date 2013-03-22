@@ -1,4 +1,5 @@
-from new_Bits import *
+from Bits import *
+from Bits import _num_bits
 
 def test_get_value():
   x = Bits(8, 0b1100)
@@ -370,8 +371,6 @@ def test_mult():
 #-------------------------------------------------------------------------
 # Tests added by cbatten
 #-------------------------------------------------------------------------
-
-from Bits import _num_bits
 
 def test_num_bits():
 
