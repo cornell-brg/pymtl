@@ -188,3 +188,207 @@ def test_RippleCarryAdderNoSlice():
 #  def check( signal, value ):
 #    assert signal.v == value
 #  ripplecarryadder_tester( RippleCarryAdderNoSlice, set, check )
+
+#-------------------------------------------------------------------------
+# Splitter Utility Functions
+#-------------------------------------------------------------------------
+
+def setup_splitter( nbits, groups=None ):
+  if not groups:
+    model = SimpleSplitter( nbits )
+  else:
+    model = ComplexSplitter( nbits, groups )
+  sim = setup_sim( model )
+  return model, sim
+
+def verify_splitter( port_array, expected ):
+  actual = 0
+  for i, port in enumerate(port_array):
+    shift = i * port.width
+    actual |= (port.value.uint << shift)
+  assert bin(actual) == bin(expected)
+
+#-------------------------------------------------------------------------
+# SimpleSplitter
+#-------------------------------------------------------------------------
+
+class SimpleSplitter( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_   = InPort( nbits )
+    s.out   = [ OutPort(1) for x in xrange( nbits ) ]
+
+  @combinational
+  def logic( s ):
+    for i in range( s.nbits ):
+      s.out[i].value = s.in_.value[i]
+
+def test_SimpleSplitter_8_to_8x1():
+  model, sim = setup_splitter( 8 )
+  model.in_.v = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+def test_SimpleSplitter_16_to_16x1():
+  model, sim = setup_splitter( 16 )
+  model.in_.v = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.v = 0b1111000011001010
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b1111000011001010 )
+
+#-------------------------------------------------------------------------
+# ComplexSplitter
+#-------------------------------------------------------------------------
+
+class ComplexSplitter(Model):
+  def __init__( s, nbits, groupings ):
+    s.nbits     = nbits
+    s.groupings = groupings
+    s.in_       = InPort( nbits )
+    s.out       = [ OutPort( groupings ) for x in
+                    xrange( 0, nbits, groupings ) ]
+  @combinational
+  def logic( s ):
+    outport_num = 0
+    for i in range( 0, s.nbits, s.groupings ):
+      s.out[outport_num].value = s.in_.value[i:i+s.groupings]
+      outport_num += 1
+
+def test_ComplexSplitter_8_to_8x1():
+  model, sim = setup_splitter( 8, 1 )
+  model.in_.value = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+def test_ComplexSplitter_8_to_4x2():
+  model, sim = setup_splitter( 8, 2 )
+  model.in_.value = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+def test_ComplexSplitter_8_to_2x4():
+  model, sim = setup_splitter( 8, 4 )
+  model.in_.value = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+def test_ComplexSplitter_8_to_1x8():
+  model, sim = setup_splitter( 8, 8 )
+  model.in_.value = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+#-------------------------------------------------------------------------
+# Merger Utility Functions
+#-------------------------------------------------------------------------
+
+def setup_merger( nbits, groups=None ):
+  if not groups:
+    model = SimpleMerger( nbits )
+  else:
+    model = ComplexMerger( nbits, groups )
+  sim = setup_sim( model )
+  return model, sim
+
+def set_ports( port_array, value ):
+  for i, port in enumerate( port_array ):
+    shift = i * port.width
+    # Truncate to ensure no width mismatches -cbatten
+    port.value = (value >> shift) & ((1 << port.width) - 1)
+
+#-------------------------------------------------------------------------
+# SimpleMerger
+#-------------------------------------------------------------------------
+
+class SimpleMerger( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_   = [ InPort( 1 ) for x in xrange( nbits ) ]
+    s.out   = OutPort( nbits )
+
+  @combinational
+  def logic( s ):
+    for i in range( s.nbits ):
+      s.out[i].value = s.in_.value[i]
+
+import pytest
+@pytest.mark.xfail
+def test_SimpleMerger_8x1_to_8():
+  model, sim = setup_merger( 8 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.value == 0b11110000
+
+@pytest.mark.xfail
+def test_SimpleMerger_16x1_to_16():
+  model, sim = setup_merger( 16 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.value == 0b11110000
+  set_ports( model.in_, 0b1111000011001010 )
+  sim.eval_combinational()
+  assert model.out.value == 0b1111000011001010
+
+#-------------------------------------------------------------------------
+# ComplexMerger
+#-------------------------------------------------------------------------
+
+class ComplexMerger( Model ):
+  def __init__( s, nbits, groupings ):
+    s.nbits     = nbits
+    s.groupings = groupings
+    s.in_       = [ InPort( groupings) for x in
+                    xrange( 0, nbits, groupings ) ]
+    s.out       = OutPort(nbits)
+
+  @combinational
+  def logic( s ):
+    inport_num = 0
+    for i in range( 0, s.nbits, s.groupings ):
+      s.out[i:i+s.groupings].value = s.in_.value[inport_num]
+      inport_num += 1
+
+@pytest.mark.xfail
+def test_ComplexMerger_8x1_to_8():
+  model, sim = setup_merger( 8, 1 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.v == 0b11110000
+
+@pytest.mark.xfail
+def test_ComplexMerger_4x2_to_8():
+  model, sim = setup_merger( 8, 2 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.v == 0b11110000
+
+@pytest.mark.xfail
+def test_ComplexMerger_2x4_to_8():
+  model, sim = setup_merger( 8, 4 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.v == 0b11110000
+
+@pytest.mark.xfail
+def test_ComplexMerger_1x8_to_8():
+  model, sim = setup_merger( 8, 8 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.v == 0b11110000
