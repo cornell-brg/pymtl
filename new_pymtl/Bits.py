@@ -1,48 +1,16 @@
+#=========================================================================
+# Bits
+#=========================================================================
+# TODO: add text here!
+
 import math
 from ValueNode import *
 
-# From the web
-# http://www.velocityreviews.com/forums/t668122-number-of-bits-sizeof-int.html
-
-def _num_bits( x ):
-
-  # Special cases
-
-  # I added the +=1 when it is negative since we need an extra bit to be
-  # able to store the sign bit and distinguish between the positive and
-  # negative versions? -cbatten
-
-  n = 1
-  # TODO: shouldn't this return 1, not zero?
-  if x == 0:
-    return 1
-  elif x < 0:
-    x = -x
-    n += 1
-
-  # Find upper bound of the form 2^(2^n) >= x
-
-  while True:
-    y = x >> n
-    if y == 0:
-      break
-    x = y
-    n <<= 1
-
-  # Now binary search until we're done
-
-  a = n
-  while n > 0:
-    n >>= 1
-    y = x >> n
-    if y > 0:
-      x = y
-      a += n
-
-  return a
-
+#=========================================================================
+# Bits
+#=========================================================================
+# Class emulating limited precision values of a set bitwidth.
 class Bits( ValueNode ):
-  """Class emulating limited precision values of a set bitwidth."""
 
   def __init__(self, width, value = 0, trunc = False ):
 
@@ -95,9 +63,9 @@ class Bits( ValueNode ):
     assert self.width >= _num_bits(value)
     self._uint = (value & self.wmask)
 
-  # This matches the nbits syntax we have been using in our models
   @property
   def nbits(self):
+    """Return the bitwidth."""
     return self.width
 
   def __repr__(self):
@@ -364,4 +332,46 @@ def concat( bits_list ):
     begin += bits.nbits
 
   return concat_bits
+
+
+# TODO: replace with Python built-in?
+def _num_bits( x ):
+
+  # From the web
+  # http://www.velocityreviews.com/forums/t668122-number-of-bits-sizeof-int.html
+
+  # Special cases
+
+  # I added the +=1 when it is negative since we need an extra bit to be
+  # able to store the sign bit and distinguish between the positive and
+  # negative versions? -cbatten
+
+  n = 1
+  # TODO: shouldn't this return 1, not zero?
+  if x == 0:
+    return 1
+  elif x < 0:
+    x = -x
+    n += 1
+
+  # Find upper bound of the form 2^(2^n) >= x
+
+  while True:
+    y = x >> n
+    if y == 0:
+      break
+    x = y
+    n <<= 1
+
+  # Now binary search until we're done
+
+  a = n
+  while n > 0:
+    n >>= 1
+    y = x >> n
+    if y > 0:
+      x = y
+      a += n
+
+  return a
 

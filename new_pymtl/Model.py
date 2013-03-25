@@ -1,14 +1,15 @@
 #=========================================================================
 # Model
 #=========================================================================
-#Base modeling components for constructing hardware description models.
+# Base modeling components for constructing hardware description models.
 #
-#This module contains a collection of classes that can be used to construct MTL
-#(pronounced metal) models. Once constructed, a MTL model can be leveraged by
-#a number of tools for various purposes (simulation, translation into HDLs, etc).
+# This module contains a collection of classes that can be used to
+# construct MTL (pronounced metal) models. Once constructed, a MTL model
+# can be leveraged by a number of tools for various purposes (simulation,
+# translation into HDLs, etc).
 
 from connection_graph import ConnectionSlice, Constant
-from signals          import Port, InPort, OutPort, Wire
+from signals          import Signal, InPort, OutPort, Wire
 
 #from physical import PhysicalDimensions
 #import PortBundle
@@ -91,8 +92,8 @@ class Model(object):
   # Utility method to specialize elaboration actions based on object type.
   def check_type(self, target, name, obj):
     # If object is a wire, add it to our sensitivity list
-    # TODO: Wires are currently subclasses of Ports, so this check must be
-    #       first.  Fix?
+    # TODO: Wires are currently subclasses of Signals, so this check must
+    #       be first.  Fix?
     if isinstance(obj, Wire):
       obj.name = name
       obj.parent = target
@@ -127,7 +128,7 @@ class Model(object):
     # recursively call the check_type() utility function
     elif isinstance(obj, list):
       # TODO: fix to handle Wire lists properly
-      if obj and isinstance(obj[0], Port):
+      if obj and isinstance(obj[0], Signal):
         target._temparrays.append( name )
       for i, item in enumerate(obj):
         if isinstance( item, Wire ):

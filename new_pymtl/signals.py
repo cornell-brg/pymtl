@@ -1,15 +1,18 @@
 #=========================================================================
-# Signals
+# signals
 #=========================================================================
+# Collection of classes for defining interfaces and connectivity of PyMTL
+# hardware models.
 
 from connection_graph import ConnectionSlice, ConnectionEdge
 
 #-------------------------------------------------------------------------
-# Port Base Class
+# Signal
 #-------------------------------------------------------------------------
-# Hidden base class implementing a module port.
-#
-class Port( object ):
+# Hidden base class implementing any Signal (port, wire, or constant) that
+# can carry a value.
+# TODO: should we name this Channel instead?
+class Signal( object ):
 
   #-----------------------------------------------------------------------
   # __init__
@@ -37,7 +40,7 @@ class Port( object ):
   #-----------------------------------------------------------------------
   # connect
   #-----------------------------------------------------------------------
-  # Creates a connection with a Port or Slice.
+  # Creates a connection with a Signal or Slice.
   def connect( self, target ):
     connection_edge     = ConnectionEdge( self, target )
     self.connections   += [ connection_edge ]
@@ -55,7 +58,7 @@ class Port( object ):
   # Unaccessible attributes
   #-----------------------------------------------------------------------
   # Prevent reading/writing the following attributes to prevent
-  # confusion between Ports (Signals? Channels?) and Values
+  # confusion between Signals (Channels?) and Values
   @property
   def v( self ):
     raise AttributeError( "ports/wires have no .v attribute!" )
@@ -88,7 +91,7 @@ class Port( object ):
 # InPort
 #-------------------------------------------------------------------------
 # User visible implementation of an input port.
-class InPort( Port ):
+class InPort( Signal ):
 
   #-----------------------------------------------------------------------
   # __init__
@@ -101,7 +104,7 @@ class InPort( Port ):
 # OutPort
 #-------------------------------------------------------------------------
 # User visible implementation of an output port.
-class OutPort( Port ):
+class OutPort( Signal ):
 
   #-----------------------------------------------------------------------
   # __init__
@@ -114,7 +117,7 @@ class OutPort( Port ):
 # Wire
 #-------------------------------------------------------------------------
 # User visible implementation of a wire.
-class Wire( Port ):
+class Wire( Signal ):
 
   #-----------------------------------------------------------------------
   # __init__

@@ -136,7 +136,7 @@ class SimulationTool():
         self.value_sets.append( set( [ p ] ) )
 
   #-----------------------------------------------------------------------
-  # Replace Ports with Value Nodes
+  # Replace Signals with Value Nodes
   #-----------------------------------------------------------------------
   def _insert_value_nodes( self ):
 

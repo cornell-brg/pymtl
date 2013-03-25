@@ -1,4 +1,9 @@
-# TODO: use abc module to create "update()" abstract method?
+#=========================================================================
+# ValueNode
+#=========================================================================
+# Base class for value types, provides hooks used by SimulationTool.
+# Any value that can be passed as a parameter to a Signal object
+# (InPort, OutPort, Wire), needs to subclass ValueNode.
 class ValueNode( object ):
 
   #-----------------------------------------------------------------------
@@ -32,6 +37,7 @@ class ValueNode( object ):
   # Write (Abstract)
   #-----------------------------------------------------------------------
   # Abstract method, must be implemented by subclasses!
+  # TODO: use abc module to create abstract method?
   def write( self, value ):
     raise NotImplementedError( "Subclasses of ValueNode must "
                                "implement the write() method!" )
