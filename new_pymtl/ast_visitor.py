@@ -1,13 +1,30 @@
 #=========================================================================
-# AST Visitor
+# ast_visitor.py
 #=========================================================================
+# Collection of python ast visitors.  Eventually want:
+#
+# * Sensitivity List Visitor: detect signals read in @combinational
+#   blocks (SimulationTool)
+#
+# * Variable Name Visitor: converts a small AST branch into it's
+#   Python variable name (SimulationTool & VerilogTranslTool)
+#
+# * Reg Visitor: detect signals written in @combinational and @posedge_clk
+#   blocks to determine which signals are 'reg' type (VerilogTranslTool)
+#
+# * Translation Visitor: translate code in @combinational and @posedge_clk
+#   blocks into Verilog syntax.
 
 import inspect
 import ast, _ast
 
 #------------------------------------------------------------------------
-# Sensitivity List Visitor
+# LeafVisitor
 #------------------------------------------------------------------------
+# AST traversal class which detects loads and stores within a concurrent
+# block.  Load detection is useful for generating the sensitivity list
+# for @combinational blocks in the Simulator.  Store detection is useful
+# for determining 'reg' type variables during Verilog translation.
 class LeafVisitor( ast.NodeVisitor ):
 
   def __init__( self ):
@@ -63,6 +80,13 @@ class LeafVisitor( ast.NodeVisitor ):
   #    raise Exception( "Unsupported concurrent block code!" )
 
 
+#------------------------------------------------------------------------
+# LeafChecker
+#------------------------------------------------------------------------
+# Converts an AST branch, beginning with the indicated node, into it's
+# corresponding Python name.  Meant to be called as a utility visitor
+# by another AST visitor, which should pass a reference to itself as
+# a parameter.
 class LeafChecker( ast.NodeVisitor ):
 
   def __init__( self, parent ):
@@ -77,7 +101,6 @@ class LeafChecker( ast.NodeVisitor ):
 
   def visit_Name( self, node ):
     return node.id
-
 
 #-------------------------------------------------------------------------
 # Parse Method Utility Function
@@ -94,139 +117,3 @@ def get_method_ast( func ):
   tree = ast.parse( new_src )
   return tree
 
-#-------------------------------------------------------------------------
-# AST Visitor Function Decorator
-#-------------------------------------------------------------------------
-
-def check_ast( ld, st ):
-
-  def check_decorator( func ):
-    tree = get_method_ast( func )
-
-    print func.__name__
-    #import debug_utils
-    #debug_utils.print_ast( tree )
-
-    load, store = LeafVisitor().enter( tree )
-    print "LOADS ", load,  "want:", ld
-    print "STORES", store, "want:", st
-    assert ld == load
-    assert st == store
-
-    return func
-
-  return check_decorator
-
-
-#-------------------------------------------------------------------------
-# Simple Assignments
-#-------------------------------------------------------------------------
-
-def test_assign():
-  @check_ast( ['s.in_'], ['s.out.v'] )
-  def assign( s ):
-    s.out.v = s.in_
-
-def test_assign_op():
-  @check_ast( ['s.a.v', 's.b', 's.c'], ['s.out.v'] )
-  def assign_op( s ):
-    s.out.v = s.a.v + s.b + s.c
-
-def test_assign_temp():
-  @check_ast( ['s.in_', 'x'], ['x', 's.out.v'] )
-  def assign_temp( s ):
-    x = s.in_
-    s.out.v = x
-
-#-------------------------------------------------------------------------
-# Bit Indexing
-#-------------------------------------------------------------------------
-
-def test_rd_bit_idx_const():
-  @check_ast( ['s.a.v', 's.b'], ['s.out.v'] )
-  def rd_bit_idx_const( s ):
-    s.out.v = s.a.v[ 0 ] + s.b[ 1 ]
-
-def test_rd_bit_idx_var():
-  @check_ast( ['s.a.v', 's.c', 's.b', 's.d'], ['s.out.v'] )
-  def rd_bit_idx_var( s ):
-    s.out.v = s.a.v[ s.c ] & s.b[ s.d ]
-
-def test_rd_bit_idx_slice_const():
-  @check_ast( ['s.a.v', 's.b'], ['s.out.v'] )
-  def rd_bit_idx_slice_const( s ):
-    s.out.v = s.a.v[ 0:2 ] & s.b[ 4:8 ]
-
-def test_rd_bit_idx_slice_var():
-  @check_ast( ['s.a.v', 's.s0', 's.s1'], ['s.out.v'] )
-  def rd_bit_idx_slice_var( s ):
-    s.out.v = s.a.v[ s.s0:s.s1 ]
-
-import pytest
-@pytest.mark.xfail
-def test_wr_bit_idx_const():
-  @check_ast( ['s.in0', 's.in1'], ['s.out.v'] )
-  def wr_bit_idx_const( s ):
-    s.out.v[ 0 ] = s.in0 + s.in1
-
-@pytest.mark.xfail
-def test_wr_bit_idx_var():
-  @check_ast( ['s.c', 's.in0', 's.in1'], ['s.out.v'] )
-  def wr_bit_idx_var( s ):
-    s.out.v[ s.c ] = s.in0 + s.in1
-
-@pytest.mark.xfail
-def test_wr_bit_idx_slice_const():
-  @check_ast( ['s.in0'], ['s.out.v'] )
-  def wr_bit_idx_slice_const( s ):
-    s.out.v[ 0:1 ] = s.in0[ 3:4 ]
-
-@pytest.mark.xfail
-def test_wr_bit_idx_slice_var():
-  @check_ast( ['s.a.v', 's.s0', 's.s1'], ['s.out.v'] )
-  def wr_bit_idx_slice_var( s ):
-    s.out.v[ s.s0:s.s1 ] = s.a.v
-
-#-------------------------------------------------------------------------
-# List Indexing
-#-------------------------------------------------------------------------
-
-def test_rd_list_idx_const():
-  @check_ast( ['s.a.[].v', 's.b.[].v'], ['s.out.v'] )
-  def rd_list_idx_const( s ):
-    s.out.v = s.a[ 0 ].v + s.b[ 1 ].v
-
-def test_rd_list_idx_var():
-  @check_ast( ['s.c', 's.a.[].v', 's.b', 's.d'], ['s.out.v'] )
-  def rd_list_idx_var( s ):
-    s.out.v = s.a[ s.c ].v & s.b[ s.d ]
-
-def test_rd_list_idx_slice_const():
-  @check_ast( ['s.a.[].v', 's.b.[].v'], ['s.out.v'] )
-  def rd_list_idx_slice_const( s ):
-    s.out.v = s.a[ 0:2 ].v & s.b[ 4:8 ].v
-
-def test_rd_list_idx_slice_var():
-  @check_ast( ['s.s0', 's.s1', 's.a.[].v'], ['s.out.v'] )
-  def rd_list_idx_slice_var( s ):
-    s.out.v = s.a[ s.s0:s.s1 ].v
-
-def test_wr_list_idx_const():
-  @check_ast( ['s.in0', 's.in1'], ['s.out.[].v'] )
-  def wr_list_idx_const( s ):
-    s.out[ 0 ].v = s.in0 + s.in1
-
-def test_wr_list_idx_var():
-  @check_ast( ['s.c', 's.in0', 's.in1'], ['s.out.[].v'] )
-  def wr_list_idx_var( s ):
-    s.out[ s.c ].v = s.in0 + s.in1
-
-def test_wr_list_idx_slice_const():
-  @check_ast( ['s.in0'], ['s.out.[].v'] )
-  def wr_list_idx_slice_const( s ):
-    s.out[ 0:1 ].v = s.in0[ 3:4 ]
-
-def test_wr_list_idx_slice_var():
-  @check_ast( ['s.s0', 's.s1', 's.a.v'], ['s.out.[].v'] )
-  def wr_list_idx_slice_var( s ):
-    s.out[ s.s0:s.s1 ].v = s.a.v
