@@ -54,6 +54,10 @@ class Signal( object ):
   def width( self ):
     return self.nbits
 
+  @property
+  def fullname( self ):
+    return "{}.{}".format( self.parent.name, self.name )
+
   #-----------------------------------------------------------------------
   # Unaccessible attributes
   #-----------------------------------------------------------------------

@@ -74,9 +74,64 @@ class SimulationTool():
   #-----------------------------------------------------------------------
   # Construct a simulator for the provided model.
   def _construct_sim(self):
-    self._group_connection_nodes( self.model )
+    self._temp()
+    #self._group_connection_nodes( self.model )
     self._insert_value_nodes()
     self._register_decorated_functions( self.model )
+
+  #-----------------------------------------------------------------------
+  # TEMP
+  #-----------------------------------------------------------------------
+  def _temp( self ):
+
+    def collect_signals( model ):
+      signals = model.get_ports() + model.get_wires()
+      for m in model.get_submodules():
+        signals.extend( collect_signals( m ) )
+      return signals
+
+    signals = collect_signals( self.model )
+
+    ## alt implementation
+    #signals = []
+    #def collect_signals( model, signals ):
+    #  signals.extend( model.get_ports() + model.get_wires() )
+    #  for m in model.get_submodules():
+    #    signals += collect_signals( m )
+    #collect_signals( self.model, signals )
+
+    def valid_connection( c ):
+      if c.src_slice or c.dest_slice:
+        raise Exception( "Slices not supported yet!" )
+      elif isinstance( c.src_node,  Constant ):
+        return False
+      elif isinstance( c.dest_node, Constant ):
+        return False
+      else:
+        return True
+
+    def iter_dfs( s ):
+      S, Q = set(), []
+      Q.append( s )
+      while Q:
+        u = Q.pop()
+        if u in S: continue
+        S.add( u )
+        connected_signals = [ x.other( u ) for x in u.connections
+                              if valid_connection( x ) ]
+        Q.extend( connected_signals )
+        #yield u
+      return S
+
+    #import pprint
+    for s in signals:
+      #pprint.pprint( [x.fullname for x in signals] )
+      subgraph = iter_dfs( s )
+      for i in subgraph:
+        if i is not s:
+          #print "REMOVING", i.fullname
+          signals.remove( i )
+      self.value_sets.append( subgraph )
 
   #-----------------------------------------------------------------------
   # Find Node Groupings
@@ -100,6 +155,17 @@ class SimulationTool():
 
     for m in model.get_submodules():
       self._group_connection_nodes( m )
+
+    # Iterate through all ports
+    for p in model.get_ports():
+
+      # Iterate through all wires
+      print p.parent.name+'.'+p.name, p.connections
+      for c in p.connections:
+
+        # Temporary exception
+        if c.src_slice or c.dest_slice:
+          raise Exception( "Slices not supported yet!" )
 
     # Create value nodes starting at the leaves, should simplify
     # ConnectionGraph minimization?
@@ -156,11 +222,13 @@ class SimulationTool():
     # Each grouping is a bits object, make all ports pointing to
     # it point to the Bits object instead
     for group in self.value_sets:
-      temp  = group.pop()
+      # Get an element out of the set, no peek so have to pop
+      # then reinsert it.  Dumb.
+      temp = group.pop()
+      group.add( temp )
       # TODO: what about BitStructs?
       vnode = Bits( temp.nbits )
       vnode.notify_sim = create_notify_sim_closure( self, vnode )
-      group.add( temp )
       for x in group:
         if 'IDX' in x.name:
           name, idx = x.name.split('IDX')

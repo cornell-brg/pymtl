@@ -90,23 +90,28 @@ class ConnectionEdge(object):
       self.dest_node = dest
     self.dest_slice = dest._addr
 
+  def other( self, node ):
+    assert self.src_node == node or self.dest_node == node
+    if self.src_node == node:
+      return self.dest_node
+    else:
+      return self.src_node
+
   def is_dest( self, node ):
     return self.dest_node == node
 
+  def is_src( self, node ):
+    return self.src_node == node
+
   def is_internal( self, node ):
-    assert self.src_node == node or self.dest_node == node
+    # Determine which node is the other in the connection
+    other = self.other( node )
 
     # InPort connections to Constants are external, else internal
     if isinstance( self.src_node, Constant ):
       # TODO: HACKY WORKAROUND TO CIRCULAR DEPS, FIX
       from signals import InPort
       return not isinstance( self.dest_node, InPort )
-
-    # Determine which node is the other in the connection
-    if self.src_node == node:
-      other = self.dest_node
-    else:
-      other = self.src_node
 
     # Check if the connection is an internal connection for the node
     return (( self.src_node.parent == self.dest_node.parent ) or
