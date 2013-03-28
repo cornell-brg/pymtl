@@ -34,10 +34,10 @@ class SimulationTool():
                        "Provided model has not been elaborated yet!!!"
                        "".format( self.__class__.__name__ ) )
 
-    self.model            = model
-    self.value_sets       = []
-    self.event_queue      = collections.deque()
-    self.vnode_callbacks  = collections.defaultdict(list)
+    self.model             = model
+    self.nets              = []
+    self.event_queue       = collections.deque()
+    self.vnode_callbacks   = collections.defaultdict(list)
 
     # Actually construct the simulator
     self._construct_sim()
@@ -74,60 +74,17 @@ class SimulationTool():
   #-----------------------------------------------------------------------
   # Construct a simulator for the provided model.
   def _construct_sim(self):
-    self._temp()
-    #self._group_connection_nodes( self.model )
+    self._create_nets( self.model )
     self._insert_value_nodes()
     self._register_decorated_functions( self.model )
 
   #-----------------------------------------------------------------------
-  # TEMP
+  # Create Nets
   #-----------------------------------------------------------------------
-  def _temp( self ):
-
-    def collect_signals( model ):
-      signals = set( model.get_ports() + model.get_wires() )
-      for m in model.get_submodules():
-        signals.update( collect_signals( m ) )
-      return signals
-
-    signals = collect_signals( self.model )
-
-    def valid_connection( c ):
-      if c.src_slice or c.dest_slice:
-        raise Exception( "Slices not supported yet!" )
-      elif isinstance( c.src_node,  Constant ):
-        return False
-      elif isinstance( c.dest_node, Constant ):
-        return False
-      else:
-        return True
-
-    def iter_dfs( s ):
-      S, Q = set(), []
-      Q.append( s )
-      while Q:
-        u = Q.pop()
-        if u in S: continue
-        S.add( u )
-        connected_signals = [ x.other( u ) for x in u.connections
-                              if valid_connection( x ) ]
-        Q.extend( connected_signals )
-        #yield u
-      return S
-
-    while signals:
-      s = signals.pop()
-      subgraph = iter_dfs( s )
-      for i in subgraph:
-        #if i is not s:
-        #  signals.remove( i )
-        signals.discard( i )
-      self.value_sets.append( subgraph )
-
-  #-----------------------------------------------------------------------
-  # Find Node Groupings
-  #-----------------------------------------------------------------------
-  def _group_connection_nodes( self, model ):
+  # Generate nets describing structural connections in the model.  Each
+  # net describes a set of Signal objects which have been interconnected,
+  # either directly or indirectly, by calls to connect().
+  def _create_nets( self, model ):
 
     # DEBUG
     #print 70*'-'
@@ -144,67 +101,73 @@ class SimulationTool():
     #pprint.pprint( model.get_connections(), indent=3 )
     #pprint.pprint( t, indent=3 )
 
-    for m in model.get_submodules():
-      self._group_connection_nodes( m )
+    # Utility function to collect all the Signal type objects (ports,
+    # wires, constants) in the model.
+    def collect_signals( model ):
+      signals = set( model.get_ports() + model.get_wires() )
+      for m in model.get_submodules():
+        signals.update( collect_signals( m ) )
+      return signals
 
-    # Iterate through all ports
-    for p in model.get_ports():
+    signals = collect_signals( model )
 
-      # Iterate through all wires
-      print p.parent.name+'.'+p.name, p.connections
-      for c in p.connections:
-
-        # Temporary exception
-        if c.src_slice or c.dest_slice:
-          raise Exception( "Slices not supported yet!" )
-
-    # Create value nodes starting at the leaves, should simplify
-    # ConnectionGraph minimization?
-    for c in model.get_connections():
-
-      # Temporary exception
+    # Utility function to filter only supported connections: ports, and
+    # wires.  No slices or Constants.
+    def valid_connection( c ):
       if c.src_slice or c.dest_slice:
         raise Exception( "Slices not supported yet!" )
+      elif isinstance( c.src_node,  Constant ):
+        return False
+      elif isinstance( c.dest_node, Constant ):
+        return False
+      else:
+        return True
 
-      # Create a new value set containing this connections ports
-      new_group = set( [ c.src_node, c.dest_node ] )
-      updated = True
+    # Iterative Depth-First-Search algorithm, borrowed from Listing 5-5
+    # in 'Python Algorithms': http://www.apress.com/9781430232377/
+    def iter_dfs( s ):
+      S, Q = set(), []
+      Q.append( s )
+      while Q:
+        u = Q.pop()
+        if u in S: continue
+        S.add( u )
+        connected_signals = [ x.other( u ) for x in u.connections
+                              if valid_connection( x ) ]
+        Q.extend( connected_signals )
+        #yield u
+      return S
 
-      # See if this value set has overlap with another set, if
-      # so, return the union of that group and see if the union
-      # has overlap with other sets.   Otherwise add the new grouping
-      # to the collection of value sets.
-      # TODO: super inefficient!  Replace by walking value graphs?
-      while updated:
-        updated = False
-        for group in self.value_sets:
-          if not group.isdisjoint( new_group ):
-            new_group = group.union( new_group )
-            self.value_sets.remove( group )
-            updated = True
-            break
-        if not updated:
-          self.value_sets.append( new_group )
-
-    # Some ports (ie. top-level module ports) may have no connections.
-    # We still need to replace them with ValueNodes.
-    for p in model.get_ports():
-      if not p.connections:
-        self.value_sets.append( set( [ p ] ) )
+    # Initially signals contains all the Signal type objects in the
+    # model.  We perform a depth-first search on the connections of each
+    # Signal object, and remove connected objects from the signals set.
+    # The result is a collection of nets describing structural
+    # connections in the design. Each independent net will later be
+    # transformed into a single ValueNode object.
+    while signals:
+      s = signals.pop()
+      net = iter_dfs( s )
+      for i in net:
+        #if i is not s:
+        #  signals.remove( i )
+        signals.discard( i )
+      self.nets.append( net )
 
   #-----------------------------------------------------------------------
-  # Replace Signals with Value Nodes
+  # Insert Value Nodes into the Model
   #-----------------------------------------------------------------------
+  # Transform each net into a single ValueNode object. Model attributes
+  # currently referencing Signal objects will be modified to reference
+  # the ValueNode object of their associated net instead.
   def _insert_value_nodes( self ):
 
     # DEBUG
     #print
     #print "NODE SETS"
-    #for set in self.value_sets:
+    #for set in self.nets:
     #  print '    ', [ x.parent.name + '.' + x.name for x in set ]
 
-    from types import MethodType
-
+    # Utility function which creates ValueNode callbacks.
     def create_notify_sim_closure( sim, vnode ):
       def notify_sim():
         sim.add_event( vnode )
@@ -212,14 +175,19 @@ class SimulationTool():
 
     # Each grouping is a bits object, make all ports pointing to
     # it point to the Bits object instead
-    for group in self.value_sets:
-      # Get an element out of the set, no peek so have to pop
-      # then reinsert it.  Dumb.
+    for group in self.nets:
+      # Get an element out of the set and use it to determine the bitwidth
+      # of the net, needed to create a properly sized ValueNode object.
+      # TODO: no peek() so have to pop() then reinsert it! Another way?
+      # TODO: what about BitStructs?
       temp = group.pop()
       group.add( temp )
-      # TODO: what about BitStructs?
       vnode = Bits( temp.nbits )
+      # Add a callback to the ValueNode so that the simulator is notified
+      # whenever it's value changes.
       vnode.notify_sim = create_notify_sim_closure( self, vnode )
+      # Modify model attributes currently referencing Signal objects to
+      # reference ValueNode objects instead.
       for x in group:
         if 'IDX' in x.name:
           name, idx = x.name.split('IDX')
