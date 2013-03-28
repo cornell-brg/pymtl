@@ -85,20 +85,12 @@ class SimulationTool():
   def _temp( self ):
 
     def collect_signals( model ):
-      signals = model.get_ports() + model.get_wires()
+      signals = set( model.get_ports() + model.get_wires() )
       for m in model.get_submodules():
-        signals.extend( collect_signals( m ) )
+        signals.update( collect_signals( m ) )
       return signals
 
     signals = collect_signals( self.model )
-
-    ## alt implementation
-    #signals = []
-    #def collect_signals( model, signals ):
-    #  signals.extend( model.get_ports() + model.get_wires() )
-    #  for m in model.get_submodules():
-    #    signals += collect_signals( m )
-    #collect_signals( self.model, signals )
 
     def valid_connection( c ):
       if c.src_slice or c.dest_slice:
@@ -123,14 +115,13 @@ class SimulationTool():
         #yield u
       return S
 
-    #import pprint
-    for s in signals:
-      #pprint.pprint( [x.fullname for x in signals] )
+    while signals:
+      s = signals.pop()
       subgraph = iter_dfs( s )
       for i in subgraph:
-        if i is not s:
-          #print "REMOVING", i.fullname
-          signals.remove( i )
+        #if i is not s:
+        #  signals.remove( i )
+        signals.discard( i )
       self.value_sets.append( subgraph )
 
   #-----------------------------------------------------------------------
