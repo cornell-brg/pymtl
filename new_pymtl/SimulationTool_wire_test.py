@@ -30,12 +30,11 @@ def passthrough_tester( model_type ):
 #-------------------------------------------------------------------------
 
 class PassThrough( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_ = InPort ( nbits )
-    self.out = OutPort( nbits )
-    # Connections
-    connect( self.in_, self.out )
+  def __init__( s, nbits ):
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
+  def elaborate_logic( s ):
+    connect( s.in_, s.out )
 
 def test_PassThrough():
   passthrough_tester( PassThrough )
@@ -45,13 +44,13 @@ def test_PassThrough():
 #-------------------------------------------------------------------------
 
 class PassThroughList( Model ):
-  def __init__( self, nbits, nports ):
-    # Ports
-    self.in_ = [ InPort ( nbits ) for x in range( nports ) ]
-    self.out = [ OutPort( nbits ) for x in range( nports ) ]
-    # Connections
-    for i in range( nports ):
-      connect( self.in_[i], self.out[i] )
+  def __init__( s, nbits, nports ):
+    s.nports = nports
+    s.in_ = [ InPort ( nbits ) for x in range( nports ) ]
+    s.out = [ OutPort( nbits ) for x in range( nports ) ]
+  def elaborate_logic( s ):
+    for i in range( s.nports ):
+      connect( s.in_[i], s.out[i] )
 
 def test_PassThroughList():
   model = PassThroughList( 16, 4 )
@@ -70,15 +69,16 @@ def test_PassThroughList():
 #-------------------------------------------------------------------------
 
 class PassThroughWrapped( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_ = InPort ( nbits )
-    self.out = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
+  def elaborate_logic( s ):
     # Submodules
-    self.pt  = PassThrough( nbits )
+    s.pt  = PassThrough( s.nbits )
     # Connections
-    connect( self.in_, self.pt.in_ )
-    connect( self.out, self.pt.out )
+    connect( s.in_, s.pt.in_ )
+    connect( s.out, s.pt.out )
 
 def test_PassThroughWrapped():
   passthrough_tester( PassThroughWrapped )
@@ -88,17 +88,18 @@ def test_PassThroughWrapped():
 #-------------------------------------------------------------------------
 
 class PassThroughWrappedChain( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_ = InPort ( nbits )
-    self.out = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
+  def elaborate_logic( s ):
     # Submodules
-    self.pt0 = PassThrough( nbits )
-    self.pt1 = PassThrough( nbits )
+    s.pt0 = PassThrough( s.nbits )
+    s.pt1 = PassThrough( s.nbits )
     # Connections
-    connect( self.in_,     self.pt0.in_ )
-    connect( self.pt0.out, self.pt1.in_ )
-    connect( self.out,     self.pt1.out )
+    connect( s.in_,     s.pt0.in_ )
+    connect( s.pt0.out, s.pt1.in_ )
+    connect( s.out,     s.pt1.out )
 
 def test_PassThroughWrappedChain():
   passthrough_tester( PassThroughWrappedChain )
@@ -126,14 +127,14 @@ def splitter_tester( model_type ):
 #-------------------------------------------------------------------------
 
 class Splitter( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_  = InPort ( nbits )
-    self.out0 = OutPort( nbits )
-    self.out1 = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( nbits )
+    s.out1 = OutPort( nbits )
+  def elaborate_logic( s ):
     # Connections
-    connect( self.in_, self.out0 )
-    connect( self.in_, self.out1 )
+    connect( s.in_, s.out0 )
+    connect( s.in_, s.out1 )
 
 def test_Splitter():
   splitter_tester( Splitter )
@@ -143,17 +144,18 @@ def test_Splitter():
 #-------------------------------------------------------------------------
 
 class SplitterWrapped( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_  = InPort ( nbits )
-    self.out0 = OutPort( nbits )
-    self.out1 = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( nbits )
+    s.out1 = OutPort( nbits )
+  def elaborate_logic( s ):
     # Submodules
-    self.spl  = Splitter( nbits )
+    s.spl  = Splitter( s.nbits )
     # Connections
-    connect( self.in_,  self.spl.in_  )
-    connect( self.out0, self.spl.out0 )
-    connect( self.out1, self.spl.out1 )
+    connect( s.in_,  s.spl.in_  )
+    connect( s.out0, s.spl.out0 )
+    connect( s.out1, s.spl.out1 )
 
 def test_SplitterWrapped():
   splitter_tester( SplitterWrapped )
@@ -163,95 +165,100 @@ def test_SplitterWrapped():
 #-------------------------------------------------------------------------
 
 class SplitterPT_1( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_  = InPort ( nbits )
-    self.out0 = OutPort( nbits )
-    self.out1 = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( nbits )
+    s.out1 = OutPort( nbits )
+  def elaborate_logic( s ):
     # Submodules
-    self.pt0  = PassThrough( nbits )
-    self.pt1  = PassThrough( nbits )
+    s.pt0  = PassThrough( s.nbits )
+    s.pt1  = PassThrough( s.nbits )
     # Connections
-    connect( self.in_,  self.pt0.in_ )
-    connect( self.in_,  self.pt1.in_ )
-    connect( self.out0, self.pt0.out )
-    connect( self.out1, self.pt1.out )
+    connect( s.in_,  s.pt0.in_ )
+    connect( s.in_,  s.pt1.in_ )
+    connect( s.out0, s.pt0.out )
+    connect( s.out1, s.pt1.out )
 
 def test_SplitterPT_1():
   splitter_tester( SplitterPT_1 )
 
 class SplitterPT_2( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_  = InPort ( nbits )
-    self.out0 = OutPort( nbits )
-    self.out1 = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( nbits )
+    s.out1 = OutPort( nbits )
+  def elaborate_logic( s ):
     # Submodules
-    self.pt0  = PassThrough( nbits )
+    s.pt0  = PassThrough( s.nbits )
     # Connections
-    connect( self.in_,  self.pt0.in_ )
-    connect( self.out0, self.pt0.out )
-    connect( self.in_,  self.out1    )
+    connect( s.in_,  s.pt0.in_ )
+    connect( s.out0, s.pt0.out )
+    connect( s.in_,  s.out1    )
 
 def test_SplitterPT_2():
   splitter_tester( SplitterPT_2 )
 
 class SplitterPT_3( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_  = InPort ( nbits )
-    self.out0 = OutPort( nbits )
-    self.out1 = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( nbits )
+    s.out1 = OutPort( nbits )
+  def elaborate_logic( s ):
     # Submodules
-    self.pt0  = PassThrough( nbits )
+    s.pt0  = PassThrough( s.nbits )
     # Connections
-    connect( self.in_,  self.pt0.in_ )
-    connect( self.in_,  self.out0    )
-    connect( self.out1, self.pt0.out )
+    connect( s.in_,  s.pt0.in_ )
+    connect( s.in_,  s.out0    )
+    connect( s.out1, s.pt0.out )
 
 def test_SplitterPT_3():
   splitter_tester( SplitterPT_3 )
 
 class SplitterPT_4( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_  = InPort ( nbits )
-    self.out0 = OutPort( nbits )
-    self.out1 = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( nbits )
+    s.out1 = OutPort( nbits )
+  def elaborate_logic( s ):
     # Submodules
-    self.spl  = Splitter( nbits )
-    self.pt0  = PassThrough( nbits )
-    self.pt1  = PassThrough( nbits )
+    s.spl  = Splitter   ( s.nbits )
+    s.pt0  = PassThrough( s.nbits )
+    s.pt1  = PassThrough( s.nbits )
     # Connections
-    connect( self.in_,      self.spl.in_ )
-    connect( self.spl.out0, self.pt0.in_ )
-    connect( self.spl.out1, self.pt1.in_ )
-    connect( self.out0,     self.pt0.out )
-    connect( self.out1,     self.pt1.out )
+    connect( s.in_,      s.spl.in_ )
+    connect( s.spl.out0, s.pt0.in_ )
+    connect( s.spl.out1, s.pt1.in_ )
+    connect( s.out0,     s.pt0.out )
+    connect( s.out1,     s.pt1.out )
 
 def test_SplitterPT_4():
   splitter_tester( SplitterPT_4 )
 
 class SplitterPT_5( Model ):
-  def __init__( self, nbits ):
-    # Ports
-    self.in_  = InPort ( nbits )
-    self.out0 = OutPort( nbits )
-    self.out1 = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( nbits )
+    s.out1 = OutPort( nbits )
+  def elaborate_logic( s ):
     # Submodules
-    self.spl  = Splitter( nbits )
-    self.pt0  = PassThrough( nbits )
-    self.pt1  = PassThrough( nbits )
-    self.pt2  = PassThrough( nbits )
-    self.pt3  = PassThrough( nbits )
+    s.spl  = Splitter   ( s.nbits )
+    s.pt0  = PassThrough( s.nbits )
+    s.pt1  = PassThrough( s.nbits )
+    s.pt2  = PassThrough( s.nbits )
+    s.pt3  = PassThrough( s.nbits )
     # Connections
-    connect( self.in_,      self.spl.in_ )
-    connect( self.spl.out0, self.pt0.in_ )
-    connect( self.spl.out1, self.pt1.in_ )
-    connect( self.pt0.out,  self.pt2.in_ )
-    connect( self.pt1.out,  self.pt3.in_ )
-    connect( self.out0,     self.pt2.out )
-    connect( self.out1,     self.pt3.out )
+    connect( s.in_,      s.spl.in_ )
+    connect( s.spl.out0, s.pt0.in_ )
+    connect( s.spl.out1, s.pt1.in_ )
+    connect( s.pt0.out,  s.pt2.in_ )
+    connect( s.pt1.out,  s.pt3.in_ )
+    connect( s.out0,     s.pt2.out )
+    connect( s.out1,     s.pt3.out )
 
 def test_SplitterPT_5():
   splitter_tester( SplitterPT_5 )

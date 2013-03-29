@@ -132,18 +132,21 @@ def ripplecarryadder_tester( model_type, set, check ):
 
 class RippleCarryAdderNoSlice( Model ):
   def __init__( s, nbits ):
+    s.nbits = nbits
     # Ports
     s.in0 = [ InPort ( 1 ) for x in xrange( nbits ) ]
     s.in1 = [ InPort ( 1 ) for x in xrange( nbits ) ]
     s.sum = [ OutPort( 1 ) for x in xrange( nbits ) ]
+
+  def elaborate_logic( s ):
     # Submodules
-    s.adders = [ FullAdder() for i in xrange( nbits ) ]
+    s.adders = [ FullAdder() for i in xrange( s.nbits ) ]
     # Connections
-    for i in xrange( nbits ):
+    for i in xrange( s.nbits ):
       connect( s.adders[i].in0, s.in0[i] )
       connect( s.adders[i].in1, s.in1[i] )
       connect( s.adders[i].sum, s.sum[i] )
-    for i in xrange( nbits - 1 ):
+    for i in xrange( s.nbits - 1 ):
       connect( s.adders[ i + 1 ].cin, s.adders[ i ].cout )
     connect( s.adders[0].cin, 0 )
 
