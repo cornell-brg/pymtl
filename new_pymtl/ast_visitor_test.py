@@ -107,41 +107,41 @@ def test_wr_bit_idx_slice_var():
 #-------------------------------------------------------------------------
 
 def test_rd_list_idx_const():
-  @check_ast( ['s.a.[].v', 's.b.[].v'], ['s.out.v'] )
+  @check_ast( ['s.a[?].v', 's.b[?].v'], ['s.out.v'] )
   def rd_list_idx_const( s ):
     s.out.v = s.a[ 0 ].v + s.b[ 1 ].v
 
 def test_rd_list_idx_var():
-  @check_ast( ['s.c', 's.a.[].v', 's.b', 's.d'], ['s.out.v'] )
+  @check_ast( ['s.c', 's.a[?].v', 's.b', 's.d'], ['s.out.v'] )
   def rd_list_idx_var( s ):
     s.out.v = s.a[ s.c ].v & s.b[ s.d ]
 
 def test_rd_list_idx_slice_const():
-  @check_ast( ['s.a.[].v', 's.b.[].v'], ['s.out.v'] )
+  @check_ast( ['s.a[?].v', 's.b[?].v'], ['s.out.v'] )
   def rd_list_idx_slice_const( s ):
     s.out.v = s.a[ 0:2 ].v & s.b[ 4:8 ].v
 
 def test_rd_list_idx_slice_var():
-  @check_ast( ['s.s0', 's.s1', 's.a.[].v'], ['s.out.v'] )
+  @check_ast( ['s.s0', 's.s1', 's.a[?].v'], ['s.out.v'] )
   def rd_list_idx_slice_var( s ):
     s.out.v = s.a[ s.s0:s.s1 ].v
 
 def test_wr_list_idx_const():
-  @check_ast( ['s.in0', 's.in1'], ['s.out.[].v'] )
+  @check_ast( ['s.in0', 's.in1'], ['s.out[?].v'] )
   def wr_list_idx_const( s ):
     s.out[ 0 ].v = s.in0 + s.in1
 
 def test_wr_list_idx_var():
-  @check_ast( ['s.c', 's.in0', 's.in1'], ['s.out.[].v'] )
+  @check_ast( ['s.c', 's.in0', 's.in1'], ['s.out[?].v'] )
   def wr_list_idx_var( s ):
     s.out[ s.c ].v = s.in0 + s.in1
 
 def test_wr_list_idx_slice_const():
-  @check_ast( ['s.in0'], ['s.out.[].v'] )
+  @check_ast( ['s.in0'], ['s.out[?].v'] )
   def wr_list_idx_slice_const( s ):
     s.out[ 0:1 ].v = s.in0[ 3:4 ]
 
 def test_wr_list_idx_slice_var():
-  @check_ast( ['s.s0', 's.s1', 's.a.v'], ['s.out.[].v'] )
+  @check_ast( ['s.s0', 's.s1', 's.a.v'], ['s.out[?].v'] )
   def wr_list_idx_slice_var( s ):
     s.out[ s.s0:s.s1 ].v = s.a.v

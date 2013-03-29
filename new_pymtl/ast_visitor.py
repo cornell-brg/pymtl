@@ -97,7 +97,8 @@ class LeafChecker( ast.NodeVisitor ):
 
   def visit_Subscript( self, node ):
     self.parent.visit( node.slice )
-    return self.visit( node.value ) + '.[]'
+    # insert eval here to test for type...
+    return self.visit( node.value ) + '[?]'
 
   def visit_Name( self, node ):
     return node.id

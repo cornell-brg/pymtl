@@ -335,16 +335,22 @@ class SimpleMerger( Model ):
     def logic():
       for i in range( s.nbits ):
         s.out.value[i] = s.in_[i].value
-
 import pytest
-@pytest.mark.xfail
 def test_SimpleMerger_8x1_to_8():
   model, sim = setup_merger( 8 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.value == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
+  model.in_[0].value = 0
+  sim.eval_combinational()
+  assert model.out.value == 0b01010100
+  model.in_[7].value = 1
+  sim.eval_combinational()
+  assert model.out.value == 0b11010100
 
-@pytest.mark.xfail
 def test_SimpleMerger_16x1_to_16():
   model, sim = setup_merger( 16 )
   set_ports( model.in_, 0b11110000 )
@@ -353,6 +359,12 @@ def test_SimpleMerger_16x1_to_16():
   set_ports( model.in_, 0b1111000011001010 )
   sim.eval_combinational()
   assert model.out.value == 0b1111000011001010
+  model.in_[0].value = 1
+  sim.eval_combinational()
+  assert model.out.value == 0b1111000011001011
+  model.in_[15].value = 0
+  sim.eval_combinational()
+  assert model.out.value == 0b0111000011001011
 
 #-------------------------------------------------------------------------
 # ComplexMerger
@@ -374,30 +386,38 @@ class ComplexMerger( Model ):
         s.out.value[i:i+s.groupings] = s.in_[inport_num].value
         inport_num += 1
 
-@pytest.mark.xfail
 def test_ComplexMerger_8x1_to_8():
   model, sim = setup_merger( 8, 1 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
 
-@pytest.mark.xfail
 def test_ComplexMerger_4x2_to_8():
   model, sim = setup_merger( 8, 2 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
 
-@pytest.mark.xfail
 def test_ComplexMerger_2x4_to_8():
   model, sim = setup_merger( 8, 4 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
 
-@pytest.mark.xfail
 def test_ComplexMerger_1x8_to_8():
   model, sim = setup_merger( 8, 8 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101

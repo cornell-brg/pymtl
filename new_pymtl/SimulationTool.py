@@ -15,7 +15,7 @@ from connection_graph import Constant
 
 # TODO: temporary
 import ast_visitor
-import ValueNode
+from ValueNode        import ValueNode
 import warnings
 
 #=========================================================================
@@ -68,7 +68,7 @@ class SimulationTool():
   # them to the event queue.
   def add_event(self, value_node):
     # TODO: debug_event
-    #print "    ADDEVENT: VALUE", value_node, value_node.value, value_node in self.vnode_callbacks
+    #print "    ADDEVENT: VALUE", value_node.__repr__(), value_node.value, value_node in self.vnode_callbacks
     if value_node in self.vnode_callbacks:
       funcs = self.vnode_callbacks[value_node]
       for func in funcs:
@@ -213,35 +213,50 @@ class SimulationTool():
     self.sequential_blocks.extend( model._tick_blocks )
     self.sequential_blocks.extend( model._posedge_clk_blocks )
 
+    # TODO: this is getting pretty hacky...
     # TODO: should never use eval... but this is easy
-    # TODO: how to handle when 'self' isnt self
+    # TODO: how to handle when 's' isnt self
     # TODO: how to handle temps!
     def name_to_object( name ):
       s = model
       try:
-        x = eval( name )
-        if isinstance( x, ValueNode.ValueNode ):
+        #HACKY, FIX
+        if '[?]' in  name:
+          list_name, rest = name.split('[?]')
+          x = eval( list_name )
+          assert isinstance( x, list )
           return x
         else:
-          warnings.warn( "Cannot add variable '{}' to sensitivity list."
-                         "".format( name ), Warning )
-          return None
+          x = eval( name )
+          if isinstance( x, ValueNode ):
+            return x
+          else:
+            warnings.warn( "Cannot add variable '{}' to sensitivity list."
+                           "".format( name ), Warning )
+            return None
       except NameError:
         warnings.warn( "Cannot add variable '{}' to sensitivity list."
                        "".format( name ), Warning )
         return None
+
 
     # Get the sensitivity list of each event driven (combinational) block
     # TODO: do before or after we swap value nodes?
     for func in model._combinational_blocks:
       tree = ast_visitor.get_method_ast( func )
       loads, stores = ast_visitor.LeafVisitor().enter( tree )
-      load_objects = [ name_to_object( x ) for x in loads ]
-      model._newsenses[ func ].extend( load_objects )
+      for x in loads:
+        obj = name_to_object( x )
+        print obj
+        if isinstance( obj, list ):
+          model._newsenses[ func ].extend( obj )
+        elif isinstance( obj, ValueNode ):
+          model._newsenses[ func ].append( obj )
 
     # Iterate through all @combinational decorated function names we detected,
     # retrieve their associated function pointer, then add entries for each
     # item in the function's sensitivity list to vnode_callbacks
+    # TODO: merge this code with above to reduce memory, # of data structures?
     print "\nSENSES"
     for func_ptr, sensitivity_list in model._newsenses.items():
       print func_ptr, sensitivity_list
