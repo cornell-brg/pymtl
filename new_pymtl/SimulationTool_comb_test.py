@@ -32,13 +32,14 @@ def passthrough_tester( model_type ):
 #-------------------------------------------------------------------------
 
 class PassThroughOld( Model ):
-  def __init__( self, nbits ):
-    self.in_ = InPort ( nbits )
-    self.out = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
 
-  @ combinational
-  def logic( self ):
-    self.out.value = self.in_.value
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.value = s.in_.value
 
 def test_PassThroughOld():
   passthrough_tester( PassThroughOld )
@@ -48,16 +49,15 @@ def test_PassThroughOld():
 #-------------------------------------------------------------------------
 
 class PassThrough( Model ):
-  def __init__( self, nbits ):
-    self.in_ = InPort ( nbits )
-    self.out = OutPort( nbits )
+  def __init__( s, nbits ):
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
 
-  @ combinational
-  def logic( self ):
-    self.out.v = self.in_
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.v = s.in_
 
-import pytest
-@pytest.mark.xfail
 def test_PassThrough():
   passthrough_tester( PassThrough )
 
@@ -66,20 +66,21 @@ def test_PassThrough():
 #-------------------------------------------------------------------------
 
 class FullAdder( Model ):
-  def __init__( self ):
-    self.in0  = InPort ( 1 )
-    self.in1  = InPort ( 1 )
-    self.cin  = InPort ( 1 )
-    self.sum  = OutPort( 1 )
-    self.cout = OutPort( 1 )
+  def __init__( s ):
+    s.in0  = InPort ( 1 )
+    s.in1  = InPort ( 1 )
+    s.cin  = InPort ( 1 )
+    s.sum  = OutPort( 1 )
+    s.cout = OutPort( 1 )
 
-  @combinational
-  def logic( self ):
-    a = self.in0.value
-    b = self.in1.value
-    c = self.cin.value
-    self.sum.value  = (a ^ b) ^ c
-    self.cout.value = (a & b) | (a & c) | (b & c)
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      a = s.in0.value
+      b = s.in1.value
+      c = s.cin.value
+      s.sum.value  = (a ^ b) ^ c
+      s.cout.value = (a & b) | (a & c) | (b & c)
 
 def test_FullAdder():
   model = FullAdder( )
@@ -130,21 +131,21 @@ def ripplecarryadder_tester( model_type, set, check ):
 #-------------------------------------------------------------------------
 
 class RippleCarryAdderNoSlice( Model ):
-  def __init__( self, nbits ):
+  def __init__( s, nbits ):
     # Ports
-    self.in0 = [ InPort ( 1 ) for x in xrange( nbits ) ]
-    self.in1 = [ InPort ( 1 ) for x in xrange( nbits ) ]
-    self.sum = [ OutPort( 1 ) for x in xrange( nbits ) ]
+    s.in0 = [ InPort ( 1 ) for x in xrange( nbits ) ]
+    s.in1 = [ InPort ( 1 ) for x in xrange( nbits ) ]
+    s.sum = [ OutPort( 1 ) for x in xrange( nbits ) ]
     # Submodules
-    self.adders = [ FullAdder() for i in xrange( nbits ) ]
+    s.adders = [ FullAdder() for i in xrange( nbits ) ]
     # Connections
     for i in xrange( nbits ):
-      connect( self.adders[i].in0, self.in0[i] )
-      connect( self.adders[i].in1, self.in1[i] )
-      connect( self.adders[i].sum, self.sum[i] )
+      connect( s.adders[i].in0, s.in0[i] )
+      connect( s.adders[i].in1, s.in1[i] )
+      connect( s.adders[i].sum, s.sum[i] )
     for i in xrange( nbits - 1 ):
-      connect( self.adders[ i + 1 ].cin, self.adders[ i ].cout )
-    connect( self.adders[0].cin, 0 )
+      connect( s.adders[ i + 1 ].cin, s.adders[ i ].cout )
+    connect( s.adders[0].cin, 0 )
 
 def test_RippleCarryAdderNoSlice():
 
@@ -166,21 +167,21 @@ def test_RippleCarryAdderNoSlice():
 #-------------------------------------------------------------------------
 
 #class RippleCarryAdder( Model ):
-#  def __init__( self, nbits ):
+#  def __init__( s, nbits ):
 #    # Ports
-#    self.in0 = InPort ( nbits )
-#    self.in1 = InPort ( nbits )
-#    self.sum = OutPort( nbits )
+#    s.in0 = InPort ( nbits )
+#    s.in1 = InPort ( nbits )
+#    s.sum = OutPort( nbits )
 #    # Submodules
-#    self.adders = [ FullAdder() for i in xrange( nbits ) ]
+#    s.adders = [ FullAdder() for i in xrange( nbits ) ]
 #    # Connections
 #    for i in xrange( nbits ):
-#      connect( self.adders[i].in0, self.in0[i] )
-#      connect( self.adders[i].in1, self.in1[i] )
-#      connect( self.adders[i].sum, self.sum[i] )
+#      connect( s.adders[i].in0, s.in0[i] )
+#      connect( s.adders[i].in1, s.in1[i] )
+#      connect( s.adders[i].sum, s.sum[i] )
 #    for i in xrange( nbits - 1 ):
-#      connect( self.adders[i+1].cin, self.adders[i].cout )
-#    connect( self.adders[0].cin, 0 )
+#      connect( s.adders[i+1].cin, s.adders[i].cout )
+#    connect( s.adders[0].cin, 0 )
 #
 #def test_RippleCarryAdderNoSlice():
 #  def set( signal, value ):
@@ -218,10 +219,11 @@ class SimpleSplitter( Model ):
     s.in_   = InPort( nbits )
     s.out   = [ OutPort(1) for x in xrange( nbits ) ]
 
-  @combinational
-  def logic( s ):
-    for i in range( s.nbits ):
-      s.out[i].value = s.in_.value[i]
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      for i in range( s.nbits ):
+        s.out[i].value = s.in_.value[i]
 
 def test_SimpleSplitter_8_to_8x1():
   model, sim = setup_splitter( 8 )
@@ -252,12 +254,14 @@ class ComplexSplitter(Model):
     s.in_       = InPort( nbits )
     s.out       = [ OutPort( groupings ) for x in
                     xrange( 0, nbits, groupings ) ]
-  @combinational
-  def logic( s ):
-    outport_num = 0
-    for i in range( 0, s.nbits, s.groupings ):
-      s.out[outport_num].value = s.in_.value[i:i+s.groupings]
-      outport_num += 1
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      outport_num = 0
+      for i in range( 0, s.nbits, s.groupings ):
+        s.out[outport_num].value = s.in_.value[i:i+s.groupings]
+        outport_num += 1
 
 def test_ComplexSplitter_8_to_8x1():
   model, sim = setup_splitter( 8, 1 )
@@ -323,10 +327,11 @@ class SimpleMerger( Model ):
     s.in_   = [ InPort( 1 ) for x in xrange( nbits ) ]
     s.out   = OutPort( nbits )
 
-  @combinational
-  def logic( s ):
-    for i in range( s.nbits ):
-      s.out[i].value = s.in_.value[i]
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      for i in range( s.nbits ):
+        s.out.value[i] = s.in_[i].value
 
 import pytest
 @pytest.mark.xfail
@@ -358,12 +363,13 @@ class ComplexMerger( Model ):
                     xrange( 0, nbits, groupings ) ]
     s.out       = OutPort(nbits)
 
-  @combinational
-  def logic( s ):
-    inport_num = 0
-    for i in range( 0, s.nbits, s.groupings ):
-      s.out[i:i+s.groupings].value = s.in_.value[inport_num]
-      inport_num += 1
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      inport_num = 0
+      for i in range( 0, s.nbits, s.groupings ):
+        s.out.value[i:i+s.groupings] = s.in_[inport_num].value
+        inport_num += 1
 
 @pytest.mark.xfail
 def test_ComplexMerger_8x1_to_8():

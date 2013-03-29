@@ -13,6 +13,11 @@ import inspect
 from Bits             import Bits
 from connection_graph import Constant
 
+# TODO: temporary
+import ast_visitor
+import ValueNode
+import warnings
+
 #=========================================================================
 # SimulationTool
 #=========================================================================
@@ -36,6 +41,7 @@ class SimulationTool():
 
     self.model             = model
     self.nets              = []
+    self.sequential_blocks = []
     self.event_queue       = collections.deque()
     self.vnode_callbacks   = collections.defaultdict(list)
 
@@ -200,86 +206,55 @@ class SimulationTool():
   #-----------------------------------------------------------------------
   # Register Decorated Functions
   #-----------------------------------------------------------------------
-  # Utility method which detects the sensitivity list of annotated functions.
-  #
-  # This method uses the DecoratedFunctionVisitor class to walk the AST of the
-  # provided model and register any functions annotated with special
-  # decorators.
-  def _register_decorated_functions(self, model):
-    # Create an AST Tree
-    model_class = model.__class__
-    src = inspect.getsource( model_class )
-    tree = ast.parse( src )
-    #print
-    #import debug_utils
-    #debug_utils.print_ast(tree)
-    comb_funcs    = set()
-    posedge_funcs = set()
+  # TODO: add comments
+  def _register_decorated_functions( self, model ):
 
-    # Walk the tree to inspect a given modules combinational blocks and
-    # build a sensitivity list from it,
-    # only gives us function names... still need function pointers
-    _DecoratedFunctionVisitor( comb_funcs, posedge_funcs ).visit( tree )
-    #print "COMB", comb_funcs
-    #print "PEDGE", posedge_funcs
+    # Add all cycle driven functions
+    self.sequential_blocks.extend( model._tick_blocks )
+    self.sequential_blocks.extend( model._posedge_clk_blocks )
+
+    # TODO: should never use eval... but this is easy
+    # TODO: how to handle when 'self' isnt self
+    # TODO: how to handle temps!
+    def name_to_object( name ):
+      s = model
+      try:
+        x = eval( name )
+        if isinstance( x, ValueNode.ValueNode ):
+          return x
+        else:
+          warnings.warn( "Cannot add variable '{}' to sensitivity list."
+                         "".format( name ), Warning )
+          return None
+      except NameError:
+        warnings.warn( "Cannot add variable '{}' to sensitivity list."
+                       "".format( name ), Warning )
+        return None
+
+    # Get the sensitivity list of each event driven (combinational) block
+    # TODO: do before or after we swap value nodes?
+    for func in model._combinational_blocks:
+      tree = ast_visitor.get_method_ast( func )
+      loads, stores = ast_visitor.LeafVisitor().enter( tree )
+      load_objects = [ name_to_object( x ) for x in loads ]
+      model._newsenses[ func ].extend( load_objects )
 
     # Iterate through all @combinational decorated function names we detected,
     # retrieve their associated function pointer, then add entries for each
     # item in the function's sensitivity list to vnode_callbacks
     print "\nSENSES"
-    for func_name, sensitivity_list in model._newsenses.items():
-      print '@@@', func_name, [ x.parent.name+'.'+x.name for x in sensitivity_list ]
-      func_ptr = model.__getattribute__(func_name)
-      for signal in sensitivity_list:
-        # TODO: handle arrays
-        value_ptr = model.__getattribute__( signal.name )
-        print value_ptr
-        self.vnode_callbacks[value_ptr] += [func_ptr]
+    for func_ptr, sensitivity_list in model._newsenses.items():
+      print func_ptr, sensitivity_list
+      for value_node in sensitivity_list:
+        self.vnode_callbacks[ value_node ].append( func_ptr )
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
         if func_ptr not in self.event_queue:
-          self.event_queue.appendleft(func_ptr)
-
-    # Add all posedge_clk functions
-    for func_name in posedge_funcs:
-      func_ptr = model.__getattribute__(func_name)
-      self.posedge_clk_fns += [func_ptr]
+          self.event_queue.appendleft( func_ptr )
 
     # Recursively perform for submodules
     for m in model.get_submodules():
       self._register_decorated_functions( m )
 
-#=========================================================================
-# Decorated Function Visitor
-#=========================================================================
-# Hidden class for building a sensitivity list from the AST of a MTL model.
-#
-# This class takes the AST tree of a Model class and looks for any
-# functions annotated with the @combinational decorator. Variables that perform
-# loads in these functions are added to the sensitivity list (registry).
-import ast
-class _DecoratedFunctionVisitor(ast.NodeVisitor):
-  # http://docs.python.org/library/ast.html#abstract-grammar
-
-  # Construct a new Decorated Function Visitor.
-  def __init__(self, comb_funcs, posedge_funcs):
-    self.current_fn    = None
-    self.comb_funcs    = comb_funcs
-    self.posedge_funcs = posedge_funcs
-    self.add_regs      = False
-
-  # Visit all functions, but only parse those with special decorators.
-  def visit_FunctionDef(self, node):
-    #pprint.pprint( dir(node) )
-    #print "Function Name:", node.name
-    if not node.decorator_list:
-      return
-    decorator_names = [x.id for x in node.decorator_list]
-    if 'combinational' in decorator_names:
-      self.comb_funcs.add( node.name )
-    elif 'posedge_clk' in decorator_names:
-      self.posedge_funcs.add( node.name )
-    elif 'tick' in decorator_names:
-      self.posedge_funcs.add( node.name )
 

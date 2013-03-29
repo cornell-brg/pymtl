@@ -54,14 +54,23 @@ class Model(object):
   # Recurse Elaborate
   #-----------------------------------------------------------------------
   def recurse_elaborate(self, target, iname):
-    # TODO: call elaborate() in the tools?
-    # TODO: better way to set the name?
     self.model_classes.add( target )
+    # Set Public Attributes
     target.class_name = self.gen_class_name( target )
-    target.parent = None
-    target.name = iname
-    target.clk   = InPort(1)
-    target.reset = InPort(1)
+    target.parent     = None
+    target.name       = iname
+    # Setup default Ports
+    target.clk        = InPort(1)
+    target.reset      = InPort(1)
+    # Setup default function lists
+    target._tick_blocks          = []
+    target._posedge_clk_blocks   = []
+    target._combinational_blocks = []
+    # Elaborate design
+    # TODO: REMOVE ME
+    if hasattr( target, 'elaborate_logic' ):
+      target.elaborate_logic()
+    # Private stuff
     target._line_trace_en  = False
     target._wires       = []
     target._ports       = []
@@ -82,9 +91,9 @@ class Model(object):
       if not name.startswith('_'):
         self.check_type(target, name, obj)
     # Infer the sensitivity list for combinational blocks
-    src = inspect.getsource( target.__class__ )
-    tree = ast.parse( src )
-    SensitivityListVisitor( target ).visit(tree)
+    #src = inspect.getsource( target.__class__ )
+    #tree = ast.parse( src )
+    #SensitivityListVisitor( target ).visit(tree)
 
   #-----------------------------------------------------------------------
   # Check Type
@@ -261,15 +270,34 @@ class Model(object):
     return self._connections
 
   #-----------------------------------------------------------------------
+  # Decorators
+  #-----------------------------------------------------------------------
+  # TODO: add documentation!
+
+  def tick( self, func ):
+    self._tick_blocks.append( func )
+    return func
+
+  def combinational( self, func ):
+    self._combinational_blocks.append( func )
+    return func
+
+  def posedge_clk( self, func ):
+    self._posedge_clk_blocks.append( func )
+    return func
+
+  #-----------------------------------------------------------------------
   # Register Combinational
   #-----------------------------------------------------------------------
-  def register_combinational( self, func_name, sensitivity_list ):
-    self._newsenses = collections.defaultdict( list )
-    self._newsenses[ func_name ] = sensitivity_list
+  # TODO: Add this back in later?
+  #def register_combinational( self, func_name, sensitivity_list ):
+  #  self._newsenses = collections.defaultdict( list )
+  #  self._newsenses[ func_name ] = sensitivity_list
 
   #-----------------------------------------------------------------------
   # Dump Physical Design
   #-----------------------------------------------------------------------
+  # TODO: Add this back in later?
   #def dump_physical_design(self, prefix=''):
   #  pass
 
@@ -309,164 +337,13 @@ def connect( left, right=None ):
  else:
    connect_ports( left, right )
 
-
-import ast, _ast
-
-#------------------------------------------------------------------------
-# Sensitivity List Visitor
-#------------------------------------------------------------------------
-# TODO: add to simulator instead of model?
-class SensitivityListVisitor(ast.NodeVisitor):
-  """Hidden class detecting the sensitivity list of @combinational blocks"""
-
-  #----------------------------------------------------------------------
-  # Constructor
-  #----------------------------------------------------------------------
-  def __init__(self, model ):
-    """Construct a new CheckSyntaxVisitor."""
-    self.func_name = None
-    self.model     = model
-
-  #----------------------------------------------------------------------
-  # Visit Functions
-  #----------------------------------------------------------------------
-  def visit_FunctionDef(self, node):
-    """Visit all functions, but only parse those with special decorators."""
-    if not node.decorator_list:
-      return
-    elif node.decorator_list[0].id == 'combinational':
-      # Visit each line in the function, translate one at a time.
-      self.func_name = node.name
-      for x in node.body:
-        self.visit(x)
-      self.func_name = None
-
-  #----------------------------------------------------------------------
-  # Visit Attributes
-  #----------------------------------------------------------------------
-  def visit_Attribute(self, node):
-    """Visit all attributes, convert into Verilog variables."""
-    if not self.func_name:
-      return
-
-    # Hacky way to get subscripts of stores to port lists
-    signal_ptr = self.get_target( node )
-
-    if isinstance( node.ctx, _ast.Load ):
-
-      if   isinstance( signal_ptr, list ):
-        # TODO: this will allow duplicate entries to be in the _newsenses
-        #       list, do we need to fix this?
-        self.model._newsenses[ self.func_name ].extend( signal_ptr )
-      elif signal_ptr:
-        if signal_ptr not in self.model._newsenses[ self.func_name ]:
-          self.model._newsenses[ self.func_name ] += [ signal_ptr ]
-      #if target_name in vars( self.model ):
-      #  signal_ptr = self.model.__getattribute__( target_name )
-      #  self.model._newsenses[ self.func_name ] += [signal_ptr]
-      #else:
-      #  print "BAD", node.attr, node.value, target_name
-
-
-  #----------------------------------------------------------------------
-  # Create a List to Target
-  #----------------------------------------------------------------------
-  def get_target(self, node):
-
-    # Is this a number/constant? Return it.
-    if isinstance(node, _ast.Num):
-      raise Exception("Ran into a number/constant!")
-      return node.n, True
-
-    # Is this an attribute? Follow it until we find a Name.
-    name = []
-    while isinstance(node, (_ast.Attribute, _ast.Subscript)):
-      if   isinstance(node, _ast.Attribute):
-        name += [node.attr]
-        node = node.value
-      elif isinstance(node, _ast.Subscript):
-        # Visit the index, if its a variable want to add to sensitivity
-        self.visit( node.slice )
-        # TODO: assumes this is an integer, not a range
-        if (isinstance( node.slice, _ast.Index) and
-            isinstance( node.slice.value, _ast.Num )):
-          name += [ node.slice.value.n ]
-          node = node.value
-        else:
-          name += [ '?' ]
-          node = node.value
-
-    # We've found the Name.
-    assert isinstance(node, _ast.Name)
-    name += [node.id]
-
-    # If the target does not access .value or .next, tell the code to ignore it.
-    if   name[0] in ['value', 'next']:
-      return self.get_target_ptr( name[::-1][1:-1] )
-    # Special case Bits methods
-    elif name[0] in ['uint', 'int', 'sext', 'zext']:
-      return self.get_target_ptr( name[::-1][1:-2] )
-    else:
-      #print "BAD",  '.'.join( name[::-1] )
-      return None
-
-  #----------------------------------------------------------------------
-  # Get Pointer to Target Signal
-  #----------------------------------------------------------------------
-  def get_target_ptr(self, target_list, obj = None):
-    if not obj:
-      obj = self.model
-    for i, attr in enumerate(target_list):
-      # This is an index into an array of objects, get there right object
-      if isinstance(attr, int) and isinstance( obj, list ):
-        obj = obj[ attr ]
-      # This is an index into an array of objects, but we can't determine
-      # which object.  Return ALL the objects in the array.
-      elif attr == '?' and isinstance( obj, list ):
-        x = []
-        for subobj in obj:
-          x.append( self.get_target_ptr( target_list[i+1:], subobj ) )
-        return x
-      # This is an index into a slice! Just return the object.
-      elif attr == '?' or isinstance(attr, int):
-        return obj
-      # This is an attribute, get the object with this attribute name
-      else:
-        # Handling for BitStructs.  Python checks __getattribute__
-        # first when trying to find a class member.  After that, it
-        # checks __getattr__,  a method implemented by developers to
-        # provide alternate checks for members.  In our case, we modify
-        # Ports to use __getattr__ to provide access to BitStructs fields
-        # assoiated with the port when using the syntax
-        # <portname>.<fieldname>.  Other components do NOT implement
-        # __getattr__, so check __getattribute__ first, then check
-        # __getattr__ as a sanity check to ensure the field name is valid,
-        # although we simply discard the returned object.
-        try:
-          obj = obj.__getattribute__( attr )
-        except AttributeError:
-          discard_me = obj.__getattr__( attr )
-
-    return obj
-
 #------------------------------------------------------------------------
 # Decorators
 #------------------------------------------------------------------------
-# Normally a decorator returns a wrapped function, but here we return
-# func unmodified.  We only use the decorator as a flag for the ast
-# parsers.
-
-def combinational(func):
-  return func
-
-def posedge_clk(func):
-  return func
-
-def tick(func):
-  return func
 
 import inspect
 # Returns a traced version of the input function.
+# TODO: add to decorators section above
 def capture_args(fn):
 
   #@functools.wraps(fn)
