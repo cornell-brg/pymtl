@@ -68,6 +68,16 @@ class LeafVisitor( ast.NodeVisitor ):
       print type( node.ctx )
       raise Exception( "Unsupported concurrent block code!" )
 
+  def visit_Subscript( self, node ):
+    if not self.assign: return
+    if   isinstance( node.ctx, _ast.Load ):
+      self.load  += [ LeafChecker( self ).visit( node ) ]
+    elif isinstance( node.ctx, _ast.Store ):
+      self.store += [ LeafChecker( self ).visit( node ) ]
+    else:
+      print type( node.ctx )
+      raise Exception( "Unsupported concurrent block code!" )
+
   # TODO: need this to detect writes to bit slices?
   #def visit_Subscript( self, node ):
   #  if not self.assign: return

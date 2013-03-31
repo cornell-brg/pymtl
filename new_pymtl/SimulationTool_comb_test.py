@@ -335,7 +335,7 @@ class SimpleMerger( Model ):
     def logic():
       for i in range( s.nbits ):
         s.out.value[i] = s.in_[i].value
-import pytest
+
 def test_SimpleMerger_8x1_to_8():
   model, sim = setup_merger( 8 )
   set_ports( model.in_, 0b11110000 )
