@@ -423,13 +423,13 @@ def test_ComplexMerger_1x8_to_8():
   assert model.out.value == 0b01010101
 
 #-------------------------------------------------------------------------
-# Exception Test
+# Self PassThrough
 #-------------------------------------------------------------------------
 
-class SelfNotSException( Model ):
-  def __init__( self ):
-    self.in_   = InPort ( 1 )
-    self.out   = OutPort( 1 )
+class SelfPassThrough( Model ):
+  def __init__( self, nbits ):
+    self.in_   = InPort ( nbits )
+    self.out   = OutPort( nbits )
 
   def elaborate_logic( self ):
     @self.combinational
@@ -437,7 +437,5 @@ class SelfNotSException( Model ):
       self.out.v = self.in_
 
 import pytest
-def test_SelfNotSException():
-  model = SelfNotSException()
-  with pytest.raises( Exception ):
-    sim   = setup_sim( model )
+def test_SelfPassThrough():
+  passthrough_tester( SelfPassThrough )

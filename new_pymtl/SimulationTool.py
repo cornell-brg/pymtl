@@ -217,13 +217,10 @@ class SimulationTool():
     # Utility function to turn attributes/names acquired from the ast
     # into Python objects
     # TODO: should never use eval... but this is easy
-    # TODO: how to handle when 's' isnt self
+    # TODO: how to handle when self is neither 's' nor 'self'?
     # TODO: how to handle temps!
     def name_to_object( name ):
-      if name.startswith( 'self.' ):
-        raise Exception( "Please use 's' as the first parameter to "
-                         "elaborate_logic() instead of 'self'!" )
-      s = model
+      self = s = model
       if '[?]' in name:
         name, extra = name.split('[?]')
       try:
