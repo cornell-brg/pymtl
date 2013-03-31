@@ -220,7 +220,9 @@ class SimulationTool():
     # TODO: how to handle when 's' isnt self
     # TODO: how to handle temps!
     def name_to_object( name ):
-      assert not name.startswith( 'self.' )
+      if name.startswith( 'self.' ):
+        raise Exception( "Please use 's' as the first parameter to "
+                         "elaborate_logic() instead of 'self'!" )
       s = model
       if '[?]' in name:
         name, extra = name.split('[?]')
