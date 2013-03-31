@@ -19,9 +19,9 @@ def check_ast( ld, st ):
   def check_decorator( func ):
     tree = get_method_ast( func )
 
-    print func.__name__
-    import debug_utils
-    debug_utils.print_ast( tree )
+    print
+    #import debug_utils
+    #debug_utils.print_ast( tree )
 
     load, store = LeafVisitor().enter( tree )
     print "LOADS ", load,  "want:", ld

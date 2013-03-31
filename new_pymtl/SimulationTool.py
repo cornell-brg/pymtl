@@ -194,6 +194,7 @@ class SimulationTool():
       vnode.notify_sim = create_notify_sim_closure( self, vnode )
       # Modify model attributes currently referencing Signal objects to
       # reference ValueNode objects instead.
+      # TODO: hacky based on IDX, fix?
       for x in group:
         if 'IDX' in x.name:
           name, idx = x.name.split('IDX')
@@ -213,32 +214,24 @@ class SimulationTool():
     self.sequential_blocks.extend( model._tick_blocks )
     self.sequential_blocks.extend( model._posedge_clk_blocks )
 
-    # TODO: this is getting pretty hacky...
+    # Utility function to turn attributes/names acquired from the ast
+    # into Python objects
     # TODO: should never use eval... but this is easy
     # TODO: how to handle when 's' isnt self
     # TODO: how to handle temps!
     def name_to_object( name ):
+      assert not name.startswith( 'self.' )
       s = model
+      if '[?]' in name:
+        name, extra = name.split('[?]')
       try:
-        #HACKY, FIX
-        if '[?]' in  name:
-          list_name, rest = name.split('[?]')
-          x = eval( list_name )
-          assert isinstance( x, list )
-          return x
-        else:
-          x = eval( name )
-          if isinstance( x, ValueNode ):
-            return x
-          else:
-            warnings.warn( "Cannot add variable '{}' to sensitivity list."
-                           "".format( name ), Warning )
-            return None
+        x = eval( name )
+        if isinstance( x, (ValueNode, list) ): return x
+        else:                                  raise NameError
       except NameError:
         warnings.warn( "Cannot add variable '{}' to sensitivity list."
                        "".format( name ), Warning )
         return None
-
 
     # Get the sensitivity list of each event driven (combinational) block
     # TODO: do before or after we swap value nodes?
@@ -247,7 +240,6 @@ class SimulationTool():
       loads, stores = ast_visitor.LeafVisitor().enter( tree )
       for x in loads:
         obj = name_to_object( x )
-        print obj
         if isinstance( obj, list ):
           model._newsenses[ func ].extend( obj )
         elif isinstance( obj, ValueNode ):
@@ -257,9 +249,7 @@ class SimulationTool():
     # retrieve their associated function pointer, then add entries for each
     # item in the function's sensitivity list to vnode_callbacks
     # TODO: merge this code with above to reduce memory, # of data structures?
-    print "\nSENSES"
     for func_ptr, sensitivity_list in model._newsenses.items():
-      print func_ptr, sensitivity_list
       for value_node in sensitivity_list:
         self.vnode_callbacks[ value_node ].append( func_ptr )
         # Prime the simulation by putting all events on the event_queue
