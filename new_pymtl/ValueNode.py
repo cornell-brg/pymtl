@@ -61,7 +61,7 @@ class ValueNode( object ):
   # Flop
   #-----------------------------------------------------------------------
   def flop( self ):
-    self.write( self._shadow_value )
+    self.v = self._shadow_value
 
   #-----------------------------------------------------------------------
   # Write (Abstract)
