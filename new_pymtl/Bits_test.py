@@ -115,7 +115,7 @@ def test_eq():
 
   x = Bits( 4, 0b1010 )
   assert x.uint() == x.uint()
-  # TODO: compare objects by value or by id?
+  # Compare objects by value, not id
   assert x == x
   # Check the value
   assert x.uint() == 0b1010
@@ -128,28 +128,24 @@ def test_eq():
   # Checking comparison with another bit container
   y = Bits( 4, 0b1010 )
   assert x.uint() == y.uint()
-  # TODO: how should equality between Bits objects work?
-  #       Same object? Same value? Same value and width?
-  # assert x == y
+  assert x == y
   y = Bits( 8 , 0b1010 )
   assert x.uint() == y.uint()
+  # TODO: how should equality between Bits objects work?
+  #       Same object? Same value? Same value and width?
   #assert x == y
   # Check the negatives
   x = Bits( 4, -1 )
   assert x.uint() == 0b1111
   assert x.uint() == 0xF
   assert x.uint() == 15
-  # TODO: check -1?
-  # assert x.uint() == -1
   # Checking the equality operator
   assert x == 0b1111
   assert x == 0xF
   assert x == 15
-  #assert x == -1
   assert x.uint() == Bits(4, -1).uint()
-  assert x == Bits(4, -1).uint()
-  # TODO: see above comment on Bits object equality
-  #assert x == Bits(4, -1)
+  assert x == Bits( 4, -1 ).uint()
+  assert 15 == x
 
 def test_ne():
 
@@ -162,22 +158,31 @@ def test_ne():
   z = Bits( 1, 0 )
   assert z.uint() != 1L
   assert z != 1L
+  assert 5 != x
 
 def test_compare_neg_assert():
 
-  x = Bits( 4, 2 )
+  x = Bits( 4, -2 )
+  # We don't allow comparison with negative numbers,
+  # although you can construct a new Bits object with one...
   with pytest.raises( AssertionError ):
     assert x != -1
   with pytest.raises( AssertionError ):
-    assert x == -1
+    assert x == -2
   with pytest.raises( AssertionError ):
-    assert x >  -1
+    assert x >  -3
   with pytest.raises( AssertionError ):
-    assert x >= -1
+    assert x >= -3
   with pytest.raises( AssertionError ):
     assert x <  -1
   with pytest.raises( AssertionError ):
     assert x >= -1
+  assert x != Bits( 4, -1 )
+  assert x == Bits( 4, -2 )
+  assert x >  Bits( 4, -3 )
+  assert x >= Bits( 4, -3 )
+  assert x <  Bits( 4, -1 )
+  assert x <= Bits( 4, -1 )
 
 def test_compare_uint_neg():
 
@@ -202,6 +207,7 @@ def test_lt():
   assert y < x.uint()
   assert y < 10
   assert y < x
+  assert 1 < y
 
 def test_gt():
 
@@ -212,6 +218,7 @@ def test_gt():
   assert x > y.uint()
   assert x > 2
   assert x > y
+  assert 9 > y
 
 def test_lte():
 
@@ -230,6 +237,8 @@ def test_lte():
   assert y <= z
   assert z <= x
   assert z <= z
+  assert 1 <= y
+  assert 3 <= y
 
 def test_gte():
 
@@ -249,6 +258,8 @@ def test_gte():
   assert z >= y
   assert z >= x
   assert x >= x
+  assert 5 >= y
+  assert 3 <= y
 
 def test_invert():
 
@@ -269,6 +280,7 @@ def test_add():
   y = Bits( 4, 14 )
   assert x + y == 2
   assert x + 14 == 2
+  assert 14 + x == 2
 
 def test_sub():
 
@@ -283,6 +295,7 @@ def test_sub():
   y = Bits( 4, 7 )
   assert x - y == 0b1110
   assert x - 7 == 0b1110
+  assert 9 - x == 0b0100
 
 def test_lshift():
 
@@ -315,7 +328,7 @@ def test_and():
   y = Bits( 8, 0b11110000 )
   assert x & y      == 0b11000000
   assert x & 0b1010 == 0b00001000
-  #assert 0b1010 & x == 0b00001000
+  assert 0b1010 & x == 0b00001000
 
 def test_or():
 
@@ -323,7 +336,7 @@ def test_or():
   y = Bits( 8, 0b11110000 )
   assert x | y      == 0b11111100
   assert x | 0b1010 == 0b11001110
-  #assert 0b1010 | x == 0b11001110
+  assert 0b1010 | x == 0b11001110
 
 def test_xor():
 
@@ -331,7 +344,7 @@ def test_xor():
   y = Bits( 8, 0b11110000 )
   assert x ^ y      == 0b00111100
   assert x ^ 0b1010 == 0b11000110
-  #assert 0b1010 ^ x == 0b11000110
+  assert 0b1010 ^ x == 0b11000110
 
 def test_mult():
 
@@ -343,6 +356,7 @@ def test_mult():
   y = Bits( 8, 0b11111111 )
   assert x * y == 0b0000000000000001111111000000001
   assert x * 0b11111111 == 0b0000000000000001111111000000001
+  assert 0b11111111 * x == 0b0000000000000001111111000000001
 
   # TODO: Currently fails as the second operand is larger than the Bits
   # object x. Should update the test when we define the behaviour

@@ -194,13 +194,22 @@ class Bits( ValueNode ):
 
   # TODO: what about multiplying Bits object with an object of other type
   # where the bitwidth of the other type is larger than the bitwidth of the
-  # Bits object? ( applies to every other oeprator as well.... )
+  # Bits object? ( applies to every other operator as well.... )
   def __mul__(self, other):
     if isinstance(other, int):
       return Bits(2*self.width, self._uint * other)
     else:
       assert self.width == other.width
       return Bits(2*self.width, self._uint * other._uint)
+
+  def __radd__(self, other):
+    return self.__add__( other )
+
+  def __rsub__(self, other):
+    return Bits( _num_bits( other ), other ) - self
+
+  def __rmul__(self, other):
+    return self.__mul__( other )
 
   # TODO: implement these?
   #def __floordiv__(self, other)
@@ -230,6 +239,13 @@ class Bits( ValueNode ):
       #assert other.uint <= self.width
       return Bits(self.width, self._uint >> other._uint)
 
+  # TODO: Not implementing reflective operators because its not clear
+  #       how to determine width of other object in case of lshift
+  #def __rlshift__(self, other):
+  #  return self.__lshift__( other )
+  #def __rrshift__(self, other):
+  #  return self.__rshift__( other )
+
   #------------------------------------------------------------------------
   # Bitwise Operators
   #------------------------------------------------------------------------
@@ -254,6 +270,15 @@ class Bits( ValueNode ):
     assert other >= 0
     return Bits( max( self.width, _num_bits(other) ),
                  self._uint | other)
+
+  def __rand__(self, other):
+    return self.__and__( other )
+
+  def __rxor__(self, other):
+    return self.__xor__( other )
+
+  def __ror__(self, other):
+    return self.__or__( other )
 
   #------------------------------------------------------------------------
   # Comparison Operators
