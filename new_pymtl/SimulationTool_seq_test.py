@@ -26,6 +26,9 @@ def register_tester( model_type ):
   model.in_.v = 10
   sim.cycle()
   assert model.out == 10
+  model.in_.v = 2
+  sim.cycle()
+  assert model.out == 2
 
 #-------------------------------------------------------------------------
 # RegisterOld
@@ -60,6 +63,83 @@ class Register( Model ):
 
 def test_Register():
   register_tester( Register )
+
+#-------------------------------------------------------------------------
+# RegisterWrapped
+#-------------------------------------------------------------------------
+
+class RegisterWrapped( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_ = InPort  ( nbits )
+    s.out = OutPort ( nbits )
+  def elaborate_logic( s ):
+    # Submodules
+    # TODO: cannot use keyword "reg" for variable names when converting
+    #       To! Check for this?
+    s.reg0 = Register( s.nbits )
+    # Connections
+    connect( s.in_, s.reg0.in_ )
+    connect( s.out, s.reg0.out )
+
+def test_RegisterWrapped():
+  register_tester( RegisterWrapped )
+
+#-------------------------------------------------------------------------
+# RegisterWrappedChain
+#-------------------------------------------------------------------------
+
+class RegisterWrappedChain( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_ = InPort  ( nbits )
+    s.out = OutPort ( nbits )
+  def elaborate_logic( s ):
+    # Submodules
+    s.reg0 = Register( s.nbits )
+    s.reg1 = Register( s.nbits )
+    s.reg2 = Register( s.nbits )
+    # Connections
+    connect( s.in_     , s.reg0.in_ )
+    connect( s.reg0.out, s.reg1.in_ )
+    connect( s.reg1.out, s.reg2.in_ )
+    connect( s.reg2.out, s.out      )
+
+def test_RegisterWrappedChain():
+  model = RegisterWrappedChain( 16 )
+  sim = setup_sim( model )
+  sim.reset()
+  model.in_.value = 8
+  assert model.reg0.out.v ==  0
+  assert model.reg1.out.v ==  0
+  assert model.reg2.out.v ==  0
+  assert model.out.v      ==  0
+  sim.cycle()
+  assert model.reg0.out.v ==  8
+  assert model.reg1.out.v ==  0
+  assert model.reg2.out.v ==  0
+  assert model.out.v      ==  0
+  model.in_.value = 9
+  assert model.reg0.out.v ==  8
+  assert model.reg1.out.v ==  0
+  assert model.reg2.out.v ==  0
+  assert model.out.v      ==  0
+  model.in_.value = 10
+  sim.cycle()
+  assert model.reg0.out.v == 10
+  assert model.reg1.out.v ==  8
+  assert model.reg2.out.v ==  0
+  assert model.out.v      ==  0
+  sim.cycle()
+  assert model.reg0.out.v == 10
+  assert model.reg1.out.v == 10
+  assert model.reg2.out.v ==  8
+  assert model.out.v      ==  8
+  sim.cycle()
+  assert model.reg0.out.v == 10
+  assert model.reg1.out.v == 10
+  assert model.reg2.out.v == 10
+  assert model.out.v      == 10
 
 #-------------------------------------------------------------------------
 # RegisterReset

@@ -246,6 +246,8 @@ class SimulationTool():
       temp = group.pop()
       group.add( temp )
       vnode = Bits( temp.nbits )
+      # TODO: should this be visible to sim?
+      vnode._shadow_value = Bits( temp.nbits )
 
       # Add a callback to the ValueNode so that the simulator is notified
       # whenever it's value changes.

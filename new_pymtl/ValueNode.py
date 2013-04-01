@@ -34,23 +34,28 @@ class ValueNode( object ):
   #-----------------------------------------------------------------------
   @property
   def n( self ):
-    return self._shadow
+    return self._shadow_value
 
   @n.setter
   def n( self, value ):
     self.notify_sim_seq_update()
-    self._shadow_value = value
+    # TODO: get raw int value or copy obj?
+    # TODO: implement as shadow_write() instead and make part of ABC?
+    self._shadow_value.write( value )
 
   #-----------------------------------------------------------------------
   # TEMPORARY: Backwards compatibility
   #-----------------------------------------------------------------------
   @property
   def next( self ):
-    return self
+    return self._shadow_value
+
   @next.setter
   def next( self, value ):
     self.notify_sim_seq_update()
-    self._shadow_value = value
+    # TODO: get raw int value or copy obj?
+    # TODO: implement as shadow_write() instead and make part of ABC?
+    self._shadow_value.write( value )
 
   #-----------------------------------------------------------------------
   # Flop
