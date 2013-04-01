@@ -13,8 +13,8 @@ def test_return_type():
 
 def test_simple_overflow():
 
-  width = 2
-  x = Bits( width )
+  nbits = 2
+  x = Bits( nbits )
   tests = [
       (0, 0),
       (1, 1),
@@ -27,7 +27,7 @@ def test_simple_overflow():
      # (7, 3),
       ]
 
-  assert x.width == width
+  assert x.nbits == nbits
   for wr, rd in tests:
     x.write( wr )
     assert x.uint() == rd
@@ -428,6 +428,8 @@ def test_construct_from_bits():
   assert c                         == 0x00000000
   assert Bits( 32, ~c )            == 0xFFFFFFFF
   assert Bits( 32, ~c + 1 )        == 0x00000000
+  d = Bits( 4, -1 )
+  assert Bits( 8, d )              == 0x0F
 
 def test_int():
 

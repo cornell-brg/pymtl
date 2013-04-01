@@ -12,29 +12,20 @@ from ValueNode import *
 # Class emulating limited precision values of a set bitwidth.
 class Bits( ValueNode ):
 
-  def __init__(self, width, value = 0, trunc = False ):
+  def __init__(self, nbits, value = 0, trunc = False ):
 
     # Make sure width is non-zero and that we have space for the value
-
-    assert width > 0
+    assert nbits > 0
     if not trunc:
-      assert width >= _num_bits(value)
+      assert nbits >= _num_bits(value)
 
-    self.width = width
-    self.wmask = (1 << self.width) - 1
+    # Set the nbits and bitmask (_mask) attributes
+    self.nbits = nbits
+    self._mask = ( 1 << self.nbits ) - 1
 
-    self.shift_trunc = int( math.ceil( math.log( self.width , 2) ) )
-
-    # If the value is negative then we calculate the twos complement
-    # TODO: isn't this unnecessary?
-    if isinstance( value, Bits ):
-      value_uint = value._uint
-    else:
-      value_uint = value
-    if ( value < 0 ):
-      value_uint = ~(-value) + 1
-
-    self._uint = value_uint & self.wmask
+    # Convert negative values into unsigned ints and store them
+    value_uint = value if ( value >= 0 ) else ( ~(-value) + 1 )
+    self._uint = value_uint & self._mask
 
   #-----------------------------------------------------------------------
   # uint
@@ -62,27 +53,19 @@ class Bits( ValueNode ):
     # TODO... performance impact of this? A way to get around this?
     if isinstance( value, Bits ):
       value = value._uint
-    assert self.width >= _num_bits(value)
-    self._uint = (value & self.wmask)
-
-  #-----------------------------------------------------------------------
-  # nbits
-  #-----------------------------------------------------------------------
-  # Return the bitwidth.
-  @property
-  def nbits(self):
-    return self.width
+    assert self.nbits >= _num_bits(value)
+    self._uint = (value & self._mask)
 
   def __repr__(self):
-    return "Bits(w={0},v={1})".format(self.width, self._uint)
+    return "Bits(w={0},v={1})".format(self.nbits, self._uint)
 
   def __str__(self):
-    num_chars = (((self.width-1)/4)+1)
+    num_chars = (((self.nbits-1)/4)+1)
     str = "{:x}".format(self._uint).zfill(num_chars)
     return str[-num_chars:len(str)]
 
   def bin_str(self):
-    str = "{:b}".format(self._uint).zfill(self.width)
+    str = "{:b}".format(self._uint).zfill(self.nbits)
     return str
 
   #------------------------------------------------------------------------
@@ -97,7 +80,7 @@ class Bits( ValueNode ):
 
   #def __set__(self, instance, value ):
   #  print "HERE"
-  #  self._uint = ( value & self.wmask )
+  #  self._uint = ( value & self._mask )
 
   #------------------------------------------------------------------------
   # Bitwise Access
@@ -111,19 +94,19 @@ class Bits( ValueNode ):
       stop = addr.stop
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
-        return Bits(self.width,self._uint)
+        return Bits(self.nbits,self._uint)
       elif start is None:
         start = 0
       elif stop is None:
-        stop = self.width
+        stop = self.nbits
       # Make sure our ranges are sane
       assert start < stop
-      assert stop <= self.width
+      assert stop <= self.nbits
       width = stop - start
       mask  = (1 << width) - 1
       return Bits( width, (self._uint & (mask << start)) >> start )
     else:
-      assert addr < self.width
+      assert addr < self.nbits
       return Bits( 1, (self._uint & (1 << addr)) >> addr )
 
   def __setitem__(self, addr, value):
@@ -137,16 +120,16 @@ class Bits( ValueNode ):
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
         # TODO: optimize and uncomment!!!!
-        assert self.width >= _num_bits(value)
+        assert self.nbits >= _num_bits(value)
         self._uint = value
         return
       elif start is None:
         start = 0
       elif stop is None:
-        stop = self.width
+        stop = self.nbits
       # Make sure our ranges are sane
       assert start < stop
-      assert stop <= self.width
+      assert stop <= self.nbits
       width = stop - start
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
@@ -161,7 +144,7 @@ class Bits( ValueNode ):
       #       do we want this behavior?
       self._uint = cleared_val | ((value & ones) << start)
     else:
-      assert addr < self.width
+      assert addr < self.nbits
       assert 0 <= value <= 1
       # Clear the bits we want to set
       mask = ~(1 << addr)
@@ -178,18 +161,18 @@ class Bits( ValueNode ):
 
   # TODO: reflected operands?
   def __invert__(self):
-    return Bits(self.width, ~self._uint, trunc=True )
+    return Bits(self.nbits, ~self._uint, trunc=True )
 
   def __add__(self, other):
     if not isinstance(other, Bits):
       other = Bits( _num_bits(other), other )
-    return Bits( max( self.width, other.width ),
+    return Bits( max( self.nbits, other.nbits ),
                  self._uint + other._uint, trunc=True )
 
   def __sub__(self, other):
     if not isinstance(other, Bits):
       other = Bits( _num_bits(other), other )
-    return Bits( max( self.width, other.width ),
+    return Bits( max( self.nbits, other.nbits ),
                  self._uint - other._uint, trunc=True )
 
   # TODO: what about multiplying Bits object with an object of other type
@@ -197,10 +180,10 @@ class Bits( ValueNode ):
   # Bits object? ( applies to every other operator as well.... )
   def __mul__(self, other):
     if isinstance(other, int):
-      return Bits(2*self.width, self._uint * other)
+      return Bits(2*self.nbits, self._uint * other)
     else:
-      assert self.width == other.width
-      return Bits(2*self.width, self._uint * other._uint)
+      assert self.nbits == other.nbits
+      return Bits(2*self.nbits, self._uint * other._uint)
 
   def __radd__(self, other):
     return self.__add__( other )
@@ -224,20 +207,20 @@ class Bits( ValueNode ):
   def __lshift__(self, other):
     if isinstance(other, int):
       # If the shift amount is greater than the width, just return 0
-      if other >= self.width: return Bits( self.width, 0 )
-      return Bits( self.width, self._uint << other, trunc=True )
+      if other >= self.nbits: return Bits( self.nbits, 0 )
+      return Bits( self.nbits, self._uint << other, trunc=True )
     else:
       # If the shift amount is greater than the width, just return 0
-      if other._uint >= self.width: return Bits( self.width, 0 )
-      return Bits( self.width, self._uint << other._uint, trunc=True )
+      if other._uint >= self.nbits: return Bits( self.nbits, 0 )
+      return Bits( self.nbits, self._uint << other._uint, trunc=True )
 
   def __rshift__(self, other):
     if isinstance(other, int):
-      #assert other <= self.width
-      return Bits(self.width, self._uint >> other)
+      #assert other <= self.nbits
+      return Bits(self.nbits, self._uint >> other)
     else:
-      #assert other.uint <= self.width
-      return Bits(self.width, self._uint >> other._uint)
+      #assert other.uint <= self.nbits
+      return Bits(self.nbits, self._uint >> other._uint)
 
   # TODO: Not implementing reflective operators because its not clear
   #       how to determine width of other object in case of lshift
@@ -254,21 +237,21 @@ class Bits( ValueNode ):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.width, _num_bits(other) ),
+    return Bits( max( self.nbits, _num_bits(other) ),
                  self._uint & other)
 
   def __xor__(self, other):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.width, _num_bits(other) ),
+    return Bits( max( self.nbits, _num_bits(other) ),
                  self._uint ^ other)
 
   def __or__(self, other):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.width, _num_bits(other) ),
+    return Bits( max( self.nbits, _num_bits(other) ),
                  self._uint | other)
 
   def __rand__(self, other):
@@ -290,42 +273,42 @@ class Bits( ValueNode ):
   def __eq__(self,other):
     """Equality operator, special case for comparisons with integers."""
     if isinstance(other, Bits):
-      assert self.width == other.width
+      assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
     return self._uint == other
 
   def __ne__(self,other):
     if isinstance(other, Bits):
-      assert self.width == other.width
+      assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
     return self._uint != other
 
   def __lt__(self,other):
     if isinstance(other, Bits):
-      assert self.width == other.width
+      assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
     return self._uint < other
 
   def __le__(self,other):
     if isinstance(other, Bits):
-      assert self.width == other.width
+      assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
     return self._uint <= other
 
   def __gt__(self,other):
     if isinstance(other, Bits):
-      assert self.width == other.width
+      assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
     return self._uint > other
 
   def __ge__(self,other):
     if isinstance(other, Bits):
-      assert self.width == other.width
+      assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
     return self._uint >= other

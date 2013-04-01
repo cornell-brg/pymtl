@@ -208,7 +208,7 @@ def setup_splitter( nbits, groups=None ):
 def verify_splitter( port_array, expected ):
   actual = 0
   for i, port in enumerate(port_array):
-    shift = i * port.width
+    shift = i * port.nbits
     actual |= (port.value.uint() << shift)
   assert bin(actual) == bin(expected)
 
@@ -316,9 +316,9 @@ def setup_merger( nbits, groups=None ):
 
 def set_ports( port_array, value ):
   for i, port in enumerate( port_array ):
-    shift = i * port.width
+    shift = i * port.nbits
     # Truncate to ensure no width mismatches -cbatten
-    port.value = (value >> shift) & ((1 << port.width) - 1)
+    port.value = (value >> shift) & ((1 << port.nbits) - 1)
 
 #-------------------------------------------------------------------------
 # SimpleMerger
