@@ -425,6 +425,7 @@ def test_ComplexMerger_1x8_to_8():
 #-------------------------------------------------------------------------
 # Self PassThrough
 #-------------------------------------------------------------------------
+# Test of using 'self' instead of 's'
 
 class SelfPassThrough( Model ):
   def __init__( self, nbits ):
@@ -439,3 +440,38 @@ class SelfPassThrough( Model ):
 import pytest
 def test_SelfPassThrough():
   passthrough_tester( SelfPassThrough )
+
+#-------------------------------------------------------------------------
+# Mux
+#-------------------------------------------------------------------------
+from math import ceil, log
+
+class Mux( Model ):
+  def __init__( s, nbits, nports ):
+    s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
+    s.out = OutPort( nbits )
+    s.sel = InPort ( int( ceil( log( nports, 2 ) ) ))
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      assert s.sel < len( s.in_ )
+      s.out.v = s.in_[ s.sel.uint ]
+
+def test_Mux():
+  model = Mux( 3, 8 )
+  sim = setup_sim( model )
+  sim.reset()
+  model.in_[0].v = 1
+  model.in_[1].v = 2
+  model.in_[2].v = 0
+  model.sel.v    = 0
+  sim.eval_combinational()
+  assert model.out == 1
+  model.sel.v = 1
+  sim.eval_combinational()
+  assert model.out == 2
+  sim.eval_combinational()
+  assert model.out == 2
+  model.sel.v = 2
+  sim.eval_combinational()
+  assert model.out == 0

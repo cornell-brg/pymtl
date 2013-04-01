@@ -178,6 +178,7 @@ def test_RegisterReset():
 #-------------------------------------------------------------------------
 # RegisterSplitter
 #-------------------------------------------------------------------------
+# TODO: move to SimulationTool_mix_test.py
 
 from SimulationTool_comb_test import ComplexSplitter, verify_splitter
 

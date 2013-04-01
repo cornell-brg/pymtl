@@ -288,6 +288,9 @@ class SimulationTool():
       self = s = model
       if '[?]' in name:
         name, extra = name.split('[?]')
+      # TODO: hacky way to account for indexing lists
+      elif name.endswith( '.uint' ):
+        name = name.rstrip( '.uint' )
       try:
         x = eval( name )
         if isinstance( x, (ValueNode, list) ): return x
