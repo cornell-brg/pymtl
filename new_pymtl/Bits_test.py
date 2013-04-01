@@ -2,6 +2,32 @@ from Bits import *
 from Bits import _num_bits
 import pytest
 
+def test_num_bits():
+
+  assert _num_bits(0) == 1
+  assert _num_bits(1) == 1
+  assert _num_bits(2) == 2
+  assert _num_bits(3) == 2
+  assert _num_bits(4) == 3
+  assert _num_bits(5) == 3
+  assert _num_bits(6) == 3
+  assert _num_bits(7) == 3
+  assert _num_bits(8) == 4
+
+  assert _num_bits( 0x000f ) == 4
+  assert _num_bits( 0x00ff ) == 8
+  assert _num_bits( 0x0fff ) == 12
+  assert _num_bits( 0xffff ) == 16
+
+  assert _num_bits(-1) == 2
+  assert _num_bits(-2) == 3
+  assert _num_bits(-3) == 3
+  assert _num_bits(-4) == 4
+  assert _num_bits(-5) == 4
+  assert _num_bits(-6) == 4
+  assert _num_bits(-7) == 4
+  assert _num_bits(-8) == 5
+
 def test_return_type():
 
   x = Bits( 8, 0b1100 )
@@ -10,6 +36,26 @@ def test_return_type():
   assert isinstance( x[1:2],   Bits )
   assert isinstance( x[0:4],   Bits )
   assert isinstance( x[2],     Bits )
+
+def test_int():
+
+  assert Bits( 4,  0 ).int() == 0
+  assert Bits( 4,  2 ).int() == 2
+  assert Bits( 4,  4 ).int() == 4
+  assert Bits( 4, 15 ).int() == -1
+  assert Bits( 4, -1 ).int() == -1
+  assert Bits( 4, -2 ).int() == -2
+  assert Bits( 4, -4 ).int() == -4
+
+def test_uint():
+
+  assert Bits( 4,  0 ).uint() == 0
+  assert Bits( 4,  2 ).uint() == 2
+  assert Bits( 4,  4 ).uint() == 4
+  assert Bits( 4, 15 ).uint() == 15
+  assert Bits( 4, -1 ).uint() == 15
+  assert Bits( 4, -2 ).uint() == 14
+  assert Bits( 4, -4 ).uint() == 12
 
 def test_simple_overflow():
 
@@ -365,36 +411,6 @@ def test_mult():
   y = Bits( 8, 0b10000000 )
   assert x * y == 0b0000000000000000111111110000000
 
-#-------------------------------------------------------------------------
-# Tests added by cbatten
-#-------------------------------------------------------------------------
-
-def test_num_bits():
-
-  assert _num_bits(0) == 1
-  assert _num_bits(1) == 1
-  assert _num_bits(2) == 2
-  assert _num_bits(3) == 2
-  assert _num_bits(4) == 3
-  assert _num_bits(5) == 3
-  assert _num_bits(6) == 3
-  assert _num_bits(7) == 3
-  assert _num_bits(8) == 4
-
-  assert _num_bits( 0x000f ) == 4
-  assert _num_bits( 0x00ff ) == 8
-  assert _num_bits( 0x0fff ) == 12
-  assert _num_bits( 0xffff ) == 16
-
-  assert _num_bits(-1) == 2
-  assert _num_bits(-2) == 3
-  assert _num_bits(-3) == 3
-  assert _num_bits(-4) == 4
-  assert _num_bits(-5) == 4
-  assert _num_bits(-6) == 4
-  assert _num_bits(-7) == 4
-  assert _num_bits(-8) == 5
-
 def test_constructor():
 
   assert Bits( 4,  2 ).uint() == 2
@@ -409,11 +425,6 @@ def test_constructor():
 
   assert Bits( 4 ) == Bits( 4, 0 )
   assert Bits( 4 ).uint() == 0
-
-def test_construct_invalid_val_assert():
-
-  with pytest.raises( TypeError ):
-    assert Bits( 4, None ) != Bits( 4, 0 )
 
 def test_construct_from_bits():
 
@@ -430,26 +441,6 @@ def test_construct_from_bits():
   assert Bits( 32, ~c + 1 )        == 0x00000000
   d = Bits( 4, -1 )
   assert Bits( 8, d )              == 0x0F
-
-def test_int():
-
-  assert Bits( 4,  0 ).int() == 0
-  assert Bits( 4,  2 ).int() == 2
-  assert Bits( 4,  4 ).int() == 4
-  assert Bits( 4, 15 ).int() == -1
-  assert Bits( 4, -1 ).int() == -1
-  assert Bits( 4, -2 ).int() == -2
-  assert Bits( 4, -4 ).int() == -4
-
-def test_uint():
-
-  assert Bits( 4,  0 ).uint() == 0
-  assert Bits( 4,  2 ).uint() == 2
-  assert Bits( 4,  4 ).uint() == 4
-  assert Bits( 4, 15 ).uint() == 15
-  assert Bits( 4, -1 ).uint() == 15
-  assert Bits( 4, -2 ).uint() == 14
-  assert Bits( 4, -4 ).uint() == 12
 
 def test_zext():
 

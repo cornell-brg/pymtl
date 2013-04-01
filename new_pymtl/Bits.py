@@ -56,6 +56,18 @@ class Bits( ValueNode ):
     assert self.nbits >= _num_bits(value)
     self._uint = (value & self._mask)
 
+  #-----------------------------------------------------------------------
+  # bit_length
+  #-----------------------------------------------------------------------
+  # Implement bit_length method provided by int built-in. Simplifies
+  # the implementation of _num_bits()
+  def bit_length( self ):
+    return self._uint.bit_length()
+
+  #-----------------------------------------------------------------------
+  # Print Methods
+  #-----------------------------------------------------------------------
+
   def __repr__(self):
     return "Bits(w={0},v={1})".format(self.nbits, self._uint)
 
@@ -119,7 +131,6 @@ class Bits( ValueNode ):
       stop = addr.stop
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
-        # TODO: optimize and uncomment!!!!
         assert self.nbits >= _num_bits(value)
         self._uint = value
         return
@@ -133,15 +144,13 @@ class Bits( ValueNode ):
       width = stop - start
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
-      # TODO: optimize and uncomment!!!!
       assert width >= _num_bits(value)
       # Clear the bits we want to set
       ones  = (1 << width) - 1
       mask = ~(ones << start)
       cleared_val = self._uint & mask
-      # Set the bits
-      # TODO: anding with ones to ensure negative value assign works!
-      #       do we want this behavior?
+      # Set the bits, anding with ones to ensure negative value assign
+      # works that way you would expect. TODO: performance impact?
       self._uint = cleared_val | ((value & ones) << start)
     else:
       assert addr < self.nbits
@@ -346,45 +355,8 @@ def concat( bits_list ):
 
   return concat_bits
 
-
-# TODO: replace with Python built-in?
 def _num_bits( x ):
-
-  # From the web
-  # http://www.velocityreviews.com/forums/t668122-number-of-bits-sizeof-int.html
-
-  # Special cases
-
-  # I added the +=1 when it is negative since we need an extra bit to be
-  # able to store the sign bit and distinguish between the positive and
-  # negative versions? -cbatten
-
-  n = 1
-  # TODO: shouldn't this return 1, not zero?
-  if x == 0:
-    return 1
-  elif x < 0:
-    x = -x
-    n += 1
-
-  # Find upper bound of the form 2^(2^n) >= x
-
-  while True:
-    y = x >> n
-    if y == 0:
-      break
-    x = y
-    n <<= 1
-
-  # Now binary search until we're done
-
-  a = n
-  while n > 0:
-    n >>= 1
-    y = x >> n
-    if y > 0:
-      x = y
-      a += n
-
-  return a
-
+  if x > 0:
+    return x.bit_length()
+  else:
+    return x.bit_length() + 1
