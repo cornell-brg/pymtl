@@ -267,7 +267,7 @@ class Bits( ValueNode ):
     if isinstance(other, Bits):
       assert self.width == other.width
       other = other._uint
-    #assert other >= 0   # TODO: allow comparison with negative numbers?
+    assert other >= 0   # TODO: allow comparison with negative numbers?
     return self._uint == other
 
   def __ne__(self,other):

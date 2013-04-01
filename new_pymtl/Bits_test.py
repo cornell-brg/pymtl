@@ -1,7 +1,9 @@
 from Bits import *
 from Bits import _num_bits
+import pytest
 
-def test_get_value():
+def test_return_type():
+
   x = Bits( 8, 0b1100 )
   assert isinstance( x.uint(), int  )
   assert isinstance( x.int(),  int  )
@@ -10,6 +12,7 @@ def test_get_value():
   assert isinstance( x[2],     Bits )
 
 def test_simple_overflow():
+
   width = 2
   x = Bits( width )
   tests = [
@@ -40,21 +43,16 @@ def test_simple_overflow():
 #       assert x.uint() ==  j % overflow_val
 
 def test_neg_assign():
+
   x = Bits( 4, -1 )
+  assert x        == 0b1111
   assert x.uint() == 0b1111
   x = Bits( 4, -2 )
+  assert x        == 0b1110
   assert x.uint() == 0b1110
 
-  # These are too big! -cbatten
-  #
-  # x.uint() = -15
-  # assert x.uint() == 0b0001
-  # x.uint() = -16
-  # assert x.uint() == 0b0000
-  # x.uint() = -17
-  # assert x.uint() == 0b1111
-
 def test_get_bit():
+
   x = Bits( 4, 0b1100 )
   assert x[3] == 1
   assert x[2] == 1
@@ -65,14 +63,8 @@ def test_get_bit():
   # TODO: check that out of bounds is caught
   #assert x[8] == 1
 
-  # Too big! -cbatten
-  # x.uint() = 22
-  # assert x[3] == 0
-  # assert x[2] == 1
-  # assert x[1] == 1
-  # assert x[0] == 0
-
 def test_get_slice():
+
   x = Bits( 4, 0b1100 )
   assert x[:] == 0b1100
   assert x[2:4] == 0b11
@@ -85,6 +77,7 @@ def test_get_slice():
   assert x[:3] == 0b100
 
 def test_set_bit():
+
   x = Bits( 4, 0b1100 )
   x[3] = 0
   assert x.uint() == 0b0100
@@ -100,6 +93,7 @@ def test_set_bit():
   #assert x[8] == 1
 
 def test_set_slice():
+
   x = Bits( 4, 0b1100 )
   x[:] = 0b0010
   assert x.uint() == 0b0010
@@ -118,6 +112,7 @@ def test_set_slice():
   assert x.uint() == 0b0110
 
 def test_eq():
+
   x = Bits( 4, 0b1010 )
   assert x.uint() == x.uint()
   # TODO: compare objects by value or by id?
@@ -157,36 +152,49 @@ def test_eq():
   #assert x == Bits(4, -1)
 
 def test_ne():
+
   x = Bits( 4, 0b1100 )
   y = Bits( 4, 0b0011 )
   # TODO: check width?
   assert x.uint() != y.uint()
   assert x != y
   # added for bug
-  z = Bits(1, 0)
+  z = Bits( 1, 0 )
   assert z.uint() != 1L
   assert z != 1L
 
-import pytest
-@pytest.mark.xfail
-def test_compare_uint_neg():
+def test_compare_neg_assert():
+
   x = Bits( 4, 2 )
-  assert x      != -1
+  with pytest.raises( AssertionError ):
+    assert x != -1
+  with pytest.raises( AssertionError ):
+    assert x == -1
+  with pytest.raises( AssertionError ):
+    assert x >  -1
+  with pytest.raises( AssertionError ):
+    assert x >= -1
+  with pytest.raises( AssertionError ):
+    assert x <  -1
+  with pytest.raises( AssertionError ):
+    assert x >= -1
+
+def test_compare_uint_neg():
+
+  x = Bits( 4, 2 )
   assert x.uint() != -1
-  assert x       > -1
   assert x.uint()  > -1
-  assert x      >= -1
   assert x.uint() >= -1
 
-@pytest.mark.xfail
 def test_compare_int_neg():
+
   x = Bits( 4, -2 )
-  #assert x     == -2  # Should fail
-  assert x.int == -2
-  assert x.int  > -1
-  assert x.int >= -1
+  assert x.int() == -2
+  assert x.int()  < -1
+  assert x.int() <= -1
 
 def test_lt():
+
   x = Bits( 4, 0b1100 )
   y = Bits( 4, 0b0011 )
   assert y.uint() < x.uint()
@@ -196,6 +204,7 @@ def test_lt():
   assert y < x
 
 def test_gt():
+
   x = Bits( 4, 0b1100 )
   y = Bits( 4, 0b0011 )
   assert x.uint() > y.uint()
@@ -205,6 +214,7 @@ def test_gt():
   assert x > y
 
 def test_lte():
+
   x = Bits( 4, 0b1100 )
   y = Bits( 4, 0b0011 )
   z = Bits( 4, 0b0011 )
@@ -222,6 +232,7 @@ def test_lte():
   assert z <= z
 
 def test_gte():
+
   x = Bits( 4, 0b1100 )
   y = Bits( 4, 0b0011 )
   z = Bits( 4, 0b1100 )
@@ -240,6 +251,7 @@ def test_gte():
   assert x >= x
 
 def test_invert():
+
   x = Bits( 4, 0b0001 )
   assert ~x == 0b1110
   x = Bits( 4, 0b1001 )
@@ -248,6 +260,7 @@ def test_invert():
   assert ~x == 0b0000111100001111
 
 def test_add():
+
   x = Bits( 4, 4 )
   y = Bits( 4, 4 )
   assert x + y == 8
@@ -258,6 +271,7 @@ def test_add():
   assert x + 14 == 2
 
 def test_sub():
+
   x = Bits( 4, 5 )
   y = Bits( 4, 4 )
   assert x - y == 1
@@ -271,6 +285,7 @@ def test_sub():
   assert x - 7 == 0b1110
 
 def test_lshift():
+
   x = Bits( 8, 0b1100 )
   y = Bits( 8, 4 )
   assert x << y == 0b11000000
@@ -281,6 +296,7 @@ def test_lshift():
   assert y << 1 == 0b00001000
 
 def test_rshift():
+
   x = Bits( 8, 0b11000000 )
   y = Bits( 8, 4 )
   assert x >> y  == 0b00001100
@@ -294,6 +310,7 @@ def test_rshift():
   assert y >> 5 == 0b00000000
 
 def test_and():
+
   x = Bits( 8, 0b11001100 )
   y = Bits( 8, 0b11110000 )
   assert x & y      == 0b11000000
@@ -301,6 +318,7 @@ def test_and():
   #assert 0b1010 & x == 0b00001000
 
 def test_or():
+
   x = Bits( 8, 0b11001100 )
   y = Bits( 8, 0b11110000 )
   assert x | y      == 0b11111100
@@ -308,6 +326,7 @@ def test_or():
   #assert 0b1010 | x == 0b11001110
 
 def test_xor():
+
   x = Bits( 8, 0b11001100 )
   y = Bits( 8, 0b11110000 )
   assert x ^ y      == 0b00111100
@@ -315,6 +334,7 @@ def test_xor():
   #assert 0b1010 ^ x == 0b11000110
 
 def test_mult():
+
   x = Bits( 8, 0b00000000 )
   y = Bits( 8, 0b00000000 )
   assert x * y == 0b0000000000000000
@@ -325,7 +345,7 @@ def test_mult():
   assert x * 0b11111111 == 0b0000000000000001111111000000001
 
   # TODO: Currently fails as the second operand is larger than the Bits
-  # object x. Should update the test when we define the behaviour  
+  # object x. Should update the test when we define the behaviour
   #assert x * 0b1111111111 == 0b0000000000000001111111000000001
 
   y = Bits( 8, 0b10000000 )
@@ -373,31 +393,47 @@ def test_constructor():
   assert Bits( 4, Bits(4, -2) ).uint() == 0b1110
   assert Bits( 4, Bits(4, -4) ).uint() == 0b1100
 
-  # TODO: catch assert, initializing to None not allowed
-  # assert Bits( 4, None ) != Bits( 4, 0 )
   assert Bits( 4 ) == Bits( 4, 0 )
   assert Bits( 4 ).uint() == 0
-  # TODO: move to test_construct_from_bits
-  a = Bits( 32, 5 )
-  assert Bits( 32, ~a + 1 ).uint() == 0xFFFFFFFB
 
-@pytest.mark.xfail
+def test_construct_invalid_val_assert():
+
+  with pytest.raises( TypeError ):
+    assert Bits( 4, None ) != Bits( 4, 0 )
+
 def test_construct_from_bits():
 
   a = Bits( 8, 5 )
-  assert Bits( 16, ~a + 1 ).uint() == 0xFFFB
-  #assert Bits( 16, ~a + 1 ).uint() == 0x00FB
-  b = Bits( 32, 0 )
-  assert Bits( 32, ~b + 1 ) + 1  == 1
+  assert a                         == 0x05
+  assert Bits( 16, a ).uint()      == 0x0005
+  assert Bits( 16, ~a + 1 ).uint() == 0x00FB
+  b = Bits( 32, 5 )
+  assert b                         == 0x00000005
+  assert Bits( 32, ~b + 1 ).uint() == 0xFFFFFFFB
+  c = Bits( 32, 0 )
+  assert c                         == 0x00000000
+  assert Bits( 32, ~c )            == 0xFFFFFFFF
+  assert Bits( 32, ~c + 1 )        == 0x00000000
 
 def test_int():
 
+  assert Bits( 4,  0 ).int() == 0
+  assert Bits( 4,  2 ).int() == 2
+  assert Bits( 4,  4 ).int() == 4
+  assert Bits( 4, 15 ).int() == -1
+  assert Bits( 4, -1 ).int() == -1
+  assert Bits( 4, -2 ).int() == -2
+  assert Bits( 4, -4 ).int() == -4
+
+def test_uint():
+
+  assert Bits( 4,  0 ).uint() == 0
   assert Bits( 4,  2 ).uint() == 2
   assert Bits( 4,  4 ).uint() == 4
   assert Bits( 4, 15 ).uint() == 15
-
-  assert Bits( 4, -2 ).int() == -2
-  assert Bits( 4, -4 ).int() == -4
+  assert Bits( 4, -1 ).uint() == 15
+  assert Bits( 4, -2 ).uint() == 14
+  assert Bits( 4, -4 ).uint() == 12
 
 def test_zext():
 
