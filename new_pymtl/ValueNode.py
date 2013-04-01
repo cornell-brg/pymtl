@@ -73,6 +73,24 @@ class ValueNode( object ):
                                "implement the write() method!" )
 
   #-----------------------------------------------------------------------
+  # Uint (Abstract)
+  #-----------------------------------------------------------------------
+  # Abstract method, must be implemented by subclasses!
+  # TODO: use abc module to create abstract method?
+  def uint( self, value ):
+    raise NotImplementedError( "Subclasses of ValueNode must "
+                               "implement the uint() method!" )
+
+  #-----------------------------------------------------------------------
+  # Int (Abstract)
+  #-----------------------------------------------------------------------
+  # Abstract method, must be implemented by subclasses!
+  # TODO: use abc module to create abstract method?
+  def int( self, value ):
+    raise NotImplementedError( "Subclasses of ValueNode must "
+                               "implement the int() method!" )
+
+  #-----------------------------------------------------------------------
   # Notify Sim of Combinational Update Hook (Abstract)
   #-----------------------------------------------------------------------
   # Another abstract method used as a hook by simulators tools.

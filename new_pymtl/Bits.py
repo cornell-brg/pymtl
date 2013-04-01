@@ -36,26 +36,28 @@ class Bits( ValueNode ):
 
     self._uint = value_uint & self.wmask
 
-  @property
-  def uint(self):
-    """Return the unsigned integer representation of the bits."""
+  #-----------------------------------------------------------------------
+  # uint
+  #-----------------------------------------------------------------------
+  # Return the unsigned integer representation of the bits.
+  def uint( self ):
     return self._uint
 
-  @property
-  def int(self):
-    """Return the integer representation of the bits."""
-    if ( self[self.nbits-1] ):
+  #-----------------------------------------------------------------------
+  # uint
+  #-----------------------------------------------------------------------
+  # Return the integer representation of the bits.
+  def int( self ):
+    if ( self[ self.nbits - 1] ):
       twos_complement = ~self + 1
       return -twos_complement._uint
     else:
       return self._uint
 
-  # TODO: remove
-  @uint.setter
-  def uint(self, value):
-    assert self.width >= _num_bits(value)
-    self._uint = (value & self.wmask)
-
+  #-----------------------------------------------------------------------
+  # write
+  #-----------------------------------------------------------------------
+  # Implementing abstract write method defined by ValueNode.
   def write( self, value ):
     # TODO... performance impact of this? A way to get around this?
     if isinstance( value, Bits ):
@@ -63,9 +65,12 @@ class Bits( ValueNode ):
     assert self.width >= _num_bits(value)
     self._uint = (value & self.wmask)
 
+  #-----------------------------------------------------------------------
+  # nbits
+  #-----------------------------------------------------------------------
+  # Return the bitwidth.
   @property
   def nbits(self):
-    """Return the bitwidth."""
     return self.width
 
   def __repr__(self):
@@ -308,7 +313,7 @@ class Bits( ValueNode ):
     return Bits( new_width, self._uint )
 
   def sext( self, new_width ):
-    return Bits( new_width, self.int )
+    return Bits( new_width, self.int() )
 
 #--------------------------------------------------------------------------
 # Helper functions

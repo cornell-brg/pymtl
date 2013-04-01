@@ -209,7 +209,7 @@ def verify_splitter( port_array, expected ):
   actual = 0
   for i, port in enumerate(port_array):
     shift = i * port.width
-    actual |= (port.value.uint << shift)
+    actual |= (port.value.uint() << shift)
   assert bin(actual) == bin(expected)
 
 #-------------------------------------------------------------------------
@@ -455,7 +455,7 @@ class Mux( Model ):
     @s.combinational
     def logic():
       assert s.sel < len( s.in_ )
-      s.out.v = s.in_[ s.sel.uint ]
+      s.out.v = s.in_[ s.sel.uint() ]
 
 def test_Mux():
   model = Mux( 3, 8 )
