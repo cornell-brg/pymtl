@@ -97,6 +97,16 @@ class SimulationTool():
     self.ncycles += 1
 
   #-----------------------------------------------------------------------
+  # Reset
+  #-----------------------------------------------------------------------
+  # Sets the reset signal high and cycles the simulator.
+  def reset( self ):
+    self.model.reset.v = 1
+    self.cycle()
+    self.cycle()
+    self.model.reset.v = 0
+
+  #-----------------------------------------------------------------------
   # Add Callback to Event Queue
   #-----------------------------------------------------------------------
   # Add an event to the simulator event queue for later execution.
