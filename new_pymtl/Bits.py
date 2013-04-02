@@ -4,7 +4,10 @@
 # Module containing the Bits class.
 
 from SignalValue import SignalValue
-from helpers   import get_nbits
+
+# NOTE: circular imports between Bits and helpers, using 'import helpers'
+#       instead of 'from helpers import' ensures pydoc still works
+import helpers
 
 #=========================================================================
 # Bits
@@ -17,7 +20,7 @@ class Bits( SignalValue ):
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0
     if not trunc:
-      assert nbits >= get_nbits( value )
+      assert nbits >= helpers.get_nbits( value )
 
     # Set the nbits and bitmask (_mask) attributes
     self.nbits = nbits
@@ -53,7 +56,7 @@ class Bits( SignalValue ):
     # TODO... performance impact of this? A way to get around this?
     if isinstance( value, Bits ):
       value = value._uint
-    assert self.nbits >= get_nbits( value )
+    assert self.nbits >= helpers.get_nbits( value )
     self._uint = (value & self._mask)
 
   #-----------------------------------------------------------------------
@@ -130,7 +133,7 @@ class Bits( SignalValue ):
       stop = addr.stop
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
-        assert self.nbits >= get_nbits( value )
+        assert self.nbits >= helpers.get_nbits( value )
         self._uint = value
         return
       elif start is None:
@@ -142,7 +145,7 @@ class Bits( SignalValue ):
       nbits = stop - start
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
-      assert nbits >= get_nbits( value )
+      assert nbits >= helpers.get_nbits( value )
       # Clear the bits we want to set
       ones  = (1 << nbits) - 1
       mask = ~(ones << start)
@@ -172,13 +175,13 @@ class Bits( SignalValue ):
 
   def __add__(self, other):
     if not isinstance(other, Bits):
-      other = Bits( get_nbits( other ), other )
+      other = Bits( helpers.get_nbits( other ), other )
     return Bits( max( self.nbits, other.nbits ),
                  self._uint + other._uint, trunc=True )
 
   def __sub__(self, other):
     if not isinstance(other, Bits):
-      other = Bits( get_nbits( other ), other )
+      other = Bits( helpers.get_nbits( other ), other )
     return Bits( max( self.nbits, other.nbits ),
                  self._uint - other._uint, trunc=True )
 
@@ -196,7 +199,7 @@ class Bits( SignalValue ):
     return self.__add__( other )
 
   def __rsub__(self, other):
-    return Bits( get_nbits( other ), other ) - self
+    return Bits( helpers.get_nbits( other ), other ) - self
 
   def __rmul__(self, other):
     return self.__mul__( other )
@@ -244,21 +247,21 @@ class Bits( SignalValue ):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.nbits, get_nbits( other ) ),
+    return Bits( max( self.nbits, helpers.get_nbits( other ) ),
                  self._uint & other)
 
   def __xor__(self, other):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.nbits, get_nbits( other ) ),
+    return Bits( max( self.nbits, helpers.get_nbits( other ) ),
                  self._uint ^ other)
 
   def __or__(self, other):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.nbits, get_nbits( other ) ),
+    return Bits( max( self.nbits, helpers.get_nbits( other ) ),
                  self._uint | other)
 
   def __rand__(self, other):
@@ -329,27 +332,3 @@ class Bits( SignalValue ):
 
   def _sext( self, new_width ):
     return Bits( new_width, self.int() )
-
-#--------------------------------------------------------------------------
-# Helper functions
-#--------------------------------------------------------------------------
-
-def concat( bits_list ):
-
-  # First figure total new bitwidth
-
-  nbits = 0
-  for bits in bits_list:
-    nbits += bits.nbits
-
-  # Create new Bits and add each bits from bits_list to it
-
-  concat_bits = Bits( nbits )
-
-  begin = 0
-  for bits in reversed(bits_list):
-    concat_bits[ begin : begin+bits.nbits ] = bits
-    begin += bits.nbits
-
-  return concat_bits
-
