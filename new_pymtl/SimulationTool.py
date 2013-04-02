@@ -15,7 +15,7 @@ from connection_graph import Constant
 
 # TODO: temporary
 import ast_visitor
-from ValueNode        import ValueNode
+from SignalValue        import SignalValue
 import warnings
 
 #=========================================================================
@@ -44,7 +44,7 @@ class SimulationTool():
     self._sequential_blocks = []
     self._register_queue    = []
     self._event_queue       = collections.deque()
-    self._vnode_callbacks   = collections.defaultdict(list)
+    self._svalue_callbacks   = collections.defaultdict(list)
     self.ncycles            = 0
 
     # Actually construct the simulator
@@ -114,12 +114,12 @@ class SimulationTool():
   # This function will check if the written Node instance has any
   # registered events (functions decorated with @combinational), and if
   # so, adds them to the event queue.
-  def add_event(self, value_node):
+  def add_event( self, signal_value ):
     # TODO: debug_event
-    #print "    ADDEVENT: VALUE", value_node.__repr__(), value_node.value,
-    #print value_node in self._vnode_callbacks
-    if value_node in self._vnode_callbacks:
-      funcs = self._vnode_callbacks[value_node]
+    #print "    ADDEVENT: VALUE", signal_value.__repr__(), signal_value.v,
+    #print signal_value in self._svalue_callbacks
+    if signal_value in self._svalue_callbacks:
+      funcs = self._svalue_callbacks[signal_value]
       for func in funcs:
         # TODO: remove this check?  test performance...
         if func not in self._event_queue:
@@ -131,7 +131,7 @@ class SimulationTool():
   # Construct a simulator for the provided model.
   def _construct_sim( self ):
     self._create_nets( self.model )
-    self._insert_value_nodes()
+    self._insert_signal_values()
     self._register_decorated_functions( self.model )
 
   #-----------------------------------------------------------------------
@@ -199,7 +199,7 @@ class SimulationTool():
     # Signal object, and remove connected objects from the signals set.
     # The result is a collection of nets describing structural
     # connections in the design. Each independent net will later be
-    # transformed into a single ValueNode object.
+    # transformed into a single SignalValue object.
     while signals:
       s = signals.pop()
       net = iter_dfs( s )
@@ -212,10 +212,10 @@ class SimulationTool():
   #-----------------------------------------------------------------------
   # Insert Value Nodes into the Model
   #-----------------------------------------------------------------------
-  # Transform each net into a single ValueNode object. Model attributes
+  # Transform each net into a single SignalValue object. Model attributes
   # currently referencing Signal objects will be modified to reference
-  # the ValueNode object of their associated net instead.
-  def _insert_value_nodes( self ):
+  # the SignalValue object of their associated net instead.
+  def _insert_signal_values( self ):
 
     # DEBUG
     #print
@@ -223,16 +223,16 @@ class SimulationTool():
     #for set in self._nets:
     #  print '    ', [ x.parent.name + '.' + x.name for x in set ]
 
-    # Utility functions which create ValueNode callbacks.
+    # Utility functions which create SignalValue callbacks.
 
-    def create_comb_update_cb( sim, vnode ):
+    def create_comb_update_cb( sim, svalue ):
       def notify_sim_comb_update():
-        sim.add_event( vnode )
+        sim.add_event( svalue )
       return notify_sim_comb_update
 
-    def create_seq_update_cb( sim, vnode ):
+    def create_seq_update_cb( sim, svalue ):
       def notify_sim_seq_update():
-        sim._register_queue.append( vnode )
+        sim._register_queue.append( svalue )
       return notify_sim_seq_update
 
     # Each grouping is a bits object, make all ports pointing to
@@ -240,34 +240,34 @@ class SimulationTool():
     for group in self._nets:
 
       # Get an element out of the set and use it to determine the bitwidth
-      # of the net, needed to create a properly sized ValueNode object.
+      # of the net, needed to create a properly sized SignalValue object.
       # TODO: no peek() so have to pop() then reinsert it! Another way?
       # TODO: what about BitStructs?
       temp = group.pop()
       group.add( temp )
-      vnode = Bits( temp.nbits )
+      svalue = Bits( temp.nbits )
       # TODO: should this be visible to sim?
-      vnode._shadow_value = Bits( temp.nbits )
+      svalue._shadow_value = Bits( temp.nbits )
 
-      # Add a callback to the ValueNode so that the simulator is notified
+      # Add a callback to the SignalValue so that the simulator is notified
       # whenever it's value changes.
-      # TODO: Currently all ValueNodes get both a comb and seq update
+      # TODO: Currently all SignalValues get both a comb and seq update
       #       callback.  Really should only need one or the other, and
       #       name it notify_sim().
-      vnode.notify_sim_comb_update = create_comb_update_cb( self, vnode )
-      vnode.notify_sim_seq_update  = create_seq_update_cb ( self, vnode )
+      svalue.notify_sim_comb_update = create_comb_update_cb( self, svalue )
+      svalue.notify_sim_seq_update  = create_seq_update_cb ( self, svalue )
 
       # Modify model attributes currently referencing Signal objects to
-      # reference ValueNode objects instead.
+      # reference SignalValue objects instead.
       # TODO: hacky based on IDX, fix?
       for x in group:
         if 'IDX' in x.name:
           name, idx = x.name.split('IDX')
-          x.parent.__dict__[ name ][ int( idx ) ] = vnode
+          x.parent.__dict__[ name ][ int( idx ) ] = svalue
         elif isinstance( x, Constant ):
-          vnode.write( x.value )
+          svalue.write( x.value )
         else:
-          x.parent.__dict__[ x.name ] = vnode
+          x.parent.__dict__[ x.name ] = svalue
 
   #-----------------------------------------------------------------------
   # Register Decorated Functions
@@ -293,8 +293,8 @@ class SimulationTool():
         name = name.rstrip( '.uint' )
       try:
         x = eval( name )
-        if isinstance( x, (ValueNode, list) ): return x
-        else:                                  raise NameError
+        if isinstance( x, (SignalValue, list) ): return x
+        else:                                    raise NameError
       except NameError:
         warnings.warn( "Cannot add variable '{}' to sensitivity list."
                        "".format( name ), Warning )
@@ -309,16 +309,17 @@ class SimulationTool():
         obj = name_to_object( x )
         if   isinstance( obj, list ):
           model._newsenses[ func ].extend( obj )
-        elif isinstance( obj, ValueNode ):
+        elif isinstance( obj, SignalValue ):
           model._newsenses[ func ].append( obj )
 
-    # Iterate through all @combinational decorated function names we detected,
-    # retrieve their associated function pointer, then add entries for each
-    # item in the function's sensitivity list to vnode_callbacks
-    # TODO: merge this code with above to reduce memory, # of data structures?
+    # Iterate through all @combinational decorated function names we
+    # detected, retrieve their associated function pointer, then add
+    # entries for each item in the function's sensitivity list to
+    # svalue_callbacks
+    # TODO: merge this code with above to reduce mem of data structures?
     for func_ptr, sensitivity_list in model._newsenses.items():
-      for value_node in sensitivity_list:
-        self._vnode_callbacks[ value_node ].append( func_ptr )
+      for signal_value in sensitivity_list:
+        self._svalue_callbacks[ signal_value ].append( func_ptr )
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?

@@ -1,10 +1,10 @@
 #=========================================================================
-# ValueNode
+# SignalValue
 #=========================================================================
 # Base class for value types, provides hooks used by SimulationTool.
 # Any value that can be passed as a parameter to a Signal object
-# (InPort, OutPort, Wire), needs to subclass ValueNode.
-class ValueNode( object ):
+# (InPort, OutPort, Wire), needs to subclass SignalValue.
+class SignalValue( object ):
 
   #-----------------------------------------------------------------------
   # Write v property
@@ -69,7 +69,7 @@ class ValueNode( object ):
   # Abstract method, must be implemented by subclasses!
   # TODO: use abc module to create abstract method?
   def write( self, value ):
-    raise NotImplementedError( "Subclasses of ValueNode must "
+    raise NotImplementedError( "Subclasses of SignalValue must "
                                "implement the write() method!" )
 
   #-----------------------------------------------------------------------
@@ -78,7 +78,7 @@ class ValueNode( object ):
   # Abstract method, must be implemented by subclasses!
   # TODO: use abc module to create abstract method?
   def uint( self, value ):
-    raise NotImplementedError( "Subclasses of ValueNode must "
+    raise NotImplementedError( "Subclasses of SignalValue must "
                                "implement the uint() method!" )
 
   #-----------------------------------------------------------------------
@@ -87,7 +87,7 @@ class ValueNode( object ):
   # Abstract method, must be implemented by subclasses!
   # TODO: use abc module to create abstract method?
   def int( self, value ):
-    raise NotImplementedError( "Subclasses of ValueNode must "
+    raise NotImplementedError( "Subclasses of SignalValue must "
                                "implement the int() method!" )
 
   #-----------------------------------------------------------------------

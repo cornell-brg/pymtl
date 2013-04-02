@@ -3,14 +3,14 @@
 #=========================================================================
 # Module containing the Bits class.
 
-from ValueNode import ValueNode
+from SignalValue import SignalValue
 from helpers   import get_nbits
 
 #=========================================================================
 # Bits
 #=========================================================================
 # Class emulating limited precision values of a set bitwidth.
-class Bits( ValueNode ):
+class Bits( SignalValue ):
 
   def __init__(self, nbits, value = 0, trunc = False ):
 
@@ -48,7 +48,7 @@ class Bits( ValueNode ):
   #-----------------------------------------------------------------------
   # write
   #-----------------------------------------------------------------------
-  # Implementing abstract write method defined by ValueNode.
+  # Implementing abstract write method defined by SignalValue.
   def write( self, value ):
     # TODO... performance impact of this? A way to get around this?
     if isinstance( value, Bits ):
