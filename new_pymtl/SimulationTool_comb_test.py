@@ -1,5 +1,6 @@
 from Model          import *
 from SimulationTool import *
+from helpers        import *
 
 #-------------------------------------------------------------------------
 # Setup Sim
@@ -444,13 +445,12 @@ def test_SelfPassThrough():
 #-------------------------------------------------------------------------
 # Mux
 #-------------------------------------------------------------------------
-from math import ceil, log
 
 class Mux( Model ):
   def __init__( s, nbits, nports ):
     s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
     s.out = OutPort( nbits )
-    s.sel = InPort ( int( ceil( log( nports, 2 ) ) ))
+    s.sel = InPort ( get_sel_nbits( nbits ) )
   def elaborate_logic( s ):
     @s.combinational
     def logic():

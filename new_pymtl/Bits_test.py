@@ -409,24 +409,6 @@ def test_construct_from_bits():
   d = Bits( 4, -1 )
   assert Bits( 8, d )              == 0x0F
 
-def test_zext():
-
-  assert Bits( 4,  2 ).zext( 8 ) == Bits( 8, 0x02 )
-  assert Bits( 4,  4 ).zext( 8 ) == Bits( 8, 0x04 )
-  assert Bits( 4, 15 ).zext( 8 ) == Bits( 8, 0x0f )
-
-  assert Bits( 4, -2  ).zext( 8 ) == Bits( 8, 0x0e )
-  assert Bits( 4, -4  ).zext( 8 ) == Bits( 8, 0x0c )
-
-def test_sext():
-
-  assert Bits( 4,  2 ).sext(8) == Bits( 8, 0x02 )
-  assert Bits( 4,  4 ).sext(8) == Bits( 8, 0x04 )
-  assert Bits( 4, 15 ).sext(8) == Bits( 8, 0xff )
-
-  assert Bits( 4, -2  ).sext(8) == Bits( 8, 0xfe )
-  assert Bits( 4, -4  ).sext(8) == Bits( 8, 0xfc )
-
 def test_str():
 
   assert Bits(  4,        0x2 ).__str__() == "2"

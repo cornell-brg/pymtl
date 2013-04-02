@@ -324,10 +324,10 @@ class Bits( ValueNode ):
   # Extension
   #------------------------------------------------------------------------
 
-  def zext( self, new_width ):
+  def _zext( self, new_width ):
     return Bits( new_width, self._uint )
 
-  def sext( self, new_width ):
+  def _sext( self, new_width ):
     return Bits( new_width, self.int() )
 
 #--------------------------------------------------------------------------
