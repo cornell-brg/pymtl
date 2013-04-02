@@ -1,10 +1,10 @@
 #=========================================================================
-# Bits
+# Bits.py
 #=========================================================================
-# TODO: add text here!
+# Module containing the Bits class.
 
-import math
-from ValueNode import *
+from ValueNode import ValueNode
+from helpers   import get_nbits
 
 #=========================================================================
 # Bits
@@ -17,7 +17,7 @@ class Bits( ValueNode ):
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0
     if not trunc:
-      assert nbits >= _num_bits(value)
+      assert nbits >= get_nbits( value )
 
     # Set the nbits and bitmask (_mask) attributes
     self.nbits = nbits
@@ -53,14 +53,14 @@ class Bits( ValueNode ):
     # TODO... performance impact of this? A way to get around this?
     if isinstance( value, Bits ):
       value = value._uint
-    assert self.nbits >= _num_bits(value)
+    assert self.nbits >= get_nbits( value )
     self._uint = (value & self._mask)
 
   #-----------------------------------------------------------------------
   # bit_length
   #-----------------------------------------------------------------------
   # Implement bit_length method provided by int built-in. Simplifies
-  # the implementation of _num_bits()
+  # the implementation of get_nbits()
   def bit_length( self ):
     return self._uint.bit_length()
 
@@ -130,7 +130,7 @@ class Bits( ValueNode ):
       stop = addr.stop
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
-        assert self.nbits >= _num_bits(value)
+        assert self.nbits >= get_nbits( value )
         self._uint = value
         return
       elif start is None:
@@ -142,7 +142,7 @@ class Bits( ValueNode ):
       nbits = stop - start
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
-      assert nbits >= _num_bits( value )
+      assert nbits >= get_nbits( value )
       # Clear the bits we want to set
       ones  = (1 << nbits) - 1
       mask = ~(ones << start)
@@ -172,13 +172,13 @@ class Bits( ValueNode ):
 
   def __add__(self, other):
     if not isinstance(other, Bits):
-      other = Bits( _num_bits(other), other )
+      other = Bits( get_nbits( other ), other )
     return Bits( max( self.nbits, other.nbits ),
                  self._uint + other._uint, trunc=True )
 
   def __sub__(self, other):
     if not isinstance(other, Bits):
-      other = Bits( _num_bits(other), other )
+      other = Bits( get_nbits( other ), other )
     return Bits( max( self.nbits, other.nbits ),
                  self._uint - other._uint, trunc=True )
 
@@ -196,7 +196,7 @@ class Bits( ValueNode ):
     return self.__add__( other )
 
   def __rsub__(self, other):
-    return Bits( _num_bits( other ), other ) - self
+    return Bits( get_nbits( other ), other ) - self
 
   def __rmul__(self, other):
     return self.__mul__( other )
@@ -244,21 +244,21 @@ class Bits( ValueNode ):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.nbits, _num_bits(other) ),
+    return Bits( max( self.nbits, get_nbits( other ) ),
                  self._uint & other)
 
   def __xor__(self, other):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.nbits, _num_bits(other) ),
+    return Bits( max( self.nbits, get_nbits( other ) ),
                  self._uint ^ other)
 
   def __or__(self, other):
     if isinstance(other, Bits):
       other = other._uint
     assert other >= 0
-    return Bits( max( self.nbits, _num_bits(other) ),
+    return Bits( max( self.nbits, get_nbits( other ) ),
                  self._uint | other)
 
   def __rand__(self, other):
@@ -353,8 +353,3 @@ def concat( bits_list ):
 
   return concat_bits
 
-def _num_bits( x ):
-  if x > 0:
-    return x.bit_length()
-  else:
-    return x.bit_length() + 1

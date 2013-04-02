@@ -1,32 +1,12 @@
-from Bits import *
-from Bits import _num_bits
+#=========================================================================
+# Bits_test.py
+#=========================================================================
+# Tests for the Bits class.
+
 import pytest
 
-def test_num_bits():
-
-  assert _num_bits(0) == 1
-  assert _num_bits(1) == 1
-  assert _num_bits(2) == 2
-  assert _num_bits(3) == 2
-  assert _num_bits(4) == 3
-  assert _num_bits(5) == 3
-  assert _num_bits(6) == 3
-  assert _num_bits(7) == 3
-  assert _num_bits(8) == 4
-
-  assert _num_bits( 0x000f ) == 4
-  assert _num_bits( 0x00ff ) == 8
-  assert _num_bits( 0x0fff ) == 12
-  assert _num_bits( 0xffff ) == 16
-
-  assert _num_bits(-1) == 2
-  assert _num_bits(-2) == 3
-  assert _num_bits(-3) == 3
-  assert _num_bits(-4) == 4
-  assert _num_bits(-5) == 4
-  assert _num_bits(-6) == 4
-  assert _num_bits(-7) == 4
-  assert _num_bits(-8) == 5
+from Bits import Bits
+from Bits import concat
 
 def test_return_type():
 
