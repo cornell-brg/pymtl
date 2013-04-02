@@ -25,8 +25,8 @@ def get_nbits( N ):
 # Return the number of bits needed to represent a control signal which can
 # select between 'N' items.
 def get_sel_nbits( N ):
-  assert N != 0
-  return int( math.ceil( math.log( N ) ) )
+  assert N > 0
+  return int( math.ceil( math.log( N, 2 ) ) )
 
 #-------------------------------------------------------------------------
 # zext

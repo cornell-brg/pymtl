@@ -2,6 +2,8 @@
 # helpers_test.py
 #=========================================================================
 
+import pytest
+
 from helpers import *
 from Bits    import Bits
 
@@ -30,6 +32,36 @@ def test_get_nbits():
   assert get_nbits( -6 ) == 4
   assert get_nbits( -7 ) == 4
   assert get_nbits( -8 ) == 5
+
+
+def test_get_sel_nbits():
+
+  assert get_sel_nbits( 1 ) == 0  # TODO: return 1 or 0 here?
+  assert get_sel_nbits( 2 ) == 1
+  assert get_sel_nbits( 3 ) == 2
+  assert get_sel_nbits( 4 ) == 2
+  assert get_sel_nbits( 5 ) == 3
+  assert get_sel_nbits( 6 ) == 3
+  assert get_sel_nbits( 7 ) == 3
+  assert get_sel_nbits( 8 ) == 3
+  assert get_sel_nbits( 9 ) == 4
+
+  assert get_sel_nbits(  16 ) == 4
+  assert get_sel_nbits(  32 ) == 5
+  assert get_sel_nbits(  64 ) == 6
+  assert get_sel_nbits( 128 ) == 7
+  assert get_sel_nbits( 256 ) == 8
+
+  assert get_nbits( 0x000f ) == 4
+  assert get_nbits( 0x00ff ) == 8
+  assert get_nbits( 0x0fff ) == 12
+  assert get_nbits( 0xffff ) == 16
+
+  with pytest.raises( AssertionError ):
+    assert get_sel_nbits( 0 ) == 1
+
+  with pytest.raises( AssertionError ):
+    assert get_sel_nbits( -1 ) == 2
 
 
 def test_zext():
