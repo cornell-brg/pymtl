@@ -1,7 +1,7 @@
 #=========================================================================
-# Connection Graph Test Suite
+# connection_graph_test.py
 #=========================================================================
-# TODO: Add comments!
+# Tests verifying the valid construction of connection graphs.
 
 from Model            import Model, connect
 from signals          import InPort, OutPort, Wire

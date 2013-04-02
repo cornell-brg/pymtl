@@ -9,9 +9,9 @@ from SignalValue import SignalValue
 #       instead of 'from helpers import' ensures pydoc still works
 import helpers
 
-#=========================================================================
+#-------------------------------------------------------------------------
 # Bits
-#=========================================================================
+#-------------------------------------------------------------------------
 # Class emulating limited precision values of a set bitwidth.
 class Bits( SignalValue ):
 
@@ -326,6 +326,7 @@ class Bits( SignalValue ):
   #------------------------------------------------------------------------
   # Extension
   #------------------------------------------------------------------------
+  # TODO: make abstract method in SignalValue, or implement differently?
 
   def _zext( self, new_width ):
     return Bits( new_width, self._uint )

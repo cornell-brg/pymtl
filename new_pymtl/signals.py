@@ -1,7 +1,7 @@
 #=========================================================================
-# signals
+# signals.py
 #=========================================================================
-# Collection of classes for defining interfaces and connectivity of PyMTL
+# Collection of classes for defining interfaces and connectivity in PyMTL
 # hardware models.
 
 from connection_graph import ConnectionSlice, ConnectionEdge
@@ -11,7 +11,6 @@ from connection_graph import ConnectionSlice, ConnectionEdge
 #-------------------------------------------------------------------------
 # Hidden base class implementing any Signal (port, wire, or constant) that
 # can carry a value.
-# TODO: should we name this Channel instead?
 class Signal( object ):
 
   #-----------------------------------------------------------------------

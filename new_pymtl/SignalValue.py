@@ -1,6 +1,11 @@
 #=========================================================================
-# SignalValue
+# SignalValue.py
 #=========================================================================
+# Module containing the SignalValue class.
+
+#-------------------------------------------------------------------------
+# SignalValue
+#-------------------------------------------------------------------------
 # Base class for value types, provides hooks used by SimulationTool.
 # Any value that can be passed as a parameter to a Signal object
 # (InPort, OutPort, Wire), needs to subclass SignalValue.

@@ -1,3 +1,8 @@
+#=========================================================================
+# SimulationTool_struct_test.py
+#=========================================================================
+# Structural composition tests for the SimulationTool class.
+
 from Model          import *
 from SimulationTool import *
 

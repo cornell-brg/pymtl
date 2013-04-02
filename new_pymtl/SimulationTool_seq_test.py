@@ -1,3 +1,8 @@
+#=========================================================================
+# SimulationTool_seq_test.py
+#=========================================================================
+# Sequential logic tests for the SimulationTool class.
+
 from Model          import *
 from SimulationTool import *
 

@@ -1,5 +1,5 @@
 #=========================================================================
-# Model
+# Model.py
 #=========================================================================
 # Base modeling components for constructing hardware description models.
 #
@@ -10,18 +10,11 @@
 
 from connection_graph import ConnectionSlice, Constant
 from signals          import Signal, InPort, OutPort, Wire
+#from physical        import PhysicalDimensions
 
-#from physical import PhysicalDimensions
 #import PortBundle
-
 import collections
 import inspect
-
-#-------------------------------------------------------------------------
-# Logic Syntax Exception
-#-------------------------------------------------------------------------
-class LogicSyntaxError(Exception):
-  pass
 
 #-------------------------------------------------------------------------
 # Model
@@ -39,11 +32,11 @@ class Model(object):
 
 
   #-----------------------------------------------------------------------
-  # Elaborate
+  # elaborate
   #-----------------------------------------------------------------------
   # Elaborate a MTL model (construct hierarchy, name modules, etc.).
   #
-  # The elaborate() function must be called on an instantiated toplevel 
+  # The elaborate() function must be called on an instantiated toplevel
   # module before it is passed to any MTL tools!
   def elaborate(self):
     self.model_classes = set()
@@ -51,8 +44,9 @@ class Model(object):
     self.recurse_connections()
 
   #-----------------------------------------------------------------------
-  # Recurse Elaborate
+  # recurse_elaborate
   #-----------------------------------------------------------------------
+  # Utility method to perform elaboration on a Model and it's submodules.
   def recurse_elaborate(self, target, iname):
     self.model_classes.add( target )
     # Set Public Attributes
@@ -90,13 +84,9 @@ class Model(object):
     for name, obj in target.__dict__.items():
       if not name.startswith('_'):
         self.check_type(target, name, obj)
-    # Infer the sensitivity list for combinational blocks
-    #src = inspect.getsource( target.__class__ )
-    #tree = ast.parse( src )
-    #SensitivityListVisitor( target ).visit(tree)
 
   #-----------------------------------------------------------------------
-  # Check Type
+  # check_type
   #-----------------------------------------------------------------------
   # Utility method to specialize elaboration actions based on object type.
   def check_type(self, target, name, obj):
@@ -147,8 +137,9 @@ class Model(object):
         self.check_type(target, item_name, item)
 
   #-----------------------------------------------------------------------
-  # Generate Class Name
+  # gen_class_name
   #-----------------------------------------------------------------------
+  # Generate a unique class name.
   def gen_class_name(self, model):
     name = model.__class__.__name__
     try:
@@ -159,8 +150,9 @@ class Model(object):
       return name
 
   #-----------------------------------------------------------------------
-  # Recurse Connections
+  # recurse_connections
   #-----------------------------------------------------------------------
+  # Set the directionality on all connections in the design of a Model.
   def recurse_connections(self):
 
     for port in self._ports:
@@ -184,8 +176,9 @@ class Model(object):
       submodule.recurse_connections()
 
   #-----------------------------------------------------------------------
-  # Set Edge Direction
+  # set_edge_direction
   #-----------------------------------------------------------------------
+  # Set the edge direction of a single ConnectionEdge.
   def set_edge_direction(self, edge):
     a = edge.src_node
     b = edge.dest_node
@@ -235,7 +228,7 @@ class Model(object):
       edge.swap_direction()
 
   #-----------------------------------------------------------------------
-  # Set Attr
+  # __setattr__
   #-----------------------------------------------------------------------
 
   #def __setattr__( self, name, value ):
@@ -287,28 +280,32 @@ class Model(object):
     return func
 
   #-----------------------------------------------------------------------
-  # Register Combinational
+  # register_combinational
   #-----------------------------------------------------------------------
+  # Explicitly register functions callbacks to the signals provided
+  # in sensitivity_list.
   # TODO: Add this back in later?
   #def register_combinational( self, func_name, sensitivity_list ):
   #  self._newsenses = collections.defaultdict( list )
   #  self._newsenses[ func_name ] = sensitivity_list
 
   #-----------------------------------------------------------------------
-  # Dump Physical Design
+  # dump_physical_design
   #-----------------------------------------------------------------------
+  # Print out the physical design.
   # TODO: Add this back in later?
   #def dump_physical_design(self, prefix=''):
   #  pass
 
   #-----------------------------------------------------------------------
-  # Is Elaborated
+  # is_elaborated
   #-----------------------------------------------------------------------
+  # Returns 'True' is elaborate() has been called on the Model.
   def is_elaborated(self):
     return hasattr(self, 'class_name')
 
   #-----------------------------------------------------------------------
-  # Line Trace
+  # line_trace
   #-----------------------------------------------------------------------
   # Having a default line trace makes it easier to just always enable
   # line tracing in the test harness. -cbatten

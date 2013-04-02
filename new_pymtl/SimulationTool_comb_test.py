@@ -1,3 +1,8 @@
+#=========================================================================
+# SimulationTool_comb_test.py
+#=========================================================================
+# Combinational logic tests for the SimulationTool class.
+
 from Model          import *
 from SimulationTool import *
 from helpers        import *

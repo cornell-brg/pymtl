@@ -1,5 +1,5 @@
 #=========================================================================
-# Simulation Tool
+# SimulationTool.py
 #=========================================================================
 # Tool for simulating MTL models.
 #
@@ -18,9 +18,9 @@ import ast_visitor
 from SignalValue        import SignalValue
 import warnings
 
-#=========================================================================
+#-------------------------------------------------------------------------
 # SimulationTool
-#=========================================================================
+#-------------------------------------------------------------------------
 # User visible class implementing a tool for simulating MTL models.
 #
 # This class takes a MTL model instance and creates a simulator for execution
