@@ -57,37 +57,6 @@ def test_uint():
   assert Bits( 4, -2 ).uint() == 14
   assert Bits( 4, -4 ).uint() == 12
 
-def test_simple_overflow():
-
-  nbits = 2
-  x = Bits( nbits )
-  tests = [
-      (0, 0),
-      (1, 1),
-      (2, 2),
-      (3, 3),
-     # We can't do these because they are too big! -cbatten
-     # (4, 0),
-     # (5, 1),
-     # (6, 2),
-     # (7, 3),
-      ]
-
-  assert x.nbits == nbits
-  for wr, rd in tests:
-    x.write( wr )
-    assert x.uint() == rd
-
-# Not allowed to write a value that is too big! -cbatten
-#
-# def test_many_overflow():
-#   for i in range(1,10):
-#     x = Bits(i)
-#     overflow_val = 2**i
-#     for j in range(50):
-#       x.write( j )
-#       assert x.uint() ==  j % overflow_val
-
 def test_neg_assign():
 
   x = Bits( 4, -1 )
@@ -104,23 +73,6 @@ def test_get_bit():
   assert x[2] == 1
   assert x[1] == 0
   assert x[0] == 0
-  # TODO: support negative indexes, or catch?
-  #assert x[-1] == 1
-  # TODO: check that out of bounds is caught
-  #assert x[8] == 1
-
-def test_get_slice():
-
-  x = Bits( 4, 0b1100 )
-  assert x[:] == 0b1100
-  assert x[2:4] == 0b11
-  assert x[0:1] == 0b0
-  assert x[1:3] == 0b10
-  # TODO: check out of bounds is caught
-  #assert x[1:5] == 0b10
-  # check open ended ranges
-  assert x[1:] == 0b110
-  assert x[:3] == 0b100
 
 def test_set_bit():
 
@@ -131,12 +83,33 @@ def test_set_bit():
   assert x.uint() == 0b0100
   x[1] = 1
   assert x.uint() == 0b0110
-  # TODO: ensure check
-  #x[0] = 2
-  # TODO: support negative indexes, or catch?
-  #assert x[-1] == 1
-  # TODO: check that out of bounds is caught
-  #assert x[8] == 1
+
+def test_bit_bounds_checking():
+
+  x = Bits( 4, 0b1100 )
+  with pytest.raises( AssertionError ):
+    assert x[-1] == 1
+  with pytest.raises( AssertionError ):
+    assert x[8] == 1
+  with pytest.raises( AssertionError ):
+    x[-1] = 1
+  with pytest.raises( AssertionError ):
+    x[4] = 1
+  with pytest.raises( AssertionError ):
+    x[0] = 2
+  with pytest.raises( AssertionError ):
+    x[3] = -1
+
+def test_get_slice():
+
+  x = Bits( 4, 0b1100 )
+  assert x[:] == 0b1100
+  assert x[2:4] == 0b11
+  assert x[0:1] == 0b0
+  assert x[1:3] == 0b10
+  # check open ended ranges
+  assert x[1:] == 0b110
+  assert x[:3] == 0b100
 
 def test_set_slice():
 
@@ -149,13 +122,27 @@ def test_set_slice():
   assert x.uint() == 0b1111
   x[1:3] = 0b10
   assert x.uint() == 0b1101
-  # TODO: check out of bounds is caught
-  #assert x[1:5] == 0b10
   # check open ended ranges
   x[1:] = 0b001
   assert x.uint() == 0b0011
   x[:3] = 0b110
   assert x.uint() == 0b0110
+
+def test_slice_bounds_checking():
+
+  x = Bits( 4, 0b1100 )
+  with pytest.raises( AssertionError ):
+    assert x[1:5]  == 0b10
+  with pytest.raises( AssertionError ):
+    assert x[-1:2] == 0b10
+  with pytest.raises( AssertionError ):
+    assert x[2:1]  == 0b10
+  with pytest.raises( AssertionError ):
+    x[1:5]  = 0b10
+  with pytest.raises( AssertionError ):
+    x[-1:2] = 0b10
+  with pytest.raises( AssertionError ):
+    x[2:1]  = 0b10
 
 def test_eq():
 
@@ -177,8 +164,8 @@ def test_eq():
   assert x == y
   y = Bits( 8 , 0b1010 )
   assert x.uint() == y.uint()
-  # TODO: how should equality between Bits objects work?
-  #       Same object? Same value? Same value and width?
+  # TODO: How should equality between Bits objects work?
+  #       Just same value or same value and width?
   #assert x == y
   # Check the negatives
   x = Bits( 4, -1 )

@@ -112,13 +112,12 @@ class Bits( ValueNode ):
       elif stop is None:
         stop = self.nbits
       # Make sure our ranges are sane
-      assert start < stop
-      assert stop <= self.nbits
-      width = stop - start
-      mask  = (1 << width) - 1
-      return Bits( width, (self._uint & (mask << start)) >> start )
+      assert 0 <= start < stop <= self.nbits
+      nbits = stop - start
+      mask  = (1 << nbits) - 1
+      return Bits( nbits, (self._uint & (mask << start)) >> start )
     else:
-      assert addr < self.nbits
+      assert 0 <= addr < self.nbits
       return Bits( 1, (self._uint & (1 << addr)) >> addr )
 
   def __setitem__(self, addr, value):
@@ -139,21 +138,20 @@ class Bits( ValueNode ):
       elif stop is None:
         stop = self.nbits
       # Make sure our ranges are sane
-      assert start < stop
-      assert stop <= self.nbits
-      width = stop - start
+      assert 0 <= start < stop <= self.nbits
+      nbits = stop - start
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
-      assert width >= _num_bits(value)
+      assert nbits >= _num_bits( value )
       # Clear the bits we want to set
-      ones  = (1 << width) - 1
+      ones  = (1 << nbits) - 1
       mask = ~(ones << start)
       cleared_val = self._uint & mask
       # Set the bits, anding with ones to ensure negative value assign
       # works that way you would expect. TODO: performance impact?
       self._uint = cleared_val | ((value & ones) << start)
     else:
-      assert addr < self.nbits
+      assert 0 <= addr < self.nbits
       assert 0 <= value <= 1
       # Clear the bits we want to set
       mask = ~(1 << addr)
