@@ -3,7 +3,7 @@
 #=========================================================================
 # Tests verifying the valid construction of connection graphs.
 
-from Model            import Model, connect
+from Model            import Model
 from signals          import InPort, OutPort, Wire
 from connection_graph import ConnectionEdge
 
@@ -48,7 +48,7 @@ class Port_Port( Model ):
   def __init__( s ):
     s.in_ = InPort ( 8 )
     s.out = OutPort( 8 )
-    connect( s.in_, s.out )
+    s.connect( s.in_, s.out )
 
 def test_Port_Port():
   m = inst_elab_model( Port_Port )
@@ -66,8 +66,8 @@ class Port_RdSl_Port( Model ):
     s.in_ = InPort ( 8 )
     s.out0 = OutPort( 4 )
     s.out1 = OutPort( 4 )
-    connect( s.in_[0:4], s.out0 )
-    connect( s.in_[4:8], s.out1 )
+    s.connect( s.in_[0:4], s.out0 )
+    s.connect( s.in_[4:8], s.out1 )
 
 def test_Port_RdSl_Port():
   m = inst_elab_model( Port_RdSl_Port )
@@ -88,9 +88,9 @@ class Port_RdSl_Overlap_Port( Model ):
     s.out0 = OutPort( 4 )
     s.out1 = OutPort( 6 )
     s.out2 = OutPort( 8 )
-    connect( s.in_[0:4], s.out0 )
-    connect( s.in_[2:8], s.out1 )
-    connect( s.in_,      s.out2 )
+    s.connect( s.in_[0:4], s.out0 )
+    s.connect( s.in_[2:8], s.out1 )
+    s.connect( s.in_,      s.out2 )
 
 def test_Port_RdSl_Overlap_Port():
   m = inst_elab_model( Port_RdSl_Overlap_Port )
@@ -111,8 +111,8 @@ class Port_WrSl_Port( Model ):
     s.in0 = InPort ( 4 )
     s.in1 = InPort ( 4 )
     s.out = OutPort( 8 )
-    connect( s.in0, s.out[0:4] )
-    connect( s.in1, s.out[4:8] )
+    s.connect( s.in0, s.out[0:4] )
+    s.connect( s.in1, s.out[4:8] )
 
 def test_Port_WrSl_Port():
   m = inst_elab_model( Port_WrSl_Port )
@@ -135,9 +135,9 @@ class Port_WrSl_Overlap_Port( Model ):
     s.out = OutPort( 8 )
     # TODO: this should throw an error!!! Shouldn't be able to overlap
     #       writes to an OutPort...
-    connect( s.in0, s.out[0:4] )
-    connect( s.in1, s.out[2:8] )
-    connect( s.in2, s.out      )
+    s.connect( s.in0, s.out[0:4] )
+    s.connect( s.in1, s.out[2:8] )
+    s.connect( s.in2, s.out      )
 
 def test_Port_WrSl_Overlap_Port():
   m = inst_elab_model( Port_WrSl_Overlap_Port )
@@ -162,8 +162,8 @@ class SubMod( Model ):
 
     s.mod  = Port_Port()
 
-    connect( s.in_, s.mod.in_ )
-    connect( s.out, s.mod.out )
+    s.connect( s.in_, s.mod.in_ )
+    s.connect( s.out, s.mod.out )
 
 def test_SubMod():
   m = inst_elab_model( SubMod )
@@ -200,15 +200,15 @@ class SubMod_SL( Model ):
     s.mod1  = Port_Port()
     s.mod2  = Port_Port()
 
-    connect( s.in1,       s.mod1.in_[0:4] )
-    connect( s.in2,       s.mod1.in_[4:8] )
-    connect( s.in3[0:8],  s.mod2.in_      )
+    s.connect( s.in1,       s.mod1.in_[0:4] )
+    s.connect( s.in2,       s.mod1.in_[4:8] )
+    s.connect( s.in3[0:8],  s.mod2.in_      )
 
-    connect( s.out1,      s.mod1.out[0:4] )
-    connect( s.out2,      s.mod1.out[4:8] )
-    connect( s.out3[0:8], s.mod2.out      )
+    s.connect( s.out1,      s.mod1.out[0:4] )
+    s.connect( s.out2,      s.mod1.out[4:8] )
+    s.connect( s.out3[0:8], s.mod2.out      )
 
-    connect( s.in3[8:16], s.out3[8:16]    )
+    s.connect( s.in3[8:16], s.out3[8:16]    )
 
 def test_SubMod_SL():
   m = inst_elab_model( SubMod_SL )

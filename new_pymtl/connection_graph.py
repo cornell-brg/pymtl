@@ -46,6 +46,7 @@ class ConnectionSlice(object):
     # TODO: figure out a way to get rid of this special case
     if not isinstance( target, Constant ):
       target.parent_port.connections += [ connection_edge ]
+    return connection_edge
 
   @property
   def connections(self):

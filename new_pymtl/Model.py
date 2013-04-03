@@ -74,7 +74,8 @@ class Model(object):
     if not hasattr( target, '_newsenses' ):
       target._newsenses   = collections.defaultdict( list )
     target._localparams = set()
-    target._connections = set()
+    if not hasattr( target, '_connections' ):
+      target._connections = set()
     target._tempwires   = {}
     target._temparrays  = []
     target._tempregs    = []
@@ -116,8 +117,8 @@ class Model(object):
     elif isinstance(obj, Model):
       self.recurse_elaborate( obj, name )
       obj.parent = target
-      connect( obj.clk, obj.parent.clk )
-      connect( obj.reset, obj.parent.reset )
+      obj.parent.connect( obj.clk,   obj.parent.clk   )
+      obj.parent.connect( obj.reset, obj.parent.reset )
       target._submodules += [obj]
     # We've found a constant assigned to a global variable.
     # TODO: add support for floats?
@@ -155,20 +156,25 @@ class Model(object):
   # Set the directionality on all connections in the design of a Model.
   def recurse_connections(self):
 
-    for port in self._ports:
+    #for port in self._ports:
 
-      for c in port.connections:
-        # Set the directionality of this connection
-        self.set_edge_direction( c )
-        # Classify as either an internal or external connection
-        if c.is_internal( port ):
-          port.int_connections += [c]
-          self._connections.add( c )
-        else:
-          port.ext_connections += [c]
-          self.parent._connections.add( c )
-        # TODO: make connect a self.connect() method instead, add to
-        #       self._connections then instead?
+    #  for c in port.connections:
+    #    # Set the directionality of this connection
+    #    self.set_edge_direction( c )
+    #    # Classify as either an internal or external connection
+    #    if c.is_internal( port ):
+    #      port.int_connections += [c]
+    #      self._connections.add( c )
+    #    else:
+    #      port.ext_connections += [c]
+    #      self.parent._connections.add( c )
+    #    # TODO: make connect a self.connect() method instead, add to
+    #    #       self._connections then instead?
+
+    # Set direction of all connections
+
+    for c in self._connections:
+      self.set_edge_direction( c )
 
     # Recursively enter submodules
 
@@ -280,6 +286,35 @@ class Model(object):
     return func
 
   #-----------------------------------------------------------------------
+  # connect
+  #-----------------------------------------------------------------------
+  def connect( self, port_A, port_B ):
+
+    # Connect the two signals
+    if   isinstance(port_B, int):
+      c = port_A.connect( Constant(port_B, port_A.width) )
+    elif isinstance(port_A, ConnectionSlice):
+      c = port_B.connect( port_A )
+    else:
+      c = port_A.connect( port_B )
+
+    # Add the connection to the Model's connection list
+    if not hasattr( self, '_connections' ):
+      self._connections = set()
+    if not c: raise Exception( "INVALid COnN")
+    self._connections.add( c )
+
+  #def connect_dict( connections ):
+  # for left_port,right_port in connections.iteritems():
+  #   connect( left_port, right_port )
+
+  #def connect( left, right=None ):
+  # if type(left) == dict:
+  #   connect_dict( left )
+  # else:
+  #   connect_ports( left, right )
+
+  #-----------------------------------------------------------------------
   # register_combinational
   #-----------------------------------------------------------------------
   # Explicitly register functions callbacks to the signals provided
@@ -311,28 +346,6 @@ class Model(object):
   # line tracing in the test harness. -cbatten
   def line_trace(self):
     return ""
-
-#------------------------------------------------------------------------
-# Connect Functions
-#------------------------------------------------------------------------
-
-def connect_ports( port_A, port_B):
-  if   isinstance(port_B, int):
-    port_A.connect( Constant(port_B, port_A.width) )
-  elif isinstance(port_A, ConnectionSlice):
-    port_B.connect( port_A )
-  else:
-    port_A.connect( port_B )
-
-def connect_dict( connections ):
- for left_port,right_port in connections.iteritems():
-   connect( left_port, right_port )
-
-def connect( left, right=None ):
- if type(left) == dict:
-   connect_dict( left )
- else:
-   connect_ports( left, right )
 
 #------------------------------------------------------------------------
 # Decorators

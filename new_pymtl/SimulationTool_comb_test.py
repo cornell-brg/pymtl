@@ -147,14 +147,14 @@ class RippleCarryAdderNoSlice( Model ):
   def elaborate_logic( s ):
     # Submodules
     s.adders = [ FullAdder() for i in xrange( s.nbits ) ]
-    # Connections
+    # s.connections
     for i in xrange( s.nbits ):
-      connect( s.adders[i].in0, s.in0[i] )
-      connect( s.adders[i].in1, s.in1[i] )
-      connect( s.adders[i].sum, s.sum[i] )
+      s.connect( s.adders[i].in0, s.in0[i] )
+      s.connect( s.adders[i].in1, s.in1[i] )
+      s.connect( s.adders[i].sum, s.sum[i] )
     for i in xrange( s.nbits - 1 ):
-      connect( s.adders[ i + 1 ].cin, s.adders[ i ].cout )
-    connect( s.adders[0].cin, 0 )
+      s.connect( s.adders[ i + 1 ].cin, s.adders[ i ].cout )
+    s.connect( s.adders[0].cin, 0 )
 
 def test_RippleCarryAdderNoSlice():
 
@@ -183,14 +183,14 @@ def test_RippleCarryAdderNoSlice():
 #    s.sum = OutPort( nbits )
 #    # Submodules
 #    s.adders = [ FullAdder() for i in xrange( nbits ) ]
-#    # Connections
+#    # s.connections
 #    for i in xrange( nbits ):
-#      connect( s.adders[i].in0, s.in0[i] )
-#      connect( s.adders[i].in1, s.in1[i] )
-#      connect( s.adders[i].sum, s.sum[i] )
+#      s.connect( s.adders[i].in0, s.in0[i] )
+#      s.connect( s.adders[i].in1, s.in1[i] )
+#      s.connect( s.adders[i].sum, s.sum[i] )
 #    for i in xrange( nbits - 1 ):
-#      connect( s.adders[i+1].cin, s.adders[i].cout )
-#    connect( s.adders[0].cin, 0 )
+#      s.connect( s.adders[i+1].cin, s.adders[i].cout )
+#    s.connect( s.adders[0].cin, 0 )
 #
 #def test_RippleCarryAdderNoSlice():
 #  def set( signal, value ):

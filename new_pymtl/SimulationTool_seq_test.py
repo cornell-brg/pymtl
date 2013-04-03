@@ -83,9 +83,9 @@ class RegisterWrapped( Model ):
     # TODO: cannot use keyword "reg" for variable names when converting
     #       To! Check for this?
     s.reg0 = Register( s.nbits )
-    # Connections
-    connect( s.in_, s.reg0.in_ )
-    connect( s.out, s.reg0.out )
+    # s.connections
+    s.connect( s.in_, s.reg0.in_ )
+    s.connect( s.out, s.reg0.out )
 
 def test_RegisterWrapped():
   register_tester( RegisterWrapped )
@@ -104,11 +104,11 @@ class RegisterWrappedChain( Model ):
     s.reg0 = Register( s.nbits )
     s.reg1 = Register( s.nbits )
     s.reg2 = Register( s.nbits )
-    # Connections
-    connect( s.in_     , s.reg0.in_ )
-    connect( s.reg0.out, s.reg1.in_ )
-    connect( s.reg1.out, s.reg2.in_ )
-    connect( s.reg2.out, s.out      )
+    # s.connections
+    s.connect( s.in_     , s.reg0.in_ )
+    s.connect( s.reg0.out, s.reg1.in_ )
+    s.connect( s.reg1.out, s.reg2.in_ )
+    s.connect( s.reg2.out, s.out      )
 
 def test_RegisterWrappedChain():
   model = RegisterWrappedChain( 16 )
@@ -199,11 +199,11 @@ class RegisterSplitter( Model ):
     # Submodules
     s.reg0  = Register( s.nbits )
     s.split = ComplexSplitter( s.nbits, s.groupings )
-    # Connections
-    connect( s.in_     , s.reg0.in_  )
-    connect( s.reg0.out, s.split.in_ )
+    # s.connections
+    s.connect( s.in_     , s.reg0.in_  )
+    s.connect( s.reg0.out, s.split.in_ )
     for i, x in enumerate( s.out ):
-      connect( s.split.out[i], x )
+      s.connect( s.split.out[i], x )
 
 def test_RegisterSplitter():
   model = RegisterSplitter( 16 )

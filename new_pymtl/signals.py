@@ -44,6 +44,7 @@ class Signal( object ):
     connection_edge     = ConnectionEdge( self, target )
     self.connections   += [ connection_edge ]
     target.connections += [ connection_edge ]
+    return connection_edge
 
   #-----------------------------------------------------------------------
   # width
