@@ -128,4 +128,4 @@ class Wire( Signal ):
   #-----------------------------------------------------------------------
   #  msg_type: msg type on the port.
   def __init__( self, msg_type ):
-    super( Wire, self ).__init__( nbits )
+    super( Wire, self ).__init__( msg_type )
