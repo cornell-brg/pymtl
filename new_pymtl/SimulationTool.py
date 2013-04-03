@@ -28,9 +28,9 @@ import warnings
 class SimulationTool():
 
   #-----------------------------------------------------------------------
-  # Constructor
+  # __init__
   #-----------------------------------------------------------------------
-  # Construct a simulator from a MTL model.
+  # Construct a simulator based on a MTL model.
   def __init__( self, model ):
 
     # Check that the model has been elaborated
@@ -51,9 +51,9 @@ class SimulationTool():
     self._construct_sim()
 
   #-----------------------------------------------------------------------
-  # Evaluate Combinational Blocks
+  # eval_combinational
   #-----------------------------------------------------------------------
-  # Evaluates all events in the combinational logic event queue.
+  # Evaluates all combinational logic blocks currently in the event queue.
   def eval_combinational( self ):
     while self._event_queue:
       func = self._event_queue.pop()
@@ -61,7 +61,7 @@ class SimulationTool():
       func()
 
   #-----------------------------------------------------------------------
-  # Cycle Simulator
+  # cycle
   #-----------------------------------------------------------------------
   # Advance the simulator by a single clock cycle.
   #
@@ -97,7 +97,7 @@ class SimulationTool():
     self.ncycles += 1
 
   #-----------------------------------------------------------------------
-  # Reset
+  # reset
   #-----------------------------------------------------------------------
   # Sets the reset signal high and cycles the simulator.
   def reset( self ):
@@ -107,11 +107,11 @@ class SimulationTool():
     self.model.reset.v = 0
 
   #-----------------------------------------------------------------------
-  # Add Callback to Event Queue
+  # add_event
   #-----------------------------------------------------------------------
   # Add an event to the simulator event queue for later execution.
   #
-  # This function will check if the written Node instance has any
+  # This function will check if the written SignalValue instance has any
   # registered events (functions decorated with @combinational), and if
   # so, adds them to the event queue.
   def add_event( self, signal_value ):
@@ -126,7 +126,7 @@ class SimulationTool():
           self._event_queue.appendleft( func )
 
   #-----------------------------------------------------------------------
-  # Construct Simulator
+  # _construct_sim
   #-----------------------------------------------------------------------
   # Construct a simulator for the provided model.
   def _construct_sim( self ):
@@ -135,7 +135,7 @@ class SimulationTool():
     self._register_decorated_functions( self.model )
 
   #-----------------------------------------------------------------------
-  # Create Nets
+  # _create_nets
   #-----------------------------------------------------------------------
   # Generate nets describing structural connections in the model.  Each
   # net describes a set of Signal objects which have been interconnected,
@@ -210,7 +210,7 @@ class SimulationTool():
       self._nets.append( net )
 
   #-----------------------------------------------------------------------
-  # Insert Value Nodes into the Model
+  # _insert_signal_values
   #-----------------------------------------------------------------------
   # Transform each net into a single SignalValue object. Model attributes
   # currently referencing Signal objects will be modified to reference
@@ -270,9 +270,13 @@ class SimulationTool():
           x.parent.__dict__[ x.name ] = svalue
 
   #-----------------------------------------------------------------------
-  # Register Decorated Functions
+  # _register_decorated_functions
   #-----------------------------------------------------------------------
-  # TODO: add comments
+  # Register all decorated @tick, @posedge_clk, and @combinational
+  # functions with the simulator.  Sequential logic blocks get called
+  # any time cycle() is called, combinational logic blocks are registered
+  # with SignalValue objects and get added to the event queue as values
+  # change.
   def _register_decorated_functions( self, model ):
 
     # Add all cycle driven functions
