@@ -116,8 +116,10 @@ class SimulationTool():
   # so, adds them to the event queue.
   def add_event( self, signal_value ):
     # TODO: debug_event
-    #print "    ADDEVENT: VALUE", signal_value.__repr__(), signal_value.v,
-    #print signal_value in self._svalue_callbacks
+    #print "    ADDEVENT: VALUE", signal_value.v,
+    #print signal_value in self._svalue_callbacks,
+    #print [x.name for x in signal_value._debug_signals],
+    #print self._svalue_callbacks[signal_value]
     if signal_value in self._svalue_callbacks:
       funcs = self._svalue_callbacks[signal_value]
       for func in funcs:
@@ -248,6 +250,7 @@ class SimulationTool():
       svalue = Bits( temp.nbits )
       # TODO: should this be visible to sim?
       svalue._shadow_value = Bits( temp.nbits )
+      #svalue._debug_signals = group
 
       # Add a callback to the SignalValue so that the simulator is notified
       # whenever it's value changes.
@@ -259,12 +262,12 @@ class SimulationTool():
 
       # Modify model attributes currently referencing Signal objects to
       # reference SignalValue objects instead.
-      # TODO: hacky based on IDX, fix?
+      # TODO: hacky based on [idx], fix?
       for x in group:
-        if 'IDX' in x.name:
-          name, idx = x.name.split('IDX')
+        if '[' in x.name:
+          name, idx = x.name.strip(']').split('[')
           x.parent.__dict__[ name ][ int( idx ) ] = svalue
-        elif isinstance( x, Constant ):
+        if isinstance( x, Constant ):
           svalue.write( x.value )
         else:
           x.parent.__dict__[ x.name ] = svalue

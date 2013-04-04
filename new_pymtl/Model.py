@@ -131,10 +131,7 @@ class Model(object):
       if obj and isinstance(obj[0], Signal):
         target._temparrays.append( name )
       for i, item in enumerate(obj):
-        if isinstance( item, Wire ):
-          item_name = "%s[%d]" % (name, i)
-        else:
-          item_name = "%sIDX%d" % (name, i)
+        item_name = "%s[%d]" % (name, i)
         self.check_type(target, item_name, item)
 
   #-----------------------------------------------------------------------

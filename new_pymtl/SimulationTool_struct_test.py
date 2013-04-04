@@ -70,6 +70,34 @@ def test_PassThroughList():
   assert model.out[2] == 10
 
 #-------------------------------------------------------------------------
+# PassThroughListWire
+#-------------------------------------------------------------------------
+
+class PassThroughListWire( Model ):
+  def __init__( s, nbits, nports ):
+    s.nports = nports
+    s.nbits  = nbits
+    s.in_ = [ InPort ( nbits ) for x in range( nports ) ]
+    s.out = [ OutPort( nbits ) for x in range( nports ) ]
+  def elaborate_logic( s ):
+    s.wire = [ Wire( s.nbits ) for x in range( s.nports ) ]
+    for i in range( s.nports ):
+      s.connect( s.in_[i],  s.wire[i] )
+      s.connect( s.wire[i], s.out[i]  )
+
+def test_PassThroughListWire():
+  model = PassThroughListWire( 16, 4 )
+  sim = setup_sim( model )
+  for i in range( 4 ):
+    model.in_[i].v = i
+  for i in range( 4 ):
+    # Note: no need to call cycle, no @combinational block
+    assert model.out[i] == i
+  model.in_[2].v = 9
+  model.in_[2].v = 10
+  assert model.out[2] == 10
+
+#-------------------------------------------------------------------------
 # PassThroughWrapped
 #-------------------------------------------------------------------------
 
@@ -143,6 +171,28 @@ class Splitter( Model ):
 
 def test_Splitter():
   splitter_tester( Splitter )
+
+#-------------------------------------------------------------------------
+# SplitterWires
+#-------------------------------------------------------------------------
+
+class SplitterWires( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( nbits )
+    s.out1 = OutPort( nbits )
+  def elaborate_logic( s ):
+    # s.connections
+    s.wire0 = Wire( s.nbits )
+    s.wire1 = Wire( s.nbits )
+    s.connect( s.in_,   s.wire0 )
+    s.connect( s.in_,   s.wire1 )
+    s.connect( s.wire0, s.out0  )
+    s.connect( s.wire1, s.out1  )
+
+def test_SplitterWires():
+  splitter_tester( SplitterWires )
 
 #-------------------------------------------------------------------------
 # SplitterWrapped
