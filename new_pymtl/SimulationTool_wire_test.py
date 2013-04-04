@@ -6,6 +6,8 @@
 from Model          import *
 from SimulationTool import *
 
+import pytest
+
 #-------------------------------------------------------------------------
 # Setup Sim
 #-------------------------------------------------------------------------
@@ -21,12 +23,17 @@ def setup_sim( model ):
 
 def pipeline_tester( model, nstages ):
   sim = setup_sim( model )
+  # fill up the pipeline
   for i in range( 10 ):
     model.in_.v = i
     expected = ( i - nstages + 1 ) if ( i - nstages + 1 ) >= 0 else 0
     assert model.out == expected
     sim.cycle()
-  #assert model.out == 9
+  # drain the pipeline
+  for i in range( 10 - nstages + 1, 10 ):
+    assert model.out == i
+    sim.cycle()
+  assert model.out == 9
 
 #-------------------------------------------------------------------------
 # ThreeStageTick
@@ -208,3 +215,52 @@ class NStagePosedge( Model ):
 def test_NStagePosedge():
   pipeline_tester( NStagePosedge( 16, 3 ), 3 )
   pipeline_tester( NStagePosedge( 16, 5 ), 5 )
+  pipeline_tester( NStagePosedge( 16, 8 ), 8 )
+
+#-------------------------------------------------------------------------
+# Dataflow Tester
+#-------------------------------------------------------------------------
+
+def dataflow_tester( model ):
+  sim = setup_sim( model )
+  # fill up the pipeline
+  for i in range( 10 ):
+    model.in_.v = i
+    expected = ( i - 1 ) if ( i - 1 ) >= 0 else 0
+    assert model.out == expected
+    assert False
+    sim.cycle()
+
+#-------------------------------------------------------------------------
+# NStageComb
+#-------------------------------------------------------------------------
+# TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO THE
+#       WAY WE DETECT SENSITIVITY LISTS... (all wires/ports in an array
+#       are added to the sensitivity list of an @combinational block since
+#       we aren't sure of the value of i when walking the AST).  Fix?
+
+class NStageCombinational( Model ):
+  def __init__( s, nbits, nstages ):
+    s.nbits   = nbits
+    s.nstages = nstages
+    s.in_     = InPort ( nbits )
+    s.out     = OutPort( nbits )
+
+  def elaborate_logic( s ):
+
+    s.wire = [ Wire( s.nbits ) for x in range( s.nstages ) ]
+
+    s.connect( s.in_, s.wire[0]  )
+
+    for i in range( s.nstages - 1 ):
+      @s.combinational
+      def func( i = i ):  # Need to capture i for this to work
+        s.wire[ i + 1 ].v = s.wire[ i ]
+
+    s.connect( s.out, s.wire[-1] )
+
+
+@pytest.mark.xfail
+def test_NStageComb():
+  dataflow_tester( NStageCombinational( 16, 3 ) )
+
