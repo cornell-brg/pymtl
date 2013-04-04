@@ -47,9 +47,9 @@ class TestRandomDelay (Model):
   # Tick
   #-----------------------------------------------------------------------
 
-  def elaborate_logical( self ):
+  def elaborate_logic( self ):
     @self.tick
-    def tick( self ):
+    def tick():
 
       # Ideally we could just not include this posedge_clk concurrent block
       # at all in the simulation. We should be able to do this when we have

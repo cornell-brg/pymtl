@@ -27,6 +27,9 @@ class TestHarness (Model):
     self.connect( self.src.out_val, self.sink.in_val )
     self.connect( self.src.out_rdy, self.sink.in_rdy )
 
+  def elaborate_logic( self ):
+    pass
+
   def done( self ):
     return self.src.done.value and self.sink.done.value
 

@@ -25,9 +25,15 @@ class TestHarness (Model):
     # Connect chain
 
     #connect_chain([ self.src, self.delay, self.sink ])
-    self.connect( self.src.out_msg, self.sink.in_msg )
-    self.connect( self.src.out_val, self.sink.in_val )
-    self.connect( self.src.out_rdy, self.sink.in_rdy )
+    self.connect( self.src.out_msg,   self.delay.in_msg )
+    self.connect( self.src.out_val,   self.delay.in_val )
+    self.connect( self.src.out_rdy,   self.delay.in_rdy )
+    self.connect( self.delay.out_msg, self.sink.in_msg  )
+    self.connect( self.delay.out_val, self.sink.in_val  )
+    self.connect( self.delay.out_rdy, self.sink.in_rdy  )
+
+  def elaborate_logic( self ):
+    pass
 
   def done( self ):
     return self.src.done.value and self.sink.done.value
@@ -72,9 +78,10 @@ def run_test_random_delay( dump_vcd, delay ):
   print ""
 
   sim.reset()
-  while not model.done():
+  while not model.done() and sim.ncycles < 100:
     sim.print_line_trace()
     sim.cycle()
+  assert model.done()
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
