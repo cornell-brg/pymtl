@@ -2,10 +2,11 @@
 # GcdUnitBL Test Suite
 #=========================================================================
 
-from pymtl import *
-import pmlib
+from new_pymtl import *
 
-from GcdUnitBL import GcdUnitBL
+from GcdUnitBL  import GcdUnitBL
+from TestSource import TestSource
+from TestSink   import TestSink
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -18,13 +19,22 @@ class TestHarness (Model):
 
     # Instantiate models
 
-    self.src  = pmlib.TestSource ( 64, src_msgs,  src_delay  )
+    self.src  = TestSource ( 64, src_msgs,  src_delay  )
     self.gcd  = ModelType        ()
-    self.sink = pmlib.TestSink   ( 32, sink_msgs, sink_delay )
+    self.sink = TestSink   ( 32, sink_msgs, sink_delay )
+
+  def elaborate_logic( self ):
 
     # Connect chain
 
-    connect_chain([ self.src, self.gcd, self.sink ])
+    #connect_chain([ self.src, self.gcd, self.sink ])
+    self.connect( self.src.out_msg, self.gcd.in_msg )
+    self.connect( self.src.out_val, self.gcd.in_val )
+    self.connect( self.src.out_rdy, self.gcd.in_rdy )
+
+    self.connect( self.gcd.out_msg, self.sink.in_msg )
+    self.connect( self.gcd.out_val, self.sink.in_val )
+    self.connect( self.gcd.out_rdy, self.sink.in_rdy )
 
   def done( self ):
     return self.src.done.value and self.sink.done.value
