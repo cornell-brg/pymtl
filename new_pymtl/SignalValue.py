@@ -63,13 +63,14 @@ class SignalValue( object ):
     self._shadow_value.write( value )
 
   #-----------------------------------------------------------------------
-  # Flop
+  # flop
   #-----------------------------------------------------------------------
+  # Update the value to match the _shadow_value (flop the register).
   def flop( self ):
     self.v = self._shadow_value
 
   #-----------------------------------------------------------------------
-  # Write (Abstract)
+  # write (Abstract)
   #-----------------------------------------------------------------------
   # Abstract method, must be implemented by subclasses!
   # TODO: use abc module to create abstract method?
@@ -78,7 +79,7 @@ class SignalValue( object ):
                                "implement the write() method!" )
 
   #-----------------------------------------------------------------------
-  # Uint (Abstract)
+  # uint (Abstract)
   #-----------------------------------------------------------------------
   # Abstract method, must be implemented by subclasses!
   # TODO: use abc module to create abstract method?
@@ -87,7 +88,7 @@ class SignalValue( object ):
                                "implement the uint() method!" )
 
   #-----------------------------------------------------------------------
-  # Int (Abstract)
+  # int (Abstract)
   #-----------------------------------------------------------------------
   # Abstract method, must be implemented by subclasses!
   # TODO: use abc module to create abstract method?
@@ -96,9 +97,10 @@ class SignalValue( object ):
                                "implement the int() method!" )
 
   #-----------------------------------------------------------------------
-  # Notify Sim of Combinational Update Hook (Abstract)
+  # notify_sim_comb_update
   #-----------------------------------------------------------------------
-  # Another abstract method used as a hook by simulators tools.
+  # Notify simulator of combinational update.
+  # Another abstract method used as a hook by simulator tools.
   # Not meant to be implemented by subclasses.
   # NOTE: This approach uses closures, other methods can be found in:
   #       http://brg.csl.cornell.edu/wiki/lockhart-2013-03-18
@@ -107,9 +109,10 @@ class SignalValue( object ):
     pass
 
   #-----------------------------------------------------------------------
-  # Notify Sim of Sequential Update Hook (Abstract)
+  # notify_sim_seq_update
   #-----------------------------------------------------------------------
-  # Another abstract method used as a hook by simulators tools.
+  # Notify simulator of sequential update.
+  # Another abstract method used as a hook by simulator tools.
   # Not meant to be implemented by subclasses.
   # NOTE: This approach uses closures, other methods can be found in:
   #       http://brg.csl.cornell.edu/wiki/lockhart-2013-03-18
