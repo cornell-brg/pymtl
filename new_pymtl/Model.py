@@ -44,6 +44,16 @@ class Model(object):
     self.recurse_connections()
 
   #-----------------------------------------------------------------------
+  # elaborate_logic (Abstract)
+  #-----------------------------------------------------------------------
+  # Abstract method, must be implemented by subclasses!
+  # TODO: use abc module to create abstract method?
+  def elaborate_logic( self ):
+    raise NotImplementedError( "Model '{}' needs to implement the "
+                               "'elaborate_logic()' method!"
+                               "".format( self.class_name ) )
+
+  #-----------------------------------------------------------------------
   # recurse_elaborate
   #-----------------------------------------------------------------------
   # Utility method to perform elaboration on a Model and it's submodules.
@@ -61,9 +71,7 @@ class Model(object):
     target._posedge_clk_blocks   = []
     target._combinational_blocks = []
     # Elaborate design
-    # TODO: REMOVE ME
-    if hasattr( target, 'elaborate_logic' ):
-      target.elaborate_logic()
+    target.elaborate_logic()
     # Private stuff
     target._line_trace_en  = False
     target._wires       = []

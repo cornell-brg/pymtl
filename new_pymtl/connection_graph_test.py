@@ -48,6 +48,7 @@ class Port_Port( Model ):
   def __init__( s ):
     s.in_ = InPort ( 8 )
     s.out = OutPort( 8 )
+  def elaborate_logic( s ):
     s.connect( s.in_, s.out )
 
 def test_Port_Port():
@@ -66,6 +67,7 @@ class Port_RdSl_Port( Model ):
     s.in_ = InPort ( 8 )
     s.out0 = OutPort( 4 )
     s.out1 = OutPort( 4 )
+  def elaborate_logic( s ):
     s.connect( s.in_[0:4], s.out0 )
     s.connect( s.in_[4:8], s.out1 )
 
@@ -88,6 +90,7 @@ class Port_RdSl_Overlap_Port( Model ):
     s.out0 = OutPort( 4 )
     s.out1 = OutPort( 6 )
     s.out2 = OutPort( 8 )
+  def elaborate_logic( s ):
     s.connect( s.in_[0:4], s.out0 )
     s.connect( s.in_[2:8], s.out1 )
     s.connect( s.in_,      s.out2 )
@@ -111,6 +114,7 @@ class Port_WrSl_Port( Model ):
     s.in0 = InPort ( 4 )
     s.in1 = InPort ( 4 )
     s.out = OutPort( 8 )
+  def elaborate_logic( s ):
     s.connect( s.in0, s.out[0:4] )
     s.connect( s.in1, s.out[4:8] )
 
@@ -135,6 +139,7 @@ class Port_WrSl_Overlap_Port( Model ):
     s.out = OutPort( 8 )
     # TODO: this should throw an error!!! Shouldn't be able to overlap
     #       writes to an OutPort...
+  def elaborate_logic( s ):
     s.connect( s.in0, s.out[0:4] )
     s.connect( s.in1, s.out[2:8] )
     s.connect( s.in2, s.out      )
@@ -160,6 +165,7 @@ class SubMod( Model ):
     s.in_ = InPort ( 8 )
     s.out = OutPort( 8 )
 
+  def elaborate_logic( s ):
     s.mod  = Port_Port()
 
     s.connect( s.in_, s.mod.in_ )
@@ -197,6 +203,7 @@ class SubMod_SL( Model ):
     s.out2 = OutPort(  4 )
     s.out3 = OutPort( 16 )
 
+  def elaborate_logic( s ):
     s.mod1  = Port_Port()
     s.mod2  = Port_Port()
 
