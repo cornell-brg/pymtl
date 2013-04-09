@@ -264,3 +264,48 @@ class NStageCombinational( Model ):
 def test_NStageComb():
   dataflow_tester( NStageCombinational( 16, 3 ) )
 
+
+#-------------------------------------------------------------------------
+# TempReadWrite
+#-------------------------------------------------------------------------
+# TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO THE
+#       WAY WE DETECT SENSITIVITY LISTS... all wires/ports read in an
+#       @combinational block are added to the sensitivity list, if a
+#       signal is written in the block and then read later in the block,
+#       it repeatedly gets added to the event queue.  These 'temporary'
+#       signals should really not be added to the sensitivity list. Fix.
+
+class WriteThenReadWire( Model ):
+  def __init__( s, nbits ):
+    s.nbits   = nbits
+    s.in_     = InPort ( nbits )
+    s.out     = OutPort( nbits )
+
+  def elaborate_logic( s ):
+
+    s.temp = Wire( s.nbits )
+
+    @s.combinational
+    def comb_logic():
+      s.temp.v = s.in_
+      s.out.v  = s.temp
+
+    # Temporary workaround
+    #@s.combinational
+    #def comb_logic():
+    #  s.temp.v = s.in_
+    #@s.combinational
+    #def comb_logic():
+    #  s.out.v  = s.temp
+
+@pytest.mark.xfail
+def test_WriteThenReadWire():
+  model = WriteThenReadWire( 16 )
+  sim = setup_sim( model )
+  for i in range( 10 ):
+    model.in_.v = i
+    assert False
+    sim.eval_combinational()
+    assert model.out == i
+
+
