@@ -71,7 +71,7 @@ def run_test_random_delay( dump_vcd, delay ):
   print ""
 
   sim.reset()
-  while not model.done() and sim.ncycles < 100:
+  while not model.done() and sim.ncycles < 200:
     sim.print_line_trace()
     sim.cycle()
 
@@ -183,7 +183,7 @@ def run_test_random_xdelay( dump_vcd, delay ):
   print ""
 
   sim.reset()
-  while not model.done() and sim.ncycles < 150:
+  while not model.done() and sim.ncycles < 200:
     sim.print_line_trace()
     sim.cycle()
 
