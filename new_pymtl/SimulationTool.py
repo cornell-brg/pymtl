@@ -58,7 +58,16 @@ class SimulationTool():
     while self._event_queue:
       func = self._event_queue.pop()
       #self.pstats.add_eval_call( func, self.num_cycles )
-      func()
+      try:
+        func()
+      except TypeError:
+        # TODO: can we catch this at static elaboration?
+        raise Exception("Concurrent block '{}' must take no parameters!\n"
+                        "file: {}\n"
+                        "line: {}\n"
+                        "".format( func.func_name,
+                                   func.func_code.co_filename,
+                                   func.func_code.co_firstlineno ) )
 
   #-----------------------------------------------------------------------
   # cycle
@@ -107,6 +116,13 @@ class SimulationTool():
     self.model.reset.v = 0
 
   #-----------------------------------------------------------------------
+  # print_line_trace
+  #-----------------------------------------------------------------------
+  # Print cycle number and line trace of model.
+  def print_line_trace(self):
+    print "{:>3}:".format( self.ncycles ), self.model.line_trace()
+
+  #-----------------------------------------------------------------------
   # add_event
   #-----------------------------------------------------------------------
   # Add an event to the simulator event queue for later execution.
@@ -118,7 +134,7 @@ class SimulationTool():
     # TODO: debug_event
     #print "    ADDEVENT: VALUE", signal_value.v,
     #print signal_value in self._svalue_callbacks,
-    #print [x.name for x in signal_value._debug_signals],
+    #print [x.fullname for x in signal_value._debug_signals],
     #print self._svalue_callbacks[signal_value]
     if signal_value in self._svalue_callbacks:
       funcs = self._svalue_callbacks[signal_value]
