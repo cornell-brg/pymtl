@@ -283,6 +283,8 @@ class Model(object):
     return func
 
   def combinational( self, func ):
+    # DEBUG, make permanent to aid debugging?
+    #func.func_name = self.name + '.' + func.func_name
     self._combinational_blocks.append( func )
     return func
 
@@ -306,12 +308,12 @@ class Model(object):
     # Add the connection to the Model's connection list
     if not hasattr( self, '_connections' ):
       self._connections = set()
-    if not c: raise Exception( "INVALid COnN")
+    if not c: raise Exception( "Invalid Connection!")
     self._connections.add( c )
 
-  #def connect_dict( connections ):
-  # for left_port,right_port in connections.iteritems():
-  #   connect( left_port, right_port )
+  def connect_dict( self, connections ):
+   for left_port,right_port in connections.iteritems():
+     self.connect( left_port, right_port )
 
   #def connect( left, right=None ):
   # if type(left) == dict:
