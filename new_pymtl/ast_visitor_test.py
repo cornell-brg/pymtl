@@ -140,3 +140,84 @@ def test_wr_list_idx_slice_var():
   @check_ast( ['s.s0', 's.s1', 's.a.v'], ['s.out[?].v'] )
   def wr_list_idx_slice_var( s ):
     s.out[ s.s0:s.s1 ].v = s.a.v
+
+#-------------------------------------------------------------------------
+# If Statements
+#-------------------------------------------------------------------------
+
+def test_if_else():
+  # TODO: prevent duplication?
+  @check_ast( ['s.if0', 's.in0', 's.in1'], ['s.out.v', 's.out.v'] )
+  def if_else( s ):
+    if s.if0:
+      s.out.v = s.in0
+    else:
+      s.out.v = s.in1
+
+def test_if_elif_else():
+  @check_ast( ['s.if0', 's.in0', 's.if1', 's.in1', 's.in2'],
+              ['s.out.v']*3 )
+  def if_elif_else( s ):
+    if   s.if0:
+      s.out.v = s.in0
+    elif s.if1:
+      s.out.v = s.in1
+    else:
+      s.out.v = s.in2
+
+def test_if_elif_and():
+  @check_ast( ['s.if0', 's.if1', 's.in0', 's.if0', 's.if2', 's.in1', 's.in2'],
+              ['s.out.v']*3 )
+  def if_elif_and( s ):
+    if   s.if0 and s.if1:
+      s.out.v = s.in0
+    elif s.if0 and s.if2:
+      s.out.v = s.in1
+    else:
+      s.out.v = s.in2
+
+def test_if_elif_elif():
+  @check_ast( ['s.if0', 's.in0', 's.if1', 's.in1', 's.if2', 's.in2'],
+              ['s.out.v']*3 )
+  def if_elif_else( s ):
+    if   s.if0:
+      s.out.v = s.in0
+    elif s.if1:
+      s.out.v = s.in1
+    elif s.if2:
+      s.out.v = s.in2
+
+def test_nested_if():
+  @check_ast( ['s.if0', 's.if1', 's.in0', 's.if2', 's.in1' ],
+              ['s.out.v']*2 )
+  def logic( s ):
+    if s.if0:
+      if   s.if1:
+        s.out.v = s.in0
+      elif s.if2:
+        s.out.v = s.in1
+
+def test_nested_else():
+  @check_ast( ['s.if0', 's.in0', 's.if1', 's.in0', 's.if2', 's.in1' ],
+              ['s.out.v']*3 )
+  def logic( s ):
+    if s.if0:
+      s.out.v = s.in0
+    else:
+      if   s.if1:
+        s.out.v = s.in0
+      elif s.if2:
+        s.out.v = s.in1
+
+def test_nested_elif():
+  @check_ast( ['s.if0', 's.in0', 's.if3', 's.if1', 's.in0', 's.if2', 's.in1' ],
+              ['s.out.v']*3 )
+  def logic( s ):
+    if s.if0:
+      s.out.v = s.in0
+    elif s.if3:
+      if   s.if1:
+        s.out.v = s.in0
+      elif s.if2:
+        s.out.v = s.in1
+

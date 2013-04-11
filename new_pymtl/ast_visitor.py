@@ -48,6 +48,17 @@ class LeafVisitor( ast.NodeVisitor ):
     self.visit( node.value )
     self.assign = False
 
+  # Sometimes we encounter an if statement first, this requires us to
+  # visit: the test expression, the body of the if statement, and
+  # any elif/else blocks at the same indentation level.
+  def visit_If( self, node ):
+    # Handle the test as if it's an assign, special case.
+    self.assign = True
+    self.visit( node.test )
+    self.assign = False
+    # Visit the body and any orelse blocks.
+    self.generic_visit( node )
+
   def visit_Attribute( self, node ):
     if not self.assign: return
     if   isinstance( node.ctx, _ast.Load ):
