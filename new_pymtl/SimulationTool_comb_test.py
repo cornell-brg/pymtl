@@ -448,22 +448,10 @@ def test_SelfPassThrough():
   passthrough_tester( SelfPassThrough )
 
 #-------------------------------------------------------------------------
-# Mux
+# Mux Tester
 #-------------------------------------------------------------------------
-
-class Mux( Model ):
-  def __init__( s, nbits, nports ):
-    s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
-    s.out = OutPort( nbits )
-    s.sel = InPort ( get_sel_nbits( nbits ) )
-  def elaborate_logic( s ):
-    @s.combinational
-    def logic():
-      assert s.sel < len( s.in_ )
-      s.out.v = s.in_[ s.sel.uint() ]
-
-def test_Mux():
-  model = Mux( 3, 8 )
+def mux_tester( model_type ):
+  model = model_type( 8, 3 )
   sim = setup_sim( model )
   sim.reset()
   model.in_[0].v = 1
@@ -480,3 +468,46 @@ def test_Mux():
   model.sel.v = 2
   sim.eval_combinational()
   assert model.out == 0
+
+#-------------------------------------------------------------------------
+# Mux
+#-------------------------------------------------------------------------
+
+class Mux( Model ):
+  def __init__( s, nbits, nports ):
+    s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
+    s.out = OutPort( nbits )
+    s.sel = InPort ( get_sel_nbits( nbits ) )
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      assert s.sel < len( s.in_ )
+      s.out.v = s.in_[ s.sel.uint() ]
+
+def test_Mux():
+  mux_tester( Mux )
+
+#-------------------------------------------------------------------------
+# IfMux
+#-------------------------------------------------------------------------
+
+class IfMux( Model ):
+  def __init__( s, nbits, nports=3 ):
+    assert nports == 3
+    s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
+    s.out = OutPort( nbits )
+    s.sel = InPort ( get_sel_nbits( nbits ) )
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      if   s.sel == 0:
+        s.out.v = s.in_[ 0 ]
+      elif s.sel == 1:
+        s.out.v = s.in_[ 1 ]
+      elif s.sel == 2:
+        s.out.v = s.in_[ 2 ]
+      else:
+        assert False
+
+def test_IfMux():
+  mux_tester( IfMux )
