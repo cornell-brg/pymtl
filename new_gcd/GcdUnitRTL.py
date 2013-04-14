@@ -2,8 +2,13 @@
 # GcdUnitRTL
 #=========================================================================
 
-from pymtl import *
-import pmlib
+from new_pymtl import *
+#import pmlib
+import valrdy
+
+from Mux import Mux
+import arith
+import regs
 
 # Constants
 
@@ -44,17 +49,19 @@ class GcdUnitDpath (Model):
     s.is_b_zero = OutPort (1)
     s.is_a_lt_b = OutPort (1)
 
-    #---------------------------------------------------------------------
-    # Static elaboration
-    #---------------------------------------------------------------------
+  #---------------------------------------------------------------------
+  # Static elaboration
+  #---------------------------------------------------------------------
+  def elaborate_logic( s ):
 
     s.sub_out   = Wire(32)
     s.b_reg_out = Wire(32)
 
     # A mux
 
-    s.a_mux = m = pmlib.muxes.Mux3(32)
-    connect({
+    #s.a_mux = m = pmlib.muxes.Mux3(32)
+    s.a_mux = m = Mux( 32, 3 )
+    s.connect_dict({
       m.sel                  : s.a_mux_sel,
       m.in_[ A_MUX_SEL_IN  ] : s.in_msg_a,
       m.in_[ A_MUX_SEL_SUB ] : s.sub_out,
@@ -63,16 +70,18 @@ class GcdUnitDpath (Model):
 
     # A register
 
-    s.a_reg = m = pmlib.regs.RegEn(32)
-    connect({
+    #s.a_reg = m = pmlib.regs.RegEn(32)
+    s.a_reg = m = regs.RegEn(32)
+    s.connect_dict({
       m.en    : s.a_reg_en,
       m.in_   : s.a_mux.out,
     })
 
     # B mux
 
-    s.b_mux = m = pmlib.muxes.Mux2(32)
-    connect({
+    #s.b_mux = m = pmlib.muxes.Mux2(32)
+    s.b_mux = m = Mux( 32, 2 )
+    s.connect_dict({
       m.sel                 : s.b_mux_sel,
       m.in_[ B_MUX_SEL_A  ] : s.a_reg.out,
       m.in_[ B_MUX_SEL_IN ] : s.in_msg_b,
@@ -80,8 +89,9 @@ class GcdUnitDpath (Model):
 
     # B register
 
-    s.b_reg = m = pmlib.regs.RegEn(32)
-    connect({
+    #s.b_reg = m = pmlib.regs.RegEn(32)
+    s.b_reg = m = regs.RegEn(32)
+    s.connect_dict({
       m.en    : s.b_reg_en,
       m.in_   : s.b_mux.out,
       m.out   : s.b_reg_out,
@@ -89,16 +99,18 @@ class GcdUnitDpath (Model):
 
     # Zero compare
 
-    s.b_zero = m = pmlib.arith.ZeroComparator(32)
-    connect({
+    #s.b_zero = m = pmlib.arith.ZeroComparator(32)
+    s.b_zero = m = arith.ZeroComparator(32)
+    s.connect_dict({
       m.in_ : s.b_reg.out,
       m.out : s.is_b_zero,
     })
 
     # Less-than comparator
 
-    s.a_lt_b = m = pmlib.arith.LtComparator(32)
-    connect({
+    #s.a_lt_b = m = pmlib.arith.LtComparator(32)
+    s.a_lt_b = m = arith.LtComparator(32)
+    s.connect_dict({
       m.in0 : s.a_reg.out,
       m.in1 : s.b_reg.out,
       m.out : s.is_a_lt_b
@@ -106,16 +118,16 @@ class GcdUnitDpath (Model):
 
     # Subtractor
 
-    s.sub = m = pmlib.arith.Subtractor(32)
-    connect({
+    s.sub = m = arith.Subtractor(32)
+    s.connect_dict({
       m.in0 : s.a_reg.out,
       m.in1 : s.b_reg.out,
       m.out : s.sub_out,
     })
 
-    # Connect to output port
+    # s.connect to output port
 
-    connect( s.sub.out, s.out_msg )
+    s.connect( s.sub.out, s.out_msg )
 
 #=========================================================================
 # GCD Control
@@ -155,80 +167,83 @@ class GcdUnitCtrl (Model):
     s.STATE_CALC = 1
     s.STATE_DONE = 2
 
-    s.state = pmlib.regs.RegRst( 2, reset_value = s.STATE_IDLE )
+    #s.state = pmlib.regs.RegRst( 2, reset_value = s.STATE_IDLE )
+    s.state = regs.RegRst( 2, reset_value = s.STATE_IDLE )
 
   #-----------------------------------------------------------------------
   # State transitions
   #-----------------------------------------------------------------------
+  def elaborate_logic( s ):
 
-  @combinational
-  def state_transitions( s ):
+    @s.combinational
+    def state_transitions():
 
-    current_state = s.state.out.value
-    next_state    = s.state.out.value
+      current_state = s.state.out.value
+      next_state    = s.state.out.value
 
-    # Transistions out of IDLE state
+      # Transistions out of IDLE state
 
-    if ( current_state == s.STATE_IDLE ):
-      if ( s.in_val.value and s.in_rdy.value ):
-        next_state = s.STATE_CALC
+      if ( current_state == s.STATE_IDLE ):
+        if ( s.in_val.value and s.in_rdy.value ):
+          next_state = s.STATE_CALC
 
-    # Transistions out of CALC state
+      # Transistions out of CALC state
 
-    if ( current_state == s.STATE_CALC ):
-      if ( not s.is_a_lt_b.value and s.is_b_zero.value ):
-        next_state = s.STATE_DONE
+      if ( current_state == s.STATE_CALC ):
+        if ( not s.is_a_lt_b.value and s.is_b_zero.value ):
+          next_state = s.STATE_DONE
 
-    # Transistions out of DONE state
+      # Transistions out of DONE state
 
-    if ( current_state == s.STATE_DONE ):
-      if ( s.out_val.value and s.out_rdy.value ):
-        next_state = s.STATE_IDLE
+      if ( current_state == s.STATE_DONE ):
+        if ( s.out_val.value and s.out_rdy.value ):
+          next_state = s.STATE_IDLE
 
-    s.state.in_.value = next_state
+      s.state.in_.value = next_state
 
-  #-----------------------------------------------------------------------
-  # State outputs
-  #-----------------------------------------------------------------------
+    #-----------------------------------------------------------------------
+    # State outputs
+    #-----------------------------------------------------------------------
 
-  @combinational
-  def state_outputs( s ):
+    @s.combinational
+    def state_outputs():
 
-    current_state = s.state.out.value
+      current_state = s.state.out.value
 
-    # In IDLE state we simply wait for inputs to arrive and latch them in
+      # In IDLE state we simply wait for inputs to arrive and latch them in
 
-    if current_state == s.STATE_IDLE:
-      s.in_rdy.value    = 1
-      s.out_val.value   = 0
-      s.a_mux_sel.value = A_MUX_SEL_IN
-      s.a_reg_en.value  = 1
-      s.b_mux_sel.value = B_MUX_SEL_IN
-      s.b_reg_en.value  = 1
+      if current_state == s.STATE_IDLE:
+        s.in_rdy.value    = 1
+        s.out_val.value   = 0
+        s.a_mux_sel.value = A_MUX_SEL_IN
+        s.a_reg_en.value  = 1
+        s.b_mux_sel.value = B_MUX_SEL_IN
+        s.b_reg_en.value  = 1
 
-    # In CALC state we iteratively swap/sub to calculate GCD
+      # In CALC state we iteratively swap/sub to calculate GCD
 
-    elif current_state == s.STATE_CALC:
+      elif current_state == s.STATE_CALC:
 
-      swap = s.is_a_lt_b.value
-      done = not s.is_a_lt_b.value and s.is_b_zero.value
+        swap = s.is_a_lt_b.value
+        done = not s.is_a_lt_b.value and s.is_b_zero.value
 
-      s.in_rdy.value    = 0
-      s.out_val.value   = 0
-      s.a_mux_sel.value = A_MUX_SEL_B if swap else A_MUX_SEL_SUB
-      s.a_reg_en.value  = not done
-      s.b_mux_sel.value = B_MUX_SEL_A
-      s.b_reg_en.value  = swap and not done
+        s.in_rdy.value    = 0
+        s.out_val.value   = 0
+        s.a_mux_sel.value = A_MUX_SEL_B if swap else A_MUX_SEL_SUB
+        s.a_reg_en.value  = not done
+        s.b_mux_sel.value = B_MUX_SEL_A
+        s.b_reg_en.value  = swap and not done
 
-    # In DONE state we simply wait for output transaction to occur
+      # In DONE state we simply wait for output transaction to occur
 
-    elif current_state == s.STATE_DONE:
-      s.in_rdy.value    = 0
-      s.out_val.value   = 1
-      s.a_mux_sel.value = A_MUX_SEL_X
-      s.a_reg_en.value  = 0
-      s.b_mux_sel.value = B_MUX_SEL_X
-      s.b_reg_en.value  = 0
+      elif current_state == s.STATE_DONE:
+        s.in_rdy.value    = 0
+        s.out_val.value   = 1
+        s.a_mux_sel.value = A_MUX_SEL_X
+        s.a_reg_en.value  = 0
+        s.b_mux_sel.value = B_MUX_SEL_X
+        s.b_reg_en.value  = 0
+
 
 #=========================================================================
 # GCD Unit
@@ -236,11 +251,10 @@ class GcdUnitCtrl (Model):
 
 class GcdUnitRTL (Model):
 
+  #---------------------------------------------------------------------
+  # Declare interface
+  #---------------------------------------------------------------------
   def __init__( s ):
-
-    #---------------------------------------------------------------------
-    # Declare ports and wires
-    #---------------------------------------------------------------------
 
     s.in_msg  = InPort  (64)
     s.in_val  = InPort  (1 )
@@ -250,30 +264,42 @@ class GcdUnitRTL (Model):
     s.out_val = OutPort (1 )
     s.out_rdy = InPort  (1 )
 
-    #---------------------------------------------------------------------
-    # Static elaboration
-    #---------------------------------------------------------------------
+  #---------------------------------------------------------------------
+  # Static elaboration
+  #---------------------------------------------------------------------
+  def elaborate_logic( s ):
 
     s.dpath = GcdUnitDpath()
     s.ctrl  = GcdUnitCtrl()
 
-    # Connect input interface to dpath/ctrl
+    # s.connect input interface to dpath/ctrl
 
-    connect( s.in_msg[ 0:32], s.dpath.in_msg_a  )
-    connect( s.in_msg[32:64], s.dpath.in_msg_b  )
+    # TODO: fix
+    #s.connect( s.in_msg[ 0:32], s.dpath.in_msg_a  )
+    #s.connect( s.in_msg[32:64], s.dpath.in_msg_b  )
+    @s.combinational
+    def slice_logic():
+      s.dpath.in_msg_a.v = s.in_msg[ 0:32]
+      s.dpath.in_msg_b.v = s.in_msg[32:64]
 
-    connect( s.in_val,        s.ctrl.in_val )
-    connect( s.in_rdy,        s.ctrl.in_rdy )
+    s.connect( s.in_val,        s.ctrl.in_val )
+    s.connect( s.in_rdy,        s.ctrl.in_rdy )
 
-    # Connect dpath/ctrl to output interface
+    # s.connect dpath/ctrl to output interface
 
-    connect( s.dpath.out_msg, s.out_msg     )
-    connect( s.ctrl.out_val,  s.out_val     )
-    connect( s.ctrl.out_rdy,  s.out_rdy     )
+    s.connect( s.dpath.out_msg, s.out_msg     )
+    s.connect( s.ctrl.out_val,  s.out_val     )
+    s.connect( s.ctrl.out_rdy,  s.out_rdy     )
 
-    # Connect ports with the same name in dpath and ctrl
+    # s.connect ports with the same name in dpath and ctrl
 
-    connect_auto( s.dpath, s.ctrl )
+    #s.connect_auto( s.dpath, s.ctrl )
+    s.connect( s.dpath.a_mux_sel, s.ctrl.a_mux_sel )
+    s.connect( s.dpath.a_reg_en,  s.ctrl.a_reg_en  )
+    s.connect( s.dpath.b_mux_sel, s.ctrl.b_mux_sel )
+    s.connect( s.dpath.b_reg_en,  s.ctrl.b_reg_en  )
+    s.connect( s.dpath.is_b_zero, s.ctrl.is_b_zero )
+    s.connect( s.dpath.is_a_lt_b, s.ctrl.is_a_lt_b )
 
   #-----------------------------------------------------------------------
   # Line tracing
@@ -282,11 +308,11 @@ class GcdUnitRTL (Model):
   def line_trace( self ):
 
     in_str = \
-      pmlib.valrdy.valrdy_to_str( self.in_msg.value,
+      valrdy.valrdy_to_str( self.in_msg.value,
         self.in_val.value, self.in_rdy.value )
 
     out_str = \
-      pmlib.valrdy.valrdy_to_str( self.out_msg.value,
+      valrdy.valrdy_to_str( self.out_msg.value,
         self.out_val.value, self.out_rdy.value )
 
     state_str = "? "

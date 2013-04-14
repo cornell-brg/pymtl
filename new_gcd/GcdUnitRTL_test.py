@@ -2,8 +2,7 @@
 # GcdUnitRTL Test Suite
 #=========================================================================
 
-from pymtl import *
-import pmlib
+from new_pymtl import *
 
 from GcdUnitRTL import GcdUnitRTL
 
