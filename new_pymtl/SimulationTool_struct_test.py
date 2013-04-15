@@ -6,6 +6,10 @@
 from Model          import *
 from SimulationTool import *
 
+from SimulationTool_comb_test import verify_splitter, set_ports
+
+import pytest
+
 #-------------------------------------------------------------------------
 # Setup Sim
 #-------------------------------------------------------------------------
@@ -317,3 +321,247 @@ class SplitterPT_5( Model ):
 
 def test_SplitterPT_5():
   splitter_tester( SplitterPT_5 )
+
+#-------------------------------------------------------------------------
+# BitBlast Utility Functions
+#-------------------------------------------------------------------------
+
+def setup_bit_blast( nbits, groups=None ):
+  if not groups:
+    model = SimpleBitBlast( nbits )
+  else:
+    model = ComplexBitBlast( nbits, groups )
+  sim = setup_sim( model )
+  return model, sim
+
+#-------------------------------------------------------------------------
+# SimpleBitBlast
+#-------------------------------------------------------------------------
+
+class SimpleBitBlast( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_   = InPort( nbits )
+    s.out   = [ OutPort(1) for x in xrange( nbits ) ]
+
+  def elaborate_logic( s ):
+    for i in range( s.nbits ):
+      s.connect( s.out[i], s.in_[i] )
+  #def elaborate_logic( s ):
+  #  @s.combinational
+  #  def logic():
+  #    for i in range( s.nbits ):
+  #      s.out[i].value = s.in_.value[i]
+
+@pytest.mark.xfail
+def test_SimpleBitBlast_8_to_8x1():
+  model, sim = setup_bit_blast( 8 )
+  model.in_.v = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+@pytest.mark.xfail
+def test_SimpleBitBlast_16_to_16x1():
+  model, sim = setup_bit_blast( 16 )
+  model.in_.v = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.v = 0b1111000011001010
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b1111000011001010 )
+
+#-------------------------------------------------------------------------
+# ComplexBitBlast
+#-------------------------------------------------------------------------
+
+class ComplexBitBlast( Model ):
+  def __init__( s, nbits, groupings ):
+    s.nbits     = nbits
+    s.groupings = groupings
+    s.in_       = InPort( nbits )
+    s.out       = [ OutPort( groupings ) for x in
+                    xrange( 0, nbits, groupings ) ]
+
+  def elaborate_logic( s ):
+    outport_num = 0
+    for i in range( 0, s.nbits, s.groupings ):
+      s.connect( s.out[outport_num], s.in_[i:i+s.groupings] )
+      outport_num += 1
+  #def elaborate_logic( s ):
+  #  @s.combinational
+  #  def logic():
+  #    outport_num = 0
+  #    for i in range( 0, s.nbits, s.groupings ):
+  #      s.out[outport_num].value = s.in_.value[i:i+s.groupings]
+  #      outport_num += 1
+
+@pytest.mark.xfail
+def test_ComplexBitBlast_8_to_8x1():
+  model, sim = setup_bit_blast( 8, 1 )
+  model.in_.value = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+@pytest.mark.xfail
+def test_ComplexBitBlast_8_to_4x2():
+  model, sim = setup_bit_blast( 8, 2 )
+  model.in_.value = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+@pytest.mark.xfail
+def test_ComplexBitBlast_8_to_2x4():
+  model, sim = setup_bit_blast( 8, 4 )
+  model.in_.value = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+@pytest.mark.xfail
+def test_ComplexBitBlast_8_to_1x8():
+  model, sim = setup_bit_blast( 8, 8 )
+  model.in_.value = 0b11110000
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b11110000 )
+  model.in_.value = 0b01010101
+  sim.eval_combinational()
+  verify_splitter( model.out, 0b01010101 )
+
+#-------------------------------------------------------------------------
+# BitMerge Utility Functions
+#-------------------------------------------------------------------------
+
+def setup_bit_merge( nbits, groups=None ):
+  if not groups:
+    model = SimpleBitMerge( nbits )
+  else:
+    model = ComplexBitMerge( nbits, groups )
+  sim = setup_sim( model )
+  return model, sim
+
+#-------------------------------------------------------------------------
+# SimpleBitMerge
+#-------------------------------------------------------------------------
+
+class SimpleBitMerge( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_   = [ InPort( 1 ) for x in xrange( nbits ) ]
+    s.out   = OutPort( nbits )
+
+  def elaborate_logic( s ):
+    for i in range( s.nbits ):
+      s.connect( s.out[i], s.in_[i] )
+  #def elaborate_logic( s ):
+  #  @s.combinational
+  #  def logic():
+  #    for i in range( s.nbits ):
+  #      s.out.value[i] = s.in_[i].value
+
+@pytest.mark.xfail
+def test_SimpleBitMerge_8x1_to_8():
+  model, sim = setup_bit_merge( 8 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.value == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
+  model.in_[0].value = 0
+  sim.eval_combinational()
+  assert model.out.value == 0b01010100
+  model.in_[7].value = 1
+  sim.eval_combinational()
+  assert model.out.value == 0b11010100
+
+@pytest.mark.xfail
+def test_SimpleBitMerge_16x1_to_16():
+  model, sim = setup_bit_merge( 16 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.value == 0b11110000
+  set_ports( model.in_, 0b1111000011001010 )
+  sim.eval_combinational()
+  assert model.out.value == 0b1111000011001010
+  model.in_[0].value = 1
+  sim.eval_combinational()
+  assert model.out.value == 0b1111000011001011
+  model.in_[15].value = 0
+  sim.eval_combinational()
+  assert model.out.value == 0b0111000011001011
+
+#-------------------------------------------------------------------------
+# ComplexBitMerge
+#-------------------------------------------------------------------------
+
+class ComplexBitMerge( Model ):
+  def __init__( s, nbits, groupings ):
+    s.nbits     = nbits
+    s.groupings = groupings
+    s.in_       = [ InPort( groupings) for x in
+                    xrange( 0, nbits, groupings ) ]
+    s.out       = OutPort(nbits)
+
+  def elaborate_logic( s ):
+    inport_num = 0
+    for i in range( 0, s.nbits, s.groupings ):
+      s.connect( s.out[i:i+s.groupings], s.in_[inport_num] )
+      inport_num += 1
+  #def elaborate_logic( s ):
+  #  @s.combinational
+  #  def logic():
+  #    inport_num = 0
+  #    for i in range( 0, s.nbits, s.groupings ):
+  #      s.out.value[i:i+s.groupings] = s.in_[inport_num].value
+  #      inport_num += 1
+
+@pytest.mark.xfail
+def test_ComplexBitMerge_8x1_to_8():
+  model, sim = setup_bit_merge( 8, 1 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.v == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
+
+@pytest.mark.xfail
+def test_ComplexBitMerge_4x2_to_8():
+  model, sim = setup_bit_merge( 8, 2 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.v == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
+
+@pytest.mark.xfail
+def test_ComplexBitMerge_2x4_to_8():
+  model, sim = setup_bit_merge( 8, 4 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.v == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
+
+@pytest.mark.xfail
+def test_ComplexBitMerge_1x8_to_8():
+  model, sim = setup_bit_merge( 8, 8 )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.v == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
