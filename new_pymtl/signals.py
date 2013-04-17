@@ -19,15 +19,16 @@ class Signal( object ):
   #  msg_type: msg type on the port.
   def __init__( self, msg_type ):
     if isinstance( msg_type, int ):
-      self.nbits         = msg_type
+      self.nbits          = msg_type
     else:
-      self.nbits         = msg_type.nbits
-    self._addr           = None
-    self.name            = "NO NAME: not elaborated yet!"
-    self.parent          = None
-    self.connections     = []
-    self.int_connections = []
-    self.ext_connections = []
+      self.nbits          = msg_type.nbits
+    self._addr            = None
+    self.name             = "NO NAME: not elaborated yet!"
+    self.parent           = None
+    self.connections      = []
+    self._int_connections = []
+    self._ext_connections = []
+    self._signalvalue     = None
 
   #-----------------------------------------------------------------------
   # __getitem__

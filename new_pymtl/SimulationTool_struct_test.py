@@ -353,7 +353,6 @@ class SimpleBitBlast( Model ):
   #    for i in range( s.nbits ):
   #      s.out[i].value = s.in_.value[i]
 
-@pytest.mark.xfail
 def test_SimpleBitBlast_8_to_8x1():
   model, sim = setup_bit_blast( 8 )
   model.in_.v = 0b11110000
@@ -363,7 +362,6 @@ def test_SimpleBitBlast_8_to_8x1():
   sim.eval_combinational()
   verify_splitter( model.out, 0b01010101 )
 
-@pytest.mark.xfail
 def test_SimpleBitBlast_16_to_16x1():
   model, sim = setup_bit_blast( 16 )
   model.in_.v = 0b11110000
@@ -390,15 +388,7 @@ class ComplexBitBlast( Model ):
     for i in range( 0, s.nbits, s.groupings ):
       s.connect( s.out[outport_num], s.in_[i:i+s.groupings] )
       outport_num += 1
-  #def elaborate_logic( s ):
-  #  @s.combinational
-  #  def logic():
-  #    outport_num = 0
-  #    for i in range( 0, s.nbits, s.groupings ):
-  #      s.out[outport_num].value = s.in_.value[i:i+s.groupings]
-  #      outport_num += 1
 
-@pytest.mark.xfail
 def test_ComplexBitBlast_8_to_8x1():
   model, sim = setup_bit_blast( 8, 1 )
   model.in_.value = 0b11110000
@@ -408,7 +398,6 @@ def test_ComplexBitBlast_8_to_8x1():
   sim.eval_combinational()
   verify_splitter( model.out, 0b01010101 )
 
-@pytest.mark.xfail
 def test_ComplexBitBlast_8_to_4x2():
   model, sim = setup_bit_blast( 8, 2 )
   model.in_.value = 0b11110000
@@ -418,7 +407,6 @@ def test_ComplexBitBlast_8_to_4x2():
   sim.eval_combinational()
   verify_splitter( model.out, 0b01010101 )
 
-@pytest.mark.xfail
 def test_ComplexBitBlast_8_to_2x4():
   model, sim = setup_bit_blast( 8, 4 )
   model.in_.value = 0b11110000
@@ -428,7 +416,6 @@ def test_ComplexBitBlast_8_to_2x4():
   sim.eval_combinational()
   verify_splitter( model.out, 0b01010101 )
 
-@pytest.mark.xfail
 def test_ComplexBitBlast_8_to_1x8():
   model, sim = setup_bit_blast( 8, 8 )
   model.in_.value = 0b11110000
@@ -463,13 +450,7 @@ class SimpleBitMerge( Model ):
   def elaborate_logic( s ):
     for i in range( s.nbits ):
       s.connect( s.out[i], s.in_[i] )
-  #def elaborate_logic( s ):
-  #  @s.combinational
-  #  def logic():
-  #    for i in range( s.nbits ):
-  #      s.out.value[i] = s.in_[i].value
 
-@pytest.mark.xfail
 def test_SimpleBitMerge_8x1_to_8():
   model, sim = setup_bit_merge( 8 )
   set_ports( model.in_, 0b11110000 )
@@ -485,7 +466,6 @@ def test_SimpleBitMerge_8x1_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b11010100
 
-@pytest.mark.xfail
 def test_SimpleBitMerge_16x1_to_16():
   model, sim = setup_bit_merge( 16 )
   set_ports( model.in_, 0b11110000 )
@@ -518,15 +498,7 @@ class ComplexBitMerge( Model ):
     for i in range( 0, s.nbits, s.groupings ):
       s.connect( s.out[i:i+s.groupings], s.in_[inport_num] )
       inport_num += 1
-  #def elaborate_logic( s ):
-  #  @s.combinational
-  #  def logic():
-  #    inport_num = 0
-  #    for i in range( 0, s.nbits, s.groupings ):
-  #      s.out.value[i:i+s.groupings] = s.in_[inport_num].value
-  #      inport_num += 1
 
-@pytest.mark.xfail
 def test_ComplexBitMerge_8x1_to_8():
   model, sim = setup_bit_merge( 8, 1 )
   set_ports( model.in_, 0b11110000 )
@@ -536,7 +508,6 @@ def test_ComplexBitMerge_8x1_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-@pytest.mark.xfail
 def test_ComplexBitMerge_4x2_to_8():
   model, sim = setup_bit_merge( 8, 2 )
   set_ports( model.in_, 0b11110000 )
@@ -546,7 +517,6 @@ def test_ComplexBitMerge_4x2_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-@pytest.mark.xfail
 def test_ComplexBitMerge_2x4_to_8():
   model, sim = setup_bit_merge( 8, 4 )
   set_ports( model.in_, 0b11110000 )
@@ -556,7 +526,6 @@ def test_ComplexBitMerge_2x4_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-@pytest.mark.xfail
 def test_ComplexBitMerge_1x8_to_8():
   model, sim = setup_bit_merge( 8, 8 )
   set_ports( model.in_, 0b11110000 )

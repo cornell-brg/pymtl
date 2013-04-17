@@ -44,8 +44,11 @@ class SimulationTool():
     self._sequential_blocks = []
     self._register_queue    = []
     self._event_queue       = collections.deque()
-    self._svalue_callbacks   = collections.defaultdict(list)
+    self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
+
+    # TODO: temporary hack
+    self._slice_connects    = []
 
     # Actually construct the simulator
     self._construct_sim()
@@ -151,6 +154,7 @@ class SimulationTool():
     self._create_nets( self.model )
     self._insert_signal_values()
     self._register_decorated_functions( self.model )
+    self._create_slice_callbacks()
 
   #-----------------------------------------------------------------------
   # _create_nets
@@ -188,8 +192,10 @@ class SimulationTool():
     # Utility function to filter only supported connections: ports, and
     # wires.  No slices or Constants.
     def valid_connection( c ):
-      if c.src_slice or c.dest_slice:
-        raise Exception( "Slices not supported yet!" )
+      if c.src_slice != None or c.dest_slice != None:
+        # TEMPORARY HACK, remove slice connections from connections?
+        self._slice_connects.append ( c )
+        return False
       elif isinstance( c.src_node,  Constant ):
         return False
       elif isinstance( c.dest_node, Constant ):
@@ -288,6 +294,10 @@ class SimulationTool():
         else:
           x.parent.__dict__[ x.name ] = svalue
 
+        # Also give signals a pointer to the SignalValue object.
+        # (Needed for VCD tracing and slice logic generator).
+        x._signalvalue = svalue
+
   #-----------------------------------------------------------------------
   # _register_decorated_functions
   #-----------------------------------------------------------------------
@@ -353,4 +363,27 @@ class SimulationTool():
     for m in model.get_submodules():
       self._register_decorated_functions( m )
 
+  #-----------------------------------------------------------------------
+  # _create_slice_callbacks
+  #-----------------------------------------------------------------------
+  # All ConnectionEdges that contain bit slicing need to be turned into
+  # combinational blocks.  This significantly simplifies the connection
+  # graph update logic.
+  def _create_slice_callbacks( self ):
+
+    # Utility function to create our callback
+    def create_slice_cb_closure( c ):
+      src       = c.src_node._signalvalue
+      dest      = c.dest_node._signalvalue
+      src_addr  = c.src_slice  if c.src_slice  != None else slice( None )
+      dest_addr = c.dest_slice if c.dest_slice != None else slice( None )
+      def slice_cb():
+        dest.v[ dest_addr ] = src.v[ src_addr ]
+      return slice_cb
+
+    for c in self._slice_connects:
+      func_ptr = create_slice_cb_closure( c )
+      signal_value = c.src_node._signalvalue
+      self._svalue_callbacks[ signal_value ].append( func_ptr )
+      self._event_queue.appendleft( func_ptr )
 
