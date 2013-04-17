@@ -534,3 +534,88 @@ def test_ComplexBitMerge_1x8_to_8():
   set_ports( model.in_, 0b01010101 )
   sim.eval_combinational()
   assert model.out.value == 0b01010101
+
+#-------------------------------------------------------------------------
+# ConstantPort
+#-------------------------------------------------------------------------
+
+class ConstantPort( Model ):
+  def __init__( s ):
+    s.out = OutPort( 32 )
+  def elaborate_logic( s ):
+    s.connect( s.out, 4 )
+
+@pytest.mark.xfail
+def test_ConstantPort():
+    model = ConstantPort()
+    sim = setup_sim( model )
+    assert model.out == 4
+    # TODO: catch writing to a constant?
+    sim.cycle()
+    assert model.out == 4
+
+#-------------------------------------------------------------------------
+# ConstantSlice
+#-------------------------------------------------------------------------
+
+class ConstantSlice( Model ):
+  def __init__( s ):
+    s.out = OutPort( 32 )
+  def elaborate_logic( s ):
+    s.connect( s.out[ 0:16], 4 )
+    s.connect( s.out[16:32], 8 )
+
+@pytest.mark.xfail
+def test_ConstantSlice():
+  model = ConstantSlice()
+  sim = setup_sim( model )
+  assert model.out.v[ 0:16] == 4
+  assert model.out.v[16:32] == 8
+  sim.cycle()
+  assert model.out.v[ 0:16] == 4
+  assert model.out.v[16:32] == 8
+
+#-------------------------------------------------------------------------
+# ConstantModule
+#-------------------------------------------------------------------------
+
+class Shifter(Model):
+  def __init__( s, inout_nbits = 1, shamt_nbits = 1 ):
+    s.in_   = InPort  ( inout_nbits )
+    s.shamt = InPort  ( shamt_nbits )
+    s.out   = OutPort ( inout_nbits )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def comb_logic():
+      s.out.v = s.in_ << s.shamt
+
+class ConstantModule( Model ):
+  def __init__( s ):
+    s.in_ = InPort  ( 8 )
+    s.out = OutPort ( 8 )
+
+  def elaborate_logic( s ):
+    s.shift = m = Shifter(8,2)
+    s.connect_dict({
+      m.in_   : s.in_,
+      m.shamt : 2,
+      m.out   : s.out,
+    })
+
+@pytest.mark.xfail
+def test_ConstantModule():
+  model = ConstantModule()
+  sim = setup_sim( model )
+  sim.reset()
+  model.in_.v = 0b1111
+  sim.eval_combinational()
+  assert model.out == 0b111100
+  sim.cycle()
+  model.in_.v = 0b0101
+  sim.cycle()
+  assert model.out == 0b010100
+  model.in_.v = 0b110110
+  sim.cycle()
+  assert model.out == 0b11011000
+  sim.cycle()
