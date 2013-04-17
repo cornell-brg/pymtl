@@ -181,15 +181,18 @@ def test_RegisterReset():
   assert model.out.v == 0
 
 #-------------------------------------------------------------------------
-# RegisterSplitter
+# RegisterBitBlast
 #-------------------------------------------------------------------------
 # TODO: move to SimulationTool_mix_test.py
 
-from SimulationTool_comb_test import ComplexSplitter, verify_splitter
+from SimulationTool_comb_test   import verify_bit_blast
+from SimulationTool_comb_test   import ComplexBitBlast as CombBitBlast
+from SimulationTool_struct_test import ComplexBitBlast as StructBitBlast
 
-class RegisterSplitter( Model ):
-  def __init__( s, nbits ):
+class RegisterBitBlast( Model ):
+  def __init__( s, nbits, subclass ):
     s.nbits     = nbits
+    s.subclass  = subclass
     s.groupings = 2
     s.in_ = InPort( nbits )
     s.out = [ OutPort( s.groupings ) for x in
@@ -198,31 +201,37 @@ class RegisterSplitter( Model ):
   def elaborate_logic( s ):
     # Submodules
     s.reg0  = Register( s.nbits )
-    s.split = ComplexSplitter( s.nbits, s.groupings )
-    # s.connections
+    s.split = s.subclass( s.nbits, s.groupings )
+    # Connections
     s.connect( s.in_     , s.reg0.in_  )
     s.connect( s.reg0.out, s.split.in_ )
     for i, x in enumerate( s.out ):
       s.connect( s.split.out[i], x )
 
-def test_RegisterSplitter():
-  model = RegisterSplitter( 16 )
+def register_bit_blast_tester( model ):
   sim = setup_sim( model )
   sim.reset()
   model.in_.v = 0b11110000
-  verify_splitter( model.out, 0b0 )
+  verify_bit_blast( model.out, 0b0 )
   assert model.reg0.out.v  == 0b0
   sim.cycle()
   assert model.reg0.out.v  == 0b11110000
   assert model.split.in_.v == 0b11110000
-  verify_splitter( model.split.out, 0b11110000 )
-  verify_splitter( model.out,       0b11110000 )
+  verify_bit_blast( model.split.out, 0b11110000 )
+  verify_bit_blast( model.out,       0b11110000 )
   model.in_.v = 0b1111000011001010
   assert model.reg0.out.v  == 0b11110000
   assert model.split.in_.v == 0b11110000
-  verify_splitter( model.split.out, 0b11110000 )
-  verify_splitter( model.out,       0b11110000 )
+  verify_bit_blast( model.split.out, 0b11110000 )
+  verify_bit_blast( model.out,       0b11110000 )
   sim.cycle()
   assert model.reg0.out.v  == 0b1111000011001010
-  verify_splitter( model.out, 0b1111000011001010 )
+  verify_bit_blast( model.out, 0b1111000011001010 )
 
+def test_RegisterCombBitBlast():
+  model = RegisterBitBlast( 16, CombBitBlast )
+  register_bit_blast_tester( model )
+
+def test_RegisterStructBitBlast():
+  model = RegisterBitBlast( 16, StructBitBlast )
+  register_bit_blast_tester( model )

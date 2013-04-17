@@ -6,7 +6,7 @@
 from Model          import *
 from SimulationTool import *
 
-from SimulationTool_comb_test import verify_splitter, set_ports
+from SimulationTool_comb_test import verify_bit_blast, set_ports
 
 import pytest
 
@@ -357,19 +357,19 @@ def test_SimpleBitBlast_8_to_8x1():
   model, sim = setup_bit_blast( 8 )
   model.in_.v = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
 def test_SimpleBitBlast_16_to_16x1():
   model, sim = setup_bit_blast( 16 )
   model.in_.v = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.v = 0b1111000011001010
   sim.eval_combinational()
-  verify_splitter( model.out, 0b1111000011001010 )
+  verify_bit_blast( model.out, 0b1111000011001010 )
 
 #-------------------------------------------------------------------------
 # ComplexBitBlast
@@ -393,37 +393,37 @@ def test_ComplexBitBlast_8_to_8x1():
   model, sim = setup_bit_blast( 8, 1 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
 def test_ComplexBitBlast_8_to_4x2():
   model, sim = setup_bit_blast( 8, 2 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
 def test_ComplexBitBlast_8_to_2x4():
   model, sim = setup_bit_blast( 8, 4 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
 def test_ComplexBitBlast_8_to_1x8():
   model, sim = setup_bit_blast( 8, 8 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
 #-------------------------------------------------------------------------
 # BitMerge Utility Functions

@@ -200,18 +200,18 @@ def test_RippleCarryAdderNoSlice():
 #  ripplecarryadder_tester( RippleCarryAdderNoSlice, set, check )
 
 #-------------------------------------------------------------------------
-# Splitter Utility Functions
+# BitBlast Utility Functions
 #-------------------------------------------------------------------------
 
-def setup_splitter( nbits, groups=None ):
+def setup_bit_blast( nbits, groups=None ):
   if not groups:
-    model = SimpleSplitter( nbits )
+    model = SimpleBitBlast( nbits )
   else:
-    model = ComplexSplitter( nbits, groups )
+    model = ComplexBitBlast( nbits, groups )
   sim = setup_sim( model )
   return model, sim
 
-def verify_splitter( port_array, expected ):
+def verify_bit_blast( port_array, expected ):
   actual = 0
   for i, port in enumerate(port_array):
     shift = i * port.nbits
@@ -219,10 +219,10 @@ def verify_splitter( port_array, expected ):
   assert bin(actual) == bin(expected)
 
 #-------------------------------------------------------------------------
-# SimpleSplitter
+# SimpleBitBlast
 #-------------------------------------------------------------------------
 
-class SimpleSplitter( Model ):
+class SimpleBitBlast( Model ):
   def __init__( s, nbits ):
     s.nbits = nbits
     s.in_   = InPort( nbits )
@@ -234,29 +234,29 @@ class SimpleSplitter( Model ):
       for i in range( s.nbits ):
         s.out[i].value = s.in_.value[i]
 
-def test_SimpleSplitter_8_to_8x1():
-  model, sim = setup_splitter( 8 )
+def test_SimpleBitBlast_8_to_8x1():
+  model, sim = setup_bit_blast( 8 )
   model.in_.v = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
-def test_SimpleSplitter_16_to_16x1():
-  model, sim = setup_splitter( 16 )
+def test_SimpleBitBlast_16_to_16x1():
+  model, sim = setup_bit_blast( 16 )
   model.in_.v = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.v = 0b1111000011001010
   sim.eval_combinational()
-  verify_splitter( model.out, 0b1111000011001010 )
+  verify_bit_blast( model.out, 0b1111000011001010 )
 
 #-------------------------------------------------------------------------
-# ComplexSplitter
+# ComplexBitBlast
 #-------------------------------------------------------------------------
 
-class ComplexSplitter(Model):
+class ComplexBitBlast(Model):
   def __init__( s, nbits, groupings ):
     s.nbits     = nbits
     s.groupings = groupings
@@ -272,51 +272,51 @@ class ComplexSplitter(Model):
         s.out[outport_num].value = s.in_.value[i:i+s.groupings]
         outport_num += 1
 
-def test_ComplexSplitter_8_to_8x1():
-  model, sim = setup_splitter( 8, 1 )
+def test_ComplexBitBlast_8_to_8x1():
+  model, sim = setup_bit_blast( 8, 1 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
-def test_ComplexSplitter_8_to_4x2():
-  model, sim = setup_splitter( 8, 2 )
+def test_ComplexBitBlast_8_to_4x2():
+  model, sim = setup_bit_blast( 8, 2 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
-def test_ComplexSplitter_8_to_2x4():
-  model, sim = setup_splitter( 8, 4 )
+def test_ComplexBitBlast_8_to_2x4():
+  model, sim = setup_bit_blast( 8, 4 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
-def test_ComplexSplitter_8_to_1x8():
-  model, sim = setup_splitter( 8, 8 )
+def test_ComplexBitBlast_8_to_1x8():
+  model, sim = setup_bit_blast( 8, 8 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
-  verify_splitter( model.out, 0b11110000 )
+  verify_bit_blast( model.out, 0b11110000 )
   model.in_.value = 0b01010101
   sim.eval_combinational()
-  verify_splitter( model.out, 0b01010101 )
+  verify_bit_blast( model.out, 0b01010101 )
 
 #-------------------------------------------------------------------------
-# Merger Utility Functions
+# BitMerge Utility Functions
 #-------------------------------------------------------------------------
 
-def setup_merger( nbits, groups=None ):
+def setup_bit_merge( nbits, groups=None ):
   if not groups:
-    model = SimpleMerger( nbits )
+    model = SimpleBitMerge( nbits )
   else:
-    model = ComplexMerger( nbits, groups )
+    model = ComplexBitMerge( nbits, groups )
   sim = setup_sim( model )
   return model, sim
 
@@ -327,10 +327,10 @@ def set_ports( port_array, value ):
     port.value = (value >> shift) & ((1 << port.nbits) - 1)
 
 #-------------------------------------------------------------------------
-# SimpleMerger
+# SimpleBitMerge
 #-------------------------------------------------------------------------
 
-class SimpleMerger( Model ):
+class SimpleBitMerge( Model ):
   def __init__( s, nbits ):
     s.nbits = nbits
     s.in_   = [ InPort( 1 ) for x in xrange( nbits ) ]
@@ -342,8 +342,8 @@ class SimpleMerger( Model ):
       for i in range( s.nbits ):
         s.out.value[i] = s.in_[i].value
 
-def test_SimpleMerger_8x1_to_8():
-  model, sim = setup_merger( 8 )
+def test_SimpleBitMerge_8x1_to_8():
+  model, sim = setup_bit_merge( 8 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.value == 0b11110000
@@ -357,8 +357,8 @@ def test_SimpleMerger_8x1_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b11010100
 
-def test_SimpleMerger_16x1_to_16():
-  model, sim = setup_merger( 16 )
+def test_SimpleBitMerge_16x1_to_16():
+  model, sim = setup_bit_merge( 16 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.value == 0b11110000
@@ -373,10 +373,10 @@ def test_SimpleMerger_16x1_to_16():
   assert model.out.value == 0b0111000011001011
 
 #-------------------------------------------------------------------------
-# ComplexMerger
+# ComplexBitMerge
 #-------------------------------------------------------------------------
 
-class ComplexMerger( Model ):
+class ComplexBitMerge( Model ):
   def __init__( s, nbits, groupings ):
     s.nbits     = nbits
     s.groupings = groupings
@@ -392,8 +392,8 @@ class ComplexMerger( Model ):
         s.out.value[i:i+s.groupings] = s.in_[inport_num].value
         inport_num += 1
 
-def test_ComplexMerger_8x1_to_8():
-  model, sim = setup_merger( 8, 1 )
+def test_ComplexBitMerge_8x1_to_8():
+  model, sim = setup_bit_merge( 8, 1 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
@@ -401,8 +401,8 @@ def test_ComplexMerger_8x1_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-def test_ComplexMerger_4x2_to_8():
-  model, sim = setup_merger( 8, 2 )
+def test_ComplexBitMerge_4x2_to_8():
+  model, sim = setup_bit_merge( 8, 2 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
@@ -410,8 +410,8 @@ def test_ComplexMerger_4x2_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-def test_ComplexMerger_2x4_to_8():
-  model, sim = setup_merger( 8, 4 )
+def test_ComplexBitMerge_2x4_to_8():
+  model, sim = setup_bit_merge( 8, 4 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
@@ -419,8 +419,8 @@ def test_ComplexMerger_2x4_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-def test_ComplexMerger_1x8_to_8():
-  model, sim = setup_merger( 8, 8 )
+def test_ComplexBitMerge_1x8_to_8():
+  model, sim = setup_bit_merge( 8, 8 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
