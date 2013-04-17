@@ -34,15 +34,10 @@ class Adder( Model ):
 
     s.temp = Wire( s.nbits+1 )
 
-    # TODO: FIX
-    ## s.connections
+    # Connections
 
-    #s.connect( s.out,  s.temp[0:s.nbits] )
-    #s.connect( s.cout, s.temp[s.nbits]   )
-    @s.combinational
-    def connect_logic():
-      s.out.v  = s.temp[0:s.nbits]
-      s.cout.v = s.temp[s.nbits]
+    s.connect( s.out,  s.temp[0:s.nbits] )
+    s.connect( s.cout, s.temp[s.nbits]   )
 
     @s.combinational
     def comb_logic():
@@ -128,16 +123,18 @@ class ZeroExtender( Model ):
     s.out = OutPort ( out_nbits )
 
   def elaborate_logic( s ):
-    ## WORKAROUND: s.connecting a constant a slice directly doesn't work
-    ## yet, but when it does we can remove this temporary wire.
+    # TODO: WORKAROUND: connecting a constant directly to a slice does
+    # not work yet, but when it does we can remove this temporary wire.
 
-    #s.temp = Wire( s.out_nbits - s.in_nbits )
+    s.temp = Wire( s.out_nbits - s.in_nbits )
 
-    ## s.connections
+    # Connections
 
-    #s.connect( s.out[0:s.in_nbits],           s.in_  )
-    #s.connect( s.out[s.in_nbits:s.out_nbits], s.temp )
-    #s.connect( s.temp,                        0      )
+    s.connect( s.out[0:s.in_nbits],           s.in_  )
+
+    #s.connect( s.out[s.in_nbits:s.out_nbits], 0 )
+    s.connect( s.out[s.in_nbits:s.out_nbits], s.temp )
+    s.connect( s.temp,                        0      )
 
     @s.combinational
     def comb_logic():
@@ -170,21 +167,14 @@ class SignExtender( Model ):
     s.out = OutPort ( out_nbits )
 
   def elaborate_logic( s ):
-    # TODO: FIX
-    ## s.connect input port directly to corresponding bottom bits of output
+    # connect input port directly to corresponding bottom bits of output
 
-    #s.connect( s.out[0:s.in_nbits], s.in_  )
+    s.connect( s.out[0:s.in_nbits], s.in_  )
 
-    ## s.connect msb of input port to each remaining bit of output port
+    # connect msb of input port to each remaining bit of output port
 
-    #for i in xrange( s.out_nbits - s.in_nbits ):
-    #  s.connect( s.out[s.in_nbits+i], s.in_[s.in_nbits-1] )
-    @s.combinational
-    def connect_logic():
-      s.out.v[0:s.in_nbits] = s.in_
-      # TODO: really inefficient!
-      for i in xrange( s.out_nbits - s.in_nbits ):
-        s.out.v[s.in_nbits+i] = s.in_[s.in_nbits-1]
+    for i in xrange( s.out_nbits - s.in_nbits ):
+      s.connect( s.out[s.in_nbits+i], s.in_[s.in_nbits-1] )
 
   def line_trace( s ):
     return "{} () {}" \

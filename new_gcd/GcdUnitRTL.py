@@ -125,7 +125,7 @@ class GcdUnitDpath (Model):
       m.out : s.sub_out,
     })
 
-    # s.connect to output port
+    # connect to output port
 
     s.connect( s.sub.out, s.out_msg )
 
@@ -272,26 +272,21 @@ class GcdUnitRTL (Model):
     s.dpath = GcdUnitDpath()
     s.ctrl  = GcdUnitCtrl()
 
-    # s.connect input interface to dpath/ctrl
+    # connect input interface to dpath/ctrl
 
-    # TODO: fix
-    #s.connect( s.in_msg[ 0:32], s.dpath.in_msg_a  )
-    #s.connect( s.in_msg[32:64], s.dpath.in_msg_b  )
-    @s.combinational
-    def slice_logic():
-      s.dpath.in_msg_a.v = s.in_msg[ 0:32]
-      s.dpath.in_msg_b.v = s.in_msg[32:64]
+    s.connect( s.in_msg[ 0:32], s.dpath.in_msg_a  )
+    s.connect( s.in_msg[32:64], s.dpath.in_msg_b  )
 
     s.connect( s.in_val,        s.ctrl.in_val )
     s.connect( s.in_rdy,        s.ctrl.in_rdy )
 
-    # s.connect dpath/ctrl to output interface
+    # connect dpath/ctrl to output interface
 
     s.connect( s.dpath.out_msg, s.out_msg     )
     s.connect( s.ctrl.out_val,  s.out_val     )
     s.connect( s.ctrl.out_rdy,  s.out_rdy     )
 
-    # s.connect ports with the same name in dpath and ctrl
+    # connect ports with the same name in dpath and ctrl
 
     #s.connect_auto( s.dpath, s.ctrl )
     s.connect( s.dpath.a_mux_sel, s.ctrl.a_mux_sel )
