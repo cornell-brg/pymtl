@@ -11,6 +11,8 @@
 # (InPort, OutPort, Wire), needs to subclass SignalValue.
 class SignalValue( object ):
 
+  constant = False
+
   #-----------------------------------------------------------------------
   # Write v property
   #-----------------------------------------------------------------------
@@ -95,6 +97,14 @@ class SignalValue( object ):
   def int( self, value ):
     raise NotImplementedError( "Subclasses of SignalValue must "
                                "implement the int() method!" )
+
+  #-----------------------------------------------------------------------
+  # is_constant
+  #-----------------------------------------------------------------------
+  # Returns true if this SignalValue contains a constant value which
+  # should never be written.
+  def is_constant( self ):
+    return self.constant
 
   #-----------------------------------------------------------------------
   # notify_sim_comb_update

@@ -44,7 +44,8 @@ class Signal( object ):
   def connect( self, target ):
     connection_edge     = ConnectionEdge( self, target )
     self.connections   += [ connection_edge ]
-    target.connections += [ connection_edge ]
+    if not isinstance( target, int ):
+      target.connections += [ connection_edge ]
     return connection_edge
 
   #-----------------------------------------------------------------------
@@ -130,3 +131,4 @@ class Wire( Signal ):
   #  msg_type: msg type on the port.
   def __init__( self, msg_type ):
     super( Wire, self ).__init__( msg_type )
+

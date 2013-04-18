@@ -5,7 +5,9 @@
 
 from Model            import Model
 from signals          import InPort, OutPort, Wire
-from connection_graph import ConnectionEdge
+from connection_graph import ConnectionEdge, ConnectError
+
+import pytest
 
 #-------------------------------------------------------------------------
 # Utility Functions
@@ -250,4 +252,44 @@ def test_SubMod_SL():
                                        ConnectionEdge( m.mod2.out     , m.out3[0:8], ),
                                        ConnectionEdge( m.in3[8:16],  m.out3[8:16]    ),
                                      ] )
+
+#-------------------------------------------------------------------------
+# PortConst
+#-------------------------------------------------------------------------
+
+class PortConst( Model ):
+  def __init__( s ):
+    s.out0 = OutPort( 4 )
+    s.out1 = OutPort( 4 )
+
+  def elaborate_logic( s ):
+    s.connect( 8,      s.out0 )
+    s.connect( s.out1,      4 )
+
+def test_PortConst():
+  m = inst_elab_model( PortConst )
+
+  verify_signals( m.get_inports(),  [('clk', 1), ('reset', 1)] )
+  verify_signals( m.get_outports(), [('out0', 4), ('out1', 4)] )
+  verify_signals( m.get_wires(),    [] )
+  verify_submodules( m.get_submodules(), [] )
+  edges = [ ConnectionEdge( m.out0, 8 ), ConnectionEdge( m.out1, 4 ) ]
+  # TODO: dumb hack since constructor doesn't allow src to be an int
+  [ x.swap_direction() for x in edges ]
+  verify_edges( m.get_connections(), edges )
+
+#-------------------------------------------------------------------------
+# PortConstAssertSize
+#-------------------------------------------------------------------------
+
+class PortConstAssertSize( Model ):
+  def __init__( s ):
+    s.out = OutPort( 4 )
+  def elaborate_logic( s ):
+    s.connect( s.out, 32 )
+
+def test_PortConstAssertSize():
+  with pytest.raises( ConnectError ):
+    m = inst_elab_model( PortConstAssertSize )
+
 

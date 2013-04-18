@@ -11,7 +11,6 @@ import collections
 import inspect
 
 from Bits             import Bits
-from connection_graph import Constant
 
 # TODO: temporary
 import ast_visitor
@@ -196,9 +195,10 @@ class SimulationTool():
         # TEMPORARY HACK, remove slice connections from connections?
         self._slice_connects.append ( c )
         return False
-      elif isinstance( c.src_node,  Constant ):
+      elif isinstance( c.src_node,  int ):
         return False
-      elif isinstance( c.dest_node, Constant ):
+      elif isinstance( c.dest_node, int ):
+        assert False
         return False
       else:
         return True
@@ -289,8 +289,9 @@ class SimulationTool():
         if '[' in x.name:
           name, idx = x.name.strip(']').split('[')
           x.parent.__dict__[ name ][ int( idx ) ] = svalue
-        if isinstance( x, Constant ):
-          svalue.write( x.value )
+        if isinstance( x, int ):
+          svalue.write( x )
+          svalue.constant = True
         else:
           x.parent.__dict__[ x.name ] = svalue
 

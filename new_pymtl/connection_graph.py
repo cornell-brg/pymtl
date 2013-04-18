@@ -3,29 +3,7 @@
 #=========================================================================
 # Classes used to construct the connection graph of a Model.
 
-#-------------------------------------------------------------------------
-# Constant
-#-------------------------------------------------------------------------
-# Hidden class for storing a constant valued node.
-class Constant( object ):
-
-
-  def __init__(self, value, nbits ):
-    """Constructor for a Constant object.
-
-    Parameters
-    ----------
-    value: value of the constant.
-    nbits: bitwidth of the constant.
-    """
-    self._addr  = None
-    self.value  = value
-    self.nbits  = nbits
-    self.type   = 'constant'
-    self.name   = "%d'd%d" % ( nbits, value )
-    self.parent = None
-    # TODO: hack to ensure Constants can be treated as either port or node
-    self.connections = []
+from helpers import get_nbits
 
 #-------------------------------------------------------------------------
 # ConnectionSlice
@@ -34,7 +12,7 @@ class ConnectionSlice(object):
   def __init__( self, port, addr ):
     self.parent_port = port
     self._addr       = addr
-    if isinstance(addr, slice):
+    if isinstance( addr, slice ):
       assert not addr.step  # We dont support steps!
       self.nbits     = addr.stop - addr.start
     else:
@@ -44,7 +22,7 @@ class ConnectionSlice(object):
     connection_edge = ConnectionEdge( self, target )
     self.parent_port.connections   += [ connection_edge ]
     # TODO: figure out a way to get rid of this special case
-    if not isinstance( target, Constant ):
+    if not isinstance( target, int ):
       target.parent_port.connections += [ connection_edge ]
     return connection_edge
 
@@ -61,19 +39,25 @@ class ConnectionSlice(object):
     return self.nbits
 
 #-------------------------------------------------------------------------
-# Connectivity Exceptions
+# ConnectError
 #-------------------------------------------------------------------------
-class ConnectionError(Exception):
+# Exception raised for invalid connection parameters
+class ConnectError(Exception):
   pass
 
 #-------------------------------------------------------------------------
 # ConnectionEdge
 #-------------------------------------------------------------------------
+# Class representing a structural connection between Signal objects.
 class ConnectionEdge(object):
   def __init__( self, src, dest ):
-    """Construct a Connection object. TODO: describe"""
-    if src.nbits != dest.nbits:
-      raise ConnectionError("Connecting signals with different bitwidths!")
+    #if   isinstance( src, int ):
+    #  raise ConnectError("Source cannot be a constant, must be a Signal!")
+    if isinstance( dest, int ):
+      if src.nbits < get_nbits( dest ):
+        raise ConnectError("Provided int is too big for target Signal!")
+    elif src.nbits != dest.nbits:
+      raise ConnectError("Connecting signals with different bitwidths!")
 
     self.nbits = src.nbits
 
@@ -89,7 +73,7 @@ class ConnectionEdge(object):
       self.dest_node = dest.parent_port
     else:
       self.dest_node = dest
-    self.dest_slice = dest._addr
+    self.dest_slice = dest._addr if not isinstance( dest, int ) else None
 
   def other( self, node ):
     assert self.src_node == node or self.dest_node == node

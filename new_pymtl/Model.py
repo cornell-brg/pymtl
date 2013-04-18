@@ -8,7 +8,8 @@
 # can be leveraged by a number of tools for various purposes (simulation,
 # translation into HDLs, etc).
 
-from connection_graph import ConnectionSlice, Constant
+#from connection_graph import ConnectionSlice, Constant
+from connection_graph import ConnectionSlice
 from signals          import Signal, InPort, OutPort, Wire
 #from physical        import PhysicalDimensions
 
@@ -195,7 +196,7 @@ class Model(object):
     b = edge.dest_node
 
     # Constants should always be the source node
-    if isinstance( b, Constant ):
+    if isinstance( b, int ):
       edge.swap_direction()
 
     # Model connecting own InPort to own OutPort
@@ -298,9 +299,13 @@ class Model(object):
   def connect( self, port_A, port_B ):
 
     # Connect the two signals
-    if   isinstance(port_B, int):
-      c = port_A.connect( Constant(port_B, port_A.width) )
-    elif isinstance(port_A, ConnectionSlice):
+    #if   isinstance(port_B, int):
+    #  c = port_A.connect( Constant(port_B, port_A.width) )
+    #elif isinstance(port_A, ConnectionSlice):
+    #  c = port_B.connect( port_A )
+    #else:
+    #  c = port_A.connect( port_B )
+    if isinstance( port_A, (ConnectionSlice, int) ):
       c = port_B.connect( port_A )
     else:
       c = port_A.connect( port_B )
