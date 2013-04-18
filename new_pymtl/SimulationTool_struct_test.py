@@ -545,7 +545,6 @@ class ConstantPort( Model ):
   def elaborate_logic( s ):
     s.connect( s.out, 4 )
 
-@pytest.mark.xfail
 def test_ConstantPort():
     model = ConstantPort()
     sim = setup_sim( model )
@@ -603,7 +602,6 @@ class ConstantModule( Model ):
       m.out   : s.out,
     })
 
-@pytest.mark.xfail
 def test_ConstantModule():
   model = ConstantModule()
   sim = setup_sim( model )

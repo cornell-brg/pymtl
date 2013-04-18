@@ -8,9 +8,8 @@
 # can be leveraged by a number of tools for various purposes (simulation,
 # translation into HDLs, etc).
 
-#from connection_graph import ConnectionSlice, Constant
-from connection_graph import ConnectionSlice
-from signals          import Signal, InPort, OutPort, Wire
+from connection_graph import ConnectionEdge
+from signals          import Signal, InPort, OutPort, Wire, Constant
 #from physical        import PhysicalDimensions
 
 #import PortBundle
@@ -196,8 +195,8 @@ class Model(object):
     b = edge.dest_node
 
     # Constants should always be the source node
-    if isinstance( b, int ):
-      edge.swap_direction()
+    if isinstance( a, Constant ): return
+    if isinstance( b, Constant ): edge.swap_direction()
 
     # Model connecting own InPort to own OutPort
     elif ( a.parent == b.parent and
@@ -296,28 +295,23 @@ class Model(object):
   #-----------------------------------------------------------------------
   # connect
   #-----------------------------------------------------------------------
-  def connect( self, port_A, port_B ):
+  def connect( self, left_port, right_port ):
 
-    # Connect the two signals
-    #if   isinstance(port_B, int):
-    #  c = port_A.connect( Constant(port_B, port_A.width) )
-    #elif isinstance(port_A, ConnectionSlice):
-    #  c = port_B.connect( port_A )
-    #else:
-    #  c = port_A.connect( port_B )
-    if isinstance( port_A, (ConnectionSlice, int) ):
-      c = port_B.connect( port_A )
-    else:
-      c = port_A.connect( port_B )
+    # Create the connection
+    connection_edge = ConnectionEdge( left_port, right_port)
 
     # Add the connection to the Model's connection list
+    # TODO: this is hacky, FIX
     if not hasattr( self, '_connections' ):
       self._connections = set()
-    if not c: raise Exception( "Invalid Connection!")
-    self._connections.add( c )
+    if not connection_edge: raise Exception( "Invalid Connection!")
+    self._connections.add( connection_edge )
 
+  #-----------------------------------------------------------------------
+  # connect_dict
+  #-----------------------------------------------------------------------
   def connect_dict( self, connections ):
-   for left_port,right_port in connections.iteritems():
+   for left_port, right_port in connections.iteritems():
      self.connect( left_port, right_port )
 
   #def connect( left, right=None ):

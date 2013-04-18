@@ -195,11 +195,6 @@ class SimulationTool():
         # TEMPORARY HACK, remove slice connections from connections?
         self._slice_connects.append ( c )
         return False
-      elif isinstance( c.src_node,  int ):
-        return False
-      elif isinstance( c.dest_node, int ):
-        assert False
-        return False
       else:
         return True
 
@@ -286,12 +281,16 @@ class SimulationTool():
       # reference SignalValue objects instead.
       # TODO: hacky based on [idx], fix?
       for x in group:
-        if '[' in x.name:
+        # Set the value of the SignalValue object if we encounter a
+        # constant (check for Constant object instead?)
+        if isinstance( x._signalvalue, int ):
+          svalue.write( x._signalvalue )
+          svalue.constant = True
+        # Handle Lists of Ports
+        elif '[' in x.name:
           name, idx = x.name.strip(']').split('[')
           x.parent.__dict__[ name ][ int( idx ) ] = svalue
-        if isinstance( x, int ):
-          svalue.write( x )
-          svalue.constant = True
+        # Handle Normal Ports
         else:
           x.parent.__dict__[ x.name ] = svalue
 

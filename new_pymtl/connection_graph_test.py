@@ -32,13 +32,15 @@ def verify_edges( connection_list, ref_list ):
   # TODO: could potentially still pass if duplicate items in
   #       connection_list, really need to remove items from ref_list
   def connection_sort( x ):
-    return ( x.src_node, x.src_slice, x.dest_node, x.dest_slice )
+    return (x.src_node.fullname, x.src_slice, x.dest_node.fullname, x.dest_slice)
 
   c_list = sorted( connection_list, key = connection_sort )
   r_list = sorted( ref_list,        key = connection_sort )
   for x, y in zip( c_list, r_list ):
     assert x.src_node == y.src_node
     assert x.src_slice == y.src_slice
+    print x.src_node.name, y.src_node.name
+    print x.dest_node.name, y.dest_node.name
     assert x.dest_node == y.dest_node
     assert x.dest_slice == y.dest_slice
 
@@ -273,23 +275,31 @@ def test_PortConst():
   verify_signals( m.get_outports(), [('out0', 4), ('out1', 4)] )
   verify_signals( m.get_wires(),    [] )
   verify_submodules( m.get_submodules(), [] )
-  edges = [ ConnectionEdge( m.out0, 8 ), ConnectionEdge( m.out1, 4 ) ]
-  # TODO: dumb hack since constructor doesn't allow src to be an int
-  [ x.swap_direction() for x in edges ]
-  verify_edges( m.get_connections(), edges )
+  verify_edges( m.get_connections(), [ ConnectionEdge( 8, m.out0 ),
+                                       ConnectionEdge( 4, m.out1 )
+                                     ] )
+
 
 #-------------------------------------------------------------------------
 # PortConstAssertSize
 #-------------------------------------------------------------------------
 
-class PortConstAssertSize( Model ):
+class PortConstAssertSize1( Model ):
   def __init__( s ):
     s.out = OutPort( 4 )
   def elaborate_logic( s ):
     s.connect( s.out, 32 )
 
+class PortConstAssertSize2( Model ):
+  def __init__( s ):
+    s.out = OutPort( 4 )
+  def elaborate_logic( s ):
+    s.connect( 32, s.out )
+
 def test_PortConstAssertSize():
   with pytest.raises( ConnectError ):
-    m = inst_elab_model( PortConstAssertSize )
+    m = inst_elab_model( PortConstAssertSize1 )
+  with pytest.raises( ConnectError ):
+    m = inst_elab_model( PortConstAssertSize2 )
 
 

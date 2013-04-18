@@ -4,8 +4,6 @@
 # Collection of classes for defining interfaces and connectivity in PyMTL
 # hardware models.
 
-from connection_graph import ConnectionSlice, ConnectionEdge
-
 #-------------------------------------------------------------------------
 # Signal
 #-------------------------------------------------------------------------
@@ -35,18 +33,9 @@ class Signal( object ):
   #-----------------------------------------------------------------------
   # Bitfield access ([]). Returns a Slice object.
   def __getitem__( self, addr ):
+    # TODO: temporary hack
+    from connection_graph import ConnectionSlice
     return ConnectionSlice( self, addr )
-
-  #-----------------------------------------------------------------------
-  # connect
-  #-----------------------------------------------------------------------
-  # Creates a connection with a Signal or Slice.
-  def connect( self, target ):
-    connection_edge     = ConnectionEdge( self, target )
-    self.connections   += [ connection_edge ]
-    if not isinstance( target, int ):
-      target.connections += [ connection_edge ]
-    return connection_edge
 
   #-----------------------------------------------------------------------
   # width
@@ -131,4 +120,25 @@ class Wire( Signal ):
   #  msg_type: msg type on the port.
   def __init__( self, msg_type ):
     super( Wire, self ).__init__( msg_type )
+
+#-------------------------------------------------------------------------
+# Constant
+#-------------------------------------------------------------------------
+# Hidden class implementing a Constant value.
+class Constant( Signal ):
+
+  def __init__( self, nbits, value ):
+    super( Constant, self ).__init__( nbits )
+    self._signalvalue = value
+    self.name = "{}'d{}".format( nbits, value )
+
+  @property
+  def fullname( self ):
+    # Constants don't have a parent (should they?) so the fullname
+    # is simply the name
+    return self.name
+
+  # TODO: temporary?
+  def __eq__( self, other ):
+    return self._signalvalue == other._signalvalue
 
