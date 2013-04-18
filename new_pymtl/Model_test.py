@@ -1,7 +1,7 @@
 #=========================================================================
-# ConnectionEdge_test.py
+# Model_test.py
 #=========================================================================
-# Tests verifying the valid construction of connection graphs.
+# Tests verifying the valid construction and elaboration of PyMTL Models.
 
 from Model          import Model
 from signals        import InPort, OutPort, Wire
@@ -12,6 +12,7 @@ import pytest
 #-------------------------------------------------------------------------
 # Utility Functions
 #-------------------------------------------------------------------------
+
 def inst_elab_model( model ):
   x = model()
   x.elaborate()
@@ -46,8 +47,9 @@ def verify_edges( connection_list, ref_list ):
 
 
 #-------------------------------------------------------------------------
-# Test0
+# Port_Port
 #-------------------------------------------------------------------------
+
 class Port_Port( Model ):
   def __init__( s ):
     s.in_ = InPort ( 8 )
@@ -64,8 +66,9 @@ def test_Port_Port():
   verify_edges( m.get_connections(), [ ConnectionEdge( m.in_, m.out ) ] )
 
 #-------------------------------------------------------------------------
-# Test0
+# Port_RdSl_Port
 #-------------------------------------------------------------------------
+
 class Port_RdSl_Port( Model ):
   def __init__( s ):
     s.in_ = InPort ( 8 )
@@ -86,8 +89,9 @@ def test_Port_RdSl_Port():
                                      ] )
 
 #-------------------------------------------------------------------------
-# Test0
+# Port_RdSl_Overlap_Port
 #-------------------------------------------------------------------------
+
 class Port_RdSl_Overlap_Port( Model ):
   def __init__( s ):
     s.in_ = InPort ( 8 )
@@ -111,8 +115,9 @@ def test_Port_RdSl_Overlap_Port():
                                      ] )
 
 #-------------------------------------------------------------------------
-# Test0
+# Port_WrSl_Port
 #-------------------------------------------------------------------------
+
 class Port_WrSl_Port( Model ):
   def __init__( s ):
     s.in0 = InPort ( 4 )
@@ -133,8 +138,9 @@ def test_Port_WrSl_Port():
                                      ] )
 
 #-------------------------------------------------------------------------
-# Test0
+# Port_WrSl_Overlap_Port
 #-------------------------------------------------------------------------
+
 class Port_WrSl_Overlap_Port( Model ):
   def __init__( s ):
     s.in0 = InPort ( 4 )
@@ -162,8 +168,9 @@ def test_Port_WrSl_Overlap_Port():
 
 
 #-------------------------------------------------------------------------
-# Test0
+# SubMod
 #-------------------------------------------------------------------------
+
 class SubMod( Model ):
   def __init__( s ):
     s.in_ = InPort ( 8 )
@@ -196,8 +203,9 @@ def test_SubMod():
                                      ] )
 
 #-------------------------------------------------------------------------
-# Test0
+# SubMod_SL
 #-------------------------------------------------------------------------
+
 class SubMod_SL( Model ):
   def __init__( s ):
     s.in1  = InPort (  4 )
@@ -256,6 +264,11 @@ def test_SubMod_SL():
                                      ] )
 
 #-------------------------------------------------------------------------
+# PortWire
+#-------------------------------------------------------------------------
+# TODO: add wire tests!
+
+#-------------------------------------------------------------------------
 # PortConst
 #-------------------------------------------------------------------------
 
@@ -278,7 +291,6 @@ def test_PortConst():
   verify_edges( m.get_connections(), [ ConnectionEdge( 8, m.out0 ),
                                        ConnectionEdge( 4, m.out1 )
                                      ] )
-
 
 #-------------------------------------------------------------------------
 # PortConstAssertSize
