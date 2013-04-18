@@ -1,11 +1,11 @@
 #=========================================================================
-# connection_graph_test.py
+# ConnectionEdge_test.py
 #=========================================================================
 # Tests verifying the valid construction of connection graphs.
 
-from Model            import Model
-from signals          import InPort, OutPort, Wire
-from connection_graph import ConnectionEdge, ConnectError
+from Model          import Model
+from signals        import InPort, OutPort, Wire
+from ConnectionEdge import ConnectionEdge, ConnectError
 
 import pytest
 

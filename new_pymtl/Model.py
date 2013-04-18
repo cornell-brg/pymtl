@@ -8,9 +8,9 @@
 # can be leveraged by a number of tools for various purposes (simulation,
 # translation into HDLs, etc).
 
-from connection_graph import ConnectionEdge
-from signals          import Signal, InPort, OutPort, Wire, Constant
-#from physical        import PhysicalDimensions
+from ConnectionEdge import ConnectionEdge
+from signals        import Signal, InPort, OutPort, Wire, Constant
+#from physical      import PhysicalDimensions
 
 #import PortBundle
 import collections

@@ -1,5 +1,5 @@
 #=========================================================================
-# connection_graph.py
+# ConnectionEdge.py
 #=========================================================================
 # Classes used to construct the structural connection graph of a Model.
 
