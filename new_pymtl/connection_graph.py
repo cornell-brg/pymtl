@@ -1,44 +1,11 @@
 #=========================================================================
 # connection_graph.py
 #=========================================================================
-# Classes used to construct the connection graph of a Model.
+# Classes used to construct the structural connection graph of a Model.
 
 from helpers import get_nbits
 
-from signals import InPort, Constant
-
-#-------------------------------------------------------------------------
-# ConnectionSlice
-#-------------------------------------------------------------------------
-class ConnectionSlice(object):
-  def __init__( self, port, addr ):
-    self.parent_port = port
-    self._addr       = addr
-    if isinstance( addr, slice ):
-      assert not addr.step  # We dont support steps!
-      self.nbits     = addr.stop - addr.start
-    else:
-      self.nbits     = 1
-
-  def connect(self, target):
-    connection_edge = ConnectionEdge( self, target )
-    self.parent_port.connections   += [ connection_edge ]
-    # TODO: figure out a way to get rid of this special case
-    if not isinstance( target, int ):
-      target.parent_port.connections += [ connection_edge ]
-    return connection_edge
-
-  @property
-  def connections(self):
-    return self.parent_port.connections
-  @connections.setter
-  def connections(self, value):
-    self.parent_port.connections = value
-
-  @property
-  def width( self ):
-    """Temporary"""
-    return self.nbits
+from signals import InPort, Constant, SignalSlice
 
 #-------------------------------------------------------------------------
 # ConnectError
@@ -74,18 +41,10 @@ class ConnectionEdge(object):
     # Set the nbits attribute of the connection
     self.nbits = src.nbits
 
-    # Source Node
-    if isinstance( src, ConnectionSlice ):
-      self.src_node = src.parent_port
-    else:
-      self.src_node = src
+    # Set source and destination nodes and ranges
+    self.src_node   = src._signal
     self.src_slice  = src._addr
-
-    # Destination Node
-    if isinstance( dest, ConnectionSlice ):
-      self.dest_node = dest.parent_port
-    else:
-      self.dest_node = dest
+    self.dest_node  = dest._signal
     self.dest_slice = dest._addr
 
     # Add ourselves to the src_node and dest_node connectivity lists

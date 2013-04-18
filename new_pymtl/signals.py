@@ -7,8 +7,8 @@
 #-------------------------------------------------------------------------
 # Signal
 #-------------------------------------------------------------------------
-# Hidden base class implementing any Signal (port, wire, or constant) that
-# can carry a value.
+# Hidden base class implementing any Signal (port, wire, constant) that
+# can carry a SignalValue.
 class Signal( object ):
 
   #-----------------------------------------------------------------------
@@ -16,44 +16,41 @@ class Signal( object ):
   #-----------------------------------------------------------------------
   #  msg_type: msg type on the port.
   def __init__( self, msg_type ):
-    if isinstance( msg_type, int ):
-      self.nbits          = msg_type
-    else:
-      self.nbits          = msg_type.nbits
-    self._addr            = None
-    self.name             = "NO NAME: not elaborated yet!"
-    self.parent           = None
-    self.connections      = []
-    self._int_connections = []
-    self._ext_connections = []
-    self._signalvalue     = None
+
+    is_bits    = isinstance( msg_type, int )
+    self.nbits = msg_type if is_bits else msg_type.nbits
+
+    self.name          = "NO NAME: not elaborated yet!"
+    self.parent        = None
+    self.connections   = []
+
+    self._addr         = None
+    self._signal       = self
+    self._signalvalue  = None
+
+    #self._int_connections = []
+    #self._ext_connections = []
 
   #-----------------------------------------------------------------------
   # __getitem__
   #-----------------------------------------------------------------------
   # Bitfield access ([]). Returns a Slice object.
   def __getitem__( self, addr ):
-    # TODO: temporary hack
-    from connection_graph import ConnectionSlice
-    return ConnectionSlice( self, addr )
+    return SignalSlice( self, addr )
 
   #-----------------------------------------------------------------------
-  # width
+  # fullname
   #-----------------------------------------------------------------------
-  # TEMPORARY: for backwards compatibility
-  @property
-  def width( self ):
-    return self.nbits
-
+  # Return name of Signal with format 'parent_model_name.signal_name'.
   @property
   def fullname( self ):
     return "{}.{}".format( self.parent.name, self.name )
 
   #-----------------------------------------------------------------------
-  # Unaccessible attributes
+  # Protected attributes
   #-----------------------------------------------------------------------
   # Prevent reading/writing the following attributes to prevent
-  # confusion between Signals (Channels?) and Values
+  # confusion between Signal objects and SignalValue objects.
   @property
   def v( self ):
     raise AttributeError( "ports/wires have no .v attribute!" )
@@ -124,21 +121,61 @@ class Wire( Signal ):
 #-------------------------------------------------------------------------
 # Constant
 #-------------------------------------------------------------------------
-# Hidden class implementing a Constant value.
+# Hidden class implementing a constant value Signal.
 class Constant( Signal ):
 
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
+  #  nbits: bitwidth of the constant.
+  #  value: integer value of the constant.
   def __init__( self, nbits, value ):
     super( Constant, self ).__init__( nbits )
-    self._signalvalue = value
-    self.name = "{}'d{}".format( nbits, value )
 
+    # Special case the name and _signalvalue attributes
+    self.name         = "{}'d{}".format( nbits, value )
+    self._signalvalue = value
+
+  #-----------------------------------------------------------------------
+  # fullname
+  #-----------------------------------------------------------------------
+  # Constants don't have a parent (should they?) so the fullname is simply
+  # simply a string describing the bitwidth + value of the constant.
   @property
   def fullname( self ):
-    # Constants don't have a parent (should they?) so the fullname
-    # is simply the name
     return self.name
 
   # TODO: temporary?
   def __eq__( self, other ):
     return self._signalvalue == other._signalvalue
+
+#-------------------------------------------------------------------------
+# SignalSlice
+#-------------------------------------------------------------------------
+# Hidden class representing a subslice of a Signal. SignalSlices are
+# temporary objects constructed when structurally connecting Signals.
+class SignalSlice( object ):
+
+  def __init__( self, signal, addr ):
+
+    # Handle slices of the form x[ idx ] and x[ start : stop ]
+    is_slice   = isinstance( addr, slice )
+    self.nbits = (addr.stop - addr.start) if is_slice else 1
+
+    # Steps are not supported!
+    if is_slice: assert not addr.step
+
+    # _signal points to the Signal object we are slicing
+    self._addr   = addr
+    self._signal = signal
+
+  # Make connections attribute reference our parent Signal's connections.
+  # Necessary? If so, do the same for _signalvalue?
+  @property
+  def connections( self ):
+    return self._signal.connections
+  @connections.setter
+  def connections( self, value ):
+    self._signal.connections = value
+
 
