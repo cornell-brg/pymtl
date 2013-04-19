@@ -7,8 +7,8 @@
 #-------------------------------------------------------------------------
 # Signal
 #-------------------------------------------------------------------------
-# Hidden base class implementing any Signal (port, wire, constant) that
-# can carry a SignalValue.
+# Base class implementing any Signal (port, wire, constant) that can carry
+# a SignalValue.
 class Signal( object ):
 
   #-----------------------------------------------------------------------
@@ -36,7 +36,7 @@ class Signal( object ):
   #-----------------------------------------------------------------------
   # Bitfield access ([]). Returns a Slice object.
   def __getitem__( self, addr ):
-    return SignalSlice( self, addr )
+    return _SignalSlice( self, addr )
 
   #-----------------------------------------------------------------------
   # fullname
@@ -76,6 +76,9 @@ class Signal( object ):
   def next( self, value ):
     raise AttributeError( "ports/wires have no .next attribute!" )
 
+  #-----------------------------------------------------------------------
+  # line_trace
+  #-----------------------------------------------------------------------
   #def line_trace( self ):
   #  return self._msg.line_trace()
 
@@ -145,17 +148,23 @@ class Constant( Signal ):
   def fullname( self ):
     return self.name
 
+  #-----------------------------------------------------------------------
+  # __eq__
+  #-----------------------------------------------------------------------
   # TODO: temporary?
   def __eq__( self, other ):
     return self._signalvalue == other._signalvalue
 
 #-------------------------------------------------------------------------
-# SignalSlice
+# _SignalSlice
 #-------------------------------------------------------------------------
-# Hidden class representing a subslice of a Signal. SignalSlices are
+# Hidden class representing a subslice of a Signal. _SignalSlices are
 # temporary objects constructed when structurally connecting Signals.
-class SignalSlice( object ):
+class _SignalSlice( object ):
 
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
   def __init__( self, signal, addr ):
 
     # Handle slices of the form x[ idx ] and x[ start : stop ]
@@ -169,6 +178,9 @@ class SignalSlice( object ):
     self._addr   = addr
     self._signal = signal
 
+  #-----------------------------------------------------------------------
+  # connections
+  #-----------------------------------------------------------------------
   # Make connections attribute reference our parent Signal's connections.
   # Necessary? If so, do the same for _signalvalue?
   @property

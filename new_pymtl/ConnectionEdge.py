@@ -4,13 +4,12 @@
 # Classes used to construct the structural connection graph of a Model.
 
 from helpers import get_nbits
-
-from signals import InPort, Constant, SignalSlice
+from signals import InPort, Constant
 
 #-------------------------------------------------------------------------
 # ConnectError
 #-------------------------------------------------------------------------
-# Exception raised for invalid connection parameters
+# Exception raised for invalid connection parameters.
 class ConnectError(Exception):
   pass
 
@@ -20,6 +19,9 @@ class ConnectError(Exception):
 # Class representing a structural connection between Signal objects.
 class ConnectionEdge(object):
 
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
   def __init__( self, src, dest ):
 
     # Validate inputs, raise exceptions if necessary

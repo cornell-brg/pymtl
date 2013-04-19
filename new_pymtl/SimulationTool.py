@@ -121,7 +121,7 @@ class SimulationTool():
   # print_line_trace
   #-----------------------------------------------------------------------
   # Print cycle number and line trace of model.
-  def print_line_trace(self):
+  def print_line_trace( self ):
     print "{:>3}:".format( self.ncycles ), self.model.line_trace()
 
   #-----------------------------------------------------------------------

@@ -30,7 +30,6 @@ import inspect
 #
 class Model(object):
 
-
   #-----------------------------------------------------------------------
   # elaborate
   #-----------------------------------------------------------------------
@@ -39,8 +38,14 @@ class Model(object):
   # The elaborate() function must be called on an instantiated toplevel
   # module before it is passed to any MTL tools!
   def elaborate(self):
+
+    # Initialize data structure to hold all model classes in the design
     self.model_classes = set()
-    self.recurse_elaborate(self, 'top')
+
+    # Recursively elaborate each model in the design, starting with top
+    self.recurse_elaborate( self, 'top' )
+
+    # Recursively visit all connections in the design, set directionality
     self.recurse_connections()
 
   #-----------------------------------------------------------------------
@@ -57,101 +62,129 @@ class Model(object):
   # recurse_elaborate
   #-----------------------------------------------------------------------
   # Utility method to perform elaboration on a Model and it's submodules.
-  def recurse_elaborate(self, target, iname):
-    self.model_classes.add( target )
+  def recurse_elaborate( self, current_model, instance_name ):
+
+    # Add the target model to the set of all models
+    self.model_classes.add( current_model )
+
     # Set Public Attributes
-    target.class_name = self.gen_class_name( target )
-    target.parent     = None
-    target.name       = iname
-    # Setup default Ports
-    target.clk        = InPort(1)
-    target.reset      = InPort(1)
-    # Setup default function lists
-    target._tick_blocks          = []
-    target._posedge_clk_blocks   = []
-    target._combinational_blocks = []
-    # Elaborate design
-    target.elaborate_logic()
-    # Private stuff
-    target._line_trace_en  = False
-    target._wires       = []
-    target._ports       = []
-    target._inports     = []
-    target._outports    = []
-    target._submodules  = []
-    if not hasattr( target, '_newsenses' ):
-      target._newsenses   = collections.defaultdict( list )
-    target._localparams = set()
-    if not hasattr( target, '_connections' ):
-      target._connections = set()
-    target._tempwires   = {}
-    target._temparrays  = []
-    target._tempregs    = []
-    target._loopvars    = []
+    current_model.class_name = self.gen_class_name( current_model )
+    current_model.parent     = None
+    current_model.name       = instance_name
+
+    # Setup default InPorts
+    current_model.clk        = InPort(1)
+    current_model.reset      = InPort(1)
+
+    # Initialize function lists for concurrent blocks
+    current_model._tick_blocks          = []
+    current_model._posedge_clk_blocks   = []
+    current_model._combinational_blocks = []
+
+    # Call user implemented elaborate_logic() function
+    current_model.elaborate_logic()
+
+    # Initialize lists for signals, submodules and connections
+    current_model._wires          = []
+    current_model._inports        = []
+    current_model._outports       = []
+    current_model._submodules     = []
+    if not hasattr( current_model, '_connections' ):
+      current_model._connections = set()
+
+    # Disable line tracing by default
+    current_model._line_trace_en  = False
+
+    if not hasattr( current_model, '_newsenses' ):
+      current_model._newsenses   = collections.defaultdict( list )
+
+    # Verilog translation specific variables
+    current_model._localparams = set()
+    current_model._tempwires   = {}
+    current_model._temparrays  = []
+    current_model._tempregs    = []
+    current_model._loopvars    = []
+
+    # Inspect all user defined model attributes (signals, signal lists,
+    # submodels, etc). Set their names, parents, and add them to the
+    # appropriate private attribute lists.
     # TODO: do all ports first?
-    # Get the names of all ports and submodules
-    for name, obj in target.__dict__.items():
-      if not name.startswith('_'):
-        self.check_type(target, name, obj)
+    for name, obj in current_model.__dict__.items():
+      if not name.startswith( '_' ):
+        self.check_type( current_model, name, obj )
 
   #-----------------------------------------------------------------------
   # check_type
   #-----------------------------------------------------------------------
   # Utility method to specialize elaboration actions based on object type.
-  def check_type(self, target, name, obj):
-    # If object is a wire, add it to our sensitivity list
-    # TODO: Wires are currently subclasses of Signals, so this check must
-    #       be first.  Fix?
-    if isinstance(obj, Wire):
-      obj.name = name
-      obj.parent = target
-      target._wires += [obj]
-    # If object is a port, add it to our ports list
-    elif isinstance(obj, InPort):
-      obj.name = name
-      obj.parent = target
-      target._ports += [obj]
-      target._inports += [obj]
-    elif isinstance(obj, OutPort):
-      obj.name = name
-      obj.parent = target
-      target._ports += [obj]
-      target._outports += [obj]
-    #elif isinstance(obj, PortBundle.PortBundle):
+  def check_type( self, current_model, name, obj ):
+
+    # Wires
+    if   isinstance( obj, Wire ):
+      obj.name              = name
+      obj.parent            = current_model
+      current_model._wires += [ obj ]
+
+    # InPorts
+    elif isinstance( obj, InPort ):
+      obj.name                = name
+      obj.parent              = current_model
+      current_model._inports += [ obj ]
+
+    # OutPorts
+    elif isinstance( obj, OutPort ):
+      obj.name                 = name
+      obj.parent               = current_model
+      current_model._outports += [ obj ]
+
+    ## PortBundles
+    #elif isinstance( obj, PortBundle.PortBundle ):
     #  for port_name, obj in obj.__dict__.items():
-    #    self.check_type(target, name+'_M_'+port_name, obj)
-    # If object is a submodule, add it to our submodules list and recursively
-    # call elaborate() on it
-    elif isinstance(obj, Model):
+    #    self.check_type(current_model, name+'_M_'+port_name, obj)
+
+    # Submodules
+    elif isinstance( obj, Model ):
+      # Recursively call elaborate() on the submodule
       self.recurse_elaborate( obj, name )
-      obj.parent = target
+      # Set attributes
+      obj.parent                 = current_model
+      current_model._submodules += [ obj ]
+      # Structurally connect the clk and reset signals
       obj.parent.connect( obj.clk,   obj.parent.clk   )
       obj.parent.connect( obj.reset, obj.parent.reset )
-      target._submodules += [obj]
-    # We've found a constant assigned to a global variable.
-    # TODO: add support for floats?
-    elif isinstance(obj, int):
-      target._localparams.add( (name, obj) )
-    # If the object is a list, iterate through each item in the list and
-    # recursively call the check_type() utility function
-    elif isinstance(obj, list):
-      # TODO: fix to handle Wire lists properly
-      if obj and isinstance(obj[0], Signal):
-        target._temparrays.append( name )
+
+    # Local Parameters (int)
+    elif isinstance( obj, int ):
+      # TODO: add support for floats?
+      current_model._localparams.add( (name, obj) )
+
+    # Lists of Signals
+    elif isinstance( obj, list ):
+      # TODO: hacky signal check, implement using SignalList instead?
+      if obj and isinstance( obj[0], Signal ):
+        current_model._temparrays.append( name )
+      # Iterate through each item in the list and recursively call the
+      # check_type() utility function
       for i, item in enumerate(obj):
         item_name = "%s[%d]" % (name, i)
-        self.check_type(target, item_name, item)
+        self.check_type( current_model, item_name, item )
 
   #-----------------------------------------------------------------------
   # gen_class_name
   #-----------------------------------------------------------------------
-  # Generate a unique class name.
-  def gen_class_name(self, model):
+  # Generate a unique class name for model instances.
+  def gen_class_name( self, model ):
+
+    # Base name is always just the class name
     name = model.__class__.__name__
+
+    # If the @capture_args decorator has been used, generate a unique
+    # name for the Model instance based on its parameters
     try:
       for arg_name, arg_val in model._args.items():
         name += "_{}_{}".format( arg_name, arg_val )
       return name
+    # No _args attribute, so no need to create a specialized name
     except AttributeError:
       return name
 
@@ -161,28 +194,11 @@ class Model(object):
   # Set the directionality on all connections in the design of a Model.
   def recurse_connections(self):
 
-    #for port in self._ports:
-
-    #  for c in port.connections:
-    #    # Set the directionality of this connection
-    #    self.set_edge_direction( c )
-    #    # Classify as either an internal or external connection
-    #    if c.is_internal( port ):
-    #      port.int_connections += [c]
-    #      self._connections.add( c )
-    #    else:
-    #      port.ext_connections += [c]
-    #      self.parent._connections.add( c )
-    #    # TODO: make connect a self.connect() method instead, add to
-    #    #       self._connections then instead?
-
     # Set direction of all connections
-
     for c in self._connections:
       self.set_edge_direction( c )
 
     # Recursively enter submodules
-
     for submodule in self._submodules:
       submodule.recurse_connections()
 
@@ -191,6 +207,7 @@ class Model(object):
   #-----------------------------------------------------------------------
   # Set the edge direction of a single ConnectionEdge.
   def set_edge_direction(self, edge):
+
     a = edge.src_node
     b = edge.dest_node
 
@@ -335,22 +352,22 @@ class Model(object):
   #-----------------------------------------------------------------------
   # Print out the physical design.
   # TODO: Add this back in later?
-  #def dump_physical_design(self, prefix=''):
+  #def dump_physical_design( self, prefix='' ):
   #  pass
 
   #-----------------------------------------------------------------------
   # is_elaborated
   #-----------------------------------------------------------------------
   # Returns 'True' is elaborate() has been called on the Model.
-  def is_elaborated(self):
-    return hasattr(self, 'class_name')
+  def is_elaborated( self):
+    return hasattr( self, 'class_name' )
 
   #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------
   # Having a default line trace makes it easier to just always enable
   # line tracing in the test harness. -cbatten
-  def line_trace(self):
+  def line_trace( self ):
     return ""
 
 #------------------------------------------------------------------------

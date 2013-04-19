@@ -15,7 +15,10 @@ import helpers
 # Class emulating limited precision values of a set bitwidth.
 class Bits( SignalValue ):
 
-  def __init__(self, nbits, value = 0, trunc = False ):
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
+  def __init__( self, nbits, value = 0, trunc = False ):
 
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0
@@ -62,8 +65,8 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   # bit_length
   #-----------------------------------------------------------------------
-  # Implement bit_length method provided by int built-in. Simplifies
-  # the implementation of get_nbits()
+  # Implement bit_length method provided by the int built-in. Simplifies
+  # the implementation of get_nbits().
   def bit_length( self ):
     return self._uint.bit_length()
 
@@ -98,12 +101,13 @@ class Bits( SignalValue ):
   #  self._uint = ( value & self._mask )
 
   #------------------------------------------------------------------------
-  # Bitwise Access
+  # __getitem__
   #------------------------------------------------------------------------
+  # Read a subset of bits in the Bits object.
+  def __getitem__( self, addr ):
 
-  def __getitem__(self, addr):
-    """Bitfield reads ([])."""
     # TODO: clean up this logic!
+
     if isinstance(addr, slice):
       start = addr.start
       stop = addr.stop
@@ -123,11 +127,17 @@ class Bits( SignalValue ):
       assert 0 <= addr < self.nbits
       return Bits( 1, (self._uint & (1 << addr)) >> addr )
 
+  #------------------------------------------------------------------------
+  # __setitem__
+  #------------------------------------------------------------------------
+  # Write a subset of bits in the Bits object.
   def __setitem__(self, addr, value):
-    """Bitfield writes([])."""
+
+    # TODO: clean up this logic!
+
     if isinstance(value, Bits):
       value = value._uint
-    # TODO: clean up this logic!
+
     if isinstance(addr, slice):
       start = addr.start
       stop = addr.stop
@@ -166,8 +176,8 @@ class Bits( SignalValue ):
   # Arithmetic Operators
   #------------------------------------------------------------------------
   # For now, let's make the width equal to the max of the widths of the
-  # two operands. This is verilog semantics:
-  #  http://www1.pldworld.com/@xilinx/html/technote/TOOL/MANUAL/21i_doc/data/fndtn/ver/ver4_4.htm
+  # two operands. These semantics match Verilog:
+  # http://www1.pldworld.com/@xilinx/html/technote/TOOL/MANUAL/21i_doc/data/fndtn/ver/ver4_4.htm
 
   # TODO: reflected operands?
   def __invert__(self):
@@ -281,7 +291,6 @@ class Bits( SignalValue ):
     return self._uint != 0
 
   def __eq__(self,other):
-    """Equality operator, special case for comparisons with integers."""
     if isinstance(other, Bits):
       assert self.nbits == other.nbits
       other = other._uint
