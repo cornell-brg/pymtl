@@ -19,13 +19,13 @@ import inspect
 import ast, _ast
 
 #------------------------------------------------------------------------
-# LeafVisitor
+# DetectLoadsAndStores
 #------------------------------------------------------------------------
 # AST traversal class which detects loads and stores within a concurrent
 # block.  Load detection is useful for generating the sensitivity list
 # for @combinational blocks in the Simulator.  Store detection is useful
 # for determining 'reg' type variables during Verilog translation.
-class LeafVisitor( ast.NodeVisitor ):
+class DetectLoadsAndStores( ast.NodeVisitor ):
 
   def __init__( self ):
     self.assign = False
@@ -62,9 +62,9 @@ class LeafVisitor( ast.NodeVisitor ):
   def visit_Attribute( self, node ):
     if not self.assign: return
     if   isinstance( node.ctx, _ast.Load ):
-      self.load  += [ LeafChecker( self ).visit( node ) ]
+      self.load  += [ GetVariableName( self ).visit( node ) ]
     elif isinstance( node.ctx, _ast.Store ):
-      self.store += [ LeafChecker( self ).visit( node ) ]
+      self.store += [ GetVariableName( self ).visit( node ) ]
     else:
       print type( node.ctx )
       raise Exception( "Unsupported concurrent block code!" )
@@ -72,9 +72,9 @@ class LeafVisitor( ast.NodeVisitor ):
   def visit_Name( self, node ):
     if not self.assign: return
     if   isinstance( node.ctx, _ast.Load ):
-      self.load  += [ LeafChecker( self ).visit( node ) ]
+      self.load  += [ GetVariableName( self ).visit( node ) ]
     elif isinstance( node.ctx, _ast.Store ):
-      self.store += [ LeafChecker( self ).visit( node ) ]
+      self.store += [ GetVariableName( self ).visit( node ) ]
     else:
       print type( node.ctx )
       raise Exception( "Unsupported concurrent block code!" )
@@ -82,9 +82,9 @@ class LeafVisitor( ast.NodeVisitor ):
   def visit_Subscript( self, node ):
     if not self.assign: return
     if   isinstance( node.ctx, _ast.Load ):
-      self.load  += [ LeafChecker( self ).visit( node ) ]
+      self.load  += [ GetVariableName( self ).visit( node ) ]
     elif isinstance( node.ctx, _ast.Store ):
-      self.store += [ LeafChecker( self ).visit( node ) ]
+      self.store += [ GetVariableName( self ).visit( node ) ]
     else:
       print type( node.ctx )
       raise Exception( "Unsupported concurrent block code!" )
@@ -93,22 +93,22 @@ class LeafVisitor( ast.NodeVisitor ):
   #def visit_Subscript( self, node ):
   #  if not self.assign: return
   #  if   isinstance( node.ctx, _ast.Load ):
-  #    self.load  += [ LeafChecker( self ).visit( node ) ]
+  #    self.load  += [ GetVariableName( self ).visit( node ) ]
   #  elif isinstance( node.ctx, _ast.Store ):
-  #    self.store += [ LeafChecker( self ).visit( node ) ]
+  #    self.store += [ GetVariableName( self ).visit( node ) ]
   #  else:
   #    print type( node.ctx )
   #    raise Exception( "Unsupported concurrent block code!" )
 
 
 #------------------------------------------------------------------------
-# LeafChecker
+# GetVariableName
 #------------------------------------------------------------------------
 # Converts an AST branch, beginning with the indicated node, into it's
 # corresponding Python name.  Meant to be called as a utility visitor
 # by another AST visitor, which should pass a reference to itself as
 # a parameter.
-class LeafChecker( ast.NodeVisitor ):
+class GetVariableName( ast.NodeVisitor ):
 
   def __init__( self, parent ):
     self.parent = parent

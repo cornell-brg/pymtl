@@ -23,7 +23,7 @@ def check_ast( ld, st ):
     #import debug_utils
     #debug_utils.print_ast( tree )
 
-    load, store = LeafVisitor().enter( tree )
+    load, store = DetectLoadsAndStores().enter( tree )
     print "LOADS ", load,  "want:", ld
     print "STORES", store, "want:", st
     assert ld == load

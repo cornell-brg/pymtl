@@ -10,11 +10,10 @@ import pprint
 import collections
 import inspect
 import copy
-
-# TODO: temporary
-import ast_visitor
-from SignalValue        import SignalValue
 import warnings
+
+from SignalValue import SignalValue
+from ast_visitor import DetectLoadsAndStores, get_method_ast
 
 #-------------------------------------------------------------------------
 # SimulationTool
@@ -336,8 +335,8 @@ class SimulationTool():
     # Get the sensitivity list of each event driven (combinational) block
     # TODO: do before or after we swap value nodes?
     for func in model._combinational_blocks:
-      tree = ast_visitor.get_method_ast( func )
-      loads, stores = ast_visitor.LeafVisitor().enter( tree )
+      tree = get_method_ast( func )
+      loads, stores = DetectLoadsAndStores().enter( tree )
       for x in loads:
         obj = name_to_object( x )
         if   isinstance( obj, list ):
