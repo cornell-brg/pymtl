@@ -6,6 +6,7 @@
 from Model          import Model
 from signals        import InPort, OutPort, Wire
 from ConnectionEdge import ConnectionEdge, ConnectError
+from Bits           import Bits
 
 import pytest
 
@@ -45,6 +46,25 @@ def verify_edges( connection_list, ref_list ):
     assert x.dest_node == y.dest_node
     assert x.dest_slice == y.dest_slice
 
+
+#-------------------------------------------------------------------------
+# Port_Port_Bits
+#-------------------------------------------------------------------------
+
+class Port_Port_Bits( Model ):
+  def __init__( s ):
+    s.in_ = InPort ( Bits( 8 ) )
+    s.out = OutPort( Bits( 8 ) )
+  def elaborate_logic( s ):
+    s.connect( s.in_, s.out )
+
+def test_Port_Port_Bits():
+  m = inst_elab_model( Port_Port_Bits )
+  verify_signals( m.get_inports(),  [('in_', 8), ('clk', 1), ('reset', 1)] )
+  verify_signals( m.get_outports(), [('out', 8)] )
+  verify_signals( m.get_wires(),    [] )
+  verify_submodules( m.get_submodules() , [] )
+  verify_edges( m.get_connections(), [ ConnectionEdge( m.in_, m.out ) ] )
 
 #-------------------------------------------------------------------------
 # Port_Port

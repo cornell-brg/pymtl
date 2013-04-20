@@ -9,8 +9,7 @@
 import pprint
 import collections
 import inspect
-
-from Bits             import Bits
+import copy
 
 # TODO: temporary
 import ast_visitor
@@ -254,8 +253,9 @@ class SimulationTool():
         sim._register_queue.append( svalue )
       return notify_sim_seq_update
 
-    # Each grouping is a bits object, make all ports pointing to
-    # it point to the Bits object instead
+    # Each grouping represents a single SignalValue object. Perform a swap
+    # so that all attributes currently pointing to Signal objects in this
+    # grouping instead point to the SignalValue.
     for group in self._nets:
 
       # Get an element out of the set and use it to determine the bitwidth
@@ -264,9 +264,9 @@ class SimulationTool():
       # TODO: what about BitStructs?
       temp = group.pop()
       group.add( temp )
-      svalue = Bits( temp.nbits )
+      svalue = temp.msg_type
       # TODO: should this be visible to sim?
-      svalue._shadow_value = Bits( temp.nbits )
+      svalue._shadow_value = copy.copy( svalue )
       #svalue._debug_signals = group
 
       # Add a callback to the SignalValue so that the simulator is notified

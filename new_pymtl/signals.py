@@ -4,6 +4,8 @@
 # Collection of classes for defining interfaces and connectivity in PyMTL
 # hardware models.
 
+from Bits import Bits
+
 #-------------------------------------------------------------------------
 # Signal
 #-------------------------------------------------------------------------
@@ -17,8 +19,9 @@ class Signal( object ):
   #  msg_type: msg type on the port.
   def __init__( self, msg_type ):
 
-    is_bits    = isinstance( msg_type, int )
-    self.nbits = msg_type if is_bits else msg_type.nbits
+    is_int        = isinstance( msg_type, int )
+    self.msg_type = msg_type if not is_int else Bits( msg_type )
+    self.nbits    = self.msg_type.nbits
 
     self.name          = "NO NAME: not elaborated yet!"
     self.parent        = None

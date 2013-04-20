@@ -6,6 +6,7 @@
 from Model          import *
 from SimulationTool import *
 from helpers        import *
+from Bits           import Bits
 
 #-------------------------------------------------------------------------
 # Setup Sim
@@ -49,6 +50,23 @@ class PassThroughOld( Model ):
 
 def test_PassThroughOld():
   passthrough_tester( PassThroughOld )
+
+#-------------------------------------------------------------------------
+# PassThroughBits
+#-------------------------------------------------------------------------
+
+class PassThroughBits( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort ( Bits( nbits ) )
+    s.out = OutPort( Bits( nbits ) )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.value = s.in_
+
+def test_PassThroughBits():
+  passthrough_tester( PassThroughBits )
 
 #-------------------------------------------------------------------------
 # PassThrough

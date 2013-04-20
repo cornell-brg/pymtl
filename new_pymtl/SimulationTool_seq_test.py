@@ -5,6 +5,7 @@
 
 from Model          import *
 from SimulationTool import *
+from Bits           import Bits
 
 #-------------------------------------------------------------------------
 # Setup Sim
@@ -51,6 +52,23 @@ class RegisterOld( Model ):
 
 def test_RegisterOld():
   register_tester( RegisterOld )
+
+#-------------------------------------------------------------------------
+# RegisterBits
+#-------------------------------------------------------------------------
+
+class RegisterBits( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort  ( Bits( nbits ) )
+    s.out = OutPort ( Bits( nbits ) )
+
+  def elaborate_logic( s ):
+    @s.posedge_clk
+    def logic():
+      s.out.next = s.in_
+
+def test_RegisterBits():
+  register_tester( RegisterBits )
 
 #-------------------------------------------------------------------------
 # Register

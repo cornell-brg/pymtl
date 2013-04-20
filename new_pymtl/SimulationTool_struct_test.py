@@ -5,6 +5,7 @@
 
 from Model          import *
 from SimulationTool import *
+from Bits           import Bits
 
 from SimulationTool_comb_test import verify_bit_blast, set_ports
 
@@ -47,6 +48,20 @@ class PassThrough( Model ):
 
 def test_PassThrough():
   passthrough_tester( PassThrough )
+
+#-------------------------------------------------------------------------
+# PassThroughBits
+#-------------------------------------------------------------------------
+
+class PassThroughBits( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort ( Bits( nbits ) )
+    s.out = OutPort( Bits( nbits ) )
+  def elaborate_logic( s ):
+    s.connect( s.in_, s.out )
+
+def test_PassThroughBits():
+  passthrough_tester( PassThroughBits )
 
 #-------------------------------------------------------------------------
 # PassThroughList
