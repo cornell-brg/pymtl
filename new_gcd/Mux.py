@@ -1,15 +1,14 @@
 #=========================================================================
-# Muxes
+# Mux
 #=========================================================================
-# Asserting that a select value is out of range is not currently
-# translatable.
+# Module containing the Mux model.
 
 from new_pymtl import *
 
 #-------------------------------------------------------------------------
-# Mux2
+# Mux
 #-------------------------------------------------------------------------
-
+# Multiplexor parameterizable by ports and bitwidth.
 class Mux( Model ):
 
   @capture_args

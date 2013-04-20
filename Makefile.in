@@ -27,10 +27,10 @@ subpkgs = \
   pex_gcd \
   plab1_imul \
   plab4_net \
+  plab3_mem \
 
 #  pex_dac \
 #  plab2_proc \
-#  plab3_mem \
 #  plab4_net \
 
 #-------------------------------------------------------------------------

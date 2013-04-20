@@ -24,7 +24,7 @@ import argparse
 import sys
 import re
 
-from pymtl import *
+from new_pymtl import *
 
 from GcdUnitBL  import GcdUnitBL
 from GcdUnitRTL import GcdUnitRTL
