@@ -529,3 +529,102 @@ class IfMux( Model ):
 
 def test_IfMux():
   mux_tester( IfMux )
+
+#-------------------------------------------------------------------------
+# splitslice_tester
+#-------------------------------------------------------------------------
+# Test slicing followed by combinational logic
+
+def splitslice_tester( model_type ):
+  model = model_type()
+  sim   = setup_sim( model )
+  #import pprint
+  #pprint.pprint( model.get_connections() )
+  sim.eval_combinational()
+  model.in_.v = 0b1001
+  assert model.out0 == 0b00
+  assert model.out1 == 0b00
+  sim.eval_combinational()
+  assert model.out0 == 0b01
+  assert model.out1 == 0b10
+  model.in_.v = 0b1111
+  sim.eval_combinational()
+  assert model.out0 == 0b11
+  assert model.out1 == 0b11
+
+#-------------------------------------------------------------------------
+# SlicePassThroughComb
+#-------------------------------------------------------------------------
+class SlicePassThrough( Model ):
+  def __init__( s ):
+    s.in_  = InPort  ( 4 )
+    s.out0 = OutPort ( 2 )
+    s.out1 = OutPort ( 2 )
+
+  def elaborate_logic( s ):
+    s.pass0  = PassThrough( 2 )
+    s.pass1  = PassThrough( 2 )
+
+    @s.combinational
+    def comb_logic():
+      s.pass0.in_.v = s.in_[0:2]
+      s.pass1.in_.v = s.in_[2:4]
+
+    s.connect( s.pass0.out, s.out0 )
+    s.connect( s.pass1.out, s.out1 )
+
+def test_SlicePassThrough():
+  splitslice_tester( SlicePassThrough )
+
+#-------------------------------------------------------------------------
+# SlicePassThroughWire
+#-------------------------------------------------------------------------
+class SlicePassThroughWire( Model ):
+  def __init__( s ):
+    s.in_  = InPort  ( 4 )
+    s.out0 = OutPort ( 2 )
+    s.out1 = OutPort ( 2 )
+
+  def elaborate_logic( s ):
+    s.wire0 = Wire( 2 )
+    s.wire1 = Wire( 2 )
+
+    @s.combinational
+    def comb_logic():
+      s.wire0.v    = s.in_[0:2]
+      s.wire1.v[:] = s.in_[2:4]
+
+    @s.combinational
+    def wire0_logic():
+      s.out0.v = s.wire0
+
+    @s.combinational
+    def wire1_logic():
+      s.out1.v = s.wire1
+
+def test_SlicePassThroughWire():
+  splitslice_tester( SlicePassThroughWire )
+
+
+#-------------------------------------------------------------------------
+# SlicePassThroughStruct
+#-------------------------------------------------------------------------
+# TODO: move to SimulationTool_mix_test.py
+class SlicePassThroughStruct( Model ):
+  def __init__( s ):
+    s.in_  = InPort  ( 4 )
+    s.out0 = OutPort ( 2 )
+    s.out1 = InPort  ( 2 )
+
+  def elaborate_logic( s ):
+    s.pass0  = PassThrough( 2 )
+    s.pass1  = PassThrough( 2 )
+
+    s.connect( s.in_[0:2], s.pass0.in_ )
+    s.connect( s.in_[2:4], s.pass1.in_ )
+
+    s.connect( s.pass0.out, s.out0 )
+    s.connect( s.pass1.out, s.out1 )
+
+def test_SlicePassThroughStruct():
+  splitslice_tester( SlicePassThroughStruct )

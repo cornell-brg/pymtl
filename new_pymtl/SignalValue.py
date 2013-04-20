@@ -25,6 +25,12 @@ class SignalValue( object ):
     self.notify_sim_comb_update()
     self.write( value )
 
+  # We need this to make writing to slices notify the sim
+  # correctly... but what about writing next! :(
+  def __setitem__( self, addr, value ):
+    self.notify_sim_comb_update()
+    self._setitem( addr, value )
+
   #-----------------------------------------------------------------------
   # TEMPORARY: Backwards compatibility
   #-----------------------------------------------------------------------

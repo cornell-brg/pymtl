@@ -131,7 +131,7 @@ class Bits( SignalValue ):
   # __setitem__
   #------------------------------------------------------------------------
   # Write a subset of bits in the Bits object.
-  def __setitem__(self, addr, value):
+  def _setitem(self, addr, value):
 
     # TODO: clean up this logic!
 
