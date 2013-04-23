@@ -553,9 +553,9 @@ def splitslice_tester( model_type ):
   assert model.out1 == 0b11
 
 #-------------------------------------------------------------------------
-# SlicePassThroughComb
+# CombSlicePassThrough
 #-------------------------------------------------------------------------
-class SlicePassThrough( Model ):
+class CombSlicePassThrough( Model ):
   def __init__( s ):
     s.in_  = InPort  ( 4 )
     s.out0 = OutPort ( 2 )
@@ -573,13 +573,13 @@ class SlicePassThrough( Model ):
     s.connect( s.pass0.out, s.out0 )
     s.connect( s.pass1.out, s.out1 )
 
-def test_SlicePassThrough():
-  splitslice_tester( SlicePassThrough )
+def test_CombSlicePassThrough():
+  splitslice_tester( CombSlicePassThrough )
 
 #-------------------------------------------------------------------------
-# SlicePassThroughWire
+# CombSlicePassThroughWire
 #-------------------------------------------------------------------------
-class SlicePassThroughWire( Model ):
+class CombSlicePassThroughWire( Model ):
   def __init__( s ):
     s.in_  = InPort  ( 4 )
     s.out0 = OutPort ( 2 )
@@ -602,15 +602,15 @@ class SlicePassThroughWire( Model ):
     def wire1_logic():
       s.out1.v = s.wire1
 
-def test_SlicePassThroughWire():
-  splitslice_tester( SlicePassThroughWire )
+def test_CombSlicePassThroughWire():
+  splitslice_tester( CombSlicePassThroughWire )
 
 
 #-------------------------------------------------------------------------
-# SlicePassThroughStruct
+# CombSlicePassThroughStruct
 #-------------------------------------------------------------------------
 # TODO: move to SimulationTool_mix_test.py
-class SlicePassThroughStruct( Model ):
+class CombSlicePassThroughStruct( Model ):
   def __init__( s ):
     s.in_  = InPort  ( 4 )
     s.out0 = OutPort ( 2 )
@@ -626,5 +626,39 @@ class SlicePassThroughStruct( Model ):
     s.connect( s.pass0.out, s.out0 )
     s.connect( s.pass1.out, s.out1 )
 
-def test_SlicePassThroughStruct():
-  splitslice_tester( SlicePassThroughStruct )
+def test_CombSlicePassThroughStruct():
+  splitslice_tester( CombSlicePassThroughStruct )
+
+#-------------------------------------------------------------------------
+# BitMergePassThrough
+#-------------------------------------------------------------------------
+class BitMergePassThrough( Model ):
+  def __init__( s ):
+    s.in_ = [ InPort( 1 ) for x in xrange( 8 ) ]
+    s.out = OutPort( 8 )
+
+  def elaborate_logic( s ):
+    s.merge = SimpleBitMerge( 8 )
+    s.pt    = PassThrough( 8 )
+
+    for i in range( 8 ):
+      s.connect( s.in_[ i ], s.merge.in_[ i ] )
+
+    s.connect( s.merge.out, s.pt.in_ )
+    s.connect( s.pt.out,    s.out    )
+
+def test_BitMergePassThrough():
+  model = BitMergePassThrough()
+  sim = setup_sim( model )
+  set_ports( model.in_, 0b11110000 )
+  sim.eval_combinational()
+  assert model.out.value == 0b11110000
+  set_ports( model.in_, 0b01010101 )
+  sim.eval_combinational()
+  assert model.out.value == 0b01010101
+  model.in_[0].value = 0
+  sim.eval_combinational()
+  assert model.out.value == 0b01010100
+  model.in_[7].value = 1
+  sim.eval_combinational()
+  assert model.out.value == 0b11010100
