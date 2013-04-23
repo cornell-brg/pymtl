@@ -362,11 +362,6 @@ class SimpleBitBlast( Model ):
   def elaborate_logic( s ):
     for i in range( s.nbits ):
       s.connect( s.out[i], s.in_[i] )
-  #def elaborate_logic( s ):
-  #  @s.combinational
-  #  def logic():
-  #    for i in range( s.nbits ):
-  #      s.out[i].value = s.in_.value[i]
 
 def test_SimpleBitBlast_8_to_8x1():
   model, sim = setup_bit_blast( 8 )
@@ -610,7 +605,7 @@ class ConstantModule( Model ):
     s.out = OutPort ( 8 )
 
   def elaborate_logic( s ):
-    s.shift = m = Shifter(8,2)
+    s.shift = m = Shifter( 8, 2 )
     s.connect_dict({
       m.in_   : s.in_,
       m.shamt : 2,
