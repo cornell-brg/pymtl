@@ -25,23 +25,6 @@ class SignalValue( object ):
     self.notify_sim_comb_update()
     self.write( value )
 
-  # We need this to make writing to slices notify the sim
-  # correctly... but what about writing next! :(
-  def __setitem__( self, addr, value ):
-    self.notify_sim_comb_update()
-    self._setitem( addr, value )
-
-  #-----------------------------------------------------------------------
-  # TEMPORARY: Backwards compatibility
-  #-----------------------------------------------------------------------
-  @property
-  def value( self ):
-    return self
-  @value.setter
-  def value( self, value ):
-    self.notify_sim_comb_update()
-    self.write( value )
-
   #-----------------------------------------------------------------------
   # Write n property
   #-----------------------------------------------------------------------
@@ -55,6 +38,30 @@ class SignalValue( object ):
     # TODO: get raw int value or copy obj?
     # TODO: implement as shadow_write() instead and make part of ABC?
     self._shadow_value.write( value )
+
+  #-----------------------------------------------------------------------
+  # __setitem__
+  #-----------------------------------------------------------------------
+  # We need this to make writing to slices notify the sim correctly.
+  # The notify_sim_slice_update function differs depending on if this
+  # is a shadow SignalValue (points to notify_sim_comb_update), or not
+  # (points to notify_sim_seq_update).  It's up to the SimulationTool
+  # to set this.
+  # TODO: this seems pretty hacky, better way?
+  def __setitem__( self, addr, value ):
+    self.notify_sim_slice_update()
+    self.write_slice( addr, value )
+
+  #-----------------------------------------------------------------------
+  # TEMPORARY: Backwards compatibility
+  #-----------------------------------------------------------------------
+  @property
+  def value( self ):
+    return self
+  @value.setter
+  def value( self, value ):
+    self.notify_sim_comb_update()
+    self.write( value )
 
   #-----------------------------------------------------------------------
   # TEMPORARY: Backwards compatibility
@@ -85,6 +92,15 @@ class SignalValue( object ):
   def write( self, value ):
     raise NotImplementedError( "Subclasses of SignalValue must "
                                "implement the write() method!" )
+
+  #-----------------------------------------------------------------------
+  # write_slice (Abstract)
+  #-----------------------------------------------------------------------
+  # Abstract method, must be implemented by subclasses?
+  # TODO: use abc module to create abstract method?
+  def write_slice( self, addr, value ):
+    raise NotImplementedError( "Subclasses of SignalValue must "
+                               "implement the write_slice() method!" )
 
   #-----------------------------------------------------------------------
   # uint (Abstract)
@@ -134,5 +150,17 @@ class SignalValue( object ):
   #       http://brg.csl.cornell.edu/wiki/lockhart-2013-03-18
   #       Is this the fastest approach?
   def notify_sim_seq_update( self ):
+    pass
+
+  #-----------------------------------------------------------------------
+  # notify_sim_slice_update
+  #-----------------------------------------------------------------------
+  # Notify simulator of sequential update.
+  # Another abstract method used as a hook by simulator tools.
+  # Not meant to be implemented by subclasses.
+  # NOTE: This approach uses closures, other methods can be found in:
+  #       http://brg.csl.cornell.edu/wiki/lockhart-2013-03-18
+  #       Is this the fastest approach?
+  def notify_sim_slice_update( self ):
     pass
 

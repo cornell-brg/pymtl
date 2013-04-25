@@ -22,7 +22,7 @@ from ast_visitor import DetectLoadsAndStores, get_method_ast
 #
 # This class takes a MTL model instance and creates a simulator for execution
 # in the python interpreter.
-class SimulationTool():
+class SimulationTool( object ):
 
   #-----------------------------------------------------------------------
   # __init__
@@ -273,8 +273,10 @@ class SimulationTool():
       # TODO: Currently all SignalValues get both a comb and seq update
       #       callback.  Really should only need one or the other, and
       #       name it notify_sim().
-      svalue.notify_sim_comb_update = create_comb_update_cb( self, svalue )
-      svalue.notify_sim_seq_update  = create_seq_update_cb ( self, svalue )
+      svalue.notify_sim_comb_update  = create_comb_update_cb( self, svalue )
+      svalue.notify_sim_seq_update   = create_seq_update_cb ( self, svalue )
+      svalue.notify_sim_slice_update = svalue.notify_sim_comb_update
+      svalue._shadow_value.notify_sim_slice_update = svalue.notify_sim_seq_update
 
       # Modify model attributes currently referencing Signal objects to
       # reference SignalValue objects instead.

@@ -139,7 +139,6 @@ class RegSlicePassThroughWire( Model ):
     def wire1_logic():
       s.out1.v = s.wire1
 
-@pytest.mark.xfail
 def test_RegSlicePassThroughWire():
   splitslice_tester( RegSlicePassThroughWire )
 
