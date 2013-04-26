@@ -123,18 +123,11 @@ class ZeroExtender( Model ):
     s.out = OutPort ( out_nbits )
 
   def elaborate_logic( s ):
-    # TODO: WORKAROUND: connecting a constant directly to a slice does
-    # not work yet, but when it does we can remove this temporary wire.
-
-    s.temp = Wire( s.out_nbits - s.in_nbits )
 
     # Connections
 
-    s.connect( s.out[0:s.in_nbits],           s.in_  )
-
-    #s.connect( s.out[s.in_nbits:s.out_nbits], 0 )
-    s.connect( s.out[s.in_nbits:s.out_nbits], s.temp )
-    s.connect( s.temp,                        0      )
+    s.connect( s.out[0:s.in_nbits],           s.in_ )
+    s.connect( s.out[s.in_nbits:s.out_nbits], 0     )
 
     @s.combinational
     def comb_logic():
