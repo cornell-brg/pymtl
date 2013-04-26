@@ -378,8 +378,14 @@ class SimulationTool( object ):
       dest      = c.dest_node._signalvalue
       src_addr  = c.src_slice  if c.src_slice  != None else slice( None )
       dest_addr = c.dest_slice if c.dest_slice != None else slice( None )
-      def slice_cb():
-        dest.v[ dest_addr ] = src.v[ src_addr ]
+      # Special case if slice is connected to a Constant
+      if isinstance( c.src_node._signalvalue, int ):
+        def slice_cb():
+          dest.v[ dest_addr ] = src
+      # Slice is connected to any other Signal
+      else:
+        def slice_cb():
+          dest.v[ dest_addr ] = src.v[ src_addr ]
       return slice_cb
 
     for c in self._slice_connects:
