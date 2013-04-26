@@ -577,9 +577,6 @@ class ConstantSlice( Model ):
 def test_ConstantSlice():
   model = ConstantSlice()
   sim = setup_sim( model )
-  assert model.out.v[ 0:16] == 0
-  assert model.out.v[16:32] == 0
-  sim.eval_combinational()
   assert model.out.v[ 0:16] == 4
   assert model.out.v[16:32] == 8
   sim.cycle()

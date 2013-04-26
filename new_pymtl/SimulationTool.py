@@ -378,19 +378,23 @@ class SimulationTool( object ):
       dest      = c.dest_node._signalvalue
       src_addr  = c.src_slice  if c.src_slice  != None else slice( None )
       dest_addr = c.dest_slice if c.dest_slice != None else slice( None )
-      # Special case if slice is connected to a Constant
-      if isinstance( c.src_node._signalvalue, int ):
-        def slice_cb():
-          dest.v[ dest_addr ] = src
-      # Slice is connected to any other Signal
-      else:
-        def slice_cb():
-          dest.v[ dest_addr ] = src.v[ src_addr ]
+      def slice_cb():
+        dest.v[ dest_addr ] = src.v[ src_addr ]
       return slice_cb
 
     for c in self._slice_connects:
-      func_ptr = create_slice_cb_closure( c )
-      signal_value = c.src_node._signalvalue
-      self._svalue_callbacks[ signal_value ].append( func_ptr )
-      self._event_queue.appendleft( func_ptr )
+      src = c.src_node._signalvalue
+      # If slice is connect to a Constant, don't create a callback.
+      # Just write the constant value now.
+      if isinstance( src, int ):
+        dest      = c.dest_node._signalvalue
+        dest_addr = c.dest_slice if c.dest_slice != None else slice( None )
+        dest.v[ dest_addr ] = src
+      # If slice is connected to another Signal, create a callback
+      # and put it on the combinational event queue.
+      else:
+        func_ptr = create_slice_cb_closure( c )
+        signal_value = c.src_node._signalvalue
+        self._svalue_callbacks[ signal_value ].append( func_ptr )
+        self._event_queue.appendleft( func_ptr )
 
