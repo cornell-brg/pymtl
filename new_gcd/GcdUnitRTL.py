@@ -300,28 +300,29 @@ class GcdUnitRTL (Model):
   # Line tracing
   #-----------------------------------------------------------------------
 
-  def line_trace( self ):
+  def line_trace( s ):
 
+    in_msg = "{:8d} {:8d}".format( s.in_msg[ 0:32].uint(),
+                                   s.in_msg[32:64].uint() )
     in_str = \
-      valrdy.valrdy_to_str( self.in_msg.value,
-        self.in_val.value, self.in_rdy.value )
+      valrdy.valrdy_to_str( in_msg, s.in_val, s.in_rdy )
 
+    out_msg = "{:8d}".format( s.out_msg.uint() )
     out_str = \
-      valrdy.valrdy_to_str( self.out_msg.value,
-        self.out_val.value, self.out_rdy.value )
+      valrdy.valrdy_to_str( out_msg, s.out_val, s.out_rdy )
 
     state_str = "? "
-    if self.ctrl.state.out.value == self.ctrl.STATE_IDLE:
+    if s.ctrl.state.out.value == s.ctrl.STATE_IDLE:
       state_str = "I "
-    if self.ctrl.state.out.value == self.ctrl.STATE_CALC:
-      if self.ctrl.is_a_lt_b.value:
+    if s.ctrl.state.out.value == s.ctrl.STATE_CALC:
+      if s.ctrl.is_a_lt_b.value:
         state_str = "Cs"
       else:
         state_str = "C-"
-    if self.ctrl.state.out.value == self.ctrl.STATE_DONE:
+    if s.ctrl.state.out.value == s.ctrl.STATE_DONE:
       state_str = "D "
 
     return "{} ({} {} {}) {}" \
-        .format( in_str, self.dpath.a_reg.out.value,
-                 self.dpath.b_reg.out.value, state_str, out_str )
+        .format( in_str, s.dpath.a_reg.out.value,
+                 s.dpath.b_reg.out.value, state_str, out_str )
 
