@@ -17,4 +17,5 @@ new_gcd_vtest_srcs = \
 
 new_gcd_prog_srcs = \
   new-gcd-sim \
+  new-gcd-sim-long \
 
