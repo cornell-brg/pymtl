@@ -17,4 +17,5 @@ pex_gcd_vtest_srcs = \
 
 pex_gcd_prog_srcs = \
   pex-gcd-sim \
+  pex-gcd-bmark \
 
