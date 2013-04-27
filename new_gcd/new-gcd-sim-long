@@ -23,6 +23,8 @@ import re
 import fractions
 import random
 
+random.seed( "0x4750" )
+
 from new_pymtl import *
 
 from GcdUnitBL  import GcdUnitBL
@@ -48,6 +50,7 @@ def parse_cmdline():
 
   p.add_argument( "-v", "--verbose", action="store_true" )
   p.add_argument( "-h", "--help",    action="store_true" )
+  p.add_argument( "--verify",        action="store_true" )
 
   # Additional commane line arguments for the simulator
 
@@ -74,11 +77,8 @@ def main():
 
   gcds = []
   for i in xrange( opts.ngcd ):
-    # TODO: fails if using this range... fix?
-    #a      = Bits( 32, random.randint( 0, 2**32-1 ) )
-    #b      = Bits( 32, random.randint( 0, 2**32-1 ) )
-    a      = Bits( 32, random.randint( 0, 1000000 ) )
-    b      = Bits( 32, random.randint( 0, 1000000 ) )
+    a      = Bits( 32, random.randint( 0, 2**32-1 ) )
+    b      = Bits( 32, random.randint( 0, 2**32-1 ) )
     msg    = concat( [ a, b ]  )
     result = Bits( 32, fractions.gcd( a.uint(), b.uint() ) )
     gcds  += [ (msg, result) ]
@@ -132,8 +132,8 @@ def main():
 
     # Verify result
 
-    #if model.out_val:
-    #  assert model.out_msg == result
+    if opts.verify and model.out_val:
+      assert model.out_msg == result
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
