@@ -23,8 +23,6 @@ import re
 import fractions
 import random
 
-random.seed( "0x4750" )
-
 from new_pymtl import *
 
 from GcdUnitBL  import GcdUnitBL
@@ -72,6 +70,7 @@ def parse_cmdline():
 
 def main():
   opts = parse_cmdline()
+  random.seed( 0x4750 )
 
   # Create ngcd GCD calculations to perform
 
