@@ -124,16 +124,9 @@ class ZeroExtender( Model ):
 
   def elaborate_logic( s ):
 
-    # Connections
-
-    s.connect( s.out[0:s.in_nbits],           s.in_ )
-    s.connect( s.out[s.in_nbits:s.out_nbits], 0     )
-
     @s.combinational
     def comb_logic():
-      # TODO: catch error when writing s.var[].v instead of s.var.v[]
-      s.out.v[ 0:s.in_nbits ] = s.in_
-      s.out.v[ s.in_nbits : s.out_nbits ] = 0
+      s.out = zext( s.in_, s.out_nbits)
 
   def line_trace( s ):
     return "{} () {}" \
@@ -160,14 +153,10 @@ class SignExtender( Model ):
     s.out = OutPort ( out_nbits )
 
   def elaborate_logic( s ):
-    # connect input port directly to corresponding bottom bits of output
 
-    s.connect( s.out[0:s.in_nbits], s.in_  )
-
-    # connect msb of input port to each remaining bit of output port
-
-    for i in xrange( s.out_nbits - s.in_nbits ):
-      s.connect( s.out[s.in_nbits+i], s.in_[s.in_nbits-1] )
+    @s.combinational
+    def comb_logic():
+      s.out = sext( s.in_, s.out_nbits )
 
   def line_trace( s ):
     return "{} () {}" \
