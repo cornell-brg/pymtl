@@ -105,3 +105,23 @@ class ConnectionEdge(object):
     self.src_node,  self.dest_node  = self.dest_node,  self.src_node
     self.src_slice, self.dest_slice = self.dest_slice, self.src_slice
 
+  #-----------------------------------------------------------------------
+  # __repr__
+  #-----------------------------------------------------------------------
+  # Pretty printing of connections for debugging.
+  def __repr__( self ):
+    if   isinstance( self.src_slice, int ):
+      sa = '[{}]'.format( self.src_slice )
+    elif isinstance( self.src_slice, slice ):
+      sa = '[{}:{}]'.format( self.src_slice.start, self.src_slice.stop )
+    else:
+      sa = ''
+    if   isinstance( self.dest_slice, int ):
+      da = '[{}]'.format( self.dest_slice )
+    elif isinstance( self.dest_slice, slice ):
+      da = '[{}:{}]'.format( self.dest_slice.start, self.dest_slice.stop )
+    else:
+      da = ''
+    return "{}{} => {}{}".format( self.src_node.fullname,  sa,
+                                    self.dest_node.fullname, da )
+
