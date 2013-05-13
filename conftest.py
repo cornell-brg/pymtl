@@ -19,3 +19,7 @@ def pytest_funcarg__dump_bin(request):
   """Dump Binary File for each test."""
   return request.config.option.dump_bin
 
+def pytest_cmdline_preparse(config, args):
+  """Don't write *.pyc and __pycache__ files."""
+  import sys
+  sys.dont_write_bytecode = True
