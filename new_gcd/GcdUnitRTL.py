@@ -3,12 +3,7 @@
 #=========================================================================
 
 from new_pymtl import *
-#import pmlib
-import valrdy
-
-from Mux import Mux
-import arith
-import regs
+from new_pmlib import Mux, regs, arith, valrdy
 
 # Constants
 

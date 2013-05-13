@@ -3,9 +3,9 @@
 #=========================================================================
 
 from new_pymtl import *
-#import pmlib
+from new_pmlib import valrdy
+
 import fractions
-import valrdy
 
 class GcdUnitBL( Model ):
 

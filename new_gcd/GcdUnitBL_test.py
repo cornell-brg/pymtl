@@ -3,10 +3,9 @@
 #=========================================================================
 
 from new_pymtl import *
+from new_pmlib import TestSource, TestSink
 
 from GcdUnitBL  import GcdUnitBL
-from TestSource import TestSource
-from TestSink   import TestSink
 
 #-------------------------------------------------------------------------
 # TestHarness
