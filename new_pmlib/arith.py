@@ -126,7 +126,7 @@ class ZeroExtender( Model ):
 
     @s.combinational
     def comb_logic():
-      s.out = zext( s.in_, s.out_nbits)
+      s.out.value = zext( s.in_, s.out_nbits)
 
   def line_trace( s ):
     return "{} () {}" \
@@ -156,7 +156,7 @@ class SignExtender( Model ):
 
     @s.combinational
     def comb_logic():
-      s.out = sext( s.in_, s.out_nbits )
+      s.out.value = sext( s.in_, s.out_nbits )
 
   def line_trace( s ):
     return "{} () {}" \
