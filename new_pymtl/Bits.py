@@ -20,6 +20,8 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   def __init__( self, nbits, value = 0, trunc = False ):
 
+    # Disallow value = Bits()
+    assert isinstance( value, (int, long) )
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0
     if not trunc:

@@ -122,6 +122,16 @@ def test_slice_bounds_checking():
     x[-1:2] = 0b10
   with pytest.raises( AssertionError ):
     x[2:1]  = 0b10
+  # Bits objects constructed with another Bits object provided as a value
+  # parameter end up having problems when writing to slices.  This is
+  # because the mask used when writing to a subslice is often a negative
+  # int in Python, and we don't allow operations on Bits to be performed
+  # with negative values.  Current workaround is to force the value param
+  # for the Bits constructor to be an int or a long.
+  with pytest.raises( AssertionError ):
+    y = Bits( 4, Bits( 4, 0 ))
+    y[1:3] = 1
+
 
 def test_eq():
 
@@ -386,13 +396,15 @@ def test_constructor():
   assert Bits( 4, -2 ).uint() == 0b1110
   assert Bits( 4, -4 ).uint() == 0b1100
 
-  assert Bits( 4, Bits(4, -2) ).uint() == 0b1110
-  assert Bits( 4, Bits(4, -4) ).uint() == 0b1100
-
   assert Bits( 4 ) == Bits( 4, 0 )
   assert Bits( 4 ).uint() == 0
 
+@pytest.mark.xfail
+# Disable construction from Bits, currently only accepts ints/longs
 def test_construct_from_bits():
+
+  assert Bits( 4, Bits(4, -2) ).uint() == 0b1110
+  assert Bits( 4, Bits(4, -4) ).uint() == 0b1100
 
   a = Bits( 8, 5 )
   assert a                         == 0x05
@@ -413,4 +425,13 @@ def test_str():
   assert Bits(  4,        0x2 ).__str__() == "2"
   assert Bits(  8,       0x1f ).__str__() == "1f"
   assert Bits( 32, 0x0000beef ).__str__() == "0000beef"
+  # Bits objects constructed with another Bits object provided as a value
+  # parameter end up having problems when printed. This is because the
+  # internal ._uint field is expected to be an int/long, but is instead
+  # a Bits object, which cannot be formatted as expected. Current
+  # workaround is to force the value param for the Bits constructor to be
+  # an int or a long.
+  #with pytest.raises( ValueError ):
+  with pytest.raises( AssertionError ):
+    assert Bits(  4, Bits(32,2) ).__str__() == "2"
 

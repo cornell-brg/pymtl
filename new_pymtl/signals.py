@@ -141,6 +141,8 @@ class Constant( Signal ):
     # Special case the name and _signalvalue attributes
     self.name         = "{}'d{}".format( nbits, value )
     self._signalvalue = value
+    # TODO: no parent, causes AttributeError when debugging, fix?
+    #self.parent      = DummyParent
 
   #-----------------------------------------------------------------------
   # fullname
