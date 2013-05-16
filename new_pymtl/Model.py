@@ -314,6 +314,9 @@ class Model(object):
   #-----------------------------------------------------------------------
   def connect( self, left_port, right_port ):
 
+    # Can't connect a port to itself!
+    assert left_port != right_port
+
     # Create the connection
     connection_edge = ConnectionEdge( left_port, right_port)
 
