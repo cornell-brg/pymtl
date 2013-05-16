@@ -218,28 +218,14 @@ def test_NStagePosedge():
   pipeline_tester( NStagePosedge( 16, 8 ), 8 )
 
 #-------------------------------------------------------------------------
-# Dataflow Tester
-#-------------------------------------------------------------------------
-
-def dataflow_tester( model ):
-  sim = setup_sim( model )
-  # fill up the pipeline
-  for i in range( 10 ):
-    model.in_.v = i
-    expected = ( i - 1 ) if ( i - 1 ) >= 0 else 0
-    assert model.out == expected
-    assert False
-    sim.cycle()
-
-#-------------------------------------------------------------------------
 # NStageComb
 #-------------------------------------------------------------------------
 # TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO THE
-#       WAY WE DETECT SENSITIVITY LISTS... (all wires/ports in an array
+#       WAY WE DETECT SENSITIVITY LISTS... all wires/ports in an array
 #       are added to the sensitivity list of an @combinational block since
-#       we aren't sure of the value of i when walking the AST).  Fix?
+#       we aren't sure of the value of i when walking the AST.  Fix?
 
-class NStageCombinational( Model ):
+class NStageComb( Model ):
   def __init__( s, nbits, nstages ):
     s.nbits   = nbits
     s.nstages = nstages
@@ -259,11 +245,17 @@ class NStageCombinational( Model ):
 
     s.connect( s.out, s.wire[-1] )
 
-
 @pytest.mark.xfail
 def test_NStageComb():
-  dataflow_tester( NStageCombinational( 16, 3 ) )
-
+  model = NStageComb( 16, 3 )
+  sim   = setup_sim( model )
+  # fill up the pipeline
+  for i in range( 10 ):
+    model.in_.v = i
+    expected = ( i - 1 ) if ( i - 1 ) >= 0 else 0
+    assert model.out == expected
+    assert False  # Prevent infinite loop!
+    sim.cycle()
 
 #-------------------------------------------------------------------------
 # TempReadWrite
@@ -304,7 +296,7 @@ def test_WriteThenReadWire():
   sim = setup_sim( model )
   for i in range( 10 ):
     model.in_.v = i
-    assert False
+    assert False  # Prevent infinite loop!
     sim.eval_combinational()
     assert model.out == i
 

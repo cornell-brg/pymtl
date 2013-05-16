@@ -192,3 +192,40 @@ def test_RegisterCombBitBlast():
 def test_RegisterStructBitBlast():
   model = RegisterBitBlast( 16, StructBitBlast )
   register_bit_blast_tester( model )
+
+#-------------------------------------------------------------------------
+# WriteThenReadCombSubmod
+#-------------------------------------------------------------------------
+# TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO THE
+#       WAY WE DETECT SENSITIVITY LISTS... if a combinational submodule
+#       is written, its @s.combinational block get's added to the event
+#       queue.  After the submodule's concurrent block fires, it adds
+#       the parent's concurrent block on the queue again, this continues
+#       forever. Fix.
+
+class WriteThenReadCombSubmod( Model ):
+  def __init__( s, nbits ):
+    s.nbits   = nbits
+    s.in_     = InPort ( nbits )
+    s.out     = OutPort( nbits )
+
+  def elaborate_logic( s ):
+
+    s.submod = PassThrough( s.nbits )
+
+    @s.combinational
+    def comb_logic():
+      s.submod.in_.v = s.in_
+      s.out.v        = s.submod.out
+
+@pytest.mark.xfail
+def test_WriteThenReadCombSubmod():
+  model = WriteThenReadCombSubmod( 16 )
+  sim = setup_sim( model )
+  for i in range( 10 ):
+    model.in_.v = i
+    assert False   # Prevent infinite loop!
+    sim.cycle()
+    assert model.out == i
+
+
