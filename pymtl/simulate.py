@@ -62,6 +62,10 @@ class SimulationTool():
     # Actually construct the simulator
     self.construct_sim()
 
+  @property
+  def ncycles(self):
+    return self.num_cycles
+
   #-----------------------------------------------------------------------
   # Cycle
   #-----------------------------------------------------------------------
