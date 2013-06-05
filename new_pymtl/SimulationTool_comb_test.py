@@ -662,3 +662,29 @@ def test_BitMergePassThrough():
   model.in_[7].value = 1
   sim.eval_combinational()
   assert model.out.value == 0b11010100
+
+#-------------------------------------------------------------------------
+# ValueWriteCheck
+#-------------------------------------------------------------------------
+# Test to verify the value write check logic in SignalValue is correctly
+# preventing infinite loops.
+class ValueWriteCheck( Model ):
+
+  def __init__( s, nbits ):
+    assert nbits == 16
+    s.in_   = InPort  ( 16 )
+    s.out   = OutPort ( 16 )
+
+  def elaborate_logic( s ):
+
+    s.temp = [ Wire( 16 ) for x in xrange( 2 ) ]
+
+    @s.combinational
+    def comb_logic():
+      s.temp[0].value = s.in_     & 0xFFFF
+      s.temp[1].value = s.temp[0] & 0xFFFF
+
+    s.connect( s.out, s.temp[1] )
+
+def test_ValueWriteCheck():
+  passthrough_tester( ValueWriteCheck )

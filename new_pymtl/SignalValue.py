@@ -19,11 +19,20 @@ class SignalValue( object ):
   @property
   def v( self ):
     return self
+  @property
+  def value( self ):
+    return self
 
   @v.setter
   def v( self, value ):
-    self.notify_sim_comb_update()
-    self.write( value )
+    if value != self:
+      self.notify_sim_comb_update()
+      self.write( value )
+  @value.setter
+  def value( self, value ):
+    if value != self:
+      self.notify_sim_comb_update()
+      self.write( value )
 
   #-----------------------------------------------------------------------
   # Write n property
@@ -31,9 +40,18 @@ class SignalValue( object ):
   @property
   def n( self ):
     return self._shadow_value
+  @property
+  def next( self ):
+    return self._shadow_value
 
   @n.setter
   def n( self, value ):
+    self.notify_sim_seq_update()
+    # TODO: get raw int value or copy obj?
+    # TODO: implement as shadow_write() instead and make part of ABC?
+    self._shadow_value.write( value )
+  @next.setter
+  def next( self, value ):
     self.notify_sim_seq_update()
     # TODO: get raw int value or copy obj?
     # TODO: implement as shadow_write() instead and make part of ABC?
@@ -51,31 +69,6 @@ class SignalValue( object ):
   def __setitem__( self, addr, value ):
     self.notify_sim_slice_update()
     self.write_slice( addr, value )
-
-  #-----------------------------------------------------------------------
-  # TEMPORARY: Backwards compatibility
-  #-----------------------------------------------------------------------
-  @property
-  def value( self ):
-    return self
-  @value.setter
-  def value( self, value ):
-    self.notify_sim_comb_update()
-    self.write( value )
-
-  #-----------------------------------------------------------------------
-  # TEMPORARY: Backwards compatibility
-  #-----------------------------------------------------------------------
-  @property
-  def next( self ):
-    return self._shadow_value
-
-  @next.setter
-  def next( self, value ):
-    self.notify_sim_seq_update()
-    # TODO: get raw int value or copy obj?
-    # TODO: implement as shadow_write() instead and make part of ABC?
-    self._shadow_value.write( value )
 
   #-----------------------------------------------------------------------
   # flop
