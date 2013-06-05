@@ -140,8 +140,8 @@ class SimulationTool( object ):
       funcs = self._svalue_callbacks[signal_value]
       for func in funcs:
         # TODO: remove this check?  test performance...
-        if func not in self._event_queue:
-          self._event_queue.appendleft( func )
+        #if func not in self._event_queue:
+        self._event_queue.appendleft( func )
 
   #-----------------------------------------------------------------------
   # _construct_sim
