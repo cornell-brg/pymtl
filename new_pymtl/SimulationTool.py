@@ -43,6 +43,7 @@ class SimulationTool( object ):
     self._event_queue       = collections.deque()
     self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
+    self._current_func      = None
 
     # TODO: temporary hack
     self._slice_connects    = []
@@ -56,10 +57,11 @@ class SimulationTool( object ):
   # Evaluates all combinational logic blocks currently in the event queue.
   def eval_combinational( self ):
     while self._event_queue:
-      func = self._event_queue.pop()
+      self._current_func = func = self._event_queue.pop()
       #self.pstats.add_eval_call( func, self.num_cycles )
       try:
         func()
+        self._current_func = None
       except TypeError:
         # TODO: can we catch this at static elaboration?
         raise Exception("Concurrent block '{}' must take no parameters!\n"
@@ -140,7 +142,7 @@ class SimulationTool( object ):
       funcs = self._svalue_callbacks[signal_value]
       for func in funcs:
         # TODO: remove this check?  test performance...
-        if func not in self._event_queue:
+        if func != self._current_func and func not in self._event_queue:
           self._event_queue.appendleft( func )
 
   #-----------------------------------------------------------------------
