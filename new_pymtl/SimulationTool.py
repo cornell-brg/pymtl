@@ -41,6 +41,7 @@ class SimulationTool( object ):
     self._sequential_blocks = []
     self._register_queue    = []
     self._event_queue       = collections.deque()
+    self._event_queue_set   = set()
     self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
     self._current_func      = None
@@ -58,6 +59,7 @@ class SimulationTool( object ):
   def eval_combinational( self ):
     while self._event_queue:
       self._current_func = func = self._event_queue.pop()
+      self._event_queue_set.discard( func )
       #self.pstats.add_eval_call( func, self.num_cycles )
       try:
         func()
@@ -142,8 +144,9 @@ class SimulationTool( object ):
       funcs = self._svalue_callbacks[signal_value]
       for func in funcs:
         # TODO: remove this check?  test performance...
-        if func != self._current_func and func not in self._event_queue:
+        if func != self._current_func and func not in self._event_queue_set:
           self._event_queue.appendleft( func )
+          self._event_queue_set.add( func )
 
   #-----------------------------------------------------------------------
   # _construct_sim
@@ -359,8 +362,9 @@ class SimulationTool( object ):
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
-        if func_ptr not in self._event_queue:
+        if func_ptr not in self._event_queue_set:
           self._event_queue.appendleft( func_ptr )
+          self._event_queue_set.add( func_ptr )
 
     # Recursively perform for submodules
     for m in model.get_submodules():
@@ -399,4 +403,5 @@ class SimulationTool( object ):
         signal_value = c.src_node._signalvalue
         self._svalue_callbacks[ signal_value ].append( func_ptr )
         self._event_queue.appendleft( func_ptr )
+        self._event_queue_set.add( func_ptr )
 
