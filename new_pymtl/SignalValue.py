@@ -11,7 +11,8 @@
 # (InPort, OutPort, Wire), needs to subclass SignalValue.
 class SignalValue( object ):
 
-  constant = False
+  constant    = False
+  _callbacks  = []
 
   #-----------------------------------------------------------------------
   # Write v property
@@ -156,4 +157,12 @@ class SignalValue( object ):
   #       Is this the fastest approach?
   def notify_sim_slice_update( self ):
     pass
+
+  #-----------------------------------------------------------------------
+  # register_callback
+  #-----------------------------------------------------------------------
+  def register_callback( self, func_ptr ):
+    if not self._callbacks:
+      self._callbacks = []
+    self._callbacks.append( func_ptr )
 

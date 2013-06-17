@@ -43,7 +43,7 @@ class SimulationTool( object ):
     self._register_queue    = []
     self._event_queue       = collections.deque()
     self._event_queue_set   = set()
-    self._svalue_callbacks  = collections.defaultdict(list)
+    #self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
     self._current_func      = None
 
@@ -177,12 +177,18 @@ class SimulationTool( object ):
     #print signal_value in self._svalue_callbacks,
     #print [x.fullname for x in signal_value._debug_signals],
     #print self._svalue_callbacks[signal_value]
-    if signal_value in self._svalue_callbacks:
-      funcs = self._svalue_callbacks[signal_value]
-      for func in funcs:
-        if func != self._current_func and func not in self._event_queue_set:
-          self._event_queue.appendleft( func )
-          self._event_queue_set.add( func )
+
+    #if signal_value in self._svalue_callbacks:
+    #  funcs = self._svalue_callbacks[signal_value]
+    #  for func in funcs:
+    #    if func != self._current_func and func not in self._event_queue_set:
+    #      self._event_queue.appendleft( func )
+    #      self._event_queue_set.add( func )
+
+    for func in signal_value._callbacks:
+      if func != self._current_func and func not in self._event_queue_set:
+        self._event_queue.appendleft( func )
+        self._event_queue_set.add( func )
 
   #-----------------------------------------------------------------------
   # _construct_sim
@@ -394,7 +400,8 @@ class SimulationTool( object ):
     # TODO: merge this code with above to reduce mem of data structures?
     for func_ptr, sensitivity_list in model._newsenses.items():
       for signal_value in sensitivity_list:
-        self._svalue_callbacks[ signal_value ].append( func_ptr )
+        #self._svalue_callbacks[ signal_value ].append( func_ptr )
+        signal_value.register_callback( func_ptr )
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
@@ -437,7 +444,8 @@ class SimulationTool( object ):
       else:
         func_ptr = create_slice_cb_closure( c )
         signal_value = c.src_node._signalvalue
-        self._svalue_callbacks[ signal_value ].append( func_ptr )
+        #self._svalue_callbacks[ signal_value ].append( func_ptr )
+        signal_value.register_callback( func_ptr )
         self._event_queue.appendleft( func_ptr )
         self._event_queue_set.add( func_ptr )
 
