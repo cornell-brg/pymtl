@@ -64,10 +64,10 @@ class SimulationTool( object ):
   # Evaluates all combinational logic blocks currently in the event queue.
   def eval_combinational( self ):
     while self._event_queue:
-      self._current_func = func = self._event_queue.deq()
       #self._current_func = func = self._event_queue.pop()
       #self._event_queue_set.discard( func )
       #self.pstats.add_eval_call( func, self.num_cycles )
+      self._current_func = func = self._event_queue.deq()
       try:
         func()
         self._current_func = None
@@ -187,12 +187,14 @@ class SimulationTool( object ):
     #      self._event_queue.appendleft( func )
     #      self._event_queue_set.add( func )
 
+    #for func in signal_value._callbacks:
+    #  if func != self._current_func and func not in self._event_queue_set:
+    #    self._event_queue.appendleft( func )
+    #    self._event_queue_set.add( func )
+
     for func in signal_value._callbacks:
-      #if func != self._current_func and func not in self._event_queue_set:
-      if func != self._current_func and func not in self._event_queue:
+      if func != self._current_func:
         self._event_queue.enq( func )
-        #self._event_queue.appendleft( func )
-        #self._event_queue_set.add( func )
 
   #-----------------------------------------------------------------------
   # _construct_sim
@@ -405,15 +407,15 @@ class SimulationTool( object ):
     for func_ptr, sensitivity_list in model._newsenses.items():
       for signal_value in sensitivity_list:
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
-        signal_value.register_callback( func_ptr )
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
         #if func_ptr not in self._event_queue_set:
-        if func_ptr not in self._event_queue:
           #self._event_queue.appendleft( func_ptr )
           #self._event_queue_set.add( func_ptr )
-          self._event_queue.enq( func_ptr )
+        signal_value.register_callback( func_ptr )
+        func_ptr.id = self._event_queue.get_id()
+        self._event_queue.enq( func_ptr )
 
     # Recursively perform for submodules
     for m in model.get_submodules():
@@ -451,10 +453,11 @@ class SimulationTool( object ):
         func_ptr = create_slice_cb_closure( c )
         signal_value = c.src_node._signalvalue
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
-        signal_value.register_callback( func_ptr )
-        self._event_queue.enq( func_ptr )
         #self._event_queue.appendleft( func_ptr )
         #self._event_queue_set.add( func_ptr )
+        signal_value.register_callback( func_ptr )
+        func_ptr.id = self._event_queue.get_id()
+        self._event_queue.enq( func_ptr )
 
 class EventQueue( object ):
 
@@ -465,29 +468,40 @@ class EventQueue( object ):
     self.max   = initsize
     self.size  = 0
     self.i     = 0
+    self.bv    = [False] * ( initsize / 10 )
+    self.bv_id = 0
 
   def enq( self, event ):
     assert self.size < self.max
-    self.size += 1
-    self.fifo[ self.tail ] = event
-    self.tail = ( self.tail + 1 ) % self.max
+    if not self.bv[ event.id ]:
+      self.bv[ event.id ] = True
+      self.size += 1
+      self.fifo[ self.tail ] = event
+      self.tail = ( self.tail + 1 ) % self.max
 
   def deq( self ):
     assert self.size > 0
     self.size -= 1
     old_head = self.head
     self.head = ( self.head + 1 ) % self.max
-    return self.fifo[ old_head ]
+    event = self.fifo[ old_head ]
+    self.bv[ event.id ] = False
+    return event
 
   def __len__( self ):
     return self.size
 
-  def __contains__( self, item ):
-    if   self.size == 0:
-      return False
-    elif self.head == self.tail:
-      return item in self.fifo[:]
-    elif self.head < self.tail:
-      return item in self.fifo[self.head:self.tail]
-    else:
-      return item in self.fifo[self.head:] + self.fifo[:self.tail]
+  #def __contains__( self, item ):
+  #  if   self.size == 0:
+  #    return False
+  #  elif self.head == self.tail:
+  #    return item in self.fifo[:]
+  #  elif self.head < self.tail:
+  #    return item in self.fifo[self.head:self.tail]
+  #  else:
+  #    return item in self.fifo[self.head:] + self.fifo[:self.tail]
+
+  def get_id( self ):
+    id = self.bv_id
+    self.bv_id += 1
+    return id
