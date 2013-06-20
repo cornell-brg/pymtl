@@ -41,8 +41,6 @@ class SimulationTool( object ):
     self._nets              = []
     self._sequential_blocks = []
     self._register_queue    = []
-    #self._event_queue       = collections.deque()
-    #self._event_queue_set   = set()
     self._event_queue       = EventQueue()
     #self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
@@ -64,8 +62,6 @@ class SimulationTool( object ):
   # Evaluates all combinational logic blocks currently in the event queue.
   def eval_combinational( self ):
     while self._event_queue:
-      #self._current_func = func = self._event_queue.pop()
-      #self._event_queue_set.discard( func )
       #self.pstats.add_eval_call( func, self.num_cycles )
       self._current_func = func = self._event_queue.deq()
       try:
@@ -180,21 +176,13 @@ class SimulationTool( object ):
     #print [x.fullname for x in signal_value._debug_signals],
     #print self._svalue_callbacks[signal_value]
 
-    #if signal_value in self._svalue_callbacks:
-    #  funcs = self._svalue_callbacks[signal_value]
-    #  for func in funcs:
-    #    if func != self._current_func and func not in self._event_queue_set:
-    #      self._event_queue.appendleft( func )
-    #      self._event_queue_set.add( func )
-
-    #for func in signal_value._callbacks:
-    #  if func != self._current_func and func not in self._event_queue_set:
-    #    self._event_queue.appendleft( func )
-    #    self._event_queue_set.add( func )
-
     for func in signal_value._callbacks:
       if func != self._current_func:
         self._event_queue.enq( func )
+
+    #if signal_value in self._svalue_callbacks:
+    #  funcs = self._svalue_callbacks[signal_value]
+    #  for func in funcs:
 
   #-----------------------------------------------------------------------
   # _construct_sim
@@ -406,14 +394,11 @@ class SimulationTool( object ):
     # TODO: merge this code with above to reduce mem of data structures?
     for func_ptr, sensitivity_list in model._newsenses.items():
       for signal_value in sensitivity_list:
-        #self._svalue_callbacks[ signal_value ].append( func_ptr )
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
-        #if func_ptr not in self._event_queue_set:
-          #self._event_queue.appendleft( func_ptr )
-          #self._event_queue_set.add( func_ptr )
         signal_value.register_callback( func_ptr )
+        #self._svalue_callbacks[ signal_value ].append( func_ptr )
         func_ptr.id = self._event_queue.get_id()
         self._event_queue.enq( func_ptr )
 
@@ -452,60 +437,51 @@ class SimulationTool( object ):
       else:
         func_ptr = create_slice_cb_closure( c )
         signal_value = c.src_node._signalvalue
-        #self._svalue_callbacks[ signal_value ].append( func_ptr )
-        #self._event_queue.appendleft( func_ptr )
-        #self._event_queue_set.add( func_ptr )
         signal_value.register_callback( func_ptr )
+        #self._svalue_callbacks[ signal_value ].append( func_ptr )
         func_ptr.id = self._event_queue.get_id()
         self._event_queue.enq( func_ptr )
 
 class EventQueue( object ):
 
   def __init__( self, initsize = 10000 ):
+    self.fifo   = collections.deque()
+    self.bv     = [False] * initsize
+    self.bv_id  = 0
     #self.fifo  = [0] * initsize
     #self.head  = 0
     #self.tail  = 0
     #self.max   = initsize
     #self.size  = 0
     #self.i     = 0
-    self.fifo  = collections.deque()
-    self.bv    = [False] * ( initsize / 10 )
-    self.bv_id = 0
 
   def enq( self, event ):
-    #assert self.size < self.max
     if not self.bv[ event.id ]:
       self.bv[ event.id ] = True
       self.fifo.appendleft( event )
+    #assert self.size < self.max
+    #if not self.bv[ event.id ]:
       #self.size += 1
       #self.fifo[ self.tail ] = event
       #self.tail = ( self.tail + 1 ) % self.max
 
   def deq( self ):
+    event = self.fifo.pop()
+    self.bv[ event.id ] = False
+    return event
     #assert self.size > 0
     #self.size -= 1
     #old_head = self.head
     #self.head = ( self.head + 1 ) % self.max
     #event = self.fifo[ old_head ]
-    event = self.fifo.pop()
-    self.bv[ event.id ] = False
     #return event
-    return event
 
   def __len__( self ):
     return len( self.fifo )
 
-  #def __contains__( self, item ):
-  #  if   self.size == 0:
-  #    return False
-  #  elif self.head == self.tail:
-  #    return item in self.fifo[:]
-  #  elif self.head < self.tail:
-  #    return item in self.fifo[self.head:self.tail]
-  #  else:
-  #    return item in self.fifo[self.head:] + self.fifo[:self.tail]
-
   def get_id( self ):
     id = self.bv_id
     self.bv_id += 1
+    if self.bv_id > len ( self.bv ):
+      self.bv.extend( [False] * 10000 )
     return id
