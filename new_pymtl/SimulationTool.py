@@ -462,34 +462,38 @@ class SimulationTool( object ):
 class EventQueue( object ):
 
   def __init__( self, initsize = 10000 ):
-    self.fifo  = [0] * initsize
-    self.head  = 0
-    self.tail  = 0
-    self.max   = initsize
-    self.size  = 0
-    self.i     = 0
+    #self.fifo  = [0] * initsize
+    #self.head  = 0
+    #self.tail  = 0
+    #self.max   = initsize
+    #self.size  = 0
+    #self.i     = 0
+    self.fifo  = collections.deque()
     self.bv    = [False] * ( initsize / 10 )
     self.bv_id = 0
 
   def enq( self, event ):
-    assert self.size < self.max
+    #assert self.size < self.max
     if not self.bv[ event.id ]:
       self.bv[ event.id ] = True
-      self.size += 1
-      self.fifo[ self.tail ] = event
-      self.tail = ( self.tail + 1 ) % self.max
+      self.fifo.appendleft( event )
+      #self.size += 1
+      #self.fifo[ self.tail ] = event
+      #self.tail = ( self.tail + 1 ) % self.max
 
   def deq( self ):
-    assert self.size > 0
-    self.size -= 1
-    old_head = self.head
-    self.head = ( self.head + 1 ) % self.max
-    event = self.fifo[ old_head ]
+    #assert self.size > 0
+    #self.size -= 1
+    #old_head = self.head
+    #self.head = ( self.head + 1 ) % self.max
+    #event = self.fifo[ old_head ]
+    event = self.fifo.pop()
     self.bv[ event.id ] = False
+    #return event
     return event
 
   def __len__( self ):
-    return self.size
+    return len( self.fifo )
 
   #def __contains__( self, item ):
   #  if   self.size == 0:
