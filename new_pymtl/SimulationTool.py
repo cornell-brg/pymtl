@@ -51,7 +51,12 @@ class SimulationTool( object ):
 
     # If the -O flag was passed to python, use the perf implementation
     # of cycle, otherwise use the dev version.
-    self.cycle = self._perf_cycle if flags.optimize else self._dev_cycle
+    if flags.optimize:
+      self.cycle              = self._perf_cycle
+      self.eval_combinational = self._perf_eval
+    else:
+      self.cycle              = self._dev_cycle
+      self.eval_combinational = self._dev_eval
 
     # Actually construct the simulator
     self._construct_sim()
@@ -61,6 +66,14 @@ class SimulationTool( object ):
   #-----------------------------------------------------------------------
   # Evaluates all combinational logic blocks currently in the event queue.
   def eval_combinational( self ):
+    pass
+
+  #-----------------------------------------------------------------------
+  # _debug_eval
+  #-----------------------------------------------------------------------
+  # Implementation of eval_combinational() for use during
+  # develop-test-debug loops.
+  def _dev_eval( self ):
     while self._event_queue:
       #self.pstats.add_eval_call( func, self.num_cycles )
       self._current_func = func = self._event_queue.deq()
@@ -75,6 +88,17 @@ class SimulationTool( object ):
                         "".format( func.func_name,
                                    func.func_code.co_filename,
                                    func.func_code.co_firstlineno ) )
+
+  #-----------------------------------------------------------------------
+  # _perf_eval
+  #-----------------------------------------------------------------------
+  # Implementation of eval_combinataional () for use when benchmarking
+  # models.
+  def _perf_eval( self ):
+    while self._event_queue:
+      self._current_func = func = self._event_queue.deq()
+      func()
+      self._current_func = None
 
   #-----------------------------------------------------------------------
   # cycle
