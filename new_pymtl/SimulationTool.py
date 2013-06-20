@@ -41,8 +41,9 @@ class SimulationTool( object ):
     self._nets              = []
     self._sequential_blocks = []
     self._register_queue    = []
-    self._event_queue       = collections.deque()
-    self._event_queue_set   = set()
+    #self._event_queue       = collections.deque()
+    #self._event_queue_set   = set()
+    self._event_queue       = EventQueue()
     #self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
     self._current_func      = None
@@ -63,8 +64,9 @@ class SimulationTool( object ):
   # Evaluates all combinational logic blocks currently in the event queue.
   def eval_combinational( self ):
     while self._event_queue:
-      self._current_func = func = self._event_queue.pop()
-      self._event_queue_set.discard( func )
+      self._current_func = func = self._event_queue.deq()
+      #self._current_func = func = self._event_queue.pop()
+      #self._event_queue_set.discard( func )
       #self.pstats.add_eval_call( func, self.num_cycles )
       try:
         func()
@@ -186,9 +188,11 @@ class SimulationTool( object ):
     #      self._event_queue_set.add( func )
 
     for func in signal_value._callbacks:
-      if func != self._current_func and func not in self._event_queue_set:
-        self._event_queue.appendleft( func )
-        self._event_queue_set.add( func )
+      #if func != self._current_func and func not in self._event_queue_set:
+      if func != self._current_func and func not in self._event_queue:
+        self._event_queue.enq( func )
+        #self._event_queue.appendleft( func )
+        #self._event_queue_set.add( func )
 
   #-----------------------------------------------------------------------
   # _construct_sim
@@ -405,9 +409,11 @@ class SimulationTool( object ):
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
-        if func_ptr not in self._event_queue_set:
-          self._event_queue.appendleft( func_ptr )
-          self._event_queue_set.add( func_ptr )
+        #if func_ptr not in self._event_queue_set:
+        if func_ptr not in self._event_queue:
+          #self._event_queue.appendleft( func_ptr )
+          #self._event_queue_set.add( func_ptr )
+          self._event_queue.enq( func_ptr )
 
     # Recursively perform for submodules
     for m in model.get_submodules():
@@ -446,6 +452,42 @@ class SimulationTool( object ):
         signal_value = c.src_node._signalvalue
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
         signal_value.register_callback( func_ptr )
-        self._event_queue.appendleft( func_ptr )
-        self._event_queue_set.add( func_ptr )
+        self._event_queue.enq( func_ptr )
+        #self._event_queue.appendleft( func_ptr )
+        #self._event_queue_set.add( func_ptr )
 
+class EventQueue( object ):
+
+  def __init__( self, initsize = 10000 ):
+    self.fifo  = [0] * initsize
+    self.head  = 0
+    self.tail  = 0
+    self.max   = initsize
+    self.size  = 0
+    self.i     = 0
+
+  def enq( self, event ):
+    assert self.size < self.max
+    self.size += 1
+    self.fifo[ self.tail ] = event
+    self.tail = ( self.tail + 1 ) % self.max
+
+  def deq( self ):
+    assert self.size > 0
+    self.size -= 1
+    old_head = self.head
+    self.head = ( self.head + 1 ) % self.max
+    return self.fifo[ old_head ]
+
+  def __len__( self ):
+    return self.size
+
+  def __contains__( self, item ):
+    if   self.size == 0:
+      return False
+    elif self.head == self.tail:
+      return item in self.fifo[:]
+    elif self.head < self.tail:
+      return item in self.fifo[self.head:self.tail]
+    else:
+      return item in self.fifo[self.head:] + self.fifo[:self.tail]
