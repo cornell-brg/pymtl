@@ -310,6 +310,7 @@ def test_add():
   c = Bits( 1, 1 )
   assert a + b + 1 == 3
   assert a + b + c == 3
+  assert c + b + a == 3
 
 def test_sub():
 
