@@ -42,11 +42,22 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   # __int__
   #-----------------------------------------------------------------------
+  # Type conversion to an int.
   def __int__( self ):
     return int( self._uint )
 
+  #-----------------------------------------------------------------------
+  # __int__
+  #-----------------------------------------------------------------------
+  # Type conversion to a long.
   def __long__( self ):
     return long( self._uint )
+
+  #-----------------------------------------------------------------------
+  # __index__
+  #-----------------------------------------------------------------------
+  # Type conversion to an int when the object is used in a slice.
+  # TODO
 
   #-----------------------------------------------------------------------
   # uint
@@ -71,7 +82,7 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   # Implementing abstract write method defined by SignalValue.
   def write( self, value ):
-    value = long( value )
+    value = int( value )
     #assert self.nbits >= helpers.get_nbits( value )
     assert self._min <= value <= self._max
     self._uint = (value & self._mask)
@@ -152,7 +163,7 @@ class Bits( SignalValue ):
 
     # TODO: clean up this logic!
 
-    value = long( value )
+    value = int( value )
 
     if isinstance( addr, slice ):
       start = addr.start
@@ -236,11 +247,11 @@ class Bits( SignalValue ):
 
   def __lshift__( self, other ):
     # Optimization to return 0 if shift amount is greater than self.nbits
-    if long( other ) >= self.nbits: return Bits( self.nbits, 0 )
-    return Bits( self.nbits, self._uint << long( other ), trunc=True )
+    if int( other ) >= self.nbits: return Bits( self.nbits, 0 )
+    return Bits( self.nbits, self._uint << int( other ), trunc=True )
 
   def __rshift__( self, other ):
-    return Bits( self.nbits, self._uint >> long( other ) )
+    return Bits( self.nbits, self._uint >> int( other ) )
 
   # TODO: Not implementing reflective operators because its not clear
   #       how to determine width of other object in case of lshift
