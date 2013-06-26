@@ -24,12 +24,16 @@ class Bits( SignalValue ):
     assert isinstance( value, (int, long) )
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0
-    if not trunc:
-      assert nbits >= helpers.get_nbits( value )
 
     # Set the nbits and bitmask (_mask) attributes
     self.nbits = nbits
+    self._max  =  2**nbits - 1
+    self._min  = -2**nbits
     self._mask = ( 1 << self.nbits ) - 1
+
+    if not trunc:
+      #assert nbits >= helpers.get_nbits( value )
+      assert self._min <= value <= self._max
 
     # Convert negative values into unsigned ints and store them
     value_uint = value if ( value >= 0 ) else ( ~(-value) + 1 )
@@ -61,7 +65,8 @@ class Bits( SignalValue ):
     # TODO... performance impact of this? A way to get around this?
     if isinstance( value, Bits ):
       value = value._uint
-    assert self.nbits >= helpers.get_nbits( value )
+    #assert self.nbits >= helpers.get_nbits( value )
+    assert self._min <= value <= self._max
     self._uint = (value & self._mask)
 
   #-----------------------------------------------------------------------
@@ -148,7 +153,8 @@ class Bits( SignalValue ):
       stop = addr.stop
       # special case open-ended ranges [:], [N:], and [:N]
       if start is None and stop is None:
-        assert self.nbits >= helpers.get_nbits( value )
+        #assert self.nbits >= helpers.get_nbits( value )
+        assert self._min <= value <= self._max
         self._uint = value
         return
       elif start is None:
@@ -160,7 +166,8 @@ class Bits( SignalValue ):
       nbits = stop - start
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
-      assert nbits >= helpers.get_nbits( value )
+      #assert nbits >= helpers.get_nbits( value )
+      assert self._min <= value <= self._max
       # Clear the bits we want to set
       ones  = (1 << nbits) - 1
       mask = ~(ones << start)
@@ -190,13 +197,15 @@ class Bits( SignalValue ):
 
   def __add__( self, other ):
     if not isinstance( other, Bits ):
-      other = Bits( helpers.get_nbits( other ), other )
+      #other = Bits( helpers.get_nbits( other ), other )
+      other = Bits( self.nbits, other )
     return Bits( max( self.nbits, other.nbits ),
                  self._uint + other._uint, trunc=True )
 
   def __sub__( self, other ):
     if not isinstance( other, Bits ):
-      other = Bits( helpers.get_nbits( other ), other )
+      #other = Bits( helpers.get_nbits( other ), other )
+      other = Bits( self.nbits, other )
     return Bits( max( self.nbits, other.nbits ),
                  self._uint - other._uint, trunc=True )
 
@@ -259,25 +268,40 @@ class Bits( SignalValue ):
   #------------------------------------------------------------------------
 
   def __and__( self, other ):
-    if isinstance( other, Bits ):
-      other = other._uint
+    #if isinstance( other, Bits ):
+    #  other = other._uint
+    #assert other >= 0
+    #return Bits( max( self.nbits, helpers.get_nbits( other ) ),
+    #             self._uint & other)
+    if isinstance( other, int ):
+      other = Bits( self.nbits, other )
     assert other >= 0
-    return Bits( max( self.nbits, helpers.get_nbits( other ) ),
-                 self._uint & other)
+    return Bits( max( self.nbits, other.nbits ),
+                 self._uint & other._uint )
 
   def __xor__( self, other ):
-    if isinstance( other, Bits ):
-      other = other._uint
+    #if isinstance( other, Bits ):
+    #  other = other._uint
+    #assert other >= 0
+    #return Bits( max( self.nbits, helpers.get_nbits( other ) ),
+    #             self._uint ^ other)
+    if isinstance( other, int ):
+      other = Bits( self.nbits, other )
     assert other >= 0
-    return Bits( max( self.nbits, helpers.get_nbits( other ) ),
-                 self._uint ^ other)
+    return Bits( max( self.nbits, other.nbits ),
+                 self._uint ^ other._uint )
 
   def __or__( self, other ):
-    if isinstance( other, Bits ):
-      other = other._uint
+    #if isinstance( other, Bits ):
+    #  other = other._uint
+    #assert other >= 0
+    #return Bits( max( self.nbits, helpers.get_nbits( other ) ),
+    #             self._uint | other)
+    if isinstance( other, int ):
+      other = Bits( self.nbits, other )
     assert other >= 0
-    return Bits( max( self.nbits, helpers.get_nbits( other ) ),
-                 self._uint | other)
+    return Bits( max( self.nbits, other.nbits ),
+                 self._uint | other._uint )
 
   def __rand__( self, other ):
     return self.__and__( other )
