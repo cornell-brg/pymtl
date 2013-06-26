@@ -8,6 +8,7 @@ from SignalValue import SignalValue
 # NOTE: circular imports between Bits and helpers, using 'import helpers'
 #       instead of 'from helpers import' ensures pydoc still works
 import helpers
+import operator
 
 #-------------------------------------------------------------------------
 # Bits
@@ -200,24 +201,24 @@ class Bits( SignalValue ):
       #other = Bits( helpers.get_nbits( other ), other )
       other = Bits( self.nbits, other )
     return Bits( max( self.nbits, other.nbits ),
-                 self._uint + other._uint, trunc=True )
+                 operator.add( self._uint, other._uint), trunc=True )
 
   def __sub__( self, other ):
     if not isinstance( other, Bits ):
       #other = Bits( helpers.get_nbits( other ), other )
       other = Bits( self.nbits, other )
     return Bits( max( self.nbits, other.nbits ),
-                 self._uint - other._uint, trunc=True )
+                 operator.sub( self._uint, other._uint), trunc=True )
 
   # TODO: what about multiplying Bits object with an object of other type
   # where the bitwidth of the other type is larger than the bitwidth of the
   # Bits object? ( applies to every other operator as well.... )
   def __mul__( self, other ):
     if isinstance( other, int ):
-      return Bits( 2*self.nbits, self._uint * other )
+      return Bits( 2*self.nbits, operator.mul( self._uint, other ) )
     else:
       assert self.nbits == other.nbits
-      return Bits( 2*self.nbits, self._uint * other._uint )
+      return Bits( 2*self.nbits, operator.mul( self._uint, other._uint ) )
 
   def __radd__( self, other ):
     return self.__add__( other )
@@ -242,19 +243,23 @@ class Bits( SignalValue ):
     if isinstance( other, int ):
       # If the shift amount is greater than the width, just return 0
       if other >= self.nbits: return Bits( self.nbits, 0 )
-      return Bits( self.nbits, self._uint << other, trunc=True )
+      #return Bits( self.nbits, self._uint << other, trunc=True )
+      return Bits( self.nbits, operator.lshift( self._uint, other), trunc=True )
     else:
       # If the shift amount is greater than the width, just return 0
       if other._uint >= self.nbits: return Bits( self.nbits, 0 )
-      return Bits( self.nbits, self._uint << other._uint, trunc=True )
+      #return Bits( self.nbits, self._uint << other._uint, trunc=True )
+      return Bits( self.nbits, operator.lshift( self._uint, other._uint), trunc=True )
 
   def __rshift__( self, other ):
     if isinstance( other, int ):
       #assert other <= self.nbits
-      return Bits( self.nbits, self._uint >> other )
+      #return Bits( self.nbits, self._uint >> other )
+      return Bits( self.nbits, operator.rshift( self._uint, other ) )
     else:
       #assert other.uint <= self.nbits
-      return Bits( self.nbits, self._uint >> other._uint )
+      #return Bits( self.nbits, self._uint >> other._uint )
+      return Bits( self.nbits, operator.rshift( self._uint, other._uint ) )
 
   # TODO: Not implementing reflective operators because its not clear
   #       how to determine width of other object in case of lshift
@@ -277,7 +282,8 @@ class Bits( SignalValue ):
       other = Bits( self.nbits, other )
     assert other >= 0
     return Bits( max( self.nbits, other.nbits ),
-                 self._uint & other._uint )
+                 operator.and_( self._uint, other._uint ) )
+                 #self._uint & other._uint )
 
   def __xor__( self, other ):
     #if isinstance( other, Bits ):
@@ -289,7 +295,8 @@ class Bits( SignalValue ):
       other = Bits( self.nbits, other )
     assert other >= 0
     return Bits( max( self.nbits, other.nbits ),
-                 self._uint ^ other._uint )
+                 operator.xor( self._uint, other._uint ) )
+                 #self._uint ^ other._uint )
 
   def __or__( self, other ):
     #if isinstance( other, Bits ):
@@ -301,7 +308,8 @@ class Bits( SignalValue ):
       other = Bits( self.nbits, other )
     assert other >= 0
     return Bits( max( self.nbits, other.nbits ),
-                 self._uint | other._uint )
+                 operator.or_( self._uint, other._uint ) )
+                 #self._uint | other._uint )
 
   def __rand__( self, other ):
     return self.__and__( other )
@@ -324,42 +332,48 @@ class Bits( SignalValue ):
       assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self._uint == other
+    #return self._uint == other
+    return operator.eq( self._uint, other )
 
   def __ne__(self,other):
     if isinstance( other, Bits ):
       assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self._uint != other
+    #return self._uint != other
+    return operator.ne( self._uint, other )
 
   def __lt__(self,other):
     if isinstance( other, Bits ):
       assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self._uint < other
+    #return self._uint < other
+    return operator.lt( self._uint, other )
 
   def __le__( self,other ):
     if isinstance( other, Bits ):
       assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self._uint <= other
+    #return self._uint <= other
+    return operator.le( self._uint, other )
 
   def __gt__( self, other ):
     if isinstance( other, Bits ):
       assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self._uint > other
+    #return self._uint > other
+    return operator.gt( self._uint, other )
 
   def __ge__( self, other ):
     if isinstance( other, Bits ):
       assert self.nbits == other.nbits
       other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return self._uint >= other
+    #return self._uint >= other
+    return operator.ge( self._uint, other )
 
   #------------------------------------------------------------------------
   # Extension
