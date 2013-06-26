@@ -21,8 +21,8 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   def __init__( self, nbits, value = 0, trunc = False ):
 
-    # Disallow value = Bits()
-    assert isinstance( value, (int, long) )
+    value = long( value )
+
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0
 
@@ -39,6 +39,15 @@ class Bits( SignalValue ):
     # Convert negative values into unsigned ints and store them
     value_uint = value if ( value >= 0 ) else ( ~(-value) + 1 )
     self._uint = value_uint & self._mask
+
+  #-----------------------------------------------------------------------
+  # __int__
+  #-----------------------------------------------------------------------
+  def __int__( self ):
+    return int( self._uint )
+
+  def __long__( self ):
+    return long( self._uint )
 
   #-----------------------------------------------------------------------
   # uint
@@ -63,9 +72,7 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   # Implementing abstract write method defined by SignalValue.
   def write( self, value ):
-    # TODO... performance impact of this? A way to get around this?
-    if isinstance( value, Bits ):
-      value = value._uint
+    value = long( value )
     #assert self.nbits >= helpers.get_nbits( value )
     assert self._min <= value <= self._max
     self._uint = (value & self._mask)
@@ -146,8 +153,7 @@ class Bits( SignalValue ):
 
     # TODO: clean up this logic!
 
-    if isinstance( value, Bits ):
-      value = value._uint
+    value = long( value )
 
     if isinstance( addr, slice ):
       start = addr.start
@@ -192,33 +198,20 @@ class Bits( SignalValue ):
   # two operands. These semantics match Verilog:
   # http://www1.pldworld.com/@xilinx/html/technote/TOOL/MANUAL/21i_doc/data/fndtn/ver/ver4_4.htm
 
-  # TODO: reflected operands?
   def __invert__( self ):
     return Bits( self.nbits, ~self._uint, trunc=True )
 
   def __add__( self, other ):
-    if not isinstance( other, Bits ):
-      #other = Bits( helpers.get_nbits( other ), other )
-      other = Bits( self.nbits, other )
-    return Bits( max( self.nbits, other.nbits ),
-                 operator.add( self._uint, other._uint), trunc=True )
+    return Bits( self.nbits, long( self ) + long( other ), trunc=True )
 
   def __sub__( self, other ):
-    if not isinstance( other, Bits ):
-      #other = Bits( helpers.get_nbits( other ), other )
-      other = Bits( self.nbits, other )
-    return Bits( max( self.nbits, other.nbits ),
-                 operator.sub( self._uint, other._uint), trunc=True )
+    return Bits( self.nbits, long( self ) - long( other ), trunc=True )
 
   # TODO: what about multiplying Bits object with an object of other type
   # where the bitwidth of the other type is larger than the bitwidth of the
   # Bits object? ( applies to every other operator as well.... )
   def __mul__( self, other ):
-    if isinstance( other, int ):
-      return Bits( 2*self.nbits, operator.mul( self._uint, other ) )
-    else:
-      assert self.nbits == other.nbits
-      return Bits( 2*self.nbits, operator.mul( self._uint, other._uint ) )
+    return Bits( 2*self.nbits, long( self ) * long( other ), trunc=True )
 
   def __radd__( self, other ):
     return self.__add__( other )
@@ -240,26 +233,11 @@ class Bits( SignalValue ):
   #------------------------------------------------------------------------
 
   def __lshift__( self, other ):
-    if isinstance( other, int ):
-      # If the shift amount is greater than the width, just return 0
-      if other >= self.nbits: return Bits( self.nbits, 0 )
-      #return Bits( self.nbits, self._uint << other, trunc=True )
-      return Bits( self.nbits, operator.lshift( self._uint, other), trunc=True )
-    else:
-      # If the shift amount is greater than the width, just return 0
-      if other._uint >= self.nbits: return Bits( self.nbits, 0 )
-      #return Bits( self.nbits, self._uint << other._uint, trunc=True )
-      return Bits( self.nbits, operator.lshift( self._uint, other._uint), trunc=True )
+    if long( other ) >= self.nbits: return Bits( self.nbits, 0 )
+    return Bits( self.nbits, long( self ) << long( other ), trunc=True )
 
   def __rshift__( self, other ):
-    if isinstance( other, int ):
-      #assert other <= self.nbits
-      #return Bits( self.nbits, self._uint >> other )
-      return Bits( self.nbits, operator.rshift( self._uint, other ) )
-    else:
-      #assert other.uint <= self.nbits
-      #return Bits( self.nbits, self._uint >> other._uint )
-      return Bits( self.nbits, operator.rshift( self._uint, other._uint ) )
+    return Bits( self.nbits, long( self ) >> long( other ) )
 
   # TODO: Not implementing reflective operators because its not clear
   #       how to determine width of other object in case of lshift
@@ -273,43 +251,16 @@ class Bits( SignalValue ):
   #------------------------------------------------------------------------
 
   def __and__( self, other ):
-    #if isinstance( other, Bits ):
-    #  other = other._uint
-    #assert other >= 0
-    #return Bits( max( self.nbits, helpers.get_nbits( other ) ),
-    #             self._uint & other)
-    if isinstance( other, int ):
-      other = Bits( self.nbits, other )
     assert other >= 0
-    return Bits( max( self.nbits, other.nbits ),
-                 operator.and_( self._uint, other._uint ) )
-                 #self._uint & other._uint )
+    return Bits( self.nbits, long( self ) & other, trunc=True )
 
   def __xor__( self, other ):
-    #if isinstance( other, Bits ):
-    #  other = other._uint
-    #assert other >= 0
-    #return Bits( max( self.nbits, helpers.get_nbits( other ) ),
-    #             self._uint ^ other)
-    if isinstance( other, int ):
-      other = Bits( self.nbits, other )
     assert other >= 0
-    return Bits( max( self.nbits, other.nbits ),
-                 operator.xor( self._uint, other._uint ) )
-                 #self._uint ^ other._uint )
+    return Bits( self.nbits, long( self ) ^ other, trunc=True )
 
   def __or__( self, other ):
-    #if isinstance( other, Bits ):
-    #  other = other._uint
-    #assert other >= 0
-    #return Bits( max( self.nbits, helpers.get_nbits( other ) ),
-    #             self._uint | other)
-    if isinstance( other, int ):
-      other = Bits( self.nbits, other )
     assert other >= 0
-    return Bits( max( self.nbits, other.nbits ),
-                 operator.or_( self._uint, other._uint ) )
-                 #self._uint | other._uint )
+    return Bits( self.nbits, long( self ) | other, trunc=True )
 
   def __rand__( self, other ):
     return self.__and__( other )
@@ -328,52 +279,28 @@ class Bits( SignalValue ):
     return self._uint != 0
 
   def __eq__(self,other):
-    if isinstance( other, Bits ):
-      assert self.nbits == other.nbits
-      other = other._uint
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    #return self._uint == other
-    return operator.eq( self._uint, other )
+    return long( self ) == other
 
   def __ne__(self,other):
-    if isinstance( other, Bits ):
-      assert self.nbits == other.nbits
-      other = other._uint
-    assert other >= 0   # TODO: allow comparison with negative numbers?
-    #return self._uint != other
-    return operator.ne( self._uint, other )
+    assert other >= 0
+    return long( self ) != other
 
   def __lt__(self,other):
-    if isinstance( other, Bits ):
-      assert self.nbits == other.nbits
-      other = other._uint
-    assert other >= 0   # TODO: allow comparison with negative numbers?
-    #return self._uint < other
-    return operator.lt( self._uint, other )
+    assert other >= 0
+    return long( self ) < other
 
   def __le__( self,other ):
-    if isinstance( other, Bits ):
-      assert self.nbits == other.nbits
-      other = other._uint
-    assert other >= 0   # TODO: allow comparison with negative numbers?
-    #return self._uint <= other
-    return operator.le( self._uint, other )
+    assert other >= 0
+    return long( self ) <= other
 
   def __gt__( self, other ):
-    if isinstance( other, Bits ):
-      assert self.nbits == other.nbits
-      other = other._uint
-    assert other >= 0   # TODO: allow comparison with negative numbers?
-    #return self._uint > other
-    return operator.gt( self._uint, other )
+    assert other >= 0
+    return long( self ) > other
 
   def __ge__( self, other ):
-    if isinstance( other, Bits ):
-      assert self.nbits == other.nbits
-      other = other._uint
-    assert other >= 0   # TODO: allow comparison with negative numbers?
-    #return self._uint >= other
-    return operator.ge( self._uint, other )
+    assert other >= 0
+    return long( self ) >= other
 
   #------------------------------------------------------------------------
   # Extension

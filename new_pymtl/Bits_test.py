@@ -10,8 +10,8 @@ from   Bits import Bits
 def test_return_type():
 
   x = Bits( 8, 0b1100 )
-  assert isinstance( x.uint(), int  )
-  assert isinstance( x.int(),  int  )
+  assert isinstance( x.uint(), long  )
+  assert isinstance( x.int(),  long  )
   assert isinstance( x[1:2],   Bits )
   assert isinstance( x[0:4],   Bits )
   assert isinstance( x[2],     Bits )
@@ -122,15 +122,16 @@ def test_slice_bounds_checking():
     x[-1:2] = 0b10
   with pytest.raises( AssertionError ):
     x[2:1]  = 0b10
+  # FIXED
   # Bits objects constructed with another Bits object provided as a value
   # parameter end up having problems when writing to slices.  This is
   # because the mask used when writing to a subslice is often a negative
   # int in Python, and we don't allow operations on Bits to be performed
   # with negative values.  Current workaround is to force the value param
   # for the Bits constructor to be an int or a long.
-  with pytest.raises( AssertionError ):
-    y = Bits( 4, Bits( 4, 0 ))
-    y[1:3] = 1
+  #with pytest.raises( AssertionError ):
+  y = Bits( 4, Bits( 4, 0 ))
+  y[1:3] = 1
 
 
 def test_eq():
@@ -304,6 +305,12 @@ def test_add():
   assert x + 14 == 2
   assert 14 + x == 2
 
+  a = Bits( 4, 1 )
+  b = Bits( 4, 1 )
+  c = Bits( 1, 1 )
+  assert a + b + 1 == 3
+  assert a + b + c == 3
+
 def test_sub():
 
   x = Bits( 4, 5 )
@@ -367,6 +374,10 @@ def test_xor():
   assert x ^ y      == 0b00111100
   assert x ^ 0b1010 == 0b11000110
   assert 0b1010 ^ x == 0b11000110
+  a = Bits( 1, 1 )
+  b = Bits( 1, 0 )
+  c = Bits( 1, 1 )
+  assert ( a ^ b ) ^ c == 0
 
 def test_mult():
 
@@ -399,7 +410,7 @@ def test_constructor():
   assert Bits( 4 ) == Bits( 4, 0 )
   assert Bits( 4 ).uint() == 0
 
-@pytest.mark.xfail
+#@pytest.mark.xfail
 # Disable construction from Bits, currently only accepts ints/longs
 def test_construct_from_bits():
 
@@ -425,6 +436,7 @@ def test_str():
   assert Bits(  4,        0x2 ).__str__() == "2"
   assert Bits(  8,       0x1f ).__str__() == "1f"
   assert Bits( 32, 0x0000beef ).__str__() == "0000beef"
+  # FIXED
   # Bits objects constructed with another Bits object provided as a value
   # parameter end up having problems when printed. This is because the
   # internal ._uint field is expected to be an int/long, but is instead
@@ -432,6 +444,7 @@ def test_str():
   # workaround is to force the value param for the Bits constructor to be
   # an int or a long.
   #with pytest.raises( ValueError ):
-  with pytest.raises( AssertionError ):
-    assert Bits(  4, Bits(32,2) ).__str__() == "2"
+  #with pytest.raises( AssertionError ):
+  #  assert Bits(  4, Bits(32,2) ).__str__() == "2"
+  assert Bits(  4, Bits(32,2) ).__str__() == "2"
 
