@@ -21,7 +21,7 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   def __init__( self, nbits, value = 0, trunc = False ):
 
-    value = long( value )
+    value = int( value )
 
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0
@@ -47,7 +47,7 @@ class Bits( SignalValue ):
     return int( self._uint )
 
   def __long__( self ):
-    return long( self._uint )
+    return int( self._uint )
 
   #-----------------------------------------------------------------------
   # uint
@@ -72,7 +72,7 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   # Implementing abstract write method defined by SignalValue.
   def write( self, value ):
-    value = long( value )
+    value = int( value )
     #assert self.nbits >= helpers.get_nbits( value )
     assert self._min <= value <= self._max
     self._uint = (value & self._mask)
@@ -153,7 +153,7 @@ class Bits( SignalValue ):
 
     # TODO: clean up this logic!
 
-    value = long( value )
+    value = int( value )
 
     if isinstance( addr, slice ):
       start = addr.start
@@ -202,16 +202,16 @@ class Bits( SignalValue ):
     return Bits( self.nbits, ~self._uint, trunc=True )
 
   def __add__( self, other ):
-    return Bits( self.nbits, self._uint + long( other ), trunc=True )
+    return Bits( self.nbits, self._uint + int( other ), trunc=True )
 
   def __sub__( self, other ):
-    return Bits( self.nbits, self._uint - long( other ), trunc=True )
+    return Bits( self.nbits, self._uint - int( other ), trunc=True )
 
   # TODO: what about multiplying Bits object with an object of other type
   # where the bitwidth of the other type is larger than the bitwidth of the
   # Bits object? ( applies to every other operator as well.... )
   def __mul__( self, other ):
-    return Bits( 2*self.nbits, self._uint * long( other ), trunc=True )
+    return Bits( 2*self.nbits, self._uint * int( other ), trunc=True )
 
   def __radd__( self, other ):
     return self.__add__( other )
@@ -233,11 +233,11 @@ class Bits( SignalValue ):
   #------------------------------------------------------------------------
 
   def __lshift__( self, other ):
-    if long( other ) >= self.nbits: return Bits( self.nbits, 0 )
-    return Bits( self.nbits, self._uint << long( other ), trunc=True )
+    if int( other ) >= self.nbits: return Bits( self.nbits, 0 )
+    return Bits( self.nbits, self._uint << int( other ), trunc=True )
 
   def __rshift__( self, other ):
-    return Bits( self.nbits, self._uint >> long( other ) )
+    return Bits( self.nbits, self._uint >> int( other ) )
 
   # TODO: Not implementing reflective operators because its not clear
   #       how to determine width of other object in case of lshift

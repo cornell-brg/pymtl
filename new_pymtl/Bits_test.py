@@ -10,8 +10,8 @@ from   Bits import Bits
 def test_return_type():
 
   x = Bits( 8, 0b1100 )
-  assert isinstance( x.uint(), long  )
-  assert isinstance( x.int(),  long  )
+  assert isinstance( x.uint(), int  )
+  assert isinstance( x.int(),  int  )
   assert isinstance( x[1:2],   Bits )
   assert isinstance( x[0:4],   Bits )
   assert isinstance( x[2],     Bits )
