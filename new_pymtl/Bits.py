@@ -202,16 +202,16 @@ class Bits( SignalValue ):
     return Bits( self.nbits, ~self._uint, trunc=True )
 
   def __add__( self, other ):
-    return Bits( self.nbits, long( self ) + long( other ), trunc=True )
+    return Bits( self.nbits, self._uint + long( other ), trunc=True )
 
   def __sub__( self, other ):
-    return Bits( self.nbits, long( self ) - long( other ), trunc=True )
+    return Bits( self.nbits, self._uint - long( other ), trunc=True )
 
   # TODO: what about multiplying Bits object with an object of other type
   # where the bitwidth of the other type is larger than the bitwidth of the
   # Bits object? ( applies to every other operator as well.... )
   def __mul__( self, other ):
-    return Bits( 2*self.nbits, long( self ) * long( other ), trunc=True )
+    return Bits( 2*self.nbits, self._uint * long( other ), trunc=True )
 
   def __radd__( self, other ):
     return self.__add__( other )
@@ -234,10 +234,10 @@ class Bits( SignalValue ):
 
   def __lshift__( self, other ):
     if long( other ) >= self.nbits: return Bits( self.nbits, 0 )
-    return Bits( self.nbits, long( self ) << long( other ), trunc=True )
+    return Bits( self.nbits, self._uint << long( other ), trunc=True )
 
   def __rshift__( self, other ):
-    return Bits( self.nbits, long( self ) >> long( other ) )
+    return Bits( self.nbits, self._uint >> long( other ) )
 
   # TODO: Not implementing reflective operators because its not clear
   #       how to determine width of other object in case of lshift
@@ -252,15 +252,15 @@ class Bits( SignalValue ):
 
   def __and__( self, other ):
     assert other >= 0
-    return Bits( self.nbits, long( self ) & other, trunc=True )
+    return Bits( self.nbits, self._uint & other, trunc=True )
 
   def __xor__( self, other ):
     assert other >= 0
-    return Bits( self.nbits, long( self ) ^ other, trunc=True )
+    return Bits( self.nbits, self._uint ^ other, trunc=True )
 
   def __or__( self, other ):
     assert other >= 0
-    return Bits( self.nbits, long( self ) | other, trunc=True )
+    return Bits( self.nbits, self._uint | other, trunc=True )
 
   def __rand__( self, other ):
     return self.__and__( other )
@@ -280,27 +280,27 @@ class Bits( SignalValue ):
 
   def __eq__(self,other):
     assert other >= 0   # TODO: allow comparison with negative numbers?
-    return long( self ) == other
+    return self._uint == other
 
   def __ne__(self,other):
     assert other >= 0
-    return long( self ) != other
+    return self._uint != other
 
   def __lt__(self,other):
     assert other >= 0
-    return long( self ) < other
+    return self._uint < other
 
   def __le__( self,other ):
     assert other >= 0
-    return long( self ) <= other
+    return self._uint <= other
 
   def __gt__( self, other ):
     assert other >= 0
-    return long( self ) > other
+    return self._uint > other
 
   def __ge__( self, other ):
     assert other >= 0
-    return long( self ) >= other
+    return self._uint >= other
 
   #------------------------------------------------------------------------
   # Extension
