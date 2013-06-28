@@ -9,6 +9,7 @@ ffi = FFI()
 
 ffi.cdef("""
   typedef  void (*FuncPtr)( void );
+  void     init ( void     );
   void     enq  ( FuncPtr func_ptr );
   FuncPtr  deq  ( void     );
   int      len  ( void     );
@@ -38,6 +39,13 @@ except OSError:
                    "You probably didn't build the C components!",
                    "Try running the following command first:",
                    make_cmd ))
+
+
+# Utility function for creating new C++ queue instance
+
+def new_cpp_queue():
+  cpp_queue.init()
+  return cpp_queue
 
 # Utility function for creating c callbacks
 

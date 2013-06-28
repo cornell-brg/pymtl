@@ -4,25 +4,31 @@
 
 #include "EventQueue.h"
 #include <queue>
-#include <list>
 
 typedef void (*FuncPtr)( void );
 
-std::queue < FuncPtr, std::list<FuncPtr> > queue;
+std::queue < FuncPtr > q;
+
+void init()
+{
+  // http://stackoverflow.com/a/709161
+  std::queue < FuncPtr > empty;
+  std::swap( q, empty );
+}
 
 void enq( FuncPtr func_ptr )
 {
-  queue.push( func_ptr );
+  q.push( func_ptr );
 }
 
 FuncPtr deq( void )
 {
-  FuncPtr item = queue.front();
-  queue.pop();
+  FuncPtr item = q.front();
+  q.pop();
   return item;
 }
 
 int len( void )
 {
-  return queue.size();
+  return q.size();
 }

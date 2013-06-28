@@ -10,6 +10,7 @@
 extern "C" {
 
   typedef  void    (*FuncPtr)( void );
+  extern   void    init      ( void );
   extern   void    enq       ( FuncPtr func_ptr );
   extern   FuncPtr deq       ( void );
   extern   int     len       ( void );

@@ -6,7 +6,7 @@
 from Model          import *
 from SimulationTool import SimulationTool
 from Bits           import Bits
-from EventQueue     import cpp_queue, cpp_callback
+from EventQueue     import new_cpp_queue, cpp_callback
 
 from StringIO       import StringIO
 
@@ -34,6 +34,7 @@ def test_BasicFuncCppQ():
   # Creating an FFI Callback
 
   cb = cpp_callback( my_func )
+  cpp_queue = new_cpp_queue()
 
   # Enq
 
@@ -140,6 +141,8 @@ def test_RegisteredFuncCppQ():
   ex = Example()
   ex.setup()
 
+  cpp_queue = new_cpp_queue()
+
   # Single Write
   ex.in_.data = 5
   assert ex.out.data == 0
@@ -214,11 +217,12 @@ def test_CPPQueue():
   model.out = Bits( 8 )
 
   fp = model._combinational_blocks[0]
+  cpp_queue = new_cpp_queue()
+  fp.cb = cpp_callback( fp )
 
   def set_eval_check( value ):
     model.in_.v = value
-    cb = cpp_callback( fp )
-    cpp_queue.enq( cb )
+    cpp_queue.enq( fp.cb )
     cp = cpp_queue.deq()
     cp()
     assert model.out == value

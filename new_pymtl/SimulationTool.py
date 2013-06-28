@@ -15,6 +15,7 @@ import warnings
 from sys         import flags
 from SignalValue import SignalValue
 from ast_visitor import DetectLoadsAndStores, get_method_ast
+from EventQueue  import new_cpp_queue, cpp_callback
 
 #-------------------------------------------------------------------------
 # SimulationTool
@@ -417,13 +418,14 @@ class SimulationTool( object ):
     # svalue_callbacks
     # TODO: merge this code with above to reduce mem of data structures?
     for func_ptr, sensitivity_list in model._newsenses.items():
+      func_ptr.id = self._event_queue.get_id()
+      func_ptr.cb = cpp_callback( func_ptr )
       for signal_value in sensitivity_list:
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
         signal_value.register_callback( func_ptr )
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
-        func_ptr.id = self._event_queue.get_id()
         self._event_queue.enq( func_ptr )
 
     # Recursively perform for submodules
@@ -464,48 +466,43 @@ class SimulationTool( object ):
         signal_value.register_callback( func_ptr )
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
         func_ptr.id = self._event_queue.get_id()
+        func_ptr.cb = cpp_callback( func_ptr )
         self._event_queue.enq( func_ptr )
 
 class EventQueue( object ):
 
   def __init__( self, initsize = 10000 ):
-    self.fifo   = collections.deque()
-    self.bv     = [False] * initsize
-    self.bv_id  = 0
-    #self.fifo  = [0] * initsize
-    #self.head  = 0
-    #self.tail  = 0
-    #self.max   = initsize
-    #self.size  = 0
-    #self.i     = 0
+    #self.fifo   = collections.deque()
+    self.fifo   = new_cpp_queue()
+    #self.bv     = [False] * initsize
+    #self.bv_id  = 0
+    self.bv     = set()
+    assert self.fifo.len() == 0
 
   def enq( self, event ):
-    if not self.bv[ event.id ]:
-      self.bv[ event.id ] = True
-      self.fifo.appendleft( event )
-    #assert self.size < self.max
     #if not self.bv[ event.id ]:
-      #self.size += 1
-      #self.fifo[ self.tail ] = event
-      #self.tail = ( self.tail + 1 ) % self.max
+      #self.bv[ event.id ] = True
+      #self.fifo.appendleft( event )
+    temp = event.cb
+    if temp not in self.bv:
+      self.bv.add( temp )
+      self.fifo.enq( temp )
 
   def deq( self ):
-    event = self.fifo.pop()
-    self.bv[ event.id ] = False
+    event = self.fifo.deq()
+    self.bv.discard( event )
+    #event = self.fifo.pop()
+    #self.bv[ event.id ] = False
     return event
-    #assert self.size > 0
-    #self.size -= 1
-    #old_head = self.head
-    #self.head = ( self.head + 1 ) % self.max
-    #event = self.fifo[ old_head ]
-    #return event
 
   def __len__( self ):
-    return len( self.fifo )
+    return self.fifo.len()
+    #return len( self.fifo )
 
   def get_id( self ):
-    id = self.bv_id
-    self.bv_id += 1
-    if self.bv_id > len ( self.bv ):
-      self.bv.extend( [False] * 10000 )
-    return id
+    #id = self.bv_id
+    #self.bv_id += 1
+    #if self.bv_id > len ( self.bv ):
+    #  self.bv.extend( [False] * 10000 )
+    #return id
+    return 0
