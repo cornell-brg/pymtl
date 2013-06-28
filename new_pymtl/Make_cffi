@@ -1,0 +1,65 @@
+#=========================================================================
+# Simple Makefile to illustrate cffi
+#=========================================================================
+
+#-------------------------------------------------------------------------
+# Basic Setup
+#-------------------------------------------------------------------------
+
+# Remove all default implicit rules since they can cause subtle bugs
+# and they just make things run slower
+
+.SUFFIXES:
+% : %,v
+% : RCS/%,v
+% : RCS/%
+% : s.%
+% : SCCS/s.%
+
+# Default is to build the prereqs of the all target (defined at bottom)
+
+default : all
+
+# Source directory
+
+src_dir := ../new_pymtl
+VPATH := $(src_dir)
+
+#-------------------------------------------------------------------------
+# Build shared library
+#-------------------------------------------------------------------------
+# Using VPATH to find sources: http://stackoverflow.com/a/9148695
+
+EventQueue.o : EventQueue.cc EventQueue.h
+	g++ -fPIC -c -o $@ $<
+
+#	g++ -fPIC -c -o EventQueue.o EventQueue.cc
+
+libEventQueue.so : EventQueue.o
+	g++ -shared -o $@ $<
+
+all  += libEventQueue.so
+junk += EventQueue.o libEventQueue.so
+
+#-------------------------------------------------------------------------
+# Run
+#-------------------------------------------------------------------------
+
+run : EventQueue_test.py EventQueue.py libEventQueue.so
+	py.test $<
+
+#-------------------------------------------------------------------------
+# Default
+#-------------------------------------------------------------------------
+
+all : $(all)
+
+.PHONY : all
+
+#-------------------------------------------------------------------------
+# Clean
+#-------------------------------------------------------------------------
+
+clean :
+	rm -rf $(junk)
+
