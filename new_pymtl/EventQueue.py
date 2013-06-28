@@ -17,7 +17,7 @@ ffi.cdef("""
 # Open the dynamic shared library
 
 try:
-  cpp_queue = ffi.dlopen( 'libEventQueue.so' )
+  cpp_queue = ffi.dlopen( './libEventQueue.so' )
 except OSError as e:
   raise OSError( "{}\n\n{}\n{}\n\n{}\n".format( e,
                  "You probably didn't build the C components!",
