@@ -31,7 +31,7 @@ VPATH := $(src_dir)
 # Using VPATH to find sources: http://stackoverflow.com/a/9148695
 
 EventQueue.o : EventQueue.cc EventQueue.h
-	g++ -fPIC -c -o $@ $<
+	g++ -O3 -fPIC -c -o $@ $<
 
 #	g++ -fPIC -c -o EventQueue.o EventQueue.cc
 
