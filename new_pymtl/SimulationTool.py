@@ -472,37 +472,37 @@ class SimulationTool( object ):
 class EventQueue( object ):
 
   def __init__( self, initsize = 10000 ):
-    #self.fifo   = collections.deque()
-    self.fifo   = new_cpp_queue()
-    #self.bv     = [False] * initsize
-    #self.bv_id  = 0
-    self.bv     = set()
-    assert self.fifo.len() == 0
+    self.fifo   = collections.deque()
+    self.bv     = [False] * initsize
+    self.bv_id  = 0
+    #self.fifo   = new_cpp_queue()
+    #self.bv     = set()
+    #assert self.fifo.len() == 0
 
   def enq( self, event ):
-    #if not self.bv[ event.id ]:
-      #self.bv[ event.id ] = True
-      #self.fifo.appendleft( event )
-    temp = event.cb
-    if temp not in self.bv:
-      self.bv.add( temp )
-      self.fifo.enq( temp )
+    if not self.bv[ event.id ]:
+      self.bv[ event.id ] = True
+      self.fifo.appendleft( event )
+    #temp = event.cb
+    #if temp not in self.bv:
+    #  self.bv.add( temp )
+    #  self.fifo.enq( temp )
 
   def deq( self ):
-    event = self.fifo.deq()
-    self.bv.discard( event )
-    #event = self.fifo.pop()
-    #self.bv[ event.id ] = False
+    #event = self.fifo.deq()
+    #self.bv.discard( event )
+    event = self.fifo.pop()
+    self.bv[ event.id ] = False
     return event
 
   def __len__( self ):
-    return self.fifo.len()
-    #return len( self.fifo )
+    #return self.fifo.len()
+    return len( self.fifo )
 
   def get_id( self ):
-    #id = self.bv_id
-    #self.bv_id += 1
-    #if self.bv_id > len ( self.bv ):
-    #  self.bv.extend( [False] * 10000 )
-    #return id
-    return 0
+    id = self.bv_id
+    self.bv_id += 1
+    if self.bv_id > len ( self.bv ):
+      self.bv.extend( [False] * 10000 )
+    return id
+    #return 0
