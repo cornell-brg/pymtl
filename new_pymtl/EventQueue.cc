@@ -38,13 +38,13 @@ void enq( FuncPtr func_ptr, unsigned int id )
   }
 }
 
-FuncPtr deq( void )
+FuncPtr eval( void )
 {
   assert( count > 0 );
   FuncPtr item = q[head];
   head = (head + 1) % MAX;
   count--;
-  return item;
+  item();
 }
 
 int len( void )

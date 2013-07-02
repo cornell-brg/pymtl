@@ -86,9 +86,10 @@ class SimulationTool( object ):
   def _dev_eval( self ):
     while self._event_queue.len():
       #self.pstats.add_eval_call( func, self.num_cycles )
-      self._current_func = func = self._event_queue.deq()
+      #self._current_func = func = self._event_queue.deq()
       try:
-        func()
+        self._event_queue.eval()
+        #func()
         self._current_func = None
       except TypeError:
         # TODO: can we catch this at static elaboration?
@@ -106,8 +107,9 @@ class SimulationTool( object ):
   # models.
   def _perf_eval( self ):
     while self._event_queue.len():
-      self._current_func = func = self._event_queue.deq()
-      func()
+      self._event_queue.eval()
+      #self._current_func = func = self._event_queue.deq()
+      #func()
       self._current_func = None
 
   #-----------------------------------------------------------------------
