@@ -39,7 +39,7 @@ def test_BasicFuncCppQ():
   # Enq
 
   assert cpp_queue.len() == 0
-  cpp_queue.enq( cb )
+  cpp_queue.enq( cb, 0 )
   assert cpp_queue.len() == 1
 
   # Deq
@@ -55,7 +55,7 @@ def test_BasicFuncCppQ():
   # Many Enq
 
   for i in range( 5 ):
-    cpp_queue.enq( cb )
+    cpp_queue.enq( cb, 0 )
 
   # Many Deq
 
@@ -148,7 +148,7 @@ def test_RegisteredFuncCppQ():
   assert ex.out.data == 0
   # Create callback, enq, deq, call
   cb = cpp_callback( ex._funcs[0] )
-  cpp_queue.enq( cb )
+  cpp_queue.enq( cb, 0 )
   cp = cpp_queue.deq()
   cp()
   #print ex.out.data
@@ -158,7 +158,7 @@ def test_RegisteredFuncCppQ():
   for i in range( 10 ):
     ex.in_.data = i
     cb = cpp_callback( ex._funcs[0] )
-    cpp_queue.enq( cb )
+    cpp_queue.enq( cb, 0 )
     cp = cpp_queue.deq()
     cp()
     #print ex.out.data
@@ -222,7 +222,7 @@ def test_CPPQueue():
 
   def set_eval_check( value ):
     model.in_.v = value
-    cpp_queue.enq( fp.cb )
+    cpp_queue.enq( fp.cb, 0 )
     cp = cpp_queue.deq()
     cp()
     assert model.out == value

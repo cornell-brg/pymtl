@@ -46,6 +46,7 @@ class SimulationTool( object ):
     #self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
     self._current_func      = None
+    self._fp_ids            = 0
 
     # TODO: temporary hack
     self._slice_connects    = []
@@ -61,6 +62,14 @@ class SimulationTool( object ):
 
     # Actually construct the simulator
     self._construct_sim()
+
+  #-----------------------------------------------------------------------
+  # get_id
+  #-----------------------------------------------------------------------
+  def get_id( self ):
+    id = self._fp_ids
+    self._fp_ids += 1
+    return id
 
   #-----------------------------------------------------------------------
   # eval_combinational
@@ -203,7 +212,7 @@ class SimulationTool( object ):
 
     for func in signal_value._callbacks:
       if func != self._current_func:
-        self._event_queue.enq( func.cb )
+        self._event_queue.enq( func.cb, func.id )
 
     #if signal_value in self._svalue_callbacks:
     #  funcs = self._svalue_callbacks[signal_value]
@@ -419,6 +428,7 @@ class SimulationTool( object ):
     # TODO: merge this code with above to reduce mem of data structures?
     for func_ptr, sensitivity_list in model._newsenses.items():
       #func_ptr.id = self._event_queue.get_id()
+      func_ptr.id = self.get_id()
       func_ptr.cb = cpp_callback( func_ptr )
       for signal_value in sensitivity_list:
         # Prime the simulation by putting all events on the event_queue
@@ -426,7 +436,7 @@ class SimulationTool( object ):
         # state. TODO: put this in reset() instead?
         signal_value.register_callback( func_ptr )
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
-        self._event_queue.enq( func_ptr.cb )
+        self._event_queue.enq( func_ptr.cb, func_ptr.id )
 
     # Recursively perform for submodules
     for m in model.get_submodules():
@@ -466,8 +476,9 @@ class SimulationTool( object ):
         signal_value.register_callback( func_ptr )
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
         #func_ptr.id = self._event_queue.get_id()
+        func_ptr.id = self.get_id()
         func_ptr.cb = cpp_callback( func_ptr )
-        self._event_queue.enq( func_ptr.cb )
+        self._event_queue.enq( func_ptr.cb, func_ptr.id )
 
 #class EventQueue( object ):
 #
@@ -506,3 +517,4 @@ class SimulationTool( object ):
 #    #  self.bv.extend( [False] * 10000 )
 #    #return id
 #    return 0
+

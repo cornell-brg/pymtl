@@ -10,7 +10,7 @@ ffi = FFI()
 ffi.cdef("""
   typedef  void (*FuncPtr)( void );
   void     init ( void     );
-  void     enq  ( FuncPtr func_ptr );
+  void     enq  ( FuncPtr func_ptr, unsigned int id );
   FuncPtr  deq  ( void     );
   int      len  ( void     );
 """)

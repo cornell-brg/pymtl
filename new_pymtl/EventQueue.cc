@@ -16,6 +16,8 @@ unsigned int head  = 0;
 unsigned int tail  = 0;
 unsigned int count = 0;
 
+std::vector < bool > in_q ( MAX, 0 );
+
 void init()
 {
   // http://stackoverflow.com/a/709161
@@ -26,12 +28,14 @@ void init()
   count = 0;
 }
 
-void enq( FuncPtr func_ptr )
+void enq( FuncPtr func_ptr, unsigned int id )
 {
   assert( count < MAX );
-  q[tail] = func_ptr;
-  tail = (tail + 1) % MAX;
-  count++;
+  if ( not in_q[ id ] ) {
+    q[tail] = func_ptr;
+    tail = (tail + 1) % MAX;
+    count++;
+  }
 }
 
 FuncPtr deq( void )
