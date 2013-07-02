@@ -42,7 +42,7 @@ class SimulationTool( object ):
     self._nets              = []
     self._sequential_blocks = []
     self._register_queue    = []
-    self._event_queue       = EventQueue()
+    self._event_queue       = new_cpp_queue()
     #self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
     self._current_func      = None
@@ -75,7 +75,7 @@ class SimulationTool( object ):
   # Implementation of eval_combinational() for use during
   # develop-test-debug loops.
   def _dev_eval( self ):
-    while self._event_queue:
+    while self._event_queue.len():
       #self.pstats.add_eval_call( func, self.num_cycles )
       self._current_func = func = self._event_queue.deq()
       try:
@@ -96,7 +96,7 @@ class SimulationTool( object ):
   # Implementation of eval_combinataional () for use when benchmarking
   # models.
   def _perf_eval( self ):
-    while self._event_queue:
+    while self._event_queue.len():
       self._current_func = func = self._event_queue.deq()
       func()
       self._current_func = None
@@ -203,7 +203,7 @@ class SimulationTool( object ):
 
     for func in signal_value._callbacks:
       if func != self._current_func:
-        self._event_queue.enq( func )
+        self._event_queue.enq( func.cb )
 
     #if signal_value in self._svalue_callbacks:
     #  funcs = self._svalue_callbacks[signal_value]
@@ -418,7 +418,7 @@ class SimulationTool( object ):
     # svalue_callbacks
     # TODO: merge this code with above to reduce mem of data structures?
     for func_ptr, sensitivity_list in model._newsenses.items():
-      func_ptr.id = self._event_queue.get_id()
+      #func_ptr.id = self._event_queue.get_id()
       func_ptr.cb = cpp_callback( func_ptr )
       for signal_value in sensitivity_list:
         # Prime the simulation by putting all events on the event_queue
@@ -426,7 +426,7 @@ class SimulationTool( object ):
         # state. TODO: put this in reset() instead?
         signal_value.register_callback( func_ptr )
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
-        self._event_queue.enq( func_ptr )
+        self._event_queue.enq( func_ptr.cb )
 
     # Recursively perform for submodules
     for m in model.get_submodules():
@@ -465,44 +465,44 @@ class SimulationTool( object ):
         signal_value = c.src_node._signalvalue
         signal_value.register_callback( func_ptr )
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
-        func_ptr.id = self._event_queue.get_id()
+        #func_ptr.id = self._event_queue.get_id()
         func_ptr.cb = cpp_callback( func_ptr )
-        self._event_queue.enq( func_ptr )
+        self._event_queue.enq( func_ptr.cb )
 
-class EventQueue( object ):
-
-  def __init__( self, initsize = 10000 ):
-    #self.fifo   = collections.deque()
-    #self.bv     = [False] * initsize
-    #self.bv_id  = 0
-    self.fifo   = new_cpp_queue()
-    self.bv     = set()
-    assert self.fifo.len() == 0
-
-  def enq( self, event ):
-    #if not self.bv[ event.id ]:
-    #  self.bv[ event.id ] = True
-    #  self.fifo.appendleft( event )
-    temp = event.cb
-    if temp not in self.bv:
-      self.bv.add( temp )
-      self.fifo.enq( temp )
-
-  def deq( self ):
-    event = self.fifo.deq()
-    self.bv.discard( event )
-    #event = self.fifo.pop()
-    #self.bv[ event.id ] = False
-    return event
-
-  def __len__( self ):
-    return self.fifo.len()
-    #return len( self.fifo )
-
-  def get_id( self ):
-    #id = self.bv_id
-    #self.bv_id += 1
-    #if self.bv_id > len ( self.bv ):
-    #  self.bv.extend( [False] * 10000 )
-    #return id
-    return 0
+#class EventQueue( object ):
+#
+#  def __init__( self, initsize = 10000 ):
+#    #self.fifo   = collections.deque()
+#    #self.bv     = [False] * initsize
+#    #self.bv_id  = 0
+#    self.fifo   = new_cpp_queue()
+#    self.bv     = set()
+#    assert self.fifo.len() == 0
+#
+#  def enq( self, event ):
+#    #if not self.bv[ event.id ]:
+#    #  self.bv[ event.id ] = True
+#    #  self.fifo.appendleft( event )
+#    temp = event.cb
+#    if temp not in self.bv:
+#      self.bv.add( temp )
+#      self.fifo.enq( temp )
+#
+#  def deq( self ):
+#    event = self.fifo.deq()
+#    self.bv.discard( event )
+#    #event = self.fifo.pop()
+#    #self.bv[ event.id ] = False
+#    return event
+#
+#  def __len__( self ):
+#    return self.fifo.len()
+#    #return len( self.fifo )
+#
+#  def get_id( self ):
+#    #id = self.bv_id
+#    #self.bv_id += 1
+#    #if self.bv_id > len ( self.bv ):
+#    #  self.bv.extend( [False] * 10000 )
+#    #return id
+#    return 0
