@@ -42,7 +42,8 @@ class SimulationTool( object ):
     self._nets              = []
     self._sequential_blocks = []
     self._register_queue    = []
-    self._event_queue       = new_cpp_queue()
+    self._event_queue       = EventQueue()
+    #self._event_queue       = new_cpp_queue()
     #self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
     self._current_func      = None
@@ -90,7 +91,7 @@ class SimulationTool( object ):
       try:
         self._event_queue.eval()
         #func()
-        self._current_func = None
+        #self._current_func = None
       except TypeError:
         # TODO: can we catch this at static elaboration?
         raise Exception("Concurrent block '{}' must take no parameters!\n"
@@ -110,7 +111,7 @@ class SimulationTool( object ):
       self._event_queue.eval()
       #self._current_func = func = self._event_queue.deq()
       #func()
-      self._current_func = None
+      #self._current_func = None
 
   #-----------------------------------------------------------------------
   # cycle
@@ -213,8 +214,8 @@ class SimulationTool( object ):
     #print self._svalue_callbacks[signal_value]
 
     for func in signal_value._callbacks:
-      if func != self._current_func:
-        self._event_queue.enq( func.cb, func.id )
+      #if func != self._current_func:
+      self._event_queue.enq( func.cb, func.id )
 
     #if signal_value in self._svalue_callbacks:
     #  funcs = self._svalue_callbacks[signal_value]
@@ -482,41 +483,47 @@ class SimulationTool( object ):
         func_ptr.cb = cpp_callback( func_ptr )
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
 
-#class EventQueue( object ):
-#
-#  def __init__( self, initsize = 10000 ):
-#    #self.fifo   = collections.deque()
-#    #self.bv     = [False] * initsize
-#    #self.bv_id  = 0
-#    self.fifo   = new_cpp_queue()
-#    self.bv     = set()
-#    assert self.fifo.len() == 0
-#
-#  def enq( self, event ):
-#    #if not self.bv[ event.id ]:
-#    #  self.bv[ event.id ] = True
-#    #  self.fifo.appendleft( event )
-#    temp = event.cb
-#    if temp not in self.bv:
-#      self.bv.add( temp )
-#      self.fifo.enq( temp )
-#
-#  def deq( self ):
-#    event = self.fifo.deq()
-#    self.bv.discard( event )
-#    #event = self.fifo.pop()
-#    #self.bv[ event.id ] = False
-#    return event
-#
-#  def __len__( self ):
-#    return self.fifo.len()
-#    #return len( self.fifo )
-#
-#  def get_id( self ):
-#    #id = self.bv_id
-#    #self.bv_id += 1
-#    #if self.bv_id > len ( self.bv ):
-#    #  self.bv.extend( [False] * 10000 )
-#    #return id
-#    return 0
+class EventQueue( object ):
+
+  def __init__( self ):
+    #self.fifo   = collections.deque()
+    #self.bv     = [False] * initsize
+    #self.bv_id  = 0
+    self.fifo   = new_cpp_queue()
+    #self.bv     = set()
+    assert self.fifo.len() == 0
+
+  def enq( self, cb, id):
+  #def enq( self, event ):
+    #if not self.bv[ event.id ]:
+    #  self.bv[ event.id ] = True
+    #  self.fifo.appendleft( event )
+    #temp = event.cb
+    #if temp not in self.bv:
+    #  self.bv.add( temp )
+    #  self.fifo.enq( temp )
+    self.fifo.enq( cb, id )
+
+  def eval( self ):
+    self.fifo.eval()
+    #event = self.fifo.deq()
+    #self.bv.discard( event )
+    #event = self.fifo.pop()
+    #self.bv[ event.id ] = False
+    #return event
+
+  def len( self ):
+    return self.fifo.len()
+
+  def __len__( self ):
+    return self.fifo.len()
+    #return len( self.fifo )
+
+  def get_id( self ):
+    #id = self.bv_id
+    #self.bv_id += 1
+    #if self.bv_id > len ( self.bv ):
+    #  self.bv.extend( [False] * 10000 )
+    #return id
+    return self.fifo.len()
 
