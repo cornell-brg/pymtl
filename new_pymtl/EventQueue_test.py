@@ -235,9 +235,8 @@ def test_CPPQueue():
 #-------------------------------------------------------------------------
 # ModelSimQ
 #-------------------------------------------------------------------------
-# For now this tests the python collections.deque, but once the C++
-# EventQueue implementation is integrated into the SimulationTool, this
-# will be a simple integration test.
+# Simple integration test (assuming SimulationTool has been modified to
+# use the cpp_queue).
 
 def test_ModelSimQ():
   model = PassThrough( 8 )
@@ -251,3 +250,60 @@ def test_ModelSimQ():
 
   for i in range( 0, 100, 15 ):
     set_eval_check( i )
+
+#=========================================================================
+# PyMTL Redundant Eval Test
+#=========================================================================
+
+#-------------------------------------------------------------------------
+# Adder
+#-------------------------------------------------------------------------
+
+class Adder( Model ):
+  def __init__( s, nbits ):
+    s.a   = InPort ( nbits )
+    s.b   = InPort ( nbits )
+    s.out = OutPort( nbits )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.v = s.a + s.b
+
+#-------------------------------------------------------------------------
+# ModelSimQ
+#-------------------------------------------------------------------------
+
+def test_ModelSimQRedundant():
+  model = Adder( 8 )
+  model.elaborate()
+  sim   = SimulationTool( model )
+
+  # Test of basic functionality
+
+  model.a.v = 1
+  model.b.v = 2
+  sim.cycle()
+  assert model.out == 3
+
+  # Testing Event queue membership, want eval only added to queue once!
+
+  model.a.v = 5
+  assert len( sim._event_queue ) == 1
+
+  # If value doesn't change, dont add it to the queue
+  model.a.v = 5
+  assert len( sim._event_queue ) == 1
+
+  # If event already in queue, don't add it again
+  model.b.v = 3
+  assert len( sim._event_queue ) == 1
+
+  model.b.v = 5
+  assert len( sim._event_queue ) == 1
+
+  sim.cycle()
+  assert model.out == 10
+
+  assert len( sim._event_queue ) == 0
+
