@@ -106,7 +106,7 @@ class SimulationTool( object ):
       #self._event_queue.eval()
       self._current_func = func = self._event_queue.deq()
       func()
-      #self._current_func = None
+      self._current_func = None
 
   #-----------------------------------------------------------------------
   # cycle
@@ -219,8 +219,8 @@ class SimulationTool( object ):
     self.stats.incr_add_events()
     for func in signal_value._callbacks:
       self.stats.incr_add_callbk()
-      #if func != self._current_func:
-      self._event_queue.enq( func.cb, func.id )
+      if func != self._current_func:
+        self._event_queue.enq( func.cb, func.id )
 
     #if signal_value in self._svalue_callbacks:
     #  funcs = self._svalue_callbacks[signal_value]
