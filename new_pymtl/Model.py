@@ -290,6 +290,15 @@ class Model(object):
   def get_connections( self ):
     return self._connections
 
+  def get_tick_blocks( self ):
+    return self._tick_blocks
+
+  def get_posedge_clk_blocks( self ):
+    return self._posedge_clk_blocks
+
+  def get_combinational_blocks( self ):
+    return self._combinational_blocks
+
   #-----------------------------------------------------------------------
   # Decorators
   #-----------------------------------------------------------------------
