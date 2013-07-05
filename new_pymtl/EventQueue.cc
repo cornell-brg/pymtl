@@ -51,7 +51,7 @@ void enq( FuncPtr func_ptr, unsigned int id )
   }
 }
 
-FuncPtr eval( void )
+FuncPtr deq( void )
 {
   assert( count > 0 );
   int id       = id_q  [ head ];
@@ -59,8 +59,9 @@ FuncPtr eval( void )
   FuncPtr item = func_q[ id ];
   head = (head + 1) % MAX;
   count--;
-  item();
+  //item();
   func_q[ id ] = NULL;
+  return item;
 }
 
 int len( void )

@@ -47,7 +47,6 @@ class SimulationTool( object ):
     #self._svalue_callbacks  = collections.defaultdict(list)
     self.ncycles            = 0
     self._current_func      = None
-    self._fp_ids            = 0
 
     # TODO: temporary hack
     self._slice_connects    = []
@@ -65,14 +64,6 @@ class SimulationTool( object ):
     self._construct_sim()
 
   #-----------------------------------------------------------------------
-  # get_id
-  #-----------------------------------------------------------------------
-  def get_id( self ):
-    id = self._fp_ids
-    self._fp_ids += 1
-    return id
-
-  #-----------------------------------------------------------------------
   # eval_combinational
   #-----------------------------------------------------------------------
   # Evaluates all combinational logic blocks currently in the event queue.
@@ -86,12 +77,11 @@ class SimulationTool( object ):
   # develop-test-debug loops.
   def _dev_eval( self ):
     while self._event_queue.len():
-      #self.pstats.add_eval_call( func, self.num_cycles )
-      #self._current_func = func = self._event_queue.deq()
+      self._current_func = func = self._event_queue.deq()
       try:
-        self._event_queue.eval()
-        #func()
-        #self._current_func = None
+        #self._event_queue.eval()
+        func()
+        self._current_func = None
       except TypeError:
         # TODO: can we catch this at static elaboration?
         raise Exception("Concurrent block '{}' must take no parameters!\n"
@@ -108,9 +98,9 @@ class SimulationTool( object ):
   # models.
   def _perf_eval( self ):
     while self._event_queue.len():
-      self._event_queue.eval()
-      #self._current_func = func = self._event_queue.deq()
-      #func()
+      #self._event_queue.eval()
+      self._current_func = func = self._event_queue.deq()
+      func()
       #self._current_func = None
 
   #-----------------------------------------------------------------------
@@ -430,8 +420,7 @@ class SimulationTool( object ):
     # svalue_callbacks
     # TODO: merge this code with above to reduce mem of data structures?
     for func_ptr, sensitivity_list in model._newsenses.items():
-      #func_ptr.id = self._event_queue.get_id()
-      func_ptr.id = self.get_id()
+      func_ptr.id = self._event_queue.get_id()
       func_ptr.cb = cpp_callback( func_ptr )
       for signal_value in sensitivity_list:
         # Prime the simulation by putting all events on the event_queue
@@ -478,52 +467,33 @@ class SimulationTool( object ):
         signal_value = c.src_node._signalvalue
         signal_value.register_callback( func_ptr )
         #self._svalue_callbacks[ signal_value ].append( func_ptr )
-        #func_ptr.id = self._event_queue.get_id()
-        func_ptr.id = self.get_id()
+        func_ptr.id = self._event_queue.get_id()
         func_ptr.cb = cpp_callback( func_ptr )
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
 
+#-------------------------------------------------------------------------
+# EventQueue
+#-------------------------------------------------------------------------
 class EventQueue( object ):
 
   def __init__( self ):
-    #self.fifo   = collections.deque()
-    #self.bv     = [False] * initsize
-    #self.bv_id  = 0
-    self.fifo   = new_cpp_queue()
-    #self.bv     = set()
+    self.fifo     = new_cpp_queue()
+    self.func_ids = 0
     assert self.fifo.len() == 0
 
   def enq( self, cb, id):
-  #def enq( self, event ):
-    #if not self.bv[ event.id ]:
-    #  self.bv[ event.id ] = True
-    #  self.fifo.appendleft( event )
-    #temp = event.cb
-    #if temp not in self.bv:
-    #  self.bv.add( temp )
-    #  self.fifo.enq( temp )
     self.fifo.enq( cb, id )
 
-  def eval( self ):
-    self.fifo.eval()
-    #event = self.fifo.deq()
-    #self.bv.discard( event )
-    #event = self.fifo.pop()
-    #self.bv[ event.id ] = False
-    #return event
+  def deq( self ):
+    return self.fifo.deq()
 
   def len( self ):
     return self.fifo.len()
 
   def __len__( self ):
     return self.fifo.len()
-    #return len( self.fifo )
 
   def get_id( self ):
-    #id = self.bv_id
-    #self.bv_id += 1
-    #if self.bv_id > len ( self.bv ):
-    #  self.bv.extend( [False] * 10000 )
-    #return id
-    return self.fifo.len()
-
+    id = self.func_ids
+    self.func_ids += 1
+    return id

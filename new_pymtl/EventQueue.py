@@ -11,7 +11,7 @@ ffi.cdef("""
   typedef  void (*FuncPtr)( void );
   void     init ( void     );
   void     enq  ( FuncPtr func_ptr, unsigned int id );
-  FuncPtr  eval ( void     );
+  FuncPtr  deq  ( void     );
   int      len  ( void     );
 """)
 
