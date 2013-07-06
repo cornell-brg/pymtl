@@ -12,11 +12,11 @@ import inspect
 import copy
 import warnings
 
-from sys             import flags
-from SignalValue     import SignalValue
-from ast_visitor     import DetectLoadsAndStores, get_method_ast
-from EventQueue      import new_cpp_queue, cpp_callback
-from SimulationStats import SimulationStats
+from sys               import flags
+from SignalValue       import SignalValue
+from ast_visitor       import DetectLoadsAndStores, get_method_ast
+from EventQueue        import new_cpp_queue, cpp_callback
+from SimulationMetrics import SimulationMetrics
 
 #-------------------------------------------------------------------------
 # SimulationTool
@@ -31,7 +31,7 @@ class SimulationTool( object ):
   # __init__
   #-----------------------------------------------------------------------
   # Construct a simulator based on the provided model.
-  def __init__( self, model, collect_stats = False ):
+  def __init__( self, model, collect_metrics = False ):
 
     # Check that the model has been elaborated
     if not model.is_elaborated():
@@ -49,8 +49,8 @@ class SimulationTool( object ):
     self._slice_connects      = [] # TODO: temporary hack
     #self._DEBUG_signal_cbs    = collections.defaultdict(list)
 
-    # Only collect stats if they are enabled (TODO)
-    self.stats                = SimulationStats()
+    # Only collect metrics if they are enabled (TODO)
+    self.metrics              = SimulationMetrics()
 
     # If the -O flag was passed to Python, use the perf implementation
     # of cycle, otherwise use the dev version.
@@ -80,7 +80,7 @@ class SimulationTool( object ):
     while self._event_queue.len():
       self._current_func = func = self._event_queue.deq()
       try:
-        self.stats.incr_comb_evals( func )
+        self.metrics.incr_comb_evals( func )
         func()
         self._current_func = None
       except TypeError:
@@ -136,7 +136,7 @@ class SimulationTool( object ):
 
     # Distinguish between events caused by input vectors changing (above)
     # and events caused by clocked logic (below).
-    self.stats.start_tick()
+    self.metrics.start_tick()
 
     # Call all rising edge triggered functions
     for func in self._sequential_blocks:
@@ -153,8 +153,8 @@ class SimulationTool( object ):
     # Increment the simulator cycle count
     self.ncycles += 1
 
-    # Setup the stats module to collect for the next cycle
-    self.stats.incr_stats_cycle()
+    # Tell the metrics module to prepare for the next cycle
+    self.metrics.incr_metrics_cycle()
 
   #-----------------------------------------------------------------------
   # _perf_cycle
@@ -212,9 +212,9 @@ class SimulationTool( object ):
     #print [x.fullname for x in signal_value._DEBUG_signal_names],
     #print self._DEBUG_signal_cbs[signal_value]
 
-    self.stats.incr_add_events()
+    self.metrics.incr_add_events()
     for func in signal_value._callbacks:
-      self.stats.incr_add_callbk()
+      self.metrics.incr_add_callbk()
       if func != self._current_func:
         self._event_queue.enq( func.cb, func.id )
 
@@ -254,7 +254,7 @@ class SimulationTool( object ):
     # Utility function to collect all the Signal type objects (ports,
     # wires, constants) in the model.
     def collect_signals( model ):
-      self.stats.reg_model( model )
+      self.metrics.reg_model( model )
       signals = set( model.get_ports() + model.get_wires() )
       for m in model.get_submodules():
         signals.update( collect_signals( m ) )
@@ -430,7 +430,7 @@ class SimulationTool( object ):
     for func_ptr, sensitivity_list in model._newsenses.items():
       func_ptr.id = self._event_queue.get_id()
       func_ptr.cb = cpp_callback( func_ptr )
-      self.stats.reg_eval( func_ptr.cb )
+      self.metrics.reg_eval( func_ptr.cb )
       for signal_value in sensitivity_list:
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
@@ -478,7 +478,7 @@ class SimulationTool( object ):
         func_ptr.id = self._event_queue.get_id()
         func_ptr.cb = cpp_callback( func_ptr )
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
-        self.stats.reg_eval( func_ptr.cb, is_slice = True )
+        self.metrics.reg_eval( func_ptr.cb, is_slice = True )
         #self._DEBUG_signal_cbs[ signal_value ].append( func_ptr )
 
 #-------------------------------------------------------------------------

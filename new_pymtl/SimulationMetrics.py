@@ -1,5 +1,5 @@
 #=========================================================================
-# SimulationStats.py
+# SimulationMetrics.py
 #=========================================================================
 
 import pickle
@@ -10,7 +10,7 @@ import pickle
 # Utility class for storing various SimulationTool metrics. Useful for
 # gaining insight into simulator performace and determining the simulation
 # efficiency of hardware model implementations.
-class SimulationStats( object ):
+class SimulationMetrics( object ):
 
   #-----------------------------------------------------------------------
   # __init__
@@ -71,11 +71,11 @@ class SimulationStats( object ):
       self.num_slice_blocks += 1
 
   #-----------------------------------------------------------------------
-  # incr_stats_cycle
+  # incr_metrics_cycle
   #-----------------------------------------------------------------------
-  # Should be called at the end of each simulation cycle. Sets up
-  # datastructures to store data for the next cycle of metric collection.
-  def incr_stats_cycle( self ):
+  # Should be called at the end of each simulation cycle. Initializes data
+  # structure storage to collect data for the next simulation cycle.
+  def incr_metrics_cycle( self ):
     self._pre_tick                   = True
     self._ncycles                   += 1
     self.input_add_events_per_cycle += [ 0 ]
@@ -137,12 +137,12 @@ class SimulationStats( object ):
       self.slice_comb_evals_per_cycle[ self._ncycles ] += 1
 
   #-----------------------------------------------------------------------
-  # print_stats
+  # print_metrics
   #-----------------------------------------------------------------------
   # Print metrics to the commandline.
-  def print_stats( self, detailed = True ):
+  def print_metrics( self, detailed = True ):
     print "-"*72
-    print "Simulator Statistics"
+    print "Simulation Metrics"
     print "-"*72
     print
     print "ncycles:               {:4}".format( self._ncycles                 )
@@ -172,11 +172,11 @@ class SimulationStats( object ):
     print "-"*72
 
   #-----------------------------------------------------------------------
-  # pickle_stats
+  # pickle_metrics
   #-----------------------------------------------------------------------
   # Pickle metrics to a file.  Useful for loading in Python later for
   # for creating matplotlib plots.
-  def pickle_stats( self, filename ):
+  def pickle_metrics( self, filename ):
     del self.is_slice
     del self.has_run
     pickle.dump( self, open( filename, 'wb' ) )
