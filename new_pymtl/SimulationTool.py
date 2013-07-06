@@ -1,10 +1,10 @@
 #=========================================================================
 # SimulationTool.py
 #=========================================================================
-# Tool for simulating MTL models.
+# Tool for simulating hardware models.
 #
-# This module contains classes which construct a simulator given a MTL model
-# for execution in the python interpreter.
+# This module contains classes which construct a model simulator for
+# execution in the Python interpreter.
 
 import pprint
 import collections
@@ -21,16 +21,16 @@ from SimulationStats import SimulationStats
 #-------------------------------------------------------------------------
 # SimulationTool
 #-------------------------------------------------------------------------
-# User visible class implementing a tool for simulating MTL models.
+# User visible class implementing a tool for simulating hardware models.
 #
-# This class takes a MTL model instance and creates a simulator for execution
-# in the python interpreter.
+# This class takes a model instance and creates a simulator for execution
+# in the Python interpreter.
 class SimulationTool( object ):
 
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  # Construct a simulator based on a MTL model.
+  # Construct a simulator based on the provided model.
   def __init__( self, model, collect_stats = False ):
 
     # Check that the model has been elaborated
@@ -39,20 +39,20 @@ class SimulationTool( object ):
                        "Provided model has not been elaborated yet!!!"
                        "".format( self.__class__.__name__ ) )
 
-    self.model              = model
-    self._nets              = []
-    self._sequential_blocks = []
-    self._register_queue    = []
-    self._event_queue       = EventQueue()
-    #self._event_queue       = new_cpp_queue()
-    #self._svalue_callbacks  = collections.defaultdict(list)
-    self.ncycles            = 0
-    self._current_func      = None
+    self.model                = model
+    self.ncycles              = 0
+    self._nets                = []
+    self._sequential_blocks   = []
+    self._register_queue      = []
+    self._event_queue         = EventQueue()
+    self._current_func        = None
+    self._slice_connects      = [] # TODO: temporary hack
+    #self._DEBUG_signal_cbs    = collections.defaultdict(list)
 
-    # TODO: temporary hack
-    self._slice_connects    = []
+    # Only collect stats if they are enabled (TODO)
+    self.stats                = SimulationStats()
 
-    # If the -O flag was passed to python, use the perf implementation
+    # If the -O flag was passed to Python, use the perf implementation
     # of cycle, otherwise use the dev version.
     if flags.optimize:
       self.cycle              = self._perf_cycle
@@ -60,9 +60,6 @@ class SimulationTool( object ):
     else:
       self.cycle              = self._dev_cycle
       self.eval_combinational = self._dev_eval
-
-    # If stats were enabled
-    self.stats              = SimulationStats()
 
     # Actually construct the simulator
     self._construct_sim()
@@ -83,8 +80,7 @@ class SimulationTool( object ):
     while self._event_queue.len():
       self._current_func = func = self._event_queue.deq()
       try:
-        self.stats.incr_comb_evals()
-        #self._event_queue.eval()
+        self.stats.incr_comb_evals( func )
         func()
         self._current_func = None
       except TypeError:
@@ -212,19 +208,15 @@ class SimulationTool( object ):
   def add_event( self, signal_value ):
     # TODO: debug_event
     #print "    ADDEVENT: VALUE", signal_value.v,
-    #print signal_value in self._svalue_callbacks,
-    #print [x.fullname for x in signal_value._debug_signals],
-    #print self._svalue_callbacks[signal_value]
+    #print signal_value in self._DEBUG_signal_cbs,
+    #print [x.fullname for x in signal_value._DEBUG_signal_names],
+    #print self._DEBUG_signal_cbs[signal_value]
 
     self.stats.incr_add_events()
     for func in signal_value._callbacks:
       self.stats.incr_add_callbk()
       if func != self._current_func:
         self._event_queue.enq( func.cb, func.id )
-
-    #if signal_value in self._svalue_callbacks:
-    #  funcs = self._svalue_callbacks[signal_value]
-    #  for func in funcs:
 
   #-----------------------------------------------------------------------
   # _construct_sim
@@ -262,10 +254,7 @@ class SimulationTool( object ):
     # Utility function to collect all the Signal type objects (ports,
     # wires, constants) in the model.
     def collect_signals( model ):
-      self.stats.num_modules              += 1
-      self.stats.num_tick_blocks          += len( model.get_tick_blocks() )
-      self.stats.num_posedge_clk_blocks   += len( model.get_posedge_clk_blocks() )
-      self.stats.num_combinational_blocks += len( model.get_combinational_blocks() )
+      self.stats.reg_model( model )
       signals = set( model.get_ports() + model.get_wires() )
       for m in model.get_submodules():
         signals.update( collect_signals( m ) )
@@ -353,7 +342,7 @@ class SimulationTool( object ):
       svalue = temp.msg_type
       # TODO: should this be visible to sim?
       svalue._shadow_value = copy.copy( svalue )
-      #svalue._debug_signals = group
+      #svalue._DEBUG_signal_names = group
 
       # Add a callback to the SignalValue so that the simulator is notified
       # whenever it's value changes.
@@ -441,13 +430,14 @@ class SimulationTool( object ):
     for func_ptr, sensitivity_list in model._newsenses.items():
       func_ptr.id = self._event_queue.get_id()
       func_ptr.cb = cpp_callback( func_ptr )
+      self.stats.reg_eval( func_ptr.cb )
       for signal_value in sensitivity_list:
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
         signal_value.register_callback( func_ptr )
-        #self._svalue_callbacks[ signal_value ].append( func_ptr )
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
+        #self._DEBUG_signal_cbs[ signal_value ].append( func_ptr )
 
     # Recursively perform for submodules
     for m in model.get_submodules():
@@ -485,10 +475,11 @@ class SimulationTool( object ):
         func_ptr = create_slice_cb_closure( c )
         signal_value = c.src_node._signalvalue
         signal_value.register_callback( func_ptr )
-        #self._svalue_callbacks[ signal_value ].append( func_ptr )
         func_ptr.id = self._event_queue.get_id()
         func_ptr.cb = cpp_callback( func_ptr )
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
+        self.stats.reg_eval( func_ptr.cb, is_slice = True )
+        #self._DEBUG_signal_cbs[ signal_value ].append( func_ptr )
 
 #-------------------------------------------------------------------------
 # EventQueue
