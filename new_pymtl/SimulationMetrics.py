@@ -5,7 +5,7 @@
 import pickle
 
 #-------------------------------------------------------------------------
-# SimulationTool
+# SimulationMetrics
 #-------------------------------------------------------------------------
 # Utility class for storing various SimulationTool metrics. Useful for
 # gaining insight into simulator performace and determining the simulation
@@ -180,3 +180,21 @@ class SimulationMetrics( object ):
     del self.is_slice
     del self.has_run
     pickle.dump( self, open( filename, 'wb' ) )
+
+#-------------------------------------------------------------------------
+# DummyMetrics
+#-------------------------------------------------------------------------
+# Dummy class which provides the interface of the SimulationMetrics
+# metrics collection class, but doesn't actually collect anything metrics.
+# This is used as a swap in replacement when collection is disabled so
+# developers don't have to worry about adding a check to disable each
+# call to SimulationMetrics methods.
+class DummyMetrics( object ):
+
+  def reg_model( self, model ): pass
+  def reg_eval( self, eval, is_slice = False ): pass
+  def incr_metrics_cycle( self ): pass
+  def start_tick( self ): pass
+  def incr_add_events( self ): pass
+  def incr_add_callbk( self ): pass
+  def incr_comb_evals( self, eval ): pass

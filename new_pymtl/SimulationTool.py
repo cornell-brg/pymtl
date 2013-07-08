@@ -16,7 +16,7 @@ from sys               import flags
 from SignalValue       import SignalValue
 from ast_visitor       import DetectLoadsAndStores, get_method_ast
 from EventQueue        import new_cpp_queue, cpp_callback
-from SimulationMetrics import SimulationMetrics
+from SimulationMetrics import SimulationMetrics, DummyMetrics
 
 #-------------------------------------------------------------------------
 # SimulationTool
@@ -49,8 +49,12 @@ class SimulationTool( object ):
     self._slice_connects      = [] # TODO: temporary hack
     #self._DEBUG_signal_cbs    = collections.defaultdict(list)
 
-    # Only collect metrics if they are enabled (TODO)
-    self.metrics              = SimulationMetrics()
+    # Only collect metrics if they are enabled, otherwise replace
+    # with a dummy collection class.
+    if collect_metrics:
+      self.metrics            = SimulationMetrics()
+    else:
+      self.metrics            = DummyMetrics()
 
     # If the -O flag was passed to Python, use the perf implementation
     # of cycle, otherwise use the dev version.
