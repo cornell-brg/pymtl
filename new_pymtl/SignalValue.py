@@ -13,6 +13,7 @@ class SignalValue( object ):
 
   constant    = False
   _callbacks  = []
+  _slices     = []
 
   #-----------------------------------------------------------------------
   # Write v property
@@ -27,13 +28,13 @@ class SignalValue( object ):
   @v.setter
   def v( self, value ):
     if value != self:
-      self.notify_sim_comb_update()
       self.write( value )
+      self.notify_sim_comb_update()
   @value.setter
   def value( self, value ):
     if value != self:
-      self.notify_sim_comb_update()
       self.write( value )
+      self.notify_sim_comb_update()
 
   #-----------------------------------------------------------------------
   # Write n property
@@ -47,16 +48,16 @@ class SignalValue( object ):
 
   @n.setter
   def n( self, value ):
-    self.notify_sim_seq_update()
     # TODO: get raw int value or copy obj?
     # TODO: implement as shadow_write() instead and make part of ABC?
     self._shadow_value.write( value )
+    self.notify_sim_seq_update()
   @next.setter
   def next( self, value ):
-    self.notify_sim_seq_update()
     # TODO: get raw int value or copy obj?
     # TODO: implement as shadow_write() instead and make part of ABC?
     self._shadow_value.write( value )
+    self.notify_sim_seq_update()
 
   #-----------------------------------------------------------------------
   # __setitem__
@@ -68,8 +69,8 @@ class SignalValue( object ):
   # to set this.
   # TODO: this seems pretty hacky, better way?
   def __setitem__( self, addr, value ):
-    self.notify_sim_slice_update()
     self.write_slice( addr, value )
+    self.notify_sim_slice_update()
 
   #-----------------------------------------------------------------------
   # flop
@@ -166,3 +167,10 @@ class SignalValue( object ):
       self._callbacks = []
     self._callbacks.append( func_ptr )
 
+  #-----------------------------------------------------------------------
+  # register_slice
+  #-----------------------------------------------------------------------
+  def register_slice( self, func_ptr ):
+    if not self._slices:
+      self._slices = []
+    self._slices.append( func_ptr )

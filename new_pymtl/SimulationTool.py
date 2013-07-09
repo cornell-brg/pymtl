@@ -217,6 +217,14 @@ class SimulationTool( object ):
     #print self._DEBUG_signal_cbs[signal_value]
 
     self.metrics.incr_add_events()
+
+    # Execute all slice callbacks immediately
+
+    for func in signal_value._slices:
+      func()
+
+    # Place all other callbacks in the event queue for execution later
+
     for func in signal_value._callbacks:
       self.metrics.incr_add_callbk()
       if func != self._current_func:
@@ -478,7 +486,7 @@ class SimulationTool( object ):
       else:
         func_ptr = create_slice_cb_closure( c )
         signal_value = c.src_node._signalvalue
-        signal_value.register_callback( func_ptr )
+        signal_value.register_slice( func_ptr )
         func_ptr.id = self._event_queue.get_id()
         func_ptr.cb = cpp_callback( func_ptr )
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
