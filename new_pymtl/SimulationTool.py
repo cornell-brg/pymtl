@@ -220,8 +220,8 @@ class SimulationTool( object ):
 
     # Execute all slice callbacks immediately
 
-    for func in signal_value._slices:
-      func()
+    #for func in signal_value._slices:
+    #  func()
 
     # Place all other callbacks in the event queue for execution later
 
@@ -361,9 +361,10 @@ class SimulationTool( object ):
       # TODO: Currently all SignalValues get both a comb and seq update
       #       callback.  Really should only need one or the other, and
       #       name it notify_sim().
-      svalue.notify_sim_comb_update  = create_comb_update_cb( self, svalue )
+      svalue._ucb = create_comb_update_cb( self, svalue )
+      #svalue.notify_sim_comb_update  = create_comb_update_cb( self, svalue )
+      #svalue.notify_sim_slice_update = svalue.notify_sim_comb_update
       svalue.notify_sim_seq_update   = create_seq_update_cb ( self, svalue )
-      svalue.notify_sim_slice_update = svalue.notify_sim_comb_update
       svalue._shadow_value.notify_sim_slice_update = svalue.notify_sim_seq_update
 
       # Modify model attributes currently referencing Signal objects to
@@ -448,6 +449,9 @@ class SimulationTool( object ):
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
         signal_value.register_callback( func_ptr )
+        # Only add "notify_sim" funcs if @comb blocks are sensitive to us
+        signal_value.notify_sim_comb_update  = signal_value._ucb
+        signal_value.notify_sim_slice_update = signal_value._ucb
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
         #self._DEBUG_signal_cbs[ signal_value ].append( func_ptr )
 

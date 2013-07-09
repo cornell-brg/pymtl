@@ -30,11 +30,13 @@ class SignalValue( object ):
     if value != self:
       self.write( value )
       self.notify_sim_comb_update()
+      for func in self._slices: func()
   @value.setter
   def value( self, value ):
     if value != self:
       self.write( value )
       self.notify_sim_comb_update()
+      for func in self._slices: func()
 
   #-----------------------------------------------------------------------
   # Write n property
@@ -71,6 +73,7 @@ class SignalValue( object ):
   def __setitem__( self, addr, value ):
     self.write_slice( addr, value )
     self.notify_sim_slice_update()
+    for func in self._slices: func()
 
   #-----------------------------------------------------------------------
   # flop
