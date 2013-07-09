@@ -15,7 +15,7 @@ import warnings
 from sys               import flags
 from SignalValue       import SignalValue
 from ast_visitor       import DetectLoadsAndStores, get_method_ast
-from EventQueue        import new_cpp_queue, cpp_callback
+#from EventQueue        import new_cpp_queue, cpp_callback
 from SimulationMetrics import SimulationMetrics, DummyMetrics
 
 #-------------------------------------------------------------------------
@@ -442,7 +442,7 @@ class SimulationTool( object ):
     # TODO: merge this code with above to reduce mem of data structures?
     for func_ptr, sensitivity_list in model._newsenses.items():
       func_ptr.id = self._event_queue.get_id()
-      func_ptr.cb = cpp_callback( func_ptr )
+      func_ptr.cb = func_ptr
       self.metrics.reg_eval( func_ptr.cb )
       for signal_value in sensitivity_list:
         # Prime the simulation by putting all events on the event_queue
@@ -492,7 +492,7 @@ class SimulationTool( object ):
         signal_value = c.src_node._signalvalue
         signal_value.register_slice( func_ptr )
         func_ptr.id = self._event_queue.get_id()
-        func_ptr.cb = cpp_callback( func_ptr )
+        func_ptr.cb = func_ptr
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
         self.metrics.reg_eval( func_ptr.cb, is_slice = True )
         #self._DEBUG_signal_cbs[ signal_value ].append( func_ptr )
@@ -502,24 +502,54 @@ class SimulationTool( object ):
 #-------------------------------------------------------------------------
 class EventQueue( object ):
 
-  def __init__( self ):
-    self.fifo     = new_cpp_queue()
+  def __init__( self, initsize = 1000 ):
+    self.fifo     = collections.deque()
+    self.func_bv  = [ False ] * initsize
     self.func_ids = 0
-    assert self.fifo.len() == 0
 
-  def enq( self, cb, id):
-    self.fifo.enq( cb, id )
+  def enq( self, event, id ):
+    if not self.func_bv[ id ]:
+      self.func_bv[ id ] = True
+      self.fifo.appendleft( event )
 
   def deq( self ):
-    return self.fifo.deq()
+    event = self.fifo.pop()
+    self.func_bv[ event.id ] = False
+    return event
 
   def len( self ):
-    return self.fifo.len()
+    return len( self.fifo )
 
   def __len__( self ):
-    return self.fifo.len()
+    return len( self.fifo )
 
   def get_id( self ):
     id = self.func_ids
     self.func_ids += 1
+    if self.func_ids > len( self.func_bv ):
+      self.func_bv.extend( [ False ] * 1000 )
     return id
+
+#class EventQueue( object ):
+#
+#  def __init__( self ):
+#    self.fifo     = new_cpp_queue()
+#    self.func_ids = 0
+#    assert self.fifo.len() == 0
+#
+#  def enq( self, cb, id):
+#    self.fifo.enq( cb, id )
+#
+#  def deq( self ):
+#    return self.fifo.deq()
+#
+#  def len( self ):
+#    return self.fifo.len()
+#
+#  def __len__( self ):
+#    return self.fifo.len()
+#
+#  def get_id( self ):
+#    id = self.func_ids
+#    self.func_ids += 1
+#    return id
