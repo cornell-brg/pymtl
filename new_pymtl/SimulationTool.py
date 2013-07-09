@@ -46,7 +46,7 @@ class SimulationTool( object ):
     self._register_queue      = []
     self._event_queue         = EventQueue()
     self._current_func        = None
-    self._slice_connects      = [] # TODO: temporary hack
+    self._slice_connects      = set() # TODO: temporary hack
     #self._DEBUG_signal_cbs    = collections.defaultdict(list)
 
     # Only collect metrics if they are enabled, otherwise replace
@@ -271,7 +271,7 @@ class SimulationTool( object ):
     def valid_connection( c ):
       if c.src_slice != None or c.dest_slice != None:
         # TEMPORARY HACK, remove slice connections from connections?
-        self._slice_connects.append ( c )
+        self._slice_connects.add( c )
         return False
       else:
         return True
