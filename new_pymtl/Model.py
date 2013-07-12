@@ -10,9 +10,10 @@
 
 from ConnectionEdge import ConnectionEdge
 from signals        import Signal, InPort, OutPort, Wire, Constant
+from PortBundle     import PortBundle
+
 #from physical      import PhysicalDimensions
 
-#import PortBundle
 import collections
 import inspect
 
@@ -137,10 +138,10 @@ class Model(object):
       obj.parent               = current_model
       current_model._outports += [ obj ]
 
-    ## PortBundles
-    #elif isinstance( obj, PortBundle.PortBundle ):
-    #  for port_name, obj in obj.__dict__.items():
-    #    self.check_type(current_model, name+'_M_'+port_name, obj)
+    # PortBundles
+    elif isinstance( obj, PortBundle ):
+      for port in obj.get_ports():
+        self.check_type( current_model, name+'.'+port.name, port )
 
     # Submodules
     elif isinstance( obj, Model ):
@@ -323,11 +324,21 @@ class Model(object):
   #-----------------------------------------------------------------------
   def connect( self, left_port, right_port ):
 
+    if  isinstance( left_port, PortBundle ):
+      self.connect_bundle( left_port, right_port )
+    else:
+      self.connect_signal( left_port, right_port )
+
+  #-----------------------------------------------------------------------
+  # connect_signal
+  #-----------------------------------------------------------------------
+  def connect_signal( self, left_port, right_port ):
+
     # Can't connect a port to itself!
     assert left_port != right_port
 
     # Create the connection
-    connection_edge = ConnectionEdge( left_port, right_port)
+    connection_edge = ConnectionEdge( left_port, right_port )
 
     # Add the connection to the Model's connection list
     # TODO: this is hacky, FIX
@@ -340,6 +351,7 @@ class Model(object):
   # connect_dict
   #-----------------------------------------------------------------------
   def connect_dict( self, connections ):
+
    for left_port, right_port in connections.iteritems():
      self.connect( left_port, right_port )
 
@@ -348,6 +360,19 @@ class Model(object):
   #   connect_dict( left )
   # else:
   #   connect_ports( left, right )
+
+  #-----------------------------------------------------------------------
+  # connect_bundle
+  #-----------------------------------------------------------------------
+  def connect_bundle( self, left_bundle, right_bundle ):
+
+    # Can't connect a port to itself!
+    assert left_bundle != right_bundle
+
+    ports = zip( left_bundle.get_ports(), right_bundle.get_ports() )
+
+    for left, right in ports:
+      self.connect_signal( left, right )
 
   #-----------------------------------------------------------------------
   # register_combinational

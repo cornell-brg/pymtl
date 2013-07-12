@@ -380,6 +380,11 @@ class SimulationTool( object ):
         elif '[' in x.name:
           name, idx = x.name.strip(']').split('[')
           x.parent.__dict__[ name ][ int( idx ) ] = svalue
+        # TODO: super hacky, won't support nested port bundles
+        # Handle PortBundles
+        elif '.' in x.name:
+          bundle, port = x.name.split('.')
+          x.parent.__dict__[ bundle ].__dict__[ port ] = svalue
         # Handle Normal Ports
         else:
           x.parent.__dict__[ x.name ] = svalue
