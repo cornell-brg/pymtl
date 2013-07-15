@@ -202,6 +202,8 @@ def test_RegisterStructBitBlast():
 #       queue.  After the submodule's concurrent block fires, it adds
 #       the parent's concurrent block on the queue again, this continues
 #       forever. Fix.
+#
+# UPDATE: FIXED!
 
 class WriteThenReadCombSubmod( Model ):
   def __init__( s, nbits ):
@@ -218,13 +220,12 @@ class WriteThenReadCombSubmod( Model ):
       s.submod.in_.v = s.in_
       s.out.v        = s.submod.out
 
-@pytest.mark.xfail
 def test_WriteThenReadCombSubmod():
   model = WriteThenReadCombSubmod( 16 )
   sim = setup_sim( model )
   for i in range( 10 ):
     model.in_.v = i
-    assert False   # Prevent infinite loop!
+    #assert False   # Prevent infinite loop!
     sim.cycle()
     assert model.out == i
 

@@ -223,7 +223,9 @@ def test_NStagePosedge():
 # TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO THE
 #       WAY WE DETECT SENSITIVITY LISTS... all wires/ports in an array
 #       are added to the sensitivity list of an @combinational block since
-#       we aren't sure of the value of i when walking the AST.  Fix?
+#       we aren't sure of the value of i when walking the AST.
+#
+# UPDATE: FIXED!
 
 class NStageComb( Model ):
   def __init__( s, nbits, nstages ):
@@ -245,7 +247,6 @@ class NStageComb( Model ):
 
     s.connect( s.out, s.wire[-1] )
 
-@pytest.mark.xfail
 def test_NStageComb():
   model = NStageComb( 16, 3 )
   sim   = setup_sim( model )
@@ -254,7 +255,7 @@ def test_NStageComb():
     model.in_.v = i
     expected = ( i - 1 ) if ( i - 1 ) >= 0 else 0
     assert model.out == expected
-    assert False  # Prevent infinite loop!
+    #assert False  # Prevent infinite loop!
     sim.cycle()
 
 #-------------------------------------------------------------------------
@@ -266,6 +267,8 @@ def test_NStageComb():
 #       signal is written in the block and then read later in the block,
 #       it repeatedly gets added to the event queue.  These 'temporary'
 #       signals should really not be added to the sensitivity list. Fix.
+#
+# UPDATE: FIXED!
 
 class WriteThenReadWire( Model ):
   def __init__( s, nbits ):
@@ -290,13 +293,12 @@ class WriteThenReadWire( Model ):
     #def comb_logic():
     #  s.out.v  = s.temp
 
-@pytest.mark.xfail
 def test_WriteThenReadWire():
   model = WriteThenReadWire( 16 )
   sim = setup_sim( model )
   for i in range( 10 ):
     model.in_.v = i
-    assert False  # Prevent infinite loop!
+    #assert False  # Prevent infinite loop!
     sim.eval_combinational()
     assert model.out == i
 
