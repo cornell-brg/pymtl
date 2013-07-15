@@ -193,29 +193,30 @@ def test_RippleCarryAdderNoSlice():
 # RippleCarryAdder
 #-------------------------------------------------------------------------
 
-#class RippleCarryAdder( Model ):
-#  def __init__( s, nbits ):
-#    # Ports
-#    s.in0 = InPort ( nbits )
-#    s.in1 = InPort ( nbits )
-#    s.sum = OutPort( nbits )
-#    # Submodules
-#    s.adders = [ FullAdder() for i in xrange( nbits ) ]
-#    # s.connections
-#    for i in xrange( nbits ):
-#      s.connect( s.adders[i].in0, s.in0[i] )
-#      s.connect( s.adders[i].in1, s.in1[i] )
-#      s.connect( s.adders[i].sum, s.sum[i] )
-#    for i in xrange( nbits - 1 ):
-#      s.connect( s.adders[i+1].cin, s.adders[i].cout )
-#    s.connect( s.adders[0].cin, 0 )
-#
-#def test_RippleCarryAdderNoSlice():
-#  def set( signal, value ):
-#    signal.v = value
-#  def check( signal, value ):
-#    assert signal.v == value
-#  ripplecarryadder_tester( RippleCarryAdderNoSlice, set, check )
+class RippleCarryAdder( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in0 = InPort ( nbits )
+    s.in1 = InPort ( nbits )
+    s.sum = OutPort( nbits )
+
+  def elaborate_logic( s ):
+    s.adders = [ FullAdder() for i in xrange( s.nbits ) ]
+
+    for i in xrange( s.nbits ):
+      s.connect( s.adders[i].in0, s.in0[i] )
+      s.connect( s.adders[i].in1, s.in1[i] )
+      s.connect( s.adders[i].sum, s.sum[i] )
+    for i in xrange( s.nbits - 1 ):
+      s.connect( s.adders[i+1].cin, s.adders[i].cout )
+    s.connect( s.adders[0].cin, 0 )
+
+def test_RippleCarryAdder():
+  def set( signal, value ):
+    signal.v = value
+  def check( signal, value ):
+    assert signal.v == value
+  ripplecarryadder_tester( RippleCarryAdder, set, check )
 
 #-------------------------------------------------------------------------
 # BitBlast Utility Functions
@@ -688,3 +689,57 @@ class ValueWriteCheck( Model ):
 
 def test_ValueWriteCheck():
   passthrough_tester( ValueWriteCheck )
+
+#-------------------------------------------------------------------------
+# SliceWriteCheck
+#-------------------------------------------------------------------------
+# Test to verify the value write check logic in SignalValue is correctly
+# preventing infinite loops.
+class SliceWriteCheck( Model ):
+
+  def __init__( s, nbits ):
+    assert nbits == 16
+    s.in_ = InPort  ( 16 )
+    s.out = OutPort ( 16 )
+
+  def elaborate_logic( s ):
+    s.m0 = PassThrough( 16 )
+    s.connect( s.in_, s.m0.in_ )
+    s.connect( s.out, s.m0.out )
+
+def test_SliceWriteCheck():
+  model = SliceWriteCheck( 16 )
+  model.elaborate()
+  sim = setup_sim( model )
+  assert model.out == 0
+
+  # Test regular write
+  model.in_.v = 8
+  sim.eval_combinational()
+  assert model.out == 0b1000
+
+  # Write slice directly, passes due to the way impl done
+  model.in_[0] = 1
+  sim.eval_combinational()
+  assert model.out == 0b1001
+  model.in_[4:8] = 0b1001
+  sim.eval_combinational()
+  assert model.out == 0b10011001
+
+  # Write sliced bits, should pass
+  model.in_.v[1] = 1
+  sim.eval_combinational()
+  assert model.out == 0b10011011
+  model.in_.v[4:8] = 0b1010
+  sim.eval_combinational()
+  assert model.out == 0b10101011
+
+  # Slice then write, should fail
+  model.in_[0].v = 0
+  sim.eval_combinational()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b10101010
+  model.in_[4:8].v = 0b0000
+  sim.eval_combinational()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b00001010
