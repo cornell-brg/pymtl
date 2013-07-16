@@ -49,8 +49,7 @@ class ValRdyQueue( Model ):
 
   def line_trace( s ):
 
-    return "{} () {}" \
-      .format( s.enq.line_trace(), s.deq.line_trace() )
+    return "{} () {}".format( s.enq, s.deq )
 
 #-------------------------------------------------------------------------
 # test_valrdy_sim
