@@ -16,3 +16,4 @@ from TestSimpleSource    import TestSimpleSource
 from TestSimpleSink      import TestSimpleSink
 from TestSource          import TestSource
 from TestSink            import TestSink
+from ValRdyBundle        import InValRdyBundle, OutValRdyBundle
