@@ -693,8 +693,6 @@ def test_ValueWriteCheck():
 #-------------------------------------------------------------------------
 # SliceWriteCheck
 #-------------------------------------------------------------------------
-# Test to verify the value write check logic in SignalValue is correctly
-# preventing infinite loops.
 class SliceWriteCheck( Model ):
 
   def __init__( s, nbits ):
@@ -743,3 +741,38 @@ def test_SliceWriteCheck():
   sim.eval_combinational()
   with pytest.raises( AssertionError ):
     assert model.out == 0b00001010
+
+#-------------------------------------------------------------------------
+# SliceLogicWriteCheck
+#-------------------------------------------------------------------------
+# Test storing a Bits slice to a temporary, then writing it
+class SliceTempWriteCheck( Model ):
+
+  def __init__( s, nbits ):
+    assert nbits == 16
+    s.in_ = InPort  ( 16 )
+    s.out = OutPort ( 16 )
+
+  def elaborate_logic( s ):
+
+    @s.combinational
+    def logic():
+      s.out.v[0:8] = s.in_[0:8]
+      x = s.out[8:16]
+      x.v          = s.in_[8:16]
+
+import pytest
+@pytest.mark.xfail
+def test_SliceTempWriteCheck():
+  model = SliceTempWriteCheck( 16 )
+  model.elaborate()
+  sim = setup_sim( model )
+  assert model.out == 0
+
+  model.in_.value = 0x00AA
+  sim.eval_combinational()
+  assert model.out == 0x00AA
+
+  model.in_.value = 0xAA00
+  sim.eval_combinational()
+  assert model.out == 0xAA00
