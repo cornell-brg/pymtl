@@ -107,6 +107,9 @@ def test_set_slice():
   x[:3] = 0b110
   assert x.uint() == 0b0110
 
+  with pytest.raises( AssertionError ):
+    x[1:3] = 0b110
+
 def test_slice_bounds_checking():
 
   x = Bits( 4, 0b1100 )

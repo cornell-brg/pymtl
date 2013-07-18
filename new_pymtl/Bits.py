@@ -131,25 +131,42 @@ class Bits( SignalValue ):
   # Read a subset of bits in the Bits object.
   def __getitem__( self, addr ):
 
-    # TODO: clean up this logic!
+    # TODO: optimize this logic?
 
+    # Handle slices
     if isinstance( addr, slice ):
+
+      # Parse address range
       start = addr.start
-      stop = addr.stop
-      # special case open-ended ranges [:], [N:], and [:N]
+      stop  = addr.stop
+
+      # Open-ended range ( [:] ), just return self
       if start is None and stop is None:
         return Bits( self.nbits, self._uint )
+
+      # Open-ended range on left ( [:N] )
       elif start is None:
         start = 0
+
+      # Open-ended range on right ( [N:] )
       elif stop is None:
         stop = self.nbits
-      # Make sure our ranges are sane
+
+      # Verify our ranges are sane
       assert 0 <= start < stop <= self.nbits
+
+      # Create a new Bits object containing the slice value and return it
       nbits = stop - start
       mask  = (1 << nbits) - 1
       return Bits( nbits, (self._uint & (mask << start)) >> start )
+
+    # Handle integers
     else:
+
+      # Verify the index is sane
       assert 0 <= addr < self.nbits
+
+      # Create a new Bits object containing the bit value and return it
       return Bits( 1, (self._uint & (1 << addr)) >> addr )
 
   #------------------------------------------------------------------------
@@ -161,43 +178,61 @@ class Bits( SignalValue ):
   # http://stackoverflow.com/questions/11687653/method-overriding-by-monkey-patching
   def write_slice( self, addr, value ):
 
-    # TODO: clean up this logic!
+    # TODO: optimize this logic?
 
     value = int( value )
 
+    # Handle slices
     if isinstance( addr, slice ):
+
+      # Parse address range
       start = addr.start
-      stop = addr.stop
-      # special case open-ended ranges [:], [N:], and [:N]
+      stop  = addr.stop
+
+      # Open-ended range ( [:] )
       if start is None and stop is None:
-        #assert self.nbits >= helpers.get_nbits( value )
         assert self._min <= value <= self._max
         self._uint = value
         return
+
+      # Open-ended range on left ( [:N] )
       elif start is None:
         start = 0
+
+      # Open-ended range on right ( [N:] )
       elif stop is None:
         stop = self.nbits
-      # Make sure our ranges are sane
+
+      # Verify our ranges are sane
       assert 0 <= start < stop <= self.nbits
+
       nbits = stop - start
+
       # This assert fires if the value you are trying to store is wider
       # than the bitwidth of the slice you are writing to!
-      #assert nbits >= helpers.get_nbits( value )
-      assert self._min <= value <= self._max
+      assert nbits >= helpers.get_nbits( value )
+
       # Clear the bits we want to set
       ones  = (1 << nbits) - 1
       mask = ~(ones << start)
       cleared_val = self._uint & mask
+
       # Set the bits, anding with ones to ensure negative value assign
-      # works that way you would expect. TODO: performance impact?
+      # works that way you would expect.
+      # TODO: performance impact?
       self._uint = cleared_val | ((value & ones) << start)
+
+    # Handle integers
     else:
+
+      # Verify the index and values are sane
       assert 0 <= addr < self.nbits
       assert 0 <= value <= 1
+
       # Clear the bits we want to set
       mask = ~(1 << addr)
       cleared_val = self._uint & mask
+
       # Set the bits
       self._uint = cleared_val | (value << addr)
 
