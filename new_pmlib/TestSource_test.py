@@ -16,19 +16,20 @@ class TestHarness( Model ):
 
   def __init__( s, nbits, msgs, delay ):
 
-    # Instantiate models
-
-    s.src  = TestSource     ( nbits, msgs, delay )
-    s.sink = TestSimpleSink ( nbits, msgs )
-
-    # Connect chain
-
-    s.connect( s.src.out_msg, s.sink.in_msg )
-    s.connect( s.src.out_val, s.sink.in_val )
-    s.connect( s.src.out_rdy, s.sink.in_rdy )
+    s.nbits = nbits
+    s.msgs  = msgs
+    s.delay = delay
 
   def elaborate_logic( s ):
-    pass
+
+    # Instantiate models
+
+    s.src  = TestSource     ( s.nbits, s.msgs, s.delay )
+    s.sink = TestSimpleSink ( s.nbits, s.msgs )
+
+    # Connect
+
+    s.connect( s.src.out, s.sink.in_ )
 
   def done( s ):
     return s.src.done and s.sink.done
@@ -119,25 +120,22 @@ class TestHarnessExtraDelay( Model ):
 
   def __init__( s, nbits, msgs, delay ):
 
-    # Instantiate models
-
-    s.src   = TestSource      ( nbits, msgs, delay )
-    s.delay = TestRandomDelay ( nbits, 5 )
-    s.sink  = TestSimpleSink  ( nbits, msgs )
-
-    # Connect chain
-
-    #connect_chain([ s.src, s.delay, s.sink ])
-    s.connect( s.src.out_msg, s.delay.in_msg )
-    s.connect( s.src.out_val, s.delay.in_val )
-    s.connect( s.src.out_rdy, s.delay.in_rdy )
-
-    s.connect( s.delay.out_msg, s.sink.in_msg )
-    s.connect( s.delay.out_val, s.sink.in_val )
-    s.connect( s.delay.out_rdy, s.sink.in_rdy )
+    s.nbits = nbits
+    s.msgs  = msgs
+    s.delay = delay
 
   def elaborate_logic( s ):
-    pass
+
+    # Instantiate models
+
+    s.src   = TestSource      ( s.nbits, s.msgs, s.delay )
+    s.delay = TestRandomDelay ( s.nbits, 5 )
+    s.sink  = TestSimpleSink  ( s.nbits, s.msgs )
+
+    # Connect
+
+    s.connect( s.src.out,   s.delay.in_ )
+    s.connect( s.delay.out, s.sink.in_  )
 
   def done( s ):
     return s.src.done and s.sink.done

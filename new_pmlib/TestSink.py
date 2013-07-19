@@ -5,9 +5,8 @@
 # to a predefined list. Includes support for random delays.
 #
 
-from new_pymtl import *
-import valrdy
-
+from new_pymtl        import *
+from ValRdyBundle     import InValRdyBundle
 from TestSimpleSink   import TestSimpleSink
 from TestRandomDelay  import TestRandomDelay
 
@@ -19,27 +18,24 @@ class TestSink( Model ):
 
   def __init__( s, nbits, msgs, max_random_delay = 0 ):
 
-    s.in_msg = InPort  ( nbits )
-    s.in_val = InPort  ( 1     )
-    s.in_rdy = OutPort ( 1     )
-    s.done   = OutPort ( 1     )
+    s.in_  = InValRdyBundle( nbits )
+    s.done = OutPort       ( 1     )
 
-    s.delay = TestRandomDelay( nbits, max_random_delay )
-    s.sink  = TestSimpleSink( nbits, msgs )
+    s.nbits            = nbits
+    s.msgs             = msgs
+    s.max_random_delay = max_random_delay
 
   def elaborate_logic( s ):
 
-    # Connect the input ports to the delay
+    # Instantiate modules
 
-    s.connect( s.in_msg, s.delay.in_msg )
-    s.connect( s.in_val, s.delay.in_val )
-    s.connect( s.in_rdy, s.delay.in_rdy )
+    s.delay = TestRandomDelay( s.nbits, s.max_random_delay )
+    s.sink  = TestSimpleSink ( s.nbits, s.msgs )
 
-    # Connect random delay to sink
+    # Connect the input ports -> random delay -> sink
 
-    s.connect( s.delay.out_msg, s.sink.in_msg )
-    s.connect( s.delay.out_val, s.sink.in_val )
-    s.connect( s.delay.out_rdy, s.sink.in_rdy )
+    s.connect( s.in_,       s.delay.in_ )
+    s.connect( s.delay.out, s.sink.in_  )
 
     # Connect test sink done signal to output port
 
@@ -51,8 +47,5 @@ class TestSink( Model ):
 
   def line_trace( s ):
 
-    in_str = \
-      valrdy.valrdy_to_str( s.in_msg, s.in_val, s.in_rdy )
-
-    return "{}".format( in_str )
+    return "{}".format( s.in_ )
 

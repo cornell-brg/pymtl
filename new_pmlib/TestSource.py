@@ -5,9 +5,8 @@
 # predefined list. Includes support for random delays.
 #
 
-from new_pymtl import *
-import valrdy
-
+from new_pymtl        import *
+from ValRdyBundle     import OutValRdyBundle
 from TestSimpleSource import TestSimpleSource
 from TestRandomDelay  import TestRandomDelay
 
@@ -19,27 +18,24 @@ class TestSource( Model ):
 
   def __init__( s, nbits, msgs, max_random_delay = 0 ):
 
-    s.out_msg = OutPort ( nbits )
-    s.out_val = OutPort ( 1     )
-    s.out_rdy = InPort  ( 1     )
-    s.done    = OutPort ( 1     )
+    s.out  = OutValRdyBundle( nbits )
+    s.done = OutPort        ( 1     )
 
-    s.src   = TestSimpleSource( nbits, msgs )
-    s.delay = TestRandomDelay( nbits, max_random_delay )
+    s.nbits            = nbits
+    s.msgs             = msgs
+    s.max_random_delay = max_random_delay
 
   def elaborate_logic( s ):
 
-    # Connect test source to random delay
+    # Instantiate modules
 
-    s.connect( s.src.out_msg, s.delay.in_msg )
-    s.connect( s.src.out_val, s.delay.in_val )
-    s.connect( s.src.out_rdy, s.delay.in_rdy )
+    s.src   = TestSimpleSource( s.nbits, s.msgs )
+    s.delay = TestRandomDelay ( s.nbits, s.max_random_delay )
 
-    # Connect random delay to output ports
+    # Connect test source -> random delay -> output ports
 
-    s.connect( s.delay.out_msg, s.out_msg )
-    s.connect( s.delay.out_val, s.out_val )
-    s.connect( s.delay.out_rdy, s.out_rdy )
+    s.connect( s.src.out,   s.delay.in_ )
+    s.connect( s.delay.out, s.out       )
 
     # Connect test source done signal to output port
 
@@ -51,7 +47,5 @@ class TestSource( Model ):
 
   def line_trace( s ):
 
-    out_str = valrdy.valrdy_to_str( s.out_msg, s.out_val, s.out_rdy )
-
-    return "{}".format( out_str )
+    return "{}".format( s.out )
 

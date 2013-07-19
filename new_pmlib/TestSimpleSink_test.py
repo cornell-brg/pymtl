@@ -15,20 +15,21 @@ class TestHarness( Model ):
 
   def __init__( s, nbits, msgs ):
 
+    s.nbits = nbits
+    s.msgs  = msgs
+
+  def elaborate_logic( s ):
+
     # Instantiate models
 
-    s.src  = TestSimpleSource ( nbits, msgs  )
-    s.sink = TestSimpleSink   ( nbits, msgs )
+    s.src  = TestSimpleSource ( s.nbits, s.msgs )
+    s.sink = TestSimpleSink   ( s.nbits, s.msgs )
 
     # Connect chain
 
-    #connect_chain([ s.src, s.sink ])
-    s.connect( s.src.out_msg, s.sink.in_msg )
-    s.connect( s.src.out_val, s.sink.in_val )
-    s.connect( s.src.out_rdy, s.sink.in_rdy )
-
-  def elaborate_logic( s ):
-    pass
+    s.connect( s.src.out.msg, s.sink.in_.msg )
+    s.connect( s.src.out.val, s.sink.in_.val )
+    s.connect( s.src.out.rdy, s.sink.in_.rdy )
 
   def done( s ):
     return s.src.done and s.sink.done

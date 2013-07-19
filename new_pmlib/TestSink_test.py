@@ -16,19 +16,21 @@ class TestHarness( Model ):
 
   def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
-    # Instantiate models
-
-    s.src  = TestSource ( nbits, msgs, src_delay  )
-    s.sink = TestSink   ( nbits, msgs, sink_delay )
-
-    # Connect chain
-
-    s.connect( s.src.out_msg, s.sink.in_msg )
-    s.connect( s.src.out_val, s.sink.in_val )
-    s.connect( s.src.out_rdy, s.sink.in_rdy )
+    s.nbits      = nbits
+    s.msgs       = msgs
+    s.src_delay  = src_delay
+    s.sink_delay = src_delay
 
   def elaborate_logic( s ):
-    pass
+
+    # Instantiate models
+
+    s.src  = TestSource ( s.nbits, s.msgs, s.src_delay  )
+    s.sink = TestSink   ( s.nbits, s.msgs, s.sink_delay )
+
+    # Connect
+
+    s.connect( s.src.out, s.sink.in_ )
 
   def done( s ):
     return s.src.done and s.sink.done
@@ -120,25 +122,23 @@ class TestHarnessExtraDelay( Model ):
 
   def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
-    # Instantiate models
-
-    s.src   = TestSource      ( nbits, msgs, src_delay )
-    s.delay = TestRandomDelay ( nbits, 5 )
-    s.sink  = TestSink        ( nbits, msgs, sink_delay )
-
-    # Connect chain
-
-    #connect_chain([ s.src, s.delay, s.sink ])
-    s.connect( s.src.out_msg, s.delay.in_msg )
-    s.connect( s.src.out_val, s.delay.in_val )
-    s.connect( s.src.out_rdy, s.delay.in_rdy )
-
-    s.connect( s.delay.out_msg, s.sink.in_msg )
-    s.connect( s.delay.out_val, s.sink.in_val )
-    s.connect( s.delay.out_rdy, s.sink.in_rdy )
+    s.nbits      = nbits
+    s.msgs       = msgs
+    s.src_delay  = src_delay
+    s.sink_delay = src_delay
 
   def elaborate_logic( s ):
-    pass
+
+    # Instantiate models
+
+    s.src   = TestSource      ( s.nbits, s.msgs, s.src_delay )
+    s.delay = TestRandomDelay ( s.nbits, 5 )
+    s.sink  = TestSink        ( s.nbits, s.msgs, s.sink_delay )
+
+    # Connect
+
+    s.connect( s.src.out,   s.delay.in_ )
+    s.connect( s.delay.out, s.sink.in_  )
 
   def done( s ):
     return s.src.done and s.sink.done
@@ -233,27 +233,24 @@ class TestHarnessTwoDelay( Model ):
 
   def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
-    # Instantiate models
-
-    s.src1   = TestSource      ( nbits, msgs[:-2], src_delay )
-    s.sink1  = TestSink        ( nbits, msgs[:-2], sink_delay )
-    s.src2   = TestSource      ( nbits, msgs,      src_delay )
-    s.sink2  = TestSink        ( nbits, msgs,      sink_delay )
-
-    # Connect chain
-
-    #connect_chain([ s.src1, s.sink1 ])
-    #connect_chain([ s.src2, s.sink2 ])
-    s.connect( s.src1.out_msg, s.sink1.in_msg )
-    s.connect( s.src1.out_val, s.sink1.in_val )
-    s.connect( s.src1.out_rdy, s.sink1.in_rdy )
-
-    s.connect( s.src2.out_msg, s.sink2.in_msg )
-    s.connect( s.src2.out_val, s.sink2.in_val )
-    s.connect( s.src2.out_rdy, s.sink2.in_rdy )
+    s.nbits      = nbits
+    s.msgs       = msgs
+    s.src_delay  = src_delay
+    s.sink_delay = src_delay
 
   def elaborate_logic( s ):
-    pass
+
+    # Instantiate models
+
+    s.src1   = TestSource      ( s.nbits, s.msgs[:-2], s.src_delay )
+    s.sink1  = TestSink        ( s.nbits, s.msgs[:-2], s.sink_delay )
+    s.src2   = TestSource      ( s.nbits, s.msgs,      s.src_delay )
+    s.sink2  = TestSink        ( s.nbits, s.msgs,      s.sink_delay )
+
+    # Connect
+
+    s.connect( s.src1.out, s.sink1.in_ )
+    s.connect( s.src2.out, s.sink2.in_ )
 
   def done( s ):
     return (s.src1.done and s.sink1.done and
