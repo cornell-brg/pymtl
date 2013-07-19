@@ -3,25 +3,22 @@
 #=========================================================================
 
 from new_pymtl import *
-from new_pmlib import valrdy
+from new_pmlib import InValRdyBundle, OutValRdyBundle
 
 import fractions
 
+#=========================================================================
+# GCD Unit Behavioral-Level Model
+#=========================================================================
 class GcdUnitBL( Model ):
 
   #-----------------------------------------------------------------------
   # Constructor: Define Interface
   #-----------------------------------------------------------------------
-
   def __init__( s ):
 
-    s.in_msg  = InPort  ( 64 )
-    s.in_val  = InPort  ( 1  )
-    s.in_rdy  = OutPort ( 1  )
-
-    s.out_msg = OutPort ( 32 )
-    s.out_val = OutPort ( 1  )
-    s.out_rdy = InPort  ( 1  )
+    s.in_ = InValRdyBundle ( 64 )
+    s.out = OutValRdyBundle( 32 )
 
     # Buffer to hold message
 
@@ -32,7 +29,6 @@ class GcdUnitBL( Model ):
   #-----------------------------------------------------------------------
   # Elaborate: Define Connectivity and Logic
   #-----------------------------------------------------------------------
-
   def elaborate_logic( s ):
 
     #---------------------------------------------------------------------
@@ -40,7 +36,7 @@ class GcdUnitBL( Model ):
     #---------------------------------------------------------------------
     # Connect ready signal to input to ensure pipeline behavior
 
-    s.connect( s.in_rdy, s.out_rdy )
+    s.connect( s.in_.rdy, s.out.rdy )
 
     #---------------------------------------------------------------------
     # Tick Logic
@@ -52,8 +48,8 @@ class GcdUnitBL( Model ):
       # At the end of the cycle, we AND together the val/rdy bits to
       # determine if the input/output message transactions occured.
 
-      in_go  = s.in_val  and s.in_rdy
-      out_go = s.out_val and s.out_rdy
+      in_go  = s.in_.val  and s.in_.rdy
+      out_go = s.out.val and s.out.rdy
 
       # If the output transaction occured, then clear the buffer full bit.
       # Note that we do this _first_ before we process the input
@@ -66,34 +62,22 @@ class GcdUnitBL( Model ):
       # our internal buffer and update the buffer full bit
 
       if in_go:
-        s.buf_a    = s.in_msg[ 0:32].uint()
-        s.buf_b    = s.in_msg[32:64].uint()
+        s.buf_a    = s.in_.msg[ 0:32].uint()
+        s.buf_b    = s.in_.msg[32:64].uint()
         s.buf_full = True
 
       # The output message is always the gcd of the buffer
 
-      s.out_msg.next = fractions.gcd( s.buf_a, s.buf_b )
+      s.out.msg.next = fractions.gcd( s.buf_a, s.buf_b )
 
       # The output message if valid if the buffer is full
 
-      s.out_val.next = s.buf_full
+      s.out.val.next = s.buf_full
 
   #-----------------------------------------------------------------------
-  # Line tracing
+  # Line Tracing: Debug Output
   #-----------------------------------------------------------------------
-
   def line_trace( s ):
 
-    in_msg = "{:8d} {:8d}".format( s.in_msg[ 0:32].uint(),
-                                   s.in_msg[32:64].uint() )
-
-    in_str = \
-      valrdy.valrdy_to_str( in_msg, s.in_val, s.in_rdy )
-
-    out_msg = "{:8d}".format( s.out_msg.uint() )
-
-    out_str = \
-      valrdy.valrdy_to_str( out_msg, s.out_val, s.out_rdy )
-
-    return "{} () {}".format( in_str, out_str )
+    return "{} () {}".format( s.in_, s.out)
 

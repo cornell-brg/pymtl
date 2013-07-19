@@ -24,16 +24,17 @@ class TestHarness( Model ):
 
   def elaborate_logic( s ):
 
-    # Connect chain
+    # Connect
 
-    #connect_chain([ s.src, s.gcd, s.sink ])
-    s.connect( s.src.out_msg, s.gcd.in_msg )
-    s.connect( s.src.out_val, s.gcd.in_val )
-    s.connect( s.src.out_rdy, s.gcd.in_rdy )
+    s.connect( s.src.out_msg, s.gcd.in_.msg )
+    s.connect( s.src.out_val, s.gcd.in_.val )
+    s.connect( s.src.out_rdy, s.gcd.in_.rdy )
 
-    s.connect( s.gcd.out_msg, s.sink.in_msg )
-    s.connect( s.gcd.out_val, s.sink.in_val )
-    s.connect( s.gcd.out_rdy, s.sink.in_rdy )
+    s.connect( s.gcd.out.msg, s.sink.in_msg )
+    s.connect( s.gcd.out.val, s.sink.in_val )
+    s.connect( s.gcd.out.rdy, s.sink.in_rdy )
+
+    #connect_chain([ s.src, s.gcd, s.sink ]) # TODO?
 
   def done( s ):
     return s.src.done and s.sink.done

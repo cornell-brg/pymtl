@@ -3,7 +3,8 @@
 #=========================================================================
 
 from new_pymtl import *
-from new_pmlib import Mux, regs, arith, valrdy
+from new_pmlib import InValRdyBundle, OutValRdyBundle
+from new_pmlib import Mux, regs, arith
 
 # Constants
 
@@ -18,13 +19,15 @@ B_MUX_SEL_A     = 0
 B_MUX_SEL_IN    = 1
 B_MUX_SEL_X     = 0
 
+#=========================================================================
+# GCD Unit RTL Datapath
+#=========================================================================
 class GcdUnitDpath( Model ):
 
+  #-----------------------------------------------------------------------
+  # Port Interface
+  #-----------------------------------------------------------------------
   def __init__( s ):
-
-    #---------------------------------------------------------------------
-    # Ports
-    #---------------------------------------------------------------------
 
     # Interface ports
 
@@ -44,17 +47,20 @@ class GcdUnitDpath( Model ):
     s.is_b_zero = OutPort (1)
     s.is_a_lt_b = OutPort (1)
 
-  #---------------------------------------------------------------------
-  # Static elaboration
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+  # Connectivity and Logic
+  #-----------------------------------------------------------------------
   def elaborate_logic( s ):
+
+    #---------------------------------------------------------------------
+    # Datapath Structural Composition
+    #---------------------------------------------------------------------
 
     s.sub_out   = Wire(32)
     s.b_reg_out = Wire(32)
 
     # A mux
 
-    #s.a_mux = m = pmlib.muxes.Mux3(32)
     s.a_mux = m = Mux( 32, 3 )
     s.connect_dict({
       m.sel                  : s.a_mux_sel,
@@ -65,7 +71,6 @@ class GcdUnitDpath( Model ):
 
     # A register
 
-    #s.a_reg = m = pmlib.regs.RegEn(32)
     s.a_reg = m = regs.RegEn(32)
     s.connect_dict({
       m.en    : s.a_reg_en,
@@ -74,7 +79,6 @@ class GcdUnitDpath( Model ):
 
     # B mux
 
-    #s.b_mux = m = pmlib.muxes.Mux2(32)
     s.b_mux = m = Mux( 32, 2 )
     s.connect_dict({
       m.sel                 : s.b_mux_sel,
@@ -84,7 +88,6 @@ class GcdUnitDpath( Model ):
 
     # B register
 
-    #s.b_reg = m = pmlib.regs.RegEn(32)
     s.b_reg = m = regs.RegEn(32)
     s.connect_dict({
       m.en    : s.b_reg_en,
@@ -94,7 +97,6 @@ class GcdUnitDpath( Model ):
 
     # Zero compare
 
-    #s.b_zero = m = pmlib.arith.ZeroComparator(32)
     s.b_zero = m = arith.ZeroComparator(32)
     s.connect_dict({
       m.in_ : s.b_reg.out,
@@ -103,7 +105,6 @@ class GcdUnitDpath( Model ):
 
     # Less-than comparator
 
-    #s.a_lt_b = m = pmlib.arith.LtComparator(32)
     s.a_lt_b = m = arith.LtComparator(32)
     s.connect_dict({
       m.in0 : s.a_reg.out,
@@ -125,15 +126,13 @@ class GcdUnitDpath( Model ):
     s.connect( s.sub.out, s.out_msg )
 
 #=========================================================================
-# GCD Control
+# GCD Unit RTL Control
 #=========================================================================
-
 class GcdUnitCtrl( Model ):
 
   #-----------------------------------------------------------------------
-  # Constructor
+  # Port Interface
   #-----------------------------------------------------------------------
-
   def __init__( s ):
 
     # Interface ports
@@ -162,13 +161,16 @@ class GcdUnitCtrl( Model ):
     s.STATE_CALC = 1
     s.STATE_DONE = 2
 
-    #s.state = pmlib.regs.RegRst( 2, reset_value = s.STATE_IDLE )
     s.state = regs.RegRst( 2, reset_value = s.STATE_IDLE )
 
   #-----------------------------------------------------------------------
-  # State transitions
+  # Connectivity and Logic
   #-----------------------------------------------------------------------
   def elaborate_logic( s ):
+
+    #---------------------------------------------------------------------
+    # State Transition Logic
+    #---------------------------------------------------------------------
 
     @s.combinational
     def state_transitions():
@@ -196,16 +198,16 @@ class GcdUnitCtrl( Model ):
 
       s.state.in_.value = next_state
 
-    #-----------------------------------------------------------------------
-    # State outputs
-    #-----------------------------------------------------------------------
+    #---------------------------------------------------------------------
+    # State Output Logic
+    #---------------------------------------------------------------------
 
     @s.combinational
     def state_outputs():
 
       current_state = s.state.out
 
-      # In IDLE state we simply wait for inputs to arrive and latch them in
+      # In IDLE state we simply wait for inputs to arrive and latch them
 
       if current_state == s.STATE_IDLE:
         s.in_rdy.value    = 1
@@ -241,27 +243,21 @@ class GcdUnitCtrl( Model ):
 
 
 #=========================================================================
-# GCD Unit
+# GCD Unit RTL Model
 #=========================================================================
-
 class GcdUnitRTL( Model ):
 
-  #---------------------------------------------------------------------
-  # Declare interface
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+  # Port Interface
+  #-----------------------------------------------------------------------
   def __init__( s ):
 
-    s.in_msg  = InPort  (64)
-    s.in_val  = InPort  (1 )
-    s.in_rdy  = OutPort (1 )
+    s.in_ = InValRdyBundle ( 64 )
+    s.out = OutValRdyBundle( 32 )
 
-    s.out_msg = OutPort (32)
-    s.out_val = OutPort (1 )
-    s.out_rdy = InPort  (1 )
-
-  #---------------------------------------------------------------------
-  # Static elaboration
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+  # Connectivity and Logic
+  #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
     s.dpath = GcdUnitDpath()
@@ -269,21 +265,20 @@ class GcdUnitRTL( Model ):
 
     # connect input interface to dpath/ctrl
 
-    s.connect( s.in_msg[ 0:32], s.dpath.in_msg_a  )
-    s.connect( s.in_msg[32:64], s.dpath.in_msg_b  )
+    s.connect( s.in_.msg[ 0:32], s.dpath.in_msg_a  )
+    s.connect( s.in_.msg[32:64], s.dpath.in_msg_b  )
 
-    s.connect( s.in_val,        s.ctrl.in_val )
-    s.connect( s.in_rdy,        s.ctrl.in_rdy )
+    s.connect( s.in_.val,        s.ctrl.in_val )
+    s.connect( s.in_.rdy,        s.ctrl.in_rdy )
 
     # connect dpath/ctrl to output interface
 
-    s.connect( s.dpath.out_msg, s.out_msg     )
-    s.connect( s.ctrl.out_val,  s.out_val     )
-    s.connect( s.ctrl.out_rdy,  s.out_rdy     )
+    s.connect( s.dpath.out_msg, s.out.msg     )
+    s.connect( s.ctrl.out_val,  s.out.val     )
+    s.connect( s.ctrl.out_rdy,  s.out.rdy     )
 
-    # connect ports with the same name in dpath and ctrl
+    # connect status/control signals
 
-    #s.connect_auto( s.dpath, s.ctrl )
     s.connect( s.dpath.a_mux_sel, s.ctrl.a_mux_sel )
     s.connect( s.dpath.a_reg_en,  s.ctrl.a_reg_en  )
     s.connect( s.dpath.b_mux_sel, s.ctrl.b_mux_sel )
@@ -292,19 +287,9 @@ class GcdUnitRTL( Model ):
     s.connect( s.dpath.is_a_lt_b, s.ctrl.is_a_lt_b )
 
   #-----------------------------------------------------------------------
-  # Line tracing
+  # Line Tracing
   #-----------------------------------------------------------------------
-
   def line_trace( s ):
-
-    in_msg = "{:8d} {:8d}".format( s.in_msg[ 0:32].uint(),
-                                   s.in_msg[32:64].uint() )
-    in_str = \
-      valrdy.valrdy_to_str( in_msg, s.in_val, s.in_rdy )
-
-    out_msg = "{:8d}".format( s.out_msg.uint() )
-    out_str = \
-      valrdy.valrdy_to_str( out_msg, s.out_val, s.out_rdy )
 
     state_str = "? "
     if s.ctrl.state.out == s.ctrl.STATE_IDLE:
@@ -318,6 +303,6 @@ class GcdUnitRTL( Model ):
       state_str = "D "
 
     return "{} ({} {} {}) {}" \
-        .format( in_str, s.dpath.a_reg.out,
-                 s.dpath.b_reg.out, state_str, out_str )
+        .format( s.in_, s.dpath.a_reg.out,
+                 s.dpath.b_reg.out, state_str, s.out )
 
