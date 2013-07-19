@@ -47,7 +47,7 @@ class Bits( SignalValue ):
     return int( self._uint )
 
   #-----------------------------------------------------------------------
-  # __int__
+  # __long__
   #-----------------------------------------------------------------------
   # Type conversion to a long.
   def __long__( self ):
@@ -67,7 +67,7 @@ class Bits( SignalValue ):
     return self._uint
 
   #-----------------------------------------------------------------------
-  # uint
+  # int
   #-----------------------------------------------------------------------
   # Return the integer representation of the bits.
   def int( self ):
@@ -78,14 +78,22 @@ class Bits( SignalValue ):
       return self._uint
 
   #-----------------------------------------------------------------------
-  # write
+  # write_value
   #-----------------------------------------------------------------------
-  # Implementing abstract write method defined by SignalValue.
-  def write( self, value ):
+  # Implementing abstract write_value method defined by SignalValue.
+  def write_value( self, value ):
     value = int( value )
-    #assert self.nbits >= helpers.get_nbits( value )
     assert self._min <= value <= self._max
     self._uint = (value & self._mask)
+
+  #-----------------------------------------------------------------------
+  # write_next
+  #-----------------------------------------------------------------------
+  # Implementing abstract write_next method defined by SignalValue.
+  def write_next( self, value ):
+    value = int( value )
+    assert self._min <= value <= self._max
+    self._next._uint = (value & self._mask)
 
   #-----------------------------------------------------------------------
   # bit_length
@@ -112,20 +120,6 @@ class Bits( SignalValue ):
     return str
 
   #------------------------------------------------------------------------
-  # Descriptor Object Methods
-  #------------------------------------------------------------------------
-  # http://www.rafekettler.com/magicmethods.html#descriptor
-  # Doesn't work :(
-  # http://stackoverflow.com/a/1004254
-
-  #def __get__(self, instance, owner ):
-  #  return self._uint
-
-  #def __set__(self, instance, value ):
-  #  print "HERE"
-  #  self._uint = ( value & self._mask )
-
-  #------------------------------------------------------------------------
   # __getitem__
   #------------------------------------------------------------------------
   # Read a subset of bits in the Bits object.
@@ -140,7 +134,7 @@ class Bits( SignalValue ):
       start = addr.start
       stop  = addr.stop
 
-      # Open-ended range ( [:] ), just return self
+      # Open-ended range ( [:] ), return a copy of self
       if start is None and stop is None:
         return Bits( self.nbits, self._uint )
 
@@ -158,7 +152,8 @@ class Bits( SignalValue ):
       # Create a new Bits object containing the slice value and return it
       nbits = stop - start
       mask  = (1 << nbits) - 1
-      return Bits( nbits, (self._uint & (mask << start)) >> start )
+      value = (self._uint & (mask << start)) >> start
+      return BitSlice( nbits, value, target_bits = self, offset = start )
 
     # Handle integers
     else:
@@ -167,16 +162,14 @@ class Bits( SignalValue ):
       assert 0 <= addr < self.nbits
 
       # Create a new Bits object containing the bit value and return it
-      return Bits( 1, (self._uint & (1 << addr)) >> addr )
+      value = (self._uint & (1 << addr)) >> addr
+      return BitSlice( 1 , value, target_bits = self, offset = addr )
 
   #------------------------------------------------------------------------
-  # write_slice
+  # __setitem__
   #------------------------------------------------------------------------
   # Write a subset of bits in the Bits object.
-  # Need to do it this way because it's impossible for __setitem__ to be
-  # overridden per-instance after the fact!
-  # http://stackoverflow.com/questions/11687653/method-overriding-by-monkey-patching
-  def write_slice( self, addr, value ):
+  def __setitem__( self, addr, value ):
 
     # TODO: optimize this logic?
 
@@ -219,7 +212,6 @@ class Bits( SignalValue ):
 
       # Set the bits, anding with ones to ensure negative value assign
       # works that way you would expect.
-      # TODO: performance impact?
       self._uint = cleared_val | ((value & ones) << start)
 
     # Handle integers
@@ -365,3 +357,75 @@ class Bits( SignalValue ):
 
   def _sext( self, new_width ):
     return Bits( new_width, self.int() )
+
+
+#-------------------------------------------------------------------------
+# BitSlice
+#-------------------------------------------------------------------------
+# Class created when slicing a Bits object. Maintains a reference to the
+# original Bits instance (target_bits) so that writing the BitSlice also
+# updates the value on the original Bits object. Note that this does not
+# work the other way around: updating the value of target_bits will not
+# update the value of BitSlices that point to it!
+class BitSlice( Bits ):
+
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
+  def __init__( self, nbits, value, target_bits, offset ):
+
+    # Create the BitSlice object using the Bits constructor.
+    super( BitSlice, self ).__init__( nbits, value )
+
+    # Extra fields specific to BitSlices: _target_bits points to the
+    # Bits object we are slicing, _offset provides the position of the
+    # specific bits we are slicing.
+    self._target_bits = target_bits
+    self._offset      = offset
+
+    # Take the notify_sim_* methods and the _slices function pointer list
+    # from the original Bits instance. This ensures writes to the BitSlice
+    # object made in a simulator will trigger the appropriate callbacks
+    # attached to the Bits instance.
+    self.notify_sim_comb_update = self._target_bits.notify_sim_comb_update
+    self.notify_sim_seq_update  = self._target_bits.notify_sim_seq_update
+    self._slices                = self._target_bits._slices
+
+  #-----------------------------------------------------------------------
+  # write_value
+  #-----------------------------------------------------------------------
+  # Implementing abstract write_value method defined by SignalValue.
+  def write_value( self, value ):
+
+    # Get the updated value and update self.
+    value = int( value )
+    assert self._min <= value <= self._max
+    self._uint = (value & self._mask)
+
+    # Update target we are slicing. First clear the bits we want to set.
+    shifted_mask = ~( self._mask << self._offset )
+    cleared_val  = self._target_bits._uint & shifted_mask
+
+    # Set the bits, write to the target.
+    new_val      = cleared_val | ( self._uint << self._offset )
+    self._target_bits.write_value( new_val )
+
+  #-----------------------------------------------------------------------
+  # write_next
+  #-----------------------------------------------------------------------
+  # Implementing abstract write_next method defined by SignalValue.
+  def write_next( self, value ):
+
+    # Get the updated value, but no don't update self (BitSlices contain
+    # no shadow state).
+    value = int( value )
+    assert self._min <= value <= self._max
+    value = (value & self._mask)
+
+    # Update target we are slicing. First clear the bits we want to set.
+    shifted_mask = ~( self._mask << self._offset )
+    cleared_val  = self._target_bits._next._uint & shifted_mask
+
+    # Set the bits, write to the target's shadow state.
+    new_val      = cleared_val | ( value << self._offset )
+    self._target_bits.write_next( new_val )

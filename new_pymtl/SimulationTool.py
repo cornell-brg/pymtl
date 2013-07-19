@@ -83,18 +83,21 @@ class SimulationTool( object ):
   def _dev_eval( self ):
     while self._event_queue.len():
       self._current_func = func = self._event_queue.deq()
-      try:
-        self.metrics.incr_comb_evals( func )
-        func()
-        self._current_func = None
-      except TypeError:
-        # TODO: can we catch this at static elaboration?
-        raise Exception("Concurrent block '{}' must take no parameters!\n"
-                        "file: {}\n"
-                        "line: {}\n"
-                        "".format( func.func_name,
-                                   func.func_code.co_filename,
-                                   func.func_code.co_firstlineno ) )
+      self.metrics.incr_comb_evals( func )
+      func()
+      self._current_func = None
+      #try:
+      #  self.metrics.incr_comb_evals( func )
+      #  func()
+      #  self._current_func = None
+      #except TypeError:
+      #  # TODO: can we catch this at static elaboration?
+      #  raise Exception("Concurrent block '{}' must take no parameters!\n"
+      #                  "file: {}\n"
+      #                  "line: {}\n"
+      #                  "".format( func.func_name,
+      #                             func.func_code.co_filename,
+      #                             func.func_code.co_firstlineno ) )
 
   #-----------------------------------------------------------------------
   # _perf_eval
@@ -353,7 +356,7 @@ class SimulationTool( object ):
       group.add( temp )
       svalue = temp.msg_type
       # TODO: should this be visible to sim?
-      svalue._shadow_value = copy.copy( svalue )
+      svalue._next = copy.copy( svalue )
       #svalue._DEBUG_signal_names = group
 
       # Add a callback to the SignalValue so that the simulator is notified
@@ -365,7 +368,7 @@ class SimulationTool( object ):
       #svalue.notify_sim_comb_update  = create_comb_update_cb( self, svalue )
       #svalue.notify_sim_slice_update = svalue.notify_sim_comb_update
       svalue.notify_sim_seq_update   = create_seq_update_cb ( self, svalue )
-      svalue._shadow_value.notify_sim_slice_update = svalue.notify_sim_seq_update
+      svalue._next.notify_sim_slice_update = svalue.notify_sim_seq_update
 
       # Modify model attributes currently referencing Signal objects to
       # reference SignalValue objects instead.
@@ -374,7 +377,7 @@ class SimulationTool( object ):
         # Set the value of the SignalValue object if we encounter a
         # constant (check for Constant object instead?)
         if isinstance( x._signalvalue, int ):
-          svalue.write( x._signalvalue )
+          svalue.write_value( x._signalvalue )
           svalue.constant = True
         # Handle Lists of Ports
         elif '[' in x.name:
@@ -477,9 +480,12 @@ class SimulationTool( object ):
       src       = c.src_node._signalvalue
       dest      = c.dest_node._signalvalue
       src_addr  = c.src_slice  if c.src_slice  != None else slice( None )
-      dest_addr = c.dest_slice if c.dest_slice != None else slice( None )
+      dest_bits = dest[ c.dest_slice ] if c.dest_slice != None else dest
       def slice_cb():
-        dest.v[ dest_addr ] = src.v[ src_addr ]
+        # We need to slice the src each time.  This is because writing
+        # to a BitSlice will updates the Bits it was sliced from, but
+        # not vice versa.
+        dest_bits.v = src[ src_addr ]
       return slice_cb
 
     for c in self._slice_connects:
@@ -489,7 +495,7 @@ class SimulationTool( object ):
       if isinstance( src, int ):
         dest      = c.dest_node._signalvalue
         dest_addr = c.dest_slice if c.dest_slice != None else slice( None )
-        dest.v[ dest_addr ] = src
+        dest[ dest_addr ].v = src
       # If slice is connected to another Signal, create a callback
       # and put it on the combinational event queue.
       else:

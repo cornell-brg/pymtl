@@ -129,7 +129,9 @@ class RegSlicePassThroughWire( Model ):
     @s.posedge_clk
     def seq_logic():
       s.wire0.n    = s.in_[0:2]
-      s.wire1.n[:] = s.in_[2:4]
+      # This doesn't work, should it?
+      #s.wire1[:].n = s.in_[2:4]
+      s.wire1.n    = s.in_[2:4]
 
     @s.combinational
     def wire0_logic():
@@ -229,4 +231,69 @@ def test_WriteThenReadCombSubmod():
     sim.cycle()
     assert model.out == i
 
+#-------------------------------------------------------------------------
+# SliceWriteCheck
+#-------------------------------------------------------------------------
+# Test updates to slices.
+class SliceWriteCheck( Model ):
 
+  def __init__( s, nbits ):
+    assert nbits == 16
+    s.in_ = InPort  ( 16 )
+    s.out = OutPort ( 16 )
+
+  def elaborate_logic( s ):
+    s.m0 = PassThrough( 16 )
+    s.connect( s.in_, s.m0.in_ )
+    s.connect( s.out, s.m0.out )
+
+def test_SliceWriteCheck():
+  import pytest
+
+  model = SliceWriteCheck( 16 )
+  model.elaborate()
+  sim = setup_sim( model )
+  assert model.out == 0
+
+  # Test regular write
+  model.in_.n = 8
+  sim.cycle()
+  assert model.out == 0b1000
+
+  # Slice then .n, should pass
+  model.in_[0].n = 1
+  sim.cycle()
+  assert model.out == 0b1001
+  model.in_[4:8].n = 0b1001
+  sim.cycle()
+  assert model.out == 0b10011001
+
+  # Test regular write
+  model.in_.n = 8
+  sim.cycle()
+  assert model.out == 0b1000
+
+  # Only slice, should fail
+  model.in_[0] = 1
+  sim.cycle()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b1001
+  model.in_[4:8] = 0b1001
+  sim.cycle()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b10011001
+
+  # Test regular write
+  model.in_.n = 8
+  sim.cycle()
+  assert model.out == 0b1000
+
+  # .n then slice, should fail
+  model.in_.n[0] = 1
+  sim.cycle()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b1001
+  model.in_.n[4:8] = 0b1001
+  sim.cycle()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b10011001

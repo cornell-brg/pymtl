@@ -359,7 +359,7 @@ class SimpleBitMerge( Model ):
     @s.combinational
     def logic():
       for i in range( s.nbits ):
-        s.out.value[i] = s.in_[i].value
+        s.out[i].value = s.in_[i].value
 
 def test_SimpleBitMerge_8x1_to_8():
   model, sim = setup_bit_merge( 8 )
@@ -408,7 +408,7 @@ class ComplexBitMerge( Model ):
     def logic():
       inport_num = 0
       for i in range( 0, s.nbits, s.groupings ):
-        s.out.value[i:i+s.groupings] = s.in_[inport_num].value
+        s.out[i:i+s.groupings].value = s.in_[inport_num].value
         inport_num += 1
 
 def test_ComplexBitMerge_8x1_to_8():
@@ -462,7 +462,6 @@ class SelfPassThrough( Model ):
     def logic():
       self.out.v = self.in_
 
-import pytest
 def test_SelfPassThrough():
   passthrough_tester( SelfPassThrough )
 
@@ -593,7 +592,9 @@ class CombSlicePassThroughWire( Model ):
     @s.combinational
     def comb_logic():
       s.wire0.v    = s.in_[0:2]
-      s.wire1.v[:] = s.in_[2:4]
+      # This doesn't work, should it?
+      #s.wire1[:].v = s.in_[2:4]
+      s.wire1.v = s.in_[2:4]
 
     @s.combinational
     def wire0_logic():
@@ -693,6 +694,7 @@ def test_ValueWriteCheck():
 #-------------------------------------------------------------------------
 # SliceWriteCheck
 #-------------------------------------------------------------------------
+# Test updates to slices.
 class SliceWriteCheck( Model ):
 
   def __init__( s, nbits ):
@@ -706,6 +708,8 @@ class SliceWriteCheck( Model ):
     s.connect( s.out, s.m0.out )
 
 def test_SliceWriteCheck():
+  import pytest
+
   model = SliceWriteCheck( 16 )
   model.elaborate()
   sim = setup_sim( model )
@@ -716,31 +720,43 @@ def test_SliceWriteCheck():
   sim.eval_combinational()
   assert model.out == 0b1000
 
-  # Write slice directly, passes due to the way impl done
-  model.in_[0] = 1
+  # Slice then .v, should pass
+  model.in_[0].v = 1
   sim.eval_combinational()
   assert model.out == 0b1001
-  model.in_[4:8] = 0b1001
+  model.in_[4:8].v = 0b1001
   sim.eval_combinational()
   assert model.out == 0b10011001
 
-  # Write sliced bits, should pass
-  model.in_.v[1] = 1
+  # Test regular write
+  model.in_.v = 8
   sim.eval_combinational()
-  assert model.out == 0b10011011
-  model.in_.v[4:8] = 0b1010
-  sim.eval_combinational()
-  assert model.out == 0b10101011
+  assert model.out == 0b1000
 
-  # Slice then write, should fail
-  model.in_[0].v = 0
+  # Only slice, should fail
+  model.in_[0] = 1
   sim.eval_combinational()
   with pytest.raises( AssertionError ):
-    assert model.out == 0b10101010
-  model.in_[4:8].v = 0b0000
+    assert model.out == 0b1001
+  model.in_[4:8] = 0b1001
   sim.eval_combinational()
   with pytest.raises( AssertionError ):
-    assert model.out == 0b00001010
+    assert model.out == 0b10011001
+
+  # Test regular write
+  model.in_.v = 8
+  sim.eval_combinational()
+  assert model.out == 0b1000
+
+  # .v then slice, should fail
+  model.in_.v[0] = 1
+  sim.eval_combinational()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b1001
+  model.in_.v[4:8] = 0b1001
+  sim.eval_combinational()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b10011001
 
 #-------------------------------------------------------------------------
 # SliceLogicWriteCheck
@@ -757,12 +773,10 @@ class SliceTempWriteCheck( Model ):
 
     @s.combinational
     def logic():
-      s.out.v[0:8] = s.in_[0:8]
+      s.out[0:8].v = s.in_[0:8]
       x = s.out[8:16]
       x.v          = s.in_[8:16]
 
-import pytest
-@pytest.mark.xfail
 def test_SliceTempWriteCheck():
   model = SliceTempWriteCheck( 16 )
   model.elaborate()

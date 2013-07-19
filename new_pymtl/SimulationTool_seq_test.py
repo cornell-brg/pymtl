@@ -199,6 +199,56 @@ def test_RegisterReset():
   assert model.out.v == 0
 
 #-------------------------------------------------------------------------
+# SliceWriteCheck
+#-------------------------------------------------------------------------
+# Test updates to slices.
+class SliceWriteCheck( Model ):
+
+  def __init__( s, nbits ):
+    assert nbits == 16
+    s.in_ = InPort  ( 16 )
+    s.out = OutPort ( 16 )
+
+  def elaborate_logic( s ):
+    s.connect( s.in_, s.out )
+
+def test_SliceWriteCheck():
+  import pytest
+
+  model = SliceWriteCheck( 16 )
+  model.elaborate()
+  sim = setup_sim( model )
+  assert model.out == 0
+
+  # Test regular write
+  model.in_.n = 8
+  sim.cycle()
+  assert model.out == 0b1000
+
+  # Slice then .n, should pass
+  model.in_[0].n = 1
+  sim.cycle()
+  assert model.out == 0b1001
+  model.in_[4:8].n = 0b1001
+  sim.cycle()
+  assert model.out == 0b10011001
+
+  # Test regular write
+  model.in_.n = 8
+  sim.cycle()
+  assert model.out == 0b1000
+
+  # .n then slice, should fail
+  model.in_.n[0] = 1
+  sim.cycle()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b1001
+  model.in_.n[4:8] = 0b1001
+  sim.cycle()
+  with pytest.raises( AssertionError ):
+    assert model.out == 0b10011001
+
+#-------------------------------------------------------------------------
 # SliceLogicWriteCheck
 #-------------------------------------------------------------------------
 # Test storing a Bits slice to a temporary, then writing it
@@ -213,12 +263,10 @@ class SliceTempWriteCheck( Model ):
 
     @s.posedge_clk
     def logic():
-      s.out.n[0:8] = s.in_[0:8]
+      s.out[0:8].n = s.in_[0:8]
       x = s.out[8:16]
       x.n          = s.in_[8:16]
 
-import pytest
-@pytest.mark.xfail
 def test_SliceTempWriteCheck():
   model = SliceTempWriteCheck( 16 )
   model.elaborate()
@@ -230,5 +278,5 @@ def test_SliceTempWriteCheck():
   assert model.out == 0x00AA
 
   model.in_.value = 0xAA00
-  sim.eval_combinational()
+  sim.cycle()
   assert model.out == 0xAA00
