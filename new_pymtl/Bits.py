@@ -56,8 +56,9 @@ class Bits( SignalValue ):
   #-----------------------------------------------------------------------
   # __index__
   #-----------------------------------------------------------------------
-  # Type conversion to an int when the object is used in a slice.
-  # TODO
+  # Behave like an int() when used as an index to slices.
+  def __index__( self ):
+    return self._uint
 
   #-----------------------------------------------------------------------
   # uint

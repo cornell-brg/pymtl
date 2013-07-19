@@ -25,9 +25,7 @@ class Mux( Model ):
     @s.combinational
     def comb_logic():
       assert s.sel < s.nports
-
-      # TODO: fix to use PortLists !
-      s.out.v = s.in_[ s.sel.uint() ]
+      s.out.v = s.in_[ s.sel ]
 
   def line_trace( s ):
     return "{} {} {} () {}".format( s.in_[0], s.in_[1], s.sel, s.out )

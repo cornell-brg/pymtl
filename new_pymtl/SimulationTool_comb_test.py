@@ -500,7 +500,7 @@ class Mux( Model ):
     @s.combinational
     def logic():
       assert s.sel < len( s.in_ )
-      s.out.v = s.in_[ s.sel.uint() ]
+      s.out.v = s.in_[ s.sel ]
 
 def test_Mux():
   mux_tester( Mux )

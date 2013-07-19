@@ -452,3 +452,29 @@ def test_str():
   #  assert Bits(  4, Bits(32,2) ).__str__() == "2"
   assert Bits(  4, Bits(32,2) ).__str__() == "2"
 
+def test_index():
+
+  data = range( 2**4 )
+
+  # Indexing into an array
+  x = Bits( 4, 3  )
+  assert data[ x ] == 3
+
+  # Note, this converts -2 to unsigned, so 14!
+  y = Bits( 4, -2 )
+  assert data[ y ] == 14
+
+  # Larger bitwidths work as long as the list is big enough
+  a = Bits( 8, 4  )
+  assert data[ a ] == 4
+
+  # If not, regular indexing error
+  b = Bits( 8, 20 )
+  with pytest.raises( IndexError ):
+    data[ b ]
+
+  # Same with negative that become out of range when converted to unsigned
+  c = Bits( 8, -1 )
+  with pytest.raises( IndexError ):
+    data[ c ]
+
