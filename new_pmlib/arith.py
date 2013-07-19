@@ -48,13 +48,12 @@ class Adder( Model ):
       t0 = zext( s.in0, s.twidth )
       t1 = zext( s.in1, s.twidth )
 
-      s.temp.value = t0 + t1 + s.cin.value
+      s.temp.value = t0 + t1 + s.cin
 
 
   def line_trace( s ):
     return "{} {} {} () {} {}" \
-      .format( s.in0.value, s.in1.value, s.cin.value,
-               s.out.value, s.cout.value )
+      .format( s.in0, s.in1, s.cin, s.out, s.cout )
 
 #-------------------------------------------------------------------------
 # Subtractor
@@ -72,11 +71,10 @@ class Subtractor( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = s.in0.value - s.in1.value;
+      s.out.value = s.in0 - s.in1
 
   def line_trace( s ):
-    return "{} {} () {}" \
-      .format( s.in0.value, s.in1.value, s.out.value )
+    return "{} {} () {}".format( s.in0, s.in1, s.out )
 
 #-------------------------------------------------------------------------
 # Incrementer
@@ -99,11 +97,10 @@ class Incrementer( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = s.in_.value + s.increment_amount
+      s.out.value = s.in_ + s.increment_amount
 
   def line_trace( s ):
-    return "{} () {}" \
-      .format( s.in_.value, s.out.value )
+    return "{} () {}".format( s.in_, s.out )
 
 #-------------------------------------------------------------------------
 # ZeroExtender
@@ -129,8 +126,7 @@ class ZeroExtender( Model ):
       s.out.value = zext( s.in_, s.out_nbits)
 
   def line_trace( s ):
-    return "{} () {}" \
-      .format( s.in_.value, s.out.value )
+    return "{} () {}".format( s.in_, s.out )
 
 #-------------------------------------------------------------------------
 # SignExtender
@@ -159,8 +155,7 @@ class SignExtender( Model ):
       s.out.value = sext( s.in_, s.out_nbits )
 
   def line_trace( s ):
-    return "{} () {}" \
-      .format( s.in_.value, s.out.value )
+    return "{} () {}".format( s.in_, s.out )
 
 #-------------------------------------------------------------------------
 # Zero Comparator
@@ -177,11 +172,10 @@ class ZeroComparator( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = s.in_.value == 0
+      s.out.value = s.in_ == 0
 
   def line_trace( s ):
-    return "{} () {}" \
-      .format( s.in_.value, s.out.value )
+    return "{} () {}".format( s.in_, s.out )
 
 #-------------------------------------------------------------------------
 # Equal Comparator
@@ -199,11 +193,10 @@ class EqComparator( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = s.in0.value == s.in1.value
+      s.out.value = s.in0 == s.in1
 
   def line_trace( s ):
-    return "{} {} () {}" \
-      .format( s.in0.value, s.in1.value, s.out.value )
+    return "{} {} () {}".format( s.in0, s.in1, s.out )
 
 #-------------------------------------------------------------------------
 # Less-Than Comparator
@@ -221,11 +214,10 @@ class LtComparator( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = s.in0.value < s.in1.value
+      s.out.value = s.in0 < s.in1
 
   def line_trace( s ):
-    return "{} {} () {}" \
-      .format( s.in0.value, s.in1.value, s.out.value )
+    return "{} {} () {}".format( s.in0, s.in1, s.out )
 
 #-------------------------------------------------------------------------
 # Greater-Than Comparator
@@ -243,11 +235,10 @@ class GtComparator( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = s.in0.value > s.in1.value
+      s.out.value = s.in0 > s.in1
 
   def line_trace( s ):
-    return "{} {} () {}" \
-      .format( s.in0.value, s.in1.value, s.out.value )
+    return "{} {} () {}".format( s.in0, s.in1, s.out )
 
 #-------------------------------------------------------------------------
 # SignUnit
@@ -264,11 +255,10 @@ class SignUnit( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = ~s.in_.value + 1
+      s.out.value = ~s.in_ + 1
 
   def line_trace( s ):
-    return "{} () {}" \
-      .format( s.in_.value, s.out.value )
+    return "{} () {}".format( s.in_, s.out )
 
 #-------------------------------------------------------------------------
 # UnsignUnit
@@ -291,14 +281,13 @@ class UnsignUnit( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      if s.in_.value[s.nbits-1]:
-        s.out.value = ~s.in_.value + 1
+      if s.in_[s.nbits-1]:
+        s.out.value = ~s.in_ + 1
       else:
-        s.out.value = s.in_.value
+        s.out.value = s.in_
 
   def line_trace( s ):
-    return "{} () {}" \
-      .format( s.in_.value, s.out.value )
+    return "{} () {}".format( s.in_, s.out )
 
 #-------------------------------------------------------------------------
 # LeftLogicalShifter
@@ -316,11 +305,10 @@ class LeftLogicalShifter( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = s.in_.value << s.shamt.value
+      s.out.value = s.in_ << s.shamt
 
   def line_trace( s ):
-    return "{} {} () {}" \
-      .format( s.in_.value, s.shamt.value, s.out.value )
+    return "{} {} () {}".format( s.in_, s.shamt, s.out )
 
 #-------------------------------------------------------------------------
 # RightLogicalShifter
@@ -338,9 +326,8 @@ class RightLogicalShifter( Model ):
   def elaborate_logic( s ):
     @s.combinational
     def comb_logic():
-      s.out.value = s.in_.value >> s.shamt.value
+      s.out.value = s.in_ >> s.shamt
 
   def line_trace( s ):
-    return "{} {} () {}" \
-      .format( s.in_.value, s.shamt.value, s.out.value )
+    return "{} {} () {}".format( s.in_, s.shamt, s.out )
 

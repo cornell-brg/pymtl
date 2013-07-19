@@ -11,30 +11,30 @@ from TestSimpleSink   import TestSimpleSink
 # TestHarness
 #-------------------------------------------------------------------------
 
-class TestHarness (Model):
+class TestHarness( Model ):
 
-  def __init__( self, nbits, msgs ):
+  def __init__( s, nbits, msgs ):
 
     # Instantiate models
 
-    self.src  = TestSimpleSource ( nbits, msgs  )
-    self.sink = TestSimpleSink   ( nbits, msgs )
+    s.src  = TestSimpleSource ( nbits, msgs  )
+    s.sink = TestSimpleSink   ( nbits, msgs )
 
     # Connect chain
 
-    #connect_chain([ self.src, self.sink ])
-    self.connect( self.src.out_msg, self.sink.in_msg )
-    self.connect( self.src.out_val, self.sink.in_val )
-    self.connect( self.src.out_rdy, self.sink.in_rdy )
+    #connect_chain([ s.src, s.sink ])
+    s.connect( s.src.out_msg, s.sink.in_msg )
+    s.connect( s.src.out_val, s.sink.in_val )
+    s.connect( s.src.out_rdy, s.sink.in_rdy )
 
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
     pass
 
-  def done( self ):
-    return self.src.done.value and self.sink.done.value
+  def done( s ):
+    return s.src.done and s.sink.done
 
-  def line_trace( self ):
-    return self.src.line_trace() + " | " + self.sink.line_trace()
+  def line_trace( s ):
+    return s.src.line_trace() + " | " + s.sink.line_trace()
 
 #-------------------------------------------------------------------------
 # TestSimpleSink unit test

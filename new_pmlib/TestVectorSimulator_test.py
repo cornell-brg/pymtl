@@ -21,11 +21,10 @@ class Incrementer( Model ):
 
     @self.combinational
     def comb_logic():
-      self.out.value = self.in_.value + 1
+      self.out.value = self.in_ + 1
 
   def line_trace( self ):
-    return "{:04x} () {:04x}" \
-      .format( self.in_.uint(), self.out.uint() )
+    return "{} () {}".format( self.in_, self.out )
 
 #-------------------------------------------------------------------------
 # test_basics
@@ -56,7 +55,7 @@ def test_basics( dump_vcd ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out.value == test_vector[1]
+      assert model.out == test_vector[1]
 
   # Run the test
 

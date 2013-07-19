@@ -275,7 +275,7 @@ def test_SimpleBitBlast_16_to_16x1():
 # ComplexBitBlast
 #-------------------------------------------------------------------------
 
-class ComplexBitBlast(Model):
+class ComplexBitBlast( Model ):
   def __init__( s, nbits, groupings ):
     s.nbits     = nbits
     s.groupings = groupings

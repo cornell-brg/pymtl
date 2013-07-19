@@ -11,49 +11,47 @@ import valrdy
 from TestSimpleSource import TestSimpleSource
 from TestRandomDelay  import TestRandomDelay
 
-class TestSource (Model):
+class TestSource( Model ):
 
   #-----------------------------------------------------------------------
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( self, nbits, msgs, max_random_delay = 0 ):
+  def __init__( s, nbits, msgs, max_random_delay = 0 ):
 
-    self.out_msg = OutPort ( nbits )
-    self.out_val = OutPort ( 1     )
-    self.out_rdy = InPort  ( 1     )
-    self.done    = OutPort ( 1     )
+    s.out_msg = OutPort ( nbits )
+    s.out_val = OutPort ( 1     )
+    s.out_rdy = InPort  ( 1     )
+    s.done    = OutPort ( 1     )
 
-    self.src   = TestSimpleSource( nbits, msgs )
-    self.delay = TestRandomDelay( nbits, max_random_delay )
+    s.src   = TestSimpleSource( nbits, msgs )
+    s.delay = TestRandomDelay( nbits, max_random_delay )
 
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
 
     # Connect test source to random delay
 
-    self.connect( self.src.out_msg, self.delay.in_msg )
-    self.connect( self.src.out_val, self.delay.in_val )
-    self.connect( self.src.out_rdy, self.delay.in_rdy )
+    s.connect( s.src.out_msg, s.delay.in_msg )
+    s.connect( s.src.out_val, s.delay.in_val )
+    s.connect( s.src.out_rdy, s.delay.in_rdy )
 
     # Connect random delay to output ports
 
-    self.connect( self.delay.out_msg, self.out_msg )
-    self.connect( self.delay.out_val, self.out_val )
-    self.connect( self.delay.out_rdy, self.out_rdy )
+    s.connect( s.delay.out_msg, s.out_msg )
+    s.connect( s.delay.out_val, s.out_val )
+    s.connect( s.delay.out_rdy, s.out_rdy )
 
     # Connect test source done signal to output port
 
-    self.connect( self.src.done, self.done )
+    s.connect( s.src.done, s.done )
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
-  def line_trace( self ):
+  def line_trace( s ):
 
-    out_str = \
-      valrdy.valrdy_to_str( self.out_msg.value,
-        self.out_val.value, self.out_rdy.value )
+    out_str = valrdy.valrdy_to_str( s.out_msg, s.out_val, s.out_rdy )
 
     return "{}".format( out_str )
 

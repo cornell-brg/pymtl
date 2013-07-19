@@ -11,18 +11,17 @@ from new_pymtl import *
 class Reg( Model ):
 
   @capture_args
-  def __init__( self, nbits = 1 ):
-    self.in_ = InPort  ( nbits )
-    self.out = OutPort ( nbits )
+  def __init__( s, nbits = 1 ):
+    s.in_ = InPort  ( nbits )
+    s.out = OutPort ( nbits )
 
-  def elaborate_logic( self ):
-    @self.posedge_clk
+  def elaborate_logic( s ):
+    @s.posedge_clk
     def seq_logic():
-      self.out.next = self.in_
+      s.out.next = s.in_
 
-  def line_trace( self ):
-    return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.uint(), self.out.uint(), self.out.uint() )
+  def line_trace( s ):
+    return "{} ({}) {}".format( s.in_, s.out, s.out )
 
 #-------------------------------------------------------------------------
 # Register with enable signal
@@ -31,20 +30,19 @@ class Reg( Model ):
 class RegEn( Model ):
 
   @capture_args
-  def __init__( self, nbits = 1 ):
-    self.in_ = InPort  ( nbits )
-    self.en  = InPort  ( 1     )
-    self.out = OutPort ( nbits )
+  def __init__( s, nbits = 1 ):
+    s.in_ = InPort  ( nbits )
+    s.en  = InPort  ( 1     )
+    s.out = OutPort ( nbits )
 
-  def elaborate_logic( self ):
-    @self.posedge_clk
+  def elaborate_logic( s ):
+    @s.posedge_clk
     def seq_logic():
-      if self.en:
-        self.out.next = self.in_
+      if s.en:
+        s.out.next = s.in_
 
-  def line_trace( self ):
-    return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.uint(), self.out.uint(), self.out.uint() )
+  def line_trace( s ):
+    return "{} ({}) {}".format( s.in_, s.out, s.out )
 
 #-------------------------------------------------------------------------
 # Register with reset signal
@@ -55,28 +53,27 @@ class RegEn( Model ):
 class RegRst( Model ):
 
   @capture_args
-  def __init__( self, nbits = 1, reset_value = 0 ):
+  def __init__( s, nbits = 1, reset_value = 0 ):
 
     # Ports
 
-    self.in_ = InPort( nbits )
-    self.out = OutPort( nbits )
+    s.in_ = InPort( nbits )
+    s.out = OutPort( nbits )
 
     # Constants
 
-    self.reset_value = reset_value
+    s.reset_value = reset_value
 
-  def elaborate_logic( self ):
-    @self.posedge_clk
+  def elaborate_logic( s ):
+    @s.posedge_clk
     def seq_logic():
-      if self.reset:
-        self.out.next = self.reset_value
+      if s.reset:
+        s.out.next = s.reset_value
       else:
-        self.out.next = self.in_
+        s.out.next = s.in_
 
-  def line_trace( self ):
-    return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.uint(), self.out.uint(), self.out.uint() )
+  def line_trace( s ):
+    return "{} ({}) {}".format( s.in_, s.out, s.out )
 
 #-------------------------------------------------------------------------
 # Register with reset and enable
@@ -87,27 +84,26 @@ class RegRst( Model ):
 class RegEnRst( Model ):
 
   @capture_args
-  def __init__( self, nbits = 1, reset_value = 0 ):
+  def __init__( s, nbits = 1, reset_value = 0 ):
 
     # Ports
 
-    self.en  = InPort( 1 )
-    self.in_ = InPort( nbits )
-    self.out = OutPort( nbits )
+    s.en  = InPort( 1 )
+    s.in_ = InPort( nbits )
+    s.out = OutPort( nbits )
 
     # Constants
 
-    self.reset_value = reset_value
+    s.reset_value = reset_value
 
-  def elaborate_logic( self ):
-    @self.posedge_clk
+  def elaborate_logic( s ):
+    @s.posedge_clk
     def seq_logic():
-      if self.reset:
-        self.out.next = self.reset_value
-      elif self.en:
-        self.out.next = self.in_
+      if s.reset:
+        s.out.next = s.reset_value
+      elif s.en:
+        s.out.next = s.in_
 
-  def line_trace( self ):
-    return "{:04x} ({:04x}) {:04x}" \
-      .format( self.in_.uint(), self.out.uint(), self.out.uint() )
+  def line_trace( s ):
+    return "{} ({}) {}".format( s.in_, s.out, s.out )
 

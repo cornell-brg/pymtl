@@ -18,7 +18,7 @@ B_MUX_SEL_A     = 0
 B_MUX_SEL_IN    = 1
 B_MUX_SEL_X     = 0
 
-class GcdUnitDpath (Model):
+class GcdUnitDpath( Model ):
 
   def __init__( s ):
 
@@ -128,7 +128,7 @@ class GcdUnitDpath (Model):
 # GCD Control
 #=========================================================================
 
-class GcdUnitCtrl (Model):
+class GcdUnitCtrl( Model ):
 
   #-----------------------------------------------------------------------
   # Constructor
@@ -173,25 +173,25 @@ class GcdUnitCtrl (Model):
     @s.combinational
     def state_transitions():
 
-      current_state = s.state.out.value
-      next_state    = s.state.out.value
+      current_state = s.state.out
+      next_state    = s.state.out
 
       # Transistions out of IDLE state
 
       if ( current_state == s.STATE_IDLE ):
-        if ( s.in_val.value and s.in_rdy.value ):
+        if ( s.in_val and s.in_rdy ):
           next_state = s.STATE_CALC
 
       # Transistions out of CALC state
 
       if ( current_state == s.STATE_CALC ):
-        if ( not s.is_a_lt_b.value and s.is_b_zero.value ):
+        if ( not s.is_a_lt_b and s.is_b_zero ):
           next_state = s.STATE_DONE
 
       # Transistions out of DONE state
 
       if ( current_state == s.STATE_DONE ):
-        if ( s.out_val.value and s.out_rdy.value ):
+        if ( s.out_val and s.out_rdy ):
           next_state = s.STATE_IDLE
 
       s.state.in_.value = next_state
@@ -203,7 +203,7 @@ class GcdUnitCtrl (Model):
     @s.combinational
     def state_outputs():
 
-      current_state = s.state.out.value
+      current_state = s.state.out
 
       # In IDLE state we simply wait for inputs to arrive and latch them in
 
@@ -219,8 +219,8 @@ class GcdUnitCtrl (Model):
 
       elif current_state == s.STATE_CALC:
 
-        swap = s.is_a_lt_b.value
-        done = not s.is_a_lt_b.value and s.is_b_zero.value
+        swap = s.is_a_lt_b
+        done = not s.is_a_lt_b and s.is_b_zero
 
         s.in_rdy.value    = 0
         s.out_val.value   = 0
@@ -244,7 +244,7 @@ class GcdUnitCtrl (Model):
 # GCD Unit
 #=========================================================================
 
-class GcdUnitRTL (Model):
+class GcdUnitRTL( Model ):
 
   #---------------------------------------------------------------------
   # Declare interface
@@ -307,17 +307,17 @@ class GcdUnitRTL (Model):
       valrdy.valrdy_to_str( out_msg, s.out_val, s.out_rdy )
 
     state_str = "? "
-    if s.ctrl.state.out.value == s.ctrl.STATE_IDLE:
+    if s.ctrl.state.out == s.ctrl.STATE_IDLE:
       state_str = "I "
-    if s.ctrl.state.out.value == s.ctrl.STATE_CALC:
-      if s.ctrl.is_a_lt_b.value:
+    if s.ctrl.state.out == s.ctrl.STATE_CALC:
+      if s.ctrl.is_a_lt_b:
         state_str = "Cs"
       else:
         state_str = "C-"
-    if s.ctrl.state.out.value == s.ctrl.STATE_DONE:
+    if s.ctrl.state.out == s.ctrl.STATE_DONE:
       state_str = "D "
 
     return "{} ({} {} {}) {}" \
-        .format( in_str, s.dpath.a_reg.out.value,
-                 s.dpath.b_reg.out.value, state_str, out_str )
+        .format( in_str, s.dpath.a_reg.out,
+                 s.dpath.b_reg.out, state_str, out_str )
 

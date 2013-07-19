@@ -12,100 +12,98 @@ import random
 # Fix the random seed so results are reproducible
 random.seed(0xdeadbeef)
 
-class TestRandomDelay (Model):
+class TestRandomDelay( Model ):
 
   #-----------------------------------------------------------------------
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( self, nbits = 1, max_random_delay = 0 ):
+  def __init__( s, nbits = 1, max_random_delay = 0 ):
 
-    self.in_msg  = InPort  ( nbits )
-    self.in_val  = InPort  ( 1     )
-    self.in_rdy  = OutPort ( 1     )
+    s.in_msg  = InPort  ( nbits )
+    s.in_val  = InPort  ( 1     )
+    s.in_rdy  = OutPort ( 1     )
 
-    self.out_msg = OutPort ( nbits )
-    self.out_val = OutPort ( 1     )
-    self.out_rdy = InPort  ( 1     )
+    s.out_msg = OutPort ( nbits )
+    s.out_val = OutPort ( 1     )
+    s.out_rdy = InPort  ( 1     )
 
     # If the maximum random delay is set to zero, then the inputs are
     # directly connected to the outputs.
 
-    self.max_random_delay = max_random_delay
+    s.max_random_delay = max_random_delay
     if max_random_delay == 0:
-      self.connect( self.in_msg, self.out_msg )
-      self.connect( self.in_val, self.out_val )
-      self.connect( self.in_rdy, self.out_rdy )
+      s.connect( s.in_msg, s.out_msg )
+      s.connect( s.in_val, s.out_val )
+      s.connect( s.in_rdy, s.out_rdy )
 
     # Buffer to hold message
 
-    self.buf      = 0
-    self.buf_full = False
-    self.counter  = 0
+    s.buf      = 0
+    s.buf_full = False
+    s.counter  = 0
 
   #-----------------------------------------------------------------------
   # Tick
   #-----------------------------------------------------------------------
 
-  def elaborate_logic( self ):
-    @self.tick
+  def elaborate_logic( s ):
+    @s.tick
     def tick():
 
       # Ideally we could just not include this posedge_clk concurrent block
       # at all in the simulation. We should be able to do this when we have
       # an explicit elaborate function.
 
-      if self.max_random_delay == 0:
+      if s.max_random_delay == 0:
         return
 
       # At the end of the cycle, we AND together the val/rdy bits to
       # determine if the input/output message transactions occured.
 
-      in_go  = self.in_val.value  and self.in_rdy.value
-      out_go = self.out_val.value and self.out_rdy.value
+      in_go  = s.in_val  and s.in_rdy
+      out_go = s.out_val and s.out_rdy
 
       # If the output transaction occured, then clear the buffer full bit.
       # Note that we do this _first_ before we process the input
       # transaction so we can essentially pipeline this control logic.
 
       if out_go:
-        self.buf_full = False
+        s.buf_full = False
 
       # If the input transaction occured, then write the input message into
       # our internal buffer, update the buffer full bit, and reset the
       # counter.
 
       if in_go:
-        self.buf      = self.in_msg.value[:]
-        self.buf_full = True
-        self.counter  = random.randint( 1, self.max_random_delay )
+        s.buf      = s.in_msg[:]
+        s.buf_full = True
+        s.counter  = random.randint( 1, s.max_random_delay )
 
-      if self.counter > 0:
-        self.counter = self.counter - 1
+      if s.counter > 0:
+        s.counter = s.counter - 1
 
       # The output message is always the output of the buffer
 
-      self.out_msg.next = self.buf
+      s.out_msg.next = s.buf
 
       # The input is ready and the output is valid if counter is zero
 
-      self.in_rdy.next  = ( self.counter == 0 ) and not self.buf_full
-      self.out_val.next = ( self.counter == 0 ) and self.buf_full
+      s.in_rdy.next  = ( s.counter == 0 ) and not s.buf_full
+      s.out_val.next = ( s.counter == 0 ) and s.buf_full
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
-  def line_trace( self ):
+  def line_trace( s ):
 
     in_str = \
-      valrdy.valrdy_to_str( self.in_msg.value,
-        self.in_val.value, self.in_rdy.value )
+      valrdy.valrdy_to_str( s.in_msg, s.in_val, s.in_rdy )
 
     out_str = \
-      valrdy.valrdy_to_str( self.out_msg.value,
-        self.out_val.value, self.out_rdy.value )
+      valrdy.valrdy_to_str( s.out_msg, s.out_val, s.out_rdy )
 
     return "{} ({:2}) {}" \
-      .format( in_str, self.counter, out_str )
+      .format( in_str, s.counter, out_str )
 

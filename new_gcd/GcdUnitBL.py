@@ -52,8 +52,8 @@ class GcdUnitBL( Model ):
       # At the end of the cycle, we AND together the val/rdy bits to
       # determine if the input/output message transactions occured.
 
-      in_go  = s.in_val.value  and s.in_rdy.value
-      out_go = s.out_val.value and s.out_rdy.value
+      in_go  = s.in_val  and s.in_rdy
+      out_go = s.out_val and s.out_rdy
 
       # If the output transaction occured, then clear the buffer full bit.
       # Note that we do this _first_ before we process the input
@@ -66,8 +66,8 @@ class GcdUnitBL( Model ):
       # our internal buffer and update the buffer full bit
 
       if in_go:
-        s.buf_a    = s.in_msg.value[ 0:32].uint()
-        s.buf_b    = s.in_msg.value[32:64].uint()
+        s.buf_a    = s.in_msg[ 0:32].uint()
+        s.buf_b    = s.in_msg[32:64].uint()
         s.buf_full = True
 
       # The output message is always the gcd of the buffer

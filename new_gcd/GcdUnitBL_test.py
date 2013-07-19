@@ -5,43 +5,43 @@
 from new_pymtl import *
 from new_pmlib import TestSource, TestSink
 
-from GcdUnitBL  import GcdUnitBL
+from GcdUnitBL import GcdUnitBL
 
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
 
-class TestHarness (Model):
+class TestHarness( Model ):
 
-  def __init__( self, ModelType, src_msgs, sink_msgs,
+  def __init__( s, ModelType, src_msgs, sink_msgs,
                 src_delay, sink_delay ):
 
     # Instantiate models
 
-    self.src  = TestSource ( 64, src_msgs,  src_delay  )
-    self.gcd  = ModelType        ()
-    self.sink = TestSink   ( 32, sink_msgs, sink_delay )
+    s.src  = TestSource ( 64, src_msgs,  src_delay  )
+    s.gcd  = ModelType        ()
+    s.sink = TestSink   ( 32, sink_msgs, sink_delay )
 
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
 
     # Connect chain
 
-    #connect_chain([ self.src, self.gcd, self.sink ])
-    self.connect( self.src.out_msg, self.gcd.in_msg )
-    self.connect( self.src.out_val, self.gcd.in_val )
-    self.connect( self.src.out_rdy, self.gcd.in_rdy )
+    #connect_chain([ s.src, s.gcd, s.sink ])
+    s.connect( s.src.out_msg, s.gcd.in_msg )
+    s.connect( s.src.out_val, s.gcd.in_val )
+    s.connect( s.src.out_rdy, s.gcd.in_rdy )
 
-    self.connect( self.gcd.out_msg, self.sink.in_msg )
-    self.connect( self.gcd.out_val, self.sink.in_val )
-    self.connect( self.gcd.out_rdy, self.sink.in_rdy )
+    s.connect( s.gcd.out_msg, s.sink.in_msg )
+    s.connect( s.gcd.out_val, s.sink.in_val )
+    s.connect( s.gcd.out_rdy, s.sink.in_rdy )
 
-  def done( self ):
-    return self.src.done.value and self.sink.done.value
+  def done( s ):
+    return s.src.done and s.sink.done
 
-  def line_trace( self ):
-    return self.src.line_trace() + " > " + \
-           self.gcd.line_trace() + " > " + \
-           self.sink.line_trace()
+  def line_trace( s ):
+    return s.src.line_trace() + " > " + \
+           s.gcd.line_trace() + " > " + \
+           s.sink.line_trace()
 
 #-------------------------------------------------------------------------
 # Run test

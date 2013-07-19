@@ -12,29 +12,29 @@ from TestRandomDelay import TestRandomDelay
 # TestHarness (directly connect source to sink)
 #-------------------------------------------------------------------------
 
-class TestHarness (Model):
+class TestHarness( Model ):
 
-  def __init__( self, nbits, msgs, delay ):
+  def __init__( s, nbits, msgs, delay ):
 
     # Instantiate models
 
-    self.src  = TestSource     ( nbits, msgs, delay )
-    self.sink = TestSimpleSink ( nbits, msgs )
+    s.src  = TestSource     ( nbits, msgs, delay )
+    s.sink = TestSimpleSink ( nbits, msgs )
 
     # Connect chain
 
-    self.connect( self.src.out_msg, self.sink.in_msg )
-    self.connect( self.src.out_val, self.sink.in_val )
-    self.connect( self.src.out_rdy, self.sink.in_rdy )
+    s.connect( s.src.out_msg, s.sink.in_msg )
+    s.connect( s.src.out_val, s.sink.in_val )
+    s.connect( s.src.out_rdy, s.sink.in_rdy )
 
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
     pass
 
-  def done( self ):
-    return self.src.done.value and self.sink.done.value
+  def done( s ):
+    return s.src.done and s.sink.done
 
-  def line_trace( self ):
-    return self.src.line_trace() + " > " + self.sink.line_trace()
+  def line_trace( s ):
+    return s.src.line_trace() + " > " + s.sink.line_trace()
 
 #-------------------------------------------------------------------------
 # Run test
@@ -115,37 +115,37 @@ def test_delay20( dump_vcd ):
 # TestHarnessExtraDelay (connect source to sink through extra delay)
 #-------------------------------------------------------------------------
 
-class TestHarnessExtraDelay (Model):
+class TestHarnessExtraDelay( Model ):
 
-  def __init__( self, nbits, msgs, delay ):
+  def __init__( s, nbits, msgs, delay ):
 
     # Instantiate models
 
-    self.src   = TestSource      ( nbits, msgs, delay )
-    self.delay = TestRandomDelay ( nbits, 5 )
-    self.sink  = TestSimpleSink  ( nbits, msgs )
+    s.src   = TestSource      ( nbits, msgs, delay )
+    s.delay = TestRandomDelay ( nbits, 5 )
+    s.sink  = TestSimpleSink  ( nbits, msgs )
 
     # Connect chain
 
-    #connect_chain([ self.src, self.delay, self.sink ])
-    self.connect( self.src.out_msg, self.delay.in_msg )
-    self.connect( self.src.out_val, self.delay.in_val )
-    self.connect( self.src.out_rdy, self.delay.in_rdy )
+    #connect_chain([ s.src, s.delay, s.sink ])
+    s.connect( s.src.out_msg, s.delay.in_msg )
+    s.connect( s.src.out_val, s.delay.in_val )
+    s.connect( s.src.out_rdy, s.delay.in_rdy )
 
-    self.connect( self.delay.out_msg, self.sink.in_msg )
-    self.connect( self.delay.out_val, self.sink.in_val )
-    self.connect( self.delay.out_rdy, self.sink.in_rdy )
+    s.connect( s.delay.out_msg, s.sink.in_msg )
+    s.connect( s.delay.out_val, s.sink.in_val )
+    s.connect( s.delay.out_rdy, s.sink.in_rdy )
 
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
     pass
 
-  def done( self ):
-    return self.src.done.value and self.sink.done.value
+  def done( s ):
+    return s.src.done and s.sink.done
 
-  def line_trace( self ):
-    return self.src.line_trace() + " > " + \
-           self.delay.line_trace() + " > " + \
-           self.sink.line_trace()
+  def line_trace( s ):
+    return s.src.line_trace() + " > " + \
+           s.delay.line_trace() + " > " + \
+           s.sink.line_trace()
 
 #-------------------------------------------------------------------------
 # Run test

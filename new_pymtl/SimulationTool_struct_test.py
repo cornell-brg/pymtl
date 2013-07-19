@@ -587,7 +587,7 @@ def test_ConstantSlice():
 # ConstantModule
 #-------------------------------------------------------------------------
 
-class Shifter(Model):
+class Shifter( Model ):
   def __init__( s, inout_nbits = 1, shamt_nbits = 1 ):
     s.in_   = InPort  ( inout_nbits )
     s.shamt = InPort  ( shamt_nbits )

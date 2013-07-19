@@ -12,29 +12,29 @@ from TestRandomDelay import TestRandomDelay
 # TestHarness (directly connect source to sink)
 #-------------------------------------------------------------------------
 
-class TestHarness (Model):
+class TestHarness( Model ):
 
-  def __init__( self, nbits, msgs, src_delay, sink_delay ):
+  def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
     # Instantiate models
 
-    self.src  = TestSource ( nbits, msgs, src_delay  )
-    self.sink = TestSink   ( nbits, msgs, sink_delay )
+    s.src  = TestSource ( nbits, msgs, src_delay  )
+    s.sink = TestSink   ( nbits, msgs, sink_delay )
 
     # Connect chain
 
-    self.connect( self.src.out_msg, self.sink.in_msg )
-    self.connect( self.src.out_val, self.sink.in_val )
-    self.connect( self.src.out_rdy, self.sink.in_rdy )
+    s.connect( s.src.out_msg, s.sink.in_msg )
+    s.connect( s.src.out_val, s.sink.in_val )
+    s.connect( s.src.out_rdy, s.sink.in_rdy )
 
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
     pass
 
-  def done( self ):
-    return self.src.done.value and self.sink.done.value
+  def done( s ):
+    return s.src.done and s.sink.done
 
-  def line_trace( self ):
-    return self.src.line_trace() + " > " + self.sink.line_trace()
+  def line_trace( s ):
+    return s.src.line_trace() + " > " + s.sink.line_trace()
 
 #-------------------------------------------------------------------------
 # Run test
@@ -116,37 +116,37 @@ def test_delay5x10( dump_vcd ):
 # TestHarnessExtraDelay (connect source to sink through extra delay)
 #-------------------------------------------------------------------------
 
-class TestHarnessExtraDelay (Model):
+class TestHarnessExtraDelay( Model ):
 
-  def __init__( self, nbits, msgs, src_delay, sink_delay ):
+  def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
     # Instantiate models
 
-    self.src   = TestSource      ( nbits, msgs, src_delay )
-    self.delay = TestRandomDelay ( nbits, 5 )
-    self.sink  = TestSink        ( nbits, msgs, sink_delay )
+    s.src   = TestSource      ( nbits, msgs, src_delay )
+    s.delay = TestRandomDelay ( nbits, 5 )
+    s.sink  = TestSink        ( nbits, msgs, sink_delay )
 
     # Connect chain
 
-    #connect_chain([ self.src, self.delay, self.sink ])
-    self.connect( self.src.out_msg, self.delay.in_msg )
-    self.connect( self.src.out_val, self.delay.in_val )
-    self.connect( self.src.out_rdy, self.delay.in_rdy )
+    #connect_chain([ s.src, s.delay, s.sink ])
+    s.connect( s.src.out_msg, s.delay.in_msg )
+    s.connect( s.src.out_val, s.delay.in_val )
+    s.connect( s.src.out_rdy, s.delay.in_rdy )
 
-    self.connect( self.delay.out_msg, self.sink.in_msg )
-    self.connect( self.delay.out_val, self.sink.in_val )
-    self.connect( self.delay.out_rdy, self.sink.in_rdy )
+    s.connect( s.delay.out_msg, s.sink.in_msg )
+    s.connect( s.delay.out_val, s.sink.in_val )
+    s.connect( s.delay.out_rdy, s.sink.in_rdy )
 
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
     pass
 
-  def done( self ):
-    return self.src.done.value and self.sink.done.value
+  def done( s ):
+    return s.src.done and s.sink.done
 
-  def line_trace( self ):
-    return self.src.line_trace() + " > " + \
-           self.delay.line_trace() + " > " + \
-           self.sink.line_trace()
+  def line_trace( s ):
+    return s.src.line_trace() + " > " + \
+           s.delay.line_trace() + " > " + \
+           s.sink.line_trace()
 
 #-------------------------------------------------------------------------
 # Run test
@@ -229,41 +229,41 @@ def test_xdelay10x5( dump_vcd ):
 # TestTwoSinks (connect source to sink through extra delay)
 #-------------------------------------------------------------------------
 
-class TestHarnessTwoDelay (Model):
+class TestHarnessTwoDelay( Model ):
 
-  def __init__( self, nbits, msgs, src_delay, sink_delay ):
+  def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
     # Instantiate models
 
-    self.src1   = TestSource      ( nbits, msgs[:-2], src_delay )
-    self.sink1  = TestSink        ( nbits, msgs[:-2], sink_delay )
-    self.src2   = TestSource      ( nbits, msgs,      src_delay )
-    self.sink2  = TestSink        ( nbits, msgs,      sink_delay )
+    s.src1   = TestSource      ( nbits, msgs[:-2], src_delay )
+    s.sink1  = TestSink        ( nbits, msgs[:-2], sink_delay )
+    s.src2   = TestSource      ( nbits, msgs,      src_delay )
+    s.sink2  = TestSink        ( nbits, msgs,      sink_delay )
 
     # Connect chain
 
-    #connect_chain([ self.src1, self.sink1 ])
-    #connect_chain([ self.src2, self.sink2 ])
-    self.connect( self.src1.out_msg, self.sink1.in_msg )
-    self.connect( self.src1.out_val, self.sink1.in_val )
-    self.connect( self.src1.out_rdy, self.sink1.in_rdy )
+    #connect_chain([ s.src1, s.sink1 ])
+    #connect_chain([ s.src2, s.sink2 ])
+    s.connect( s.src1.out_msg, s.sink1.in_msg )
+    s.connect( s.src1.out_val, s.sink1.in_val )
+    s.connect( s.src1.out_rdy, s.sink1.in_rdy )
 
-    self.connect( self.src2.out_msg, self.sink2.in_msg )
-    self.connect( self.src2.out_val, self.sink2.in_val )
-    self.connect( self.src2.out_rdy, self.sink2.in_rdy )
+    s.connect( s.src2.out_msg, s.sink2.in_msg )
+    s.connect( s.src2.out_val, s.sink2.in_val )
+    s.connect( s.src2.out_rdy, s.sink2.in_rdy )
 
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
     pass
 
-  def done( self ):
-    return (self.src1.done.value and self.sink1.done.value and
-            self.src2.done.value and self.sink2.done.value)
+  def done( s ):
+    return (s.src1.done and s.sink1.done and
+            s.src2.done and s.sink2.done)
 
-  def line_trace( self ):
-    return self.src1.line_trace()  + " > " + \
-           self.sink1.line_trace() + "  "  + \
-           self.src2.line_trace()  + " > " + \
-           self.sink2.line_trace()
+  def line_trace( s ):
+    return s.src1.line_trace()  + " > " + \
+           s.sink1.line_trace() + "  "  + \
+           s.src2.line_trace()  + " > " + \
+           s.sink2.line_trace()
 
 #-------------------------------------------------------------------------
 # Run test

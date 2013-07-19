@@ -8,68 +8,66 @@
 from new_pymtl import *
 import valrdy
 
-class TestSimpleSink (Model):
+class TestSimpleSink( Model ):
 
   #-----------------------------------------------------------------------
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( self, nbits, msgs ):
+  def __init__( s, nbits, msgs ):
 
-    self.in_msg = InPort  ( nbits )
-    self.in_val = InPort  ( 1     )
-    self.in_rdy = OutPort ( 1     )
-    self.done   = OutPort ( 1     )
+    s.in_msg = InPort  ( nbits )
+    s.in_val = InPort  ( 1     )
+    s.in_rdy = OutPort ( 1     )
+    s.done   = OutPort ( 1     )
 
-    self.msgs = msgs
-    self.idx  = 0
+    s.msgs = msgs
+    s.idx  = 0
 
   #-----------------------------------------------------------------------
   # Tick
   #-----------------------------------------------------------------------
-  def elaborate_logic( self ):
+  def elaborate_logic( s ):
 
-    @self.tick
+    @s.tick
     def tick():
 
       # Handle reset
 
-      if self.reset.value:
-        self.in_rdy.next = False
-        self.done.next   = False
+      if s.reset:
+        s.in_rdy.next = False
+        s.done.next   = False
         return
 
       # At the end of the cycle, we AND together the val/rdy bits to
       # determine if the input message transaction occured
 
-      in_go = self.in_val.value and self.in_rdy.value
+      in_go = s.in_val and s.in_rdy
 
       # If the input transaction occured, verify that it is what we
       # expected. then increment the index.
 
       if in_go:
-        assert self.in_msg.value == self.msgs[self.idx]
-        self.idx = self.idx + 1
+        assert s.in_msg == s.msgs[s.idx]
+        s.idx = s.idx + 1
 
       # Set the ready and done signals.
 
-      if ( self.idx < len(self.msgs) ):
-        self.in_rdy.next = True
-        self.done.next   = False
+      if ( s.idx < len(s.msgs) ):
+        s.in_rdy.next = True
+        s.done.next   = False
       else:
-        self.in_rdy.next = False
-        self.done.next   = True
+        s.in_rdy.next = False
+        s.done.next   = True
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
-  def line_trace( self ):
+  def line_trace( s ):
 
-    in_str = \
-      valrdy.valrdy_to_str( self.in_msg.value,
-        self.in_val.value, self.in_rdy.value )
+    in_str = valrdy.valrdy_to_str( s.in_msg, s.in_val, s.in_rdy )
 
     return "{} ({:2})" \
-      .format( in_str, self.idx )
+      .format( in_str, s.idx )
 

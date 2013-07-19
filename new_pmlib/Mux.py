@@ -30,6 +30,4 @@ class Mux( Model ):
       s.out.v = s.in_[ s.sel.uint() ]
 
   def line_trace( s ):
-    return "{:04x} {:04x} {:01x} () {:04x}" \
-      .format( s.in_[0].uint(), s.in_[1].uint(),
-               s.sel.uint(), s.out.uint() )
+    return "{} {} {} () {}".format( s.in_[0], s.in_[1], s.sel, s.out )
