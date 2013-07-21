@@ -39,6 +39,7 @@ class MetaBitStruct( type ):
     inst.__class__ = type( inst.__class__.__name__, ( inst.__class__, Bits ), {} )
 
     # Get all the members of type Field, sort them by order of declaration
+    # TODO: sort objects in dictionary..
     fields = [(name, obj) for name, obj in
               inst.__dict__.items() if isinstance( obj, Field )]
     fields.sort( lambda (n1, o1), (n2, o2) : cmp(o2.id, o1.id) )
@@ -47,33 +48,34 @@ class MetaBitStruct( type ):
     nbits = sum( [ f.nbits for name, f in fields ] )
 
     start_pos = 0
+    inst._bitfields = {}
 
     # Transform attributes containing Field objects into properties so that
     # when accessed they return slices of the underlying value
     for name, f in fields:
       end_pos = start_pos + f.nbits
+      addr = slice( start_pos, end_pos )
 
       # Create a getter to assign to the property
-      def create_getter( start_pos, end_pos ):
-        addr = slice( start_pos, end_pos )
+      def create_getter( addr ):
         return lambda self : self.__getitem__( addr )
 
       # Create a setter to assign to the property
       # TODO: not needed when returning ConnectionSlice and accessing .value
-      def create_setter( start_pos, end_pos ):
-        addr = slice( start_pos, end_pos )
+      def create_setter( addr ):
         return lambda self, value: self.__setitem__( addr, value )
 
       # Apply the property
       setattr( inst.__class__, name,
-               property( create_getter( start_pos, end_pos ),
-                         create_setter( start_pos, end_pos )
+               property( create_getter( addr ),
+                         create_setter( addr )
                        )
              )
 
       # Add attribute '<field>_nbits' so we can query the size of fields.
-      #setattr( inst, name+'_nbits', width )
-      setattr( inst, name+'_slice', slice( start_pos, end_pos ) )
+      setattr( inst, name+'_slice', addr )
+
+      inst._bitfields[ name ] = addr
 
       start_pos = end_pos
 
@@ -88,4 +90,8 @@ class MetaBitStruct( type ):
 #-------------------------------------------------------------------------
 class BitStruct( Bits ):
   __metaclass__ = MetaBitStruct
+
+  @property
+  def bitfields( self ):
+    return self._bitfields
 

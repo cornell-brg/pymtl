@@ -31,13 +31,19 @@ class Signal( object ):
     self._signal       = self
     self._signalvalue  = None
 
-    #self._int_connections = []
-    #self._ext_connections = []
+  #-----------------------------------------------------------------------
+  # __getattr__
+  #-----------------------------------------------------------------------
+  def __getattr__( self, name ):
+    if name in self.msg_type.bitfields:
+      return self[ self.msg_type.bitfields[ name ] ]
+    raise AttributeError( "'{}' object has no attribute '{}'".format(
+                           self.__class__.__name__, name ) )
 
   #-----------------------------------------------------------------------
   # __getitem__
   #-----------------------------------------------------------------------
-  # Bitfield access ([]). Returns a Slice object.
+  # Bitfield access ([]). Returns a SignalSlice object.
   def __getitem__( self, addr ):
     return _SignalSlice( self, addr )
 

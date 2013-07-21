@@ -247,16 +247,12 @@ class PortMsgModel( Model ):
     s.connect( s.out.addr, s.addr )
     s.connect( s.out.data, s.data )
 
-import pytest
-@pytest.mark.xfail
 def test_msg_ports():
 
   model = PortMsgModel()
   model.elaborate()
 
   sim = SimulationTool(model)
-  #import debug_utils
-  #debug_utils.port_walk(model)
 
   assert model.in_.nbits      == 1 + 2 + 16 + 32
   assert model.in_.nbits      == 1 + 2 + 16 + 32
@@ -267,6 +263,8 @@ def test_msg_ports():
 
   # TODO: Doing port_walk here shows all temporary slices generated
   #       above as connections!  Fix this somehow?
+  #       Is this still relevant?
+  #import debug_utils
   #debug_utils.port_walk(model)
 
   assert model.type.v == 0

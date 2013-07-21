@@ -149,3 +149,10 @@ class SignalValue( object ):
     if not self._slices:
       self._slices = []
     self._slices.append( func_ptr )
+
+  #-----------------------------------------------------------------------
+  # bitfields
+  #-----------------------------------------------------------------------
+  @property
+  def bitfields( self ):
+    return {}
