@@ -39,6 +39,8 @@ class Bits( SignalValue ):
     value_uint = value if ( value >= 0 ) else ( ~(-value) + 1 )
     self._uint = value_uint & self._mask
 
+    self._target_bits = self
+
   #-----------------------------------------------------------------------
   # __int__
   #-----------------------------------------------------------------------

@@ -416,12 +416,16 @@ class SimulationTool( object ):
     # TODO: how to handle when self is neither 's' nor 'self'?
     # TODO: how to handle temps!
     def name_to_object( name ):
+      # Temporarily creates the names 'self' and 's' in the current
+      # scope.  SUPER HACKY
       self = s = model
+      # If slice or list, get name components previous to indexing
       if '[?]' in name:
         name, extra = name.split('[?]')
-      # TODO: hacky way to account for indexing lists
-      elif name.endswith( '.uint' ):
-        name = name.rstrip( '.uint' )
+      # Try to the Python object attached to the name.  If it's not a
+      # SignalValue or a list, we can't add it to the sensitivity list.
+      # Sometimes this is okay (AKA constants), but sometimes this
+      # indicates an error in the users code, so raise an error.
       try:
         x = eval( name )
         if isinstance( x, (SignalValue, list) ): return x
@@ -441,7 +445,7 @@ class SimulationTool( object ):
         if   isinstance( obj, list ):
           model._newsenses[ func ].extend( obj )
         elif isinstance( obj, SignalValue ):
-          model._newsenses[ func ].append( obj )
+          model._newsenses[ func ].append( obj._target_bits )
 
     # Iterate through all @combinational decorated function names we
     # detected, retrieve their associated function pointer, then add
