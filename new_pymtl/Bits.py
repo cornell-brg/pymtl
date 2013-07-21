@@ -30,6 +30,7 @@ class Bits( SignalValue ):
     self._max  =  2**nbits - 1
     self._min  = -2**nbits
     self._mask = ( 1 << self.nbits ) - 1
+    self.slice = slice( None )
 
     if not trunc:
       #assert nbits >= helpers.get_nbits( value )
@@ -385,6 +386,7 @@ class BitSlice( Bits ):
     # specific bits we are slicing.
     self._target_bits = target_bits
     self._offset      = offset
+    self.slice        = slice( offset, offset + nbits )
 
     # Take the notify_sim_* methods and the _slices function pointer list
     # from the original Bits instance. This ensures writes to the BitSlice

@@ -25,7 +25,6 @@ class MemMsg( BitStruct ):
 
   def __init__( s, addr_nbits, data_nbits ):
 
-    print "TEST INIT"
     assert data_nbits % 8 == 0
 
     # Calculate number of bits needed to store msg len
@@ -61,12 +60,14 @@ def test_bitstruct_fields():
   assert x.addr.nbits == 16
   assert x.len.nbits  == 2
   assert x.data.nbits == 32
+  assert x.nbits      == 1 + 16 + 2 + 32
 
   # Test field slices attributes
-  assert x.type_slice == slice( 50, 51 )
-  assert x.addr_slice == slice( 34, 50 )
-  assert x.len_slice  == slice( 32, 34 )
-  assert x.data_slice == slice(  0, 32 )
+  assert x.type.slice == slice( 50, 51 )
+  assert x.addr.slice == slice( 34, 50 )
+  assert x.len.slice  == slice( 32, 34 )
+  assert x.data.slice == slice(  0, 32 )
+  assert x.slice      == slice( None )
 
   # Test access to vs
   assert x.type.v == 1
@@ -82,6 +83,7 @@ def test_bitstruct_fields():
   assert MemMsg.HALF  == 2
   assert MemMsg.WORD  == 0
 
+  # Test assignment
   x.type.v = MemMsg.READ
   assert x.type.v == 0
   x.type.v = MemMsg.WRITE
@@ -141,6 +143,12 @@ def test_msg_comb_logic():
   assert model.in_.addr.nbits == 16
   assert model.in_.data.nbits == 32
 
+  assert model.out.type.slice == slice( 50, 51 )
+  assert model.out.addr.slice == slice( 34, 50 )
+  assert model.out.len.slice  == slice( 32, 34 )
+  assert model.out.data.slice == slice(  0, 32 )
+  assert model.out.slice      == slice( None )
+
   model.in_.v = 1
   assert model.out.v == 0
   sim.eval_combinational()
@@ -197,6 +205,12 @@ def test_msg_seq_logic():
   assert model.in_.addr.nbits == 16
   assert model.in_.data.nbits == 32
 
+  assert model.out.type.slice == slice( 50, 51 )
+  assert model.out.addr.slice == slice( 34, 50 )
+  assert model.out.len.slice  == slice( 32, 34 )
+  assert model.out.data.slice == slice(  0, 32 )
+  assert model.out.slice      == slice( None )
+
   sim.reset()
 
   model.in_.v = 1
@@ -252,47 +266,120 @@ def test_msg_ports():
   model = PortMsgModel()
   model.elaborate()
 
+  # Test port slices attributes (InPort, OutPort, Wire) before Sim init
+
+  assert model.in_.slice      == slice( None )
+  assert model.in_.type.slice == slice( 50, 51 )
+  assert model.in_.addr.slice == slice( 34, 50 )
+  assert model.in_.len.slice  == slice( 32, 34 )
+  assert model.in_.data.slice == slice(  0, 32 )
+
+  assert model.out.slice      == slice( None )
+  assert model.out.type.slice == slice( 50, 51 )
+  assert model.out.addr.slice == slice( 34, 50 )
+  assert model.out.len.slice  == slice( 32, 34 )
+  assert model.out.data.slice == slice(  0, 32 )
+
+  assert model.type.slice     == slice( None )
+  assert model.addr.slice     == slice( None )
+  assert model.len.slice      == slice( None )
+  assert model.data.slice     == slice( None )
+
+  # Create simulator
+
   sim = SimulationTool(model)
 
-  assert model.in_.nbits      == 1 + 2 + 16 + 32
+  # Test nbits attributes (InPort, OutPort, Wire)
+
   assert model.in_.nbits      == 1 + 2 + 16 + 32
   assert model.in_.type.nbits == 1
   assert model.in_.addr.nbits == 16
   assert model.in_.len.nbits  == 2
   assert model.in_.data.nbits == 32
 
-  # TODO: Doing port_walk here shows all temporary slices generated
-  #       above as connections!  Fix this somehow?
-  #       Is this still relevant?
-  #import debug_utils
-  #debug_utils.port_walk(model)
+  assert model.out.nbits      == 1 + 2 + 16 + 32
+  assert model.out.type.nbits == 1
+  assert model.out.addr.nbits == 16
+  assert model.out.len.nbits  == 2
+  assert model.out.data.nbits == 32
 
-  assert model.type.v == 0
-  assert model.addr.v == 0
-  assert model.len.v  == 0
-  assert model.data.v == 0
+  assert model.type.nbits     == 1
+  assert model.addr.nbits     == 16
+  assert model.len.nbits      == 2
+  assert model.data.nbits     == 32
 
-  assert model.out.type.v == 0
-  assert model.out.addr.v == 0
-  assert model.out.len.v  == 0
-  assert model.out.data.v == 0
+  # Test field slices attributes (InPort, OutPort, Wire)
 
-  model.in_.v = 0x5f0cd0f0f0f0f
-  assert model.in_.v == 0x5f0cd0f0f0f0f
+  assert model.in_.slice      == slice( None )
+  assert model.in_.type.slice == slice( 50, 51 )
+  assert model.in_.addr.slice == slice( 34, 50 )
+  assert model.in_.len.slice  == slice( 32, 34 )
+  assert model.in_.data.slice == slice(  0, 32 )
+
+  assert model.out.slice      == slice( None )
+  assert model.out.type.slice == slice( 50, 51 )
+  assert model.out.addr.slice == slice( 34, 50 )
+  assert model.out.len.slice  == slice( 32, 34 )
+  assert model.out.data.slice == slice(  0, 32 )
+
+  assert model.type.slice     == slice( None )
+  assert model.addr.slice     == slice( None )
+  assert model.len.slice      == slice( None )
+  assert model.data.slice     == slice( None )
+
+  # Test initial values (InPort, OutPort, Wire)
+
+  assert model.in_      == 0
+  assert model.in_.type == 0
+  assert model.in_.addr == 0
+  assert model.in_.len  == 0
+  assert model.in_.data == 0
+
+  assert model.out      == 0
+  assert model.out.type == 0
+  assert model.out.addr == 0
+  assert model.out.len  == 0
+  assert model.out.data == 0
+
+  assert model.type     == 0
+  assert model.addr     == 0
+  assert model.len      == 0
+  assert model.data     == 0
+
+  # Test whole assignment
+
+  model.in_.v            = 0x5f0cd0f0f0f0f
+  assert model.in_      == 0x5f0cd0f0f0f0f
 
   sim.eval_combinational()
 
-  assert model.type.v == 1
-  assert model.addr.v == 0x7c33
-  assert model.len.v  == 1
-  assert model.data.v == 0x0f0f0f0f
+  assert model.in_      == 0x5f0cd0f0f0f0f
+  assert model.in_.type == 1
+  assert model.in_.len  == 1
+  assert model.in_.addr == 0x7c33
+  assert model.in_.data == 0x0f0f0f0f
 
-  assert model.out.type.v == 1
-  assert model.out.len.v  == 1
-  assert model.out.addr.v == 0x7c33
-  assert model.out.data.v == 0x0f0f0f0f
-  assert model.out.v      == 0x5f0cd0f0f0f0f
+  assert model.type     == 1
+  assert model.addr     == 0x7c33
+  assert model.len      == 1
+  assert model.data     == 0x0f0f0f0f
 
-  model.in_.len.v = MemMsg.HALF
-  assert model.out.len.v == MemMsg.HALF
+  assert model.out      == 0x5f0cd0f0f0f0f
+  assert model.out.type == 1
+  assert model.out.len  == 1
+  assert model.out.addr == 0x7c33
+  assert model.out.data == 0x0f0f0f0f
+
+  # Test field assignment
+
+  model.in_.len.v        = MemMsg.HALF
+  assert model.out.len  == MemMsg.HALF
+  assert model.out      == 0x5f0ce0f0f0f0f
+
+  model.in_.type.v       = MemMsg.WRITE
+  model.in_.addr.v       = 0
+  model.in_.len.v        = MemMsg.WORD
+  model.in_.data.v       = 0x88888888
+  assert model.out      == 0x4000088888888
+
 

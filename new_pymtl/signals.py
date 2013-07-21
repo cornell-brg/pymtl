@@ -19,9 +19,10 @@ class Signal( object ):
   #  msg_type: msg type on the port.
   def __init__( self, msg_type ):
 
-    is_int        = isinstance( msg_type, int )
-    self.msg_type = msg_type if not is_int else Bits( msg_type )
-    self.nbits    = self.msg_type.nbits
+    is_int             = isinstance( msg_type, int )
+    self.msg_type      = msg_type if not is_int else Bits( msg_type )
+    self.nbits         = self.msg_type.nbits
+    self.slice         = slice( None )
 
     self.name          = "NO NAME: not elaborated yet!"
     self.parent        = None
@@ -181,6 +182,7 @@ class _SignalSlice( object ):
     # Handle slices of the form x[ idx ] and x[ start : stop ]
     is_slice   = isinstance( addr, slice )
     self.nbits = (addr.stop - addr.start) if is_slice else 1
+    self.slice = addr
 
     # Steps are not supported!
     if is_slice: assert not addr.step

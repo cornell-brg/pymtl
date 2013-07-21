@@ -27,7 +27,6 @@ class MetaBitStruct( type ):
   #-----------------------------------------------------------------------
   def __call__( self, *args, **kwargs ):
 
-    print "CALL"
     # Create a class instance using the default definition of __call__
     inst = super( MetaBitStruct, self ).__call__( *args, **kwargs )
 
@@ -53,8 +52,14 @@ class MetaBitStruct( type ):
     # Transform attributes containing Field objects into properties so that
     # when accessed they return slices of the underlying value
     for name, f in fields:
-      end_pos = start_pos + f.nbits
-      addr = slice( start_pos, end_pos )
+
+      # Calculate address range, update start_pos
+      end_pos   = start_pos + f.nbits
+      addr      = slice( start_pos, end_pos )
+      start_pos = end_pos
+
+      # Add slice to bitfields
+      inst._bitfields[ name ] = addr
 
       # Create a getter to assign to the property
       def create_getter( addr ):
@@ -71,13 +76,6 @@ class MetaBitStruct( type ):
                          create_setter( addr )
                        )
              )
-
-      # Add attribute '<field>_nbits' so we can query the size of fields.
-      setattr( inst, name+'_slice', addr )
-
-      inst._bitfields[ name ] = addr
-
-      start_pos = end_pos
 
     # Call the parent constructor (Bits)
     super( BitStruct, inst ).__init__( nbits )
