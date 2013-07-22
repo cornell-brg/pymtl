@@ -17,3 +17,4 @@ from TestSimpleSink      import TestSimpleSink
 from TestSource          import TestSource
 from TestSink            import TestSink
 from ValRdyBundle        import InValRdyBundle, OutValRdyBundle
+from NetMsg              import NetMsg
