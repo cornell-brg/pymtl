@@ -11,10 +11,15 @@ import valrdy
 # List of single-class modules
 
 from Mux                 import Mux
+
 from TestVectorSimulator import TestVectorSimulator
 from TestSimpleSource    import TestSimpleSource
-from TestSimpleSink      import TestSimpleSink
 from TestSource          import TestSource
+from TestSimpleSink      import TestSimpleSink
 from TestSink            import TestSink
+from TestSimpleNetSink   import TestSimpleNetSink
+from TestNetSink         import TestNetSink
+
 from ValRdyBundle        import InValRdyBundle, OutValRdyBundle
+
 from NetMsg              import NetMsg
