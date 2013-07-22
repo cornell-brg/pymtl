@@ -6,16 +6,16 @@
 from Bits import Bits
 
 #-------------------------------------------------------------------------
-# Field
+# BitField
 #-------------------------------------------------------------------------
-class Field( object ):
+class BitField( object ):
   # http://stackoverflow.com/a/2014002
   ids = 0
 
   def __init__( self, nbits ):
-    self.nbits = nbits
-    self.id    = Field.ids
-    Field.ids  += 1
+    self.nbits    = nbits
+    self.id       = BitField.ids
+    BitField.ids += 1
 
 #-------------------------------------------------------------------------
 # MetaBitStruct
@@ -37,10 +37,10 @@ class MetaBitStruct( type ):
     # http://stackoverflow.com/a/1633363
     inst.__class__ = type( inst.__class__.__name__, ( inst.__class__, Bits ), {} )
 
-    # Get all the members of type Field, sort them by order of declaration
+    # Get all the members of type BitField, sort them by order of declaration
     # TODO: sort objects in dictionary..
     fields = [(name, obj) for name, obj in
-              inst.__dict__.items() if isinstance( obj, Field )]
+              inst.__dict__.items() if isinstance( obj, BitField )]
     fields.sort( lambda (n1, o1), (n2, o2) : cmp(o2.id, o1.id) )
 
     # Get the total size of the BitStruct
@@ -49,7 +49,7 @@ class MetaBitStruct( type ):
     start_pos = 0
     inst._bitfields = {}
 
-    # Transform attributes containing Field objects into properties so that
+    # Transform attributes containing BitField objects into properties so that
     # when accessed they return slices of the underlying value
     for name, f in fields:
 

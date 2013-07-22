@@ -4,6 +4,7 @@ from signals        import Wire, InPort, OutPort
 from Bits           import Bits
 from SimulationTool import SimulationTool
 from PortBundle     import PortBundle, create_PortBundles
+from BitStruct      import BitStruct, BitField
 from helpers        import get_nbits, get_sel_nbits, zext, sext, concat
 
 __all__ = [ # Model Construction
@@ -16,6 +17,8 @@ __all__ = [ # Model Construction
             'create_PortBundles',
             # Message Types
             'Bits',
+            'BitStruct',
+            'BitField',
             # Tools
             'SimulationTool',
             # TEMPORARY

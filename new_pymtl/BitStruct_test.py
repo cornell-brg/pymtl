@@ -6,7 +6,7 @@ import math
 
 from new_pymtl import *
 from Bits      import Bits
-from BitStruct import BitStruct, Field
+from BitStruct import BitStruct, BitField
 
 #-------------------------------------------------------------------------
 # Example BitStruct and Enums
@@ -28,18 +28,18 @@ class MemMsg( BitStruct ):
     assert data_nbits % 8 == 0
 
     # Calculate number of bits needed to store msg len
-    len = int( math.ceil( math.log( data_nbits/8, 2 ) ) )
+    len_nbits = int( math.ceil( math.log( data_nbits/8, 2 ) ) )
 
     # Declare the MemoryMsg fields
-    s.type = Field( 1 )
-    s.addr = Field( addr_nbits )
-    s.len  = Field( len )
-    s.data = Field( data_nbits )
+    s.type = BitField( 1          )
+    s.addr = BitField( addr_nbits )
+    s.len  = BitField( len_nbits  )
+    s.data = BitField( data_nbits )
 
-    # TODO: test other Field types (for overlapping fields)
-    # Field( nbits )
-    # Field( start, nbits )
-    # Field( start, stop )  # Excl, like python range
+    # TODO: test other BitField types (for overlapping fields)
+    # BitField( nbits )
+    # BitField( start, nbits )
+    # BitField( start, stop )  # Excl, like python range
 
 #-------------------------------------------------------------------------
 # Hacky BitStruct test
