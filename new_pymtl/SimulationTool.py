@@ -359,38 +359,26 @@ class SimulationTool( object ):
       svalue._next = copy.copy( svalue )
       #svalue._DEBUG_signal_names = group
 
-      # Add a callback to the SignalValue so that the simulator is notified
-      # whenever it's value changes.
-      # TODO: Currently all SignalValues get both a comb and seq update
-      #       callback.  Really should only need one or the other, and
-      #       name it notify_sim().
-      svalue._ucb = create_comb_update_cb( self, svalue )
-      #svalue.notify_sim_comb_update  = create_comb_update_cb( self, svalue )
-      #svalue.notify_sim_slice_update = svalue.notify_sim_comb_update
-      svalue.notify_sim_seq_update   = create_seq_update_cb ( self, svalue )
-      svalue._next.notify_sim_slice_update = svalue.notify_sim_seq_update
+      # Add a callback to the SignalValue to notify SimulationTool every
+      # time a sequential update occurs (.next is written).
+      # TODO: currently all signals get this, necessary?
+      svalue.notify_sim_seq_update = create_seq_update_cb ( self, svalue )
+
+      # Create a callback for the SignalValue to notify SimulationTool
+      # every time a combinational update occurs (.value is written).
+      # We just store the callback for now, only add it later if we detect
+      # that a combinational block is sensitive to us
+      svalue._ucb                  = create_comb_update_cb( self, svalue )
 
       # Modify model attributes currently referencing Signal objects to
       # reference SignalValue objects instead.
-      # TODO: hacky based on [idx], fix?
       for x in group:
         # Set the value of the SignalValue object if we encounter a
         # constant (check for Constant object instead?)
         if isinstance( x._signalvalue, int ):
           svalue.write_value( x._signalvalue )
           svalue.constant = True
-        # Handle Lists of Ports
-        #elif '[' in x.name:
-        #  name, idx = x.name.strip(']').split('[')
-        #  x.parent.__dict__[ name ][ int( idx ) ] = svalue
-        ## TODO: super hacky, won't support nested port bundles
-        ## Handle PortBundles
-        #elif '.' in x.name:
-        #  bundle, port = x.name.split('.')
-        #  x.parent.__dict__[ bundle ].__dict__[ port ] = svalue
-        ## Handle Normal Ports
-        #else:
-        #  x.parent.__dict__[ x.name ] = svalue
+        # Otherwise swap the value
         else:
           # We need 'in locals()' because of the nested function above,
           # see: http://stackoverflow.com/a/4484946
