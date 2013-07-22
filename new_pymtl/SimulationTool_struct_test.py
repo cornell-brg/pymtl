@@ -626,3 +626,35 @@ def test_ConstantModule():
   sim.cycle()
   assert model.out == 0b11011000
   sim.cycle()
+
+from PortBundle_test import InValRdyBundle, OutValRdyBundle
+#from BitStruct_test  import MemMsg
+
+#-------------------------------------------------------------------------
+# ListOfPortBundles
+#-------------------------------------------------------------------------
+# Test added to catch use case of a list of PortBundles.
+class ListOfPortBundles( Model ):
+  def __init__( s ):
+
+    s.in_ = [ InValRdyBundle ( 8 ) for x in range( 4 ) ]
+    s.out = [ OutValRdyBundle( 8 ) for x in range( 4 ) ]
+
+  def elaborate_logic( s ):
+
+    for i in range( 4 ):
+      s.connect( s.in_[ i ], s.out[ i ] )
+
+def test_ListOfPortBundles():
+  model = ListOfPortBundles()
+  sim = setup_sim( model )
+  sim.reset()
+
+  for i in range( 4 ):
+    # TODO add assert to prevent this
+    #model.in_[ i ].v = i
+    model.in_[ i ].msg.v = i
+
+  for i in range( 4 ):
+    assert model.out[ i ].msg.v == i
+

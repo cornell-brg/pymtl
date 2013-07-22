@@ -380,17 +380,21 @@ class SimulationTool( object ):
           svalue.write_value( x._signalvalue )
           svalue.constant = True
         # Handle Lists of Ports
-        elif '[' in x.name:
-          name, idx = x.name.strip(']').split('[')
-          x.parent.__dict__[ name ][ int( idx ) ] = svalue
-        # TODO: super hacky, won't support nested port bundles
-        # Handle PortBundles
-        elif '.' in x.name:
-          bundle, port = x.name.split('.')
-          x.parent.__dict__[ bundle ].__dict__[ port ] = svalue
-        # Handle Normal Ports
+        #elif '[' in x.name:
+        #  name, idx = x.name.strip(']').split('[')
+        #  x.parent.__dict__[ name ][ int( idx ) ] = svalue
+        ## TODO: super hacky, won't support nested port bundles
+        ## Handle PortBundles
+        #elif '.' in x.name:
+        #  bundle, port = x.name.split('.')
+        #  x.parent.__dict__[ bundle ].__dict__[ port ] = svalue
+        ## Handle Normal Ports
+        #else:
+        #  x.parent.__dict__[ x.name ] = svalue
         else:
-          x.parent.__dict__[ x.name ] = svalue
+          # We need 'in locals()' because of the nested function above,
+          # see: http://stackoverflow.com/a/4484946
+          exec( "x.parent.{} = svalue".format( x.name ) ) in locals()
 
         # Also give signals a pointer to the SignalValue object.
         # (Needed for VCD tracing and slice logic generator).
