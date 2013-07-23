@@ -1,5 +1,5 @@
 #=========================================================================
-# MeshNetworkBL
+# MeshNetworkBL.py
 #=========================================================================
 
 from new_pymtl   import *
@@ -7,11 +7,14 @@ from new_pmlib   import InValRdyBundle, OutValRdyBundle, NetMsg
 from collections import deque
 from math        import sqrt
 
+#=========================================================================
+# MeshNetworkBL
+#=========================================================================
 class MeshNetworkBL( Model ):
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # __init__
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   def __init__( s, nrouters, nmessages, payload_nbits, nentries ):
 
     # ensure nrouters is a perfect square
@@ -24,9 +27,9 @@ class MeshNetworkBL( Model ):
     s.in_ = [ InValRdyBundle ( NetMsg( *s.config ) ) for x in range( nrouters ) ]
     s.out = [ OutValRdyBundle( NetMsg( *s.config ) ) for x in range( nrouters ) ]
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # elaborate_logic
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
     s.output_fifos = [ deque() for x in range( s.nrouters ) ]
