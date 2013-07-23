@@ -449,14 +449,16 @@ class SimulationTool( object ):
       func_ptr.cb = func_ptr
       self.metrics.reg_eval( func_ptr.cb )
       for signal_value in sensitivity_list:
+
+        # Only add "notify_sim" funcs if @comb blocks are sensitive to us
+        signal_value.notify_sim_comb_update = signal_value._ucb
+
         # Prime the simulation by putting all events on the event_queue
         # This will make sure all nodes come out of reset in a consistent
         # state. TODO: put this in reset() instead?
         signal_value.register_callback( func_ptr )
-        # Only add "notify_sim" funcs if @comb blocks are sensitive to us
-        signal_value.notify_sim_comb_update  = signal_value._ucb
-        signal_value.notify_sim_slice_update = signal_value._ucb
         self._event_queue.enq( func_ptr.cb, func_ptr.id )
+
         #self._DEBUG_signal_cbs[ signal_value ].append( func_ptr )
 
     # Recursively perform for submodules

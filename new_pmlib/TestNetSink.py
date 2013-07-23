@@ -6,8 +6,6 @@ from new_pymtl         import *
 from ValRdyBundle      import InValRdyBundle, OutValRdyBundle
 from TestSimpleNetSink import TestSimpleNetSink
 from TestRandomDelay   import TestRandomDelay
-# TODO: fix copy() hack
-from copy              import copy
 
 #-------------------------------------------------------------------------
 # TestNetSink
@@ -23,23 +21,20 @@ class TestNetSink( Model ):
   #-----------------------------------------------------------------------
   def __init__( s, msg_type, msgs, max_random_delay = 0 ):
 
-    # TODO: fix copy() hack
-    s.msg_type         = lambda: copy( msg_type )
+    s.msg_type         = msg_type
     s.msgs             = msgs
     s.max_random_delay = max_random_delay
 
-    # TODO: fix copy() hack
-    s.in_  = InValRdyBundle( s.msg_type() )
-    s.done = OutPort       ( 1            )
+    s.in_  = InValRdyBundle( s.msg_type )
+    s.done = OutPort       ( 1          )
 
   #-----------------------------------------------------------------------
   # elaborate_logic
   #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
-    # TODO: fix copy() hack
-    s.delay = TestRandomDelay  ( s.msg_type(), s.max_random_delay )
-    s.sink  = TestSimpleNetSink( s.msg_type(), s.msgs             )
+    s.delay = TestRandomDelay  ( s.msg_type, s.max_random_delay )
+    s.sink  = TestSimpleNetSink( s.msg_type, s.msgs             )
 
     s.connect( s.in_,       s.delay.in_ )
     s.connect( s.delay.out, s.sink.in_  )

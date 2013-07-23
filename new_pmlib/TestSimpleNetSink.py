@@ -4,8 +4,6 @@
 
 from new_pymtl       import *
 from ValRdyBundle    import InValRdyBundle, OutValRdyBundle
-# TODO: fix copy() hack
-from copy             import copy
 
 #-------------------------------------------------------------------------
 # TestSimpleNetSink
@@ -22,9 +20,8 @@ class TestSimpleNetSink( Model ):
 
   def __init__( s, msg_type, msgs ):
 
-    # TODO: fix copy() hack
-    s.in_  = InValRdyBundle( copy( msg_type ) )
-    s.done = OutPort       ( 1                )
+    s.in_  = InValRdyBundle( msg_type )
+    s.done = OutPort       ( 1        )
 
     s.msgs        = msgs
     s.recv        = []

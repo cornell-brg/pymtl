@@ -7,8 +7,6 @@ from ValRdyBundle     import InValRdyBundle, OutValRdyBundle
 from TestSimpleSource import TestSimpleSource
 from TestNetSink      import TestSimpleNetSink
 from NetMsg           import NetMsg
-# TODO: fix copy() hack
-from copy             import copy
 
 import pytest
 
@@ -18,8 +16,7 @@ import pytest
 class TestHarness( Model ):
 
   def __init__( s, msg_type, src_msgs, sink_msgs ):
-    # TODO: fix copy() hack
-    s.msg_type  = lambda: copy( msg_type )
+    s.msg_type  = msg_type
     s.src_msgs  = src_msgs
     s.sink_msgs = sink_msgs
 
@@ -27,8 +24,8 @@ class TestHarness( Model ):
 
     # Instantiate models
 
-    s.src  = TestSimpleSource ( s.msg_type(), s.src_msgs  )
-    s.sink = TestSimpleNetSink( s.msg_type(), s.sink_msgs )
+    s.src  = TestSimpleSource ( s.msg_type, s.src_msgs  )
+    s.sink = TestSimpleNetSink( s.msg_type, s.sink_msgs )
 
     # Connect
 
