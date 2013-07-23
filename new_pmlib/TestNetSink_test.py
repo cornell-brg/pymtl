@@ -7,15 +7,18 @@ from ValRdyBundle     import InValRdyBundle, OutValRdyBundle
 from TestSource       import TestSource
 from TestNetSink      import TestNetSink
 from NetMsg           import NetMsg
+# TODO: fix copy() hack
+from copy             import copy
 
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
-class TestHarness_NetSink( Model ):
+class TestHarness( Model ):
 
   def __init__( s, msg_type, src_msgs, sink_msgs, src_delay, sink_delay ):
 
-    s.msg_type   = msg_type
+    # TODO: major hack, need to figure out how to best handle type stuff
+    s.msg_type   = lambda: copy( msg_type )
     s.src_msgs   = src_msgs
     s.sink_msgs  = sink_msgs
     s.src_delay  = src_delay
@@ -25,8 +28,9 @@ class TestHarness_NetSink( Model ):
 
     # Instantiate models
 
-    s.src  = TestSource  ( s.msg_type, s.src_msgs,  s.src_delay  )
-    s.sink = TestNetSink ( s.msg_type, s.sink_msgs, s.sink_delay )
+    # TODO: fix copy() hack
+    s.src  = TestSource  ( s.msg_type(), s.src_msgs,  s.src_delay  )
+    s.sink = TestNetSink ( s.msg_type(), s.sink_msgs, s.sink_delay )
 
     # Connect
 
@@ -141,8 +145,8 @@ def run_test( dump_vcd, vcd_filename, src_delay, sink_delay, src_msgs,
   # Instantiate and elaborate the model
 
   msg_type = NetMsg( 4, 16, 32 )
-  model = TestHarness_NetSink( msg_type, src_msgs, sink_msgs,
-                               src_delay, sink_delay )
+  model = TestHarness( msg_type, src_msgs, sink_msgs,
+                       src_delay, sink_delay )
   model.elaborate()
 
   # Create a simulator using the simulation tool

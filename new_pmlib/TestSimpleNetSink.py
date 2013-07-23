@@ -4,6 +4,8 @@
 
 from new_pymtl       import *
 from ValRdyBundle    import InValRdyBundle, OutValRdyBundle
+# TODO: fix copy() hack
+from copy             import copy
 
 #-------------------------------------------------------------------------
 # TestSimpleNetSink
@@ -20,10 +22,12 @@ class TestSimpleNetSink( Model ):
 
   def __init__( s, msg_type, msgs ):
 
-    s.in_  = InValRdyBundle( msg_type )
-    s.done = OutPort       ( 1        )
+    # TODO: fix copy() hack
+    s.in_  = InValRdyBundle( copy( msg_type ) )
+    s.done = OutPort       ( 1                )
 
     s.msgs        = msgs
+    s.recv        = []
     s.idx         = 0
     s.msgs_len    = len( msgs )
 
@@ -52,7 +56,19 @@ class TestSimpleNetSink( Model ):
       # expected, then increment the index.
 
       if in_go:
-        assert s.in_.msg in s.msgs
+
+        # Check if the msg received was valid
+        if s.in_.msg not in s.msgs:
+          if s.in_.msg in s.recv:
+            raise AssertionError( "Message {} arrived twice!"
+                                  .format( s.in_.msg ) )
+          else:
+            raise AssertionError( "Message {} not found in Test Sink!"
+                                  .format( s.in_.msg ) )
+
+        # Update State
+        s.msgs.remove( s.in_.msg )
+        s.recv.append( s.in_.msg )
         s.idx = s.idx + 1
 
       # Set the ready and done signals.
