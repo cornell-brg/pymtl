@@ -24,8 +24,9 @@ class ValRdyBundle( PortBundle ):
   #-----------------------------------------------------------------------
   # to_str
   #-----------------------------------------------------------------------
-  def to_str( self ):
-    return valrdy_to_str( self.msg, self.val, self.rdy )
+  def to_str( self, msg=None ):
+    msg = self.msg if None else msg
+    return valrdy_to_str( msg, self.val, self.rdy )
 
   #-----------------------------------------------------------------------
   # __str__
