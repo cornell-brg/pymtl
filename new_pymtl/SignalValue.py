@@ -51,13 +51,15 @@ class SignalValue( object ):
   @n.setter
   def n( self, value ):
     # TODO: get raw int value or copy obj?
-    self.write_next( value )
-    self.notify_sim_seq_update()
+    if value != self:
+      self.write_next( value )
+      self.notify_sim_seq_update()
   @next.setter
   def next( self, value ):
     # TODO: get raw int value or copy obj?
-    self.write_next( value )
-    self.notify_sim_seq_update()
+    if value != self:
+      self.write_next( value )
+      self.notify_sim_seq_update()
 
   #-----------------------------------------------------------------------
   # flop
