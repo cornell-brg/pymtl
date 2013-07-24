@@ -8,6 +8,7 @@ from SignalValue import SignalValue
 # NOTE: circular imports between Bits and helpers, using 'import helpers'
 #       instead of 'from helpers import' ensures pydoc still works
 import helpers
+import copy
 
 #-------------------------------------------------------------------------
 # Bits
@@ -140,7 +141,7 @@ class Bits( SignalValue ):
 
       # Open-ended range ( [:] ), return a copy of self
       if start is None and stop is None:
-        return Bits( self.nbits, self._uint )
+        return copy.copy( self )
 
       # Open-ended range on left ( [:N] )
       elif start is None:
