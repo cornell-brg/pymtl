@@ -19,7 +19,7 @@ class MeshNetworkCL( Model ):
     assert sqrt( nrouters ) % 1 == 0
 
     s.nrouters  = nrouters
-    s.bparams     = [ nrouters, nmessages, payload_nbits ]
+    s.bparams   = [ nrouters, nmessages, payload_nbits ]
     s.params    = [ nrouters, nmessages, payload_nbits, nentries ]
 
     s.in_ = [ InValRdyBundle ( NetMsg( *s.bparams ) ) for x in range( nrouters ) ]
@@ -32,33 +32,35 @@ class MeshNetworkCL( Model ):
 
     # instantiate routers
 
-    s.routers = [ MeshRouterCL( x, *s.params ) for x in xrange( s.nrouters ) ]
+    R = MeshRouterCL
+    s.routers = [ R( x, *s.params ) for x in xrange( s.nrouters ) ]
 
     # connect injection terminals
 
     for i in xrange( s.nrouters ):
-      s.connect( s.in_[i],  s.routers[i].in_[4] )
-      s.connect( s.out[i],  s.routers[i].out[4] )
+      s.connect( s.in_[i],  s.routers[i].in_[ R.TERM ] )
+      s.connect( s.out[i],  s.routers[i].out[ R.TERM ] )
 
-    # connect mesh
+    # connect mesh routers
 
     nrouters_1D = int( sqrt( s.nrouters ) )
 
     for j in range( nrouters_1D ):
       for i in range( nrouters_1D ):
-        id_ = i + j * nrouters_1D
+        idx     = i + j * nrouters_1D
+        current = s.routers[ idx ]
 
         # East
         if i + 1 < nrouters_1D:
-          east  = id_ + 1
-          s.connect( s.routers[ id_ ].out[ 1 ], s.routers[ east  ].in_[ 3 ] )
-          s.connect( s.routers[ id_ ].in_[ 1 ], s.routers[ east  ].out[ 3 ] )
+          right = s.routers[ idx + 1 ]
+          s.connect( current.out[ R.EAST ], right.in_[ R.WEST ] )
+          s.connect( current.in_[ R.EAST ], right.out[ R.WEST ] )
 
         # South
         if j + 1 < nrouters_1D:
-          south = id_ + nrouters_1D
-          s.connect( s.routers[ id_ ].out[ 2 ], s.routers[ south ].in_[ 0 ] )
-          s.connect( s.routers[ id_ ].in_[ 2 ], s.routers[ south ].out[ 0 ] )
+          below = s.routers[ idx + nrouters_1D ]
+          s.connect( current.out[ R.SOUTH ], below.in_[ R.NORTH ] )
+          s.connect( current.in_[ R.SOUTH ], below.out[ R.NORTH ] )
 
 
   #-----------------------------------------------------------------------
@@ -67,18 +69,20 @@ class MeshNetworkCL( Model ):
   def line_trace( s ):
 
     router_traces = []
-    for i in range( s.nrouters ):
+    for i, r in enumerate( s.routers ):
+
       in_str  = s.in_[ i ].to_str( s.in_[ i ].msg.dest )
       out_str = s.out[ i ].to_str( s.out[ i ].msg.dest )
-      # Detailed
-      NORTH = s.routers[ i ].out[ 0 ].to_str( s.routers[ i ].out[ 0 ].msg.dest )
-      EAST  = s.routers[ i ].out[ 1 ].to_str( s.routers[ i ].out[ 1 ].msg.dest )
-      SOUTH = s.routers[ i ].out[ 2 ].to_str( s.routers[ i ].out[ 2 ].msg.dest )
-      WEST  = s.routers[ i ].out[ 3 ].to_str( s.routers[ i ].out[ 3 ].msg.dest )
-      router_traces += ['{} ({}{}{}{}) {}'.format( in_str,
-        WEST, NORTH, SOUTH, EAST, out_str ) ]
-      # Succinct
-      #router_traces += ['{} {}'.format( in_str, out_str )
+
+      west    = r.out[ r.WEST  ].to_str( r.out[ r.WEST  ].msg.dest )
+      north   = r.out[ r.NORTH ].to_str( r.out[ r.NORTH ].msg.dest )
+      south   = r.out[ r.SOUTH ].to_str( r.out[ r.SOUTH ].msg.dest )
+      east    = r.out[ r.EAST  ].to_str( r.out[ r.EAST  ].msg.dest )
+
+      router_traces  += ['{} ({}{}{}{}) {}'.format( in_str,
+                         west, north, south, east, out_str ) ]
+
+      #router_traces += ['{} {}'.format( in_str, out_str ) ]
 
     return '|'.join( router_traces )
 

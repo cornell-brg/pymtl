@@ -13,6 +13,12 @@ from copy        import copy
 #=========================================================================
 class MeshRouterCL( Model ):
 
+  NORTH = 0
+  EAST  = 1
+  SOUTH = 2
+  WEST  = 3
+  TERM  = 4
+
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
@@ -33,18 +39,13 @@ class MeshRouterCL( Model ):
     s.in_ = [ InValRdyBundle ( s.msg_type ) for x in range( 5 ) ]
     s.out = [ OutValRdyBundle( s.msg_type ) for x in range( 5 ) ]
 
+    s.east = ( s.in_[ s.EAST ], s.out[ s.EAST ] )
+    s.west = ( s.in_[ s.WEST ], s.out[ s.WEST ] )
+
   #-----------------------------------------------------------------------
   # elaborate_logic
   #-----------------------------------------------------------------------
   def elaborate_logic( s ):
-
-    # Define constants
-
-    s.NORTH = 0
-    s.EAST  = 1
-    s.SOUTH = 2
-    s.WEST  = 3
-    s.TERM  = 4
 
     # Instantiate buffers
 
@@ -57,14 +58,14 @@ class MeshRouterCL( Model ):
     def router_logic():
 
       # Dequeue logic
-      for i, output in enumerate( s.out ):
-        if output.val and output.rdy:
+      for i, outport in enumerate( s.out ):
+        if outport.val and outport.rdy:
           s.output_regs[ i ] = None
 
       # Enqueue logic
-      for i, input in enumerate( s.in_ ):
-        if input.val and input.rdy:
-          s.input_buffers[ i ].append( copy( input.msg ) )
+      for i, inport in enumerate( s.in_ ):
+        if inport.val and inport.rdy:
+          s.input_buffers[ i ].append( inport.msg[:] )
 
       # Crossbar Traversal
       # TODO: add round robin arbitration, this is currently unfair
@@ -78,13 +79,19 @@ class MeshRouterCL( Model ):
 
       # Set Signals
       for i in range( 5 ):
+
         in_full  = len( s.input_buffers[ i ] ) == s.nentries
         out_full = s.output_regs[ i ] is not None
+
         s.out[ i ].val.next = out_full
         s.in_[ i ].rdy.next = not in_full
         if out_full:
           s.out[ i ].msg.next = s.output_regs[ i ]
 
+  #-----------------------------------------------------------------------
+  # route_compute
+  #-----------------------------------------------------------------------
+  # dimension-ordered (x then y) routing algorithm
   def route_compute( s, dest ):
 
     x_dest = dest.uint() % s.xnodes
@@ -98,7 +105,6 @@ class MeshRouterCL( Model ):
       assert x_dest == s.x
       assert y_dest == s.y
       return s.TERM
-
 
   #-----------------------------------------------------------------------
   # line_trace
