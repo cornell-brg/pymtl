@@ -39,19 +39,21 @@ class MeshNetworkBL( Model ):
     def network_logic():
 
       # Dequeue logic
-      for i, output in enumerate( s.out ):
-        if output.val and output.rdy:
-          x = s.output_fifos[ i ].popleft()
+      for i, outport in enumerate( s.out ):
+        if outport.val and outport.rdy:
+          s.output_fifos[ i ].popleft()
 
       # Enqueue logic
-      for i, input in enumerate( s.in_ ):
-        if input.val and input.rdy:
-          s.output_fifos[ input.msg.dest ].append( Bits( input.msg.nbits, input.msg ) )
+      for i, inport in enumerate( s.in_ ):
+        if inport.val and inport.rdy:
+          s.output_fifos[ inport.msg.dest ].append( inport.msg[:] )
 
-      # Set valid & ready
+      # Set output signals
       for i, fifo in enumerate( s.output_fifos ):
+
         is_full  = len( fifo ) == s.nentries
         is_empty = len( fifo ) == 0
+
         s.out[ i ].val.next = not is_empty
         s.in_[ i ].rdy.next = not is_full
         if not is_empty:
@@ -64,8 +66,10 @@ class MeshNetworkBL( Model ):
 
     router_traces = []
     for i in range( s.nrouters ):
-      in_str  = s.in_[ i ].to_str( s.in_[ i ].msg.seqnum )
-      out_str = s.in_[ i ].to_str( s.out[ i ].msg.seqnum )
+      in_ = s.in_[ i ]
+      out = s.out[ i ]
+      in_str  = in_.to_str( in_.msg.dest )
+      out_str = out.to_str( out.msg.dest )
       router_traces += ['{} {}'.format( in_str, out_str ) ]
 
     return '|'.join( router_traces )

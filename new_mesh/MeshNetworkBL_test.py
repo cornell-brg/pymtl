@@ -16,9 +16,11 @@ random.seed(0xdeadbeef)
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
-
 class TestHarness( Model ):
 
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
   def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay,
                 nrouters, nmessages, payload_nbits, nentries ):
 
@@ -31,40 +33,44 @@ class TestHarness( Model ):
     s.payload_nbits = payload_nbits
     s.nentries      = nentries
 
+  #-----------------------------------------------------------------------
+  # elaborate_logic
+  #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
-    # Instantiate Models
+    # instantiate models
 
-    msg_type = lambda: NetMsg( s.nrouters, s.nmessages, s.payload_nbits )
+    msg_type = NetMsg( s.nrouters, s.nmessages, s.payload_nbits )
 
-    s.src    = [ TestSource  ( msg_type(), s.src_msgs[x],  s.src_delay  )
-                 for x in xrange( s.nrouters ) ]
+    s.src  = [ TestSource ( msg_type, s.src_msgs[x],  s.src_delay  ) for x in xrange( s.nrouters ) ]
+    s.mesh = MeshNetworkBL( s.nrouters, s.nmessages, s.payload_nbits, s.nentries )
+    s.sink = [ TestNetSink( msg_type, s.sink_msgs[x], s.sink_delay ) for x in xrange( s.nrouters ) ]
 
-    s.mesh   = MeshNetworkBL( s.nrouters, s.nmessages,
-                              s.payload_nbits, s.nentries )
-
-    s.sink   = [ TestNetSink ( msg_type(), s.sink_msgs[x], s.sink_delay )
-                 for x in xrange( s.nrouters ) ]
-
-    # connect
+    # connect signals
 
     for i in xrange( s.nrouters ):
       s.connect( s.mesh.in_[i], s.src[i].out  )
       s.connect( s.mesh.out[i], s.sink[i].in_ )
 
+  #-----------------------------------------------------------------------
+  # done
+  #-----------------------------------------------------------------------
   def done( s ):
     done_flag = 1
     for i in xrange( s.nrouters ):
       done_flag &= s.src[i].done and s.sink[i].done
     return done_flag
 
+  #-----------------------------------------------------------------------
+  # line_trace
+  #-----------------------------------------------------------------------
   def line_trace( s ):
     return s.mesh.line_trace()
 
 #-------------------------------------------------------------------------
-# RunTest Utility Function
+# run_net_test
 #-------------------------------------------------------------------------
-
+# RunTest Utility Function
 def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
                   test_msgs, nrouters, nmessages, payload_nbits,
                   nentries ):
