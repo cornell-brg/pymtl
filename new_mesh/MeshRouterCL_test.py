@@ -154,22 +154,22 @@ def basic_msgs():
   term  = 4
 
   #           src_   sink   dest src seq_num, payload
-  mk_net_msg( term,  term,  5,   5,  0,       0xaa )
-  mk_net_msg( east,  east,  6,   6,  0,       0xbb )
-  mk_net_msg( west,  west,  4,   4,  0,       0xcc )
-  mk_net_msg( north, north, 1,   1,  0,       0xdd )
-  mk_net_msg( south, south, 9,   9,  0,       0xee )
-  mk_net_msg( term,  term,  5,   5,  1,       0xaa )
-  mk_net_msg( east,  west,  4,   6,  1,       0xbb )
-  mk_net_msg( west,  east,  6,   4,  1,       0xcc )
-  mk_net_msg( north, south, 9,   1,  1,       0xdd )
-  mk_net_msg( south, north, 1,   9,  1,       0xee )
+  mk_net_msg( term,  term,  5,   5,  0,       0x0a )
+  mk_net_msg( east,  east,  6,   6,  0,       0x0b )
+  mk_net_msg( west,  west,  4,   4,  0,       0x0c )
+  mk_net_msg( north, north, 1,   1,  0,       0x0d )
+  mk_net_msg( south, south, 9,   9,  0,       0x0e )
+  mk_net_msg( term,  term,  5,   5,  1,       0x1a )
+  mk_net_msg( east,  west,  4,   6,  1,       0x1b )
+  mk_net_msg( west,  east,  6,   4,  1,       0x1c )
+  mk_net_msg( north, south, 9,   1,  1,       0x1d )
+  mk_net_msg( south, north, 1,   9,  1,       0x1e )
 
-  mk_net_msg( term,  east,  6,   5,  2,       0xaa )
-  mk_net_msg( east,  east,  6,   6,  2,       0xbb )
-  mk_net_msg( west,  east,  6,   4,  2,       0xcc )
-  mk_net_msg( north, east,  6,   1,  2,       0xdd )
-  mk_net_msg( south, east,  6,   9,  2,       0xee )
+  mk_net_msg( term,  east,  6,   5,  2,       0x2a )
+  mk_net_msg( east,  east,  6,   6,  2,       0x2b )
+  mk_net_msg( west,  east,  6,   4,  2,       0x2c )
+  mk_net_msg( north, east,  6,   1,  2,       0x2d )
+  mk_net_msg( south, east,  6,   9,  2,       0x2e )
 
   return [ src_msgs, sink_msgs ]
 
@@ -204,3 +204,67 @@ def test_router_basic_delay0x5( dump_vcd ):
 def test_router_basic_delay3x8( dump_vcd ):
   run_net_test( dump_vcd, "TRouterBasic_delay3x8.vcd", 3, 8,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
+
+#-------------------------------------------------------------------------
+# hotspot_msgs
+#-------------------------------------------------------------------------
+def hotspot_msgs():
+
+  src_msgs  = [ [] for x in xrange( 5 ) ]
+  sink_msgs = [ [] for x in xrange( 5 ) ]
+
+  # mk_net_msg
+  def mk_net_msg( src_, sink, dest, src, seq_num, payload ):
+    msg = mk_msg( dest, src, seq_num, payload )
+    src_msgs[src_].append( msg )
+    sink_msgs[sink].append( msg )
+
+  # constants
+
+  north = 0
+  east  = 1
+  south = 2
+  west  = 3
+  term  = 4
+
+  #           src_   sink   dest src seq_num, payload
+  mk_net_msg( term,  east,  6,   5,  0,       0x0a )
+  mk_net_msg( east,  east,  6,   6,  0,       0x0b )
+  mk_net_msg( west,  east,  6,   4,  0,       0x0c )
+  mk_net_msg( north, east,  6,   1,  0,       0x0d )
+  mk_net_msg( south, east,  6,   9,  0,       0x0e )
+  mk_net_msg( term,  east,  6,   5,  1,       0x1a )
+  mk_net_msg( east,  east,  6,   6,  1,       0x1b )
+  mk_net_msg( west,  east,  6,   4,  1,       0x1c )
+  mk_net_msg( north, east,  6,   1,  1,       0x1d )
+  mk_net_msg( south, east,  6,   9,  1,       0x1e )
+
+  mk_net_msg( term,  east,  6,   5,  2,       0x2a )
+  mk_net_msg( east,  east,  6,   6,  2,       0x2b )
+  mk_net_msg( west,  east,  6,   4,  2,       0x2c )
+  mk_net_msg( north, east,  6,   1,  2,       0x2d )
+  mk_net_msg( south, east,  6,   9,  2,       0x2e )
+
+  return [ src_msgs, sink_msgs ]
+
+#-------------------------------------------------------------------------
+# Router hotspot unit test with delay = 0 x 0, id = 1
+#-------------------------------------------------------------------------
+
+def test_router_hotspot_delay0x0( dump_vcd ):
+  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 0, 0,
+                hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
+
+def test_router_hotspot_delay5x0( dump_vcd ):
+  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 5, 0,
+                hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
+
+def test_router_hotspot_delay0x5( dump_vcd ):
+  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 0, 5,
+                hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
+
+def test_router_hotspot_delay3x8( dump_vcd ):
+  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 3, 8,
+                hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
+
+# TODO: arbitration test, need specific order

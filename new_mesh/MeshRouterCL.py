@@ -6,7 +6,6 @@ from new_pymtl   import *
 from new_pmlib   import InValRdyBundle, OutValRdyBundle, NetMsg
 from collections import deque
 from math        import sqrt
-from copy        import copy
 
 #=========================================================================
 # MeshRouterCL
@@ -51,6 +50,7 @@ class MeshRouterCL( Model ):
 
     s.input_buffers = [ deque() for x in range( 5 ) ]
     s.output_regs   = [ None ] * 5
+    s.priorities    = [ 0 ] * 5
 
     # Logic
 
@@ -67,15 +67,24 @@ class MeshRouterCL( Model ):
         if inport.val and inport.rdy:
           s.input_buffers[ i ].append( inport.msg[:] )
 
-      # Crossbar Traversal
-      # TODO: add round robin arbitration, this is currently unfair
+      # Arbitration and Crossbar Traversal
+      s.winners = []
       for i in range( 5 ):
-        buffer = s.input_buffers[ i ]
-        if len( buffer ) > 0:
-          port = s.route_compute( buffer[ 0 ].dest )
-          if s.output_regs[ port ] is None:
-            msg = buffer.popleft()
-            s.output_regs[ port ] = msg
+        if not s.output_regs[ i ]:
+          s.output_regs[ i ] = s.arbitrate( i )
+
+      # Deque winners
+      for i in s.winners:
+        i.popleft()
+
+      ## Crossbar Traversal
+      #for i in range( 5 ):
+      #  buffer = s.input_buffers[ i ]
+      #  if len( buffer ) > 0:
+      #    port = s.route_compute( buffer[ 0 ].dest )
+      #    if s.output_regs[ port ] is None:
+      #      msg = buffer.popleft()
+      #      s.output_regs[ port ] = msg
 
       # Set Signals
       for i in range( 5 ):
@@ -107,14 +116,33 @@ class MeshRouterCL( Model ):
       return s.TERM
 
   #-----------------------------------------------------------------------
+  # arbitrate
+  #-----------------------------------------------------------------------
+  # round robin arbitration algorithm
+  def arbitrate( s, output ):
+    first = s.priorities[ output ]
+    order = range( 5 )[first:] + range( 5 )[:first]
+    #print "arbitrating for r:", s.id_, "out:", output, order,
+    for i in order:
+      request_q = s.input_buffers[ i ]
+      if len( request_q ) > 0:
+        if s.route_compute( request_q[ 0 ].dest ) == output:
+          #print "*** i", i, "wins!   dest", s.route_compute( request_q[ 0 ].dest ),
+          s.priorities[ output ] = ( i + 1 ) % 5
+          s.winners.append( request_q )
+          return request_q[ 0 ]
+    #print "NO WINNER"
+
+
+  #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------
   def line_trace( s ):
 
     router_traces = []
     for i in range( 5 ):
-      in_str  = s.in_[ i ].to_str( s.in_[ i ].msg.seqnum )
-      out_str = s.out[ i ].to_str( s.out[ i ].msg.seqnum )
+      in_str  = s.in_[ i ].to_str( s.in_[ i ].msg.payload )
+      out_str = s.out[ i ].to_str( s.out[ i ].msg.payload )
       router_traces += ['{} {}'.format( in_str, out_str ) ]
 
     return '|'.join( router_traces )
