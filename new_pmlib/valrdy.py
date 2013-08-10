@@ -4,15 +4,15 @@
 
 def valrdy_to_str( msg, val, rdy ):
 
-  str = "{}".format( msg )
-  num_chars = len(str)
+  str_   = "{}".format( msg )
+  nchars = len( str_ )
 
-  if val and not rdy:
-    str = "#".ljust(num_chars)
-  elif not val and rdy:
-    str = " ".ljust(num_chars)
+  if       val and not rdy:
+    str_ = "#".ljust( nchars )
+  elif not val and     rdy:
+    str_ = " ".ljust( nchars )
   elif not val and not rdy:
-    str = ".".ljust(num_chars)
+    str_ = ".".ljust( nchars )
 
-  return str
+  return str_
 

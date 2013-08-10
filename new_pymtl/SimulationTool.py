@@ -413,31 +413,50 @@ class SimulationTool( object ):
       self = s = model
       # If slice or list, get name components previous to indexing
       if '[?]' in name:
-        name, extra = name.split('[?]')
-      # Try to the Python object attached to the name.  If it's not a
-      # SignalValue or a list, we can't add it to the sensitivity list.
-      # Sometimes this is okay (AKA constants), but sometimes this
-      # indicates an error in the users code, so raise an error.
+        name, extra = name.split('[?]', 1)
+      # Try to return the Python object attached to the name. If the
+      # object is not a  SignalValue or a list, we can't add it to
+      # the sensitivity list.  Sometimes this is okay (eg. constants),
+      # but sometimes this indicates an error in the user's code, so
+      # display a warning.
+      # In the case of a list, we need to reconstruct the name of each
+      # item in the list so we can try to add it to the sensitivity
+      # list. Return a tuple containing the list object, the list name
+      # and the attribute string the appears after the list indexing.
       try:
         x = eval( name )
-        if isinstance( x, (SignalValue, list) ): return x
+        if   isinstance( x, SignalValue ): return x
+        elif isinstance( x, list        ): return ( x, name, extra )
         else:                                    raise NameError
       except NameError:
         warnings.warn( "Cannot add variable '{}' to sensitivity list."
                        "".format( name ), Warning )
         return None
 
+    # Utility function to recursively add signals/lists of signals to
+    # the sensitivity list.
+    def add_senses( name ):
+      obj = name_to_object( name )
+      # If name_to_object returned a tuple, this is a list inside of a
+      # for loop.  Iteratively go through each object in the list and
+      # recursively call add_senses on it.
+      if   isinstance( obj, tuple ):
+        obj_list, list_name, attr = obj
+        for i, o in enumerate( obj_list ):
+          obj_name = "{}[{}]{}".format( list_name, i, attr )
+          add_senses( obj_name )
+      # If this is a signal value, add it to the sensitivity list
+      elif isinstance( obj, SignalValue ):
+        model._newsenses[ func ].append( obj._target_bits )
+
+
     # Get the sensitivity list of each event driven (combinational) block
     # TODO: do before or after we swap value nodes?
     for func in model._combinational_blocks:
       tree = get_method_ast( func )
       loads, stores = DetectLoadsAndStores().enter( tree )
-      for x in loads:
-        obj = name_to_object( x )
-        if   isinstance( obj, list ):
-          model._newsenses[ func ].extend( obj )
-        elif isinstance( obj, SignalValue ):
-          model._newsenses[ func ].append( obj._target_bits )
+      for name in loads:
+        add_senses( name )
 
     # Iterate through all @combinational decorated function names we
     # detected, retrieve their associated function pointer, then add

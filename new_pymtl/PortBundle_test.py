@@ -19,6 +19,20 @@ class ValRdyBundle( PortBundle ):
     s.val = InPort  ( 1 )
     s.rdy = OutPort ( 1 )
 
+  def __str__( s ):
+
+    str = "{}".format( s.msg )
+    num_chars = len(str)
+
+    if       s.val and not s.rdy:
+      str = "#".ljust( num_chars )
+    elif not s.val and     s.rdy:
+      str = " ".ljust( num_chars )
+    elif not s.val and not s.rdy:
+      str = ".".ljust( num_chars )
+
+    return str
+
 InValRdyBundle, OutValRdyBundle = create_PortBundles( ValRdyBundle )
 
 #-------------------------------------------------------------------------
@@ -43,33 +57,31 @@ class PortBundleQueue( Model ):
     @s.combinational
     def comb():
 
-      s.wen.v       = ~s.full.v & s.enq.val.v
-      s.enq.rdy.v   = ~s.full.v
-      s.deq.val.v   = s.full.v
+      s.wen.v       = ~s.full & s.enq.val
+      s.enq.rdy.v   = ~s.full
+      s.deq.val.v   =  s.full
 
     @s.posedge_clk
     def seq():
 
       # Data Register
-      if s.wen.v:
-        s.deq.msg.next = s.enq.msg.v
+      if s.wen:
+        s.deq.msg.next = s.enq.msg
 
       # Full Bit
-      if s.reset.v:
+      if s.reset:
         s.full.next = 0
-      elif   s.deq.rdy.v and s.deq.val.v:
+      elif   s.deq.rdy and s.deq.val:
         s.full.next = 0
-      elif s.enq.rdy.v and s.enq.val.v:
+      elif s.enq.rdy and s.enq.val:
         s.full.next = 1
       else:
-        s.full.next = s.full.v
+        s.full.next = s.full
 
 
   def line_trace( s ):
 
-    return "{} {} {} () {} {} {}"\
-      .format( s.enq.msg, s.enq.val, s.enq.rdy,
-               s.deq.msg, s.deq.val, s.deq.rdy )
+    return "{} () {}".format( s.enq, s.deq )
 
 #-------------------------------------------------------------------------
 # Test Elaboration
@@ -192,6 +204,118 @@ def test_portbundle_queue_sim( dump_vcd ):
     assert model.deq.val.v == test_vector[3]
     if not test_vector[5] == '?':
       assert model.deq.msg.v == test_vector[5]
+
+  # Run the test
+
+  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  #if dump_vcd:
+  #  sim.dump_vcd( "PortBundle_test.vcd" )
+  sim.run_test()
+
+#-------------------------------------------------------------------------
+# Example Module using List of PortBundle
+#-------------------------------------------------------------------------
+
+class ParameterizablePortBundleQueue( Model ):
+
+  def __init__( s, nbits, nports ):
+
+    s.nports = nports
+
+    s.enq    = [ InValRdyBundle ( nbits ) for x in range( s.nports ) ]
+    s.deq    = [ OutValRdyBundle( nbits ) for x in range( s.nports ) ]
+
+  def elaborate_logic( s ):
+
+    s.full  = [ Wire( 1 ) for x in range( s.nports ) ]
+    s.wen   = [ Wire( 1 ) for x in range( s.nports ) ]
+
+    @s.combinational
+    def comb():
+
+      for i in range( s.nports ):
+        s.wen[i].v       = ~s.full[i] & s.enq[i].val
+        s.enq[i].rdy.v   = ~s.full[i]
+        s.deq[i].val.v   =  s.full[i]
+
+    @s.posedge_clk
+    def seq():
+
+      for i in range( s.nports ):
+
+        # Data Register
+        if s.wen[i]:
+          s.deq[i].msg.next = s.enq[i].msg
+
+        # Full Bit
+        if   s.reset:
+          s.full[i].next = 0
+        elif s.deq[i].rdy and s.deq[i].val:
+          s.full[i].next = 0
+        elif s.enq[i].rdy and s.enq[i].val:
+          s.full[i].next = 1
+        else:
+          s.full[i].next = s.full[i]
+
+
+  def line_trace( s ):
+
+    print_str = ''
+    for enq, deq in zip( s.enq, s.deq ):
+      print_str += "{} () {} ".format( enq, deq )
+
+    return print_str
+
+#-------------------------------------------------------------------------
+# Test Sim
+#-------------------------------------------------------------------------
+
+def test_portbundle_param_queue_sim( dump_vcd ):
+
+  test_vectors = [
+
+    # Enqueue one element and then dequeue it
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ 1,      1,      0x0001,  0,      1,      '?'    ],
+    [ 0,      0,      0x0000,  1,      1,      0x0001 ],
+    [ 0,      1,      0x0000,  0,      0,      '?'    ],
+
+    # Fill in the queue and enq/deq at the same time
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ 1,      1,      0x0002,  0,      0,      '?'    ],
+    [ 1,      0,      0x0003,  1,      0,      0x0002 ],
+    [ 0,      0,      0x0003,  1,      0,      0x0002 ],
+    [ 1,      0,      0x0003,  1,      1,      0x0002 ],
+    [ 1,      1,      0x0003,  0,      1,      '?'    ],
+    [ 1,      0,      0x0004,  1,      1,      0x0003 ],
+    [ 1,      1,      0x0004,  0,      1,      '?'    ],
+    [ 0,      0,      0x0004,  1,      1,      0x0004 ],
+    [ 0,      1,      0x0004,  0,      1,      '?'    ],
+
+  ]
+
+  # Instantiate and elaborate the model
+
+  nports = 4
+  model  = ParameterizablePortBundleQueue( 16, nports )
+  model.elaborate()
+
+  # Define functions mapping the test vector to ports in model
+
+  def tv_in( model, test_vector ):
+
+    for i in range( nports ):
+      model.enq[i].val.v = test_vector[0]
+      model.enq[i].msg.v = test_vector[2]
+      model.deq[i].rdy.v = test_vector[4]
+
+  def tv_out( model, test_vector ):
+
+    for i in range( nports ):
+      assert model.enq[i].rdy.v   == test_vector[1]
+      assert model.deq[i].val.v   == test_vector[3]
+      if not test_vector[5] == '?':
+        assert model.deq[i].msg.v == test_vector[5]
 
   # Run the test
 
