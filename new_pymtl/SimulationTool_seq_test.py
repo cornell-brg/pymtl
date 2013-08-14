@@ -280,3 +280,31 @@ def test_SliceTempWriteCheck():
   model.in_.value = 0xAA00
   sim.cycle()
   assert model.out == 0xAA00
+
+#-------------------------------------------------------------------------
+# MultipleWrites
+#-------------------------------------------------------------------------
+# Test to catch strange simulator behavior
+class MultipleWrites( Model ):
+  def __init__( s ):
+    s.out = OutPort ( 16 )
+
+  def elaborate_logic( s ):
+    @s.tick
+    def logic():
+      s.out.next = 4
+      s.out.next = 1
+
+def test_MultipleWrites():
+  model = MultipleWrites()
+  model.elaborate()
+  sim = setup_sim( model )
+
+  assert model.out == 0   # passes
+  sim.cycle()
+  assert model.out == 1   # passes
+  sim.cycle()
+  #assert model.out == 4  # passes
+  assert model.out == 1   # FAILS
+  sim.cycle()
+  assert model.out == 1   # passes
