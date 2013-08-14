@@ -790,3 +790,21 @@ def test_SliceTempWriteCheck():
   model.in_.value = 0xAA00
   sim.eval_combinational()
   assert model.out == 0xAA00
+
+#-------------------------------------------------------------------------
+# MultipleWrites
+#-------------------------------------------------------------------------
+# Test to catch strange simulator behavior
+class MultipleWrites( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.value = 4
+      s.out.value = s.in_
+
+def test_MultipleWrites():
+  passthrough_tester( MultipleWrites )
