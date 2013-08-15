@@ -16,6 +16,7 @@ from PortBundle     import PortBundle
 
 import collections
 import inspect
+import warnings
 
 #-------------------------------------------------------------------------
 # Model
@@ -145,6 +146,11 @@ class Model(object):
 
     # Submodules
     elif isinstance( obj, Model ):
+      if obj.is_elaborated():
+        # TODO: make an exception!
+        warnings.warn( "Model '{}' has two parents!!!"
+                       "".format( name ), Warning )
+        return
       # Recursively call elaborate() on the submodule
       self.recurse_elaborate( obj, name )
       # Set attributes
