@@ -382,4 +382,60 @@ def test_msg_ports():
   model.in_.data.v       = 0x88888888
   assert model.out      == 0x4000088888888
 
+#-------------------------------------------------------------------------
+# Check List of PortMsg
+#-------------------------------------------------------------------------
+class SeqLogicMsgListModel( Model ):
+  def __init__( s ):
+
+    s.in_ = [ InPort ( MemMsg( 16, 32 ) ) for x in range( 4 ) ]
+    s.out = [ OutPort( MemMsg( 16, 32 ) ) for x in range( 4 ) ]
+
+  def elaborate_logic( s ):
+
+    @s.posedge_clk
+    def logic():
+
+      for i in range( 4 ):
+        s.out[ i ].type.next = s.in_[ i ].type
+        s.out[ i ].len.next  = s.in_[ i ].len
+        s.out[ i ].addr.next = s.in_[ i ].addr
+        s.out[ i ].data.next = s.in_[ i ].data
+
+def test_msg_seq_list_logic():
+
+  model = SeqLogicMsgListModel()
+  model.elaborate()
+
+  sim = SimulationTool(model)
+
+  sim.reset()
+
+  for i in range( 4 ):
+    model.in_[ i ].v = 1
+    assert model.out[ i ].v == 0
+  sim.cycle()
+  for i in range( 4 ):
+    assert model.out[ i ].v == 1
+
+  for i in range( 4 ):
+    model.in_[ i ].v = 2
+    sim.eval_combinational()
+    assert model.out[ i ].v == 1
+  sim.cycle()
+  for i in range( 4 ):
+    assert model.out[ i ].v == 2
+
+  for i in range( 4 ):
+    model.in_[ i ].v = 0x5f0cd0f0f0f0f
+  sim.cycle()
+  for i in range( 4 ):
+    assert model.out[ i ].v == 0x5f0cd0f0f0f0f
+
+  for i in range( 4 ):
+    model.in_[ i ].len.v = MemMsg.HALF
+  sim.cycle()
+  for i in range( 4 ):
+    assert model.out[ i ].len.v == MemMsg.HALF
+    assert model.out[ i ].v     == 0x5f0ce0f0f0f0f
 

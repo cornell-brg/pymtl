@@ -353,3 +353,115 @@ def test_portbundle_param_queue_sim( dump_vcd ):
 #    x = os.system( compile_cmd )
 #    assert x == 0
 #
+
+#-------------------------------------------------------------------------
+# Example Module using List of PortBundle with BitStructs
+#-------------------------------------------------------------------------
+
+from BitStruct_test import MemMsg
+class ParameterizablePortBundleBitStructQueue( Model ):
+
+  def __init__( s, nbits, nports ):
+
+    s.nports = nports
+
+    s.enq    = [ InValRdyBundle ( MemMsg( 16, 32 ) ) for x in range( s.nports ) ]
+    s.deq    = [ OutValRdyBundle( MemMsg( 16, 32 ) ) for x in range( s.nports ) ]
+
+  def elaborate_logic( s ):
+
+    s.full  = [ Wire( 1 ) for x in range( s.nports ) ]
+    s.wen   = [ Wire( 1 ) for x in range( s.nports ) ]
+
+    @s.combinational
+    def comb():
+
+      for i in range( s.nports ):
+        s.wen[i].v       = ~s.full[i] & s.enq[i].val
+        s.enq[i].rdy.v   = ~s.full[i]
+        s.deq[i].val.v   =  s.full[i]
+
+    @s.posedge_clk
+    def seq():
+
+      for i in range( s.nports ):
+
+        # Data Register
+        if s.wen[i]:
+          s.deq[i].msg.type.next = s.enq[i].msg.type
+          s.deq[i].msg.len .next = s.enq[i].msg.len
+          s.deq[i].msg.addr.next = s.enq[i].msg.addr
+          s.deq[i].msg.data.next = s.enq[i].msg.data
+
+        # Full Bit
+        if   s.reset:
+          s.full[i].next = 0
+        elif s.deq[i].rdy and s.deq[i].val:
+          s.full[i].next = 0
+        elif s.enq[i].rdy and s.enq[i].val:
+          s.full[i].next = 1
+        else:
+          s.full[i].next = s.full[i]
+
+
+  def line_trace( s ):
+
+    print_str = ''
+    for enq, deq in zip( s.enq, s.deq ):
+      print_str += "{} () {} ".format( enq, deq )
+
+    return print_str
+
+def test_portbundle_bitstruct_param_queue_sim( dump_vcd ):
+
+  test_vectors = [
+
+    # Enqueue one element and then dequeue it
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ 1,      1,      0x0001,  0,      1,      '?'    ],
+    [ 0,      0,      0x0000,  1,      1,      0x0001 ],
+    [ 0,      1,      0x0000,  0,      0,      '?'    ],
+
+    # Fill in the queue and enq/deq at the same time
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ 1,      1,      0x0002,  0,      0,      '?'    ],
+    [ 1,      0,      0x0003,  1,      0,      0x0002 ],
+    [ 0,      0,      0x0003,  1,      0,      0x0002 ],
+    [ 1,      0,      0x0003,  1,      1,      0x0002 ],
+    [ 1,      1,      0x0003,  0,      1,      '?'    ],
+    [ 1,      0,      0x0004,  1,      1,      0x0003 ],
+    [ 1,      1,      0x0004,  0,      1,      '?'    ],
+    [ 0,      0,      0x0004,  1,      1,      0x0004 ],
+    [ 0,      1,      0x0004,  0,      1,      '?'    ],
+
+  ]
+
+  # Instantiate and elaborate the model
+
+  nports = 4
+  model  = ParameterizablePortBundleBitStructQueue( 16, nports )
+  model.elaborate()
+
+  # Define functions mapping the test vector to ports in model
+
+  def tv_in( model, test_vector ):
+
+    for i in range( nports ):
+      model.enq[i].val.v = test_vector[0]
+      model.enq[i].msg.v = test_vector[2]
+      model.deq[i].rdy.v = test_vector[4]
+
+  def tv_out( model, test_vector ):
+
+    for i in range( nports ):
+      assert model.enq[i].rdy.v   == test_vector[1]
+      assert model.deq[i].val.v   == test_vector[3]
+      if not test_vector[5] == '?':
+        assert model.deq[i].msg.v == test_vector[5]
+
+  # Run the test
+
+  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  #if dump_vcd:
+  #  sim.dump_vcd( "PortBundle_test.vcd" )
+  sim.run_test()
