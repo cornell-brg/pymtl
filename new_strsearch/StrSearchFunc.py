@@ -10,11 +10,11 @@ class StrSignalValue( SignalValue, str ):
     self._str  = str_
     self.nbits = None
   def write_value( self, value ):
-    try:    self._str = value._str
-    except: self._str = value
+    try:                   self._str = value._str
+    except AttributeError: self._str = value
   def write_next( self, value ):
-    try:    self._next._str = value._str
-    except: self._next._str = value
+    try:                   self._next._str = value._str
+    except AttributeError: self._next._str = value
   def __eq__( self, value ):
     return self._str == value
   def __ne__( self, value ):
