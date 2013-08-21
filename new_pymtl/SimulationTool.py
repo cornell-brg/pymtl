@@ -354,9 +354,16 @@ class SimulationTool( object ):
       # TODO: what about BitStructs?
       temp = group.pop()
       group.add( temp )
-      svalue = temp.msg_type
-      # TODO: should this be visible to sim?
-      svalue._next = copy.copy( svalue )
+      #svalue       = temp.msg_type
+      ## TODO: should this be visible to sim?
+      #svalue._next = copy.copy( svalue )
+      if not isinstance( temp.msg_type, type ):
+        svalue       = temp.msg_type
+        svalue._next = copy.copy( svalue )
+      else:
+        svalue       = temp.msg_type()
+        svalue._next = temp.msg_type()
+
       #svalue._DEBUG_signal_names = group
 
       # Add a callback to the SignalValue to notify SimulationTool every

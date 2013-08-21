@@ -6,6 +6,7 @@ from SimulationTool import SimulationTool
 from PortBundle     import PortBundle, create_PortBundles
 from BitStruct      import BitStruct, BitField
 from helpers        import get_nbits, get_sel_nbits, zext, sext, concat
+from SignalValue    import CreateWrappedClass
 
 __all__ = [ # Model Construction
             'Model',
@@ -23,6 +24,7 @@ __all__ = [ # Model Construction
             'SimulationTool',
             # TEMPORARY
             'capture_args',
+            'CreateWrappedClass',
             # Helper Functions
             'get_nbits',
             'get_sel_nbits',

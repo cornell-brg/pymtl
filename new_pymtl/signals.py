@@ -23,7 +23,8 @@ class Signal( object ):
 
     is_int             = isinstance( msg_type, int )
     # TODO: remove copy hack
-    msg_type           = deepcopy( msg_type )
+    msg_type           = msg_type if    isinstance( msg_type, type ) \
+                                  else  deepcopy( msg_type )
     self.msg_type      = msg_type if not is_int else Bits( msg_type )
     self.nbits         = self.msg_type.nbits
     self.slice         = slice( None )
