@@ -20,6 +20,8 @@ def run_test( SearchModel ):
     model.elaborate()
     sim   = SimulationTool( model )
 
+    sim.reset()
+
     for doc in docs:
       model.in_.v = doc
       sim.cycle()

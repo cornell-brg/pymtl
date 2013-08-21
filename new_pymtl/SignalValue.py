@@ -165,6 +165,10 @@ class SignalValue( object ):
 #-------------------------------------------------------------------------
 # _magic_methods
 #-------------------------------------------------------------------------
+# Borrowed from:
+# http://code.activestate.com/recipes/496741-object-proxying/
+# http://stackoverflow.com/a/9942607
+
 _magic_methods = [
       '__abs__', '__add__', '__and__', '__call__', '__cmp__', '__coerce__',
       '__contains__', '__delitem__', '__delslice__', '__div__', '__divmod__',

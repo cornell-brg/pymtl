@@ -18,7 +18,7 @@ class StrSearchMath( Model ):
   def __init__( s, max_doc_chars, string ):
     s.string = string
 
-    s.in_    = InValRdyBundle( StrSignalValue() )
+    s.in_    = InValRdyBundle( StrSignalValue )
     s.out    = OutValRdyBundle( 1 )
 
   #-----------------------------------------------------------------------
@@ -34,7 +34,7 @@ class StrSearchMath( Model ):
         s.buf_full = False
 
       if s.in_.val and s.in_.rdy:
-        s.out.msg.next = s.string in s.in_.msg.data()
+        s.out.msg.next = s.string in s.in_.msg
         s.buf_full = True
 
       s.out.val.next = s.buf_full
@@ -53,7 +53,7 @@ class StrSearchAlg( Model ):
   def __init__( s, max_doc_chars, string ):
     s.string = string
 
-    s.in_    = InPort ( StrSignalValue() )
+    s.in_    = InPort ( StrSignalValue )
     s.out    = OutPort( 1 )
 
     s.DFA    = DFA = (len(string) + 1) * [0]

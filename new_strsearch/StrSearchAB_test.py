@@ -7,7 +7,7 @@
 from new_pymtl        import *
 from new_pmlib        import TestSource, TestSink
 from StrSearchOO_test import strings, docs, reference
-from StrSearchAB      import StrSignalValue
+from StrSearchAB      import StrSignalValue, StrSearchMath, StrSearchAlg
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -20,7 +20,9 @@ class TestHarness( Model ):
 
     # Instantiate models
 
-    s.src  = TestSource ( StrSignalValue(), src_msgs,  src_delay  )
+    print "TH"
+    s.src  = TestSource ( StrSignalValue, src_msgs,  src_delay  )
+    print "\TH"
     s.sort = ModelType  ( 64, string )
     s.sink = TestSink   ( 1, sink_msgs, sink_delay )
 
@@ -77,7 +79,6 @@ def run_test( ModelType, str_id, src_delay, sink_delay ):
   sim.cycle()
   sim.cycle()
 
-from StrSearchAB import StrSearchMath, StrSearchAlg
 
 #-------------------------------------------------------------------------
 # test_strsearch_math
@@ -88,5 +89,5 @@ def test_strsearch_math():
 #-------------------------------------------------------------------------
 # test_strsearch_alg
 #-------------------------------------------------------------------------
-#def test_strsearch_alg():
-#  run_test( StrSearchAlg )
+def test_strsearch_alg():
+  run_test( StrSearchMath, 0, 0, 0 )

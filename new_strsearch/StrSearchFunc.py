@@ -2,28 +2,9 @@
 # StrSearchFunc.py
 #=========================================================================
 
-from new_pymtl import *
-from new_pymtl.SignalValue import SignalValue
+from new_pymtl          import *
 
-class StrSignalValue( SignalValue, str ):
-  def __init__( self, str_="" ):
-    self._str  = str_
-    self.nbits = None
-  def write_value( self, value ):
-    try:                   self._str = value._str
-    except AttributeError: self._str = value
-  def write_next( self, value ):
-    try:                   self._next._str = value._str
-    except AttributeError: self._next._str = value
-  def __eq__( self, value ):
-    return self._str == value
-  def __ne__( self, value ):
-    return self._str != value
-  def __str__( self ):
-    return self._str[0:10].zfill( 10 )
-  def data( self ):
-    return self._str
-
+StrSignalValue = CreateWrappedClass( str )
 
 #-------------------------------------------------------------------------
 # StrSearchMath
@@ -37,7 +18,7 @@ class StrSearchMath( Model ):
   def __init__( s, max_doc_chars, string ):
     s.string = string
 
-    s.in_    = InPort ( StrSignalValue() )
+    s.in_    = InPort ( StrSignalValue )
     s.out    = OutPort( 1 )
 
   #-----------------------------------------------------------------------
@@ -47,7 +28,7 @@ class StrSearchMath( Model ):
 
     @s.tick
     def find_logic():
-      s.out.next = s.string in s.in_.data()
+      s.out.next = s.string in s.in_
 
 
 #-------------------------------------------------------------------------
@@ -62,7 +43,7 @@ class StrSearchAlg( Model ):
   def __init__( s, max_doc_chars, string ):
     s.string = string
 
-    s.in_    = InPort ( StrSignalValue() )
+    s.in_    = InPort ( StrSignalValue )
     s.out    = OutPort( 1 )
 
     s.DFA    = DFA = (len(string) + 1) * [0]
@@ -84,7 +65,7 @@ class StrSearchAlg( Model ):
     @s.tick
     def find_logic():
 
-      doc   = s.in_.data()
+      doc   = s.in_
       index = 0
       j     = 0
 
