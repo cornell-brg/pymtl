@@ -5,6 +5,9 @@
 from new_pymtl          import *
 
 StrSignalValue = CreateWrappedClass( str )
+# TODO: necessary because RandomDelay module initializes output with an int
+#       how should we handle this?
+StrSignalValue.__format__ = lambda self, formatstr : str(self)[0:30].ljust(30)
 
 #-------------------------------------------------------------------------
 # StrSearchMath
@@ -15,7 +18,7 @@ class StrSearchMath( Model ):
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  def __init__( s, max_doc_chars, string ):
+  def __init__( s, string ):
     s.string = string
 
     s.in_    = InPort ( StrSignalValue )
@@ -28,7 +31,8 @@ class StrSearchMath( Model ):
 
     @s.tick
     def find_logic():
-      s.out.next = s.string in s.in_
+      doc = s.in_
+      s.out.next = s.string in doc
 
 
 #-------------------------------------------------------------------------
@@ -40,7 +44,7 @@ class StrSearchAlg( Model ):
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  def __init__( s, max_doc_chars, string ):
+  def __init__( s, string ):
     s.string = string
 
     s.in_    = InPort ( StrSignalValue )

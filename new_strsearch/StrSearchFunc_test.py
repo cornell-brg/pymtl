@@ -16,7 +16,7 @@ def run_test( SearchModel ):
   for string in strings:
 
     # Instantiate the model, elaborate it, and create a simulator
-    model = SearchModel( 64, string )
+    model = SearchModel( string )
     model.elaborate()
     sim   = SimulationTool( model )
 
