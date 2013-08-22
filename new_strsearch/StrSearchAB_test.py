@@ -15,8 +15,8 @@ from StrSearchAB      import StrSignalValue, StrSearchMath, StrSearchAlg
 
 class TestHarness( Model ):
 
-  def __init__( s, ModelType, string, src_msgs, sink_msgs,
-                src_delay, sink_delay ):
+  def __init__( s, ModelType, string,
+                src_msgs, sink_msgs, src_delay, sink_delay ):
 
     # Instantiate models
 
@@ -88,7 +88,7 @@ import pytest
     [(0,0), (3,0), (0,3), (3,5)]
 )
 def test_strsearch_math( src_delay, sink_delay ):
-  for i, string in enumerate( strings[0:1] ):
+  for i, string in enumerate( strings ):
     run_test( StrSearchMath, i, src_delay, sink_delay )
 
 #-------------------------------------------------------------------------

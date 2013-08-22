@@ -16,8 +16,9 @@ class StrSearchMath( Model ):
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  def __init__( s, string ):
+  def __init__( s, string, stages=4 ):
     s.string = string
+    s.stages = stages
 
     s.in_    = InValRdyBundle( StrSignalValue )
     s.out    = OutValRdyBundle( 1 )
@@ -27,23 +28,30 @@ class StrSearchMath( Model ):
   #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
-    s.buf = deque( maxlen=2 )
+    s.buf      = deque( maxlen=2 )
+    s.pipeline = deque( s.stages*[None] )
 
     @s.tick
     def find_logic():
 
-      # Dequeue
+      # Dequeue From Pipeline
       if s.out.val and s.out.rdy:
-        s.buf.popleft()
+        s.pipeline[-1] = None
 
-      # Enqueue
+      # Enqueue Into Input Buffer
       if s.in_.val and s.in_.rdy :
         s.buf.append( s.string in s.in_.msg )
 
+      # Advance pipeline
+      if s.out.rdy:
+        s.pipeline.rotate()
+        if s.buf:
+          s.pipeline[ 0 ] = s.buf.popleft()
+
       # Set Ports
-      if len( s.buf ) > 0:
-        s.out.msg.next = s.buf[0]
-      s.out.val.next = len( s.buf ) > 0
+      if s.pipeline[-1] != None:
+        s.out.msg.next = s.pipeline[-1]
+      s.out.val.next = s.pipeline[-1] != None
       s.in_.rdy.next = len( s.buf ) < s.buf.maxlen
 
   def line_trace( s ):
