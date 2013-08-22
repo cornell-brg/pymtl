@@ -163,64 +163,86 @@ class SignalValue( object ):
 
 
 #-------------------------------------------------------------------------
-# _magic_methods
-#-------------------------------------------------------------------------
-# Borrowed from:
-# http://code.activestate.com/recipes/496741-object-proxying/
-# http://stackoverflow.com/a/9942607
-
-_magic_methods = [
-      '__abs__', '__add__', '__and__', '__call__', '__cmp__', '__coerce__',
-      '__contains__', '__delitem__', '__delslice__', '__div__', '__divmod__',
-      '__eq__', '__float__', '__floordiv__', '__ge__', '__getitem__',
-      '__getslice__', '__gt__', '__hash__', '__hex__', '__iadd__', '__iand__',
-      '__idiv__', '__idivmod__', '__ifloordiv__', '__ilshift__', '__imod__',
-      '__imul__', '__int__', '__invert__', '__ior__', '__ipow__', '__irshift__',
-      '__isub__', '__iter__', '__itruediv__', '__ixor__', '__le__', '__len__',
-      '__long__', '__lshift__', '__lt__', '__mod__', '__mul__', '__ne__',
-      '__neg__', '__oct__', '__or__', '__pos__', '__pow__', '__radd__',
-      '__rand__', '__rdiv__', '__rdivmod__', '__reduce__', '__reduce_ex__',
-      '__repr__', '__reversed__', '__rfloorfiv__', '__rlshift__', '__rmod__',
-      '__rmul__', '__ror__', '__rpow__', '__rrshift__', '__rshift__', '__rsub__',
-      '__rtruediv__', '__rxor__', '__setitem__', '__setslice__', '__sub__',
-      '__truediv__', '__xor__', 'next',
-  ]
-
-
-#-------------------------------------------------------------------------
 # SignalValueWrapper
 #-------------------------------------------------------------------------
 # Wrapper to turn arbitrary objects into SignalValues.
+# Proxying magic borrowed from: http://stackoverflow.com/a/9059858
 class SignalValueWrapper( SignalValue ):
-  nbits = None
+
+  __wraps__  = None
+  __ignore__ = "class mro new init setattr getattr getattribute nbits"
+
+  nbits      = None
+
+  #-----------------------------------------------------------------------
+  # __init__
+  #-----------------------------------------------------------------------
+  def __init__( self ):
+    if self.__wraps__ is None:
+      raise TypeError("base class Wrapper may not be instantiated")
+    self._data = self.__wraps__()
+
+  #-----------------------------------------------------------------------
+  # write_value
+  #-----------------------------------------------------------------------
+  # Provide implementation for required SignalValue abstract method.
   def write_value( self, value ):
     try:                   self._data = value._data
     except AttributeError: self._data = value
+
+  #-----------------------------------------------------------------------
+  # write_next
+  #-----------------------------------------------------------------------
+  # Provide implementation for required SignalValue abstract method.
   def write_next( self, value ):
     try:                   self._next._data = value._data
     except AttributeError: self._next._data = value
 
-#-------------------------------------------------------------------------
-# _make_func
-#-------------------------------------------------------------------------
-def _make_func( attr):
-  def func( obj, *args, **kwargs ):
-    return getattr( obj._data, attr )( *args, **kwargs )
-  return func
+  #-----------------------------------------------------------------------
+  # __getattr__
+  #-----------------------------------------------------------------------
+  # Proxy attribute access to the wrapped data.
+  def __getattr__( self, name ):
+    return getattr( self._data, name )
+
+  #-----------------------------------------------------------------------
+  # __metaclass__
+  #-----------------------------------------------------------------------
+  # Add metaclass magic to automatically create proxies for double-
+  # underscore attribute access.
+  class __metaclass__( type ):
+
+    # Constructor for __metaclass__.
+    def __init__( cls, name, bases, dct ):
+
+      # Utility function to create proxying logic.
+      def make_proxy( name ):
+        def proxy( self, *args ):
+          return getattr( self._data, name )
+        return proxy
+
+      # Create the warpper class.
+      type.__init__( cls, name, bases, dct )
+
+      # For each double-underscore attribute not in the __ignore__ list,
+      # create a proxy attribute.
+      if cls.__wraps__:
+        ignore = set( "__%s__" % n for n in cls.__ignore__.split() )
+        for name in dir( cls.__wraps__ ):
+          if name.startswith("__"):
+            if name not in ignore and name not in dct:
+              attr = getattr( cls.__wraps__, name )
+              setattr( cls, name, property( make_proxy( name ) ) )
+
 
 #-------------------------------------------------------------------------
 # CreateWrappedClass
 #-------------------------------------------------------------------------
+# Takes a class and returns a wrapped version of the class that can
+# behave as a SignalValue (can be passed on Ports and Wires).
 def CreateWrappedClass( cls ):
 
-  classdict = {}
-  for attr, kind, c, o in inspect.classify_class_attrs( cls ):
-    if kind == 'method' and (
-       not attr.startswith('__') or attr in _magic_methods ):
+  class Wrapper( SignalValueWrapper ):
+    __wraps__ = cls
 
-         classdict[ attr ] = _make_func( attr )
-
-  x = type( 'Wrapped_'+cls.__name__, (SignalValueWrapper,), classdict )
-  x._data = cls()
-  return x
-
+  return Wrapper
