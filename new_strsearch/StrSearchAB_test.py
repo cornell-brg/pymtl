@@ -20,11 +20,9 @@ class TestHarness( Model ):
 
     # Instantiate models
 
-    print "TH"
-    s.src  = TestSource ( StrSignalValue, src_msgs,  src_delay  )
-    print "\TH"
-    s.sort = ModelType  ( 64, string )
-    s.sink = TestSink   ( 1, sink_msgs, sink_delay )
+    s.src  = TestSource ( StrSignalValue, src_msgs, src_delay )
+    s.sort = ModelType  ( string )
+    s.sink = TestSink   (  1, sink_msgs, sink_delay )
 
   def elaborate_logic( s ):
 
@@ -80,14 +78,26 @@ def run_test( ModelType, str_id, src_delay, sink_delay ):
   sim.cycle()
 
 
+import pytest
+
 #-------------------------------------------------------------------------
 # test_strsearch_math
 #-------------------------------------------------------------------------
-def test_strsearch_math():
-  run_test( StrSearchMath, 0, 0, 0 )
+@pytest.mark.parametrize(
+    ('src_delay', 'sink_delay'),
+    [(0,0), (3,0), (0,3), (3,5)]
+)
+def test_strsearch_math( src_delay, sink_delay ):
+  for i, string in enumerate( strings[0:1] ):
+    run_test( StrSearchMath, i, src_delay, sink_delay )
 
 #-------------------------------------------------------------------------
 # test_strsearch_alg
 #-------------------------------------------------------------------------
-def test_strsearch_alg():
-  run_test( StrSearchMath, 0, 0, 0 )
+@pytest.mark.parametrize(
+    ('src_delay', 'sink_delay'),
+    [(0,0), (3,0), (0,3), (3,5)]
+)
+def test_strsearch_alg( src_delay, sink_delay ):
+  for i, string in enumerate( strings ):
+    run_test( StrSearchAlg, i, src_delay, sink_delay )

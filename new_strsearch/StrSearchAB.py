@@ -5,6 +5,7 @@
 from new_pymtl     import *
 from new_pmlib     import InValRdyBundle, OutValRdyBundle
 from StrSearchFunc import StrSignalValue
+from collections   import deque
 
 #-------------------------------------------------------------------------
 # StrSearchMath
@@ -15,7 +16,7 @@ class StrSearchMath( Model ):
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  def __init__( s, max_doc_chars, string ):
+  def __init__( s, string ):
     s.string = string
 
     s.in_    = InValRdyBundle( StrSignalValue )
@@ -26,19 +27,27 @@ class StrSearchMath( Model ):
   #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
-    s.buf_full = False
+    s.buf = deque( maxlen=2 )
 
     @s.tick
     def find_logic():
+
+      # Dequeue
       if s.out.val and s.out.rdy:
-        s.buf_full = False
+        s.buf.popleft()
 
-      if s.in_.val and s.in_.rdy:
-        s.out.msg.next = s.string in s.in_.msg
-        s.buf_full = True
+      # Enqueue
+      if s.in_.val and s.in_.rdy :
+        s.buf.append( s.string in s.in_.msg )
 
-      s.out.val.next = s.buf_full
-      s.in_.rdy.next = True
+      # Set Ports
+      if len( s.buf ) > 0:
+        s.out.msg.next = s.buf[0]
+      s.out.val.next = len( s.buf ) > 0
+      s.in_.rdy.next = len( s.buf ) < s.buf.maxlen
+
+  def line_trace( s ):
+    return "{}".format( len( s.buf ) )
 
 
 #-------------------------------------------------------------------------
@@ -50,11 +59,11 @@ class StrSearchAlg( Model ):
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  def __init__( s, max_doc_chars, string ):
+  def __init__( s, string ):
     s.string = string
 
-    s.in_    = InPort ( StrSignalValue )
-    s.out    = OutPort( 1 )
+    s.in_    = InValRdyBundle( StrSignalValue )
+    s.out    = OutValRdyBundle( 1 )
 
     s.DFA    = DFA = (len(string) + 1) * [0]
 
@@ -72,34 +81,53 @@ class StrSearchAlg( Model ):
   #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
+    s.buf = deque( maxlen=2 )
+
     @s.tick
     def find_logic():
 
-      doc   = s.in_.data()
-      index = 0
-      j     = 0
+      # Dequeue
+      if s.out.val and s.out.rdy:
+        s.buf.popleft()
 
-      while j < len(doc):
+      # Enqueue
+      if s.in_.val and s.in_.rdy:
 
-        # if character not a match, rewind the DFA
-        #while (index > 0 and doc[j] != re[index]):
-        if (index > 0 and doc[j] != s.string[index]):
-          index = s.DFA[index]
+        doc   = s.in_.msg
+        index = 0
+        j     = 0
+        found = False
 
-        # check if this character matches our current search
-        if (doc[j] == s.string[index]):
-          index += 1
+        while j < len(doc):
 
-          # we found a match! now check for overlapping matches
-          if index == (len(s.string)):
+          # if character not a match, rewind the DFA
+          #while (index > 0 and doc[j] != re[index]):
+          if (index > 0 and doc[j] != s.string[index]):
             index = s.DFA[index]
-            #print ("FOUND: "+doc[:j+1-len(s.string)]+"|"
-            #      +doc[j+1-len(s.string):j+1]+"|"+doc[j+1:])
-            s.out.next = True
-            return
 
-        # increment the doc indice
-        j += 1
+          # check if this character matches our current search
+          if (doc[j] == s.string[index]):
+            index += 1
 
-      s.out.next = False
+            # we found a match! now check for overlapping matches
+            if index == (len(s.string)):
+              index = s.DFA[index]
+              #print ("FOUND: "+doc[:j+1-len(s.string)]+"|"
+              #      +doc[j+1-len(s.string):j+1]+"|"+doc[j+1:])
+              found = True
+              break
+
+          # increment the doc indice
+          j += 1
+
+        s.buf.append( found )
+
+      # Set Ports
+      if len( s.buf ) > 0:
+        s.out.msg.next = s.buf[0]
+      s.out.val.next = len( s.buf ) > 0
+      s.in_.rdy.next = len( s.buf ) < s.buf.maxlen
+
+  def line_trace( s ):
+    return "{}".format( len( s.buf ) )
 
