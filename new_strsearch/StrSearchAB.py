@@ -89,53 +89,64 @@ class StrSearchAlg( Model ):
   #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
-    s.buf = deque( maxlen=2 )
+    s.buf    = deque( maxlen=2 )
+    s.result = None
+    s.index  = 0
+    s.j      = 0
 
     @s.tick
     def find_logic():
 
       # Dequeue
       if s.out.val and s.out.rdy:
-        s.buf.popleft()
+        s.result = None
 
       # Enqueue
       if s.in_.val and s.in_.rdy:
+        s.buf.append( s.in_.msg[:] )
 
-        doc   = s.in_.msg
-        index = 0
-        j     = 0
-        found = False
+      # Do Work:
+      if s.buf and s.result == None:
 
-        while j < len(doc):
+        doc   = s.buf[0]
+        j     = s.j
+
+        #while j < len(doc):
+        if j <  len( doc ):
 
           # if character not a match, rewind the DFA
-          #while (index > 0 and doc[j] != re[index]):
-          if (index > 0 and doc[j] != s.string[index]):
-            index = s.DFA[index]
+          if (s.index > 0 and doc[j] != s.string[s.index]):
+            s.index = s.DFA[s.index]
 
           # check if this character matches our current search
-          if (doc[j] == s.string[index]):
-            index += 1
+          if (doc[j] == s.string[s.index]):
+            s.index += 1
 
             # we found a match! now check for overlapping matches
-            if index == (len(s.string)):
-              index = s.DFA[index]
+            if s.index == (len(s.string)):
+              #s.index = s.DFA[index]
               #print ("FOUND: "+doc[:j+1-len(s.string)]+"|"
               #      +doc[j+1-len(s.string):j+1]+"|"+doc[j+1:])
-              found = True
-              break
+              s.result = True
+              s.index  = 0
+              s.j      = -1
+              s.buf.popleft()
 
           # increment the doc indice
-          j += 1
+          s.j += 1
 
-        s.buf.append( found )
+        else:
+          s.result = False
+          s.index  = 0
+          s.j      = 0
+          s.buf.popleft()
 
       # Set Ports
-      if len( s.buf ) > 0:
-        s.out.msg.next = s.buf[0]
-      s.out.val.next = len( s.buf ) > 0
+      if s.result != None:
+        s.out.msg.next = s.result
+      s.out.val.next = s.result != None
       s.in_.rdy.next = len( s.buf ) < s.buf.maxlen
 
   def line_trace( s ):
-    return "{}".format( len( s.buf ) )
+    return "{:2} {:2}".format( len( s.buf[0] )  if s.buf else '  ', s.j )
 
