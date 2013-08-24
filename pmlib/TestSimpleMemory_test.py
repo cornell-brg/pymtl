@@ -240,6 +240,10 @@ def dual_port_mem_test_msgs():
   mk_req_resp( 1,   req_wr( 0x00014000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
   mk_req_resp( 0,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
   mk_req_resp( 1,   req_rd( 0x00014000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
+  mk_req_resp( 0,   req_wr( 0x00004000, 0, 0xcafebabe ), resp_wr( 0, 0x00000000 ) )
+  mk_req_resp( 1,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xcafebabe ) )
+  mk_req_resp( 1,   req_wr( 0x00004000, 0, 0x12341234 ), resp_wr( 0, 0x00000000 ) )
+  mk_req_resp( 1,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0x12341234 ) )
 
   return [ src_msgs, sink_msgs ]
 

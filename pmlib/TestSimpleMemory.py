@@ -142,49 +142,49 @@ class TestSimpleMemory (Model):
         self.memreq_data[i] = self.memreq[i].data.value[:]
         self.memreq_full[i] = True
 
-      # When len is zero, then we use all of the data
+        # When len is zero, then we use all of the data
 
-      nbytes = self.memreq_len[i]
-      if self.memreq_len[i] == 0:
-        nbytes = self.memreq_params.data_nbits/8
+        nbytes = self.memreq_len[i]
+        if self.memreq_len[i] == 0:
+          nbytes = self.memreq_params.data_nbits/8
 
-      # Handle a read request
+        # Handle a read request
 
-      if self.memreq_type[i] == self.memreq_params.type_read:
+        if self.memreq_type[i] == self.memreq_params.type_read:
 
-        # Copy the bytes from the bytearray into read data bits
+          # Copy the bytes from the bytearray into read data bits
 
-        read_data = Bits( self.memreq_params.data_nbits )
-        for j in xrange( nbytes ):
-          read_data[j*8:j*8+8] = self.mem[ self.memreq_addr[i] + j ]
+          read_data = Bits( self.memreq_params.data_nbits )
+          for j in xrange( nbytes ):
+            read_data[j*8:j*8+8] = self.mem[ self.memreq_addr[i] + j ]
 
-        # Create the response message
+          # Create the response message
 
-        self.memresp[i].type_.next = self.memresp_params.type_read
-        self.memresp[i].len_.next  = self.memreq_len[i]
-        self.memresp[i].data.next  = read_data
+          self.memresp[i].type_.next = self.memresp_params.type_read
+          self.memresp[i].len_.next  = self.memreq_len[i]
+          self.memresp[i].data.next  = read_data
 
-      # Handle a write request
+        # Handle a write request
 
-      elif self.memreq_type[i] == self.memreq_params.type_write:
+        elif self.memreq_type[i] == self.memreq_params.type_write:
 
-        # Copy write data bits into bytearray
+          # Copy write data bits into bytearray
 
-        write_data = self.memreq_data[i]
-        for j in xrange( nbytes ):
-          self.mem[ self.memreq_addr[i] + j ] = write_data[j*8:j*8+8].uint
+          write_data = self.memreq_data[i]
+          for j in xrange( nbytes ):
+            self.mem[ self.memreq_addr[i] + j ] = write_data[j*8:j*8+8].uint
 
-        # Create the response message
+          # Create the response message
 
-        self.memresp[i].type_.next = self.memresp_params.type_write
-        self.memresp[i].len_.next  = 0
-        self.memresp[i].data.next  = 0
+          self.memresp[i].type_.next = self.memresp_params.type_write
+          self.memresp[i].len_.next  = 0
+          self.memresp[i].data.next  = 0
 
-      # For some reason this is causing an assert in PyMTL?
-      #
-      # else:
-      #   assert True, "Unrecognized request message type! {}" \
-      #     .format( self.memreq_type[i] )
+        # For some reason this is causing an assert in PyMTL?
+        #
+        # else:
+        #   assert True, "Unrecognized request message type! {}" \
+        #     .format( self.memreq_type[i] )
 
       # The memresp message if valid if the buffer is full
 
