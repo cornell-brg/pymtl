@@ -15,7 +15,7 @@
 
 from new_pymtl import *
 
-class TestVectorSimulator:
+class TestVectorSimulator( object ):
 
   #-----------------------------------------------------------------------
   # Constructor
