@@ -329,10 +329,12 @@ class Bits( SignalValue ):
 
   # TODO: allow comparison with negative numbers?
   def __eq__( self, other ):
+    if other is None: return False
     assert other >= 0
     return self._uint == other
 
   def __ne__( self, other ):
+    if other is None: return True
     assert other >= 0
     return self._uint != other
 

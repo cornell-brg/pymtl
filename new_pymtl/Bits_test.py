@@ -173,6 +173,9 @@ def test_eq():
   assert x == Bits( 4, -1 ).uint()
   assert 15 == x
 
+  assert not x == None
+  assert not Bits( 4, 0 ) == None
+
 def test_ne():
 
   x = Bits( 4, 0b1100 )
@@ -185,6 +188,9 @@ def test_ne():
   assert z.uint() != 1L
   assert z != 1L
   assert 5 != x
+
+  assert z != None
+  assert Bits( 4, 0 ) != None
 
 def test_compare_neg_assert():
 
