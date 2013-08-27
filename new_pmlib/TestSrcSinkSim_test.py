@@ -1,17 +1,17 @@
 #=========================================================================
-# TestSourceSinkSimulator_test.py
+# TestSrcSinkSim_test.py
 #=========================================================================
 
-from new_pymtl               import *
-from ValRdyBundle            import InValRdyBundle, OutValRdyBundle
-from TestSourceSinkSimulator import TestSourceSinkSimulator
+from new_pymtl      import *
+from ValRdyBundle   import InValRdyBundle, OutValRdyBundle
+from TestSrcSinkSim import TestSrcSinkSim
 
 import pytest
 
 #-------------------------------------------------------------------------
 # ValRdyBuffer
 #-------------------------------------------------------------------------
-# Simple example model for testing the TestSourceSinkSimulator.
+# Simple example model for testing the TestSrcSinkSim.
 #
 class ValRdyBuffer( Model ):
 
@@ -40,7 +40,7 @@ class ValRdyBuffer( Model ):
       s.in_.rdy.next = s.data == None
 
 #-------------------------------------------------------------------------
-# test_TestSourceSinkSimulator
+# test_TestSrcSinkSim
 #-------------------------------------------------------------------------
 # Test with various source and sink delays.
 #
@@ -53,7 +53,7 @@ class ValRdyBuffer( Model ):
       (3, 5),
     ]
 )
-def test_TestSourceSinkSimulator( dump_vcd, src_delay, sink_delay ):
+def test_TestSrcSinkSim( dump_vcd, src_delay, sink_delay ):
 
   # Create some messages
   src_msgs = sink_msgs = range( 15 )
@@ -62,11 +62,11 @@ def test_TestSourceSinkSimulator( dump_vcd, src_delay, sink_delay ):
   model = ValRdyBuffer( 8 )
 
   # Create the simulator
-  sim = TestSourceSinkSimulator( model, src_msgs,  sink_msgs, 
-                                        src_delay, sink_delay )
+  sim = TestSrcSinkSim( model, src_msgs,  sink_msgs, 
+                               src_delay, sink_delay )
   # Dump a vcd if enabled
   if dump_vcd:
-    sim.dump_vcd( "pmlib-TestSourceSinkSimulator_test.vcd" )
+    sim.dump_vcd( "pmlib-TestSrcSinkSim_test.vcd" )
 
   # Run the test
   sim.run_test()

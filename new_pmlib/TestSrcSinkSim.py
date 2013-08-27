@@ -1,5 +1,5 @@
 #=========================================================================
-# TestSourceSinkSimulator.py
+# TestSrcSinkSim.py
 #=========================================================================
 
 from new_pymtl  import *
@@ -7,7 +7,7 @@ from TestSource import TestSource
 from TestSink   import TestSink
 
 #-------------------------------------------------------------------------
-# TestSourceSinkSimulator
+# TestSrcSinkSim
 #-------------------------------------------------------------------------
 # This class simplifies creating unit tests which use the ValRdy latency
 # insensitive interface. A user provides the model under test, a list
@@ -15,7 +15,7 @@ from TestSink   import TestSink
 # exptected output messages. The simulator will handle driving the
 # simulation to completion.
 #
-class TestSourceSinkSimulator( object ):
+class TestSrcSinkSim( object ):
 
   #-----------------------------------------------------------------------
   # __init__
@@ -23,9 +23,8 @@ class TestSourceSinkSimulator( object ):
   def __init__( self, model_inst, src_msgs,  sink_msgs,
                                   src_delay, sink_delay ):
 
-    self.model = TestSourceSinkHarness( model_inst, 
-                                        src_msgs,  sink_msgs,
-                                        src_delay, sink_delay )
+    self.model = TestSrcSinkHarness( model_inst, src_msgs,  sink_msgs,
+                                                 src_delay, sink_delay )
     self.vcd_file_name = None
  
   #-----------------------------------------------------------------------
@@ -70,7 +69,7 @@ class TestSourceSinkSimulator( object ):
 #-------------------------------------------------------------------------
 # TestHarness with a TestSource, TestSink, and the module under test.
 #
-class TestSourceSinkHarness( Model ):
+class TestSrcSinkHarness( Model ):
 
   #-----------------------------------------------------------------------
   # __init__

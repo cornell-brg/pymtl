@@ -2,13 +2,12 @@
 # queues_test.py
 #=========================================================================
 
-from new_pymtl    import *
-from TestSource   import TestSource
-from TestSink     import TestSink
-from ValRdyBundle import InValRdyBundle, OutValRdyBundle
-from queues       import Queue, InValRdyQueue, OutValRdyQueue, Pipeline
-
-from TestSourceSinkSimulator import TestSourceSinkSimulator
+from new_pymtl      import *
+from TestSource     import TestSource
+from TestSink       import TestSink
+from ValRdyBundle   import InValRdyBundle, OutValRdyBundle
+from queues         import Queue, InValRdyQueue, OutValRdyQueue, Pipeline
+from TestSrcSinkSim import TestSrcSinkSim
 
 import pytest
 
@@ -95,7 +94,7 @@ class InValRdyQueueHarness( Model ):
 def test_InValRdyQueue( qsize, src_delay, sink_delay ):
   msgs  = range( 20 )
   model = InValRdyQueueHarness( Bits( 8 ), qsize )
-  sim   = TestSourceSinkSimulator( model, msgs, msgs, 
+  sim   = TestSrcSinkSim( model, msgs, msgs, 
                                    src_delay, sink_delay )
   sim.run_test()
 
@@ -141,7 +140,7 @@ class OutValRdyQueueHarness( Model ):
 def test_OutValRdyQueue( qsize, src_delay, sink_delay ):
   msgs  = range( 20 )
   model = OutValRdyQueueHarness( Bits( 8 ), qsize )
-  sim   = TestSourceSinkSimulator( model, msgs, msgs, 
+  sim   = TestSrcSinkSim( model, msgs, msgs, 
                                    src_delay, sink_delay )
   sim.run_test()
 
@@ -188,7 +187,7 @@ class InOutValRdyQueueHarness( Model ):
 def test_InOutValRdyQueues( qsize, src_delay, sink_delay ):
   msgs  = range( 20 )
   model = InOutValRdyQueueHarness( Bits( 8 ), qsize )
-  sim   = TestSourceSinkSimulator( model, msgs, msgs, 
+  sim   = TestSrcSinkSim( model, msgs, msgs, 
                                    src_delay, sink_delay )
   sim.run_test()
 
@@ -284,6 +283,6 @@ class ValRdyPipelineHarness( Model ):
 def test_ValRdyPipeline( stages, src_delay, sink_delay ):
   msgs  = range( 20 )
   model = ValRdyPipelineHarness( Bits( 8 ), stages )
-  sim   = TestSourceSinkSimulator( model, msgs, msgs, 
-                                   src_delay, sink_delay )
+  sim   = TestSrcSinkSim( model, msgs, msgs, 
+                                 src_delay, sink_delay )
   sim.run_test()
