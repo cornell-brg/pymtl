@@ -1,6 +1,6 @@
-#=======================================================================
+#=========================================================================
 # queues_test.py
-#=======================================================================
+#=========================================================================
 
 from new_pymtl    import *
 from TestSource   import TestSource
@@ -8,13 +8,15 @@ from TestSink     import TestSink
 from ValRdyBundle import InValRdyBundle, OutValRdyBundle
 from queues       import Queue, InValRdyQueue, OutValRdyQueue, Pipeline
 
+from TestSourceSinkSimulator import TestSourceSinkSimulator
+
 import pytest
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # test_Queue
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 @pytest.mark.parametrize(
-    ('size'), [1, 3, 12]
+  ('size'), [1, 3, 12]
 )
 def test_Queue( size ):
 
@@ -46,68 +48,10 @@ def test_Queue( size ):
   with pytest.raises( IndexError ):
     queue.deq()
 
-#-----------------------------------------------------------------------
-# TestHarness
-#-----------------------------------------------------------------------
-class ValRdyTestHarness( Model ):
-
-  def __init__( s, model_inst, src_msgs,  sink_msgs,
-                               src_delay, sink_delay ):
-
-    src_msg_type  = model_inst.in_.msg.msg_type
-    sink_msg_type = model_inst.out.msg.msg_type
-
-    s.src   = TestSource( src_msg_type,  src_msgs,  src_delay  )
-    s.model = model_inst
-    s.sink  = TestSink  ( sink_msg_type, sink_msgs, sink_delay )
-
-  # TODO: get rid of elaborate_logic()?
-  def elaborate_logic( s ):
-    s.connect( s.src  .out, s.model.in_ )
-    s.connect( s.model.out, s.sink .in_ )
-
-  def done( s ):
-    return s.src.done and s.sink.done
-
-  def line_trace( s ):
-    return s.src.  line_trace() + " > " + \
-           s.model.line_trace() + " > " + \
-           s.sink. line_trace()
-
-#-------------------------------------------------------------------------
-# run_test
-#-------------------------------------------------------------------------
-def run_test( model_inst, src_msgs, sink_msgs, src_delay, sink_delay ):
-
-  # Instantiate and elaborate the model
-
-  model = ValRdyTestHarness( model_inst, src_msgs,  sink_msgs,
-                                         src_delay, sink_delay )
-  model.elaborate()
-
-  # Create a simulator using the simulation tool
-
-  sim = SimulationTool( model )
-
-  # Run the simulation
-
-  print ""
-
-  sim.reset()
-  while not model.done():
-    sim.print_line_trace()
-    sim.cycle()
-
-  # Add a couple extra ticks so that the VCD dump is nicer
-
-  sim.cycle()
-  sim.cycle()
-  sim.cycle()
-
-#-----------------------------------------------------------------------
-# TestOne
-#-----------------------------------------------------------------------
-class TestOne( Model ):
+#------------------------------------------------------------------------
+# InValRdyQueueHarness
+#------------------------------------------------------------------------
+class InValRdyQueueHarness( Model ):
   def __init__( s, MsgType, size ):
 
     s.in_  = InValRdyBundle ( MsgType )
@@ -136,28 +80,29 @@ class TestOne( Model ):
 
       s.out.val.next = s.out_buffer_full
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # test_InValRdyQueue
-#-----------------------------------------------------------------------
-src_msgs = sink_msgs = range( 20 )
+#-------------------------------------------------------------------------
 @pytest.mark.parametrize(
-    ('qsize', 'src_delay', 'sink_delay'),
-    [
-      (1, 0,0), (2, 0, 0),
-      (1, 3,0), (2, 3, 0),
-      (1, 0,3), (2, 0, 3),
-      (1, 3,5), (2, 3, 5),
-    ]
+  ('qsize', 'src_delay', 'sink_delay'),
+  [
+    (1, 0,0), (2, 0, 0),
+    (1, 3,0), (2, 3, 0),
+    (1, 0,3), (2, 0, 3),
+    (1, 3,5), (2, 3, 5),
+  ]
 )
 def test_InValRdyQueue( qsize, src_delay, sink_delay ):
-  MsgType = Bits( 8 )
-  run_test( TestOne( MsgType, qsize ), src_msgs,  sink_msgs,
-                                       src_delay, sink_delay )
+  msgs  = range( 20 )
+  model = InValRdyQueueHarness( Bits( 8 ), qsize )
+  sim   = TestSourceSinkSimulator( model, msgs, msgs, 
+                                   src_delay, sink_delay )
+  sim.run_test()
 
-#-----------------------------------------------------------------------
-# TestTwo
-#-----------------------------------------------------------------------
-class TestTwo( Model ):
+#-------------------------------------------------------------------------
+# OutValRdyQueueHarness
+#-------------------------------------------------------------------------
+class OutValRdyQueueHarness( Model ):
   def __init__( s, MsgType, size ):
 
     s.in_  = InValRdyBundle ( MsgType )
@@ -181,29 +126,29 @@ class TestTwo( Model ):
       s.queue.xtick()
       s.in_.rdy.next = not s.queue.is_full()
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # test_OutValRdyQueue
-#-----------------------------------------------------------------------
-#def test_OutValRdyQueue( src_delay, sink_delay ):
-src_msgs = sink_msgs = range( 20 )
+#-------------------------------------------------------------------------
 @pytest.mark.parametrize(
-    ('qsize', 'src_delay', 'sink_delay'),
-    [
-      (1, 0,0), (2, 0, 0),
-      (1, 3,0), (2, 3, 0),
-      (1, 0,3), (2, 0, 3),
-      (1, 3,5), (2, 3, 5),
-    ]
+  ('qsize', 'src_delay', 'sink_delay'),
+  [
+    (1, 0,0), (2, 0, 0),
+    (1, 3,0), (2, 3, 0),
+    (1, 0,3), (2, 0, 3),
+    (1, 3,5), (2, 3, 5),
+  ]
 )
 def test_OutValRdyQueue( qsize, src_delay, sink_delay ):
-  MsgType = Bits( 8 )
-  run_test( TestTwo( MsgType, qsize ), src_msgs,  sink_msgs,
-                                       src_delay, sink_delay )
+  msgs  = range( 20 )
+  model = OutValRdyQueueHarness( Bits( 8 ), qsize )
+  sim   = TestSourceSinkSimulator( model, msgs, msgs, 
+                                   src_delay, sink_delay )
+  sim.run_test()
 
-#-----------------------------------------------------------------------
-# TestThree
-#-----------------------------------------------------------------------
-class TestThree( Model ):
+#-------------------------------------------------------------------------
+# InOutValRdyQueueHarness
+#-------------------------------------------------------------------------
+class InOutValRdyQueueHarness( Model ):
   def __init__( s, MsgType, size ):
 
     s.in_  = InValRdyBundle ( MsgType )
@@ -228,29 +173,30 @@ class TestThree( Model ):
 
       s.out_q.xtick()
 
-#-----------------------------------------------------------------------
-# test_ValRdyQueues
-#-----------------------------------------------------------------------
-src_msgs = sink_msgs = range( 20 )
+#-------------------------------------------------------------------------
+# test_InOutValRdyQueues
+#-------------------------------------------------------------------------
 @pytest.mark.parametrize(
-    ('qsize', 'src_delay', 'sink_delay'),
-    [
-      (1, 0,0), (2, 0, 0),
-      (1, 3,0), (2, 3, 0),
-      (1, 0,3), (2, 0, 3),
-      (1, 3,5), (2, 3, 5),
-    ]
+  ('qsize', 'src_delay', 'sink_delay'),
+  [
+    (1, 0,0), (2, 0, 0),
+    (1, 3,0), (2, 3, 0),
+    (1, 0,3), (2, 0, 3),
+    (1, 3,5), (2, 3, 5),
+  ]
 )
-def test_ValRdyQueues( qsize, src_delay, sink_delay ):
-  MsgType = Bits( 8 )
-  run_test( TestThree( MsgType, qsize ), src_msgs,  sink_msgs,
-                                         src_delay, sink_delay )
+def test_InOutValRdyQueues( qsize, src_delay, sink_delay ):
+  msgs  = range( 20 )
+  model = InOutValRdyQueueHarness( Bits( 8 ), qsize )
+  sim   = TestSourceSinkSimulator( model, msgs, msgs, 
+                                   src_delay, sink_delay )
+  sim.run_test()
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # test_Pipeline
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 @pytest.mark.parametrize(
-    ('stages'), [1, 3, 12]
+  ('stages'), [1, 3, 12]
 )
 def test_Pipeline( stages ):
 
@@ -281,10 +227,10 @@ def test_Pipeline( stages ):
 
   assert not pipeline.ready()
 
-#-----------------------------------------------------------------------
-# TestFour
-#-----------------------------------------------------------------------
-class TestFour( Model ):
+#-------------------------------------------------------------------------
+# TestValRdyPipeline
+#-------------------------------------------------------------------------
+class ValRdyPipelineHarness( Model ):
   def __init__( s, MsgType, size ):
 
     s.in_  = InValRdyBundle ( MsgType )
@@ -323,10 +269,9 @@ class TestFour( Model ):
       # Set Output Ports based on Output Queue
       s.out_q.xtick()
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # test_ValRdyPipeline
-#-----------------------------------------------------------------------
-src_msgs = sink_msgs = range( 20 )
+#-------------------------------------------------------------------------
 @pytest.mark.parametrize(
     ('stages', 'src_delay', 'sink_delay'),
     [
@@ -337,6 +282,8 @@ src_msgs = sink_msgs = range( 20 )
     ]
 )
 def test_ValRdyPipeline( stages, src_delay, sink_delay ):
-  MsgType = Bits( 8 )
-  run_test( TestFour( MsgType, stages ), src_msgs,  sink_msgs,
-                                         src_delay, sink_delay )
+  msgs  = range( 20 )
+  model = ValRdyPipelineHarness( Bits( 8 ), stages )
+  sim   = TestSourceSinkSimulator( model, msgs, msgs, 
+                                   src_delay, sink_delay )
+  sim.run_test()
