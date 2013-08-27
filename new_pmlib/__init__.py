@@ -7,6 +7,7 @@
 import regs
 import arith
 import valrdy
+import queues
 
 # List of single-class modules
 
