@@ -50,17 +50,20 @@ def test_Queue( size ):
 #------------------------------------------------------------------------
 # InValRdyQueueHarness
 #------------------------------------------------------------------------
+# Model an input Simple or Bypass queue connected to an output register.
 class InValRdyQueueHarness( Model ):
-  def __init__( s, MsgType, size ):
+  def __init__( s, MsgType, size, pipeq ):
 
     s.in_  = InValRdyBundle ( MsgType )
     s.out  = OutValRdyBundle( MsgType )
 
-    s.size = size
+    s.size  = size
+    s.pipeq = pipeq
 
   def elaborate_logic( s ):
 
-    s.queue = InValRdyQueue( s.in_.msg.msg_type, size=s.size )
+    msg_type = s.in_.msg.msg_type
+    s.queue = InValRdyQueue( msg_type, size=s.size, pipe=s.pipeq )
     s.connect( s.in_, s.queue.in_ )
 
     s.out_buffer_full = False
@@ -83,17 +86,21 @@ class InValRdyQueueHarness( Model ):
 # test_InValRdyQueue
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize(
-  ('qsize', 'src_delay', 'sink_delay'),
+  ('qsize', 'pipeq', 'src_delay', 'sink_delay'),
   [
-    (1, 0,0), (2, 0, 0),
-    (1, 3,0), (2, 3, 0),
-    (1, 0,3), (2, 0, 3),
-    (1, 3,5), (2, 3, 5),
+    (1, 0, 0, 0), (1, 1, 0, 0),
+    (1, 0, 3, 0), (1, 1, 3, 0),
+    (1, 0, 0, 3), (1, 1, 0, 3),
+    (1, 0, 3, 5), (1, 1, 3, 5),
+    (2, 0, 0, 0), (2, 1, 0, 0),
+    (2, 0, 3, 0), (2, 1, 3, 0),
+    (2, 0, 0, 3), (2, 1, 0, 3),
+    (2, 0, 3, 5), (2, 1, 3, 5),
   ]
 )
-def test_InValRdyQueue( qsize, src_delay, sink_delay ):
-  msgs  = range( 20 )
-  model = InValRdyQueueHarness( Bits( 8 ), qsize )
+def test_InValRdyQueue( qsize, pipeq, src_delay, sink_delay ):
+  msgs  = range( 5 )
+  model = InValRdyQueueHarness( Bits( 8 ), qsize, pipeq )
   sim   = TestSrcSinkSim( model, msgs, msgs, 
                                    src_delay, sink_delay )
   sim.run_test()
@@ -102,16 +109,18 @@ def test_InValRdyQueue( qsize, src_delay, sink_delay ):
 # OutValRdyQueueHarness
 #-------------------------------------------------------------------------
 class OutValRdyQueueHarness( Model ):
-  def __init__( s, MsgType, size ):
+  def __init__( s, MsgType, size, bypassq ):
 
     s.in_  = InValRdyBundle ( MsgType )
     s.out  = OutValRdyBundle( MsgType )
 
-    s.size = size
+    s.size    = size
+    s.bypassq = bypassq
 
   def elaborate_logic( s ):
 
-    s.queue = OutValRdyQueue( s.in_.msg.msg_type, size=s.size )
+    msg_type = s.in_.msg.msg_type
+    s.queue = OutValRdyQueue( msg_type, size=s.size, bypass=s.bypassq )
     s.connect( s.out, s.queue.out )
 
     #s.out_buffer_full = False
@@ -119,27 +128,35 @@ class OutValRdyQueueHarness( Model ):
     @s.tick
     def logic():
 
-      if s.in_.val and s.in_.rdy and not s.queue.is_full():
+      # TODO: this behavior is strange, bypass acts like simple + simple
+      # but simple acts like rdy is getting set a cycle late... fix?
+      s.queue.xtick()
+
+      if s.in_.val and s.in_.rdy:
         s.queue.enq( s.in_.msg[:] )
 
-      s.queue.xtick()
       s.in_.rdy.next = not s.queue.is_full()
+
 
 #-------------------------------------------------------------------------
 # test_OutValRdyQueue
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize(
-  ('qsize', 'src_delay', 'sink_delay'),
+  ('qsize', 'bypassq', 'src_delay', 'sink_delay'),
   [
-    (1, 0,0), (2, 0, 0),
-    (1, 3,0), (2, 3, 0),
-    (1, 0,3), (2, 0, 3),
-    (1, 3,5), (2, 3, 5),
+    (1, 0, 0, 0), (1, 1, 0, 0),
+    (1, 0, 3, 0), (1, 1, 3, 0),
+    (1, 0, 0, 3), (1, 1, 0, 3),
+    (1, 0, 3, 5), (1, 1, 3, 5),
+    (2, 0, 0, 0), (2, 1, 0, 0),
+    (2, 0, 3, 0), (2, 1, 3, 0),
+    (2, 0, 0, 3), (2, 1, 0, 3),
+    (2, 0, 3, 5), (2, 1, 3, 5),
   ]
 )
-def test_OutValRdyQueue( qsize, src_delay, sink_delay ):
-  msgs  = range( 20 )
-  model = OutValRdyQueueHarness( Bits( 8 ), qsize )
+def test_OutValRdyQueue( qsize, bypassq, src_delay, sink_delay ):
+  msgs  = range( 5 )
+  model = OutValRdyQueueHarness( Bits( 8 ), qsize, bypassq )
   sim   = TestSrcSinkSim( model, msgs, msgs, 
                                    src_delay, sink_delay )
   sim.run_test()
@@ -148,17 +165,19 @@ def test_OutValRdyQueue( qsize, src_delay, sink_delay ):
 # InOutValRdyQueueHarness
 #-------------------------------------------------------------------------
 class InOutValRdyQueueHarness( Model ):
-  def __init__( s, MsgType, size ):
+  def __init__( s, MsgType, size, pipeq, bypassq ):
 
     s.in_  = InValRdyBundle ( MsgType )
     s.out  = OutValRdyBundle( MsgType )
 
-    s.size = size
+    s.size    = size
+    s.pipeq   = pipeq
+    s.bypassq = bypassq
 
   def elaborate_logic( s ):
 
-    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, size=s.size )
-    s.out_q = OutValRdyQueue( s.out.msg.msg_type, size=s.size )
+    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, size=s.size, pipe  =s.pipeq  )
+    s.out_q = OutValRdyQueue( s.out.msg.msg_type, size=s.size, bypass=s.bypassq)
     s.connect( s.in_, s.in_q. in_ )
     s.connect( s.out, s.out_q.out )
 
@@ -166,27 +185,32 @@ class InOutValRdyQueueHarness( Model ):
     def logic():
 
       s.in_q.xtick()
-
+      s.out_q.xtick()
       if not s.in_q.is_empty() and not s.out_q.is_full():
         s.out_q.enq( s.in_q.deq() )
 
-      s.out_q.xtick()
+
+
 
 #-------------------------------------------------------------------------
 # test_InOutValRdyQueues
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize(
-  ('qsize', 'src_delay', 'sink_delay'),
+  ('qsize', 'pipeq', 'bypassq', 'src_delay', 'sink_delay'),
   [
-    (1, 0,0), (2, 0, 0),
-    (1, 3,0), (2, 3, 0),
-    (1, 0,3), (2, 0, 3),
-    (1, 3,5), (2, 3, 5),
+    (1, 0, 0, 0, 0), (1, 0, 1, 0, 0), (1, 1, 0, 0, 0), (1, 1, 1, 0, 0),
+    (1, 0, 0, 3, 0), (1, 0, 1, 3, 0), (1, 1, 0, 3, 0), (1, 1, 1, 3, 0),
+    (1, 0, 0, 0, 3), (1, 0, 1, 0, 3), (1, 1, 0, 0, 3), (1, 1, 1, 0, 3),
+    (1, 0, 0, 3, 5), (1, 0, 1, 3, 5), (1, 1, 0, 3, 5), (1, 1, 1, 3, 5),
+    (2, 0, 0, 0, 0), (2, 0, 1, 0, 0), (2, 1, 0, 0, 0), (2, 1, 1, 0, 0),
+    (2, 0, 0, 3, 0), (2, 0, 1, 3, 0), (2, 1, 0, 3, 0), (2, 1, 1, 3, 0),
+    (2, 0, 0, 0, 3), (2, 0, 1, 0, 3), (2, 1, 0, 0, 3), (2, 1, 1, 0, 3),
+    (2, 0, 0, 3, 5), (2, 0, 1, 3, 5), (2, 1, 0, 3, 5), (2, 1, 1, 3, 5),
   ]
 )
-def test_InOutValRdyQueues( qsize, src_delay, sink_delay ):
-  msgs  = range( 20 )
-  model = InOutValRdyQueueHarness( Bits( 8 ), qsize )
+def test_InOutValRdyQueues( qsize, pipeq, bypassq, src_delay, sink_delay ):
+  msgs  = range( 10 )
+  model = InOutValRdyQueueHarness( Bits( 8 ), qsize, pipeq, bypassq )
   sim   = TestSrcSinkSim( model, msgs, msgs, 
                                    src_delay, sink_delay )
   sim.run_test()
