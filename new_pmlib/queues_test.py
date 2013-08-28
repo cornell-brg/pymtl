@@ -3,11 +3,9 @@
 #=========================================================================
 
 from new_pymtl      import *
-from TestSource     import TestSource
-from TestSink       import TestSink
 from ValRdyBundle   import InValRdyBundle, OutValRdyBundle
-from queues         import Queue, InValRdyQueue, OutValRdyQueue, Pipeline
 from TestSrcSinkSim import TestSrcSinkSim
+from queues         import Queue, InValRdyQueue, OutValRdyQueue
 
 import pytest
 
@@ -184,13 +182,13 @@ class InOutValRdyQueueHarness( Model ):
     @s.tick
     def logic():
 
+      # Automatically enq from input / deq from output
       s.in_q.xtick()
       s.out_q.xtick()
+
+      # Transfer data from input to output queue
       if not s.in_q.is_empty() and not s.out_q.is_full():
         s.out_q.enq( s.in_q.deq() )
-
-
-
 
 #-------------------------------------------------------------------------
 # test_InOutValRdyQueues
@@ -215,98 +213,3 @@ def test_InOutValRdyQueues( qsize, pipeq, bypassq, src_delay, sink_delay ):
                                    src_delay, sink_delay )
   sim.run_test()
 
-#-------------------------------------------------------------------------
-# test_Pipeline
-#-------------------------------------------------------------------------
-@pytest.mark.parametrize(
-  ('stages'), [1, 3, 12]
-)
-def test_Pipeline( stages ):
-
-  # Create the pipeline
-  pipeline = Pipeline( stages )
-
-  # Fill up the pipeline
-  i = -1
-  for i in range( stages-1 ):
-    pipeline.advance()
-    pipeline.insert( i )
-    assert not pipeline.ready()
-    print pipeline.data
-
-  # Insert one last item
-  pipeline.advance()
-  pipeline.insert( i+1 )
-
-  print pipeline.data
-  # Make sure there is something at the tail of the pipeline
-  assert pipeline.ready()
-
-  # Start removing items from the pipeline
-  for i in range( stages ):
-    assert pipeline.ready()
-    assert pipeline.remove() == i
-    pipeline.advance()
-
-  assert not pipeline.ready()
-
-#-------------------------------------------------------------------------
-# TestValRdyPipeline
-#-------------------------------------------------------------------------
-class ValRdyPipelineHarness( Model ):
-  def __init__( s, MsgType, size ):
-
-    s.in_  = InValRdyBundle ( MsgType )
-    s.out  = OutValRdyBundle( MsgType )
-
-    s.size = size
-
-  def elaborate_logic( s ):
-
-    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, size=s.size )
-    s.out_q = OutValRdyQueue( s.out.msg.msg_type, size=s.size )
-    s.pipe  = Pipeline( s.size )
-    s.connect( s.in_, s.in_q. in_ )
-    s.connect( s.out, s.out_q.out )
-
-    @s.tick
-    def logic():
-
-      # Xfer Data from InPort to Input Queue
-      s.in_q.xtick()
-
-      # No stall
-      if not s.out_q.is_full():
-
-        # Insert item into pipeline from input queue
-        if not s.in_q.is_empty():
-          s.pipe.insert( s.in_q.deq() )
-
-        # Items graduating from pipeline, add to output queue
-        if s.pipe.ready():
-          s.out_q.enq( s.pipe.remove() )
-
-        # Advance the pipeline
-        s.pipe.advance()
-
-      # Set Output Ports based on Output Queue
-      s.out_q.xtick()
-
-#-------------------------------------------------------------------------
-# test_ValRdyPipeline
-#-------------------------------------------------------------------------
-@pytest.mark.parametrize(
-    ('stages', 'src_delay', 'sink_delay'),
-    [
-      (1, 0,0), (5, 0, 0),
-      (1, 3,0), (5, 3, 0),
-      (1, 0,3), (5, 0, 3),
-      (1, 3,5), (5, 3, 5),
-    ]
-)
-def test_ValRdyPipeline( stages, src_delay, sink_delay ):
-  msgs  = range( 20 )
-  model = ValRdyPipelineHarness( Bits( 8 ), stages )
-  sim   = TestSrcSinkSim( model, msgs, msgs, 
-                                 src_delay, sink_delay )
-  sim.run_test()
