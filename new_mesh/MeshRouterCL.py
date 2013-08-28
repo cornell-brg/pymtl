@@ -2,10 +2,11 @@
 # MeshRouterCL.py
 #=========================================================================
 
-from new_pymtl   import *
-from new_pmlib   import InValRdyBundle, OutValRdyBundle, NetMsg
-from collections import deque
-from math        import sqrt
+from new_pymtl        import *
+from new_pmlib        import InValRdyBundle, OutValRdyBundle, NetMsg
+from new_pmlib.queues import InValRdyQueue,  OutValRdyQueue
+from collections      import deque
+from math             import sqrt
 
 #=========================================================================
 # MeshRouterCL
@@ -48,54 +49,48 @@ class MeshRouterCL( Model ):
 
     # Instantiate buffers
 
-    s.input_buffers = [ deque() for x in range( 5 ) ]
-    s.output_regs   = [ None ] * 5
+    s.input_buffers = [ InValRdyQueue( s.msg_type, s.nentries )
+                        for i in range( 5 ) ]
+    # TODO: this would ideally be 1 element of buffering, but since
+    # dequeue and signal setting are all done in the same tick, we can't
+    # pipeline this!
+    s.output_regs   = [ OutValRdyQueue( s.msg_type, 1 )
+                        for i in range( 5 ) ]
     s.priorities    = [ 0 ] * 5
+
+    # Connect
+
+    for i in range( 5 ):
+      s.connect( s.in_[ i ], s.input_buffers[ i ].in_ )
+      s.connect( s.out[ i ], s.output_regs  [ i ].out )
 
     # Logic
 
     @s.tick
     def router_logic():
 
-      # Dequeue logic
-      for i, outport in enumerate( s.out ):
-        if outport.val and outport.rdy:
-          s.output_regs[ i ] = None
+      # Xfer data from input ports to input_buffers
+      for i in range( 5 ):
+        s.input_buffers[ i ].xtick()
+        s.output_regs[ i ].xtick()
 
-      # Enqueue logic
-      for i, inport in enumerate( s.in_ ):
-        if inport.val and inport.rdy:
-          s.input_buffers[ i ].append( inport.msg[:] )
 
       # Arbitration and Crossbar Traversal
       s.winners = []
       for i in range( 5 ):
-        if not s.output_regs[ i ]:
-          s.output_regs[ i ] = s.arbitrate( i )
+
+        if not s.output_regs[ i ].is_full():
+          data = s.arbitrate( i )
+          if data != None:
+            s.output_regs[ i ].enq( data )
 
       # Deque winners
-      for i in s.winners:
-        i.popleft()
+      for winner in s.winners:
+        winner.deq()
 
-      ## Crossbar Traversal
+
+      # Set output ports
       #for i in range( 5 ):
-      #  buffer = s.input_buffers[ i ]
-      #  if len( buffer ) > 0:
-      #    port = s.route_compute( buffer[ 0 ].dest )
-      #    if s.output_regs[ port ] is None:
-      #      msg = buffer.popleft()
-      #      s.output_regs[ port ] = msg
-
-      # Set Signals
-      for i in range( 5 ):
-
-        in_full  = len( s.input_buffers[ i ] ) == s.nentries
-        out_full = s.output_regs[ i ] is not None
-
-        s.out[ i ].val.next = out_full
-        s.in_[ i ].rdy.next = not in_full
-        if out_full:
-          s.out[ i ].msg.next = s.output_regs[ i ]
 
   #-----------------------------------------------------------------------
   # route_compute
@@ -125,12 +120,12 @@ class MeshRouterCL( Model ):
     #print "arbitrating for r:", s.id_, "out:", output, order,
     for i in order:
       request_q = s.input_buffers[ i ]
-      if len( request_q ) > 0:
-        if s.route_compute( request_q[ 0 ].dest ) == output:
+      if not request_q.is_empty():
+        if s.route_compute( request_q.peek().dest ) == output:
           #print "*** i", i, "wins!   dest", s.route_compute( request_q[ 0 ].dest ),
           s.priorities[ output ] = ( i + 1 ) % 5
           s.winners.append( request_q )
-          return request_q[ 0 ]
+          return request_q.peek()
     #print "NO WINNER"
 
 
