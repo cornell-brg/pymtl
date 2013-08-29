@@ -365,13 +365,14 @@ class ParameterizablePortBundleBitStructQueue( Model ):
 
     s.nports = nports
 
-    s.enq    = [ InValRdyBundle ( MemMsg( 16, 32 ) ) for x in range( s.nports ) ]
-    s.deq    = [ OutValRdyBundle( MemMsg( 16, 32 ) ) for x in range( s.nports ) ]
+    msg_type = MemMsg( 16, 32 )
+    s.enq    = InValRdyBundle [ nports ]( msg_type )
+    s.deq    = OutValRdyBundle[ nports ]( msg_type )
 
   def elaborate_logic( s ):
 
-    s.full  = [ Wire( 1 ) for x in range( s.nports ) ]
-    s.wen   = [ Wire( 1 ) for x in range( s.nports ) ]
+    s.full  = Wire[ s.nports ]( 1 )
+    s.wen   = Wire[ s.nports ]( 1 )
 
     @s.combinational
     def comb():

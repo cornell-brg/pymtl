@@ -4,7 +4,9 @@
 # Collection of classes for defining interfaces and connectivity in PyMTL
 # hardware models.
 
-from Bits import Bits
+from metaclasses import MetaListConstructor
+from Bits        import Bits
+
 # TODO: remove copy hack
 from copy import deepcopy
 
@@ -14,6 +16,8 @@ from copy import deepcopy
 # Base class implementing any Signal (port, wire, constant) that can carry
 # a SignalValue.
 class Signal( object ):
+
+  __metaclass__ = MetaListConstructor
 
   #-----------------------------------------------------------------------
   # __init__

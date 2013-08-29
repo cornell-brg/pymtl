@@ -29,14 +29,15 @@
 # "flip" class attribute, and then sets the direction of the bundles
 # ports based on the value of "flip".
 
-from signals import InPort, OutPort
+from metaclasses import MetaListConstructor
+from signals     import InPort, OutPort
 
 #-------------------------------------------------------------------------
 # MetaPortBundle
 #-------------------------------------------------------------------------
 # Metaclass that customizes PortBundle subclass creation
 
-class MetaPortBundle( type ):
+class MetaPortBundle( MetaListConstructor ):
 
   def __call__( self, *args, **kwargs ):
 

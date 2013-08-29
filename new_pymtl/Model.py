@@ -8,6 +8,7 @@
 # can be leveraged by a number of tools for various purposes (simulation,
 # translation into HDLs, etc).
 
+from metaclasses    import MetaListConstructor
 from ConnectionEdge import ConnectionEdge
 from signals        import Signal, InPort, OutPort, Wire, Constant
 from PortBundle     import PortBundle
@@ -18,9 +19,9 @@ import collections
 import inspect
 import warnings
 
-#-------------------------------------------------------------------------
+#=========================================================================
 # Model
-#-------------------------------------------------------------------------
+#=========================================================================
 # User visible base class for hardware models.
 #
 # Provides utility classes for elaborating connectivity between components,
@@ -30,7 +31,9 @@ import warnings
 # Any user implemented model that wishes to make use of the various MTL tools
 # should subclass this.
 #
-class Model(object):
+class Model( object ):
+
+  __metaclass__ = MetaListConstructor
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -39,7 +42,7 @@ class Model(object):
   #
   # The elaborate() function must be called on an instantiated toplevel
   # module before it is passed to any MTL tools!
-  def elaborate(self):
+  def elaborate( self ):
 
     # Initialize data structure to hold all model classes in the design
     self.model_classes = set()
