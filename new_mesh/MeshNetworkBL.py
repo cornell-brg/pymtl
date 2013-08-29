@@ -22,10 +22,10 @@ class MeshNetworkBL( Model ):
 
     s.nrouters  = nrouters
     s.nentries  = nentries
-    s.config    = [ nrouters, nmessages, payload_nbits ]
 
-    s.in_ = [ InValRdyBundle ( NetMsg( *s.config ) ) for x in range( nrouters ) ]
-    s.out = [ OutValRdyBundle( NetMsg( *s.config ) ) for x in range( nrouters ) ]
+    net_msg = NetMsg( nrouters, nmessages, payload_nbits )
+    s.in_   = InValRdyBundle [ nrouters ]( net_msg )
+    s.out   = OutValRdyBundle[ nrouters ]( net_msg )
 
   #-----------------------------------------------------------------------
   # elaborate_logic

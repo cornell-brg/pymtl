@@ -1,5 +1,5 @@
 #=========================================================================
-# MeshNetworkBL
+# MeshNetworkCL
 #=========================================================================
 
 from new_pymtl    import *
@@ -8,32 +8,35 @@ from MeshRouterCL import MeshRouterCL
 from collections  import deque
 from math         import sqrt
 
+#=========================================================================
+# MeshNetworkCL.py
+#=========================================================================
 class MeshNetworkCL( Model ):
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # __init__
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   def __init__( s, nrouters, nmessages, payload_nbits, nentries ):
 
     # ensure nrouters is a perfect square
     assert sqrt( nrouters ) % 1 == 0
 
     s.nrouters  = nrouters
-    s.bparams   = [ nrouters, nmessages, payload_nbits ]
     s.params    = [ nrouters, nmessages, payload_nbits, nentries ]
 
-    s.in_ = [ InValRdyBundle ( NetMsg( *s.bparams ) ) for x in range( nrouters ) ]
-    s.out = [ OutValRdyBundle( NetMsg( *s.bparams ) ) for x in range( nrouters ) ]
+    net_msg = NetMsg( nrouters, nmessages, payload_nbits )
+    s.in_   = InValRdyBundle [ nrouters ]( net_msg )
+    s.out   = OutValRdyBundle[ nrouters ]( net_msg )
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # elaborate_logic
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   def elaborate_logic( s ):
 
     # instantiate routers
 
-    R = MeshRouterCL
-    s.routers = [ R( x, *s.params ) for x in xrange( s.nrouters ) ]
+    R = Router = MeshRouterCL
+    s.routers = [ Router( x, *s.params ) for x in xrange( s.nrouters ) ]
 
     # connect injection terminals
 

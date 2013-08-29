@@ -36,11 +36,9 @@ class MeshRouterCL( Model ):
     # Interface
     #---------------------------------------------------------------------
 
-    s.in_ = [ InValRdyBundle ( s.msg_type ) for x in range( 5 ) ]
-    s.out = [ OutValRdyBundle( s.msg_type ) for x in range( 5 ) ]
+    s.in_ = InValRdyBundle [ 5 ]( s.msg_type )
+    s.out = OutValRdyBundle[ 5 ]( s.msg_type )
 
-    s.east = ( s.in_[ s.EAST ], s.out[ s.EAST ] )
-    s.west = ( s.in_[ s.WEST ], s.out[ s.WEST ] )
 
   #-----------------------------------------------------------------------
   # elaborate_logic
@@ -49,13 +47,8 @@ class MeshRouterCL( Model ):
 
     # Instantiate buffers
 
-    s.input_buffers = [ InValRdyQueue( s.msg_type, s.nentries )
-                        for i in range( 5 ) ]
-    # TODO: this would ideally be 1 element of buffering, but since
-    # dequeue and signal setting are all done in the same tick, we can't
-    # pipeline this!
-    s.output_regs   = [ OutValRdyQueue( s.msg_type, 1 )
-                        for i in range( 5 ) ]
+    s.input_buffers = InValRdyQueue [ 5 ]( s.msg_type, s.nentries )
+    s.output_regs   = OutValRdyQueue[ 5 ]( s.msg_type, 1          )
     s.priorities    = [ 0 ] * 5
 
     # Connect
@@ -87,10 +80,6 @@ class MeshRouterCL( Model ):
       # Deque winners
       for winner in s.winners:
         winner.deq()
-
-
-      # Set output ports
-      #for i in range( 5 ):
 
   #-----------------------------------------------------------------------
   # route_compute
