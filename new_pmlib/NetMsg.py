@@ -37,13 +37,21 @@ class NetMsg( BitStruct ):
     s.seqnum  = BitField( seqnum_nbits  )
     s.payload = BitField( payload_nbits )
 
-  #def mk_msg( s, dest, src, seqnum, payload ):
+    s.nrouters      = nrouters
+    s.nmessages     = nmessages
+    s.payload_nbits = payload_nbits
 
-  #  bits = Bits( s.nbits )
-  #  bits[ s.dest_slice    ] = dest
-  #  bits[ s.src_slice     ] = src
-  #  bits[ s.seqnum_slice  ] = seqnum
-  #  bits[ s.payload_slice ] = payload
+  # TODO: SUPER HACKY
+  def mk_msg( s, dest, src, seqnum, payload ):
+
+    msg         = NetMsg( s.nrouters, s.nmessages, s.payload_nbits )
+
+    msg.dest    = dest
+    msg.src     = src
+    msg.seqnum  = seqnum
+    msg.payload = payload
+
+    return msg
 
   #  return bits
 
