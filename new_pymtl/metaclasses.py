@@ -17,6 +17,11 @@
 #
 #   var = [ MyModel( arg1, arg2, arg3 ) for x in range( nitems ) ]
 #
+# An alternative, more explicit syntax is also provided using the list()
+# class method:
+#
+#   var = MyObject.list( 4 )( arg1, arg2, arg3 )
+#
 class MetaListConstructor( type ):
 
   #-----------------------------------------------------------------------
@@ -27,6 +32,15 @@ class MetaListConstructor( type ):
   # cls, where n is integer passed within [] brackets, and cls is the
   # object class the [] operator was called on. Any args received by the
   # lambda are proxied to the cls constructor.
+  #
+  # http://stackoverflow.com/a/12447078
   def __getitem__( cls, n ):
-    return lambda *args : [ cls( *args ) for x in range( n ) ]
+    return lambda *args, **kwargs : [ cls( *args, **kwargs ) for x in range( n ) ]
+
+  #-----------------------------------------------------------------------
+  # list
+  #-----------------------------------------------------------------------
+  # Same implementation as __getitem__, but a much more explicit
+  def list( cls, n ):
+    return lambda *args, **kwargs : [ cls( *args, **kwargs ) for x in range( n ) ]
 
