@@ -38,6 +38,8 @@ from new_pymtl          import *
 from new_pmlib          import NetMsg
 from MeshNetworkCL      import MeshNetworkCL
 
+from collections        import deque
+
 # Fix the random seed so results are reproducible
 seed(0xdeadbeef)
 
@@ -92,8 +94,9 @@ NUM_MESSAGES        = 2*16
 PAYLOAD_NBITS       = 16
 NUM_ENTRIES         = 4
 
-NUM_WARMUP_CYCLES   = 2000
-NUM_MEASURE_PACKETS = 32
+NUM_WARMUP_CYCLES   = 3000
+#NUM_MEASURE_PACKETS = 32
+NUM_SAMPLE_CYCLES   = 3000 + NUM_WARMUP_CYCLES
 INVALID_TIMESTAMP   = 0
 
 #--------------------------------------------------------------------------
@@ -108,6 +111,7 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
   average_latency     = 0
   packets_generated   = 0
   packets_received    = 0
+  all_packets_received= 0
   total_latency       = 0
   drain_cycles        = 0
   sim_done            = False
@@ -123,7 +127,7 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
 
   # Source Queues - Modeled as Bypass Queues
 
-  src = [ [] for x in xrange( NUM_ROUTERS ) ]
+  src = [ deque() for x in xrange( NUM_ROUTERS ) ]
 
   # Create a simulator using the simulation tool
 
@@ -156,8 +160,9 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
 
         # inject packet past the warmup period
 
-        if (    ( sim.ncycles  > NUM_WARMUP_CYCLES   )
-            and ( packets_generated < NUM_MEASURE_PACKETS ) ):
+        if ( NUM_WARMUP_CYCLES < sim.ncycles < NUM_SAMPLE_CYCLES ):
+            #if (    ( sim.ncycles  > NUM_WARMUP_CYCLES   )
+            #and ( packets_generated < NUM_MEASURE_PACKETS ) ):
           src[i].append( mk_net_msg( dest, i,
                                      0, sim.ncycles ) )
           packets_generated += 1
@@ -167,6 +172,8 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
         else:
           src[i].append( mk_net_msg( dest, i,
                                      0, INVALID_TIMESTAMP ) )
+          if ( sim.ncycles < NUM_SAMPLE_CYCLES ):
+            packets_generated += 1
 
       # Inject from source queue
 
@@ -181,6 +188,7 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
       if ( model.out[i].val.value == 1 ):
         timestamp = \
           model.out[i].msg.payload.value
+        all_packets_received += 1
 
         # collect data for measurement packets
 
@@ -191,8 +199,9 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
 
       # Check if finished - drain phase
 
-      if (   ( average_latency > drain_limit )
-          or ( packets_received == NUM_MEASURE_PACKETS ) ):
+      #if (   ( average_latency > drain_limit )
+      #    or ( packets_received == NUM_MEASURE_PACKETS ) ):
+      if ( all_packets_received == packets_generated ):
         average_latency = total_latency / float( packets_received )
         sim_done = True
         break
@@ -200,11 +209,13 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
       # Pop the source queue
 
       if ( model.in_[i].rdy.value == 1 ) and ( len( src[i] ) > 0 ):
-        src[i].pop(0)
+        src[i].popleft()
 
     # advance simulation
 
     sim.cycle()
+    #if sim.ncycles % 100 == 1:
+    #  print "{:4}: gen {:5} recv {:5}".format( sim.ncycles, packets_generated, all_packets_received )
 
     # print line trace if enables
 
@@ -213,7 +224,7 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
 
   # return the calculated average_latency and count of packets received
 
-  return [average_latency, packets_received]
+  return [average_latency, packets_received, sim.ncycles]
 
 #-------------------------------------------------------------------------------
 # Main
@@ -263,7 +274,10 @@ def main():
 
   # Network Simulation Sweeps
 
-  for i in xrange( step, 105, step ):
+  #for i in xrange( step, 105, step ):
+  #for i in xrange( step, 1, step ):
+  n = 5
+  for i in xrange( n, n+1, 5 ):
     results = simulate( impl_dict[ opts.impl ],           # model type
                         i,                                # injection rate
                         pattern_dict[ opts.pattern ],     # traffic pattern
@@ -274,10 +288,11 @@ def main():
     # Handle stats if enabled
 
     if opts.stats:
-      if results[1] < NUM_MEASURE_PACKETS:
-        print >> os, "Injection Rate {} saturates the network".format( i )
-        break
-      else:
-        print >> os, "{:>2d} {}".format( i, results[0] )
+      #if results[1] < NUM_MEASURE_PACKETS:
+      #  print >> os, "Injection Rate {} saturates the network".format( i )
+      #  break
+      #else:
+      print >> os, "{:>2d} {}".format( i, results[0] )
+      print "Total cycles", results[2]
 
 main()
