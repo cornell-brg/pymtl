@@ -7,9 +7,6 @@
 from metaclasses import MetaListConstructor
 from Bits        import Bits
 
-# TODO: remove copy hack
-from copy import deepcopy
-
 #-------------------------------------------------------------------------
 # Signal
 #-------------------------------------------------------------------------
@@ -26,9 +23,6 @@ class Signal( object ):
   def __init__( self, msg_type ):
 
     is_int             = isinstance( msg_type, int )
-    # TODO: remove copy hack
-    msg_type           = msg_type if    isinstance( msg_type, type ) \
-                                  else  deepcopy( msg_type )
     self.msg_type      = msg_type if not is_int else Bits( msg_type )
     self.nbits         = self.msg_type.nbits
     self.slice         = slice( None )
