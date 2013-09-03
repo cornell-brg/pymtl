@@ -54,41 +54,39 @@ class MetaBitStruct( type ):
     #print "- Meta CALL", args   # DEBUG
 
     # Instantiate the user-created BitStructDefinition class
-    inst = super( MetaBitStruct, self ).__call__( *args, **kwargs )
+    def_inst = super( MetaBitStruct, self ).__call__( *args, **kwargs )
 
     # Get all the members of type BitField from the BitStructDefinition
     # instance. Sort them by order of declaration (stored by the BitField
     # objects). TODO: sort objects in dictionary..
     fields = [(name, obj) for name, obj in
-              inst.__dict__.items() if isinstance( obj, BitField )]
+              def_inst.__dict__.items() if isinstance( obj, BitField )]
     fields.sort( lambda (n1, o1), (n2, o2) : cmp(o2.id, o1.id) )
 
     # Get the total size of the BitStruct
     nbits = sum( [ f.nbits for name, f in fields ] )
 
     # Create the new BitStruct class, then instantiate it
-    prfx       = inst.__class__.__name__
-    sufx       = '_'.join(str(x) for x in args)
-    class_name = "{}_{}".format( prfx, sufx )
-    new_class  = type( class_name, ( BitStruct, ), self._classdict )
-    new_inst   = new_class( nbits )
-    inst       = new_inst
+    name_prfx       = def_inst.__class__.__name__
+    name_sufx       = '_'.join(str(x) for x in args)
+    class_name      = "{}_{}".format( name_prfx, name_sufx )
+    bitstruct_class = type( class_name, ( BitStruct, ), self._classdict )
 
     # Keep track of bit positions for each bitfield
     start_pos = 0
-    inst._bitfields = {}
+    bitstruct_class._bitfields = {}
 
     # Transform attributes containing BitField objects into properties,
     # when accessed they return slices of the underlying value
-    for name, f in fields:
+    for attr_name, bitfield in fields:
 
       # Calculate address range, update start_pos
-      end_pos   = start_pos + f.nbits
+      end_pos   = start_pos + bitfield.nbits
       addr      = slice( start_pos, end_pos )
       start_pos = end_pos
 
       # Add slice to bitfields
-      inst._bitfields[ name ] = addr
+      bitstruct_class._bitfields[ attr_name ] = addr
 
       # Create a getter to assign to the property
       def create_getter( addr ):
@@ -99,15 +97,16 @@ class MetaBitStruct( type ):
       def create_setter( addr ):
         return lambda self, value: self.__setitem__( addr, value )
 
-      # Apply the property
-      setattr( inst.__class__, name,
+      # Add the property to the class
+      setattr( bitstruct_class, attr_name,
                property( create_getter( addr ),
                          create_setter( addr )
                        )
              )
 
-    # Return the BitStruct instance
-    return inst
+    # Return an instance of the new BitStruct class
+    bitstruct_inst = bitstruct_class( nbits )
+    return bitstruct_inst
 
 #=========================================================================
 # BitStructDefinition
@@ -169,6 +168,5 @@ class BitStruct( Bits ):
   #
   def __call__( self ):
     #print "-CALL", type( self )
-    x = type( self )( self.nbits )
-    return x
+    return type( self )( self.nbits )
 
