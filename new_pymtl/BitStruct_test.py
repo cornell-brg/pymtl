@@ -6,13 +6,13 @@ import math
 
 from new_pymtl import *
 from Bits      import Bits
-from BitStruct import BitStruct, BitField
+from BitStruct import BitStructDefinition, BitField
 
 #-------------------------------------------------------------------------
 # Example BitStruct and Enums
 #-------------------------------------------------------------------------
 
-class MemMsg( BitStruct ):
+class MemMsg( BitStructDefinition ):
 
   # Enums for type field
   READ  = 0
@@ -101,6 +101,44 @@ def test_bitstruct_fields():
 
   x.data.v = 0xabcd1234
   assert x.data.v == 0xabcd1234
+
+#-------------------------------------------------------------------------
+# Test new instances created by __call__
+#-------------------------------------------------------------------------
+
+def test_bitstruct_call():
+
+    # Test instantiation
+    msg_type = MemMsg( 16, 32 )
+    x = msg_type()
+    y = msg_type()
+    assert type( x ) == type( y )
+    assert x is not y
+
+    # Test updates
+    x.addr = 10
+    y.addr = 8
+    assert x.addr != y.addr
+
+#-------------------------------------------------------------------------
+# Test two instances with same params
+#-------------------------------------------------------------------------
+import pytest
+@pytest.mark.xfail
+def test_bitstruct_call():
+
+  bits_a = Bits( 8 )
+  bits_b = Bits( 8 )
+
+  # Passes.  Bits doesn't use metaclasses.
+  assert type( bits_a ) == type( bits_b )
+
+  type_a = MemMsg( 16, 32 )
+  type_b = MemMsg( 16, 32 )
+
+  # Fails.  Each call to MemMsg uses metaclassed to build a new class.
+  # Possible fixes: caching?
+  assert type( type_a ) == type( type_b )
 
 #-------------------------------------------------------------------------
 # Check Combinational Logic

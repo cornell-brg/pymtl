@@ -21,7 +21,7 @@ from new_pymtl import *
 # NetMsg
 #-------------------------------------------------------------------------
 # BitStruct designed to create network messages.
-class NetMsg( BitStruct ):
+class NetMsg( BitStructDefinition ):
 
   def __init__( s, nrouters, nmessages, payload_nbits ):
 
@@ -41,11 +41,10 @@ class NetMsg( BitStruct ):
     s.nmessages     = nmessages
     s.payload_nbits = payload_nbits
 
-  # TODO: SUPER HACKY
+  # TODO: Should this be a class method?
   def mk_msg( s, dest, src, seqnum, payload ):
 
-    msg         = NetMsg( s.nrouters, s.nmessages, s.payload_nbits )
-
+    msg         = s()
     msg.dest    = dest
     msg.src     = src
     msg.seqnum  = seqnum
@@ -53,12 +52,11 @@ class NetMsg( BitStruct ):
 
     return msg
 
-  #  return bits
-
   #s.hash = hash(( num_routers, num_messages, payload_nbits ))
   #def __hash__( s ):
   #  return s.hash
 
+  # TODO: Should this be a class method?
   def __str__( s ):
     return "{}:{}:{}:{}".format( s.dest, s.src, s.seqnum, s.payload )
 

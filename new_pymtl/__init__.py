@@ -4,7 +4,7 @@ from signals        import Wire, InPort, OutPort
 from Bits           import Bits
 from SimulationTool import SimulationTool
 from PortBundle     import PortBundle, create_PortBundles
-from BitStruct      import BitStruct, BitField
+from BitStruct      import BitStruct, BitStructDefinition, BitField
 from helpers        import get_nbits, get_sel_nbits, zext, sext, concat
 from SignalValue    import CreateWrappedClass
 
@@ -19,6 +19,8 @@ __all__ = [ # Model Construction
             # Message Types
             'Bits',
             'BitStruct',
+            # Message Constructors
+            'BitStructDefinition',
             'BitField',
             # Tools
             'SimulationTool',
