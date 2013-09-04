@@ -116,7 +116,7 @@ class MetaBitStruct( type ):
 # BitField type (below). The parameterizable BitStructDefinition defined
 # by the user is then used to create new classes of type BitStruct.
 #
-class BitStructDefinition( Bits ):
+class BitStructDefinition( object ):
   __metaclass__ = MetaBitStruct
 
 #=========================================================================
