@@ -4,6 +4,7 @@
 # Module containing the SignalValue class.
 
 import inspect
+import copy
 
 #-------------------------------------------------------------------------
 # SignalValue
@@ -170,17 +171,17 @@ class SignalValue( object ):
 class SignalValueWrapper( SignalValue ):
 
   __wraps__  = None
-  __ignore__ = "class mro new init setattr getattr getattribute nbits"
+  __ignore__ = "class mro new init setattr getattr getattribute nbits dict"
 
   nbits      = None
 
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  def __init__( self ):
+  def __init__( self, *args, **kwargs ):
     if self.__wraps__ is None:
       raise TypeError("base class Wrapper may not be instantiated")
-    self._data = self.__wraps__()
+    self._data = self.__wraps__( *args, **kwargs )
 
   #-----------------------------------------------------------------------
   # write_value
@@ -197,6 +198,14 @@ class SignalValueWrapper( SignalValue ):
   def write_next( self, value ):
     try:                   self._next._data = value._data
     except AttributeError: self._next._data = value
+
+  #-----------------------------------------------------------------------
+  # __getattr__
+  #-----------------------------------------------------------------------
+  # Add support for performing copy using the slice operator (signal[:]).
+  def __getitem__( self, idx ):
+    assert idx.start is None and idx.stop is None
+    return copy.copy( self )
 
   #-----------------------------------------------------------------------
   # __getattr__
@@ -221,7 +230,7 @@ class SignalValueWrapper( SignalValue ):
           return getattr( self._data, name )
         return proxy
 
-      # Create the warpper class.
+      # Create the wrapper class.
       type.__init__( cls, name, bases, dct )
 
       # For each double-underscore attribute not in the __ignore__ list,
