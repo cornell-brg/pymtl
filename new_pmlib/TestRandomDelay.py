@@ -33,7 +33,7 @@ class TestRandomDelay( Model ):
 
     # Buffer to hold message
 
-    s.buf      = 0
+    s.buf      = None
     s.buf_full = False
     s.counter  = 0
 
@@ -79,7 +79,8 @@ class TestRandomDelay( Model ):
 
       # The output message is always the output of the buffer
 
-      s.out.msg.next = s.buf
+      if s.buf_full:
+        s.out.msg.next = s.buf
 
       # The input is ready and the output is valid if counter is zero
 
