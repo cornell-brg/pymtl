@@ -171,7 +171,7 @@ class SignalValue( object ):
 class SignalValueWrapper( SignalValue ):
 
   __wraps__  = None
-  __ignore__ = "class mro new init setattr getattr getattribute nbits dict"
+  __ignore__ = "class mro new init setattr getattr getattribute nbits dict weakref"
 
   nbits      = None
 
