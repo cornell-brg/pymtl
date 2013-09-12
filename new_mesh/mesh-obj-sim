@@ -35,8 +35,7 @@ import re
 
 from random             import randint, seed
 from new_pymtl          import *
-from new_pmlib          import NetMsg
-from MeshNetworkCL      import MeshNetworkCL
+from MeshObjNetworkCL   import MeshNetworkCL, NetObject
 
 from collections        import deque
 
@@ -118,7 +117,8 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
 
   # Syntax helper
 
-  mk_net_msg = NetMsg( NUM_ROUTERS, NUM_MESSAGES, PAYLOAD_NBITS ).mk_msg
+  def mk_net_msg( dest, src, seqnum, payload ):
+    return NetObject( dest, src, seqnum, payload )
 
   # Instantiate and elaborate a ring network
 
@@ -193,7 +193,7 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
         # collect data for measurement packets
 
         if ( timestamp != INVALID_TIMESTAMP ):
-          total_latency    += ( sim.ncycles - timestamp.uint() )
+          total_latency    += ( sim.ncycles - timestamp )
           packets_received += 1
           average_latency = total_latency / float( packets_received )
 
