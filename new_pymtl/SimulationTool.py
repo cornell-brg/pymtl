@@ -13,7 +13,8 @@ import warnings
 
 from sys               import flags
 from SignalValue       import SignalValue
-from ast_visitor       import DetectLoadsAndStores, get_method_ast
+from ast_helpers       import get_method_ast
+from ast_visitor       import DetectLoadsAndStores
 #from EventQueue        import new_cpp_queue, cpp_callback
 from SimulationMetrics import SimulationMetrics, DummyMetrics
 

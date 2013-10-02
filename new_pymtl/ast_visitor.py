@@ -15,7 +15,6 @@
 # * Translation Visitor: translate code in @combinational and @posedge_clk
 #   blocks into Verilog syntax.
 
-import inspect
 import ast, _ast
 
 #------------------------------------------------------------------------
@@ -123,19 +122,4 @@ class GetVariableName( ast.NodeVisitor ):
 
   def visit_Name( self, node ):
     return node.id
-
-#-------------------------------------------------------------------------
-# Parse Method Utility Function
-#-------------------------------------------------------------------------
-# In order to parse class methods and inner functions, we need to fix the
-# indentation whitespace or else the ast parser throws an "unexpected
-# ident" error.
-import re
-p = re.compile('( *(@|def))')
-def get_method_ast( func ):
-
-  src = inspect.getsource( func )
-  new_src = p.sub( r'\2', src )
-  tree = ast.parse( new_src )
-  return tree
 
