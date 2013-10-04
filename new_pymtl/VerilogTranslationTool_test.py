@@ -46,8 +46,12 @@ def test_PassThroughListWire():
   setup_sim( structural.PassThroughListWire( 8, 4 ) )
   setup_sim( structural.PassThroughListWire( 8, 1 ) )
 
-#def test_PassThroughWrapped():
+def test_PassThroughWrapped():
+  setup_sim( structural.PassThroughWrapped( 8 ) )
+
 #def test_PassThroughWrappedChain():
+  #setup_sim( structural.PassThroughWrappedChain( 8, 4 ) )
+
 #def test_Splitter():
 #def test_SplitterWires():
 #def test_SplitterWrapped():

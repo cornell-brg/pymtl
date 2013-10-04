@@ -24,11 +24,34 @@ class VerilogTranslationTool(object):
   # Generates Verilog source from a PyMTL model.
   def __init__(self, model, o=sys.stdout):
 
-    start_module     ( model, o )
-    port_declarations( model, o )
-    wire_declarations( model, o )
-    port_connections ( model, o )
-    end_module       ( model, o )
+    # List of models to translate
+    translation_queue = []
+
+    # Utility function to recursively collect all submodels in design
+    def collect_all_models( m ):
+      # Add the model to the queue
+      if m not in translation_queue:
+        translation_queue.append( m )
+
+      for subm in m.get_submodules():
+        collect_all_models( subm )
+
+    # Collect all submodels in design and translate them
+    collect_all_models( model )
+    for m in translation_queue:
+      translate_module( m, o )
+
+#------------------------------------------------------------------------
+# translate_module
+#-------------------------------------------------------------------------
+def translate_module( model, o ):
+
+  start_module      ( model, o )
+  port_declarations ( model, o )
+  wire_declarations ( model, o )
+  submodel_instances( model, o )
+  signal_connections( model, o )
+  end_module        ( model, o )
 
 #------------------------------------------------------------------------
 # start_module
@@ -51,12 +74,13 @@ def port_declarations( model, o ):
   def port_to_str( port ):
     direction = 'input'  if isinstance( port, InPort ) else 'output'
     return '  {:6} [{:4}:0] {}'.format( direction, port.nbits-1,
-                                        mangle_name( port ) )
+                                        mangle_name( port.name ) )
 
   print >> o, '('
   for p in model.get_ports()[:-1]: print >> o, port_to_str( p ) + ','
   for p in model.get_ports()[-1:]: print >> o, port_to_str( p )
   print >> o, ');'
+  print >> o
 
 #------------------------------------------------------------------------
 # wire_declarations
@@ -64,42 +88,20 @@ def port_declarations( model, o ):
 # Generate Verilog source for wire declarations.
 def wire_declarations( model, o ):
 
-  # utility function
-  def wire_to_str( port ):
-    return '  wire   [{:4}:0] {}'.format( port.nbits-1,
-                                          mangle_name( port ) )
+  if not model.get_wires(): return
 
   print >> o, '  // wire declarations'
   for p in model.get_wires(): print >> o, wire_to_str( p ) + ';'
   print >> o
 
 #------------------------------------------------------------------------
-# port_connections
+# signal_connections
 #-------------------------------------------------------------------------
-# Generate Verilog source for port declarations.
-def port_connections( model, o ):
+# Generate Verilog source for signal.
+def signal_connections( model, o ):
 
-  # Utility function
-  def signal_to_str( node, addr, context ):
+  if not model.get_connections(): return
 
-    # Special case constants
-    if isinstance( node, Constant ): return node.name
-
-    # If the node's parent module isn't the same as the current module
-    # we need to prefix the signal name with the module name
-    prefix = ''
-    if node.parent != context and node.parent != None:
-      prefix = '{}_M_'.format( node.parent.name )
-
-    # If this is a slice, we need to provide the slice indexing
-    suffix = ''
-    if isinstance( addr, slice ):
-      suffix = '[{}:{}]'.format( addr.stop - 1, addr.start )
-    elif isinstance( addr, int ):
-      suffix = '[{}]'.format( addr )
-
-    # Return the string
-    return prefix + mangle_name( node ) + suffix
 
   # Create all the assignment statements
   connection_list = []
@@ -109,9 +111,39 @@ def port_connections( model, o ):
     connection_list.append( '  assign {} = {};'.format( dest, src ) )
 
   # Print them in alphabetically sorted order (prettier)
-  print >> o, '  // port connections'
+  print >> o, '  // signal connections'
   for c in sorted( connection_list ): print >> o, c
   print >> o
+
+#-------------------------------------------------------------------------
+# submodel_instances
+#-------------------------------------------------------------------------
+# Generate Verilog source for submodel instances.
+def submodel_instances( model, o ):
+
+  if not model.get_submodules(): return
+
+  for submodel in model.get_submodules():
+
+    # Create strings for port connections
+    submodel_name = mangle_name( submodel.name )
+    wires = []
+    ports = []
+    for p in submodel.get_ports():
+      port_name = mangle_name( p.name )
+      temp_name = submodel_name + '$' + port_name
+      wires.append( wire_to_str( p, None, model ) )
+      ports.append( '    .{} ({})'.format( port_name, temp_name ) )
+
+    # Print the submodule instantiation
+    for w in wires: print >> o, w + ';'
+    print >> o
+    print >> o, '  {} {}'.format( submodel.class_name, submodel_name )
+    print >> o, '  ('
+    for p in ports[:-1]: print >> o, p + ','
+    for p in ports[-1:]: print >> o, p
+    print >> o, '  );'
+    print >> o
 
 #------------------------------------------------------------------------
 # end_module
@@ -121,14 +153,44 @@ def end_module( model, o ):
   print >> o
 
 #------------------------------------------------------------------------
+# wire_to_str
+#-------------------------------------------------------------------------
+# utility function
+def wire_to_str( port, slice_=None, parent=None ):
+  return '  wire   [{:4}:0] {}'.format( port.nbits-1,
+                                signal_to_str( port, slice_, parent ) )
+
+#------------------------------------------------------------------------
 # mangle_name
 #-------------------------------------------------------------------------
-def mangle_name( p ):
+def mangle_name( name ):
   # Utility function
   def replacement_string( m ):
     return "${:03d}".format( int(m.group(2)) )
   # Return the mangled name
-  return re.sub( indexing, replacement_string, p.name )
+  return re.sub( indexing, replacement_string, name )
 
 # Regex to match list indexing
 indexing = re.compile("(\[)(.*)(\])")
+
+# Utility function
+def signal_to_str( node, addr, context ):
+
+  # Special case constants
+  if isinstance( node, Constant ): return node.name
+
+  # If the node's parent module isn't the same as the current module
+  # we need to prefix the signal name with the module name
+  prefix = ''
+  if node.parent != context and node.parent != None:
+    prefix = '{}$'.format( node.parent.name )
+
+  # If this is a slice, we need to provide the slice indexing
+  suffix = ''
+  if isinstance( addr, slice ):
+    suffix = '[{}:{}]'.format( addr.stop - 1, addr.start )
+  elif isinstance( addr, int ):
+    suffix = '[{}]'.format( addr )
+
+  # Return the string
+  return prefix + mangle_name( node.name ) + suffix
