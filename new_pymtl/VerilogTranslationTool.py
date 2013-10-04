@@ -26,6 +26,7 @@ class VerilogTranslationTool(object):
 
     start_module     ( model, o )
     port_declarations( model, o )
+    wire_declarations( model, o )
     port_connections ( model, o )
     end_module       ( model, o )
 
@@ -49,13 +50,28 @@ def port_declarations( model, o ):
   # utility function
   def port_to_str( port ):
     direction = 'input'  if isinstance( port, InPort ) else 'output'
-    return '  {:6} [{:3}:0] {}'.format( direction, port.nbits-1,
+    return '  {:6} [{:4}:0] {}'.format( direction, port.nbits-1,
                                         mangle_name( port ) )
 
   print >> o, '('
   for p in model.get_ports()[:-1]: print >> o, port_to_str( p ) + ','
   for p in model.get_ports()[-1:]: print >> o, port_to_str( p )
   print >> o, ');'
+
+#------------------------------------------------------------------------
+# wire_declarations
+#-------------------------------------------------------------------------
+# Generate Verilog source for wire declarations.
+def wire_declarations( model, o ):
+
+  # utility function
+  def wire_to_str( port ):
+    return '  wire   [{:4}:0] {}'.format( port.nbits-1,
+                                          mangle_name( port ) )
+
+  print >> o, '  // wire declarations'
+  for p in model.get_wires(): print >> o, wire_to_str( p ) + ';'
+  print >> o
 
 #------------------------------------------------------------------------
 # port_connections
@@ -85,11 +101,16 @@ def port_connections( model, o ):
     # Return the string
     return prefix + mangle_name( node ) + suffix
 
-  print >> o, '  // port_connections'
+  # Create all the assignment statements
+  connection_list = []
   for c in model.get_connections():
     dest = signal_to_str( c.dest_node, c.dest_slice, model )
     src  = signal_to_str( c.src_node,  c.src_slice,  model )
-    print >> o, '  assign {} = {};'.format( dest, src )
+    connection_list.append( '  assign {} = {};'.format( dest, src ) )
+
+  # Print them in alphabetically sorted order (prettier)
+  print >> o, '  // port connections'
+  for c in sorted( connection_list ): print >> o, c
   print >> o
 
 #------------------------------------------------------------------------

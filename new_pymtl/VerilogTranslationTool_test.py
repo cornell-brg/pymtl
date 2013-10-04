@@ -2,7 +2,7 @@
 # TranslationTool_test.py
 #=========================================================================
 
-import SimulationTool_struct_test as t1
+import SimulationTool_struct_test as structural
 from VerilogTranslationTool     import VerilogTranslationTool
 
 import tempfile
@@ -32,15 +32,38 @@ def setup_sim( model ):
 # PassThrough
 #-------------------------------------------------------------------------
 def test_PassThrough():
-  setup_sim( t1.PassThrough( 8 ) )
-  setup_sim( t1.PassThrough( 32 ) )
+  setup_sim( structural.PassThrough( 8 ) )
+  setup_sim( structural.PassThrough( 32 ) )
 
 def test_PassThroughBits():
-  setup_sim( t1.PassThroughBits( 8 ) )
+  setup_sim( structural.PassThroughBits( 8 ) )
 
 def test_PassThroughList():
-  setup_sim( t1.PassThroughList( 8, 4 ) )
-  setup_sim( t1.PassThroughList( 8, 1 ) )
+  setup_sim( structural.PassThroughList( 8, 4 ) )
+  setup_sim( structural.PassThroughList( 8, 1 ) )
 
-#def test_PassThroughListWire():
-#  setup_sim( PassThroughListWire )
+def test_PassThroughListWire():
+  setup_sim( structural.PassThroughListWire( 8, 4 ) )
+  setup_sim( structural.PassThroughListWire( 8, 1 ) )
+
+#def test_PassThroughWrapped():
+#def test_PassThroughWrappedChain():
+#def test_Splitter():
+#def test_SplitterWires():
+#def test_SplitterWrapped():
+#def test_SplitterPT_1():
+#def test_SplitterPT_2():
+#def test_SplitterPT_3():
+#def test_SplitterPT_4():
+#def test_SplitterPT_5():
+#def test_SplitterPT_5():
+#def test_SimpleBitBlast():
+#  setup_sim( structural.SimpleBitBlast( 8 ) )
+#def test_SimpleBitBlast():
+#  setup_sim( structural.SimpleBitBlast( 16 ) )
+#def test_ComplexBitBlast():
+#def test_SimlbeBitMerge():
+#def test_ConstantPort():
+#def test_ConstantSlice():
+#def test_ConstantModule():
+#def test_ListOfPortBundles():
