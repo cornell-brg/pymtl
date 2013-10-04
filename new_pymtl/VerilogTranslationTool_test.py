@@ -2,7 +2,7 @@
 # TranslationTool_test.py
 #=========================================================================
 
-from SimulationTool_struct_test import PassThrough, PassThroughBits
+import SimulationTool_struct_test as t1
 from VerilogTranslationTool     import VerilogTranslationTool
 
 import tempfile
@@ -19,25 +19,28 @@ def setup_sim( model ):
     cmd  = '{} {}'.format( compiler, output.name )
     exit = os.system( cmd )
 
-    if exit != 0:
+    output.seek(0)
+    verilog = output.read()
+    print
+    print verilog
 
-      output.seek(0)
-      verilog = output.read()
+    if exit != 0:
       raise Exception( "Module did not compile!\n Source:\n" + verilog )
+
 
 #-------------------------------------------------------------------------
 # PassThrough
 #-------------------------------------------------------------------------
 def test_PassThrough():
-  setup_sim( PassThrough( 8 ) )
-  setup_sim( PassThrough( 32 ) )
-
+  setup_sim( t1.PassThrough( 8 ) )
+  setup_sim( t1.PassThrough( 32 ) )
 
 def test_PassThroughBits():
-  setup_sim( PassThroughBits( 8 ) )
-#
-#def test_PassThroughList():
-#  setup_sim( PassThroughList )
-#
+  setup_sim( t1.PassThroughBits( 8 ) )
+
+def test_PassThroughList():
+  setup_sim( t1.PassThroughList( 8, 4 ) )
+  setup_sim( t1.PassThroughList( 8, 1 ) )
+
 #def test_PassThroughListWire():
 #  setup_sim( PassThroughListWire )

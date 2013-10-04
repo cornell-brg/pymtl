@@ -5,6 +5,7 @@
 
 from Model import *
 import sys
+import re
 
 import inspect
 #from   translate_logic import PyToVerilogVisitor
@@ -82,7 +83,7 @@ def port_connections( model, o ):
       suffix = '[{}]'.format( addr )
 
     # Return the string
-    return prefix + node.name + suffix
+    return prefix + mangle_name( node ) + suffix
 
   print >> o, '  // port_connections'
   for c in model.get_connections():
@@ -101,6 +102,12 @@ def end_module( model, o ):
 #------------------------------------------------------------------------
 # mangle_name
 #-------------------------------------------------------------------------
-# TODO
 def mangle_name( p ):
-  return p.name
+  # Utility function
+  def replacement_string( m ):
+    return "${:03d}".format( int(m.group(2)) )
+  # Return the mangled name
+  return re.sub( indexing, replacement_string, p.name )
+
+# Regex to match list indexing
+indexing = re.compile("(\[)(.*)(\])")
