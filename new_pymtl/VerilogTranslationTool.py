@@ -13,9 +13,8 @@ import inspect
 #from   translate_logic import TemporariesVisitor
 
 #------------------------------------------------------------------------
-# Verilog Translation Tool
+# VerilogTranslationTool
 #-------------------------------------------------------------------------
-
 class VerilogTranslationTool(object):
 
   #-----------------------------------------------------------------------
@@ -46,40 +45,27 @@ class VerilogTranslationTool(object):
 #-------------------------------------------------------------------------
 def translate_module( model, o ):
 
-  start_module      ( model, o )
+  print >> o, header   .format( model.class_name )
+  print >> o, start_mod.format( model.class_name )
+
   port_declarations ( model, o )
   wire_declarations ( model, o )
   submodel_instances( model, o )
-  signal_connections( model, o )
-  end_module        ( model, o )
+  signal_assignments( model, o )
 
-#------------------------------------------------------------------------
-# start_module
-#-------------------------------------------------------------------------
-def start_module( model, o ):
-
-  # Module declaration
-  print >> o, '//-{}'.format( 71*'-' )
-  print >> o, '// {}'.format( model.class_name )
-  print >> o, '//-{}'.format( 71*'-' )
-  print >> o, 'module {}'.format( model.class_name )
+  print >> o, end_mod  .format( model.class_name )
+  print >> o
 
 #------------------------------------------------------------------------
 # port_declarations
 #-------------------------------------------------------------------------
 # Generate Verilog source for port declarations.
 def port_declarations( model, o ):
-
-  # utility function
-  def port_to_str( port ):
-    direction = 'input'  if isinstance( port, InPort ) else 'output'
-    return '  {:6} [{:4}:0] {}'.format( direction, port.nbits-1,
-                                        mangle_name( port.name ) )
-
-  print >> o, '('
-  for p in model.get_ports()[:-1]: print >> o, port_to_str( p ) + ','
-  for p in model.get_ports()[-1:]: print >> o, port_to_str( p )
-  print >> o, ');'
+  if not model.get_ports(): return
+  port_list = [ port_decl( x ) for x in model.get_ports() ]
+  print >> o, start_ports
+  print >> o, port_delim.join( port_list )
+  print >> o, end_ports
   print >> o
 
 #------------------------------------------------------------------------
@@ -87,32 +73,29 @@ def port_declarations( model, o ):
 #-------------------------------------------------------------------------
 # Generate Verilog source for wire declarations.
 def wire_declarations( model, o ):
-
   if not model.get_wires(): return
-
+  wires = [ wire_decl( x ) for x in model.get_wires() ]
   print >> o, '  // wire declarations'
-  for p in model.get_wires(): print >> o, wire_to_str( p ) + ';'
+  print >> o, wire_delim.join( wires ) + wire_delim
   print >> o
 
 #------------------------------------------------------------------------
-# signal_connections
+# signal_assignments
 #-------------------------------------------------------------------------
-# Generate Verilog source for signal.
-def signal_connections( model, o ):
-
+# Generate Verilog source for signal connections.
+def signal_assignments( model, o ):
   if not model.get_connections(): return
 
-
   # Create all the assignment statements
-  connection_list = []
+  assignment_list = []
   for c in model.get_connections():
     dest = signal_to_str( c.dest_node, c.dest_slice, model )
     src  = signal_to_str( c.src_node,  c.src_slice,  model )
-    connection_list.append( '  assign {} = {};'.format( dest, src ) )
+    assignment_list.append( assignment.format( dest, src ) )
 
   # Print them in alphabetically sorted order (prettier)
   print >> o, '  // signal connections'
-  for c in sorted( connection_list ): print >> o, c
+  print >> o, endl.join( sorted( assignment_list ) )
   print >> o
 
 #-------------------------------------------------------------------------
@@ -131,26 +114,18 @@ def submodel_instances( model, o ):
     ports = []
     for p in submodel.get_ports():
       port_name = mangle_name( p.name )
-      temp_name = submodel_name + '$' + port_name
+      temp_name = signal_to_str( p, None, model )
       wires.append( wire_to_str( p, None, model ) )
-      ports.append( '    .{} ({})'.format( port_name, temp_name ) )
+      ports.append( connection.format( port_name, temp_name ) )
 
     # Print the submodule instantiation
-    for w in wires: print >> o, w + ';'
+    print >> o, '  // {} temporaries'.format( submodel_name )
+    print >> o, wire_delim.join( wires ) + wire_delim
+    print >> o, instance.format( submodel.class_name, submodel_name )
+    print >> o, tab + start_ports
+    print >> o, port_delim.join( ports )
+    print >> o, tab + end_ports
     print >> o
-    print >> o, '  {} {}'.format( submodel.class_name, submodel_name )
-    print >> o, '  ('
-    for p in ports[:-1]: print >> o, p + ','
-    for p in ports[-1:]: print >> o, p
-    print >> o, '  );'
-    print >> o
-
-#------------------------------------------------------------------------
-# end_module
-#-------------------------------------------------------------------------
-def end_module( model, o ):
-  print >> o, 'endmodule // {}'.format( model.class_name )
-  print >> o
 
 #------------------------------------------------------------------------
 # wire_to_str
@@ -173,7 +148,10 @@ def mangle_name( name ):
 # Regex to match list indexing
 indexing = re.compile("(\[)(.*)(\])")
 
-# Utility function
+#------------------------------------------------------------------------
+# signal_to_str
+#-------------------------------------------------------------------------
+# TODO: clean this up
 def signal_to_str( node, addr, context ):
 
   # Special case constants
@@ -194,3 +172,50 @@ def signal_to_str( node, addr, context ):
 
   # Return the string
   return prefix + mangle_name( node.name ) + suffix
+
+
+#------------------------------------------------------------------------
+# verilog
+#-------------------------------------------------------------------------
+tab         = '  '
+endl        = '\n'
+div         = '//' + '-'*72
+comment     = '// {}'
+header      = div + endl + comment + endl + div
+start_mod   = 'module {}'
+end_mod     = 'endmodule // {}'
+start_ports = '('
+end_ports   = ');'
+instance    = tab + '{} {}'
+connection  = tab + '.{} ({})'
+signal_decl = tab + '{:6} [{:4}:0] {}'
+port_delim  = ',' + endl
+wire_delim  = ';' + endl
+assignment  = tab + 'assign {} = {};'
+
+#------------------------------------------------------------------------
+# port_decl
+#-------------------------------------------------------------------------
+def port_decl( port ):
+
+  if   isinstance( port, InPort ):
+    type_ = 'input'
+  elif isinstance( port, OutPort ):
+    type_ = 'output'
+
+  nbits = port.nbits - 1
+  name  = mangle_name( port.name )
+
+  return signal_decl.format( type_, nbits, name )
+
+#------------------------------------------------------------------------
+# wire_decl
+#-------------------------------------------------------------------------
+def wire_decl( port ):
+
+  type_ = 'wire'
+  nbits = port.nbits - 1
+  name  = mangle_name( port.name )
+
+  return signal_decl.format( type_, nbits, name )
+
