@@ -3,10 +3,11 @@
 #=========================================================================
 
 import SimulationTool_struct_test as structural
-from VerilogTranslationTool     import VerilogTranslationTool
+
+from VerilogTranslationTool import VerilogTranslationTool
+from subprocess             import check_output, STDOUT, CalledProcessError
 
 import tempfile
-import os
 
 compiler = 'iverilog -g2005 -Wall -Wno-sensitivity-entire-vector'
 
@@ -17,15 +18,25 @@ def setup_sim( model ):
     VerilogTranslationTool( model, output )
     output.flush()
     cmd  = '{} {}'.format( compiler, output.name )
-    exit = os.system( cmd )
 
-    output.seek(0)
-    verilog = output.read()
-    print
-    print verilog
+    try:
 
-    if exit != 0:
-      raise Exception( "Module did not compile!\n Source:\n" + verilog )
+      result = check_output( cmd.split() , stderr=STDOUT )
+      output.seek(0)
+      verilog = output.read()
+      print
+      print verilog
+
+    except CalledProcessError as e:
+
+      output.seek(0)
+      verilog = output.read()
+
+      raise Exception( 'Module did not compile!\n\n'
+                       'Command:\n' + ' '.join(e.cmd) + '\n\n'
+                       'Error:\n' + e.output + '\n'
+                       'Source:\n' + verilog
+                     )
 
 
 #-------------------------------------------------------------------------
@@ -97,7 +108,7 @@ def test_ConstantSlice():
 def test_ConstantModule():
   setup_sim( structural.ConstantModule() )
 
-#def test_ListOfPortBundles():
-#  setup_sim( structural.ListOfPortBundles() )
+def test_ListOfPortBundles():
+  setup_sim( structural.ListOfPortBundles() )
 
 
