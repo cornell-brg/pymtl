@@ -4,10 +4,10 @@
 # Tool to translate PyMTL Models into Verilog HDL.
 
 from Model import *
+
 import sys
 import re
-
-import inspect
+import collections
 #from   translate_logic import PyToVerilogVisitor
 #from   translate_logic import FindRegistersVisitor
 #from   translate_logic import TemporariesVisitor
@@ -24,21 +24,20 @@ class VerilogTranslationTool(object):
   def __init__(self, model, o=sys.stdout):
 
     # List of models to translate
-    translation_queue = []
+    translation_queue = collections.OrderedDict()
 
     # Utility function to recursively collect all submodels in design
     def collect_all_models( m ):
       # Add the model to the queue
-      if m not in translation_queue:
-        translation_queue.append( m )
+      translation_queue[ m.class_name ] = m
 
       for subm in m.get_submodules():
         collect_all_models( subm )
 
     # Collect all submodels in design and translate them
     collect_all_models( model )
-    for m in translation_queue:
-      translate_module( m, o )
+    for k, v in translation_queue.items():
+      translate_module( v, o )
 
 #------------------------------------------------------------------------
 # translate_module

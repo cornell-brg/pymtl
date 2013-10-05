@@ -49,25 +49,55 @@ def test_PassThroughListWire():
 def test_PassThroughWrapped():
   setup_sim( structural.PassThroughWrapped( 8 ) )
 
-#def test_PassThroughWrappedChain():
-  #setup_sim( structural.PassThroughWrappedChain( 8, 4 ) )
+def test_PassThroughWrappedChain():
+  setup_sim( structural.PassThroughWrappedChain( 8 ) )
 
-#def test_Splitter():
-#def test_SplitterWires():
-#def test_SplitterWrapped():
-#def test_SplitterPT_1():
-#def test_SplitterPT_2():
-#def test_SplitterPT_3():
-#def test_SplitterPT_4():
-#def test_SplitterPT_5():
-#def test_SplitterPT_5():
-#def test_SimpleBitBlast():
-#  setup_sim( structural.SimpleBitBlast( 8 ) )
-#def test_SimpleBitBlast():
-#  setup_sim( structural.SimpleBitBlast( 16 ) )
-#def test_ComplexBitBlast():
-#def test_SimlbeBitMerge():
-#def test_ConstantPort():
-#def test_ConstantSlice():
-#def test_ConstantModule():
+def test_Splitter():
+  setup_sim( structural.Splitter( 16 ) )
+
+def test_SplitterWires():
+  setup_sim( structural.SplitterWires( 16 ) )
+
+def test_SplitterWrapped():
+  setup_sim( structural.SplitterWrapped( 16 ) )
+
+def test_SplitterPT_1():
+  setup_sim( structural.SplitterPT_1( 16 ) )
+
+def test_SplitterPT_2():
+  setup_sim( structural.SplitterPT_2( 16 ) )
+
+def test_SplitterPT_3():
+  setup_sim( structural.SplitterPT_3( 16 ) )
+
+def test_SplitterPT_4():
+  setup_sim( structural.SplitterPT_4( 16 ) )
+
+def test_SplitterPT_5():
+  setup_sim( structural.SplitterPT_5( 16 ) )
+
+def test_SimpleBitBlast():
+  setup_sim( structural.SimpleBitBlast( 8 ) )
+
+def test_ComplexBitBlast():
+  setup_sim( structural.ComplexBitBlast( 8, 2 ) )
+
+def test_SimpleBitMerge():
+  setup_sim( structural.SimpleBitMerge( 8 ) )
+
+def test_ComplexBitMerge():
+  setup_sim( structural.ComplexBitMerge( 8, 2 ) )
+
+def test_ConstantPort():
+  setup_sim( structural.ConstantPort() )
+
+def test_ConstantSlice():
+  setup_sim( structural.ConstantSlice() )
+
+def test_ConstantModule():
+  setup_sim( structural.ConstantModule() )
+
 #def test_ListOfPortBundles():
+#  setup_sim( structural.ListOfPortBundles() )
+
+
