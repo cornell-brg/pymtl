@@ -93,6 +93,7 @@ def signal_assignments( model, o ):
     src  = signal_to_str( c.src_node,  c.src_slice,  model )
     assignment_list.append( assignment.format( dest, src ) )
 
+  assignment_list = pretty_align( assignment_list, '=' )
   # Print them in alphabetically sorted order (prettier)
   print >> o, '  // signal connections'
   print >> o, endl.join( sorted( assignment_list ) )
@@ -110,20 +111,21 @@ def submodel_instances( model, o ):
 
     # Create strings for port connections
     submodel_name = mangle_name( submodel.name )
-    wires = []
-    ports = []
+    temporaries = []
+    connections = []
     for p in submodel.get_ports():
       port_name = mangle_name( p.name )
       temp_name = signal_to_str( p, None, model )
-      wires.append( wire_to_str( p, None, model ) )
-      ports.append( connection.format( port_name, temp_name ) )
+      temporaries.append( wire_to_str( p, None, model ) )
+      connections.append( connection.format( port_name, temp_name ) )
 
+    connections = pretty_align( connections, '(' )
     # Print the submodule instantiation
     print >> o, '  // {} temporaries'.format( submodel_name )
-    print >> o, wire_delim.join( wires ) + wire_delim
+    print >> o, wire_delim.join( temporaries ) + wire_delim
     print >> o, instance.format( submodel.class_name, submodel_name )
     print >> o, tab + start_ports
-    print >> o, port_delim.join( ports )
+    print >> o, port_delim.join( connections )
     print >> o, tab + end_ports
     print >> o
 
@@ -187,7 +189,7 @@ end_mod     = 'endmodule // {}'
 start_ports = '('
 end_ports   = ');'
 instance    = tab + '{} {}'
-connection  = tab + '.{} ({})'
+connection  = tab + tab + '.{} ( {} )'
 signal_decl = tab + '{:6} [{:4}:0] {}'
 port_delim  = ',' + endl
 wire_delim  = ';' + endl
@@ -218,4 +220,12 @@ def wire_decl( port ):
   name  = mangle_name( port.name )
 
   return signal_decl.format( type_, nbits, name )
+
+#------------------------------------------------------------------------
+# pretty_align
+#-------------------------------------------------------------------------
+def pretty_align( assignment_list, char ):
+  split = [ x.split( char ) for x in assignment_list ]
+  pad   = max( [len(x) for x,y in split] )
+  return [ "{0:<{1}}{2}{3}".format( x, pad, char, y ) for x,y in split ]
 
