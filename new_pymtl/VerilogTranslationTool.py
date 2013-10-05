@@ -144,7 +144,7 @@ def mangle_name( name ):
   def replacement_string( m ):
     return "${:03d}".format( int(m.group(2)) )
   # Return the mangled name
-  return re.sub( indexing, replacement_string, name )
+  return re.sub( indexing, replacement_string, name.replace('.','_') )
 
 # Regex to match list indexing
 indexing = re.compile("(\[)(.*)(\])")
