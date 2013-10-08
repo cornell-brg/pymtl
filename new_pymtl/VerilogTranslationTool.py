@@ -78,26 +78,6 @@ def wire_declarations( model, o ):
   print >> o, wire_delim.join( wires ) + wire_delim
   print >> o
 
-#------------------------------------------------------------------------
-# signal_assignments
-#-------------------------------------------------------------------------
-# Generate Verilog source for signal connections.
-def signal_assignments( model, o ):
-  if not model.get_connections(): return
-
-  # Create all the assignment statements
-  assignment_list = []
-  for c in model.get_connections():
-    dest = signal_to_str( c.dest_node, c.dest_slice, model )
-    src  = signal_to_str( c.src_node,  c.src_slice,  model )
-    assignment_list.append( assignment.format( dest, src ) )
-
-  assignment_list = pretty_align( assignment_list, '=' )
-  # Print them in alphabetically sorted order (prettier)
-  print >> o, '  // signal connections'
-  print >> o, endl.join( sorted( assignment_list ) )
-  print >> o
-
 #-------------------------------------------------------------------------
 # submodel_instances
 #-------------------------------------------------------------------------
@@ -129,51 +109,24 @@ def submodel_instances( model, o ):
     print >> o
 
 #------------------------------------------------------------------------
-# wire_to_str
+# signal_assignments
 #-------------------------------------------------------------------------
-# utility function
-def wire_to_str( port, slice_=None, parent=None ):
-  return '  wire   [{:4}:0] {}'.format( port.nbits-1,
-                                signal_to_str( port, slice_, parent ) )
+# Generate Verilog source for signal connections.
+def signal_assignments( model, o ):
+  if not model.get_connections(): return
 
-#------------------------------------------------------------------------
-# mangle_name
-#-------------------------------------------------------------------------
-def mangle_name( name ):
-  # Utility function
-  def replacement_string( m ):
-    return "${:03d}".format( int(m.group(2)) )
-  # Return the mangled name
-  return re.sub( indexing, replacement_string, name.replace('.','_') )
+  # Create all the assignment statements
+  assignment_list = []
+  for c in model.get_connections():
+    dest = signal_to_str( c.dest_node, c.dest_slice, model )
+    src  = signal_to_str( c.src_node,  c.src_slice,  model )
+    assignment_list.append( assignment.format( dest, src ) )
 
-# Regex to match list indexing
-indexing = re.compile("(\[)(.*)(\])")
-
-#------------------------------------------------------------------------
-# signal_to_str
-#-------------------------------------------------------------------------
-# TODO: clean this up
-def signal_to_str( node, addr, context ):
-
-  # Special case constants
-  if isinstance( node, Constant ): return node.name
-
-  # If the node's parent module isn't the same as the current module
-  # we need to prefix the signal name with the module name
-  prefix = ''
-  if node.parent != context and node.parent != None:
-    prefix = '{}$'.format( node.parent.name )
-
-  # If this is a slice, we need to provide the slice indexing
-  suffix = ''
-  if isinstance( addr, slice ):
-    suffix = '[{}:{}]'.format( addr.stop - 1, addr.start )
-  elif isinstance( addr, int ):
-    suffix = '[{}]'.format( addr )
-
-  # Return the string
-  return prefix + mangle_name( node.name ) + suffix
-
+  assignment_list = pretty_align( assignment_list, '=' )
+  # Print them in alphabetically sorted order (prettier)
+  print >> o, '  // signal connections'
+  print >> o, endl.join( sorted( assignment_list ) )
+  print >> o
 
 #------------------------------------------------------------------------
 # verilog
@@ -227,4 +180,51 @@ def pretty_align( assignment_list, char ):
   split = [ x.split( char ) for x in assignment_list ]
   pad   = max( [len(x) for x,y in split] )
   return [ "{0:<{1}}{2}{3}".format( x, pad, char, y ) for x,y in split ]
+
+#------------------------------------------------------------------------
+# wire_to_str
+#-------------------------------------------------------------------------
+# utility function
+# TODO: replace
+def wire_to_str( port, slice_=None, parent=None ):
+  return '  wire   [{:4}:0] {}'.format( port.nbits-1,
+                                signal_to_str( port, slice_, parent ) )
+
+#------------------------------------------------------------------------
+# mangle_name
+#-------------------------------------------------------------------------
+def mangle_name( name ):
+  # Utility function
+  def replacement_string( m ):
+    return "${:03d}".format( int(m.group(2)) )
+  # Return the mangled name
+  return re.sub( indexing, replacement_string, name.replace('.','_') )
+
+# Regex to match list indexing
+indexing = re.compile("(\[)(.*)(\])")
+
+#------------------------------------------------------------------------
+# signal_to_str
+#-------------------------------------------------------------------------
+# TODO: clean this up
+def signal_to_str( node, addr, context ):
+
+  # Special case constants
+  if isinstance( node, Constant ): return node.name
+
+  # If the node's parent module isn't the same as the current module
+  # we need to prefix the signal name with the module name
+  prefix = ''
+  if node.parent != context and node.parent != None:
+    prefix = '{}$'.format( node.parent.name )
+
+  # If this is a slice, we need to provide the slice indexing
+  suffix = ''
+  if isinstance( addr, slice ):
+    suffix = '[{}:{}]'.format( addr.stop - 1, addr.start )
+  elif isinstance( addr, int ):
+    suffix = '[{}]'.format( addr )
+
+  # Return the string
+  return prefix + mangle_name( node.name ) + suffix
 
