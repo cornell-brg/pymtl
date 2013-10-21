@@ -3,7 +3,7 @@
 #=========================================================================
 
 from ast_transformer import *
-from ast_helpers     import get_method_ast, print_simple_ast
+from ast_helpers     import get_method_ast, print_simple_ast, print_ast
 
 #-------------------------------------------------------------------------
 # AST Transformer Checker: Function Decorator
@@ -23,6 +23,7 @@ def check_ast( ld, st ):
     #load, store = DetectLoadsAndStores().enter( tree )
     new_tree = SimplifiedAST().visit( tree )
 
+    #print_ast( tree )
     print_simple_ast( new_tree )
 
     return func

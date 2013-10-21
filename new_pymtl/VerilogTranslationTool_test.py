@@ -11,6 +11,9 @@ import tempfile
 
 compiler = 'iverilog -g2005 -Wall -Wno-sensitivity-entire-vector'
 
+#-------------------------------------------------------------------------
+# Translation Test
+#-------------------------------------------------------------------------
 def setup_sim( model ):
   model.elaborate()
 
@@ -40,7 +43,7 @@ def setup_sim( model ):
 
 
 #-------------------------------------------------------------------------
-# PassThrough
+# Tests
 #-------------------------------------------------------------------------
 def test_PassThrough():
   setup_sim( structural.PassThrough( 8 ) )

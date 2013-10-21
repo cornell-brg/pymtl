@@ -24,12 +24,22 @@ class SimplifiedAST( ast.NodeTransformer ):
 
   def visit_FunctionDef( self, node ):
     # store self_name
-    self.self_name   = node.args.args[0].id
-    self.self_prefix = node.args.args[0].id + '.'
+    # TODO: fix so that this properly detects the "self" param
+    if node.args.args: s = node.args.args[0].id
+    else:              s = 's'
+    self.self_name   = s
+    self.self_prefix = s + '.'
     # visit children
     self.generic_visit( node )
+    # simplified decorator list
+    decorator_list = [ x._name for x in node.decorator_list
+                       if isinstance( x, Self ) ]
+    # create a new FunctionDef node
     new_node = ast.FunctionDef( name=node.name, args=node.args,
-                                body=node.body, decorator_list=[] )
+                                body=node.body,
+                                decorator_list=decorator_list
+                                #decorator_list=[]
+                               )
     # create a new function that deletes the decorators
     return new_node
 
@@ -68,27 +78,41 @@ class ReorderAST( ast.NodeVisitor ):
 
     # The top of the stack is the new root of the tree
     current = new_root = self.stack.pop()
+    name    = [current._name]
 
     # Pop each node off the stack, update pointers
     while self.stack:
       next_         = self.stack.pop()
       current.value = next_
       current       = next_
+      name.append( current._name )
+
+    # Name generation
+    new_root._name = '.'.join( name ).replace('.[', '[')
 
     # Update the last pointer to None, return the new_root
     current.value = None
     return new_root
 
   def visit_Name( self, node ):
-    self.stack.append( Self( attr=node.id ) )
+    # TODO: Make sure name is actually an attribute!
+    #       Otherwise this should be an attribute.
+    n = Self( attr=node.id )
+    # Name generation
+    n._name = node.id
+    self.stack.append( n )
 
   def visit_Attribute( self, node ):
+    # Name generation
+    node._name = node.attr
     self.stack.append( node )
     self.visit( node.value )
 
   def visit_Subscript( self, node ):
     node.slice = ReorderAST().reverse( node.slice )
     self.stack.append( node )
+    # Name generation
+    node._name = '[{}]'.format( node.slice._name )
     self.visit( node.value )
 
   def visit_Index( self, node ):
@@ -100,8 +124,12 @@ class ReorderAST( ast.NodeVisitor ):
     self.stack.append( node )
     node.lower = ReorderAST().reverse( node.lower )
     node.upper = ReorderAST().reverse( node.upper )
+    # Name generation
+    node._name = "{}:{}".format( node.lower._name, node.upper._name )
 
   def visit_Num( self, node ):
+    # Name generation
+    node._name = str( node.n )
     self.stack.append( node )
 
 #------------------------------------------------------------------------
