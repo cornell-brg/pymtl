@@ -53,6 +53,7 @@ class SimplifiedAST( ast.NodeTransformer ):
 
   def visit_Name( self, node ):
     new_node = Local( id=node.id )
+    new_node._name = node.id
     return ast.copy_location( new_node, node )
 
 
