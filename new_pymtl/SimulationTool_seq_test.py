@@ -290,7 +290,7 @@ class MultipleWrites( Model ):
     s.out = OutPort ( 16 )
 
   def elaborate_logic( s ):
-    @s.tick
+    @s.posedge_clk
     def logic():
       s.out.next = 4
       s.out.next = 1
