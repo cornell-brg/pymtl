@@ -111,10 +111,11 @@ class ReorderAST( ast.NodeVisitor ):
     self.visit( node.value )
 
   def visit_Subscript( self, node ):
-    node.slice = ReorderAST( self.self_name ).reverse( node.slice )
+    node.slice = SimplifiedAST( self.self_name ).visit( node.slice)
     self.stack.append( node )
     # Name generation
-    node._name = '[{}]'.format( node.slice._name )
+    #node._name = '[{}]'.format( node.slice._name )
+    node._name = '[?]'
     self.visit( node.value )
 
   def visit_Index( self, node ):
@@ -124,12 +125,11 @@ class ReorderAST( ast.NodeVisitor ):
   def visit_Slice( self, node ):
     assert node.step == None
     self.stack.append( node )
-    #node.lower = ReorderAST().reverse( node.lower )
-    #node.upper = ReorderAST().reverse( node.upper )
-    node.lower = ReorderAST( self.self_name ).reverse( node.lower )
-    node.upper = ReorderAST( self.self_name ).reverse( node.upper )
+    node.lower = SimplifiedAST( self.self_name ).visit( node.lower )
+    node.upper = SimplifiedAST( self.self_name ).visit( node.upper )
     # Name generation
-    node._name = "{}:{}".format( node.lower._name, node.upper._name )
+    #node._name = "{}:{}".format( node.lower._name, node.upper._name )
+    node._name = "?:?"
 
   def visit_Num( self, node ):
     # Name generation
