@@ -12,9 +12,8 @@ import re
 #-------------------------------------------------------------------------
 class SimplifiedAST( ast.NodeTransformer ):
 
-  def __init__( self ):
-    self.self_name   = None
-    self.self_prefix = None
+  def __init__( self, self_name=None ):
+    self.self_name   = self_name
 
   def visit_Module( self, node ):
     # visit children
@@ -28,7 +27,6 @@ class SimplifiedAST( ast.NodeTransformer ):
     if node.args.args: s = node.args.args[0].id
     else:              s = 's'
     self.self_name   = s
-    self.self_prefix = s + '.'
     # visit children
     self.generic_visit( node )
     # simplified decorator list
@@ -44,15 +42,15 @@ class SimplifiedAST( ast.NodeTransformer ):
     return new_node
 
   def visit_Attribute( self, node ):
-    reverse_branch = ReorderAST().reverse( node )
+    reverse_branch = ReorderAST(self.self_name).reverse( node )
     return ast.copy_location( reverse_branch, node )
 
   def visit_Subscript( self, node ):
-    reverse_branch = ReorderAST().reverse( node )
+    reverse_branch = ReorderAST(self.self_name).reverse( node )
     return ast.copy_location( reverse_branch, node )
 
   def visit_Name( self, node ):
-    new_node = Local( id=node.id )
+    new_node = LocalVar( id=node.id )
     new_node._name = node.id
     return ast.copy_location( new_node, node )
 
@@ -70,8 +68,9 @@ class SimplifiedAST( ast.NodeTransformer ):
 
 class ReorderAST( ast.NodeVisitor ):
 
-  def __init__( self ):
-    self.stack = []
+  def __init__( self, self_name ):
+    self.self_name = self_name
+    self.stack     = []
 
   def reverse( self, tree ):
     # Visit the tree
@@ -96,9 +95,11 @@ class ReorderAST( ast.NodeVisitor ):
     return new_root
 
   def visit_Name( self, node ):
-    # TODO: Make sure name is actually an attribute!
-    #       Otherwise this should be an attribute.
-    n = Self( attr=node.id )
+    # TODO: Make sure name is actually self before transforming.
+    if node.id == self.self_name:
+      n = Self( attr=node.id )
+    else:
+      n = LocalObject( attr=node.id )
     # Name generation
     n._name = node.id
     self.stack.append( n )
@@ -110,7 +111,7 @@ class ReorderAST( ast.NodeVisitor ):
     self.visit( node.value )
 
   def visit_Subscript( self, node ):
-    node.slice = ReorderAST().reverse( node.slice )
+    node.slice = ReorderAST( self.self_name ).reverse( node.slice )
     self.stack.append( node )
     # Name generation
     node._name = '[{}]'.format( node.slice._name )
@@ -123,8 +124,10 @@ class ReorderAST( ast.NodeVisitor ):
   def visit_Slice( self, node ):
     assert node.step == None
     self.stack.append( node )
-    node.lower = ReorderAST().reverse( node.lower )
-    node.upper = ReorderAST().reverse( node.upper )
+    #node.lower = ReorderAST().reverse( node.lower )
+    #node.upper = ReorderAST().reverse( node.upper )
+    node.lower = ReorderAST( self.self_name ).reverse( node.lower )
+    node.upper = ReorderAST( self.self_name ).reverse( node.upper )
     # Name generation
     node._name = "{}:{}".format( node.lower._name, node.upper._name )
 
@@ -141,9 +144,16 @@ class Self( _ast.Attribute ):
   value = None
 
 #------------------------------------------------------------------------
-# Local
+# LocalVar
 #------------------------------------------------------------------------
 # New AST Node for local vars. Based on Name node.
-class Local( _ast.Name ):
+class LocalVar( _ast.Name ):
+  pass
+
+#------------------------------------------------------------------------
+# LocalObj
+#------------------------------------------------------------------------
+# New AST Node for local vars. Based on Name node.
+class LocalObject( _ast.Attribute ):
   pass
 

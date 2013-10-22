@@ -18,7 +18,7 @@ def check_ast( ld, st ):
     import inspect
     print inspect.getsource( func )
     #print_ast( tree )
-    #print_simple_ast( tree )
+    print_simple_ast( tree )
 
     #load, store = DetectLoadsAndStores().enter( tree )
     new_tree = SimplifiedAST().visit( tree )
@@ -138,6 +138,16 @@ def test_wr_list_idx_slice_var():
   def wr_list_idx_slice_var( s ):
     s.out[ s.s0:s.s1 ].v = s.a.v
 
+def test_wr_list_idx_op():
+  @check_ast( [], [] )
+  def wr_list_idx_slice_op( s ):
+    s.out[i + s.s0].v = s.a.v
+
+def test_wr_list_idx_slice_op():
+  @check_ast( [], [] )
+  def wr_list_idx_slice_op( s ):
+    s.out[i:i + s.s0].v = s.a.v
+
 #-------------------------------------------------------------------------
 # If Statements
 #-------------------------------------------------------------------------
@@ -221,7 +231,11 @@ def test_nested_elif():
 #-------------------------------------------------------------------------
 # For Loops
 #-------------------------------------------------------------------------
-# TODO
+def test_for_loop_const():
+  @check_ast( [], [] )
+  def logic( s ):
+    for i in range( 10 ):
+      a[i] = i
 
 #-------------------------------------------------------------------------
 # While Loops
