@@ -3,7 +3,7 @@
 #=========================================================================
 # Tool to translate PyMTL Models into Verilog HDL.
 
-from Model import *
+#from Model import *
 
 from   ast_transformer import SimplifiedAST
 from   ast_helpers     import get_method_ast, print_simple_ast, print_ast
@@ -11,6 +11,7 @@ from   ast_helpers     import get_method_ast, print_simple_ast, print_ast
 import sys
 import ast, _ast
 import collections
+import inspect
 
 #-------------------------------------------------------------------------
 # VerilogLogicTransl
@@ -147,6 +148,17 @@ class TranslateLogic( ast.NodeVisitor ):
     print >> self.o, ';'
 
   #-----------------------------------------------------------------------
+  # visit_AugAssign
+  #-----------------------------------------------------------------------
+  def visit_AugAssign(self, node):
+    # TODO: implement multiple left hand targets?
+    target = node.target._name
+    print >> self.o, (self.ident+2)*" ",
+    print >> self.o, "{} {}=".format( target, opmap[type(node.op)] ),
+    self.visit(node.value)
+    print >> self.o, ';'
+
+  #-----------------------------------------------------------------------
   # visit_BinOp
   #-----------------------------------------------------------------------
   def visit_BinOp(self, node):
@@ -236,14 +248,19 @@ class TranslateLogic( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   # TODO: does this work?
   def visit_For(self, node):
-    raise Exception( "For not implemented!" )
     # TODO: create new list of iterators?
     var_name = node.target.id
+    assert node.iter.func.id == "range"
+    range_   = node.iter.func.id
     #if var_name not in self.model._loopvars:
     #  self.model._loopvars.append( var_name )
     # TODO: add support for temporaries declared in for loop
+    print >> self.o, (self.ident+2)*" " + \
+        "for ({0} = {1}; {0} < {2}; {0}={0}+1)".format( var_name, range_, range_ )
+    print >> self.o, (self.ident+2)*" " + "begin"
     for x in node.body:
       self.visit(x)
+    print >> self.o, (self.ident+2)*" " + "end"
 
   #-----------------------------------------------------------------------
   # visit_If
