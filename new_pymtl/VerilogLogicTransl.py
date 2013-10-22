@@ -34,12 +34,12 @@ class VerilogLogicTransl(object):
     # Collect all submodels in design and translate them
     collect_all_models( model )
     for k, v in translation_queue.items():
-      translate_module( v, o )
+      translate_logic_blocks( v, o )
 
 #-------------------------------------------------------------------------
-# translate_module
+# translate_logic_blocks
 #-------------------------------------------------------------------------
-def translate_module( model, o ):
+def translate_logic_blocks( model, o ):
 
   blocks = ( model.get_posedge_clk_blocks()
            + model.get_combinational_blocks()
@@ -48,9 +48,13 @@ def translate_module( model, o ):
   for func in blocks:
     tree     = get_method_ast( func )
     new_tree = SimplifiedAST().visit( tree )
-    print_simple_ast( new_tree )    # DEBUG
-    print; print inspect.getsource( func ) # DEBUG
-    TranslateLogic( sys.stdout ).visit( new_tree )
+    #print_simple_ast( new_tree )    # DEBUG
+    src      = inspect.getsource( func ) # DEBUG
+    print >> o, "  // PYMTL SOURCE:"
+    for line in src.splitlines():
+      print >> o, "  // " + line
+
+    TranslateLogic( o ).visit( new_tree )
 
 
 #-------------------------------------------------------------------------

@@ -5,11 +5,14 @@
 
 from Model import *
 
+import re
 import sys
 import collections
 #from   translate_logic import PyToVerilogVisitor
 #from   translate_logic import FindRegistersVisitor
 #from   translate_logic import TemporariesVisitor
+
+from VerilogLogicTransl import translate_logic_blocks
 
 #-------------------------------------------------------------------------
 # VerilogTranslationTool
@@ -50,6 +53,8 @@ def translate_module( model, o ):
   wire_declarations ( model, o )
   submodel_instances( model, o )
   signal_assignments( model, o )
+
+  translate_logic_blocks( model, o )
 
   print >> o, end_mod  .format( model.class_name )
   print >> o
@@ -126,6 +131,7 @@ def signal_assignments( model, o ):
   print >> o, '  // signal connections'
   print >> o, endl.join( sorted( assignment_list ) )
   print >> o
+
 
 #------------------------------------------------------------------------
 # verilog

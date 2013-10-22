@@ -5,7 +5,8 @@
 import SimulationTool_seq_test  as sequential
 import SimulationTool_comb_test as combinational
 
-from VerilogLogicTransl import VerilogLogicTransl
+#from VerilogLogicTransl import VerilogLogicTransl
+from VerilogTranslationTool import VerilogTranslationTool
 from subprocess         import check_output, STDOUT, CalledProcessError
 
 import tempfile
@@ -18,29 +19,33 @@ compiler = 'iverilog -g2005 -Wall -Wno-sensitivity-entire-vector'
 def setup_sim( model ):
   model.elaborate()
 
-  with tempfile.NamedTemporaryFile() as output:
-    VerilogLogicTransl( model, output )
-    #output.flush()
-    #cmd  = '{} {}'.format( compiler, output.name )
+  # Debug
+  import sys
+  VerilogTranslationTool( model, sys.stdout)
 
-    #try:
+  #with tempfile.NamedTemporaryFile() as output:
+  #  VerilogTranslationTool( model, output )
+  #  output.flush()
+  #  cmd  = '{} {}'.format( compiler, output.name )
 
-    #  result = check_output( cmd.split() , stderr=STDOUT )
-    #  output.seek(0)
-    #  verilog = output.read()
-    #  print
-    #  print verilog
+  #  try:
 
-    #except CalledProcessError as e:
+  #    result = check_output( cmd.split() , stderr=STDOUT )
+  #    output.seek(0)
+  #    verilog = output.read()
+  #    print
+  #    print verilog
 
-    #  output.seek(0)
-    #  verilog = output.read()
+  #  except CalledProcessError as e:
 
-    #  raise Exception( 'Module did not compile!\n\n'
-    #                   'Command:\n' + ' '.join(e.cmd) + '\n\n'
-    #                   'Error:\n' + e.output + '\n'
-    #                   'Source:\n' + verilog
-    #                 )
+  #    output.seek(0)
+  #    verilog = output.read()
+
+  #    raise Exception( 'Module did not compile!\n\n'
+  #                     'Command:\n' + ' '.join(e.cmd) + '\n\n'
+  #                     'Error:\n' + e.output + '\n'
+  #                     'Source:\n' + verilog
+  #                   )
 
 
 #-------------------------------------------------------------------------
