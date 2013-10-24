@@ -2,8 +2,8 @@
 # MinMax Unit Tests
 #=========================================================================
 
-from pymtl import *
-import pmlib
+from new_pymtl import *
+import new_pmlib
 
 from MinMax import MinMax
 
@@ -44,7 +44,7 @@ def test_basics( dump_vcd ):
 
   # Create and run the test simulation
 
-  sim = pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "pex-sorter-MinMax_test_basics.vcd" )
   sim.run_test()

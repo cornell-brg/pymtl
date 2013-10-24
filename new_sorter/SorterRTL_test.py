@@ -2,7 +2,7 @@
 # SorterRTL Test Suite
 #=========================================================================
 
-from pymtl import *
+from new_pymtl import *
 
 from SorterRTL import SorterRTL
 

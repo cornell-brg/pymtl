@@ -6,38 +6,32 @@
 # cycles it might take to execute the hardware. It is a more abstract
 # modeling technique.
 
-from pymtl import *
+from new_pymtl import *
 
 class SorterBL( Model ):
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
+  def __init__( s ):
+    s.in_ = [ InPort  ( 16 ) for x in range(4) ]
+    s.out = [ OutPort ( 16 ) for x in range(4) ]
 
-  def __init__( self ):
-    self.in_ = [ InPort  ( 16 ) for x in range(4) ]
-    self.out = [ OutPort ( 16 ) for x in range(4) ]
+  def elaborate_logic( s ):
 
-  #-----------------------------------------------------------------------
-  # Tick
-  #-----------------------------------------------------------------------
+    @s.tick
+    def logic():
 
-  @tick
-  def logic( self ):
-
-    values = [ x.value for x in self.in_ ]
-    values.sort()
-    for i, value in enumerate( values ):
-      self.out[i].value = value
+      values = [ x.value for x in s.in_ ]
+      values.sort()
+      for i, value in enumerate( values ):
+        s.out[i].value = value
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
-  def line_trace( self ):
-    return "{:04x} {:04x} {:04x} {:04x} () {:04x} {:04x} {:04x} {:04x}" \
-      .format( self.in_[0].value.uint, self.in_[1].value.uint,
-               self.in_[2].value.uint, self.in_[3].value.uint,
-               self.out[0].value.uint, self.out[1].value.uint,
-               self.out[2].value.uint, self.out[3].value.uint )
+  def line_trace( s ):
+    return "{} {} {} {} () {} {} {} {}" \
+      .format( s.in_[0], s.in_[1],
+               s.in_[2], s.in_[3],
+               s.out[0], s.out[1],
+               s.out[2], s.out[3] )
 

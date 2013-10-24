@@ -5,124 +5,126 @@
 # with posedge_clk concurrent blocks and uses combinational concurrent
 # blocks to model how data transfers between state elements.
 
-from pymtl import *
+from new_pymtl import *
 
 class SorterRTL( Model ):
 
-  def __init__( self ):
+  def __init__( s ):
 
     # Ports
 
-    self.in_ = [ InPort  ( 16 ) for x in range(4) ]
-    self.out = [ OutPort ( 16 ) for x in range(4) ]
+    s.in_ = [ InPort  ( 16 ) for x in range(4) ]
+    s.out = [ OutPort ( 16 ) for x in range(4) ]
+
+  def elaborate_logic( s ):
 
     # Wires
 
-    self.reg_AB = [ Wire ( 16 ) for x in range(4) ]
+    s.reg_AB = [ Wire ( 16 ) for x in range(4) ]
 
-    self.B0_max = Wire ( 16 )
-    self.B0_min = Wire ( 16 )
-    self.B1_max = Wire ( 16 )
-    self.B1_min = Wire ( 16 )
+    s.B0_max = Wire ( 16 )
+    s.B0_min = Wire ( 16 )
+    s.B1_max = Wire ( 16 )
+    s.B1_min = Wire ( 16 )
 
-    self.reg_BC = [ Wire ( 16 ) for x in range(4) ]
+    s.reg_BC = [ Wire ( 16 ) for x in range(4) ]
 
-    self.C0_max = Wire ( 16 )
-    self.C0_min = Wire ( 16 )
-    self.C1_max = Wire ( 16 )
-    self.C1_min = Wire ( 16 )
-    self.C2_max = Wire ( 16 )
-    self.C2_min = Wire ( 16 )
+    s.C0_max = Wire ( 16 )
+    s.C0_min = Wire ( 16 )
+    s.C1_max = Wire ( 16 )
+    s.C1_min = Wire ( 16 )
+    s.C2_max = Wire ( 16 )
+    s.C2_min = Wire ( 16 )
 
-  #---------------------------------------------------------------------
-  # Stage A->B pipeline registers
-  #---------------------------------------------------------------------
+    #---------------------------------------------------------------------
+    # Stage A->B pipeline registers
+    #---------------------------------------------------------------------
 
-  @posedge_clk
-  def reg_ab( self ):
+    @s.posedge_clk
+    def reg_ab():
 
-    self.reg_AB[0].next = self.in_[0].value
-    self.reg_AB[1].next = self.in_[1].value
-    self.reg_AB[2].next = self.in_[2].value
-    self.reg_AB[3].next = self.in_[3].value
+      s.reg_AB[0].next = s.in_[0]
+      s.reg_AB[1].next = s.in_[1]
+      s.reg_AB[2].next = s.in_[2]
+      s.reg_AB[3].next = s.in_[3]
 
-  #---------------------------------------------------------------------
-  # Stage B combinational logic
-  #---------------------------------------------------------------------
+    #---------------------------------------------------------------------
+    # Stage B combinational logic
+    #---------------------------------------------------------------------
 
-  @combinational
-  def stage_b( self ):
+    @s.combinational
+    def stage_b():
 
-    if self.reg_AB[0].value >= self.reg_AB[1].value:
-      self.B0_max.value = self.reg_AB[0].value
-      self.B0_min.value = self.reg_AB[1].value
-    else:
-      self.B0_max.value = self.reg_AB[1].value
-      self.B0_min.value = self.reg_AB[0].value
+      if s.reg_AB[0] >= s.reg_AB[1]:
+        s.B0_max.value = s.reg_AB[0]
+        s.B0_min.value = s.reg_AB[1]
+      else:
+        s.B0_max.value = s.reg_AB[1]
+        s.B0_min.value = s.reg_AB[0]
 
-    if self.reg_AB[2].value >= self.reg_AB[3].value:
-      self.B1_max.value = self.reg_AB[2].value
-      self.B1_min.value = self.reg_AB[3].value
-    else:
-      self.B1_max.value = self.reg_AB[3].value
-      self.B1_min.value = self.reg_AB[2].value
+      if s.reg_AB[2] >= s.reg_AB[3]:
+        s.B1_max.value = s.reg_AB[2]
+        s.B1_min.value = s.reg_AB[3]
+      else:
+        s.B1_max.value = s.reg_AB[3]
+        s.B1_min.value = s.reg_AB[2]
 
-  #---------------------------------------------------------------------
-  # Stage B->C pipeline registers
-  #---------------------------------------------------------------------
+    #---------------------------------------------------------------------
+    # Stage B->C pipeline registers
+    #---------------------------------------------------------------------
 
-  @posedge_clk
-  def reg_bc( self ):
+    @s.posedge_clk
+    def reg_bc():
 
-    self.reg_BC[0].next = self.B0_min.value
-    self.reg_BC[1].next = self.B0_max.value
+      s.reg_BC[0].next = s.B0_min
+      s.reg_BC[1].next = s.B0_max
 
-    self.reg_BC[2].next = self.B1_min.value
-    self.reg_BC[3].next = self.B1_max.value
+      s.reg_BC[2].next = s.B1_min
+      s.reg_BC[3].next = s.B1_max
 
-  #---------------------------------------------------------------------
-  # Stage C combinational logic
-  #---------------------------------------------------------------------
+    #---------------------------------------------------------------------
+    # Stage C combinational logic
+    #---------------------------------------------------------------------
 
-  @combinational
-  def stage_c( self ):
+    @s.combinational
+    def stage_c():
 
-    if self.reg_BC[0].value >= self.reg_BC[2].value:
-      self.C0_max.value = self.reg_BC[0].value
-      self.C0_min.value = self.reg_BC[2].value
-    else:
-      self.C0_max.value = self.reg_BC[2].value
-      self.C0_min.value = self.reg_BC[0].value
+      if s.reg_BC[0] >= s.reg_BC[2]:
+        s.C0_max.value = s.reg_BC[0]
+        s.C0_min.value = s.reg_BC[2]
+      else:
+        s.C0_max.value = s.reg_BC[2]
+        s.C0_min.value = s.reg_BC[0]
 
-    if self.reg_BC[1].value >= self.reg_BC[3].value:
-      self.C1_max.value = self.reg_BC[1].value
-      self.C1_min.value = self.reg_BC[3].value
-    else:
-      self.C1_max.value = self.reg_BC[3].value
-      self.C1_min.value = self.reg_BC[1].value
+      if s.reg_BC[1] >= s.reg_BC[3]:
+        s.C1_max.value = s.reg_BC[1]
+        s.C1_min.value = s.reg_BC[3]
+      else:
+        s.C1_max.value = s.reg_BC[3]
+        s.C1_min.value = s.reg_BC[1]
 
-    if self.C0_max.value >= self.C1_min.value:
-      self.C2_max.value = self.C0_max.value
-      self.C2_min.value = self.C1_min.value
-    else:
-      self.C2_max.value = self.C1_min.value
-      self.C2_min.value = self.C0_max.value
+      if s.C0_max >= s.C1_min:
+        s.C2_max.value = s.C0_max
+        s.C2_min.value = s.C1_min
+      else:
+        s.C2_max.value = s.C1_min
+        s.C2_min.value = s.C0_max
 
-    # Connect to output ports
+      # Connect to output ports
 
-    self.out[0].value = self.C0_min.value
-    self.out[1].value = self.C2_min.value
-    self.out[2].value = self.C2_max.value
-    self.out[3].value = self.C1_max.value
+      s.out[0].value = s.C0_min
+      s.out[1].value = s.C2_min
+      s.out[2].value = s.C2_max
+      s.out[3].value = s.C1_max
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
-  def line_trace( self ):
-    return "{:04x} {:04x} {:04x} {:04x} () {:04x} {:04x} {:04x} {:04x}" \
-      .format( self.in_[0].value.uint, self.in_[1].value.uint,
-               self.in_[2].value.uint, self.in_[3].value.uint,
-               self.out[0].value.uint, self.out[1].value.uint,
-               self.out[2].value.uint, self.out[3].value.uint )
+  def line_trace( s ):
+    return "{} {} {} {} () {} {} {} {}" \
+      .format( s.in_[0], s.in_[1],
+               s.in_[2], s.in_[3],
+               s.out[0], s.out[1],
+               s.out[2], s.out[3] )
 

@@ -2,7 +2,7 @@
 # MinMax
 #=========================================================================
 
-from pymtl import *
+from new_pymtl import *
 
 class MinMax( Model ):
 
@@ -10,33 +10,34 @@ class MinMax( Model ):
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( self ):
+  def __init__( s ):
 
-    self.in0 = InPort  ( 16 )
-    self.in1 = InPort  ( 16 )
-    self.min = OutPort ( 16 )
-    self.max = OutPort ( 16 )
+    s.in0 = InPort  ( 16 )
+    s.in1 = InPort  ( 16 )
+    s.min = OutPort ( 16 )
+    s.max = OutPort ( 16 )
 
   #-----------------------------------------------------------------------
   # Combinational logic
   #-----------------------------------------------------------------------
+  def elaborate_logic( s ):
 
-  @combinational
-  def comb_logic( self ):
+    @s.combinational
+    def comb_logic():
 
-    if self.in0.value >= self.in1.value:
-      self.max.value = self.in0.value
-      self.min.value = self.in1.value
-    else:
-      self.max.value = self.in1.value
-      self.min.value = self.in0.value
+      if s.in0 >= s.in1:
+        s.max.value = s.in0
+        s.min.value = s.in1
+      else:
+        s.max.value = s.in1
+        s.min.value = s.in0
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
-  def line_trace( self ):
-    return "{:04x} {:04x} () {:04x} {:04x}" \
-      .format( self.in0.value.uint, self.in1.value.uint,
-               self.min.value.uint, self.max.value.uint )
+  def line_trace( s ):
+    return "{} {} () {} {}" \
+      .format( s.in0, s.in1,
+               s.min, s.max )
 

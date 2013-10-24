@@ -7,50 +7,40 @@
 # posedge_clk concurrent block. In this model, we use the built-in Python
 # function for sorting and then just delay the output for one more cycle.
 
-from pymtl import *
+from new_pymtl import *
 
 class SorterCL( Model ):
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
+  def __init__( s, nbits, nports ):
 
-  def __init__( self ):
+    s.in_ = [ InPort  ( nbits ) for x in range( nports ) ]
+    s.out = [ OutPort ( nbits ) for x in range( nports ) ]
 
-    # Ports
+    s.buf = [ 0 ] * nports
 
-    self.in_ = [ InPort  ( 16 ) for x in range(4) ]
-    self.out = [ OutPort ( 16 ) for x in range(4) ]
+  def elaborate_logic( s ):
 
-    # Intermediate buffer
+    @s.tick
+    def logic():
 
-    self.buf = [ 0, 0, 0, 0 ]
+      # Delay by one cycle and write outputs
 
-  #-----------------------------------------------------------------------
-  # Sequential logic
-  #-----------------------------------------------------------------------
+      for i, value in enumerate( s.buf ):
+        s.out[i].value = value
 
-  @tick
-  def logic( self ):
+      # Sort behavioral level
 
-    # Delay by one cycle and write outputs
-
-    for i, value in enumerate( self.buf ):
-      self.out[i].value = value
-
-    # Sort behavioral level
-
-    self.buf = [ x.value[:] for x in self.in_ ]
-    self.buf.sort()
+      s.buf = [ x.value[:] for x in s.in_ ]
+      s.buf.sort()
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
-  def line_trace( self ):
-    return "{:04x} {:04x} {:04x} {:04x} () {:04x} {:04x} {:04x} {:04x}" \
-      .format( self.in_[0].value.uint, self.in_[1].value.uint,
-               self.in_[2].value.uint, self.in_[3].value.uint,
-               self.out[0].value.uint, self.out[1].value.uint,
-               self.out[2].value.uint, self.out[3].value.uint )
+  def line_trace( s ):
+    return "{} {} {} {} () {} {} {} {}" \
+      .format( s.in_[0], s.in_[1],
+               s.in_[2], s.in_[3],
+               s.out[0], s.out[1],
+               s.out[2], s.out[3] )
 

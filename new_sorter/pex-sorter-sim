@@ -26,7 +26,7 @@ import argparse
 import sys
 import re
 
-from pymtl import *
+from new_pymtl import *
 
 from SorterBL     import SorterBL
 from SorterCL     import SorterCL
