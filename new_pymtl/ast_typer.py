@@ -71,6 +71,8 @@ class TypeAST( ast.NodeTransformer ):
       x = self.current_obj.getattr( node.attr )
       self.current_obj.update( node.attr, x )
 
+    node._object = self.current_obj.inst if self.current_obj else None
+
     return node
 
   #-----------------------------------------------------------------------
@@ -96,6 +98,7 @@ class TypeAST( ast.NodeTransformer ):
 
     # Store the new_obj
     self.current_obj = new_obj
+    node._object = self.current_obj.inst if self.current_obj else None
 
     # Return the new_node
     return ast.copy_location( new_node, node )
@@ -134,6 +137,7 @@ class TypeAST( ast.NodeTransformer ):
     # TODO: what about lists that initially contain None?
     if self.current_obj:
       self.current_obj.update( '[]', self.current_obj.inst[0] )
+    node._object = self.current_obj.inst if self.current_obj else None
 
     return ast.copy_location( new_node, node )
 
