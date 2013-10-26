@@ -8,9 +8,6 @@ from Model import *
 import re
 import sys
 import collections
-#from   translate_logic import PyToVerilogVisitor
-#from   translate_logic import FindRegistersVisitor
-#from   translate_logic import TemporariesVisitor
 
 from VerilogLogicTransl import translate_logic_blocks
 
@@ -49,11 +46,13 @@ def translate_module( model, o ):
   print >> o, header   .format( model.class_name )
   print >> o, start_mod.format( model.class_name )
 
+  # Structural Verilog
   port_declarations ( model, o )
   wire_declarations ( model, o )
   submodel_instances( model, o )
   signal_assignments( model, o )
 
+  # Behavioral Verilog
   translate_logic_blocks( model, o )
 
   print >> o, end_mod  .format( model.class_name )
@@ -131,7 +130,6 @@ def signal_assignments( model, o ):
   print >> o, '  // signal connections'
   print >> o, endl.join( sorted( assignment_list ) )
   print >> o
-
 
 #------------------------------------------------------------------------
 # verilog

@@ -5,7 +5,7 @@
 
 #from Model import *
 
-from   ast_transformer import SimplifiedAST
+from   ast_typer       import TypeAST
 from   ast_helpers     import get_method_ast, print_simple_ast, print_ast
 
 import sys
@@ -45,17 +45,38 @@ def translate_logic_blocks( model, o ):
            + model.get_combinational_blocks()
            + model.get_tick_blocks() )
 
+  import StringIO
+  behavioral_code = StringIO.StringIO()
+
+  regs = []
+
   for func in blocks:
     tree     = get_method_ast( func )
-    new_tree = SimplifiedAST().visit( tree )
-    #print_simple_ast( new_tree )    # DEBUG
-    src      = inspect.getsource( func ) # DEBUG
-    print >> o, "  // PYMTL SOURCE:"
+    #print_simple_ast( tree )    # DEBUG
+    new_tree = TypeAST( model, func ).visit( tree )
+    print_simple_ast( new_tree )    # DEBUG
+
+    # Store the PyMTL source inline with the behavioral code
+    src = inspect.getsource( func )
+    print   >> behavioral_code, "  // PYMTL SOURCE:"
     for line in src.splitlines():
-      print >> o, "  // " + line
+      print >> behavioral_code, "  // " + line
 
-    TranslateLogic( o ).visit( new_tree )
+    # Print the Verilog translation
+    visitor = TranslateLogic( model, behavioral_code )
+    visitor.visit( new_tree )
 
+    # TODO: check for conflicts, ensure that signals are not written in
+    #       two different behavioral blocks!
+    regs.extend( visitor.regs )
+
+  # Print the reg declarations
+  for signal in regs:
+    print >> o, '  reg {};'.format( signal.name )
+
+  # Print the behavioral block code
+  print >> o
+  print >> o, behavioral_code.getvalue()
 
 #-------------------------------------------------------------------------
 # opmap
@@ -95,10 +116,14 @@ opmap = {
 class TranslateLogic( ast.NodeVisitor ):
 
 
-  def __init__( self, o ):
+  def __init__( self, model, o ):
+    self.model  = model
     self.o      = o
     self.ident  = 0
     self.elseif = False
+    self.regs   = []
+
+    self.this_obj = None
 
   #-----------------------------------------------------------------------
   # visit_FunctionDef
@@ -111,19 +136,19 @@ class TranslateLogic( ast.NodeVisitor ):
     self.block_type = None
 
     # Combinational Block          TODO: handle s or self
-    if 's.combinational' in node.decorator_list:
+    if 'combinational' in node.decorator_list:
       self.block_type = 's.combinational'
       self.assign     = '='
       always = '  always @ (*) begin'
 
     # Posedge Clock                TODO: handle s or self
-    elif 's.posedge_clk' in node.decorator_list:
+    elif 'posedge_clk' in node.decorator_list:
       self.block_type = 's.posedge_clk'
       self.assign     = '<='
       always = '  always @ (posedge clk) begin'
 
     # Can't translate tick blocks  TODO: handle s or self
-    elif  's.tick' in node.decorator_list:
+    elif  'tick' in node.decorator_list:
       raise Exception("Tick blocks can't be translated!")
 
     # Write
@@ -144,11 +169,11 @@ class TranslateLogic( ast.NodeVisitor ):
   def visit_Assign(self, node):
     # TODO: implement multiple left hand targets?
     assert len(node.targets) == 1
-    target = node.targets[0]._name
     #if debug:
     print >> self.o, (self.ident+2)*" ",
-    print >> self.o, "{} {}".format( target, self.assign ),
-    self.visit(node.value)
+    self.visit( node.targets[0] )
+    print >> self.o, "{}".format( self.assign ),
+    self.visit( node.value )
     print >> self.o, ';'
 
   #-----------------------------------------------------------------------
@@ -158,7 +183,8 @@ class TranslateLogic( ast.NodeVisitor ):
     # TODO: implement multiple left hand targets?
     target = node.target._name
     print >> self.o, (self.ident+2)*" ",
-    print >> self.o, "{} {}=".format( target, opmap[type(node.op)] ),
+    print >> self.o, "{0} {1} {0} {2}".format( target, self.assign,
+                                               opmap[type(node.op)] ),
     self.visit(node.value)
     print >> self.o, ';'
 
@@ -237,15 +263,30 @@ class TranslateLogic( ast.NodeVisitor ):
   # visit_Self
   #-----------------------------------------------------------------------
   # TODO: handle names properly
-  def visit_Self(self, node):
-    print >> self.o, node._name,
+  #def visit_Self(self, node):
+  #  self.this_obj = ThisObject( '', self.model )
+  #  self.visit( node.value )
+  #  print >> self.o, self.this_obj.name,
 
   #-----------------------------------------------------------------------
   # visit_Local
   #-----------------------------------------------------------------------
   # TODO: handle names properly
-  def visit_Local(self, node):
-    print >> self.o, node._name,
+  #def visit_Local(self, node):
+  #  obj = getattr( self.model, node.attr )
+  #  self.this_obj = ThisObject( node.attr, obj )
+  #  self.visit( node.value )
+  #  print >> self.o, self.this_obj.name,
+
+  #-----------------------------------------------------------------------
+  # visit_Attribute
+  #-----------------------------------------------------------------------
+  # TODO: currently assuming all attributes are bits objects,
+  #       need to fix for PortBundles and BitStructs
+  def visit_Attribute(self, node):
+    if isinstance( node.ctx, _ast.Store ):
+      self.regs.append( node._object )
+    print >> self.o, node._object.name,
 
   #-----------------------------------------------------------------------
   # visit_For
@@ -329,3 +370,9 @@ class TranslateLogic( ast.NodeVisitor ):
   #  else:
   #    raise Exception("Function {}() not supported for translation!"
   #                    "".format(func) )
+
+class ThisObject( object ):
+  def __init__( self, name, obj ):
+    self.name = name
+    self.obj  = obj
+

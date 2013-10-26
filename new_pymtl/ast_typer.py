@@ -8,6 +8,7 @@ import ast, _ast
 import re
 
 from Bits        import Bits
+# TODO: Import Ports/Portbundles
 
 #-------------------------------------------------------------------------
 # TypeAST
@@ -50,10 +51,11 @@ class TypeAST( ast.NodeTransformer ):
     self.generic_visit( node )
 
     # TODO: add annotation to self.func based on decorator type
+    dec = node.decorator_list[0].attr
 
     # create a new FunctionDef node that deletes the decorators
     new_node = ast.FunctionDef( name=node.name, args=node.args,
-                                body=node.body, decorator_list=[] )
+                                body=node.body, decorator_list=dec )
 
     return ast.copy_location( new_node, node )
 
@@ -68,8 +70,15 @@ class TypeAST( ast.NodeTransformer ):
     #       change!
 
     if self.current_obj:
-      x = self.current_obj.getattr( node.attr )
-      self.current_obj.update( node.attr, x )
+      try :
+        x = self.current_obj.getattr( node.attr )
+        self.current_obj.update( node.attr, x )
+      except AttributeError:
+        if node.attr == 'next' or node.attr == 'value':
+          node.value.ctx = node.ctx  # Update the Load/Store information
+          return node.value
+        else:
+          raise Exception("Error: Unknown attribute for this object!");
 
     node._object = self.current_obj.inst if self.current_obj else None
 

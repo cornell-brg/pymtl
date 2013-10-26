@@ -19,33 +19,29 @@ compiler = 'iverilog -g2005 -Wall -Wno-sensitivity-entire-vector'
 def setup_sim( model ):
   model.elaborate()
 
-  # Debug
-  import sys
-  VerilogTranslationTool( model, sys.stdout)
+  with tempfile.NamedTemporaryFile() as output:
+    VerilogTranslationTool( model, output )
+    output.flush()
+    cmd  = '{} {}'.format( compiler, output.name )
 
-  #with tempfile.NamedTemporaryFile() as output:
-  #  VerilogTranslationTool( model, output )
-  #  output.flush()
-  #  cmd  = '{} {}'.format( compiler, output.name )
+    try:
 
-  #  try:
+      result = check_output( cmd.split() , stderr=STDOUT )
+      output.seek(0)
+      verilog = output.read()
+      print
+      print verilog
 
-  #    result = check_output( cmd.split() , stderr=STDOUT )
-  #    output.seek(0)
-  #    verilog = output.read()
-  #    print
-  #    print verilog
+    except CalledProcessError as e:
 
-  #  except CalledProcessError as e:
+      output.seek(0)
+      verilog = output.read()
 
-  #    output.seek(0)
-  #    verilog = output.read()
-
-  #    raise Exception( 'Module did not compile!\n\n'
-  #                     'Command:\n' + ' '.join(e.cmd) + '\n\n'
-  #                     'Error:\n' + e.output + '\n'
-  #                     'Source:\n' + verilog
-  #                   )
+      raise Exception( 'Module did not compile!\n\n'
+                       'Command:\n' + ' '.join(e.cmd) + '\n\n'
+                       'Error:\n' + e.output + '\n'
+                       'Source:\n' + verilog
+                     )
 
 
 #-------------------------------------------------------------------------
