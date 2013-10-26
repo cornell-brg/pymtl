@@ -16,15 +16,20 @@ class TypeAST( ast.NodeTransformer ):
     self.model       = model
     self.func        = func
     self.closed_vars = get_closure_dict( func )
+    self.current_obj = None
 
-
-
+  #-----------------------------------------------------------------------
+  # visit_Module
+  #-----------------------------------------------------------------------
   def visit_Module( self, node ):
     # visit children
     self.generic_visit( node )
     # copy the function body, delete module references
     return ast.copy_location( node.body[0], node )
 
+  #-----------------------------------------------------------------------
+  # visit_FunctionDef
+  #-----------------------------------------------------------------------
   def visit_FunctionDef( self, node ):
     # visit children
     self.generic_visit( node )
@@ -42,37 +47,81 @@ class TypeAST( ast.NodeTransformer ):
     # create a new function that deletes the decorators
     return new_node
 
-  #def visit_Attribute( self, node ):
-  #  reverse_branch = ReorderAST(self.self_name).reverse( node )
-  #  return ast.copy_location( reverse_branch, node )
+  #-----------------------------------------------------------------------
+  # visit_Attribute
+  #-----------------------------------------------------------------------
+  def visit_Attribute( self, node ):
+    self.visit( node.value )
 
-  #def visit_Subscript( self, node ):
-  #  reverse_branch = ReorderAST(self.self_name).reverse( node )
-  #  return ast.copy_location( reverse_branch, node )
+    # TODO: handle self.current_obj == None.  These are temporary
+    #       locals that we should check to ensure their types don't
+    #       change!
 
+    if self.current_obj:
+      x = self.current_obj.getattr( node.attr )
+      self.current_obj.update( node.attr, x )
+
+    return node
+
+  #-----------------------------------------------------------------------
+  # visit_Name
+  #-----------------------------------------------------------------------
   def visit_Name( self, node ):
+
     # If the name is not in closed_vars, it is a local temporary
     if   node.id not in self.closed_vars:
       new_node = Temp( id=node.id )
+      new_obj  = None
+
     # If the name points to the model, this is a reference to self (or s)
     elif self.closed_vars[ node.id ] is self.model:
       new_node = Self( id=node.id )
+      new_obj  = PyObj( '', self.closed_vars[ node.id ] )
+
     # Otherwise, we have some other variable captured by the closure...
     # TODO: should we allow this?
     else:
       new_node = node
+      new_obj  = PyObj( node.id, self.closed_vars[ node.id ] )
+
+    # Store the new_obj
+    self.current_obj = new_obj
 
     # Return the new_node
     return ast.copy_location( new_node, node )
 
+  #-----------------------------------------------------------------------
+  # visit_Subscript
+  #-----------------------------------------------------------------------
+  #def visit_Subscript( self, node ):
+  #  return node
+
+  #-----------------------------------------------------------------------
+  # visit_Index
+  #-----------------------------------------------------------------------
   def visit_Index( self, node ):
     # Remove Index nodes, they seem pointless
     child = self.visit( node.value )
     return child
 
 #------------------------------------------------------------------------
+# PyObj
+#------------------------------------------------------------------------
+class PyObj( object ):
+  def __init__( self, name, inst ):
+    self.name  = name
+    self.inst  = inst
+  def update( self, name, inst ):
+    self.name += name
+    self.inst  = inst
+  def getattr( self, name ):
+    return getattr( self.inst, name )
+
+
+#------------------------------------------------------------------------
 # get_closure_dict
 #------------------------------------------------------------------------
+# http://stackoverflow.com/a/19416942
 def get_closure_dict( fn ):
   closure_objects = [c.cell_contents for c in fn.func_closure]
   return dict( zip( fn.func_code.co_freevars, closure_objects ))
