@@ -7,9 +7,23 @@
 import ast, _ast
 import re
 
+from Bits        import Bits
+
 #-------------------------------------------------------------------------
 # TypeAST
 #-------------------------------------------------------------------------
+# ASTTransformer which uses type information to simplify the AST:
+#
+# - clears references to the module
+# - clears the decorator, attaches relevant notation to func instead
+# - removes Index nodes
+# - replaces Name nodes with Self if they reference the self object
+# - replaces Name nodes with Temp if they reference a local temporary
+# - replaces Subscript nodes with BitSlice if they reference a Bits
+#   or BitStruct object
+# - replaces Subscript nodes with ArrayIndex if they reference a list
+# - attaches object references to each node (TODO)
+#
 class TypeAST( ast.NodeTransformer ):
 
   def __init__( self, model, func ):
@@ -24,6 +38,7 @@ class TypeAST( ast.NodeTransformer ):
   def visit_Module( self, node ):
     # visit children
     self.generic_visit( node )
+
     # copy the function body, delete module references
     return ast.copy_location( node.body[0], node )
 
@@ -34,24 +49,19 @@ class TypeAST( ast.NodeTransformer ):
     # visit children
     self.generic_visit( node )
 
-    # simplified decorator list
-    decorator_list = [ x._name for x in node.decorator_list
-                       if isinstance( x, Self ) ]
+    # TODO: add annotation to self.func based on decorator type
 
-    # create a new FunctionDef node
+    # create a new FunctionDef node that deletes the decorators
     new_node = ast.FunctionDef( name=node.name, args=node.args,
-                                body=node.body,
-                                decorator_list=decorator_list
-                               )
+                                body=node.body, decorator_list=[] )
 
-    # create a new function that deletes the decorators
-    return new_node
+    return ast.copy_location( new_node, node )
 
   #-----------------------------------------------------------------------
   # visit_Attribute
   #-----------------------------------------------------------------------
   def visit_Attribute( self, node ):
-    self.visit( node.value )
+    self.generic_visit( node )
 
     # TODO: handle self.current_obj == None.  These are temporary
     #       locals that we should check to ensure their types don't
@@ -93,8 +103,39 @@ class TypeAST( ast.NodeTransformer ):
   #-----------------------------------------------------------------------
   # visit_Subscript
   #-----------------------------------------------------------------------
-  #def visit_Subscript( self, node ):
-  #  return node
+  def visit_Subscript( self, node ):
+
+    # Visit the object being sliced
+    new_value = self.visit( node.value )
+
+    # Visit the index of the slice; stash and restore the current_obj
+    stash = self.current_obj
+    self.current_obj = None
+    new_slice = self.visit( node.slice )
+    self.current_obj = stash
+
+    # If current_obj not initialized, it is a local temp. Don't replace.
+    if   not self.current_obj:
+      new_node = Subscript( value=new_value, slice=new_slice )
+    # If current_obj is a Bits object, replace with a BitSlice node.
+    elif isinstance( self.current_obj.inst, Bits ):
+      new_node = BitSlice( value=new_value, slice=new_slice )
+    # If current_obj is a list object, replace with an ArrayIndex node.
+    elif isinstance( self.current_obj.inst, list ):
+      new_node = ArrayIndex( value=new_value, slice=new_slice )
+    # Otherwise, throw an exception
+    else:
+      print self.current_obj
+      raise Exception("Unknown type being subscripted!")
+
+    # Update the current_obj to contain the obj returned by subscript
+    # TODO: check that type of all elements in item are identical
+    # TODO: won't work for lists that are initially empty
+    # TODO: what about lists that initially contain None?
+    if self.current_obj:
+      self.current_obj.update( '[]', self.current_obj.inst[0] )
+
+    return ast.copy_location( new_node, node )
 
   #-----------------------------------------------------------------------
   # visit_Index
@@ -102,7 +143,8 @@ class TypeAST( ast.NodeTransformer ):
   def visit_Index( self, node ):
     # Remove Index nodes, they seem pointless
     child = self.visit( node.value )
-    return child
+
+    return ast.copy_location( child, node )
 
 #------------------------------------------------------------------------
 # PyObj
@@ -116,6 +158,8 @@ class PyObj( object ):
     self.inst  = inst
   def getattr( self, name ):
     return getattr( self.inst, name )
+  def __repr__( self ):
+    return "PyObj( name={} inst={} )".format( self.name, type(self.inst) )
 
 
 #------------------------------------------------------------------------
@@ -127,9 +171,9 @@ def get_closure_dict( fn ):
   return dict( zip( fn.func_code.co_freevars, closure_objects ))
 
 #------------------------------------------------------------------------
-# ArraySlice
+# ArrayIndex
 #------------------------------------------------------------------------
-class ArraySlice( _ast.Subscript ):
+class ArrayIndex( _ast.Subscript ):
   pass
 
 #------------------------------------------------------------------------

@@ -11,7 +11,10 @@ class M( object ):
   def __init__( self, *args ):
     for x in args:
       setattr( self, x, Bits(4) )
-    
+  def lists( self, *args ):
+    for x in args:
+      setattr( self, x, [Bits(4)] )
+    return self
 
 #-------------------------------------------------------------------------
 # check_ast
@@ -26,7 +29,7 @@ def check_ast( model ):
 
     import inspect
     print inspect.getsource( func )
-    print_simple_ast( tree )
+    #print_simple_ast( tree )
 
     new_tree = TypeAST( model, func ).visit( tree )
 
@@ -116,61 +119,61 @@ def test_wr_bit_idx_slice_var():
 #-------------------------------------------------------------------------
 
 def test_rd_list_idx_const():
-  s = M( 'out', 'a', 'b' )
+  s = M( 'out' ).lists( 'a', 'b' )
   @check_ast( s )
   def rd_list_idx_const():
     s.out.v = s.a[ 0 ].v + s.b[ 1 ].v
 
 def test_rd_list_idx_var():
-  s = M( 'out', 'a', 'b', 'c', 'd' )
+  s = M( 'out', 'c', 'd'  ).lists( 'a', 'b' )
   @check_ast( s )
   def rd_list_idx_var():
     s.out.v = s.a[ s.c ].v & s.b[ s.d ]
 
 def test_rd_list_idx_slice_const():
-  s = M( 'out', 'a', 'b' )
+  s = M( 'out' ).lists( 'a', 'b' )
   @check_ast( s )
   def rd_list_idx_slice_const():
     s.out.v = s.a[ 0:2 ].v & s.b[ 4:8 ].v
 
 def test_rd_list_idx_slice_var():
-  s = M( 'out', 'a', 's0', 's1' )
+  s = M( 'out', 's0', 's1' ).lists( 'a' )
   @check_ast( s )
   def rd_list_idx_slice_var():
     s.out.v = s.a[ s.s0:s.s1 ].v
 
 def test_wr_list_idx_const():
-  s = M( 'out', 'in0', 'in1' )
+  s = M( 'in0', 'in1' ).lists( 'out' )
   @check_ast( s )
   def wr_list_idx_const():
     s.out[ 0 ].v = s.in0 + s.in1
 
 def test_wr_list_idx_var():
-  s = M( 'out', 'c', 'in0', 'in1' )
+  s = M( 'c', 'in0', 'in1' ).lists( 'out' )
   @check_ast( s )
   def wr_list_idx_var():
     s.out[ s.c ].v = s.in0 + s.in1
 
 def test_wr_list_idx_slice_const():
-  s = M( 'out', 'in0' )
+  s = M( 'in0' ).lists( 'out' )
   @check_ast( s )
   def wr_list_idx_slice_const():
     s.out[ 0:1 ].v = s.in0[ 3:4 ]
 
 def test_wr_list_idx_slice_var():
-  s = M( 'out', 's0', 's1', 'a' )
+  s = M( 's0', 's1', 'a' ).lists( 'out' )
   @check_ast( s )
   def wr_list_idx_slice_var():
     s.out[ s.s0:s.s1 ].v = s.a.v
 
 def test_wr_list_idx_op():
-  s = M( 'out', 's0', 'a' )
+  s = M( 's0', 'a' ).lists( 'out' )
   @check_ast( s )
   def wr_list_idx_slice_op():
     s.out[i + s.s0].v = s.a.v
 
 def test_wr_list_idx_slice_op():
-  s = M( 'out', 's0', 'a' )
+  s = M( 's0', 'a' ).lists( 'out' )
   @check_ast( s )
   def wr_list_idx_slice_op():
     s.out[i:i + s.s0].v = s.a.v
@@ -260,7 +263,8 @@ def test_nested_elif():
 #-------------------------------------------------------------------------
 def test_for_loop_const():
   s = M()
-  a = []
+  a = [None]
+  # TODO: fails if a is empty, how to handle this?
   @check_ast( s )
   def logic():
     for i in range( 10 ):
