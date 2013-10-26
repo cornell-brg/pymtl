@@ -23,7 +23,10 @@ from Bits        import Bits
 # - replaces Subscript nodes with BitSlice if they reference a Bits
 #   or BitStruct object
 # - replaces Subscript nodes with ArrayIndex if they reference a list
-# - attaches object references to each node (TODO)
+# - attaches object references to each node
+# - removes '.next', '.value', '.n', and '.v' Attribute nodes on Ports
+#
+# TODO: fix ctx references on newly created nodes
 #
 class TypeAST( ast.NodeTransformer ):
 
@@ -74,7 +77,7 @@ class TypeAST( ast.NodeTransformer ):
         x = self.current_obj.getattr( node.attr )
         self.current_obj.update( node.attr, x )
       except AttributeError:
-        if node.attr == 'next' or node.attr == 'value':
+        if node.attr in ['next', 'value', 'n', 'v']:
           node.value.ctx = node.ctx  # Update the Load/Store information
           return node.value
         else:

@@ -48,6 +48,8 @@ def translate_logic_blocks( model, o ):
   import StringIO
   behavioral_code = StringIO.StringIO()
 
+  # TODO: remove regs logic, move to own visitor that visits _ast.Store
+  #       nodes!
   regs = []
 
   for func in blocks:
@@ -71,8 +73,10 @@ def translate_logic_blocks( model, o ):
     regs.extend( visitor.regs )
 
   # Print the reg declarations
-  for signal in regs:
-    print >> o, '  reg {};'.format( signal.name )
+  if regs:
+    print   >> o, '  // register declarations'
+    for signal in regs:
+      print >> o, '  reg {};'.format( signal.name )
 
   # Print the behavioral block code
   print >> o
@@ -121,7 +125,7 @@ class TranslateLogic( ast.NodeVisitor ):
     self.o      = o
     self.ident  = 0
     self.elseif = False
-    self.regs   = []
+    self.regs   = set()
 
     self.this_obj = None
 
@@ -285,7 +289,7 @@ class TranslateLogic( ast.NodeVisitor ):
   #       need to fix for PortBundles and BitStructs
   def visit_Attribute(self, node):
     if isinstance( node.ctx, _ast.Store ):
-      self.regs.append( node._object )
+      self.regs.add( node._object )
     print >> self.o, node._object.name,
 
   #-----------------------------------------------------------------------
