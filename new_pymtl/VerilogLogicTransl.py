@@ -347,8 +347,11 @@ class TranslateLogic( ast.NodeVisitor ):
       self.regs.add( node._object )
 
     # TODO: hacky
-    if isinstance( node._object, list ):
+    if   isinstance( node._object, list ):
       print >> self.o, node._object[0].name.split('[')[0],
+    # TODO:convert int attributes into contant nodes!
+    elif isinstance( node._object, int ):
+      print >> self.o, node._object,
     else:
       print >> self.o, node._object.name,
 
@@ -364,15 +367,19 @@ class TranslateLogic( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   # TODO: does this work?
   def visit_For(self, node):
-    # TODO: create new list of iterators?
-    var_name = node.target.id
-    assert node.iter.func.id == "range"
-    range_   = node.iter.func.id
-    #if var_name not in self.model._loopvars:
-    #  self.model._loopvars.append( var_name )
+
+    # TODO: fix to return string..
+    assert isinstance( node.iter, _ast.Slice )
+    i = node.target.id
+
     # TODO: add support for temporaries declared in for loop
-    print >> self.o, (self.ident+2)*" " + \
-        "for ({0} = {1}; {0} < {2}; {0}={0}+1)".format( var_name, range_, range_ )
+    print >> self.o, (self.ident+2)*" " + "for ({}=".format(i),
+    self.visit( node.iter.lower )
+    print >> self.o, "; {}<".format(i),
+    self.visit( node.iter.upper )
+    print >> self.o, "; {0}={0}+".format(i),
+    self.visit( node.iter.step )
+    print >> self.o, ")"
     print >> self.o, (self.ident+2)*" " + "begin"
     for x in node.body:
       self.visit(x)
