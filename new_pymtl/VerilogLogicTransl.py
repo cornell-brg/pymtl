@@ -13,6 +13,8 @@ import ast, _ast
 import collections
 import inspect
 
+from signals import InPort, OutPort
+
 #-------------------------------------------------------------------------
 # VerilogLogicTransl
 #-------------------------------------------------------------------------
@@ -52,15 +54,20 @@ def translate_logic_blocks( model, o ):
   #       nodes!
   regs  = []
   temps = []
+  array = []
 
   for func in blocks:
-    tree     = get_method_ast( func )
+
+    # Type Check the AST
+    tree = get_method_ast( func )
+    src  = inspect.getsource( func )
     #print_simple_ast( tree )    # DEBUG
+    print src
     new_tree = TypeAST( model, func ).visit( tree )
-    print_simple_ast( new_tree )    # DEBUG
+
+    print_simple_ast( new_tree ) # DEBUG
 
     # Store the PyMTL source inline with the behavioral code
-    src = inspect.getsource( func )
     print   >> behavioral_code, "  // PYMTL SOURCE:"
     for line in src.splitlines():
       print >> behavioral_code, "  // " + line
@@ -73,6 +80,7 @@ def translate_logic_blocks( model, o ):
     #       two different behavioral blocks!
     regs .extend( visitor.regs  )
     temps.extend( visitor.temps )
+    array.extend( visitor.array )
 
   # Print the reg declarations
   if regs:
@@ -88,6 +96,28 @@ def translate_logic_blocks( model, o ):
     print   >> o, '  // temporary declarations'
     for signal in temps:
       print >> o, '  reg {};'.format( signal )
+
+  # TODO: clean this up and move it somewhere else! Ugly!
+  print >> o
+  if array:
+    print   >> o, '  // temporary arrays'
+    for x in array:
+      # declare the array
+      nports = len( x )
+      nbits  = x[0].nbits
+      name   = x[0].name.split('[')[0]
+      if   isinstance( x[0], InPort  ):
+        print   >> o, '  wire   [{:4}:0] {}[0:{}];'.format( nbits-1, name, nports-1 )
+        for i in range( nports ):
+          print >> o, '  assign {0}[{1:3}] = {0}${1:03d};'.format( name, i )
+      elif isinstance( x[0], OutPort ):
+        print   >> o, '  reg    [{:4}:0] {}[0:{}];'.format( nbits-1, name, nports-1 )
+        for i in range( nports ):
+          print >> o, '  assign {0}${1:03d} = {0}[{1:3}];'.format( name, i )
+      else:
+        raise Exception("Untranslatable array item!")
+
+  # Print the temporary declarations
 
   # Print the behavioral block code
   print >> o
@@ -138,6 +168,7 @@ class TranslateLogic( ast.NodeVisitor ):
     self.elseif = False
     self.regs   = set()
     self.temps  = set()
+    self.array  = []
 
     self.this_obj = None
 
@@ -259,15 +290,27 @@ class TranslateLogic( ast.NodeVisitor ):
     print >> self.o, ")",
 
   #-----------------------------------------------------------------------
-  # visit_Subscript
+  # visit_ArrayIndex
   #-----------------------------------------------------------------------
-  #def visit_Subscript(self, node):
-  #  # TODO: add support for ranges!
-  #  target_name, debug = get_target_name(node.value)
-  #  print >> self.o, "{}[".format( target_name ),
-  #  self.visit(node.slice)
-  #  print >> self.o, "]",
-  #  #print "  @@@@@",  node.slice
+  def visit_ArrayIndex(self, node):
+
+    # TODO: need to set ArrayIndex to point to list object
+    # Ugly, by creating portlist?
+    self.array.append( node.value._object )
+    self.visit(node.value)
+    print >> self.o, "[",
+    self.visit(node.slice)
+    print >> self.o, "]",
+
+  #-----------------------------------------------------------------------
+  # visit_BitSlice
+  #-----------------------------------------------------------------------
+  def visit_BitSlice(self, node):
+    # TODO: add support for ranges!
+    self.visit(node.value)
+    print >> self.o, "[",
+    self.visit(node.slice)
+    print >> self.o, "]",
 
   #-----------------------------------------------------------------------
   # visit_Num
@@ -302,7 +345,12 @@ class TranslateLogic( ast.NodeVisitor ):
   def visit_Attribute(self, node):
     if isinstance( node.ctx, _ast.Store ):
       self.regs.add( node._object )
-    print >> self.o, node._object.name,
+
+    # TODO: hacky
+    if isinstance( node._object, list ):
+      print >> self.o, node._object[0].name.split('[')[0],
+    else:
+      print >> self.o, node._object.name,
 
   #-----------------------------------------------------------------------
   # visit_Temp

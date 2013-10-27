@@ -138,6 +138,9 @@ class TypeAST( ast.NodeTransformer ):
     # If current_obj is a list object, replace with an ArrayIndex node.
     elif isinstance( self.current_obj.inst, list ):
       new_node = ArrayIndex( value=new_value, slice=new_slice )
+      # TODO: Want to do this for lists, but can't add attribute
+      #       handling in translation instead
+      #self.current_obj.inst.name = self.current_obj.inst[0].name.split('[')[0]
     # Otherwise, throw an exception
     else:
       print self.current_obj
