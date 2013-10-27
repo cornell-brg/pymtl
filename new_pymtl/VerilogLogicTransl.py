@@ -228,10 +228,11 @@ class TranslateLogic( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_AugAssign(self, node):
     # TODO: implement multiple left hand targets?
-    target = node.target._name
     print >> self.o, (self.ident+2)*" ",
-    print >> self.o, "{0} {1} {0} {2}".format( target, self.assign,
-                                               opmap[type(node.op)] ),
+    self.visit( node.target )
+    print >> self.o, self.assign,
+    self.visit( node.target )
+    print >> self.o, opmap[type(node.op)],
     self.visit(node.value)
     print >> self.o, ';'
 
