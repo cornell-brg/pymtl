@@ -50,7 +50,8 @@ def translate_logic_blocks( model, o ):
 
   # TODO: remove regs logic, move to own visitor that visits _ast.Store
   #       nodes!
-  regs = []
+  regs  = []
+  temps = []
 
   for func in blocks:
     tree     = get_method_ast( func )
@@ -70,13 +71,23 @@ def translate_logic_blocks( model, o ):
 
     # TODO: check for conflicts, ensure that signals are not written in
     #       two different behavioral blocks!
-    regs.extend( visitor.regs )
+    regs .extend( visitor.regs  )
+    temps.extend( visitor.temps )
 
   # Print the reg declarations
   if regs:
     print   >> o, '  // register declarations'
     for signal in regs:
       print >> o, '  reg {};'.format( signal.name )
+
+  print >> o
+
+  # Print the temporary declarations
+  # TODO: this doesn't really work, need to set type of temp
+  if temps:
+    print   >> o, '  // temporary declarations'
+    for signal in temps:
+      print >> o, '  reg {};'.format( signal )
 
   # Print the behavioral block code
   print >> o
@@ -126,6 +137,7 @@ class TranslateLogic( ast.NodeVisitor ):
     self.ident  = 0
     self.elseif = False
     self.regs   = set()
+    self.temps  = set()
 
     self.this_obj = None
 
@@ -291,6 +303,13 @@ class TranslateLogic( ast.NodeVisitor ):
     if isinstance( node.ctx, _ast.Store ):
       self.regs.add( node._object )
     print >> self.o, node._object.name,
+
+  #-----------------------------------------------------------------------
+  # visit_Temp
+  #-----------------------------------------------------------------------
+  def visit_Temp(self, node):
+    self.temps.add( node.id )
+    print >> self.o, node.id,
 
   #-----------------------------------------------------------------------
   # visit_For
