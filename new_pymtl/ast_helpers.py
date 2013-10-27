@@ -62,13 +62,13 @@ def print_simple_ast(node, indent=' '):
       head_string += " ({})".format(field) if field else ""
       body_string  = ""
       for label, value in ast.iter_fields(node):
-        if label == "ctx" or label == "args":
+        if label == "ctx":
           continue
         if isinstance( value, (str, int, float, long) ):
           head_string +=  '  {} = {}'.format( label, value )
           #pass
           #string += indent*level + '|- %s = "%s"\n' % (label,value)
-        elif isinstance( value, type(None) ):
+        elif not value:
           body_string += get_indent( level+1, pipe=True) + '{} ({})\n'.format( value, label )
         else:
           #string += indent + '- %s = %s\n' % (label,value)
