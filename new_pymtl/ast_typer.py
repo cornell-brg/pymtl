@@ -7,8 +7,8 @@
 import ast, _ast
 import re
 
-from Bits        import Bits
-# TODO: Import Ports/Portbundles
+from Bits    import Bits
+from signals import InPort, OutPort
 
 #-------------------------------------------------------------------------
 # TypeAST
@@ -133,7 +133,7 @@ class TypeAST( ast.NodeTransformer ):
     if   not self.current_obj:
       new_node = Subscript( value=new_value, slice=new_slice )
     # If current_obj is a Bits object, replace with a BitSlice node.
-    elif isinstance( self.current_obj.inst, Bits ):
+    elif isinstance( self.current_obj.inst, (Bits, InPort, OutPort) ):
       new_node = BitSlice( value=new_value, slice=new_slice )
     # If current_obj is a list object, replace with an ArrayIndex node.
     elif isinstance( self.current_obj.inst, list ):
@@ -162,8 +162,40 @@ class TypeAST( ast.NodeTransformer ):
   def visit_Index( self, node ):
     # Remove Index nodes, they seem pointless
     child = self.visit( node.value )
-
     return ast.copy_location( child, node )
+
+  #-----------------------------------------------------------------------
+  # visit_Call
+  #-----------------------------------------------------------------------
+  # Specially handle certain function calls
+  def visit_Call( self, node ):
+    # func, args, keywords, starargs, kwargs
+    # Check that this is just a normal function call, not something weird
+    supported_functions = ['range']
+    assert isinstance( node.func, _ast.Name )
+    assert node.func.id in supported_functions
+
+    self.generic_visit( node )
+
+    if node.func.id == 'range':
+      if   len( node.args ) == 1:
+        start = _ast.Num( n=0 )
+        stop  = node.args[0]
+        step  = _ast.Num( n=1 )
+      elif len( node.args ) == 2:
+        start = node.args[0]
+        stop  = node.args[1]
+        step  = _ast.Num( n=1 ) # TODO: should be an expression
+      elif len( node.args ) == 3:
+        start = node.args[0]
+        stop  = node.args[1]
+        step  = node.args[2]
+      else:
+        raise Exception("Invalid # of arguments!")
+
+      new_node = _ast.Slice( lower=start, upper=stop, step=step )
+
+    return ast.copy_location( new_node, node )
 
 #------------------------------------------------------------------------
 # PyObj
