@@ -219,7 +219,7 @@ def signal_to_str( node, addr, context ):
   # we need to prefix the signal name with the module name
   prefix = ''
   if node.parent != context and node.parent != None:
-    prefix = '{}$'.format( node.parent.name )
+    prefix = '{}$'.format( mangle_name( node.parent.name ) )
 
   # If this is a slice, we need to provide the slice indexing
   suffix = ''
