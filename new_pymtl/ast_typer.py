@@ -131,13 +131,13 @@ class TypeAST( ast.NodeTransformer ):
 
     # If current_obj not initialized, it is a local temp. Don't replace.
     if   not self.current_obj:
-      new_node = Subscript( value=new_value, slice=new_slice )
+      new_node = Subscript( value=new_value, slice=new_slice, ctx=node.ctx )
     # If current_obj is a Bits object, replace with a BitSlice node.
     elif isinstance( self.current_obj.inst, (Bits, InPort, OutPort) ):
-      new_node = BitSlice( value=new_value, slice=new_slice )
+      new_node = BitSlice( value=new_value, slice=new_slice, ctx=node.ctx )
     # If current_obj is a list object, replace with an ArrayIndex node.
     elif isinstance( self.current_obj.inst, list ):
-      new_node = ArrayIndex( value=new_value, slice=new_slice )
+      new_node = ArrayIndex( value=new_value, slice=new_slice, ctx=node.ctx )
       # TODO: Want to do this for lists, but can't add attribute
       #       handling in translation instead
       #self.current_obj.inst.name = self.current_obj.inst[0].name.split('[')[0]
