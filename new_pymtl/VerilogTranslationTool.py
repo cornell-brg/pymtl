@@ -48,7 +48,7 @@ def translate_module( model, o ):
 
   # Structural Verilog
   port_declarations ( model, o )
-  wire_declarations ( model, o )
+  #wire_declarations ( model, o )
   submodel_instances( model, o )
   signal_assignments( model, o )
 
