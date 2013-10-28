@@ -13,7 +13,7 @@ import ast, _ast
 import collections
 import inspect
 
-from signals import InPort, OutPort
+from signals import InPort, OutPort, Wire
 
 #-------------------------------------------------------------------------
 # VerilogLogicTransl
@@ -114,6 +114,8 @@ def translate_logic_blocks( model, o ):
         print   >> o, '  reg    [{:4}:0] {}[0:{}];'.format( nbits-1, name, nports-1 )
         for i in range( nports ):
           print >> o, '  assign {0}${1:03d} = {0}[{1:3}];'.format( name, i )
+      elif isinstance( x[0], Wire ):
+        print   >> o, '  reg    [{:4}:0] {}[0:{}];'.format( nbits-1, name, nports-1 )
       else:
         raise Exception("Untranslatable array item!")
 
