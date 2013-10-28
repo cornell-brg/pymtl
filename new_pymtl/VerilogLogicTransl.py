@@ -86,7 +86,7 @@ def translate_logic_blocks( model, o ):
   if regs:
     print   >> o, '  // register declarations'
     for signal in regs:
-      print >> o, '  reg {};'.format( signal.name )
+      print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1, signal.name )
 
   print >> o
 
@@ -301,6 +301,8 @@ class TranslateLogic( ast.NodeVisitor ):
     # TODO: need to set ArrayIndex to point to list object
     # Ugly, by creating portlist?
     self.array.append( node.value._object )
+
+    # Translate
     self.visit(node.value)
     print >> self.o, "[",
     self.visit(node.slice)
@@ -310,6 +312,11 @@ class TranslateLogic( ast.NodeVisitor ):
   # visit_BitSlice
   #-----------------------------------------------------------------------
   def visit_BitSlice(self, node):
+
+    # Writes to slices need to add the signal as a reg
+    if isinstance( node.ctx, _ast.Store ):
+      self.regs.add( node.value._object )
+
     # TODO: add support for ranges!
     self.visit(node.value)
     print >> self.o, "[",
@@ -327,7 +334,9 @@ class TranslateLogic( ast.NodeVisitor ):
       self.visit( node.upper )
       print >> self.o, '-1:',
       self.visit( node.lower )
-    # TODO: super hacky!!!!
+    # TODO: Hacky attempt at implementing variable part-selects, as
+    #       described here:
+    #       http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-884-complex-digital-systems-spring-2005/related-resources/verilog_2k1paper.pdf
     elif isinstance( upper, _ast.BinOp ):
       assert isinstance( upper.op, (_ast.Add, _ast.Sub) )
       self.visit( node.lower )
