@@ -295,6 +295,9 @@ class TranslateLogic( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_ArrayIndex(self, node):
 
+    # We don't support ArrayIndexes being slices
+    assert not isinstance( node.slice, _ast.Slice )
+
     # TODO: need to set ArrayIndex to point to list object
     # Ugly, by creating portlist?
     self.array.append( node.value._object )
@@ -312,6 +315,29 @@ class TranslateLogic( ast.NodeVisitor ):
     print >> self.o, "[",
     self.visit(node.slice)
     print >> self.o, "]",
+
+  #-----------------------------------------------------------------------
+  # visit_Slice
+  #-----------------------------------------------------------------------
+  def visit_Slice(self, node):
+    assert node.step == None
+    upper = node.upper
+    lower = node.lower
+    if isinstance( upper, _ast.Num) and isinstance( lower, _ast.Num ):
+      self.visit( node.upper )
+      print >> self.o, '-1:',
+      self.visit( node.lower )
+    # TODO: super hacky!!!!
+    elif isinstance( upper, _ast.BinOp ):
+      assert isinstance( upper.op, (_ast.Add, _ast.Sub) )
+      self.visit( node.lower )
+      print >> self.o, '{}:'.format( opmap[type(node.upper.op)] ),
+      self.visit( node.upper.right )
+    else:
+      self.visit( node.upper )
+      print >> self.o, "-1:",
+      self.visit( node.lower )
+      #raise Exception( "Cannot translate this slice!" )
 
   #-----------------------------------------------------------------------
   # visit_Num
