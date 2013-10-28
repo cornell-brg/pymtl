@@ -13,7 +13,7 @@ import ast, _ast
 import collections
 import inspect
 
-from signals import InPort, OutPort, Wire
+from signals import InPort, OutPort, Wire, Constant
 
 #-------------------------------------------------------------------------
 # VerilogLogicTransl
@@ -86,7 +86,8 @@ def translate_logic_blocks( model, o ):
   if regs:
     print   >> o, '  // register declarations'
     for signal in regs:
-      print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1, signal.name )
+      print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1,
+          signal_to_str( signal, None, model ))
 
   print >> o
 
@@ -392,7 +393,7 @@ class TranslateLogic( ast.NodeVisitor ):
     elif isinstance( node._object, int ):
       print >> self.o, node._object,
     else:
-      print >> self.o, node._object.name,
+      print >> self.o, signal_to_str( node._object, None, self.model ),
 
   #-----------------------------------------------------------------------
   # visit_Temp
@@ -492,4 +493,42 @@ class ThisObject( object ):
   def __init__( self, name, obj ):
     self.name = name
     self.obj  = obj
+
+#-------------------------------------------------------------------------
+# mangle_name
+#-------------------------------------------------------------------------
+import re
+def mangle_name( name ):
+  # Utility function
+  def replacement_string( m ):
+    return "${:03d}".format( int(m.group(2)) )
+  # Return the mangled name
+  return re.sub( indexing, replacement_string, name.replace('.','_') )
+
+# Regex to match list indexing
+indexing = re.compile("(\[)(.*)(\])")
+
+#-------------------------------------------------------------------------
+# signal_to_str
+#-------------------------------------------------------------------------
+def signal_to_str( node, addr, context ):
+
+  # Special case constants
+  if isinstance( node, Constant ): return node.name
+
+  # If the node's parent module isn't the same as the current module
+  # we need to prefix the signal name with the module name
+  prefix = ''
+  if node.parent != context and node.parent != None:
+    prefix = '{}$'.format( mangle_name( node.parent.name ) )
+
+  # If this is a slice, we need to provide the slice indexing
+  suffix = ''
+  if isinstance( addr, slice ):
+    suffix = '[{}:{}]'.format( addr.stop - 1, addr.start )
+  elif isinstance( addr, int ):
+    suffix = '[{}]'.format( addr )
+
+  # Return the string
+  return prefix + mangle_name( node.name ) + suffix
 
