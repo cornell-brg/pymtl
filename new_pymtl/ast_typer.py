@@ -171,9 +171,6 @@ class TypeAST( ast.NodeTransformer ):
   def visit_Call( self, node ):
     # func, args, keywords, starargs, kwargs
     # Check that this is just a normal function call, not something weird
-    supported_functions = ['range']
-    assert isinstance( node.func, _ast.Name )
-    assert node.func.id in supported_functions
 
     self.generic_visit( node )
 
@@ -191,9 +188,12 @@ class TypeAST( ast.NodeTransformer ):
         stop  = node.args[1]
         step  = node.args[2]
       else:
-        raise Exception("Invalid # of arguments!")
+        raise Exception("Invalid # of arguments to range function!")
 
       new_node = _ast.Slice( lower=start, upper=stop, step=step )
+
+    else:
+      new_node = node
 
     return ast.copy_location( new_node, node )
 
