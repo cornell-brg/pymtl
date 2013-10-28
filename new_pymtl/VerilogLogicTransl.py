@@ -300,7 +300,8 @@ class TranslateLogic( ast.NodeVisitor ):
 
     # TODO: need to set ArrayIndex to point to list object
     # Ugly, by creating portlist?
-    self.array.append( node.value._object )
+    if node.value._object not in self.array:
+      self.array.append( node.value._object )
 
     # Translate
     self.visit(node.value)
