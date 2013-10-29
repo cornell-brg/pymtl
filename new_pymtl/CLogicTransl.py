@@ -70,7 +70,7 @@ def translate_func( func, o ):
   src   = inspect.getsource( func )
   model = func._model
 
-  #print_simple_ast( tree )    # DEBUG
+  print_simple_ast( tree )    # DEBUG
   #print src
   #new_tree = TypeAST( model, func ).visit( tree )
 
@@ -263,16 +263,6 @@ class TranslateLogic( ast.NodeVisitor ):
     print >> self.o, name,
 
 
-class VariableName( GetVariableName ):
-  def __init__( self, parent ):
-    self.parent = parent
-    self.model  = self.parent.model
-  def visit_Name( self, node ):
-    if node.id in ['s', 'self']:
-      return self.model.name
-    else:
-      return name.id
-
 
 ##  #-----------------------------------------------------------------------
 ##  # visit_ArrayIndex
@@ -333,12 +323,12 @@ class VariableName( GetVariableName ):
 ##      self.visit( node.lower )
 ##      #raise Exception( "Cannot translate this slice!" )
 ##
-#  #-----------------------------------------------------------------------
-#  # visit_Num
-#  #-----------------------------------------------------------------------
-#  def visit_Num(self, node):
-#    print >> self.o, node.n,
-#
+  #-----------------------------------------------------------------------
+  # visit_Num
+  #-----------------------------------------------------------------------
+  def visit_Num(self, node):
+    print >> self.o, node.n,
+
 #  #-----------------------------------------------------------------------
 #  # visit_Self
 #  #-----------------------------------------------------------------------
@@ -406,39 +396,39 @@ class VariableName( GetVariableName ):
 ##      self.visit(x)
 ##    print >> self.o, (self.ident+2)*" " + "end"
 ##
-##  #-----------------------------------------------------------------------
-##  # visit_If
-##  #-----------------------------------------------------------------------
-##  # TODO: cleanup
-##  def visit_If(self, node):
-##    # Write out the if block
-##    if not self.elseif:
-##      print >> self.o
-##      print >> self.o, self.ident*" " + "  if (",
-##    else:
-##      print >> self.o, self.ident*" " + "  else if (",
-##      self.elseif = False
-##    self.visit(node.test)
-##    print >> self.o, " ) begin"
-##    # Write out the body
-##    for body in node.body:
-##      self.ident += 2
-##      self.visit(body)
-##      self.ident -= 2
-##    print >> self.o, self.ident*" " + "  end"
-##    # Write out an an elif block
-##    if len(node.orelse) == 1 and isinstance(node.orelse[0], _ast.If):
-##      self.elseif = True
-##      self.visit(node.orelse[0])
-##    # Write out an else block
-##    elif node.orelse:
-##      print >> self.o, self.ident*" " + "  else begin"
-##      for orelse in node.orelse:
-##        self.ident += 2
-##        self.visit(orelse)
-##        self.ident -= 2
-##      print >> self.o, self.ident*" " + "  end"
-##
+  #-----------------------------------------------------------------------
+  # visit_If
+  #-----------------------------------------------------------------------
+  # TODO: cleanup
+  def visit_If(self, node):
+    # Write out the if block
+    if not self.elseif:
+      print >> self.o
+      print >> self.o, self.ident*" " + "  if (",
+    else:
+      print >> self.o, self.ident*" " + "  else if (",
+      self.elseif = False
+    self.visit(node.test)
+    print >> self.o, " ) {"
+    # Write out the body
+    for body in node.body:
+      self.ident += 2
+      self.visit(body)
+      self.ident -= 2
+    print >> self.o, self.ident*" " + "  }"
+    # Write out an an elif block
+    if len(node.orelse) == 1 and isinstance(node.orelse[0], _ast.If):
+      self.elseif = True
+      self.visit(node.orelse[0])
+    # Write out an else block
+    elif node.orelse:
+      print >> self.o, self.ident*" " + "  else {"
+      for orelse in node.orelse:
+        self.ident += 2
+        self.visit(orelse)
+        self.ident -= 2
+      print >> self.o, self.ident*" " + "  }"
+
 ##  #-----------------------------------------------------------------------
 ##  # visit_Assert
 ##  #-----------------------------------------------------------------------
@@ -470,3 +460,14 @@ class VariableName( GetVariableName ):
 ##  #    raise Exception("Function {}() not supported for translation!"
 ##  #                    "".format(func) )
 ##
+
+class VariableName( GetVariableName ):
+  def __init__( self, parent ):
+    self.parent = parent
+    self.model  = self.parent.model
+  def visit_Name( self, node ):
+    if node.id in ['s', 'self']:
+      return self.model.name
+    else:
+      return name.id
+

@@ -86,10 +86,10 @@ def test_RegisterWrappedChain():
   translate( sequential.RegisterWrappedChain( 16 ) )
   translate( sequential.RegisterWrappedChain( NO ) )
 
-#def test_RegisterReset():
-#  translate( sequential.RegisterReset( 16 ) )
-#  translate( sequential.RegisterReset( NO ) )
-#
+def test_RegisterReset():
+  translate( sequential.RegisterReset( 16 ) )
+  translate( sequential.RegisterReset( NO ) )
+
 #def test_SliceWriteCheck():
 #  translate( sequential.SliceWriteCheck( 16 ) )
 #
