@@ -78,14 +78,14 @@ def test_Register():
   translate( sequential.Register( 8 ) )
   translate( sequential.Register( NO ) )
 
-#def test_RegisterWrapped():
-#  translate( sequential.RegisterWrapped( 8 ) )
-#  translate( sequential.RegisterWrapped( NO ) )
+def test_RegisterWrapped():
+  translate( sequential.RegisterWrapped( 8 ) )
+  translate( sequential.RegisterWrapped( NO ) )
 
-#def test_RegisterWrappedChain():
-#  translate( sequential.RegisterWrappedChain( 16 ) )
-#  translate( sequential.RegisterWrappedChain( NO ) )
-#
+def test_RegisterWrappedChain():
+  translate( sequential.RegisterWrappedChain( 16 ) )
+  translate( sequential.RegisterWrappedChain( NO ) )
+
 #def test_RegisterReset():
 #  translate( sequential.RegisterReset( 16 ) )
 #  translate( sequential.RegisterReset( NO ) )

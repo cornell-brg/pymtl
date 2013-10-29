@@ -48,8 +48,8 @@ class CLogicTransl(object):
     # Create the cycle function
     print >> o, '// cycle'
     print >> o, 'void cycle() {'
-    for func_name in [x.func_name for x in sim._sequential_blocks]:
-      print >> o, '  {}_{}();'.format( 'top', func_name )
+    for x in sim._sequential_blocks:
+      print >> o, '  {}_{}();'.format( x._model.name, x.func_name)
     print >> o, '}'
     print >> o
 
