@@ -17,7 +17,7 @@ compiler = 'gcc -Wall'
 def translate( model ):
   model.elaborate()
 
-  with tempfile.NamedTemporaryFile(suffix='.c') as output:
+  with tempfile.NamedTemporaryFile(suffix='.cpp') as output:
     CLogicTransl( model, output )
     output.flush()
     cmd  = '{} {}'.format( compiler, output.name )

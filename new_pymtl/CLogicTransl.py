@@ -13,7 +13,7 @@ import collections
 import inspect
 
 from signals import InPort, OutPort, Wire, Constant
-from ast_visitor import DetectLoadsAndStores
+from ast_visitor import GetVariableName
 
 #-------------------------------------------------------------------------
 # CLogicTransl
@@ -34,10 +34,12 @@ class CLogicTransl(object):
 
     # Create the simulator signals
     for id_, net in enumerate( sim._nets ):
-      print   >>o, 'int net_{:05};'.format( id_ );
+      print   >>o, 'int  net_{:05};'.format( id_ );
+      print   >>o, 'int  net_{:05}_next;'.format( id_ );
       for signal in net:
         name = mangle_name( signal.fullname )
-        print >>o, 'int* {} = &net_{:05d};'.format( name, id_ );
+        print >>o, 'int &{}      = net_{:05d};'.format( name, id_ );
+        print >>o, 'int &{}_next = net_{:05d}_next;'.format( name, id_ );
 
     # Create the tick functions
     for func in sim._sequential_blocks:
@@ -64,8 +66,9 @@ def translate_func( func, o ):
   behavioral_code = StringIO.StringIO()
 
   # Type Check the AST
-  tree = get_method_ast( func )
-  src  = inspect.getsource( func )
+  tree  = get_method_ast( func )
+  src   = inspect.getsource( func )
+  model = func._model
 
   #print_simple_ast( tree )    # DEBUG
   #print src
@@ -79,50 +82,12 @@ def translate_func( func, o ):
     print >> behavioral_code, "  // " + line
 
   # Print the Verilog translation
-  #visitor = TranslateLogic( model, behavioral_code )
+  visitor = TranslateLogic( model, behavioral_code )
   #visitor.visit( new_tree )
-  visitor = TranslateLogic( behavioral_code )
   visitor.visit( tree )
 
   print >> o
   print >> o, behavioral_code.getvalue()
-
-#-------------------------------------------------------------------------
-# translate_logic_blocks
-#-------------------------------------------------------------------------
-# TODO: same as Verilog, reduce code dup
-#def translate_logic_blocks( model, o ):
-#
-#  blocks = ( model.get_posedge_clk_blocks()
-#           + model.get_combinational_blocks()
-#           + model.get_tick_blocks() )
-#
-#  import StringIO
-#  behavioral_code = StringIO.StringIO()
-#
-#  for func in blocks:
-#
-#    # Type Check the AST
-#    tree = get_method_ast( func )
-#    src  = inspect.getsource( func )
-#    #print_simple_ast( tree )    # DEBUG
-#    print src
-#    new_tree = TypeAST( model, func ).visit( tree )
-#
-#    print_simple_ast( new_tree ) # DEBUG
-#
-#    # Store the PyMTL source inline with the behavioral code
-#    print   >> behavioral_code, "  // PYMTL SOURCE:"
-#    for line in src.splitlines():
-#      print >> behavioral_code, "  // " + line
-#
-#    # Print the Verilog translation
-#    visitor = TranslateLogic( model, behavioral_code )
-#    visitor.visit( new_tree )
-#
-#  # Print the behavioral block code
-#  print >> o
-#  print >> o, behavioral_code.getvalue()
 
 #-------------------------------------------------------------------------
 # opmap
@@ -162,26 +127,18 @@ opmap = {
 class TranslateLogic( ast.NodeVisitor ):
 
 
-  def __init__( self, o ):
+  def __init__( self, model, o ):
+    self.model  = model
     self.o      = o
     self.ident  = 0
     self.elseif = False
-    self.regs   = set()
-    self.temps  = set()
-    self.array  = []
-    class T(object):
-      name = 'top'
-    self.model  = T()
 
-    self.this_obj = None
+    self.assign = '='
 
   #-----------------------------------------------------------------------
   # visit_FunctionDef
   #-----------------------------------------------------------------------
   def visit_FunctionDef(self, node):
-    # Don't bother translating undecorated functions
-    if not node.decorator_list:
-      return
 
     print >> self.o
     print >> self.o, '  // logic for {}()'.format( self.model.name, node.name )
@@ -194,86 +151,119 @@ class TranslateLogic( ast.NodeVisitor ):
     self.ident -= 2
     print >> self.o, '  }\n'
 
-#  #-----------------------------------------------------------------------
-#  # visit_Assign
-#  #-----------------------------------------------------------------------
-#  def visit_Assign(self, node):
-#    # TODO: implement multiple left hand targets?
-#    assert len(node.targets) == 1
-#    #if debug:
-#    print >> self.o, (self.ident+2)*" ",
-#    self.visit( node.targets[0] )
-#    print >> self.o, "{}".format( self.assign ),
-#    self.visit( node.value )
-#    print >> self.o, ';'
-#
-#  #-----------------------------------------------------------------------
-#  # visit_AugAssign
-#  #-----------------------------------------------------------------------
-#  def visit_AugAssign(self, node):
-#    # TODO: implement multiple left hand targets?
-#    print >> self.o, (self.ident+2)*" ",
-#    self.visit( node.target )
-#    print >> self.o, self.assign,
-#    self.visit( node.target )
-#    print >> self.o, opmap[type(node.op)],
-#    self.visit(node.value)
-#    print >> self.o, ';'
-#
-#  #-----------------------------------------------------------------------
-#  # visit_BinOp
-#  #-----------------------------------------------------------------------
-#  def visit_BinOp(self, node):
-#    print >> self.o, '(',
-#    self.visit(node.left)
-#    print >> self.o, opmap[type(node.op)],
-#    self.visit(node.right)
-#    print >> self.o, ')',
-#
-#  #-----------------------------------------------------------------------
-#  # visit_BoolOp
-#  #-----------------------------------------------------------------------
-#  def visit_BoolOp(self, node):
-#    print >> self.o, '(',
-#    num_nodes = len(node.values)
-#    for i in range( num_nodes - 1 ):
-#      self.visit( node.values[i] )
-#      print >> self.o, opmap[type(node.op)],
-#    self.visit( node.values[ num_nodes - 1 ] )
-#    print >> self.o, ')',
-#
-#  #-----------------------------------------------------------------------
-#  # visit_UnaryOp
-#  #-----------------------------------------------------------------------
-#  def visit_UnaryOp(self, node):
-#    print >> self.o, opmap[type(node.op)],
-#    self.visit(node.operand)
-#
-#  #-----------------------------------------------------------------------
-#  # visit_IfExp
-#  #-----------------------------------------------------------------------
-#  # Ternary operators (w = x if y else z).
-#  def visit_IfExp(self, node):
-#    # TODO: verify this works
-#    self.visit(node.test)
-#    print >> self.o, '?',
-#    self.visit(node.body)
-#    print >> self.o, ':',
-#    self.visit(node.orelse)
-#
-#  #-----------------------------------------------------------------------
-#  # visit_Compare
-#  #-----------------------------------------------------------------------
-#  def visit_Compare(self, node):
-#    assert len(node.ops) == 1
-#    # TODO: add debug check
-#    print >> self.o, "(",
-#    self.visit(node.left)
-#    op_symbol = opmap[type(node.ops[0])]
-#    print >> self.o, op_symbol,
-#    self.visit(node.comparators[0])
-#    print >> self.o, ")",
-#
+  #-----------------------------------------------------------------------
+  # visit_Assign
+  #-----------------------------------------------------------------------
+  def visit_Assign(self, node):
+    # TODO: implement multiple left hand targets?
+    assert len(node.targets) == 1
+    #if debug:
+    print >> self.o, (self.ident+2)*" ",
+    self.visit( node.targets[0] )
+    print >> self.o, "{}".format( self.assign ),
+    self.visit( node.value )
+    print >> self.o, ';'
+
+  #-----------------------------------------------------------------------
+  # visit_AugAssign
+  #-----------------------------------------------------------------------
+  def visit_AugAssign(self, node):
+    # TODO: implement multiple left hand targets?
+    print >> self.o, (self.ident+2)*" ",
+    self.visit( node.target )
+    print >> self.o, self.assign,
+    self.visit( node.target )
+    print >> self.o, opmap[type(node.op)],
+    self.visit(node.value)
+    print >> self.o, ';'
+
+  #-----------------------------------------------------------------------
+  # visit_BinOp
+  #-----------------------------------------------------------------------
+  def visit_BinOp(self, node):
+    print >> self.o, '(',
+    self.visit(node.left)
+    print >> self.o, opmap[type(node.op)],
+    self.visit(node.right)
+    print >> self.o, ')',
+
+  #-----------------------------------------------------------------------
+  # visit_BoolOp
+  #-----------------------------------------------------------------------
+  def visit_BoolOp(self, node):
+    print >> self.o, '(',
+    num_nodes = len(node.values)
+    for i in range( num_nodes - 1 ):
+      self.visit( node.values[i] )
+      print >> self.o, opmap[type(node.op)],
+    self.visit( node.values[ num_nodes - 1 ] )
+    print >> self.o, ')',
+
+  #-----------------------------------------------------------------------
+  # visit_UnaryOp
+  #-----------------------------------------------------------------------
+  def visit_UnaryOp(self, node):
+    print >> self.o, opmap[type(node.op)],
+    self.visit(node.operand)
+
+  #-----------------------------------------------------------------------
+  # visit_IfExp
+  #-----------------------------------------------------------------------
+  # Ternary operators (w = x if y else z).
+  def visit_IfExp(self, node):
+    # TODO: verify this works
+    self.visit(node.test)
+    print >> self.o, '?',
+    self.visit(node.body)
+    print >> self.o, ':',
+    self.visit(node.orelse)
+
+  #-----------------------------------------------------------------------
+  # visit_Compare
+  #-----------------------------------------------------------------------
+  def visit_Compare(self, node):
+    assert len(node.ops) == 1
+    # TODO: add debug check
+    print >> self.o, "(",
+    self.visit(node.left)
+    op_symbol = opmap[type(node.ops[0])]
+    print >> self.o, op_symbol,
+    self.visit(node.comparators[0])
+    print >> self.o, ")",
+
+  #-----------------------------------------------------------------------
+  # visit_Attribute
+  #-----------------------------------------------------------------------
+  def visit_Attribute( self, node ):
+    name = VariableName( self ).visit( node ).replace('.', '_')
+    print >> self.o, name,
+
+  #-----------------------------------------------------------------------
+  # visit_Name
+  #-----------------------------------------------------------------------
+  def visit_Name( self, node ):
+    name = VariableName( self ).visit( node ).replace('.', '_')
+    print >> self.o, name,
+
+  #-----------------------------------------------------------------------
+  # visit_Subscript
+  #-----------------------------------------------------------------------
+  def visit_Subscript( self, node ):
+    name = VariableName( self ).visit( node ).replace('.', '_')
+    print >> self.o, name,
+
+
+class VariableName( GetVariableName ):
+  def __init__( self, parent ):
+    self.parent = parent
+    self.model  = self.parent.model
+  def visit_Name( self, node ):
+    if node.id in ['s', 'self']:
+      return self.model.name
+    else:
+      return name.id
+
+
 ##  #-----------------------------------------------------------------------
 ##  # visit_ArrayIndex
 ##  #-----------------------------------------------------------------------
@@ -470,48 +460,3 @@ class TranslateLogic( ast.NodeVisitor ):
 ##  #    raise Exception("Function {}() not supported for translation!"
 ##  #                    "".format(func) )
 ##
-##class ThisObject( object ):
-##  def __init__( self, name, obj ):
-##    self.name = name
-##    self.obj  = obj
-##
-#
-##-------------------------------------------------------------------------
-## mangle_name
-##-------------------------------------------------------------------------
-#import re
-#def mangle_name( name ):
-#  # Utility function
-#  def replacement_string( m ):
-#    return "${:03d}".format( int(m.group(2)) )
-#  # Return the mangled name
-#  return re.sub( indexing, replacement_string, name.replace('.','_') )
-#
-## Regex to match list indexing
-#indexing = re.compile("(\[)(.*)(\])")
-#
-##-------------------------------------------------------------------------
-## signal_to_str
-##-------------------------------------------------------------------------
-#def signal_to_str( node, addr, context ):
-#
-#  # Special case constants
-#  if isinstance( node, Constant ): return node.name
-#
-#  # If the node's parent module isn't the same as the current module
-#  # we need to prefix the signal name with the module name
-#  prefix = ''
-#  if node.parent != context and node.parent != None:
-#    prefix = '{}$'.format( mangle_name( node.parent.name ) )
-#
-#  # If this is a slice, we need to provide the slice indexing
-#  suffix = ''
-#  if isinstance( addr, slice ):
-#    suffix = '[{}:{}]'.format( addr.stop - 1, addr.start )
-#  elif isinstance( addr, int ):
-#    suffix = '[{}]'.format( addr )
-#
-#  # Return the string
-#  return prefix + mangle_name( node.name ) + suffix
-
-

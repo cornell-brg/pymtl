@@ -316,16 +316,19 @@ class Model( object ):
 
   def tick( self, func ):
     self._tick_blocks.append( func )
+    func._model = self
     return func
 
   def combinational( self, func ):
     # DEBUG, make permanent to aid debugging?
     #func.func_name = self.name + '.' + func.func_name
     self._combinational_blocks.append( func )
+    func._model = self
     return func
 
   def posedge_clk( self, func ):
     self._posedge_clk_blocks.append( func )
+    func._model = self
     return func
 
   #-----------------------------------------------------------------------
