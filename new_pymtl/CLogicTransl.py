@@ -236,6 +236,16 @@ class TranslateLogic( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_Attribute( self, node ):
     name = VariableName( self ).visit( node ).replace('.', '_')
+
+    # TODO: SUPER HACKY
+    if   name.endswith('_n'):
+      name = name[:-2]+'_next'
+    elif name.endswith('_v'):
+      name = name[:-2]
+    elif name.endswith('_value'):
+      name = name[:-6]
+    # TODO: SUPER HACKY
+
     print >> self.o, name,
 
   #-----------------------------------------------------------------------
