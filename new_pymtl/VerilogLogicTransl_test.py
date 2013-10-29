@@ -19,7 +19,7 @@ compiler = 'iverilog -g2005 -Wall -Wno-sensitivity-entire-vector'
 def setup_sim( model ):
   model.elaborate()
 
-  with tempfile.NamedTemporaryFile() as output:
+  with tempfile.NamedTemporaryFile(suffix='.v') as output:
     VerilogTranslationTool( model, output )
     output.flush()
     cmd  = '{} {}'.format( compiler, output.name )
