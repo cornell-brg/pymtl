@@ -14,6 +14,9 @@ import inspect
 
 from signals import InPort, OutPort, Wire, Constant
 from ast_visitor import GetVariableName
+from Bits import Bits
+from BitStruct import BitStruct
+from SignalValue import SignalValueWrapper
 
 #-------------------------------------------------------------------------
 # CLogicTransl
@@ -30,16 +33,22 @@ class CLogicTransl(object):
     print >> o, '#include "stdio.h"'
     print >> o
 
+    import StringIO
+    s = StringIO.StringIO()
     from VerilogTranslationTool import mangle_name
 
     # Create the simulator signals
-    for id_, net in enumerate( sim._nets ):
-      print   >>o, 'int  net_{:05};'.format( id_ );
-      print   >>o, 'int  net_{:05}_next;'.format( id_ );
+    for id_, n in enumerate( sim._nets ):
+      net   = list( n )
+      type_ = get_type( net[0].msg_type(), o )
+      print   >>s, '{}  net_{:05};'.format( type_, id_ );
+      print   >>s, '{}  net_{:05}_next;'.format( type_, id_ );
       for signal in net:
         name = mangle_name( signal.fullname )
-        print >>o, 'int &{}      = net_{:05d};'.format( name, id_ );
-        print >>o, 'int &{}_next = net_{:05d}_next;'.format( name, id_ );
+        print >>s, '{} &{}      = net_{:05d};'.format( type_, name, id_ );
+        print >>s, '{} &{}_next = net_{:05d}_next;'.format( type_, name, id_ );
+
+    print >> o, s.getvalue()
 
     # Create the tick functions
     for func in sim._sequential_blocks:
@@ -58,8 +67,41 @@ class CLogicTransl(object):
     print >> o, 'int main () { cycle(); }'
 
 #-------------------------------------------------------------------------
+# get_type
+#-------------------------------------------------------------------------
+def get_type( signal, o=None ):
+  if   isinstance( signal, int ):
+    return 'int'
+  elif isinstance( signal, Bits ):
+    assert not isinstance( signal, BitStruct )
+    return 'int'    # TODO: make a setbitwidth object
+  elif isinstance( signal, SignalValueWrapper ):
+    if not o:
+      raise Exception( "NESTED TYPES NOT ALLOWED" )
+    return declare_class( signal, o )
+  else:
+    raise Exception( "UNTRANSLATABLE TYPE!")
+
+#-------------------------------------------------------------------------
+# declare_class
+#-------------------------------------------------------------------------
+classes = set()
+def declare_class( signal, o ):
+  class_name = signal._data.__class__.__name__
+  if class_name in classes:
+    return class_name
+  classes.add( class_name )
+  print   >> o, "class {} {{".format( class_name )
+  print   >> o, "  public:"
+  for name, value in signal._data.__dict__.items():
+    print >> o, "    {} {};".format( get_type(value), name );
+  print   >> o, "};"
+  return class_name
+
+#-------------------------------------------------------------------------
 # translate_func
 #-------------------------------------------------------------------------
+
 def translate_func( func, o ):
 
   import StringIO
@@ -70,7 +112,7 @@ def translate_func( func, o ):
   src   = inspect.getsource( func )
   model = func._model
 
-  print_simple_ast( tree )    # DEBUG
+  #print_simple_ast( tree )    # DEBUG
   #print src
   #new_tree = TypeAST( model, func ).visit( tree )
 
@@ -88,6 +130,7 @@ def translate_func( func, o ):
 
   print >> o
   print >> o, behavioral_code.getvalue()
+
 
 #-------------------------------------------------------------------------
 # opmap

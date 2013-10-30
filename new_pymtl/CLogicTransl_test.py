@@ -66,30 +66,30 @@ NO = CreateWrappedClass( _NetObject )
 # Sequential Logic
 #-------------------------------------------------------------------------
 
-def test_RegisterOld():
-  translate( sequential.RegisterOld(  8 ) )
-  translate( sequential.RegisterOld( NO ) )
-
-def test_RegisterBits():
-  translate( sequential.RegisterBits( 8 ) )
-  translate( sequential.RegisterOld( 16 ) )
-
 def test_Register():
   translate( sequential.Register( 8 ) )
   translate( sequential.Register( NO ) )
 
-def test_RegisterWrapped():
-  translate( sequential.RegisterWrapped( 8 ) )
-  translate( sequential.RegisterWrapped( NO ) )
-
-def test_RegisterWrappedChain():
-  translate( sequential.RegisterWrappedChain( 16 ) )
-  translate( sequential.RegisterWrappedChain( NO ) )
-
-def test_RegisterReset():
-  translate( sequential.RegisterReset( 16 ) )
-  translate( sequential.RegisterReset( NO ) )
-
+#def test_RegisterOld():
+#  translate( sequential.RegisterOld(  8 ) )
+#  translate( sequential.RegisterOld( NO ) )
+#
+#def test_RegisterBits():
+#  translate( sequential.RegisterBits( 8 ) )
+#  translate( sequential.RegisterOld( 16 ) )
+#
+#def test_RegisterWrapped():
+#  translate( sequential.RegisterWrapped( 8 ) )
+#  translate( sequential.RegisterWrapped( NO ) )
+#
+#def test_RegisterWrappedChain():
+#  translate( sequential.RegisterWrappedChain( 16 ) )
+#  translate( sequential.RegisterWrappedChain( NO ) )
+#
+#def test_RegisterReset():
+#  translate( sequential.RegisterReset( 16 ) )
+#  translate( sequential.RegisterReset( NO ) )
+#
 #def test_SliceWriteCheck():
 #  translate( sequential.SliceWriteCheck( 16 ) )
 #
