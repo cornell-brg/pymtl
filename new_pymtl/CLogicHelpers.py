@@ -67,6 +67,16 @@ def gen_pywrapper( top_ports ):
       return self.cmodule.ncycles
 
   # Accessor closure, needed to create unique accessors
+  class ListAccessor( object ):
+    def __init__( self, cmodule ):
+      self.cmodule = cmodule
+      self.lookup  = {}
+    def __getitem__( self, idx ):
+      return getattr( self.cmodule, self.lookup[idx] )
+    def __setitem__( self, idx, value ):
+      setattr( self.cmodule, self.lookup[idx], value )
+
+  # Accessor closure, needed to create unique accessors
   def make_accessor( closed_name, closed_cname ):
     setattr( CSimWrapper, closed_name, property(
       lambda self:        getattr( self.cmodule, closed_cname ),
@@ -75,11 +85,25 @@ def gen_pywrapper( top_ports ):
 
   # Create the properties for each port
   for name, cname, type_ in top_ports:
+
     # Don't expose reset and clk signals
     if name in ['top_reset', 'top_clk']:
       continue
     name = name[4:]  # remove the 'top_' prefix
-    make_accessor( name, cname )
+
+    # Port lists
+    if '$' in name:
+      sig, idx = name.split('$')
+      if not hasattr( CSimWrapper, sig ):
+        portlist = ListAccessor( CSimWrapper )
+        setattr( CSimWrapper, sig, portlist )
+      else:
+        portlist = getattr( CSimWrapper, sig )
+      portlist.lookup[ int(idx) ] = cname
+
+    # Normal ports
+    else:
+      make_accessor( name, cname )
 
   return CSimWrapper
 

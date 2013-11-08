@@ -203,3 +203,27 @@ def test_SplitterPT_4():
 
 def test_SplitterPT_5():
   splitter_tester( translate(structural.SplitterPT_5(16)) )
+
+def test_PassThroughList():
+  sim = translate( structural.PassThroughList(16, 4) )
+  model = sim
+  for i in range( 4 ):
+    model.in_[i] = i
+  for i in range( 4 ):
+    # Note: no need to call cycle, no @combinational block
+    assert model.out[i] == i
+  model.in_[2] = 9
+  model.in_[2] = 10
+  assert model.out[2] == 10
+
+def test_PassThroughListWire():
+  sim = translate( structural.PassThroughListWire(16, 4) )
+  model = sim
+  for i in range( 4 ):
+    model.in_[i] = i
+  for i in range( 4 ):
+    # Note: no need to call cycle, no @combinational block
+    assert model.out[i] == i
+  model.in_[2] = 9
+  model.in_[2] = 10
+  assert model.out[2] == 10
