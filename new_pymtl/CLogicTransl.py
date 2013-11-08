@@ -60,7 +60,19 @@ def CLogicTransl( model, o=sys.stdout ):
     print   >> o, '}'
     print   >> o
 
-    # Create the cycle function
+    # Create the reset function
+    print   >> o, '/* cycle */'
+    print   >> o, 'void reset() {'
+    print   >> o, '  top_reset = 1;'
+    print   >> o, '  cycle();'
+    print   >> o, '  flop();'
+    print   >> o, '  cycle();'
+    print   >> o, '  flop();'
+    print   >> o, '  top_reset = 0;'
+    print   >> o, '}'
+    print   >> o
+
+    # Create the flop function
     print   >> o, '/* flop */'
     print   >> o, 'void flop() {'
     for reg in regs:
@@ -561,6 +573,16 @@ class TranslateLogic( ast.NodeVisitor ):
 ##  #    raise Exception("Function {}() not supported for translation!"
 ##  #                    "".format(func) )
 ##
+  #-----------------------------------------------------------------------
+  # visit_Print
+  #-----------------------------------------------------------------------
+  def visit_Print( self, node ):
+    print >> self.o, self.ident*' ' + 'printf("',
+    print >> self.o, '%d '*len( node.values ) + '\\n"',
+    for v in node.values:
+      print >> self.o, ', ',
+      self.visit( v )
+    print >> self.o, ' );'
 
 class VariableName( GetVariableName ):
   def __init__( self, parent ):

@@ -109,21 +109,22 @@ def test_RegisterWrappedChain():
   sim.cycle(); assert sim.out == 10
   sim.cycle(); assert sim.out == 2
 
-#def test_RegisterReset():
-#  sim = translate( sequential.RegisterReset( 16 ) )
-#  model.in_ = 8
-#  assert model.out == 0
-#  sim.reset()
-#  assert model.out == 0
-#  sim.cycle()
-#  assert model.out == 8
-#  model.in_ = 9
-#  assert model.out == 8
-#  model.in_ = 10
-#  sim.cycle()
-#  assert model.out == 10
-#  sim.reset()
-#  assert model.out == 0
+def test_RegisterReset():
+  sim = translate( sequential.RegisterReset( 16 ) )
+  model = sim
+  model.in_ = 8
+  assert model.out == 0
+  sim.reset()
+  assert model.out == 0
+  sim.cycle()
+  assert model.out == 8
+  model.in_ = 9
+  assert model.out == 8
+  model.in_ = 10
+  sim.cycle()
+  assert model.out == 10
+  sim.reset()
+  assert model.out == 0
 
 
 # TODO: slices not supported

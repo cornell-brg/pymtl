@@ -20,8 +20,9 @@ def gen_cppsim( clib, cdef ):
 # Create the string passed into ffi.cdef
 def gen_cdef( top_ports ):
   str_    = '\n'
-  str_   += 'void cycle(void);\n'
-  str_   += 'void flop(void);\n'
+  str_   += 'void cycle( void );\n'
+  str_   += 'void reset( void );\n'
+  str_   += 'void flop( void );\n'
   str_   += 'int  ncycles;\n'
   for name, cname, type_ in top_ports:
     str_ += '{} {}; // {}\n'.format( type_, cname, name )
@@ -37,6 +38,7 @@ def gen_cheader( top_ports ):
   #str_   += '#define CSIM_H\n'
   str_   += 'extern "C" {\n'
   str_   += '  extern void cycle( void );\n'
+  str_   += '  extern void reset( void );\n'
   str_   += '  extern void flop( void );\n'
   str_   += '  extern int ncycles;\n'
   for name, cname, type_ in top_ports:
@@ -58,6 +60,8 @@ def gen_pywrapper( top_ports ):
     def cycle( self ):
       self.cmodule.cycle()
       self.cmodule.flop()
+    def reset( self ):
+      self.cmodule.reset()
     @property
     def ncycles( self ):
       return self.cmodule.ncycles
@@ -71,6 +75,9 @@ def gen_pywrapper( top_ports ):
 
   # Create the properties for each port
   for name, cname, type_ in top_ports:
+    # Don't expose reset and clk signals
+    if name in ['top_reset', 'top_clk']:
+      continue
     name = name[4:]  # remove the 'top_' prefix
     make_accessor( name, cname )
 
