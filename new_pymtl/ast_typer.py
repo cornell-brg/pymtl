@@ -54,13 +54,14 @@ class TypeAST( ast.NodeTransformer ):
     self.generic_visit( node )
 
     # TODO: add annotation to self.func based on decorator type
-    dec = node.decorator_list[0].attr
+    #dec = node.decorator_list[0].attr
 
     # create a new FunctionDef node that deletes the decorators
-    new_node = ast.FunctionDef( name=node.name, args=node.args,
-                                body=node.body, decorator_list=dec )
+    #new_node = ast.FunctionDef( name=node.name, args=node.args,
+    #                            body=node.body, decorator_list=)
 
-    return ast.copy_location( new_node, node )
+    #return ast.copy_location( new_node, node )
+    return node
 
   #-----------------------------------------------------------------------
   # visit_Attribute

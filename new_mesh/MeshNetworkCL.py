@@ -5,7 +5,6 @@
 from new_pymtl    import *
 from new_pmlib    import InValRdyBundle, OutValRdyBundle, NetMsg
 from MeshRouterCL import MeshRouterCL
-from collections  import deque
 from math         import sqrt
 
 #=========================================================================

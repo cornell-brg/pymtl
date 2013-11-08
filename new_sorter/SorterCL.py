@@ -11,7 +11,7 @@ from new_pymtl import *
 
 class SorterCL( Model ):
 
-  def __init__( s, nbits, nports ):
+  def __init__( s, nbits=16, nports=4 ):
 
     s.in_ = [ InPort  ( nbits ) for x in range( nports ) ]
     s.out = [ OutPort ( nbits ) for x in range( nports ) ]

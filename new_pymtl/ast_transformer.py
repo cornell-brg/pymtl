@@ -41,13 +41,15 @@ class SimplifiedAST( ast.NodeTransformer ):
     # create a new function that deletes the decorators
     return new_node
 
-  def visit_Attribute( self, node ):
-    reverse_branch = ReorderAST(self.self_name).reverse( node )
-    return ast.copy_location( reverse_branch, node )
-
-  def visit_Subscript( self, node ):
-    reverse_branch = ReorderAST(self.self_name).reverse( node )
-    return ast.copy_location( reverse_branch, node )
+  #def visit_Attribute( self, node ):
+  #  reverse_branch = ReorderAST(self.self_name).reverse( node )
+  #  return ast.copy_location( reverse_branch, node )
+  #def visit_Subscript( self, node ):
+  #  reverse_branch = ReorderAST(self.self_name).reverse( node )
+  #  return ast.copy_location( reverse_branch, node )
+  #def visit_Index( self, node ):
+  #  reverse_branch = ReorderAST(self.self_name).reverse( node )
+  #  return ast.copy_location( reverse_branch, node )
 
   def visit_Name( self, node ):
     new_node = LocalVar( id=node.id )
