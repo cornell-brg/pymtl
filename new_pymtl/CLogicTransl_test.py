@@ -14,7 +14,7 @@ from CLogicHelpers import gen_cppsim
 
 import tempfile
 
-compiler = "g++ -O3 -fPIC -shared -o libCSim.so"
+compiler = "g++ -O3 -fPIC -shared -o {libname} {csource}"
 
 #-------------------------------------------------------------------------
 # translate
@@ -23,9 +23,15 @@ def translate( model ):
   model.elaborate()
 
   with tempfile.NamedTemporaryFile(suffix='.cpp') as output:
+
     cdef, CSimWrapper = CLogicTransl( model, output )
     output.flush()
-    cmd  = '{} {}'.format( compiler, output.name )
+
+    # NOTE: if we don't create a unique name for each .so, things get
+    #       inconsisten (stale data?)
+    clib = model.class_name+'.so'
+    cmd  = compiler.format( libname = clib,
+                            csource = output.name )
 
     try:
 
@@ -33,24 +39,14 @@ def translate( model ):
       output.seek(0)
       source = output.read()
 
-      csim = gen_cppsim( 'libCSim.so', cdef )
+      csim = gen_cppsim( clib, cdef )
       sim  = CSimWrapper( csim )
 
       print
       print source
       print
 
-      def trace():
-        return "{:02}: in_: {:02} out: {:02} ".format( sim.ncycles,
-                                                       sim.in_, sim.out )
-
-      print trace(); sim.in_ = 5
-      print trace(); sim.cycle()
-      print trace(); sim.cycle(); sim.in_ = 20
-      print trace(); sim.cycle()
-      print trace(); sim.cycle(); sim.in_ = 30
-      print trace(); sim.cycle(); sim.in_ = 40
-      print trace()
+      return sim
 
     except CalledProcessError as e:
 
@@ -81,40 +77,75 @@ NO = CreateWrappedClass( _NetObject )
 #-------------------------------------------------------------------------
 
 def test_Register():
-  translate( sequential.Register( 8 ) )
+  sim = translate( sequential.Register( 8 ) )
+  sim.in_ = 8; assert sim.out == 0
+  sim.cycle(); assert sim.out == 8
+  sim.in_ = 9; assert sim.out == 8
+  sim.in_ = 10
+  sim.cycle(); assert sim.out == 10
+  sim.in_ = 2
+  sim.cycle(); assert sim.out == 2
 
-def test_Register_Obj():
-  translate( sequential.Register( NO ) )
+def test_RegisterWrapped():
+  sim = translate( sequential.RegisterWrapped( 8 ) )
+  sim.in_ = 8; assert sim.out == 0
+  sim.cycle(); assert sim.out == 8
+  sim.in_ = 9; assert sim.out == 8
+  sim.in_ = 10
+  sim.cycle(); assert sim.out == 10
+  sim.in_ = 2
+  sim.cycle(); assert sim.out == 2
 
-#def test_RegisterOld():
-#  translate( sequential.RegisterOld(  8 ) )
-#  translate( sequential.RegisterOld( NO ) )
-#
-#def test_RegisterBits():
-#  translate( sequential.RegisterBits( 8 ) )
-#  translate( sequential.RegisterOld( 16 ) )
-#
-#def test_RegisterWrapped():
-#  translate( sequential.RegisterWrapped( 8 ) )
-#  translate( sequential.RegisterWrapped( NO ) )
-#
-#def test_RegisterWrappedChain():
-#  translate( sequential.RegisterWrappedChain( 16 ) )
-#  translate( sequential.RegisterWrappedChain( NO ) )
-#
+def test_RegisterWrappedChain():
+  sim = translate( sequential.RegisterWrappedChain( 8 ) )
+  sim.in_ = 8; assert sim.out == 0
+  sim.cycle(); assert sim.out == 0
+  sim.cycle(); assert sim.out == 0
+  sim.in_ = 9;
+  sim.in_ = 10
+  sim.cycle(); assert sim.out == 8
+  sim.in_ = 2
+  sim.cycle(); assert sim.out == 8
+  sim.cycle(); assert sim.out == 10
+  sim.cycle(); assert sim.out == 2
+
 #def test_RegisterReset():
-#  translate( sequential.RegisterReset( 16 ) )
-#  translate( sequential.RegisterReset( NO ) )
-#
+#  sim = translate( sequential.RegisterReset( 16 ) )
+#  model.in_ = 8
+#  assert model.out == 0
+#  sim.reset()
+#  assert model.out == 0
+#  sim.cycle()
+#  assert model.out == 8
+#  model.in_ = 9
+#  assert model.out == 8
+#  model.in_ = 10
+#  sim.cycle()
+#  assert model.out == 10
+#  sim.reset()
+#  assert model.out == 0
+
+
+# TODO: slices not supported
+# TODO: bit math doesn't work properly
+
 #def test_SliceWriteCheck():
 #  translate( sequential.SliceWriteCheck( 16 ) )
 #
 #def test_SliceTempWriteCheck():
 #  translate( sequential.SliceTempWriteCheck( 16 ) )
-#
+
+
 #def test_MultipleWrites():
 #  translate( sequential.MultipleWrites() )
 #
+
+#-------------------------------------------------------------------------
+# Complex Objects
+#-------------------------------------------------------------------------
+#def test_Register_Obj():
+#  translate( sequential.Register( NO ) )
+
 ##-------------------------------------------------------------------------
 ## Combinational Logic
 ##-------------------------------------------------------------------------

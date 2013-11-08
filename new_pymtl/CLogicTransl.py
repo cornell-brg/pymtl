@@ -95,7 +95,7 @@ def declare_signals( sim, regs, o ):
 
     # declare the net
     cname = 'net_{:05}'.format( id_ )
-    print   >>o, '{}  {};'     .format( type_, cname);
+    print   >>o, '{}  {} = 0;'.format( type_, cname);
 
     # create references for each signal connected to the net
     for signal in net:
@@ -108,7 +108,7 @@ def declare_signals( sim, regs, o ):
       #       attached to the net write next; this is okay because that is
       #       invalid code!
       if name in regs:
-        print >>o, '{}  {}_next;'          .format( type_, cname );
+        print >>o, '{}  {}_next = 0;'      .format( type_, cname );
         print >>o, '{} &{}_next = {}_next;'.format( type_, name, cname );
 
       # ports attached to top will be exposed in the CSim wrapper
