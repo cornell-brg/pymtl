@@ -592,5 +592,5 @@ class VariableName( GetVariableName ):
     if node.id in ['s', 'self']:
       return self.model.name
     else:
-      return name.id
+      return node.id
 
