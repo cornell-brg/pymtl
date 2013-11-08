@@ -10,9 +10,11 @@ from subprocess   import check_output, STDOUT, CalledProcessError
 from SignalValue  import CreateWrappedClass
 from Model        import *
 
+from CLogicHelpers import gen_cppsim
+
 import tempfile
 
-compiler = 'gcc -Wall'
+compiler = "g++ -O3 -fPIC -shared -o libCSim.so"
 
 #-------------------------------------------------------------------------
 # translate
@@ -21,7 +23,7 @@ def translate( model ):
   model.elaborate()
 
   with tempfile.NamedTemporaryFile(suffix='.cpp') as output:
-    CLogicTransl( model, output )
+    cdef, CSimWrapper = CLogicTransl( model, output )
     output.flush()
     cmd  = '{} {}'.format( compiler, output.name )
 
@@ -30,12 +32,25 @@ def translate( model ):
       result = check_output( cmd.split() , stderr=STDOUT )
       output.seek(0)
       source = output.read()
+
+      csim = gen_cppsim( 'libCSim.so', cdef )
+      sim  = CSimWrapper( csim )
+
       print
       print source
-      run    = check_output( './a.out' )
-      print '...EXECUTING'+'.'*20
-      print run
-      print '............'+'.'*20
+      print
+
+      def trace():
+        return "{:02}: in_: {:02} out: {:02} ".format( sim.ncycles,
+                                                       sim.in_, sim.out )
+
+      print trace(); sim.in_ = 5
+      print trace(); sim.cycle()
+      print trace(); sim.cycle(); sim.in_ = 20
+      print trace(); sim.cycle()
+      print trace(); sim.cycle(); sim.in_ = 30
+      print trace(); sim.cycle(); sim.in_ = 40
+      print trace()
 
     except CalledProcessError as e:
 
@@ -47,7 +62,6 @@ def translate( model ):
                        'Error:\n' + e.output + '\n'
                        'Source:\n' + source
                      )
-
 
 
 #-------------------------------------------------------------------------
@@ -68,6 +82,8 @@ NO = CreateWrappedClass( _NetObject )
 
 def test_Register():
   translate( sequential.Register( 8 ) )
+
+def test_Register_Obj():
   translate( sequential.Register( NO ) )
 
 #def test_RegisterOld():

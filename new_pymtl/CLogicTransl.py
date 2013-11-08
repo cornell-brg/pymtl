@@ -11,60 +11,111 @@ import sys
 import ast, _ast
 import collections
 import inspect
+import StringIO
 
-from signals import InPort, OutPort, Wire, Constant
-from ast_visitor import GetVariableName
-from Bits import Bits
-from BitStruct import BitStruct
-from SignalValue import SignalValueWrapper
+from signals       import InPort, OutPort, Wire, Constant
+from ast_visitor   import GetVariableName
+from Bits          import Bits
+from BitStruct     import BitStruct
+from SignalValue   import SignalValueWrapper
+from CLogicHelpers import gen_cheader, gen_cdef, gen_csim, gen_pywrapper
+
+from VerilogTranslationTool import mangle_name
 
 #-------------------------------------------------------------------------
 # CLogicTransl
 #-------------------------------------------------------------------------
 # TODO: same as Verilog, reduce code dup
-class CLogicTransl(object):
-
-  def __init__(self, model, o=sys.stdout):
+def CLogicTransl( model, o=sys.stdout ):
 
     # Create the python simulator
     sim = SimulationTool( model )
 
+    c_functions = StringIO.StringIO()
+    c_variables = StringIO.StringIO()
+
+    # Visit tick functions, save register information
+    regs = []
+    for func in sim._sequential_blocks:
+      regs += translate_func( func, c_functions )
+
+    # Visit signals, use reg information
+    top_ports =  declare_signals( sim, regs, c_variables )
+
     # Create the C header
-    print >> o, '#include "stdio.h"'
+    print >> o, '#include <stdio.h>'
     print >> o
 
-    import StringIO
-    s = StringIO.StringIO()
-    from VerilogTranslationTool import mangle_name
-
-    # Create the simulator signals
-    for id_, n in enumerate( sim._nets ):
-      net   = list( n )
-      type_ = get_type( net[0].msg_type(), o )
-      print   >>s, '{}  net_{:05};'.format( type_, id_ );
-      print   >>s, '{}  net_{:05}_next;'.format( type_, id_ );
-      for signal in net:
-        name = mangle_name( signal.fullname )
-        print >>s, '{} &{}      = net_{:05d};'.format( type_, name, id_ );
-        print >>s, '{} &{}_next = net_{:05d}_next;'.format( type_, name, id_ );
-
-    print >> o, s.getvalue()
-
-    # Create the tick functions
-    for func in sim._sequential_blocks:
-      translate_func( func, o )
+    print >> o, gen_cheader( top_ports )
+    print >> o, c_variables.getvalue()
+    print >> o, c_functions.getvalue()
 
     # Create the cycle function
-    print >> o, '// cycle'
-    print >> o, 'void cycle() {'
+    print   >> o, 'int ncycles;\n'
+    print   >> o, '/* cycle */'
+    print   >> o, 'void cycle() {'
     for x in sim._sequential_blocks:
       print >> o, '  {}_{}();'.format( x._model.name, x.func_name)
-    print >> o, '}'
-    print >> o
+    print   >> o, '  ncycles++;'
+    print   >> o, '}'
+    print   >> o
+
+    # Create the cycle function
+    print   >> o, '/* flop */'
+    print   >> o, 'void flop() {'
+    for reg in regs:
+      print >> o, ' {0} = {0}_next;'.format( reg )
+    print   >> o,   '}'
+    print   >> o
 
     # Create a temporary test thingy
-    print >> o, '// main'
-    print >> o, 'int main () { cycle(); }'
+    #print >> o, '// main'
+    #print >> o, 'int main () { cycle(); }'
+
+    cdef        = gen_cdef( top_ports )
+    CSimWrapper = gen_pywrapper( top_ports )
+    return cdef, CSimWrapper
+
+
+#-------------------------------------------------------------------------
+# declare_signals
+#-------------------------------------------------------------------------
+def declare_signals( sim, regs, o ):
+
+  top_ports    = []
+  next_assigns = []
+
+  for id_, n in enumerate( sim._nets ):
+
+    # each net is a set, convert it to a list
+    net   = list( n )
+
+    # returns the type, if it is an object/class generate the C def
+    type_ = get_type( net[0].msg_type(), o ) # TODO: add obj decl to extern
+
+    # declare the net
+    cname = 'net_{:05}'.format( id_ )
+    print   >>o, '{}  {};'     .format( type_, cname);
+
+    # create references for each signal connected to the net
+    for signal in net:
+
+      name = mangle_name( signal.fullname )
+      print >>o, '{} &{}      = {};'     .format( type_, name, cname );
+
+      # only create "next" if this signal was written to in @tick
+      # NOTE: this will declare "net_next" twice if two different signals
+      #       attached to the net write next; this is okay because that is
+      #       invalid code!
+      if name in regs:
+        print >>o, '{}  {}_next;'          .format( type_, cname );
+        print >>o, '{} &{}_next = {}_next;'.format( type_, name, cname );
+
+      # ports attached to top will be exposed in the CSim wrapper
+      if name.startswith('top'):
+        top_ports.append( (name, cname, type_) );
+
+  return top_ports
 
 #-------------------------------------------------------------------------
 # get_type
@@ -112,11 +163,10 @@ def translate_func( func, o ):
   src   = inspect.getsource( func )
   model = func._model
 
-  #print_simple_ast( tree )    # DEBUG
-  #print src
-  #new_tree = TypeAST( model, func ).visit( tree )
-
-  #  print_simple_ast( new_tree ) # DEBUG
+  #print_simple_ast( tree )                         # DEBUG
+  #print src                                        # DEBUG
+  #new_tree = TypeAST( model, func ).visit( tree )  # DEBUG
+  #  print_simple_ast( new_tree )                   # DEBUG
 
   # Store the PyMTL source inline with the behavioral code
   print   >> behavioral_code, "  // PYMTL SOURCE:"
@@ -128,9 +178,12 @@ def translate_func( func, o ):
   #visitor.visit( new_tree )
   visitor.visit( tree )
 
+  # print behavioral code to passed in
   print >> o
   print >> o, behavioral_code.getvalue()
 
+  # return regs
+  return func._model._regs
 
 #-------------------------------------------------------------------------
 # opmap
@@ -176,6 +229,8 @@ class TranslateLogic( ast.NodeVisitor ):
     self.ident  = 0
     self.elseif = False
 
+    self.model._regs = []
+
     self.assign = '='
 
   #-----------------------------------------------------------------------
@@ -186,7 +241,8 @@ class TranslateLogic( ast.NodeVisitor ):
     print >> self.o
     print >> self.o, '  // logic for {}()'.format( self.model.name, node.name )
     print >> self.o, '  void {}_{}() {{'.format( self.model.name, node.name )
-    print >> self.o, '    printf("EXECUTING {}_{}\\n");'.format( self.model.name, node.name )
+    #print >> self.o, '    printf("EXECUTING {}_{}\\n");'.format(
+    #                             self.model.name, node.name )
     # Visit each line in the function, translate one at a time.
     self.ident += 2
     for x in node.body:
@@ -289,6 +345,9 @@ class TranslateLogic( ast.NodeVisitor ):
       name = name[:-6]
     # TODO: SUPER HACKY
 
+    if   name.endswith('_next'):
+      self.model._regs.append( name[:-5] )
+
     print >> self.o, name,
 
   #-----------------------------------------------------------------------
@@ -304,7 +363,6 @@ class TranslateLogic( ast.NodeVisitor ):
   def visit_Subscript( self, node ):
     name = VariableName( self ).visit( node ).replace('.', '_')
     print >> self.o, name,
-
 
 
 ##  #-----------------------------------------------------------------------
