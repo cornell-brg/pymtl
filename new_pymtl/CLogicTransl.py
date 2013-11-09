@@ -594,30 +594,22 @@ class TranslateLogic( ast.NodeVisitor ):
 ##    print >> self.o, self.ident*" " + "  // ASSERT ",
 ##    self.visit( node.test )
 ##    print >> self.o
-##
-##  #-----------------------------------------------------------------------
-##  # visit_Call
-##  #-----------------------------------------------------------------------
-##  #def visit_Call(self, node):
-##  #  if not self.write_names:
-##  #    return
-##
-##  #  # TODO: clean this up!!!!
-##  #  func_list, debug = get_target_list( node.func )
-##  #  if func_list[-1] == 'zext':
-##  #    param, debug = get_target_name( node.args[0] )
-##  #    param_value = self.get_signal_type( param )
-##  #    signal_type = self.get_signal_type( func_list[0] )
-##  #    ext = param_value - signal_type.width
-##  #    # sext
-##  #    #print >> self.o, "{{ {{ {0} {{ {1}[{2}] }} }}, {3} }}".format(
-##  #    print >> self.o, "{{ {{ {0} {{ 1'b0 }} }}, {1} }}".format(
-##  #        ext, func_list[0] ),
-##  #    #self.type_stack.append( Bits(param_value) )
-##  #  else:
-##  #    raise Exception("Function {}() not supported for translation!"
-##  #                    "".format(func) )
-##
+
+  #-----------------------------------------------------------------------
+  # visit_Call
+  #-----------------------------------------------------------------------
+  def visit_Call(self, node):
+
+    try:
+      if node.func.id not in ['zext']:
+        raise Exception('Unsupported function: {}'.format(node.func.id))
+
+      self.visit( node.args[0] )
+
+    except AttributeError as e:
+      raise AttributeError('Function call is not a name node!\n'
+                           + e.message )
+
   #-----------------------------------------------------------------------
   # visit_Print
   #-----------------------------------------------------------------------
