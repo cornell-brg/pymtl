@@ -385,8 +385,10 @@ class TranslateLogic( ast.NodeVisitor ):
     if   name.endswith('_next'):
       self.regs.append( name[:-5] )
 
-    TypeAST( self.model, self.func ).visit( node )
-    self.localvars[name] = node._object
+    # TODO: more super hacky
+    if name not in self.localvars:
+      TypeAST( self.model, self.func ).visit( node )
+      self.localvars[name] = node._object
 
     print >> self.o, name,
 
@@ -537,7 +539,7 @@ class TranslateLogic( ast.NodeVisitor ):
 ##    for x in node.body:
 ##      self.visit(x)
 ##    print >> self.o, (self.ident+2)*" " + "end"
-##
+
   #-----------------------------------------------------------------------
   # visit_If
   #-----------------------------------------------------------------------
@@ -570,6 +572,20 @@ class TranslateLogic( ast.NodeVisitor ):
         self.visit(orelse)
         self.ident -= 2
       print >> self.o, self.ident*" " + "  }"
+
+  #--------------------------------------------------------------------
+  # visit_While
+  #-----------------------------------------------------------------------
+  # TODO: does this work?
+  def visit_While(self, node):
+    print >> self.o, self.ident*" " + "  while( ",
+    self.visit( node.test )
+    print >> self.o, ") {"
+    self.ident += 2
+    for line in node.body:
+      self.visit( line )
+    self.ident -= 2
+    print >> self.o, self.ident*" " + "  }"
 
 ##  #-----------------------------------------------------------------------
 ##  # visit_Assert
