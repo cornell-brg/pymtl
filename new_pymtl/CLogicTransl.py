@@ -68,7 +68,7 @@ def CLogicTransl( model, o=sys.stdout ):
     print >> o, c_functions.getvalue()
 
     # Create the cycle function
-    print   >> o, 'int ncycles;\n'
+    print   >> o, 'unsigned int ncycles;\n'
     print   >> o, '/* cycle */'
     print   >> o, 'void cycle() {'
     for x in sim._sequential_blocks:
@@ -156,10 +156,10 @@ def get_type( signal, o=None ):
   if   isinstance( signal, bool ):
     return 'bool'
   elif isinstance( signal, int ):
-    return 'int'
+    return 'unsigned int'
   elif isinstance( signal, Bits ):
     assert not isinstance( signal, BitStruct )
-    return 'int'    # TODO: make a setbitwidth object
+    return 'unsigned int'    # TODO: make a setbitwidth object
   elif isinstance( signal, SignalValueWrapper ):
     if not o:
       raise Exception( "NESTED TYPES NOT ALLOWED" )
@@ -615,7 +615,7 @@ class TranslateLogic( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_Print( self, node ):
     print >> self.o, self.ident*' ' + 'printf("',
-    print >> self.o, '%d '*len( node.values ) + '\\n"',
+    print >> self.o, '%x '*len( node.values ) + '\\n"',
     for v in node.values:
       print >> self.o, ', ',
       self.visit( v )

@@ -23,7 +23,7 @@ def gen_cdef( top_ports ):
   str_   += 'void cycle( void );\n'
   str_   += 'void reset( void );\n'
   str_   += 'void flop( void );\n'
-  str_   += 'int  ncycles;\n'
+  str_   += 'unsigned int  ncycles;\n'
   for name, cname, type_ in top_ports:
     str_ += '{} {}; // {}\n'.format( type_, cname, name )
   return str_
@@ -40,7 +40,7 @@ def gen_cheader( top_ports ):
   str_   += '  extern void cycle( void );\n'
   str_   += '  extern void reset( void );\n'
   str_   += '  extern void flop( void );\n'
-  str_   += '  extern int ncycles;\n'
+  str_   += '  extern unsigned int ncycles;\n'
   for name, cname, type_ in top_ports:
     str_ += '  extern {} {}; // {}\n'.format( type_, cname, name )
   str_   += '}\n'
