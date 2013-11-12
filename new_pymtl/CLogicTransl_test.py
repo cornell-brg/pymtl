@@ -13,6 +13,7 @@ from Model        import *
 from CLogicHelpers import gen_cppsim
 
 import tempfile
+import os
 
 compiler = "g++ -O3 -fPIC -shared -o {libname} {csource}"
 
@@ -29,7 +30,8 @@ def translate( model ):
 
     # NOTE: if we don't create a unique name for each .so, things get
     #       inconsisten (stale data?)
-    clib = model.class_name+'.so'
+    clib = os.getcwd() + '/' + model.class_name+'.so'
+    print clib
     cmd  = compiler.format( libname = clib,
                             csource = output.name )
 
@@ -42,9 +44,9 @@ def translate( model ):
       csim = gen_cppsim( clib, cdef )
       sim  = CSimWrapper( csim )
 
-      print
-      print source
-      print
+      #print
+      #print source
+      #print
 
       return sim
 

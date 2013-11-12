@@ -49,10 +49,10 @@ def CLogicTransl( model, o=sys.stdout ):
     # print locals
     print >> c_variables
     print >> c_variables, '/* LOCALS ' + '-'*60 + '*/'
-    import pprint
-    pprint.pprint( all_ports)
+    #import pprint
+    #pprint.pprint( all_ports)
     for var, obj in localvars.items():
-      print var, var in all_ports
+      #print var, var in all_ports
       if var not in all_ports:
         var_type = get_type( obj, o )
         print >> c_variables, "{} {};".format( var_type, var )
