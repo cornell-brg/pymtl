@@ -74,6 +74,8 @@ def CLogicTransl( model, o=sys.stdout ):
     for x in sim._sequential_blocks:
       print >> o, '  {}_{}();'.format( x._model.name, x.func_name)
     print   >> o, '  ncycles++;'
+    for reg in regs:
+      print >> o, ' {0} = {0}_next;'.format( reg )
     print   >> o, '}'
     print   >> o
 
@@ -82,20 +84,44 @@ def CLogicTransl( model, o=sys.stdout ):
     print   >> o, 'void reset() {'
     print   >> o, '  top_reset = 1;'
     print   >> o, '  cycle();'
-    print   >> o, '  flop();'
+    #print   >> o, '  flop();'
     print   >> o, '  cycle();'
-    print   >> o, '  flop();'
+    #print   >> o, '  flop();'
     print   >> o, '  top_reset = 0;'
     print   >> o, '}'
     print   >> o
 
-    # Create the flop function
-    print   >> o, '/* flop */'
-    print   >> o, 'void flop() {'
-    for reg in regs:
-      print >> o, ' {0} = {0}_next;'.format( reg )
-    print   >> o,   '}'
+    print   >> o, '/* Xcycle */'
+    print   >> o, ( 'void Xcycle( \n'
+                    '  unsigned int a, \n'
+                    '  unsigned int b, \n'
+                    '  unsigned int c, \n'
+                    '  unsigned int d, \n'
+                    '  unsigned int *e,\n'
+                    '  unsigned int *f,\n'
+                    '  unsigned int *g,\n'
+                    '  unsigned int *h \n'
+                    ') {\n' )
+    print   >> o, ( 'top_in__msga = a;\n'
+                    'top_in__msgb = b;\n'
+                    'top_in__val  = c;\n'
+                    'top_out_rdy  = d;\n'
+                    'cycle();\n'
+                    '*e = top_out_msga;\n'
+                    '*f = top_out_msgb;\n'
+                    '*g = top_out_val;\n'
+                    '*h = top_in__rdy;\n'
+                  )
+    print   >> o, '}'
     print   >> o
+
+    # Create the flop function
+    #print   >> o, '/* flop */'
+    #print   >> o, 'void flop() {'
+    #for reg in regs:
+    #  print >> o, ' {0} = {0}_next;'.format( reg )
+    #print   >> o,   '}'
+    #print   >> o
 
     # Create a temporary test thingy
     #print >> o, '// main'

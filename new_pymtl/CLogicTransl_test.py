@@ -31,7 +31,7 @@ def translate( model ):
     # NOTE: if we don't create a unique name for each .so, things get
     #       inconsisten (stale data?)
     clib = os.getcwd() + '/' + model.class_name+'.so'
-    print clib
+    #print clib
     cmd  = compiler.format( libname = clib,
                             csource = output.name )
 
@@ -41,14 +41,16 @@ def translate( model ):
       output.seek(0)
       source = output.read()
 
-      csim = gen_cppsim( clib, cdef )
-      sim  = CSimWrapper( csim )
+      #csim = gen_cppsim( clib, cdef )
+      #sim  = CSimWrapper( csim )
 
       #print
       #print source
       #print
 
-      return sim
+      #return sim
+      csim, ffi = gen_cppsim( clib, cdef )
+      return csim, ffi
 
     except CalledProcessError as e:
 

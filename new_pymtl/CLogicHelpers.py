@@ -11,7 +11,7 @@ def gen_cppsim( clib, cdef ):
   ffi = FFI()
   ffi.cdef( cdef )
   cmodule = ffi.dlopen( clib )
-  return cmodule
+  return cmodule, ffi
   #return wrap( cmodule )
 
 #-------------------------------------------------------------------------
@@ -20,9 +20,19 @@ def gen_cppsim( clib, cdef ):
 # Create the string passed into ffi.cdef
 def gen_cdef( top_ports ):
   str_    = '\n'
-  str_   += 'void cycle( void );\n'
+  #str_   += 'void cycle( void );\n'
+  str_   += ( 'void Xcycle( \n'
+              '  unsigned int a, \n'
+              '  unsigned int b, \n'
+              '  unsigned int c, \n'
+              '  unsigned int d, \n'
+              '  unsigned int *e,\n'
+              '  unsigned int *f,\n'
+              '  unsigned int *g,\n'
+              '  unsigned int *h \n'
+              ');\n' )
   str_   += 'void reset( void );\n'
-  str_   += 'void flop( void );\n'
+  #str_   += 'void flop( void );\n'
   str_   += 'unsigned int  ncycles;\n'
   for name, cname, type_ in top_ports:
     str_ += '{} {}; // {}\n'.format( type_, cname, name )
@@ -37,9 +47,19 @@ def gen_cheader( top_ports ):
   #str_   += '#ifndef CSIM_H\n'
   #str_   += '#define CSIM_H\n'
   str_   += 'extern "C" {\n'
-  str_   += '  extern void cycle( void );\n'
+  #str_   += '  extern void cycle( void );\n'
+  str_   += ( 'extern void Xcycle( \n'
+              '  unsigned int a, \n'
+              '  unsigned int b, \n'
+              '  unsigned int c, \n'
+              '  unsigned int d, \n'
+              '  unsigned int *e,\n'
+              '  unsigned int *f,\n'
+              '  unsigned int *g,\n'
+              '  unsigned int *h \n'
+              ');\n' )
   str_   += '  extern void reset( void );\n'
-  str_   += '  extern void flop( void );\n'
+  #str_   += '  extern void flop( void );\n'
   str_   += '  extern unsigned int ncycles;\n'
   for name, cname, type_ in top_ports:
     str_ += '  extern {} {}; // {}\n'.format( type_, cname, name )
@@ -59,7 +79,7 @@ def gen_pywrapper( top_ports ):
       self.cmodule = cmodule
     def cycle( self ):
       self.cmodule.cycle()
-      self.cmodule.flop()
+      #self.cmodule.flop()
     def reset( self ):
       self.cmodule.reset()
     @property
