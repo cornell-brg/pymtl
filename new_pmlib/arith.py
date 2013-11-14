@@ -149,7 +149,6 @@ class SignExtender( Model ):
     s.out = OutPort ( out_nbits )
 
   def elaborate_logic( s ):
-
     @s.combinational
     def comb_logic():
       s.out.value = sext( s.in_, s.out_nbits )
