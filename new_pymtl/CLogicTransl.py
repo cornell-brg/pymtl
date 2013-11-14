@@ -33,17 +33,34 @@ def CLogicTransl( model, o=sys.stdout ):
 
     c_functions = StringIO.StringIO()
     c_variables = StringIO.StringIO()
+    c_variables = StringIO.StringIO()
 
     # Visit tick functions, save register information
     regs = []
+    localvars = {}
     for func in sim._sequential_blocks:
-      regs += translate_func( func, c_functions )
+      r, l = translate_func( func, c_functions )
+      regs.extend( r )
+      localvars.update( l )
 
-    # Visit signals, use reg information
-    top_ports =  declare_signals( sim, regs, c_variables )
+    # Print signal declarations, use reg information
+    top_ports, all_ports =  declare_signals( sim, regs, c_variables )
+
+    # print locals
+    print >> c_variables
+    print >> c_variables, '/* LOCALS ' + '-'*60 + '*/'
+    #import pprint
+    #pprint.pprint( all_ports)
+    for var, obj in localvars.items():
+      #print var, var in all_ports
+      if var not in all_ports:
+        var_type = get_type( obj, o )
+        print >> c_variables, "{} {};".format( var_type, var )
 
     # Create the C header
     print >> o, '#include <stdio.h>'
+    print >> o, '#define  True  true'
+    print >> o, '#define  False false'
     print >> o
 
     print >> o, gen_cheader( top_ports )
@@ -51,7 +68,7 @@ def CLogicTransl( model, o=sys.stdout ):
     print >> o, c_functions.getvalue()
 
     # Create the cycle function
-    print   >> o, 'int ncycles;\n'
+    print   >> o, 'unsigned int ncycles;\n'
     print   >> o, '/* cycle */'
     print   >> o, 'void cycle() {'
     for x in sim._sequential_blocks:
@@ -60,7 +77,19 @@ def CLogicTransl( model, o=sys.stdout ):
     print   >> o, '}'
     print   >> o
 
-    # Create the cycle function
+    # Create the reset function
+    print   >> o, '/* cycle */'
+    print   >> o, 'void reset() {'
+    print   >> o, '  top_reset = 1;'
+    print   >> o, '  cycle();'
+    print   >> o, '  flop();'
+    print   >> o, '  cycle();'
+    print   >> o, '  flop();'
+    print   >> o, '  top_reset = 0;'
+    print   >> o, '}'
+    print   >> o
+
+    # Create the flop function
     print   >> o, '/* flop */'
     print   >> o, 'void flop() {'
     for reg in regs:
@@ -83,7 +112,7 @@ def CLogicTransl( model, o=sys.stdout ):
 def declare_signals( sim, regs, o ):
 
   top_ports    = []
-  next_assigns = []
+  all_ports    = []
 
   for id_, n in enumerate( sim._nets ):
 
@@ -95,7 +124,7 @@ def declare_signals( sim, regs, o ):
 
     # declare the net
     cname = 'net_{:05}'.format( id_ )
-    print   >>o, '{}  {};'     .format( type_, cname);
+    print   >>o, '{}  {} = 0;'.format( type_, cname);
 
     # create references for each signal connected to the net
     for signal in net:
@@ -108,24 +137,29 @@ def declare_signals( sim, regs, o ):
       #       attached to the net write next; this is okay because that is
       #       invalid code!
       if name in regs:
-        print >>o, '{}  {}_next;'          .format( type_, cname );
+        print >>o, '{}  {}_next = 0;'      .format( type_, cname );
         print >>o, '{} &{}_next = {}_next;'.format( type_, name, cname );
+
+        all_ports.append( name+'_next' )
+      all_ports.append( name )
 
       # ports attached to top will be exposed in the CSim wrapper
       if name.startswith('top'):
         top_ports.append( (name, cname, type_) );
 
-  return top_ports
+  return top_ports, all_ports
 
 #-------------------------------------------------------------------------
 # get_type
 #-------------------------------------------------------------------------
 def get_type( signal, o=None ):
-  if   isinstance( signal, int ):
-    return 'int'
+  if   isinstance( signal, bool ):
+    return 'bool'
+  elif isinstance( signal, int ):
+    return 'unsigned int'
   elif isinstance( signal, Bits ):
     assert not isinstance( signal, BitStruct )
-    return 'int'    # TODO: make a setbitwidth object
+    return 'unsigned int'    # TODO: make a setbitwidth object
   elif isinstance( signal, SignalValueWrapper ):
     if not o:
       raise Exception( "NESTED TYPES NOT ALLOWED" )
@@ -166,7 +200,7 @@ def translate_func( func, o ):
   #print_simple_ast( tree )                         # DEBUG
   #print src                                        # DEBUG
   #new_tree = TypeAST( model, func ).visit( tree )  # DEBUG
-  #  print_simple_ast( new_tree )                   # DEBUG
+  #print_simple_ast( new_tree )                     # DEBUG
 
   # Store the PyMTL source inline with the behavioral code
   print   >> behavioral_code, "  // PYMTL SOURCE:"
@@ -174,7 +208,7 @@ def translate_func( func, o ):
     print >> behavioral_code, "  // " + line
 
   # Print the Verilog translation
-  visitor = TranslateLogic( model, behavioral_code )
+  visitor = TranslateLogic( model, func, behavioral_code )
   #visitor.visit( new_tree )
   visitor.visit( tree )
 
@@ -183,7 +217,7 @@ def translate_func( func, o ):
   print >> o, behavioral_code.getvalue()
 
   # return regs
-  return func._model._regs
+  return visitor.regs, visitor.localvars
 
 #-------------------------------------------------------------------------
 # opmap
@@ -223,13 +257,16 @@ opmap = {
 class TranslateLogic( ast.NodeVisitor ):
 
 
-  def __init__( self, model, o ):
+  def __init__( self, model, func, o ):
     self.model  = model
+    self.func   = func
+
     self.o      = o
     self.ident  = 0
     self.elseif = False
 
-    self.model._regs = []
+    self.regs      = []
+    self.localvars = {}
 
     self.assign = '='
 
@@ -346,7 +383,12 @@ class TranslateLogic( ast.NodeVisitor ):
     # TODO: SUPER HACKY
 
     if   name.endswith('_next'):
-      self.model._regs.append( name[:-5] )
+      self.regs.append( name[:-5] )
+
+    # TODO: more super hacky
+    if name not in self.localvars:
+      TypeAST( self.model, self.func ).visit( node )
+      self.localvars[name] = node._object
 
     print >> self.o, name,
 
@@ -355,6 +397,7 @@ class TranslateLogic( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_Name( self, node ):
     name = VariableName( self ).visit( node ).replace('.', '_')
+
     print >> self.o, name,
 
   #-----------------------------------------------------------------------
@@ -496,7 +539,7 @@ class TranslateLogic( ast.NodeVisitor ):
 ##    for x in node.body:
 ##      self.visit(x)
 ##    print >> self.o, (self.ident+2)*" " + "end"
-##
+
   #-----------------------------------------------------------------------
   # visit_If
   #-----------------------------------------------------------------------
@@ -530,6 +573,20 @@ class TranslateLogic( ast.NodeVisitor ):
         self.ident -= 2
       print >> self.o, self.ident*" " + "  }"
 
+  #--------------------------------------------------------------------
+  # visit_While
+  #-----------------------------------------------------------------------
+  # TODO: does this work?
+  def visit_While(self, node):
+    print >> self.o, self.ident*" " + "  while( ",
+    self.visit( node.test )
+    print >> self.o, ") {"
+    self.ident += 2
+    for line in node.body:
+      self.visit( line )
+    self.ident -= 2
+    print >> self.o, self.ident*" " + "  }"
+
 ##  #-----------------------------------------------------------------------
 ##  # visit_Assert
 ##  #-----------------------------------------------------------------------
@@ -537,30 +594,32 @@ class TranslateLogic( ast.NodeVisitor ):
 ##    print >> self.o, self.ident*" " + "  // ASSERT ",
 ##    self.visit( node.test )
 ##    print >> self.o
-##
-##  #-----------------------------------------------------------------------
-##  # visit_Call
-##  #-----------------------------------------------------------------------
-##  #def visit_Call(self, node):
-##  #  if not self.write_names:
-##  #    return
-##
-##  #  # TODO: clean this up!!!!
-##  #  func_list, debug = get_target_list( node.func )
-##  #  if func_list[-1] == 'zext':
-##  #    param, debug = get_target_name( node.args[0] )
-##  #    param_value = self.get_signal_type( param )
-##  #    signal_type = self.get_signal_type( func_list[0] )
-##  #    ext = param_value - signal_type.width
-##  #    # sext
-##  #    #print >> self.o, "{{ {{ {0} {{ {1}[{2}] }} }}, {3} }}".format(
-##  #    print >> self.o, "{{ {{ {0} {{ 1'b0 }} }}, {1} }}".format(
-##  #        ext, func_list[0] ),
-##  #    #self.type_stack.append( Bits(param_value) )
-##  #  else:
-##  #    raise Exception("Function {}() not supported for translation!"
-##  #                    "".format(func) )
-##
+
+  #-----------------------------------------------------------------------
+  # visit_Call
+  #-----------------------------------------------------------------------
+  def visit_Call(self, node):
+
+    try:
+      if node.func.id not in ['zext']:
+        raise Exception('Unsupported function: {}'.format(node.func.id))
+
+      self.visit( node.args[0] )
+
+    except AttributeError as e:
+      raise AttributeError('Function call is not a name node!\n'
+                           + e.message )
+
+  #-----------------------------------------------------------------------
+  # visit_Print
+  #-----------------------------------------------------------------------
+  def visit_Print( self, node ):
+    print >> self.o, self.ident*' ' + 'printf("',
+    print >> self.o, '%x '*len( node.values ) + '\\n"',
+    for v in node.values:
+      print >> self.o, ', ',
+      self.visit( v )
+    print >> self.o, ' );'
 
 class VariableName( GetVariableName ):
   def __init__( self, parent ):
@@ -570,5 +629,5 @@ class VariableName( GetVariableName ):
     if node.id in ['s', 'self']:
       return self.model.name
     else:
-      return name.id
+      return node.id
 

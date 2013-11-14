@@ -82,7 +82,8 @@ class TypeAST( ast.NodeTransformer ):
           node.value.ctx = node.ctx  # Update the Load/Store information
           return node.value
         else:
-          raise Exception("Error: Unknown attribute for this object!");
+          raise Exception("Error: Unknown attribute for this object: {}"
+                          .format( node.attr ) )
 
     node._object = self.current_obj.inst if self.current_obj else None
 

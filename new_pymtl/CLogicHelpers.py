@@ -20,9 +20,10 @@ def gen_cppsim( clib, cdef ):
 # Create the string passed into ffi.cdef
 def gen_cdef( top_ports ):
   str_    = '\n'
-  str_   += 'void cycle(void);\n'
-  str_   += 'void flop(void);\n'
-  str_   += 'int  ncycles;\n'
+  str_   += 'void cycle( void );\n'
+  str_   += 'void reset( void );\n'
+  str_   += 'void flop( void );\n'
+  str_   += 'unsigned int  ncycles;\n'
   for name, cname, type_ in top_ports:
     str_ += '{} {}; // {}\n'.format( type_, cname, name )
   return str_
@@ -37,8 +38,9 @@ def gen_cheader( top_ports ):
   #str_   += '#define CSIM_H\n'
   str_   += 'extern "C" {\n'
   str_   += '  extern void cycle( void );\n'
+  str_   += '  extern void reset( void );\n'
   str_   += '  extern void flop( void );\n'
-  str_   += '  extern int ncycles;\n'
+  str_   += '  extern unsigned int ncycles;\n'
   for name, cname, type_ in top_ports:
     str_ += '  extern {} {}; // {}\n'.format( type_, cname, name )
   str_   += '}\n'
@@ -58,9 +60,21 @@ def gen_pywrapper( top_ports ):
     def cycle( self ):
       self.cmodule.cycle()
       self.cmodule.flop()
+    def reset( self ):
+      self.cmodule.reset()
     @property
     def ncycles( self ):
       return self.cmodule.ncycles
+
+  # Accessor closure, needed to create unique accessors
+  class ListAccessor( object ):
+    def __init__( self, cmodule ):
+      self.cmodule = cmodule
+      self.lookup  = {}
+    def __getitem__( self, idx ):
+      return getattr( self.cmodule, self.lookup[idx] )
+    def __setitem__( self, idx, value ):
+      setattr( self.cmodule, self.lookup[idx], value )
 
   # Accessor closure, needed to create unique accessors
   def make_accessor( closed_name, closed_cname ):
@@ -71,8 +85,25 @@ def gen_pywrapper( top_ports ):
 
   # Create the properties for each port
   for name, cname, type_ in top_ports:
+
+    # Don't expose reset and clk signals
+    if name in ['top_reset', 'top_clk']:
+      continue
     name = name[4:]  # remove the 'top_' prefix
-    make_accessor( name, cname )
+
+    # Port lists
+    if '$' in name:
+      sig, idx = name.split('$')
+      if not hasattr( CSimWrapper, sig ):
+        portlist = ListAccessor( CSimWrapper )
+        setattr( CSimWrapper, sig, portlist )
+      else:
+        portlist = getattr( CSimWrapper, sig )
+      portlist.lookup[ int(idx) ] = cname
+
+    # Normal ports
+    else:
+      make_accessor( name, cname )
 
   return CSimWrapper
 
