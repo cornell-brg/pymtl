@@ -41,16 +41,14 @@ def translate( model ):
       output.seek(0)
       source = output.read()
 
-      #csim = gen_cppsim( clib, cdef )
-      #sim  = CSimWrapper( csim )
+      csim, ffi = gen_cppsim ( clib, cdef )
+      sim       = CSimWrapper( csim, ffi )
 
       #print
       #print source
       #print
 
-      #return sim
-      csim, ffi = gen_cppsim( clib, cdef )
-      return csim, ffi
+      return sim
 
     except CalledProcessError as e:
 
@@ -60,7 +58,7 @@ def translate( model ):
       raise Exception( 'Module did not compile!\n\n'
                        'Command:\n' + ' '.join(e.cmd) + '\n\n'
                        'Error:\n' + e.output + '\n'
-                       'Source:\n' + source
+                       'Source:\n \x1b[31m' + source + '\x1b[0m'
                      )
 
 

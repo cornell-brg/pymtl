@@ -33,7 +33,6 @@ def CLogicTransl( model, o=sys.stdout ):
 
     c_functions = StringIO.StringIO()
     c_variables = StringIO.StringIO()
-    c_variables = StringIO.StringIO()
 
     # Visit tick functions, save register information
     regs = []
@@ -46,16 +45,36 @@ def CLogicTransl( model, o=sys.stdout ):
     # Print signal declarations, use reg information
     top_ports, all_ports =  declare_signals( sim, regs, c_variables )
 
+    top_ports_names = [ x[0] for x in top_ports ]
+    top_inports  = []
+    top_outports = []
+
+    # Separate input and output ports
+    for x in model.get_inports():
+      name = 'top_' + mangle_name( x.name )
+      idx  = top_ports_names.index( name )
+      top_inports.append( top_ports[ idx ] )
+
+    for x in model.get_outports():
+      name = 'top_' + mangle_name( x.name )
+      idx  = top_ports_names.index( name )
+      top_outports.append( top_ports[ idx ] )
+
     # print locals
     print >> c_variables
     print >> c_variables, '/* LOCALS ' + '-'*60 + '*/'
-    #import pprint
-    #pprint.pprint( all_ports)
     for var, obj in localvars.items():
-      #print var, var in all_ports
       if var not in all_ports:
         var_type = get_type( obj, o )
         print >> c_variables, "{} {};".format( var_type, var )
+
+    # Declare parameters
+    params = [ ]
+    for name, net, type_ in top_inports:
+      params.append( ' {}   _{}'.format( type_, name ) )
+    for name, net, type_ in top_outports:
+      params.append( ' {} * _{}'.format( type_, name ) )
+    params = ',\n'.join( params )
 
     # Create the C header
     print >> o, '#include <stdio.h>'
@@ -63,72 +82,48 @@ def CLogicTransl( model, o=sys.stdout ):
     print >> o, '#define  False false'
     print >> o
 
-    print >> o, gen_cheader( top_ports )
+    print >> o, gen_cheader( params )
     print >> o, c_variables.getvalue()
     print >> o, c_functions.getvalue()
 
+    print   >> o, 'unsigned int ncycles;\n\n'
+
     # Create the cycle function
-    print   >> o, 'unsigned int ncycles;\n'
     print   >> o, '/* cycle */'
-    print   >> o, 'void cycle() {'
+    print   >> o, 'void cycle({}) {{'.format( '\n'+params+'\n' )
+
+    # Set input ports from params
+    print   >> o
+    print   >> o, '  /* Set all inputs    */'
+    for name, _, _ in top_inports:
+      print >> o, '  {0} = _{0};'.format( name )
+
+    # Execute all ticks
+    print   >> o
+    print   >> o, '  /* Execute all ticks */'
     for x in sim._sequential_blocks:
       print >> o, '  {}_{}();'.format( x._model.name, x.func_name)
     print   >> o, '  ncycles++;'
+
+    # Update all registers
+    print   >> o
+    print   >> o, '  /* Update all registers */'
     for reg in regs:
-      print >> o, ' {0} = {0}_next;'.format( reg )
+      print >> o, '  {0} = {0}_next;'.format( reg )
+
+    # Update params from output ports
+    print   >> o
+    print   >> o, '  /* Assign all outputs */'
+    for name, _, _ in top_outports:
+      print >> o, '  *_{0} = {0};'.format( name )
+
     print   >> o, '}'
     print   >> o
 
-    # Create the reset function
-    print   >> o, '/* cycle */'
-    print   >> o, 'void reset() {'
-    print   >> o, '  top_reset = 1;'
-    print   >> o, '  cycle();'
-    #print   >> o, '  flop();'
-    print   >> o, '  cycle();'
-    #print   >> o, '  flop();'
-    print   >> o, '  top_reset = 0;'
-    print   >> o, '}'
-    print   >> o
+    # Create the cdef and Python wrapper
+    cdef        = gen_cdef( params )
+    CSimWrapper = gen_pywrapper( top_inports, top_outports )
 
-    print   >> o, '/* Xcycle */'
-    print   >> o, ( 'void Xcycle( \n'
-                    '  unsigned int a, \n'
-                    '  unsigned int b, \n'
-                    '  unsigned int c, \n'
-                    '  unsigned int d, \n'
-                    '  unsigned int *e,\n'
-                    '  unsigned int *f,\n'
-                    '  unsigned int *g,\n'
-                    '  unsigned int *h \n'
-                    ') {\n' )
-    print   >> o, ( 'top_in__msga = a;\n'
-                    'top_in__msgb = b;\n'
-                    'top_in__val  = c;\n'
-                    'top_out_rdy  = d;\n'
-                    'cycle();\n'
-                    '*e = top_out_msga;\n'
-                    '*f = top_out_msgb;\n'
-                    '*g = top_out_val;\n'
-                    '*h = top_in__rdy;\n'
-                  )
-    print   >> o, '}'
-    print   >> o
-
-    # Create the flop function
-    #print   >> o, '/* flop */'
-    #print   >> o, 'void flop() {'
-    #for reg in regs:
-    #  print >> o, ' {0} = {0}_next;'.format( reg )
-    #print   >> o,   '}'
-    #print   >> o
-
-    # Create a temporary test thingy
-    #print >> o, '// main'
-    #print >> o, 'int main () { cycle(); }'
-
-    cdef        = gen_cdef( top_ports )
-    CSimWrapper = gen_pywrapper( top_ports )
     return cdef, CSimWrapper
 
 
@@ -170,7 +165,13 @@ def declare_signals( sim, regs, o ):
       all_ports.append( name )
 
       # ports attached to top will be exposed in the CSim wrapper
-      if name.startswith('top'):
+      # special case clock/reset, since they won't be exposed, want them
+      # to be known locations in the cycle(...) function call
+      if   name is 'top_clock':
+        top_ports.insert( 0, (name, cname, type_) );
+      elif name is 'top_reset':
+        top_ports.insert( 1, (name, cname, type_) );
+      elif name.startswith('top'):
         top_ports.append( (name, cname, type_) );
 
   return top_ports, all_ports

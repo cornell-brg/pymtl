@@ -18,51 +18,27 @@ def gen_cppsim( clib, cdef ):
 # translate
 #-------------------------------------------------------------------------
 # Create the string passed into ffi.cdef
-def gen_cdef( top_ports ):
+def gen_cdef( cycle_params ):
   str_    = '\n'
-  #str_   += 'void cycle( void );\n'
-  str_   += ( 'void Xcycle( \n'
-              '  unsigned int a, \n'
-              '  unsigned int b, \n'
-              '  unsigned int c, \n'
-              '  unsigned int d, \n'
-              '  unsigned int *e,\n'
-              '  unsigned int *f,\n'
-              '  unsigned int *g,\n'
-              '  unsigned int *h \n'
-              ');\n' )
-  str_   += 'void reset( void );\n'
-  #str_   += 'void flop( void );\n'
+  str_   += 'void cycle({});\n'.format('\n'+cycle_params+'\n')
   str_   += 'unsigned int  ncycles;\n'
-  for name, cname, type_ in top_ports:
-    str_ += '{} {}; // {}\n'.format( type_, cname, name )
+  #for name, cname, type_ in top_ports:
+  #  str_ += '{} {}; // {}\n'.format( type_, cname, name )
   return str_
 
 #-------------------------------------------------------------------------
 # gen_cheader
 #-------------------------------------------------------------------------
 # Create the header for the simulator
-def gen_cheader( top_ports ):
+def gen_cheader( cycle_params ):
   str_    = '\n'
   #str_   += '#ifndef CSIM_H\n'
   #str_   += '#define CSIM_H\n'
   str_   += 'extern "C" {\n'
-  #str_   += '  extern void cycle( void );\n'
-  str_   += ( 'extern void Xcycle( \n'
-              '  unsigned int a, \n'
-              '  unsigned int b, \n'
-              '  unsigned int c, \n'
-              '  unsigned int d, \n'
-              '  unsigned int *e,\n'
-              '  unsigned int *f,\n'
-              '  unsigned int *g,\n'
-              '  unsigned int *h \n'
-              ');\n' )
-  str_   += '  extern void reset( void );\n'
-  #str_   += '  extern void flop( void );\n'
+  str_   += '  extern void cycle({});\n'.format('\n'+cycle_params+'\n')
   str_   += '  extern unsigned int ncycles;\n'
-  for name, cname, type_ in top_ports:
-    str_ += '  extern {} {}; // {}\n'.format( type_, cname, name )
+  #for name, cname, type_ in top_ports:
+  #  str_ += '  extern {} {}; // {}\n'.format( type_, cname, name )
   str_   += '}\n'
   #str_   += '#endif\n'
   return str_
@@ -71,59 +47,58 @@ def gen_cheader( top_ports ):
 # gen_pywrapper
 #-------------------------------------------------------------------------
 # Create the header for the simulator
-def gen_pywrapper( top_ports ):
+def gen_pywrapper( top_inports, top_outports ):
 
-  # Inner class to create unique classes
   class CSimWrapper( object ):
-    def __init__( self, cmodule ):
-      self.cmodule = cmodule
-    def cycle( self ):
-      self.cmodule.cycle()
-      #self.cmodule.flop()
+
+    def __init__( self, cmodule, ffi ):
+      #self._model    = model
+      self._cmodule  = cmodule
+      self._ffi      = ffi
+      self._inports  = []
+      self._outports = []
+
+      # Skip clk and reset
+      for fullname, _, _  in top_inports[2:]:
+        name = fullname[4:]  # remove 'top_' from name
+        setattr( self, name , 0 )
+        self._inports.append( name )
+
+      for fullname, net, type_ in top_outports:
+        name = fullname[4:]  # remove 'top_' from name
+        setattr( self, name, 0 )
+        setattr( self, '_'+name, self._ffi.new( type_+'*' ) )
+        self._outports.append( name )
+
+    def cycle( self, clk=0, reset=0 ):
+      # TODO: replace this with properties?
+      in_args  = [ getattr( self, x )     for x in self._inports  ]
+      out_args = [ getattr( self, '_'+x ) for x in self._outports ]
+      self._cmodule.cycle( clk, reset, *(in_args + out_args) )
+      for i in self._outports:
+        setattr( self, i, getattr( self, '_'+i )[0] )
+
     def reset( self ):
-      self.cmodule.reset()
+      self.cycle( reset=1 )
+      self.cycle( reset=1 )
+
     @property
     def ncycles( self ):
       return self.cmodule.ncycles
 
-  # Accessor closure, needed to create unique accessors
-  class ListAccessor( object ):
-    def __init__( self, cmodule ):
-      self.cmodule = cmodule
-      self.lookup  = {}
-    def __getitem__( self, idx ):
-      return getattr( self.cmodule, self.lookup[idx] )
-    def __setitem__( self, idx, value ):
-      setattr( self.cmodule, self.lookup[idx], value )
+  #  # Port lists
+  #  if '$' in name:
+  #    sig, idx = name.split('$')
+  #    if not hasattr( CSimWrapper, sig ):
+  #      portlist = ListAccessor( CSimWrapper )
+  #      setattr( CSimWrapper, sig, portlist )
+  #    else:
+  #      portlist = getattr( CSimWrapper, sig )
+  #    portlist.lookup[ int(idx) ] = cname
 
-  # Accessor closure, needed to create unique accessors
-  def make_accessor( closed_name, closed_cname ):
-    setattr( CSimWrapper, closed_name, property(
-      lambda self:        getattr( self.cmodule, closed_cname ),
-      lambda self, value: setattr( self.cmodule, closed_cname, value )
-    ))
-
-  # Create the properties for each port
-  for name, cname, type_ in top_ports:
-
-    # Don't expose reset and clk signals
-    if name in ['top_reset', 'top_clk']:
-      continue
-    name = name[4:]  # remove the 'top_' prefix
-
-    # Port lists
-    if '$' in name:
-      sig, idx = name.split('$')
-      if not hasattr( CSimWrapper, sig ):
-        portlist = ListAccessor( CSimWrapper )
-        setattr( CSimWrapper, sig, portlist )
-      else:
-        portlist = getattr( CSimWrapper, sig )
-      portlist.lookup[ int(idx) ] = cname
-
-    # Normal ports
-    else:
-      make_accessor( name, cname )
+  #  # Normal ports
+  #  else:
+  #    make_accessor( name, cname )
 
   return CSimWrapper
 
