@@ -44,39 +44,42 @@ def gen_cheader( cycle_params ):
   return str_
 
 #-------------------------------------------------------------------------
+# cycle_templ
+#-------------------------------------------------------------------------
+# Template for the cycle method in CSimWrapper
+cycle_templ = """
+def cycle( self, clk=0, reset=0 ):
+  # Cycle Call
+  self._cmodule.cycle(
+    clk,
+    reset,
+    {}
+  )
+  # Store outputs
+  {}
+"""
+#-------------------------------------------------------------------------
 # gen_pywrapper
 #-------------------------------------------------------------------------
 # Create the header for the simulator
 def gen_pywrapper( top_inports, top_outports ):
 
+  #-----------------------------------------------------------------------
+  # CSimWrapper
+  #-----------------------------------------------------------------------
+  # Inner class for generated python wrapper.
+  # TODO: better way?
   class CSimWrapper( object ):
 
     def __init__( self, cmodule, ffi ):
       #self._model    = model
       self._cmodule  = cmodule
       self._ffi      = ffi
-      self._inports  = []
-      self._outports = []
 
-      # Skip clk and reset
-      for fullname, _, _  in top_inports[2:]:
-        name = fullname[4:]  # remove 'top_' from name
-        setattr( self, name , 0 )
-        self._inports.append( name )
-
+      # Create ffi types
       for fullname, net, type_ in top_outports:
         name = fullname[4:]  # remove 'top_' from name
-        setattr( self, name, 0 )
         setattr( self, '_'+name, self._ffi.new( type_+'*' ) )
-        self._outports.append( name )
-
-    def cycle( self, clk=0, reset=0 ):
-      # TODO: replace this with properties?
-      in_args  = [ getattr( self, x )     for x in self._inports  ]
-      out_args = [ getattr( self, '_'+x ) for x in self._outports ]
-      self._cmodule.cycle( clk, reset, *(in_args + out_args) )
-      for i in self._outports:
-        setattr( self, i, getattr( self, '_'+i )[0] )
 
     def reset( self ):
       self.cycle( reset=1 )
@@ -85,6 +88,33 @@ def gen_pywrapper( top_inports, top_outports ):
     @property
     def ncycles( self ):
       return self.cmodule.ncycles
+
+
+  # Add input port attributes to CSimWrapper
+  cparams  = []
+  assigns  = []
+  for fullname, _, _  in top_inports[2:]:
+    name = fullname[4:]  # remove 'top_' from name
+    cparams.append( 'self.'+name )
+    setattr( CSimWrapper, name , 0 )
+
+  # Add output port attributes to CSimWrapper
+  for fullname, net, type_ in top_outports:
+    name = fullname[4:]  # remove 'top_' from name
+    cparams.append( 'self._'+name )
+    assigns.append( 'self.{0} = self._{0}[0]'.format(name) )
+    setattr( CSimWrapper, name , 0 )
+    setattr( CSimWrapper, '_'+name , 0 )
+
+  # TODO: SUPER HACKY PYTHON CODEGEN
+  code = cycle_templ.format( ',\n    '.join( cparams ),
+                             '\n  '   .join( assigns ) )
+
+  # Create cycle method code and add it to the CSimWrapper
+  exec( code ) in locals()
+  CSimWrapper.cycle = cycle
+
+  return CSimWrapper
 
   #  # Port lists
   #  if '$' in name:
@@ -99,8 +129,6 @@ def gen_pywrapper( top_inports, top_outports ):
   #  # Normal ports
   #  else:
   #    make_accessor( name, cname )
-
-  return CSimWrapper
 
 
 #-------------------------------------------------------------------------
