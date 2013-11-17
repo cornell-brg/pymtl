@@ -176,7 +176,7 @@ def declare_signals( sim, regs, o ):
       elif name.startswith('top'):
         top_ports.append( (name, cname, type_) );
 
-  top_ports = [clk_port, reset_port] + top_ports
+  top_ports = [clk_port, reset_port] + sorted(top_ports)
 
   return top_ports, all_ports
 

@@ -79,7 +79,12 @@ def gen_pywrapper( top_inports, top_outports ):
       # Create ffi types
       for fullname, net, type_ in top_outports:
         name = fullname[4:]  # remove 'top_' from name
-        setattr( self, '_'+name, self._ffi.new( type_+'*' ) )
+        if '$' in name:
+          sig, idx = name.split('$')
+          setattr( self, '_'+sig,
+                  [self._ffi.new( type_+'*' ) for x in range(int(idx)+1)] )
+        else:
+          setattr( self, '_'+name, self._ffi.new( type_+'*' ) )
 
     def reset( self ):
       self.cycle( reset=1 )
@@ -95,16 +100,32 @@ def gen_pywrapper( top_inports, top_outports ):
   assigns  = []
   for fullname, _, _  in top_inports[2:]:
     name = fullname[4:]  # remove 'top_' from name
-    cparams.append( 'self.'+name )
-    setattr( CSimWrapper, name , 0 )
+    # Handle lists specially
+    # TODO: super hacky, only works if top_inports sorted by name
+    if '$' in name:
+      sig, idx = name.split('$')
+      cparams.append( 'self.{}[{}]'.format(sig,idx) )
+      setattr( CSimWrapper, sig, [0]*(int(idx)+1) )
+    else:
+      cparams.append( 'self.{}'.format(name) )
+      setattr( CSimWrapper, name , 0 )
 
   # Add output port attributes to CSimWrapper
   for fullname, net, type_ in top_outports:
     name = fullname[4:]  # remove 'top_' from name
-    cparams.append( 'self._'+name )
-    assigns.append( 'self.{0} = self._{0}[0]'.format(name) )
-    setattr( CSimWrapper, name , 0 )
-    setattr( CSimWrapper, '_'+name , 0 )
+    # Handle lists specially
+    # TODO: super hacky, only works if top_outports sorted by name
+    if '$' in name:
+      sig, idx = name.split('$')
+      cparams.append( 'self._{}[{}]'.format(sig,idx) )
+      assigns.append( 'self.{0}[{1}] = self._{0}[{1}][0]'.format(sig,idx) )
+      setattr( CSimWrapper, sig, [0]*(int(idx)+1) )
+      setattr( CSimWrapper, '_'+sig, [0]*(int(idx)+1) )
+    else:
+      cparams.append( 'self._'+name )
+      assigns.append( 'self.{0} = self._{0}[0]'.format(name) )
+      setattr( CSimWrapper, name , 0 )
+      setattr( CSimWrapper, '_'+name , 0 )
 
   # TODO: SUPER HACKY PYTHON CODEGEN
   code = cycle_templ.format( ',\n    '.join( cparams ),
@@ -115,20 +136,6 @@ def gen_pywrapper( top_inports, top_outports ):
   CSimWrapper.cycle = cycle
 
   return CSimWrapper
-
-  #  # Port lists
-  #  if '$' in name:
-  #    sig, idx = name.split('$')
-  #    if not hasattr( CSimWrapper, sig ):
-  #      portlist = ListAccessor( CSimWrapper )
-  #      setattr( CSimWrapper, sig, portlist )
-  #    else:
-  #      portlist = getattr( CSimWrapper, sig )
-  #    portlist.lookup[ int(idx) ] = cname
-
-  #  # Normal ports
-  #  else:
-  #    make_accessor( name, cname )
 
 
 #-------------------------------------------------------------------------
