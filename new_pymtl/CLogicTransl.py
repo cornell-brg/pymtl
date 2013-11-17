@@ -45,20 +45,20 @@ def CLogicTransl( model, o=sys.stdout ):
     # Print signal declarations, use reg information
     top_ports, all_ports =  declare_signals( sim, regs, c_variables )
 
-    top_ports_names = [ x[0] for x in top_ports ]
-    top_inports  = []
-    top_outports = []
+    inport_names   = ['top_'+mangle_name(x.name) for x in model.get_inports() ]
+    outport_names  = ['top_'+mangle_name(x.name) for x in model.get_outports()]
+    top_inports    = []
+    top_outports   = []
 
     # Separate input and output ports
-    for x in model.get_inports():
-      name = 'top_' + mangle_name( x.name )
-      idx  = top_ports_names.index( name )
-      top_inports.append( top_ports[ idx ] )
-
-    for x in model.get_outports():
-      name = 'top_' + mangle_name( x.name )
-      idx  = top_ports_names.index( name )
-      top_outports.append( top_ports[ idx ] )
+    for port in top_ports:
+      name = port[0]
+      if   name in inport_names:
+        top_inports.append( port )
+      elif name in outport_names:
+        top_outports.append( port )
+      #else:
+      #    raise Exception("Unknown port detected!")
 
     # print locals
     print >> c_variables
@@ -132,6 +132,8 @@ def CLogicTransl( model, o=sys.stdout ):
 #-------------------------------------------------------------------------
 def declare_signals( sim, regs, o ):
 
+  clk_port     = None
+  reset_port   = None
   top_ports    = []
   all_ports    = []
 
@@ -167,12 +169,14 @@ def declare_signals( sim, regs, o ):
       # ports attached to top will be exposed in the CSim wrapper
       # special case clock/reset, since they won't be exposed, want them
       # to be known locations in the cycle(...) function call
-      if   name is 'top_clock':
-        top_ports.insert( 0, (name, cname, type_) );
-      elif name is 'top_reset':
-        top_ports.insert( 1, (name, cname, type_) );
+      if   name == 'top_clk':
+        clk_port   = (name, cname, type_)
+      elif name == 'top_reset':
+        reset_port = (name, cname, type_)
       elif name.startswith('top'):
         top_ports.append( (name, cname, type_) );
+
+  top_ports = [clk_port, reset_port] + top_ports
 
   return top_ports, all_ports
 
