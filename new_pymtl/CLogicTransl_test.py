@@ -31,7 +31,6 @@ def translate( model ):
     # NOTE: if we don't create a unique name for each .so, things get
     #       inconsisten (stale data?)
     clib = os.getcwd() + '/' + model.class_name+'.so'
-    #print clib
     cmd  = compiler.format( libname = clib,
                             csource = output.name )
 
@@ -239,3 +238,34 @@ def test_PassThroughListWire():
   model.in_[2] = 10
   model.cycle()  # TODO: remove
   assert model.out[2] == 10
+
+
+#-------------------------------------------------------------------------
+# Sequential
+#-------------------------------------------------------------------------
+
+class ForAssign0( Model ):
+  def __init__( s ):
+    s.in_ = [ InPort (16) for x in range(4) ]
+    s.out = [ OutPort(16) for x in range(4) ]
+    s.nports = 4
+
+  def elaborate_logic( s ):
+    @s.posedge_clk
+    def logic():
+
+      for i in range( s.nports ):
+        s.out[i].next = s.in_[i]
+
+def test_ForAssign0():
+  sim = translate( ForAssign0() )
+  model = sim
+  for i in range( 4 ): model.in_[i] = i
+  model.cycle()
+  for i in range( 4 ): assert model.out[i] == i
+  model.in_[2] = 9
+  model.in_[2] = 10
+  model.cycle()
+  assert model.out[2] == 10
+
+

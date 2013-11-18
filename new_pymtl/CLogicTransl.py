@@ -3,7 +3,6 @@
 #=========================================================================
 # Tool to translate PyMTL Models into a C simulation object.
 
-from   ast_typer       import TypeAST
 from   ast_helpers     import get_method_ast, print_simple_ast, print_ast
 from   SimulationTool  import SimulationTool
 
@@ -14,7 +13,6 @@ import inspect
 import StringIO
 
 from signals       import InPort, OutPort, Wire, Constant
-from ast_visitor   import GetVariableName
 from Bits          import Bits
 from BitStruct     import BitStruct
 from SignalValue   import SignalValueWrapper
@@ -35,15 +33,15 @@ def CLogicTransl( model, o=sys.stdout ):
     c_variables = StringIO.StringIO()
 
     # Visit tick functions, save register information
-    regs = []
+    ast_next  = []
     localvars = {}
     for func in sim._sequential_blocks:
       r, l = translate_func( func, c_functions )
-      regs.extend( r )
+      ast_next.extend( r )
       localvars.update( l )
 
     # Print signal declarations, use reg information
-    top_ports, all_ports =  declare_signals( sim, regs, c_variables )
+    top_ports, all_ports, shadows =  declare_signals( sim, ast_next, c_variables )
 
     inport_names   = ['top_'+mangle_name(x.name) for x in model.get_inports() ]
     outport_names  = ['top_'+mangle_name(x.name) for x in model.get_outports()]
@@ -65,8 +63,21 @@ def CLogicTransl( model, o=sys.stdout ):
     print >> c_variables, '/* LOCALS ' + '-'*60 + '*/'
     for var, obj in localvars.items():
       if var not in all_ports:
-        var_type = get_type( obj, o )
-        print >> c_variables, "{} {};".format( var_type, var )
+        if   isinstance( obj, int ):
+          var_type = get_type( obj, o )
+          print >> c_variables, "{} {} = {};".format( var_type, var, obj )
+        elif isinstance( obj, list ):
+          var_type = get_type( obj[0], o )
+          print >> c_variables, "{} * {}[] = {{".format( var_type, var ),
+          if var.endswith('_next'):
+            vx = [ '&{}${:03}_next'.format(var[:-5],i) for i in range(len(obj)) ]
+          else:
+            vx = [ '&{}${:03}'.format(var,i) for i in range(len(obj)) ]
+          print >> c_variables, "{} }};".format( ', '.join(vx) )
+        else:
+          var_type = get_type( obj, o )
+          print >> c_variables, "{} {};".format( var_type, var )
+
 
     # Declare parameters
     params = [ ]
@@ -108,8 +119,8 @@ def CLogicTransl( model, o=sys.stdout ):
     # Update all registers
     print   >> o
     print   >> o, '  /* Update all registers */'
-    for reg in regs:
-      print >> o, '  {0} = {0}_next;'.format( reg )
+    for s in shadows:
+      print >> o, '  {0} = {0}_next;'.format( s )
 
     # Update params from output ports
     print   >> o
@@ -130,13 +141,14 @@ def CLogicTransl( model, o=sys.stdout ):
 #-------------------------------------------------------------------------
 # declare_signals
 #-------------------------------------------------------------------------
-def declare_signals( sim, regs, o ):
+def declare_signals( sim, ast_next, o ):
 
   clk_port     = None
   reset_port   = None
   top_ports    = []
   all_ports    = []
 
+  shadows = []
   for id_, n in enumerate( sim._nets ):
 
     # each net is a set, convert it to a list
@@ -159,9 +171,11 @@ def declare_signals( sim, regs, o ):
       # NOTE: this will declare "net_next" twice if two different signals
       #       attached to the net write next; this is okay because that is
       #       invalid code!
-      if name in regs:
+      pfx = name.split('$')[0]
+      if pfx in ast_next:
         print >>o, '{}  {}_next = 0;'      .format( type_, cname );
         print >>o, '{} &{}_next = {}_next;'.format( type_, name, cname );
+        shadows.append( name )
 
         all_ports.append( name+'_next' )
       all_ports.append( name )
@@ -178,7 +192,7 @@ def declare_signals( sim, regs, o ):
 
   top_ports = [clk_port, reset_port] + sorted(top_ports)
 
-  return top_ports, all_ports
+  return top_ports, all_ports, shadows
 
 #-------------------------------------------------------------------------
 # get_type
@@ -195,6 +209,10 @@ def get_type( signal, o=None ):
     if not o:
       raise Exception( "NESTED TYPES NOT ALLOWED" )
     return declare_class( signal, o )
+  elif isinstance( signal, list ):
+    return get_type( signal[0], o ) + ' *'
+  elif signal == None:
+    return 'void *'
   else:
     raise Exception( "UNTRANSLATABLE TYPE!")
 
@@ -228,6 +246,8 @@ def translate_func( func, o ):
   src   = inspect.getsource( func )
   model = func._model
 
+  tree = ReorderSubscriptNext().visit( tree )
+  InferTypes( model, func ).visit( tree )
   #print_simple_ast( tree )                         # DEBUG
   #print src                                        # DEBUG
   #new_tree = TypeAST( model, func ).visit( tree )  # DEBUG
@@ -298,6 +318,7 @@ class TranslateLogic( ast.NodeVisitor ):
 
     self.regs      = []
     self.localvars = {}
+    self.arrays    = []
 
     self.assign = '='
 
@@ -418,7 +439,7 @@ class TranslateLogic( ast.NodeVisitor ):
 
     # TODO: more super hacky
     if name not in self.localvars:
-      TypeAST( self.model, self.func ).visit( node )
+      #TypeAST( self.model, self.func ).visit( node )
       self.localvars[name] = node._object
 
     print >> self.o, name,
@@ -435,9 +456,11 @@ class TranslateLogic( ast.NodeVisitor ):
   # visit_Subscript
   #-----------------------------------------------------------------------
   def visit_Subscript( self, node ):
-    name = VariableName( self ).visit( node ).replace('.', '_')
-    print >> self.o, name,
-
+    print >> self.o, '*',
+    self.visit( node.value )
+    print >> self.o, '[',
+    self.visit( node.slice )
+    print >> self.o, ']',
 
 ##  #-----------------------------------------------------------------------
 ##  # visit_ArrayIndex
@@ -548,28 +571,38 @@ class TranslateLogic( ast.NodeVisitor ):
 #    self.temps.add( node.id )
 #    print >> self.o, node.id,
 #
-##  #-----------------------------------------------------------------------
-##  # visit_For
-##  #-----------------------------------------------------------------------
-##  # TODO: does this work?
-##  def visit_For(self, node):
-##
-##    # TODO: fix to return string..
-##    assert isinstance( node.iter, _ast.Slice )
-##    i = node.target.id
-##
-##    # TODO: add support for temporaries declared in for loop
-##    print >> self.o, (self.ident+2)*" " + "for ({}=".format(i),
-##    self.visit( node.iter.lower )
-##    print >> self.o, "; {}<".format(i),
-##    self.visit( node.iter.upper )
-##    print >> self.o, "; {0}={0}+".format(i),
-##    self.visit( node.iter.step )
-##    print >> self.o, ")"
-##    print >> self.o, (self.ident+2)*" " + "begin"
-##    for x in node.body:
-##      self.visit(x)
-##    print >> self.o, (self.ident+2)*" " + "end"
+  #-----------------------------------------------------------------------
+  # visit_For
+  #-----------------------------------------------------------------------
+  # TODO: does this work?
+  def visit_For(self, node):
+
+    try:
+      if node.iter.func.id != 'range':
+        raise AttributeError()
+
+      args    = node.iter.args
+      lower   = args[0] if len( args ) > 1 else _ast.Num(0)
+      upper   = args[1] if len( args ) > 1 else args[0]
+      step    = args[2] if len( args ) > 2 else _ast.Num(1)
+      i       = node.target.id
+
+      print lower, upper, step, i
+
+      print  >> self.o, (self.ident+2)*" " + "for (int {}=".format(i),
+      self.visit( lower )
+      print  >> self.o, "; {}<".format(i),
+      self.visit( upper )
+      print  >> self.o, "; {0}={0}+".format(i),
+      self.visit( step )
+      print  >> self.o, ") { "
+      for x in node.body:
+        self.visit(x)
+      print  >> self.o, (self.ident+2)*" " + "}"
+
+    except AttributeError as e:
+      raise Exception("For can only loop over range()! " + e.message)
+
 
   #-----------------------------------------------------------------------
   # visit_If
@@ -631,15 +664,30 @@ class TranslateLogic( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_Call(self, node):
 
-    try:
-      if node.func.id not in ['zext']:
-        raise Exception('Unsupported function: {}'.format(node.func.id))
+    # Free function calls
+    if   isinstance( node.func, _ast.Name ):
+      if   node.func.id == 'zext':
+        self.visit( node.args[0] )
+      elif node.func.id == 'len':
+        self.visit( node.args[0] )
+        print >> self.o, ".size()",
+      else:
+        raise Exception('Unsupported free function: {}'.format(node.func.id))
 
-      self.visit( node.args[0] )
+    # Method Calls
+    elif isinstance( node.func, _ast.Attribute ):
+      self.visit( node.func.value )
+      if   node.func.attr == 'popleft':
+        print >> self.o, ".pop()"
+      elif node.func.attr == 'append':
+        print >> self.o, ".push("
+        self.visit( node.args[0] )
+        print >> self.o, ")"
+      else:
+        raise Exception('Unsupported method: {}'.format(node.func.attr))
 
-    except AttributeError as e:
-      raise AttributeError('Function call is not a name node!\n'
-                           + e.message )
+    else:
+      raise AttributeError('Unsupported Function Call!\n')
 
   #-----------------------------------------------------------------------
   # visit_Print
@@ -652,13 +700,108 @@ class TranslateLogic( ast.NodeVisitor ):
       self.visit( v )
     print >> self.o, ' );'
 
-class VariableName( GetVariableName ):
+class VariableName( ast.NodeVisitor ):
   def __init__( self, parent ):
     self.parent = parent
     self.model  = self.parent.model
+
+  def visit_Attribute( self, node ):
+    return self.visit( node.value ) + '.' + node.attr
+
+  def visit_Subscript( self, node ):
+    stash = self.parent.o
+    import StringIO
+    self.parent.o = StringIO.StringIO()
+    self.parent.visit( node )
+    val = self.parent.o.getvalue()
+    self.parent.o = stash
+    return val
+
+  def visit_Self( self, node ):
+    return self.model.name
+
   def visit_Name( self, node ):
     if node.id in ['s', 'self']:
       return self.model.name
     else:
       return node.id
 
+#-------------------------------------------------------------------------
+# ReorderSubscriptNext
+#-------------------------------------------------------------------------
+class ReorderSubscriptNext( ast.NodeTransformer ):
+
+  def visit_Attribute( self, node ):
+    if node.attr == 'next' and isinstance(node.value, _ast.Subscript):
+      subscript       = node.value
+      node.value      = subscript.value
+      subscript.value = node
+      return ast.copy_location( subscript, node )
+
+    return node
+
+#-------------------------------------------------------------------------
+# InferTypes
+#-------------------------------------------------------------------------
+class InferTypes( ast.NodeVisitor ):
+
+  def __init__( self, model, func ):
+    self.model       = model
+    self.func        = func
+    self.closed_vars = get_closure_dict( func )
+    self.current_obj = None
+
+
+  def visit_Attribute( self, node ):
+    # First visit all children
+    self.generic_visit( node )
+
+    # TODO: temporary, only handle objects that are live
+    assert self.current_obj != None
+
+    # Try to get the object by loading it
+    try:
+      x = self.current_obj.getattr( node.attr )
+      self.current_obj.update( node.attr, x )
+    except AttributeError:
+      if node.attr not in ['next', 'value', 'n', 'v']:
+        raise Exception("Error: Unknown attribute for this object: {}"
+                        .format( node.attr ) )
+
+
+    node._object = self.current_obj.inst if self.current_obj else None
+    return node
+
+  def visit_Name( self, node ):
+
+    # TODO: temporary, don't handle local temporaries
+    if node.id in self.closed_vars:
+      new_node = node
+      new_obj  = PyObj( node.id, self.closed_vars[ node.id ] )
+    else:
+      print "WARNING: variable {} type is unknown".format( node.id )
+      new_obj  = None
+
+    self.current_obj = new_obj
+    node._object = self.current_obj.inst if self.current_obj else None
+
+
+class PyObj( object ):
+  def __init__( self, name, inst ):
+    self.name  = name
+    self.inst  = inst
+  def update( self, name, inst ):
+    self.name += name
+    self.inst  = inst
+  def getattr( self, name ):
+    return getattr( self.inst, name )
+  def __repr__( self ):
+    return "PyObj( name={} inst={} )".format( self.name, type(self.inst) )
+
+#------------------------------------------------------------------------
+# get_closure_dict
+#------------------------------------------------------------------------
+# http://stackoverflow.com/a/19416942
+def get_closure_dict( fn ):
+  closure_objects = [c.cell_contents for c in fn.func_closure]
+  return dict( zip( fn.func_code.co_freevars, closure_objects ))
