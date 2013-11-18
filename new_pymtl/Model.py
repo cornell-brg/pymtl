@@ -45,7 +45,7 @@ class Model( object ):
   def elaborate( self ):
 
     # Initialize data structure to hold all model classes in the design
-    self.model_classes = set()
+    self._model_classes = set()
 
     # Recursively elaborate each model in the design, starting with top
     self.recurse_elaborate( self, 'top' )
@@ -70,7 +70,7 @@ class Model( object ):
   def recurse_elaborate( self, current_model, instance_name ):
 
     # Add the target model to the set of all models
-    self.model_classes.add( current_model )
+    self._model_classes.add( current_model )
 
     # Set Public Attributes
     current_model.class_name = self.gen_class_name( current_model )
