@@ -133,7 +133,7 @@ class TypeAST( ast.NodeTransformer ):
 
     # If current_obj not initialized, it is a local temp. Don't replace.
     if   not self.current_obj:
-      new_node = Subscript( value=new_value, slice=new_slice, ctx=node.ctx )
+      new_node = _ast.Subscript( value=new_value, slice=new_slice, ctx=node.ctx )
     # If current_obj is a Bits object, replace with a BitSlice node.
     elif isinstance( self.current_obj.inst, (Bits, InPort, OutPort) ):
       new_node = BitSlice( value=new_value, slice=new_slice, ctx=node.ctx )
