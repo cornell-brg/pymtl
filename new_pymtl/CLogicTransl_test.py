@@ -419,6 +419,21 @@ class TestValRdy3( Model ):
 def test_TestValRdy3():
   valrdyarray_test( TestValRdy3() )
 
+class TestValRdy4( Model ):
+  def __init__( s, nports ):
+    s.nports = nports
+    s.in_ = [ InValRdyBundle (16) for x in range(nports) ]
+    s.out = [ OutValRdyBundle(16) for x in range(nports) ]
+  def elaborate_logic( s ):
+    @s.tick
+    def logic():
+      for i in range( s.nports ):
+        s.out[i].msg.next = s.in_[i].msg
+        s.out[i].val.next = s.in_[i].val
+        s.in_[i].rdy.next = s.out[i].rdy
+def test_TestValRdy4():
+  valrdyarray_test( TestValRdy4(2) )
+
 
 #-------------------------------------------------------------------------
 # ValRdyQueues
