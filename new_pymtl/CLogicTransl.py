@@ -92,6 +92,7 @@ def CLogicTransl( model, o=sys.stdout ):
 
     # Create the C header
     print >> o, '#include <stdio.h>'
+    print >> o, '#include <queue>'
     print >> o, '#define  True  true'
     print >> o, '#define  False false'
     print >> o
@@ -200,6 +201,7 @@ def declare_signals( sim, ast_next, o ):
 #-------------------------------------------------------------------------
 # get_type
 #-------------------------------------------------------------------------
+from new_pmlib.queues import Queue
 def get_type( signal, o=None ):
   if   isinstance( signal, bool ):
     return 'bool'
@@ -216,6 +218,9 @@ def get_type( signal, o=None ):
     return get_type( signal[0], o ) + ' *'
   elif signal == None:
     return 'void *'
+  # TODO: super hacky handling of generics
+  elif isinstance( signal, Queue ):
+    return 'std::queue<'+ get_type( signal._kind )+ '>'
   else:
     raise Exception( "UNTRANSLATABLE TYPE!")
     #print( "UNTRANSLATABLE TYPE!")
@@ -251,6 +256,7 @@ def translate_func( func, o ):
   model = func._model
 
   tree = ReorderSubscriptNext().visit( tree )
+  tree = RemoveCopy().visit( tree )
   InferTypes( model, func ).visit( tree )
   #print_simple_ast( tree )                         # DEBUG
   #print src                                        # DEBUG
@@ -626,6 +632,7 @@ class TranslateLogic( ast.NodeVisitor ):
     for body in node.body:
       self.ident += 2
       self.visit(body)
+      print >> self.o, ';'
       self.ident -= 2
     print >> self.o, self.ident*" " + "  }"
     # Write out an an elif block
@@ -680,6 +687,7 @@ class TranslateLogic( ast.NodeVisitor ):
 
     # Method Calls
     elif isinstance( node.func, _ast.Attribute ):
+      print >> self.o, "(",
       self.visit( node.func.value )
 
      # TODO
@@ -690,17 +698,25 @@ class TranslateLogic( ast.NodeVisitor ):
         print >> self.o, ".push("
         self.visit( node.args[0] )
         print >> self.o, ")",
-      # INVALRDY
-      #elif node.func.attr == 'xtick':
-      #  print >> self.o, ".xtick()",
-      #elif node.func.attr == 'peek':
-      #  print >> self.o, ".peek()",
-      #elif node.func.attr == 'is_empty':
-      #  print >> self.o, ".is_empty()",
-      #elif node.func.attr == 'deq':
-      #  print >> self.o, ".deq()",
+      # Queue
+      elif node.func.attr == 'is_full':
+        maxlen = node.func.value._object.data.maxlen
+        print >> self.o, ".size() == {}".format(maxlen),
+      elif node.func.attr == 'is_empty':
+        print >> self.o, ".empty()",
+      elif node.func.attr == 'peek':
+        print >> self.o, ".front()",
+      elif node.func.attr == 'deq':
+        print >> self.o, ".pop()",
+      elif node.func.attr == 'enq':
+        print >> self.o, ".push(",
+        self.visit( node.args[0] )
+        node.func.value._object._kind = node.args[0]._object
+        print >> self.o, ")",
       else:
         raise Exception('Unsupported method: {}'.format(node.func.attr))
+
+      print >> self.o, ")",
 
     else:
       raise AttributeError('Unsupported Function Call!\n')
@@ -758,6 +774,14 @@ class ReorderSubscriptNext( ast.NodeTransformer ):
 
     return node
 
+class RemoveCopy( ast.NodeTransformer ):
+
+  def visit_Call( self, node ):
+    self.generic_visit( node )
+    if isinstance(node.func, _ast.Name) and node.func.id == "copy":
+      return ast.copy_location( node.args[0], node )
+    return node
+
 #-------------------------------------------------------------------------
 # InferTypes
 #-------------------------------------------------------------------------
@@ -769,6 +793,10 @@ class InferTypes( ast.NodeVisitor ):
     self.closed_vars = get_closure_dict( func )
     self.current_obj = None
 
+  def visit_Subscript( self, node ):
+    self.generic_visit( node )
+    node._object = node.value._object
+    return node
 
   def visit_Attribute( self, node ):
     # First visit all children
