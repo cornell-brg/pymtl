@@ -492,29 +492,76 @@ def test_TestQueue():
   assert sim.in__rdy == 1
 
 
-#class TestTwoQueue( Model ):
-#  def __init__( s ):
-#    s.in_ = InValRdyBundle (16)
-#    s.out = OutValRdyBundle(16)
-#  def elaborate_logic( s ):
-#    s.inbuf  =
-#    s.outbuf =
-#    @s.tick
-#    def logic():
-#      if s.in_.rdy and s.in_.val:
-#        s.inbuf [i].enq( s.in_.msg[:] )
-#      if s.out.rdy and s.out.val:
-#        s.outbuf.deq()
-#
-#      if not s.outbuf.is_empty():
-#        s.out.msg.next = s.outbuf.peek()
-#      s.out.val.next = not s.outbuf.is_empty()
-#      s.in_.rdy.next = not s.inbuf.is_full()
-#
-#      if not s.inbuf.is_empty() and not s.outbuf.is_full():
-#        data = s.inbuf.peek()
-#        s.outbuf.enq( data )
-#        s.inbuf.deq()
+class TestTwoQueue( Model ):
+  def __init__( s ):
+    s.in_ = InValRdyBundle (16)
+    s.out = OutValRdyBundle(16)
+  def elaborate_logic( s ):
+    s.inbuf  = Queue(2)
+    s.outbuf = Queue(2)
+    s.data   = 0
+    @s.tick
+    def logic():
+
+      if s.in_.rdy and s.in_.val:
+        s.inbuf.enq( copy( s.in_.msg) )
+
+      if s.out.rdy and s.out.val:
+        s.outbuf.deq()
+
+      if not s.outbuf.is_empty():
+        s.out.msg.next = s.outbuf.peek()
+      s.out.val.next = not s.outbuf.is_empty()
+      s.in_.rdy.next = not s.inbuf.is_full()
+
+      if not s.inbuf.is_empty() and not s.outbuf.is_full():
+        s.data = s.inbuf.peek()
+        s.outbuf.enq( s.data )
+        s.inbuf.deq()
+
+def test_TestTwoQueue():
+  sim = translate( TestTwoQueue() )
+  sim.reset()
+  sim.in__msg = 9
+  sim.in__val = 1
+  sim.out_rdy = 1
+  sim.cycle() # enq 9
+  #assert sim.out_msg == 9
+  assert sim.out_val == 0
+  assert sim.in__rdy == 1
+  sim.in__msg = 8
+  sim.in__val = 1
+  sim.out_rdy = 1
+  sim.cycle() # enq 8, out 9
+  assert sim.out_msg == 9
+  assert sim.out_val == 1
+  assert sim.in__rdy == 1
+  sim.in__msg = 7
+  sim.in__val = 1
+  sim.out_rdy = 0
+  sim.cycle() # enq 7, out 9
+  assert sim.out_msg == 9
+  assert sim.out_val == 1
+  assert sim.in__rdy == 1
+  sim.in__msg = 6
+  sim.in__val = 1
+  sim.out_rdy = 1
+  sim.cycle() # enq 6, deq 9, out 8
+  assert sim.out_msg == 8
+  assert sim.out_val == 1
+  assert sim.in__rdy == 0
+  sim.in__val = 0
+  sim.cycle() # deq 8, out 7
+  assert sim.out_msg == 7
+  assert sim.out_val == 1
+  assert sim.in__rdy == 1
+  sim.cycle() # deq 7, out 6
+  assert sim.out_msg == 6
+  assert sim.out_val == 1
+  assert sim.in__rdy == 1
+  sim.cycle() # deq 6
+  assert sim.out_val == 0
+  assert sim.in__rdy == 1
 
 #class TestQueueList( Model ):
 #  def __init__( s ):
