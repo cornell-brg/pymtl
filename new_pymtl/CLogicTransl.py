@@ -11,6 +11,7 @@ import ast, _ast
 import collections
 import inspect
 import StringIO
+import re
 
 from signals       import InPort, OutPort, Wire, Constant
 from Bits          import Bits
@@ -62,21 +63,23 @@ def CLogicTransl( model, o=sys.stdout ):
     print >> c_variables
     print >> c_variables, '/* LOCALS ' + '-'*60 + '*/'
     for var, obj in localvars.items():
-      if var not in all_ports:
+      rvar = var.replace('.','_')
+      if rvar not in all_ports:
         if   isinstance( obj, int ):
           var_type = get_type( obj, o )
-          print >> c_variables, "{} {} = {};".format( var_type, var, obj )
+          print >> c_variables, "{} {} = {};".format( var_type, rvar, obj )
+        # TODO: super hacky handling of lists
         elif isinstance( obj, list ):
           var_type = get_type( obj[0], o )
-          print >> c_variables, "{} * {}[] = {{".format( var_type, var ),
-          if var.endswith('_next'):
-            vx = [ '&{}${:03}_next'.format(var[:-5],i) for i in range(len(obj)) ]
-          else:
-            vx = [ '&{}${:03}'.format(var,i) for i in range(len(obj)) ]
+          split = var.split('.')
+          pfx = '_'.join( split[0:2] )
+          sfx = '_'+'_'.join( split[2:]  ) if split[2:] else ''
+          print >> c_variables, "{} * {}[] = {{".format( var_type, rvar ),
+          vx = [ '&{}${:03}{}'.format(pfx,i,sfx) for i in range(len(obj)) ]
           print >> c_variables, "{} }};".format( ', '.join(vx) )
         else:
           var_type = get_type( obj, o )
-          print >> c_variables, "{} {};".format( var_type, var )
+          print >> c_variables, "{} {};".format( var_type, rvar )
 
 
     # Declare parameters
@@ -171,8 +174,8 @@ def declare_signals( sim, ast_next, o ):
       # NOTE: this will declare "net_next" twice if two different signals
       #       attached to the net write next; this is okay because that is
       #       invalid code!
-      pfx = name.split('$')[0]
-      if pfx in ast_next:
+      sig = re.sub('\[[0-9]*\]', '', signal.fullname)
+      if sig in ast_next:
         print >>o, '{}  {}_next = 0;'      .format( type_, cname );
         print >>o, '{} &{}_next = {}_next;'.format( type_, name, cname );
         shadows.append( name )
@@ -215,6 +218,7 @@ def get_type( signal, o=None ):
     return 'void *'
   else:
     raise Exception( "UNTRANSLATABLE TYPE!")
+    #print( "UNTRANSLATABLE TYPE!")
 
 #-------------------------------------------------------------------------
 # declare_class
@@ -423,18 +427,18 @@ class TranslateLogic( ast.NodeVisitor ):
   # visit_Attribute
   #-----------------------------------------------------------------------
   def visit_Attribute( self, node ):
-    name = VariableName( self ).visit( node ).replace('.', '_')
+    name = VariableName( self ).visit( node )
 
     # TODO: SUPER HACKY
-    if   name.endswith('_n'):
-      name = name[:-2]+'_next'
-    elif name.endswith('_v'):
+    if   name.endswith('.n'):
+      name = name[:-2]+'.next'
+    elif name.endswith('.v'):
       name = name[:-2]
-    elif name.endswith('_value'):
+    elif name.endswith('.value'):
       name = name[:-6]
     # TODO: SUPER HACKY
 
-    if   name.endswith('_next'):
+    if   name.endswith('.next'):
       self.regs.append( name[:-5] )
 
     # TODO: more super hacky
@@ -442,7 +446,7 @@ class TranslateLogic( ast.NodeVisitor ):
       #TypeAST( self.model, self.func ).visit( node )
       self.localvars[name] = node._object
 
-    print >> self.o, name,
+    print >> self.o, name.replace('.','_'),
 
   #-----------------------------------------------------------------------
   # visit_Name
@@ -677,12 +681,24 @@ class TranslateLogic( ast.NodeVisitor ):
     # Method Calls
     elif isinstance( node.func, _ast.Attribute ):
       self.visit( node.func.value )
+
+     # TODO
+     # print "METHODCALL", node.func.attr, node.func.value._object.__class__.__name__
       if   node.func.attr == 'popleft':
-        print >> self.o, ".pop()"
+        print >> self.o, ".pop()",
       elif node.func.attr == 'append':
         print >> self.o, ".push("
         self.visit( node.args[0] )
-        print >> self.o, ")"
+        print >> self.o, ")",
+      # INVALRDY
+      #elif node.func.attr == 'xtick':
+      #  print >> self.o, ".xtick()",
+      #elif node.func.attr == 'peek':
+      #  print >> self.o, ".peek()",
+      #elif node.func.attr == 'is_empty':
+      #  print >> self.o, ".is_empty()",
+      #elif node.func.attr == 'deq':
+      #  print >> self.o, ".deq()",
       else:
         raise Exception('Unsupported method: {}'.format(node.func.attr))
 
@@ -732,7 +748,9 @@ class VariableName( ast.NodeVisitor ):
 class ReorderSubscriptNext( ast.NodeTransformer ):
 
   def visit_Attribute( self, node ):
-    if node.attr == 'next' and isinstance(node.value, _ast.Subscript):
+    self.generic_visit( node )
+    #if node.attr == 'next' and isinstance(node.value, _ast.Subscript):
+    if isinstance(node.value, _ast.Subscript):
       subscript       = node.value
       node.value      = subscript.value
       subscript.value = node
@@ -794,6 +812,11 @@ class PyObj( object ):
     self.name += name
     self.inst  = inst
   def getattr( self, name ):
+    if isinstance( self.inst, list ):
+      # TODO: super hacky, not sure why this works for forloop
+      if name not in ['next', 'value', 'n', 'v']:
+        return [getattr( x, name ) for x in self.inst]
+      return getattr( self.inst, name )
     return getattr( self.inst, name )
   def __repr__( self ):
     return "PyObj( name={} inst={} )".format( self.name, type(self.inst) )

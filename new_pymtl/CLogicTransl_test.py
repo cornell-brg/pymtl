@@ -376,8 +376,8 @@ class TestValRdy2( Model ):
     for i, o in zip( s.in_, s.out ):
       s.connect( i, o )
 
-def test_TestValRdy2():
-  sim = translate( TestValRdy2() )
+def valrdyarray_test( model ):
+  sim = translate( model )
   sim.in__msg[0] = 9
   sim.in__val[0] = 1
   sim.out_rdy[0] = 1
@@ -398,6 +398,26 @@ def test_TestValRdy2():
   assert sim.out_msg[0] == 7
   assert sim.out_val[0] == 0
   assert sim.in__rdy[0] == 1
+
+def test_TestValRdy2():
+  valrdyarray_test( TestValRdy2() )
+
+class TestValRdy3( Model ):
+  def __init__( s ):
+    s.in_ = [ InValRdyBundle (16) for x in range(2) ]
+    s.out = [ OutValRdyBundle(16) for x in range(2) ]
+  def elaborate_logic( s ):
+    @s.tick
+    def logic():
+      s.out[0].msg.next = s.in_[0].msg
+      s.out[0].val.next = s.in_[0].val
+      s.in_[0].rdy.next = s.out[0].rdy
+      s.out[1].msg.next = s.in_[1].msg
+      s.out[1].val.next = s.in_[1].val
+      s.in_[1].rdy.next = s.out[1].rdy
+
+def test_TestValRdy3():
+  valrdyarray_test( TestValRdy3() )
 
 
 #-------------------------------------------------------------------------
