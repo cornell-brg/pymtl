@@ -64,6 +64,16 @@ def cycle( self, clk=0, reset=0 ):
 # Create the header for the simulator
 def gen_pywrapper( top_inports, top_outports ):
 
+  def name_splitter( name ):
+    sig, idx = name.split('$')
+    sig = [sig] + idx.split('_')
+    nonidx, idx = [], []
+    for s in sig:
+      (idx if s.isdigit() else nonidx).append(s)
+    sig = '_'.join(nonidx)
+    idx = idx[0]
+    return sig, idx
+
   #-----------------------------------------------------------------------
   # CSimWrapper
   #-----------------------------------------------------------------------
@@ -80,7 +90,7 @@ def gen_pywrapper( top_inports, top_outports ):
       for fullname, net, type_ in top_outports:
         name = fullname[4:]  # remove 'top_' from name
         if '$' in name:
-          sig, idx = name.split('$')
+          sig, idx = name_splitter(name)
           setattr( self, '_'+sig,
                   [self._ffi.new( type_+'*' ) for x in range(int(idx)+1)] )
         else:
@@ -103,7 +113,7 @@ def gen_pywrapper( top_inports, top_outports ):
     # Handle lists specially
     # TODO: super hacky, only works if top_inports sorted by name
     if '$' in name:
-      sig, idx = name.split('$')
+      sig, idx = name_splitter(name)
       cparams.append( 'self.{}[{}]'.format(sig,idx) )
       setattr( CSimWrapper, sig, [0]*(int(idx)+1) )
     else:
@@ -116,7 +126,7 @@ def gen_pywrapper( top_inports, top_outports ):
     # Handle lists specially
     # TODO: super hacky, only works if top_outports sorted by name
     if '$' in name:
-      sig, idx = name.split('$')
+      sig, idx = name_splitter(name)
       cparams.append( 'self._{}[{}]'.format(sig,idx) )
       assigns.append( 'self.{0}[{1}] = self._{0}[{1}][0]'.format(sig,idx) )
       setattr( CSimWrapper, sig, [0]*(int(idx)+1) )

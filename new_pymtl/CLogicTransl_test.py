@@ -43,8 +43,8 @@ def translate( model ):
       csim, ffi = gen_cppsim ( clib, cdef )
       sim       = CSimWrapper( csim, ffi )
 
-      #print
-      #print source
+      print
+      print source
       #print
 
       return sim
@@ -243,22 +243,8 @@ def test_PassThroughListWire():
 #-------------------------------------------------------------------------
 # Sequential
 #-------------------------------------------------------------------------
-
-class ForAssign0( Model ):
-  def __init__( s ):
-    s.in_ = [ InPort (16) for x in range(4) ]
-    s.out = [ OutPort(16) for x in range(4) ]
-    s.nports = 4
-
-  def elaborate_logic( s ):
-    @s.posedge_clk
-    def logic():
-
-      for i in range( s.nports ):
-        s.out[i].next = s.in_[i]
-
-def test_ForAssign0():
-  sim = translate( ForAssign0() )
+def for_tester( model ):
+  sim = translate( model )
   model = sim
   for i in range( 4 ): model.in_[i] = i
   model.cycle()
@@ -268,4 +254,186 @@ def test_ForAssign0():
   model.cycle()
   assert model.out[2] == 10
 
+class ForAssign0( Model ):
+  def __init__( s ):
+    s.in_ = [ InPort (16) for x in range(4) ]
+    s.out = [ OutPort(16) for x in range(4) ]
+    s.nports = 4
+  def elaborate_logic( s ):
+    @s.posedge_clk
+    def logic():
+      for i in range( s.nports ):
+        s.out[i].next = s.in_[i]
 
+def test_ForAssign0():
+  for_tester( ForAssign0() )
+
+# TODO
+#class ForAssign1( Model ):
+#  def __init__( s ):
+#    s.in_ = [ InPort (16) for x in range(4) ]
+#    s.out = [ OutPort(16) for x in range(4) ]
+#  def elaborate_logic( s ):
+#    @s.posedge_clk
+#    def logic():
+#      for i in range( len( s.in_ ) ):
+#        s.out[i].next = s.in_[i]
+#
+#def test_ForAssign1():
+#  for_tester( ForAssign1() )
+
+# TODO
+#class ForAssign2( Model ):
+#  def __init__( s ):
+#    s.in_ = [ InPort (16) for x in range(4) ]
+#    s.out = [ OutPort(16) for x in range(4) ]
+#  def elaborate_logic( s ):
+#    @s.posedge_clk
+#    def logic():
+#      i = 0
+#      for input in s.in_:
+#        s.out[i].next = input
+#        i += 1
+#
+#def test_ForAssign2():
+#  for_tester( ForAssign1() )
+
+# TODO
+#class ForAssign3( Model ):
+#  def __init__( s ):
+#    s.in_ = [ InPort (16) for x in range(4) ]
+#    s.out = [ OutPort(16) for x in range(4) ]
+#  def elaborate_logic( s ):
+#    @s.posedge_clk
+#    def logic():
+#      for i, input in enumerate( s.in_ ):
+#        s.out[i].next = input
+#
+#def test_ForAssign3():
+#  for_tester( ForAssign1() )
+
+#-------------------------------------------------------------------------
+# PortBundles
+#-------------------------------------------------------------------------
+from new_pmlib        import InValRdyBundle, OutValRdyBundle
+class TestValRdy0( Model ):
+  def __init__( s ):
+    s.in_ = InValRdyBundle (16)
+    s.out = OutValRdyBundle(16)
+  def elaborate_logic( s ):
+    s.connect( s.in_, s.out )
+
+def test_TestValRdy0():
+  sim = translate( TestValRdy0() )
+  sim.in__msg = 9
+  sim.in__val = 1
+  sim.out_rdy = 1
+  sim.cycle()
+  assert sim.out_msg == 9
+  assert sim.out_val == 1
+  assert sim.in__rdy == 1
+  sim.in__msg = 7
+  sim.in__val = 0
+  sim.out_rdy = 1
+  sim.cycle()
+  assert sim.out_msg == 7
+  assert sim.out_val == 0
+  assert sim.in__rdy == 1
+
+class TestValRdy1( Model ):
+  def __init__( s ):
+    s.in_ = InValRdyBundle (16)
+    s.out = OutValRdyBundle(16)
+  def elaborate_logic( s ):
+    @s.tick
+    def logic():
+      s.out.msg.next = s.in_.msg
+      s.out.val.next = s.in_.val
+      s.in_.rdy.next = s.out.rdy
+
+def test_TestValRdy1():
+  sim = translate( TestValRdy0() )
+  sim.in__msg = 9
+  sim.in__val = 1
+  sim.out_rdy = 1
+  sim.cycle()
+  assert sim.out_msg == 9
+  assert sim.out_val == 1
+  assert sim.in__rdy == 1
+  sim.in__msg = 7
+  sim.in__val = 0
+  sim.out_rdy = 1
+  sim.cycle()
+  assert sim.out_msg == 7
+  assert sim.out_val == 0
+  assert sim.in__rdy == 1
+
+class TestValRdy2( Model ):
+  def __init__( s ):
+    s.in_ = [ InValRdyBundle (16) for x in range(2) ]
+    s.out = [ OutValRdyBundle(16) for x in range(2) ]
+  def elaborate_logic( s ):
+    for i, o in zip( s.in_, s.out ):
+      s.connect( i, o )
+
+def test_TestValRdy2():
+  sim = translate( TestValRdy2() )
+  sim.in__msg[0] = 9
+  sim.in__val[0] = 1
+  sim.out_rdy[0] = 1
+  sim.in__msg[1] = 8
+  sim.in__val[1] = 1
+  sim.out_rdy[1] = 1
+  sim.cycle()
+  assert sim.out_msg[0] == 9
+  assert sim.out_val[0] == 1
+  assert sim.in__rdy[0] == 1
+  assert sim.out_msg[1] == 8
+  assert sim.out_val[1] == 1
+  assert sim.in__rdy[1] == 1
+  sim.in__msg[0] = 7
+  sim.in__val[0] = 0
+  sim.out_rdy[0] = 1
+  sim.cycle()
+  assert sim.out_msg[0] == 7
+  assert sim.out_val[0] == 0
+  assert sim.in__rdy[0] == 1
+
+
+#-------------------------------------------------------------------------
+# ValRdyQueues
+#-------------------------------------------------------------------------
+#from new_pmlib.queues import InValRdyQueue, OutValRdyQueue
+#
+#class IVQueue( Model ):
+#  def __init__( s ):
+#    s.in_ = InValRdyBundle(16)
+#    s.out = OutPort (16)
+#    s.chk = OutPort (16)
+#  def elaborate_logic( s ):
+#    s.inbuf = InValRdyQueue( 16, 2 )
+#    s.connect( s.in_, s.inbuf.in_ )
+#    @s.posedge_clk
+#
+#    def logic():
+#      s.inbuf.xtick()
+#      if not s.inbuf.is_empty():
+#        s.chk.next = s.inbuf.peek() == 3
+#        x = s.inbuf.deq()
+#        s.out.next = x
+#
+#def test_IVQueue():
+#  sim = translate( IVQueue() )
+#  model = sim
+#  model.in_.msg = 2
+#  model.in_.val = 1
+#  model.cycle()
+#  assert model.chk == 0
+#  assert model.out == 0
+#  model.in_.msg = 3
+#  model.in_.val = 1
+#  assert model.chk == 0
+#  assert model.out == 2
+##  model.cycle()
+##  assert model.chk == 1
+##  assert model.out == 3
