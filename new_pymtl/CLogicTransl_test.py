@@ -563,29 +563,78 @@ def test_TestTwoQueue():
   assert sim.out_val == 0
   assert sim.in__rdy == 1
 
-#class TestQueueList( Model ):
-#  def __init__( s ):
-#    s.in_ = [ InValRdyBundle (16) for x in range(2) ]
-#    s.out = [ OutValRdyBundle(16) for x in range(2) ]
-#  def elaborate_logic( s ):
-#    s.inbuf[]
-#    s.outbuf[]
-#    @s.tick
-#    def logic():
-#      if s.in_[i].rdy and s.in_[i].val:
-#        s.inbuf [i].enq( s.in_[i].msg[:] )
-#      if s.out[i].rdy and s.out[i].val:
-#        s.outbuf[i].deq()
-#
-#      if not s.outbuf[i].is_empty():
-#        s.out[i].msg.next = s.outbuf[i].peek()
-#      s.out[i].val.next = not s.outbuf[i].is_empty()
-#      s.in_[i].rdy.next = not s.inbuf[i].is_full()
-#
-#      if not s.inbuf[i].is_empty() and not s.outbuf[i].is_full():
-#        data = s.inbuf[i].peek()
-#        s.outbuf[i].enq( data )
-#        s.inbuf[i].deq()
+class TestTwoQueueList( Model ):
+  def __init__( s ):
+    s.in_ = [ InValRdyBundle (16) for x in range(2) ]
+    s.out = [ OutValRdyBundle(16) for x in range(2) ]
+  def elaborate_logic( s ):
+    s.inbuf  = [ Queue(2) for x in range(2) ]
+    s.outbuf = [ Queue(2) for x in range(2) ]
+    s.data   = 0
+    @s.tick
+    def logic():
+
+      for i in range(2):
+        if s.in_[i].rdy and s.in_[i].val:
+          s.inbuf[i].enq( copy( s.in_[i].msg) )
+
+        if s.out[i].rdy and s.out[i].val:
+          s.outbuf[i].deq()
+
+      for i in range(2):
+        if not s.outbuf[i].is_empty():
+          s.out[i].msg.next = s.outbuf[i].peek()
+        s.out[i].val.next = not s.outbuf[i].is_empty()
+        s.in_[i].rdy.next = not s.inbuf[i].is_full()
+
+      for i in range(2):
+        if not s.inbuf[i].is_empty() and not s.outbuf[i].is_full():
+          s.data = s.inbuf[i].peek()
+          s.outbuf[i].enq( s.data )
+          s.inbuf[i].deq()
+
+def test_TestTwoQueueList():
+  sim = translate( TestTwoQueueList() )
+  sim.reset()
+  for i in range( 2 ):
+    sim.in__msg[i] = 9 + i
+    sim.in__val[i] = 1
+    sim.out_rdy[i] = 1
+  sim.cycle() # enq 9
+  #assert sim.out_msg == 9
+  for i in range( 2 ):
+    assert sim.out_val[i] == 0
+    assert sim.in__rdy[i] == 1
+    sim.in__msg[i] = 8 + i
+    sim.in__val[i] = 1
+    sim.out_rdy[i] = 1
+  sim.cycle() # enq 8, out 9
+  for i in range( 2 ):
+    assert sim.out_msg[i] == 9+i
+    assert sim.out_val[i] == 1
+    assert sim.in__rdy[i] == 1
+    sim.in__msg[i] = 7+i
+    sim.in__val[i] = 1
+    sim.out_rdy[i] = 0
+  sim.cycle() # enq 7, out 9
+  for i in range( 2 ):
+    assert sim.out_msg[i] == 9+i
+    assert sim.out_val[i] == 1
+    assert sim.in__rdy[i] == 1
+    sim.in__msg[i] = 6+i
+    sim.in__val[i] = 1
+    sim.out_rdy[i] = 1
+  sim.cycle() # enq 6, deq 9, out 8
+  for i in range( 2 ):
+    assert sim.out_msg[i] == 8+i
+    assert sim.out_val[i] == 1
+    assert sim.in__rdy[i] == 0
+    sim.in__val[i] = 0
+  sim.cycle() # deq 8, out 7
+  for i in range( 2 ):
+    assert sim.out_msg[i] == 7+i
+    assert sim.out_val[i] == 1
+    assert sim.in__rdy[i] == 1
 
 #-------------------------------------------------------------------------
 # ValRdyQueues

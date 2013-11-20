@@ -74,9 +74,13 @@ def CLogicTransl( model, o=sys.stdout ):
           split = var.split('.')
           pfx = '_'.join( split[0:2] )
           sfx = '_'+'_'.join( split[2:]  ) if split[2:] else ''
-          print >> c_variables, "{} * {}[] = {{".format( var_type, rvar ),
           vx = [ '&{}${:03}{}'.format(pfx,i,sfx) for i in range(len(obj)) ]
-          print >> c_variables, "{} }};".format( ', '.join(vx) )
+          # Declare the variables if they don't exist yet
+          for x in vx:
+            if x[1:] not in all_ports:
+              print >> c_variables, "{} {};".format( var_type, x[1:])
+          print >> c_variables, "{} * {}[] = {{ {} }};".format(
+              var_type, rvar, ', '.join(vx ) )
         else:
           var_type = get_type( obj, o )
           print >> c_variables, "{} {};".format( var_type, rvar )
@@ -255,8 +259,8 @@ def translate_func( func, o ):
   src   = inspect.getsource( func )
   model = func._model
 
-  tree = ReorderSubscriptNext().visit( tree )
   tree = RemoveCopy().visit( tree )
+  tree = ReorderSubscriptNext().visit( tree )
   InferTypes( model, func ).visit( tree )
   #print_simple_ast( tree )                         # DEBUG
   #print src                                        # DEBUG
@@ -466,11 +470,11 @@ class TranslateLogic( ast.NodeVisitor ):
   # visit_Subscript
   #-----------------------------------------------------------------------
   def visit_Subscript( self, node ):
-    print >> self.o, '*',
+    print >> self.o, '(*',
     self.visit( node.value )
     print >> self.o, '[',
     self.visit( node.slice )
-    print >> self.o, ']',
+    print >> self.o, '])',
 
 ##  #-----------------------------------------------------------------------
 ##  # visit_ArrayIndex
@@ -587,7 +591,7 @@ class TranslateLogic( ast.NodeVisitor ):
   # TODO: does this work?
   def visit_For(self, node):
 
-    try:
+    #try:
       if node.iter.func.id != 'range':
         raise AttributeError()
 
@@ -596,8 +600,6 @@ class TranslateLogic( ast.NodeVisitor ):
       upper   = args[1] if len( args ) > 1 else args[0]
       step    = args[2] if len( args ) > 2 else _ast.Num(1)
       i       = node.target.id
-
-      print lower, upper, step, i
 
       print  >> self.o, (self.ident+2)*" " + "for (int {}=".format(i),
       self.visit( lower )
@@ -610,8 +612,8 @@ class TranslateLogic( ast.NodeVisitor ):
         self.visit(x)
       print  >> self.o, (self.ident+2)*" " + "}"
 
-    except AttributeError as e:
-      raise Exception("For can only loop over range()! " + e.message)
+    #except AttributeError as e:
+    #  raise Exception("For can only loop over range()! " + e.message)
 
 
   #-----------------------------------------------------------------------
@@ -680,8 +682,9 @@ class TranslateLogic( ast.NodeVisitor ):
       if   node.func.id == 'zext':
         self.visit( node.args[0] )
       elif node.func.id == 'len':
+        print >> self.o, "(",
         self.visit( node.args[0] )
-        print >> self.o, ".size()",
+        print >> self.o, ".size())",
       else:
         raise Exception('Unsupported free function: {}'.format(node.func.id))
 
@@ -711,7 +714,11 @@ class TranslateLogic( ast.NodeVisitor ):
       elif node.func.attr == 'enq':
         print >> self.o, ".push(",
         self.visit( node.args[0] )
-        node.func.value._object._kind = node.args[0]._object
+        if isinstance( node.func.value._object, list ):
+          for i in node.func.value._object:
+            i._kind = node.args[0]._object
+        else:
+          node.func.value._object._kind = node.args[0]._object
         print >> self.o, ")",
       else:
         raise Exception('Unsupported method: {}'.format(node.func.attr))
@@ -719,7 +726,8 @@ class TranslateLogic( ast.NodeVisitor ):
       print >> self.o, ")",
 
     else:
-      raise AttributeError('Unsupported Function Call!\n')
+      raise Exception('Attempting to call a non-name! {}\n'
+                      .format(node.func))
 
   #-----------------------------------------------------------------------
   # visit_Print
@@ -762,10 +770,31 @@ class VariableName( ast.NodeVisitor ):
 # ReorderSubscriptNext
 #-------------------------------------------------------------------------
 class ReorderSubscriptNext( ast.NodeTransformer ):
+  def __init__( self ):
+    self.call = False
+
+  def visit_Call( self, node ):
+    # TODO: specially handle self.visit( node.func ) if attr
+    #       currently not visiting at all!
+    args     = [self.visit(x) for x in node.args]
+    keywords = [self.visit(x) for x in node.keywords]
+    if node.starargs:
+      starargs = [self.visit(x) for x in node.starargs]
+    else:
+      starargs = None
+    if node.kwargs:
+      kwargs = [self.visit(x) for x in node.kwargs]
+    else:
+      kwargs = None
+
+    return _ast.Call(func=node.func,
+                     args=args,
+                     keyword=keywords,
+                     starargs=starargs,
+                     kwargs=kwargs)
 
   def visit_Attribute( self, node ):
     self.generic_visit( node )
-    #if node.attr == 'next' and isinstance(node.value, _ast.Subscript):
     if isinstance(node.value, _ast.Subscript):
       subscript       = node.value
       node.value      = subscript.value
@@ -794,8 +823,10 @@ class InferTypes( ast.NodeVisitor ):
     self.current_obj = None
 
   def visit_Subscript( self, node ):
-    self.generic_visit( node )
-    node._object = node.value._object
+    self.visit( node.slice )
+    self.visit( node.value )
+    node._object = node.value._object[0]
+
     return node
 
   def visit_Attribute( self, node ):
