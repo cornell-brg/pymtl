@@ -199,12 +199,12 @@ def wire_to_str( port, slice_=None, parent=None ):
 def mangle_name( name ):
   # Utility function
   def replacement_string( m ):
-    return "${:03d}".format( int(m.group(2)) )
+    return "${:03d}".format( int(m.group('idx')) )
   # Return the mangled name
   return re.sub( indexing, replacement_string, name.replace('.','_') )
 
 # Regex to match list indexing
-indexing = re.compile("(\[)(.*)(\])")
+indexing = re.compile("(\[)(?P<idx>.*?)(\])")
 
 #-------------------------------------------------------------------------
 # signal_to_str
