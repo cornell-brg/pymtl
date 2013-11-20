@@ -96,6 +96,7 @@ def CLogicTransl( model, o=sys.stdout ):
 
     # Create the C header
     print >> o, '#include <stdio.h>'
+    print >> o, '#include <assert.h>'
     print >> o, '#include <queue>'
     print >> o, '#define  True  true'
     print >> o, '#define  False false'
@@ -129,6 +130,7 @@ def CLogicTransl( model, o=sys.stdout ):
     print   >> o, '  /* Update all registers */'
     for s in shadows:
       print >> o, '  {0} = {0}_next;'.format( s )
+      #print >> o, '  printf("%s %d %s %d\\n","cur",{0},"next",{0});'.format( s )
 
     # Update params from output ports
     print   >> o
@@ -249,7 +251,7 @@ def declare_class( signal, o ):
 # translate_func
 #-------------------------------------------------------------------------
 
-def translate_func( func, o ):
+def translate_func( func, o, model=None ):
 
   import StringIO
   behavioral_code = StringIO.StringIO()
@@ -257,10 +259,12 @@ def translate_func( func, o ):
   # Type Check the AST
   tree  = get_method_ast( func )
   src   = inspect.getsource( func )
-  model = func._model
+  if not model:
+    model = func._model
 
   tree = RemoveCopy().visit( tree )
   tree = ReorderSubscriptNext().visit( tree )
+  print_simple_ast( tree )                         # DEBUG
   InferTypes( model, func ).visit( tree )
   #print_simple_ast( tree )                         # DEBUG
   #print src                                        # DEBUG
@@ -277,12 +281,21 @@ def translate_func( func, o ):
   #visitor.visit( new_tree )
   visitor.visit( tree )
 
+  regs      = []
+  localvars = {}
+  for f in visitor.funcs:
+    x, y = translate_func( f, o, model )
+    regs.extend( x )
+    localvars.update( y )
+
   # print behavioral code to passed in
   print >> o
   print >> o, behavioral_code.getvalue()
 
   # return regs
-  return visitor.regs, visitor.localvars
+  regs.extend( visitor.regs )
+  localvars.update( visitor.localvars )
+  return regs, localvars
 
 #-------------------------------------------------------------------------
 # opmap
@@ -333,6 +346,7 @@ class TranslateLogic( ast.NodeVisitor ):
     self.regs      = []
     self.localvars = {}
     self.arrays    = []
+    self.funcs     = []
 
     self.assign = '='
 
@@ -340,10 +354,32 @@ class TranslateLogic( ast.NodeVisitor ):
   # visit_FunctionDef
   #-----------------------------------------------------------------------
   def visit_FunctionDef(self, node):
+    assert node.args.vararg == None
+    assert node.args.kwarg  == None
+    # TODO: hacky typing: first argument should be self=<returntype>
+    #                     following args should have default value
+
+    if node.args.args:
+      rtype = 'int'
+      args = []
+      stash = self.o
+      self.o = StringIO.StringIO()
+      for x, y in zip(node.args.defaults[1:], node.args.args[1:]):
+        self.visit( x )
+        args.append( "{} {}".format( 'int', y.id ) )
+      self.o = stash
+    else:
+      rtype = 'void'
+      args  = []
 
     print >> self.o
     print >> self.o, '  // logic for {}()'.format( self.model.name, node.name )
-    print >> self.o, '  void {}_{}() {{'.format( self.model.name, node.name )
+    print >> self.o, '  {} {}_{}( {} ) {{'.format(
+        rtype,
+        self.model.name,
+        node.name,
+        ', '.join(args)
+        )
     #print >> self.o, '    printf("EXECUTING {}_{}\\n");'.format(
     #                             self.model.name, node.name )
     # Visit each line in the function, translate one at a time.
@@ -539,6 +575,7 @@ class TranslateLogic( ast.NodeVisitor ):
   # visit_Num
   #-----------------------------------------------------------------------
   def visit_Num(self, node):
+    node._object = int( node.n )
     print >> self.o, node.n,
 
 #  #-----------------------------------------------------------------------
@@ -647,6 +684,7 @@ class TranslateLogic( ast.NodeVisitor ):
       for orelse in node.orelse:
         self.ident += 2
         self.visit(orelse)
+        print >> self.o, ';'
         self.ident -= 2
       print >> self.o, self.ident*" " + "  }"
 
@@ -664,13 +702,22 @@ class TranslateLogic( ast.NodeVisitor ):
     self.ident -= 2
     print >> self.o, self.ident*" " + "  }"
 
-##  #-----------------------------------------------------------------------
-##  # visit_Assert
-##  #-----------------------------------------------------------------------
-##  def visit_Assert(self, node):
-##    print >> self.o, self.ident*" " + "  // ASSERT ",
-##    self.visit( node.test )
-##    print >> self.o
+  #-----------------------------------------------------------------------
+  # visit_Assert
+  #-----------------------------------------------------------------------
+  def visit_Assert(self, node):
+    print >> self.o, self.ident*' ' + '  assert(',
+    self.visit( node.test )
+    print >> self.o, ')',
+
+  #-----------------------------------------------------------------------
+  # visit_Return
+  #-----------------------------------------------------------------------
+  def visit_Return(self, node):
+    print >> self.o, self.ident*' ' + '  return ',
+    if node.value:
+      self.visit( node.value )
+    print >> self.o, ';'
 
   #-----------------------------------------------------------------------
   # visit_Call
@@ -690,11 +737,23 @@ class TranslateLogic( ast.NodeVisitor ):
 
     # Method Calls
     elif isinstance( node.func, _ast.Attribute ):
+
+      if hasattr( self.model, node.func.attr ):
+        self.funcs.append( getattr( self.model, node.func.attr ) )
+        fname = node.func.attr
+        print >> self.o, "{}_{}(".format( self.model.name, fname ),
+        for i, arg in enumerate( node.args ):
+          if i != 0: print >> self.o, ","
+          self.visit( node.args[i] )
+        print >> self.o, ")",
+        return
+
       print >> self.o, "(",
       self.visit( node.func.value )
 
-     # TODO
-     # print "METHODCALL", node.func.attr, node.func.value._object.__class__.__name__
+      # TODO
+      # print "METHODCALL", node.func.attr,
+      # node.func.value._object.__class__.__name__
       if   node.func.attr == 'popleft':
         print >> self.o, ".pop()",
       elif node.func.attr == 'append':
@@ -821,6 +880,8 @@ class InferTypes( ast.NodeVisitor ):
     self.func        = func
     self.closed_vars = get_closure_dict( func )
     self.current_obj = None
+    if not self.closed_vars:
+      self.closed_vars['s'] = model
 
   def visit_Subscript( self, node ):
     self.visit( node.slice )
@@ -885,5 +946,7 @@ class PyObj( object ):
 #------------------------------------------------------------------------
 # http://stackoverflow.com/a/19416942
 def get_closure_dict( fn ):
-  closure_objects = [c.cell_contents for c in fn.func_closure]
-  return dict( zip( fn.func_code.co_freevars, closure_objects ))
+  if fn.func_closure:
+    closure_objects = [c.cell_contents for c in fn.func_closure]
+    return dict( zip( fn.func_code.co_freevars, closure_objects ))
+  else: return dict()

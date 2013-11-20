@@ -43,8 +43,8 @@ def translate( model ):
       csim, ffi = gen_cppsim ( clib, cdef )
       sim       = CSimWrapper( csim, ffi )
 
-      print
-      print source
+      #print
+      #print source
       #print
 
       return sim
@@ -635,6 +635,66 @@ def test_TestTwoQueueList():
     assert sim.out_msg[i] == 7+i
     assert sim.out_val[i] == 1
     assert sim.in__rdy[i] == 1
+
+#-------------------------------------------------------------------------
+# Function Call
+#-------------------------------------------------------------------------
+from math import sqrt
+class FunctionCall0( Model ):
+  NORTH = 0
+  EAST  = 1
+  SOUTH = 2
+  WEST  = 3
+  TERM  = 4
+  def __init__( s, id_, nrouters ):
+    s.id_       = id_
+    s.xnodes    = int( sqrt( nrouters ) )
+    s.x         = id_ % s.xnodes
+    s.y         = id_ / s.xnodes
+    s.in_ = InPort ( 8 )
+    s.out = OutPort( 8 )
+    s.x_dest = 0
+    s.y_dest = 0
+
+  def elaborate_logic( s ):
+    s.temp = 0
+    @s.tick
+    def logic():
+      s.temp = s.route_compute( s.in_ )
+      s.out.next = s.temp
+
+  # TODO: hacky, fix later!
+  def route_compute( s=0, dest=0 ):
+    s.x_dest = dest % s.xnodes
+    s.y_dest = dest / s.xnodes
+    if   s.x_dest < s.x: return s.WEST
+    elif s.x_dest > s.x: return s.EAST
+    elif s.y_dest < s.y: return s.NORTH
+    elif s.y_dest > s.y: return s.SOUTH
+    else:
+      assert s.x_dest == s.x
+      assert s.y_dest == s.y
+      return s.TERM
+
+def test_FunctionCall0():
+  F = FunctionCall0
+  s = translate( FunctionCall0( 10, 16) )
+  s.reset()
+  s.in_ = 10; s.cycle(); assert s.out == F.TERM
+  s.in_ =  8; s.cycle(); assert s.out == F.WEST
+  s.in_ =  2; s.cycle(); assert s.out == F.NORTH
+  s.in_ = 14; s.cycle(); assert s.out == F.SOUTH
+  s.in_ = 11; s.cycle(); assert s.out == F.EAST
+
+# TODO: only one of these works at a time... wtf
+#def test_FunctionCall1():
+#  F = FunctionCall0
+#  s = translate( FunctionCall0( 1, 4) )
+#  s.reset()
+#  s.in_ = 0; s.cycle();  assert s.out == F.WEST
+#  s.in_ = 1; s.cycle();  assert s.out == F.TERM
+#  s.in_ = 2; s.cycle();  assert s.out == F.WEST
+#  s.in_ = 3; s.cycle();  assert s.out == F.SOUTH
 
 #-------------------------------------------------------------------------
 # ValRdyQueues
