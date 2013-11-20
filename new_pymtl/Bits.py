@@ -276,7 +276,14 @@ class Bits( SignalValue ):
 
   # TODO: implement these?
   #def __floordiv__(self, other)
-  #def __mod__(self, other)
+  def __div__(self, other):
+    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint / other._uint, trunc=True )
+    except: return Bits( 2*self.nbits,                    self._uint / other,       trunc=True )
+
+  def __mod__(self, other):
+    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint % other._uint, trunc=True )
+    except: return Bits( 2*self.nbits,                    self._uint % other,       trunc=True )
+
   #def __divmod__(self, other)
   #def __pow__(self, other[, modulo])
 
