@@ -696,6 +696,173 @@ def test_FunctionCall0():
 #  s.in_ = 2; s.cycle();  assert s.out == F.WEST
 #  s.in_ = 3; s.cycle();  assert s.out == F.SOUTH
 
+class FunctionCall1( Model ):
+  NORTH = 0
+  EAST  = 1
+  SOUTH = 2
+  WEST  = 3
+  TERM  = 4
+
+  def __init__( s, offset, dummy ):
+    s.in_  = [ InPort ( 8 ) for x in range( 5 ) ]
+    s.outd = [ OutPort( 8 ) for x in range( 5 ) ]
+    s.outw = [ OutPort( 8 ) for x in range( 5 ) ]
+
+    s.offset     = offset
+    s.priorities = [0]*5
+    s.winners    = [0]*5
+    s.temp       = 0
+
+    s.i          = 0
+    s.last       = 0
+    s.enter      = 0
+
+  def elaborate_logic( s ):
+    s.temp = 0
+    @s.tick
+    def logic():
+
+      for i in range( 5 ):
+        s.temp         = s.arbitrate( i )
+        s.outd[i].next = s.temp
+
+      for i in range( 5 ):
+        s.outw[i].next = s.priorities[i]
+
+  def arbitrate( s=0, output=0 ):
+    s.i     = s.priorities[output]
+    s.last  = s.i
+    s.enter = 0
+    while not (s.i == s.last and s.enter):
+      s.enter = 1
+      if s.route_compute( s.in_[s.i] ) == output:
+        s.priorities[ output ] = ( s.i + 1 ) % 5
+        s.winners[ output ] = 1
+        return s.i
+      s.i = (s.i + 1) % 5
+    s.winners[ output ] = 0
+    # No winner
+    return 0xFF
+
+  def route_compute( s=0, dest=0 ):
+     return (dest + s.offset) % 5
+
+def test_FunctionCall1():
+  F = FunctionCall1
+  s = translate( F( 1, 0) )
+  s.reset()
+  for i in range(5):
+    s.in_[i] = i
+  s.cycle()
+  assert s.outd[0] == 4
+  assert s.outd[1] == 0
+  assert s.outd[2] == 1
+  assert s.outd[3] == 2
+  assert s.outd[4] == 3
+  assert s.outw[0] == 0
+  assert s.outw[1] == 1
+  assert s.outw[2] == 2
+  assert s.outw[3] == 3
+  assert s.outw[4] == 4
+  for i in range(5):
+    s.in_[i] = 2
+  s.cycle()
+  assert s.outd[0] == 0xFF
+  assert s.outd[1] == 0xFF
+  assert s.outd[2] == 0xFF
+  assert s.outd[3] == 3
+  assert s.outd[4] == 0xFF
+  assert s.outw[0] == 0
+  assert s.outw[1] == 1
+  assert s.outw[2] == 2
+  assert s.outw[3] == 4
+  assert s.outw[4] == 4
+  for i in range(5):
+    s.in_[i] = 2
+  s.cycle()
+  assert s.outd[0] == 0xFF
+  assert s.outd[1] == 0xFF
+  assert s.outd[2] == 0xFF
+  assert s.outd[3] == 4
+  assert s.outd[4] == 0xFF
+  assert s.outw[0] == 0
+  assert s.outw[1] == 1
+  assert s.outw[2] == 2
+  assert s.outw[3] == 0
+  assert s.outw[4] == 4
+
+##-------------------------------------------------------------------------
+## Router
+##-------------------------------------------------------------------------
+##   00 - 01 - 02 - 03
+##   |    |    |    |
+##   04 - 05 - 06 - 07
+##   |    |    |    |
+##   08 - 09 - 10 - 11
+##   |    |    |    |
+##   12 - 13 - 14 - 15
+##   NORTH = 0
+##   EAST  = 1
+##   SOUTH = 2
+##   WEST  = 3
+##   TERM  = 4
+#
+#from perf_tests.cffi_net_CL import MeshRouterCL
+#def test_Router():
+#  R = MeshRouterCL
+#  s = translate( R( 5, 16, 0,0,0) )
+#  s.reset()
+#  X = 'x'
+#  for i in range(5):
+#    s.out_rdy[i] = 1
+#    s.in__val[i] = 0
+#
+#  def debug():
+#    print "{:3}:".format(s.ncycles),
+#    for i in range(5):
+#      print s.out_msg[i] if s.out_val[i] == 1 else 'x',
+#    print
+#
+#  def put(exp):
+#    for i, j in enumerate( exp ):
+#      if j == 'x':
+#        s.in__val[i] = 0
+#      else:
+#        s.in__val[i] = 1
+#        s.in__msg[i] = j
+#
+#  def check(exp):
+#    for i, j in enumerate( exp ):
+#      print 'checking', i,j
+#      if j == 'x':
+#        assert s.out_val[i] == 0
+#      else:
+#        assert s.out_val[i] == 1
+#        assert s.out_msg[i] == j
+#
+#  put([ 1, 6, 9, 4, 5])
+#  s.cycle(); debug(); check([ X, X, X, X, X])
+#  put([ X, X, X, X, X])
+#  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
+#  s.cycle(); debug(); check([ X, X, X, X, X])
+#  s.cycle(); debug(); check([ X, X, X, X, X])
+#  put([ 6, 9, 4, 5, 1])
+#  s.cycle(); debug(); check([ X, X, X, X, X])
+#  put([ 4, 5, 1, 6, 9])
+#  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
+#  put([ X, X, X, X, X])
+#  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
+#  put([ 9, 9, 9, 9, 9])
+#  s.cycle(); debug(); check([ X, X, X, X, X])
+#  put([ X, X, X, X, X])
+#  s.cycle(); debug(); check([ X, X, 9, X, X])
+#  s.cycle(); debug(); check([ X, X, 9, X, X])
+#  s.cycle(); debug(); check([ X, X, 9, X, X])
+#  s.cycle(); debug(); check([ X, X, 9, X, X])
+#  #s.cycle(); debug(); check([ X, X, 9, X, X])
+#  #s.cycle(); debug(); check([ X, X, X, 1, 5])
+
+
 #-------------------------------------------------------------------------
 # ValRdyQueues
 #-------------------------------------------------------------------------
