@@ -62,7 +62,6 @@ def translate_logic_blocks( model, o ):
     tree = get_method_ast( func )
     src  = inspect.getsource( func )
     #print_simple_ast( tree )    # DEBUG
-    print src
     new_tree = TypeAST( model, func ).visit( tree )
 
     print_simple_ast( new_tree ) # DEBUG
@@ -184,21 +183,25 @@ class TranslateLogic( ast.NodeVisitor ):
       return
 
     self.block_type = None
+    dec = node.decorator_list[0].attr
 
     # Combinational Block          TODO: handle s or self
-    if 'combinational' in node.decorator_list:
+    #if 'combinational' in node.decorator_list:
+    if 'combinational' == dec:
       self.block_type = 's.combinational'
       self.assign     = '='
       always = '  always @ (*) begin'
 
     # Posedge Clock                TODO: handle s or self
-    elif 'posedge_clk' in node.decorator_list:
+    #elif 'posedge_clk' in node.decorator_list:
+    elif 'posedge_clk' == dec:
       self.block_type = 's.posedge_clk'
       self.assign     = '<='
       always = '  always @ (posedge clk) begin'
 
     # Can't translate tick blocks  TODO: handle s or self
-    elif  'tick' in node.decorator_list:
+    #elif  'tick' in node.decorator_list:
+    elif 'tick' == dec:
       raise Exception("Tick blocks can't be translated!")
 
     # Write
