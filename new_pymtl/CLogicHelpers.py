@@ -102,7 +102,7 @@ def gen_pywrapper( top_inports, top_outports ):
 
     @property
     def ncycles( self ):
-      return self.cmodule.ncycles
+      return self._cmodule.ncycles
 
 
   # Add input port attributes to CSimWrapper
