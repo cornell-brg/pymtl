@@ -264,7 +264,7 @@ def translate_func( func, o, model=None ):
 
   tree = RemoveCopy().visit( tree )
   tree = ReorderSubscriptNext().visit( tree )
-  print_simple_ast( tree )                         # DEBUG
+  #print_simple_ast( tree )                         # DEBUG
   InferTypes( model, func ).visit( tree )
   #print_simple_ast( tree )                         # DEBUG
   #print src                                        # DEBUG
@@ -727,6 +727,8 @@ class TranslateLogic( ast.NodeVisitor ):
     # Free function calls
     if   isinstance( node.func, _ast.Name ):
       if   node.func.id == 'zext':
+        self.visit( node.args[0] )
+      elif node.func.id == 'hex':
         self.visit( node.args[0] )
       elif node.func.id == 'len':
         print >> self.o, "(",

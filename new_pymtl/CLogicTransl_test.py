@@ -791,76 +791,76 @@ def test_FunctionCall1():
   assert s.outw[3] == 0
   assert s.outw[4] == 4
 
-##-------------------------------------------------------------------------
-## Router
-##-------------------------------------------------------------------------
-##   00 - 01 - 02 - 03
-##   |    |    |    |
-##   04 - 05 - 06 - 07
-##   |    |    |    |
-##   08 - 09 - 10 - 11
-##   |    |    |    |
-##   12 - 13 - 14 - 15
-##   NORTH = 0
-##   EAST  = 1
-##   SOUTH = 2
-##   WEST  = 3
-##   TERM  = 4
-#
-#from perf_tests.cffi_net_CL import MeshRouterCL
-#def test_Router():
-#  R = MeshRouterCL
-#  s = translate( R( 5, 16, 0,0,0) )
-#  s.reset()
-#  X = 'x'
-#  for i in range(5):
-#    s.out_rdy[i] = 1
-#    s.in__val[i] = 0
-#
-#  def debug():
-#    print "{:3}:".format(s.ncycles),
-#    for i in range(5):
-#      print s.out_msg[i] if s.out_val[i] == 1 else 'x',
-#    print
-#
-#  def put(exp):
-#    for i, j in enumerate( exp ):
-#      if j == 'x':
-#        s.in__val[i] = 0
-#      else:
-#        s.in__val[i] = 1
-#        s.in__msg[i] = j
-#
-#  def check(exp):
-#    for i, j in enumerate( exp ):
-#      print 'checking', i,j
-#      if j == 'x':
-#        assert s.out_val[i] == 0
-#      else:
-#        assert s.out_val[i] == 1
-#        assert s.out_msg[i] == j
-#
-#  put([ 1, 6, 9, 4, 5])
-#  s.cycle(); debug(); check([ X, X, X, X, X])
-#  put([ X, X, X, X, X])
-#  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
-#  s.cycle(); debug(); check([ X, X, X, X, X])
-#  s.cycle(); debug(); check([ X, X, X, X, X])
-#  put([ 6, 9, 4, 5, 1])
-#  s.cycle(); debug(); check([ X, X, X, X, X])
-#  put([ 4, 5, 1, 6, 9])
-#  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
-#  put([ X, X, X, X, X])
-#  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
-#  put([ 9, 9, 9, 9, 9])
-#  s.cycle(); debug(); check([ X, X, X, X, X])
-#  put([ X, X, X, X, X])
-#  s.cycle(); debug(); check([ X, X, 9, X, X])
-#  s.cycle(); debug(); check([ X, X, 9, X, X])
-#  s.cycle(); debug(); check([ X, X, 9, X, X])
-#  s.cycle(); debug(); check([ X, X, 9, X, X])
-#  #s.cycle(); debug(); check([ X, X, 9, X, X])
-#  #s.cycle(); debug(); check([ X, X, X, 1, 5])
+#-------------------------------------------------------------------------
+# Router
+#-------------------------------------------------------------------------
+#   00 - 01 - 02 - 03
+#   |    |    |    |
+#   04 - 05 - 06 - 07
+#   |    |    |    |
+#   08 - 09 - 10 - 11
+#   |    |    |    |
+#   12 - 13 - 14 - 15
+#   NORTH = 0
+#   EAST  = 1
+#   SOUTH = 2
+#   WEST  = 3
+#   TERM  = 4
+
+from perf_tests.cffi_net_CL import MeshRouterCL
+def test_Router():
+  R = MeshRouterCL
+  s = translate( R( 5, 16, 0,0,0) )
+  s.reset()
+  X = 'x'
+  for i in range(5):
+    s.out_rdy[i] = 1
+    s.in__val[i] = 0
+
+  def debug():
+    print "{:3}:".format(s.ncycles),
+    for i in range(5):
+      print s.out_msg[i] if s.out_val[i] == 1 else 'x',
+    print
+
+  def put(exp):
+    for i, j in enumerate( exp ):
+      if j == 'x':
+        s.in__val[i] = 0
+      else:
+        s.in__val[i] = 1
+        s.in__msg[i] = j
+
+  def check(exp):
+    for i, j in enumerate( exp ):
+      print 'checking', i,j
+      if j == 'x':
+        assert s.out_val[i] == 0
+      else:
+        assert s.out_val[i] == 1
+        assert s.out_msg[i] == j
+
+  put([ 1, 6, 9, 4, 5])
+  s.cycle(); debug(); check([ X, X, X, X, X])
+  put([ X, X, X, X, X])
+  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
+  s.cycle(); debug(); check([ X, X, X, X, X])
+  s.cycle(); debug(); check([ X, X, X, X, X])
+  put([ 6, 9, 4, 5, 1])
+  s.cycle(); debug(); check([ X, X, X, X, X])
+  put([ 4, 5, 1, 6, 9])
+  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
+  put([ X, X, X, X, X])
+  s.cycle(); debug(); check([ 1, 6, 9, 4, 5])
+  put([ 9, 9, 9, 9, 9])
+  s.cycle(); debug(); check([ X, X, X, X, X])
+  put([ X, X, X, X, X])
+  s.cycle(); debug(); check([ X, X, 9, X, X])
+  s.cycle(); debug(); check([ X, X, 9, X, X])
+  s.cycle(); debug(); check([ X, X, 9, X, X])
+  s.cycle(); debug(); check([ X, X, 9, X, X])
+  s.cycle(); debug(); check([ X, X, 9, X, X])
+  s.cycle(); debug(); check([ X, X, X, X, X])
 
 
 #-------------------------------------------------------------------------
