@@ -122,7 +122,7 @@ def CLogicTransl( model, o=sys.stdout ):
     print   >> o
     print   >> o, '  /* Execute all ticks */'
     for x in sim._sequential_blocks:
-      print >> o, '  {}_{}();'.format( x._model.name, x.func_name)
+      print >> o, '  {}_{}();'.format( mangle_idxs(x._model.name), x.func_name)
     print   >> o, '  ncycles++;'
 
     # Update all registers
@@ -181,8 +181,10 @@ def declare_signals( sim, ast_next, o ):
       # NOTE: this will declare "net_next" twice if two different signals
       #       attached to the net write next; this is okay because that is
       #       invalid code!
-      sig = re.sub('\[[0-9]*\]', '', signal.fullname)
-      if sig in ast_next:
+      sig = re.sub('\[[0-9]*\]', '', signal.name)
+      mod = mangle_idxs( signal.parent.name )
+      fullname = mod + '.' + sig
+      if fullname in ast_next:
         print >>o, '{}  {}_next = 0;'      .format( type_, cname );
         print >>o, '{} &{}_next = {}_next;'.format( type_, name, cname );
         shadows.append( name )
@@ -376,7 +378,7 @@ class TranslateLogic( ast.NodeVisitor ):
     print >> self.o, '  // logic for {}()'.format( self.model.name, node.name )
     print >> self.o, '  {} {}_{}( {} ) {{'.format(
         rtype,
-        self.model.name,
+        mangle_idxs(self.model.name),
         node.name,
         ', '.join(args)
         )
@@ -473,7 +475,7 @@ class TranslateLogic( ast.NodeVisitor ):
   # visit_Attribute
   #-----------------------------------------------------------------------
   def visit_Attribute( self, node ):
-    name = VariableName( self ).visit( node )
+    name = mangle_idxs( VariableName( self ).visit( node ) )
 
     # TODO: SUPER HACKY
     if   name.endswith('.n'):
@@ -952,3 +954,14 @@ def get_closure_dict( fn ):
     closure_objects = [c.cell_contents for c in fn.func_closure]
     return dict( zip( fn.func_code.co_freevars, closure_objects ))
   else: return dict()
+
+#------------------------------------------------------------------------
+# mangle_idxs
+#------------------------------------------------------------------------
+indexing = re.compile("(\[)(?P<idx>.*?)(\])")
+def mangle_idxs( name ):
+  def replacement_string( m ):
+    return "${:03d}".format( int(m.group('idx')) )
+  # Return the mangled name
+  return re.sub( indexing, replacement_string, name )
+

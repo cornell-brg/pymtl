@@ -313,6 +313,46 @@ def test_ForAssign0():
 #  for_tester( ForAssign1() )
 
 #-------------------------------------------------------------------------
+# ModuleListPortList
+#-------------------------------------------------------------------------
+class ModuleListPortList( Model ):
+  def __init__( s ):
+    s.in_ = [ InPort (16) for x in range(4) ]
+    s.out = [ OutPort(16) for x in range(4) ]
+    s.nports = 4
+  def elaborate_logic( s ):
+    s.mods = [ ForAssign0() for i in range(3) ]
+    for i in range( 4 ):
+      s.connect( s.in_[i],         s.mods[0].in_[i] )
+      s.connect( s.mods[0].out[i], s.mods[1].in_[i] )
+      s.connect( s.mods[1].out[i], s.mods[2].in_[i] )
+      s.connect( s.mods[2].out[i], s.out[i]         )
+
+def test_ModuleListPortList():
+  s = translate( ModuleListPortList() )
+
+  def put(exp):
+    for i, j in enumerate( exp ): s.in_[i]  = j
+  def check(exp):
+    for i, j in enumerate( exp ): assert s.out[i] == j
+
+  def debug():
+    print "{:3}:".format(s.ncycles),
+    for i in range(4): print s.out[i],
+    print
+
+  s.reset()
+  put([1,2,3,4]); s.cycle(); debug();
+  put([0,0,0,0]); s.cycle(); debug();
+  put([0,0,0,0]); s.cycle(); debug(); check([1,2,3,4])
+  put([0,0,0,0]); s.cycle(); debug();
+  put([0,0,0,0]); s.cycle(); debug();
+  put([0,0,0,0]); s.cycle(); debug();
+
+
+
+
+#-------------------------------------------------------------------------
 # PortBundles
 #-------------------------------------------------------------------------
 from new_pmlib        import InValRdyBundle, OutValRdyBundle
