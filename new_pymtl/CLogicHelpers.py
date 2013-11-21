@@ -114,6 +114,7 @@ def gen_pywrapper( top_inports, top_outports ):
     # TODO: super hacky, only works if top_inports sorted by name
     if '$' in name:
       sig, idx = name_splitter(name)
+      idx = int(idx)
       cparams.append( 'self.{}[{}]'.format(sig,idx) )
       setattr( CSimWrapper, sig, [0]*(int(idx)+1) )
     else:
@@ -127,6 +128,7 @@ def gen_pywrapper( top_inports, top_outports ):
     # TODO: super hacky, only works if top_outports sorted by name
     if '$' in name:
       sig, idx = name_splitter(name)
+      idx = int(idx)
       cparams.append( 'self._{}[{}]'.format(sig,idx) )
       assigns.append( 'self.{0}[{1}] = self._{0}[{1}][0]'.format(sig,idx) )
       setattr( CSimWrapper, sig, [0]*(int(idx)+1) )
