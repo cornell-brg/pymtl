@@ -745,7 +745,8 @@ class TranslateLogic( ast.NodeVisitor ):
       if hasattr( self.model, node.func.attr ):
         self.funcs.append( getattr( self.model, node.func.attr ) )
         fname = node.func.attr
-        print >> self.o, "{}_{}(".format( self.model.name, fname ),
+        print >> self.o, "{}_{}(".format( mangle_idxs(self.model.name),
+                                          fname ),
         for i, arg in enumerate( node.args ):
           if i != 0: print >> self.o, ","
           self.visit( node.args[i] )
