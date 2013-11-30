@@ -9,7 +9,6 @@ from   SimulationTool  import SimulationTool
 import sys
 import ast, _ast
 import collections
-import inspect
 import StringIO
 import re
 
@@ -259,8 +258,7 @@ def translate_func( func, o, model=None ):
   behavioral_code = StringIO.StringIO()
 
   # Type Check the AST
-  tree  = get_method_ast( func )
-  src   = inspect.getsource( func )
+  tree, src = get_method_ast( func )
   if not model:
     model = func._model
 

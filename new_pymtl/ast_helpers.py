@@ -101,5 +101,5 @@ def get_method_ast( func ):
   src = inspect.getsource( func )
   new_src = p.sub( r'\2', src )
   tree = ast.parse( new_src )
-  return tree
+  return tree, new_src
 

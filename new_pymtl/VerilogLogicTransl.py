@@ -11,7 +11,6 @@ from   ast_helpers     import get_method_ast, print_simple_ast, print_ast
 import sys
 import ast, _ast
 import collections
-import inspect
 
 from signals import InPort, OutPort, Wire, Constant
 
@@ -59,8 +58,7 @@ def translate_logic_blocks( model, o ):
   for func in blocks:
 
     # Type Check the AST
-    tree = get_method_ast( func )
-    src  = inspect.getsource( func )
+    tree, src = get_method_ast( func )
     #print_simple_ast( tree )    # DEBUG
     new_tree = TypeAST( model, func ).visit( tree )
 

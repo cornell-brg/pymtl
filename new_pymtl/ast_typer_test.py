@@ -23,12 +23,11 @@ class M( object ):
 def check_ast( model ):
 
   def check_decorator( func ):
-    tree = get_method_ast( func )
+    tree, src = get_method_ast( func )
     print
     print
+    print src
 
-    import inspect
-    print inspect.getsource( func )
     #print_simple_ast( tree )
 
     new_tree = TypeAST( model, func ).visit( tree )

@@ -455,7 +455,7 @@ class SimulationTool( object ):
     # Get the sensitivity list of each event driven (combinational) block
     # TODO: do before or after we swap value nodes?
     for func in model._combinational_blocks:
-      tree = get_method_ast( func )
+      tree, _ = get_method_ast( func )
       loads, stores = DetectLoadsAndStores().enter( tree )
       for name in loads:
         add_senses( name )

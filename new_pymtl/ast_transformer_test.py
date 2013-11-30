@@ -11,12 +11,11 @@ from ast_helpers     import get_method_ast, print_simple_ast, print_ast
 def check_ast( ld, st ):
 
   def check_decorator( func ):
-    tree = get_method_ast( func )
+    tree, src = get_method_ast( func )
     print
     print
+    print src
 
-    import inspect
-    print inspect.getsource( func )
     #print_ast( tree )
     print_simple_ast( tree )
 
