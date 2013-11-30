@@ -4,7 +4,9 @@
 
 import sys
 import collections
+import tempfile
 
+from subprocess         import check_output, STDOUT, CalledProcessError
 from verilog_structural import *
 
 #-----------------------------------------------------------------------
@@ -48,3 +50,38 @@ def translate_module( model, o ):
 
   print >> o, end_mod  .format( model.class_name )
   print >> o
+
+#-----------------------------------------------------------------------
+# check_compile
+#-----------------------------------------------------------------------
+compiler = 'iverilog -g2005 -Wall -Wno-sensitivity-entire-vector'
+def check_compile( model ):
+
+  model.elaborate()
+
+  with tempfile.NamedTemporaryFile(suffix='.v') as output:
+
+    translate( model, output )
+    output.flush()
+    cmd  = '{} {}'.format( compiler, output.name )
+
+    try:
+
+      result = check_output( cmd.split() , stderr=STDOUT )
+      output.seek(0)
+      verilog_src = output.read()
+      print
+      print verilog_src
+
+    except CalledProcessError as e:
+
+      output.seek(0)
+      verilog_src = output.read()
+
+      raise Exception( 'Module did not compile!\n\n'
+                       'Command:\n {}\n\n'
+                       'Error:\n {}'
+                       'Source:\n {}'
+                       .format( ' '.join(e.cmd), e.output, verilog_src )
+                     )
+

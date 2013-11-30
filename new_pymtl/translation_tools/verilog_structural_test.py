@@ -1,52 +1,14 @@
 #=========================================================================
-# TranslationTool_test.py
+# verilog_structural_test.py
 #=========================================================================
 
-#import ..SimulationTool_struct_test as structural
-from .. import SimulationTool_struct_test as structural
-
-from subprocess import check_output, STDOUT, CalledProcessError
-
-import verilog
-import tempfile
-
-compiler = 'iverilog -g2005 -Wall -Wno-sensitivity-entire-vector'
-
-#-------------------------------------------------------------------------
-# Translation Test
-#-------------------------------------------------------------------------
-def setup_sim( model ):
-  model.elaborate()
-
-  with tempfile.NamedTemporaryFile(suffix='.v') as output:
-
-    verilog.translate( model, output )
-    output.flush()
-    cmd  = '{} {}'.format( compiler, output.name )
-
-    try:
-
-      result = check_output( cmd.split() , stderr=STDOUT )
-      output.seek(0)
-      verilog_src = output.read()
-      print
-      print verilog_src
-
-    except CalledProcessError as e:
-
-      output.seek(0)
-      verilog_src = output.read()
-
-      raise Exception( 'Module did not compile!\n\n'
-                       'Command:\n' + ' '.join(e.cmd) + '\n\n'
-                       'Error:\n' + e.output + '\n'
-                       'Source:\n' + verilog_src
-                     )
-
+from ..      import SimulationTool_struct_test as structural
+from verilog import check_compile as setup_sim
 
 #-------------------------------------------------------------------------
 # Tests
 #-------------------------------------------------------------------------
+
 def test_PassThrough():
   setup_sim( structural.PassThrough( 8 ) )
   setup_sim( structural.PassThrough( 32 ) )

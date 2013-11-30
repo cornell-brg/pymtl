@@ -1,5 +1,5 @@
 #=========================================================================
-# VerilogTranslationTool.py
+# verilog_structural.py
 #=========================================================================
 # Tool to translate PyMTL Models into Verilog HDL.
 
