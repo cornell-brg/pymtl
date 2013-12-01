@@ -103,3 +103,10 @@ def get_method_ast( func ):
   tree = ast.parse( new_src )
   return tree, new_src
 
+#------------------------------------------------------------------------
+# get_closure_dict
+#------------------------------------------------------------------------
+# http://stackoverflow.com/a/19416942
+def get_closure_dict( fn ):
+  closure_objects = [c.cell_contents for c in fn.func_closure]
+  return dict( zip( fn.func_code.co_freevars, closure_objects ))
