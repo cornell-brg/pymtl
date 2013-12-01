@@ -8,6 +8,7 @@ import tempfile
 
 from subprocess         import check_output, STDOUT, CalledProcessError
 from verilog_structural import *
+from verilog_behavioral import translate_logic_blocks
 
 #-----------------------------------------------------------------------
 # translate
@@ -46,7 +47,7 @@ def translate_module( model, o ):
   signal_assignments( model, o )
 
   # Behavioral Verilog
-  #translate_logic_blocks( model, o )
+  translate_logic_blocks( model, o )
 
   print >> o, end_mod  .format( model.class_name )
   print >> o
