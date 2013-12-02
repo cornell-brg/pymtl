@@ -9,6 +9,9 @@ import StringIO
 
 from ..ast_helpers import get_method_ast, print_simple_ast
 
+# TODO: HACKY
+from verilog_structural import signal_to_str
+
 import visitors
 
 #-------------------------------------------------------------------------
@@ -24,40 +27,41 @@ def translate_logic_blocks( model, o ):
 
   # TODO: remove regs logic, move to own visitor that visits _ast.Store
   #       nodes!
-  regs  = []
+  regs  = set()
   temps = []
   array = []
 
   for func in blocks:
 
     # Type Check the AST
-    tree, src = get_method_ast( func )
-    new_tree  = ast_pipeline( tree, model, func )
+    tree, src  = get_method_ast( func )
+    new_tree   = ast_pipeline( tree, model, func )
+    regs      |= visitors.GetRegsTempsArrays().get( new_tree )
 
 
     # Store the PyMTL source inline with the behavioral code
-    print   >> behavioral_code, "  // PYMTL SOURCE:"
-    for line in src.splitlines():
-      print >> behavioral_code, "  // " + line
+    block_code = ("  // PYMTL SOURCE:\n"
+                  "  // {}\n\n").format( "\n  // ".join( src.splitlines()))
 
-  #  # Print the Verilog translation
-  #  visitor = TranslateLogic( model, behavioral_code )
-  #  visitor.visit( new_tree )
+    # Print the Verilog translation
+    visitor     = TranslateBehavioralVerilog()
+    block_code += visitor.visit( new_tree )
 
-  #  # TODO: check for conflicts, ensure that signals are not written in
-  #  #       two different behavioral blocks!
-  #  regs .extend( visitor.regs  )
-  #  temps.extend( visitor.temps )
-  #  array.extend( visitor.array )
+    print >> behavioral_code, block_code
 
-  ## Print the reg declarations
-  #if regs:
-  #  print   >> o, '  // register declarations'
-  #  for signal in regs:
-  #    print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1,
-  #        signal_to_str( signal, None, model ))
+    # TODO: check for conflicts, ensure that signals are not written in
+    #       two different behavioral blocks!
 
-  #print >> o
+  print regs
+
+  # Print the reg declarations
+  if regs:
+    print   >> o, '  // register declarations'
+    for signal in regs:
+      print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1,
+          signal_to_str( signal, None, model ))
+
+  print >> o
 
   ## Print the temporary declarations
   ## TODO: this doesn't really work, need to set type of temp
@@ -90,40 +94,139 @@ def translate_logic_blocks( model, o ):
 
   ## Print the temporary declarations
 
-  ## Print the behavioral block code
-  #print >> o
-  #print >> o, behavioral_code.getvalue()
-
-
+  # Print the behavioral block code
+  print >> o
+  print >> o, behavioral_code.getvalue()
 
 #-------------------------------------------------------------------------
-# opmap
+# ast_pipeline
 #-------------------------------------------------------------------------
 def ast_pipeline( tree, model, func ):
 
   print_simple_ast( tree ) # DEBUG
+
   tree = visitors.AnnotateWithObjects( model, func ).visit( tree )
   tree = visitors.RemoveModule       (             ).visit( tree )
   tree = visitors.SimplifyDecorator  (             ).visit( tree )
   tree = visitors.RemoveValueNext    (             ).visit( tree )
   tree = visitors.RemoveSelf         ( model       ).visit( tree )
-  #tree = visitors.AddTempSelf        ( model, func ).visit( tree )
+
+  print_simple_ast( tree ) # DEBUG
+
+  return tree
+
   # TODO:
   # ? remove index nodes (replace with integer?)
   # ? replace Subscript nodes with BitSlice if they reference a Bits
   # ? replace Subscript nodes with ArrayIndex if they reference a list
-  # - flatten signals so that s.out becomes out
   # - flatten port bundles
   # - flatten bitstructs
-  print_simple_ast( tree ) # DEBUG
 
+#-------------------------------------------------------------------------
+# TranslateBehavioralVerilog
+#-------------------------------------------------------------------------
+class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
+  def __init__( self ):
+    self.ident = 0
 
+  #-----------------------------------------------------------------------
+  # visit_FunctionDef
+  #-----------------------------------------------------------------------
+  def visit_FunctionDef(self, node):
 
+    # Don't bother translating undecorated functions
+    if not node.decorator_list:
+      return
 
+    # Combinational Block
+    if 'combinational' in node.decorator_list:
+      self.assign = '='
+      sensitivity = '*'
 
+    # Posedge Clock
+    elif 'posedge_clk' in node.decorator_list:
+      self.assign = '<='
+      sensitivity = 'posedge clk'
 
+    # Unsupported annotation
+    else:
+      raise Exception("Untranslatable block!")
 
+    body = '    '.join( [ self.visit(x) for x in node.body ] )
+
+    s = ('  // logic for {}()\n'
+         '  always @ ({}) begin\n'
+         '    {}'
+         '  end\n').format( node.name, sensitivity, body )
+
+    return s
+
+  #-----------------------------------------------------------------------
+  # visit_Assign
+  #-----------------------------------------------------------------------
+  def visit_Assign(self, node):
+
+    # TODO: implement multiple left hand targets?
+    assert len(node.targets) == 1
+    lhs = self.visit( node.targets[0] )
+    rhs = self.visit( node.value )
+
+    return '{} {} {};\n'.format( lhs, self.assign, rhs )
+
+  #-----------------------------------------------------------------------
+  # visit_AugAssign
+  #-----------------------------------------------------------------------
+  def visit_AugAssign(self, node):
+
+    lhs = self.visit( node.target )
+    rhs = self.visit( node.value )
+    op  = opmap[ type(node.op) ]
+
+    return '{0} {1} {0} {2} {3};\n'.format( lhs, self.assign, op, rhs )
+
+  #-----------------------------------------------------------------------
+  # visit_BinOp
+  #-----------------------------------------------------------------------
+  def visit_BinOp(self, node):
+
+    op  = opmap[ type(node.op) ]
+    return '({}{}{})'.format( node.left, op, node.right )
+
+  #-----------------------------------------------------------------------
+  # visit_BoolOp
+  #-----------------------------------------------------------------------
+  def visit_BoolOp(self, node):
+
+    op  = opmap[ type(node.op) ]
+    abc = op.join( node.values )
+    return '({})'.format( abc )
+
+  #-----------------------------------------------------------------------
+  # visit_UnaryOp
+  #-----------------------------------------------------------------------
+  def visit_UnaryOp(self, node):
+
+    op  = opmap[ type(node.op) ]
+    return '{}{}'.format( op, node.operand )
+
+  #-----------------------------------------------------------------------
+  # visit_Attribute
+  #-----------------------------------------------------------------------
+  def visit_Attribute(self, node):
+    return node.attr
+
+  #-----------------------------------------------------------------------
+  # visit_Name
+  #-----------------------------------------------------------------------
+  def visit_Name(self, node):
+    return node.id
+
+  #-----------------------------------------------------------------------
+  # visit_Num
+  #-----------------------------------------------------------------------
+  def visit_Num(self, node):
+    return node.n
 
 
 #-------------------------------------------------------------------------
@@ -156,3 +259,4 @@ opmap = {
     ast.And      : '&&',
     ast.Or       : '||',
 }
+

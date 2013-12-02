@@ -124,6 +124,26 @@ class SimplifyDecorator( ast.NodeTransformer ):
 
     return ast.copy_location( new_node, node )
 
+#-------------------------------------------------------------------------
+# GetRegsTempsArrays
+#-------------------------------------------------------------------------
+# Make the decorator contain text strings, not AST Trees
+class GetRegsTempsArrays( ast.NodeVisitor ):
+
+  def get( self, tree ):
+    self.store  = set()
+    self.visit( tree )
+    return self.store
+
+  def visit_Name( self, node ):
+    if isinstance( node.ctx, _ast.Store ):
+      self.store.add( node._object )
+
+  def visit_Attribute( self, node ):
+    if isinstance( node.ctx, _ast.Store ):
+      self.store.add( node._object )
+    self.generic_visit( node )
+
 #------------------------------------------------------------------------
 # PyObj
 #------------------------------------------------------------------------
