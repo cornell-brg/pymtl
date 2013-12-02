@@ -106,7 +106,8 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.RemoveModule       (             ).visit( tree )
   tree = visitors.SimplifyDecorator  (             ).visit( tree )
   tree = visitors.RemoveValueNext    (             ).visit( tree )
-  tree = visitors.AddTempSelf        ( model, func ).visit( tree )
+  tree = visitors.RemoveSelf         ( model       ).visit( tree )
+  #tree = visitors.AddTempSelf        ( model, func ).visit( tree )
   # TODO:
   # ? remove index nodes (replace with integer?)
   # ? replace Subscript nodes with BitSlice if they reference a Bits

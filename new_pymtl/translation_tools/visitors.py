@@ -43,12 +43,10 @@ class AnnotateWithObjects( ast.NodeTransformer ):
 
     # If the name is not in closed_vars, it is a local temporary
     if   node.id not in self.closed_vars:
-      new_node = Temp( id=node.id )
       new_obj  = None
 
     # If the name points to the model, this is a reference to self (or s)
     elif self.closed_vars[ node.id ] is self.model:
-      new_node = Self( id=node.id )
       new_obj  = PyObj( '', self.closed_vars[ node.id ] )
 
     # Otherwise, we have some other variable captured by the closure...
@@ -62,7 +60,7 @@ class AnnotateWithObjects( ast.NodeTransformer ):
     node._object = self.current_obj.inst if self.current_obj else None
 
     # Return the new_node
-    return ast.copy_location( new_node, node )
+    return node
 
 #-------------------------------------------------------------------------
 # RemoveValueNext
@@ -79,36 +77,20 @@ class RemoveValueNext( ast.NodeTransformer ):
 
     return node
 
-
 #-------------------------------------------------------------------------
-# AddTempSelf
+# RemoveSelf
 #-------------------------------------------------------------------------
-# Replace Name nodes with Self and Temp nodes if possible.
-class AddTempSelf( ast.NodeTransformer ):
+# Remove references to self.
+# TODO: make Attribute attached to self a Name node?
+class RemoveSelf( ast.NodeTransformer ):
 
-  def __init__( self, model, func ):
+  def __init__( self, model ):
     self.model       = model
-    self.func        = func
-    self.closed_vars = get_closure_dict( func )
-    self.current_obj = None
 
   def visit_Name( self, node ):
-
-    # If the name is not in closed_vars, it is a local temporary
-    if   node.id not in self.closed_vars:
-      new_node = Temp( id=node.id )
-
-    # If the name points to the model, this is a reference to self (or s)
-    elif self.closed_vars[ node.id ] is self.model:
-      new_node = Self( id=node.id )
-
-    # Otherwise, we have some other variable captured by the closure...
-    # TODO: should we allow this?
-    else:
-      new_node = node
-
-    # Return the new_node
-    return ast.copy_location( new_node, node )
+    if node._object == self.model:
+      return None
+    return node
 
 #-------------------------------------------------------------------------
 # RemoveModule
@@ -141,20 +123,6 @@ class SimplifyDecorator( ast.NodeTransformer ):
                                 body=node.body, decorator_list=[dec])
 
     return ast.copy_location( new_node, node )
-
-#------------------------------------------------------------------------
-# Self
-#------------------------------------------------------------------------
-# New AST Node for references to self. Based on Name node.
-class Self( _ast.Name ):
-  pass
-
-#------------------------------------------------------------------------
-# Temp
-#------------------------------------------------------------------------
-# New AST Node for local temporaries. Based on Name node.
-class Temp( _ast.Name ):
-  pass
 
 #------------------------------------------------------------------------
 # PyObj
