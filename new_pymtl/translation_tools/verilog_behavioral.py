@@ -6,6 +6,7 @@ import ast, _ast
 import collections
 import inspect
 import StringIO
+import textwrap
 
 from ..ast_helpers import get_method_ast, print_simple_ast
 
@@ -101,6 +102,12 @@ def translate_logic_blocks( model, o ):
 #-------------------------------------------------------------------------
 # ast_pipeline
 #-------------------------------------------------------------------------
+# TODO:
+# ? remove index nodes (replace with integer?)
+# ? replace Subscript nodes with BitSlice if they reference a Bits
+# ? replace Subscript nodes with ArrayIndex if they reference a list
+# - flatten port bundles
+# - flatten bitstructs
 def ast_pipeline( tree, model, func ):
 
   print_simple_ast( tree ) # DEBUG
@@ -115,20 +122,29 @@ def ast_pipeline( tree, model, func ):
 
   return tree
 
-  # TODO:
-  # ? remove index nodes (replace with integer?)
-  # ? replace Subscript nodes with BitSlice if they reference a Bits
-  # ? replace Subscript nodes with ArrayIndex if they reference a list
-  # - flatten port bundles
-  # - flatten bitstructs
-
 #-------------------------------------------------------------------------
 # TranslateBehavioralVerilog
 #-------------------------------------------------------------------------
+def fmt( string, indent ):
+  y  = textwrap.dedent( string )
+  yl = y.split('\n')
+  z  = ''
+  for i, x in enumerate( yl ):
+    if   x =='{}': z +=          x
+    elif x       : z += indent + x + '\n'
+  return z
+
 class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
   def __init__( self ):
-    self.ident = 0
+    self.indent = '  '
+    self.elseif = False
+
+  def fmt_body( self, body ):
+    self.indent += '  '
+    text = ''.join((self.visit(x) for x in body))
+    self.indent  = self.indent[:-2]
+    return text
 
   #-----------------------------------------------------------------------
   # visit_FunctionDef
@@ -153,14 +169,22 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     else:
       raise Exception("Untranslatable block!")
 
-    body = '    '.join( [ self.visit(x) for x in node.body ] )
+    # Visit the body of the function
+    body = self.fmt_body( node.body )
 
-    s = ('  // logic for {}()\n'
-         '  always @ ({}) begin\n'
-         '    {}'
-         '  end\n').format( node.name, sensitivity, body )
+    return fmt("""
+    // logic for {}()
+    always @ ({}) begin
+    {}
+    end
+    """, self.indent ).format( node.name, sensitivity, body )
 
-    return s
+  #-----------------------------------------------------------------------
+  # visit_Expr
+  #-----------------------------------------------------------------------
+  def visit_Expr(self, node):
+    raise Exception("TODO: visit_Expr not implemented")
+    return '{}{};\n'.format( self.indent, self.visit(node.value) )
 
   #-----------------------------------------------------------------------
   # visit_Assign
@@ -172,7 +196,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     lhs = self.visit( node.targets[0] )
     rhs = self.visit( node.value )
 
-    return '{} {} {};\n'.format( lhs, self.assign, rhs )
+    return '{}{} {} {};\n'.format( self.indent, lhs, self.assign, rhs )
 
   #-----------------------------------------------------------------------
   # visit_AugAssign
@@ -183,24 +207,48 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     rhs = self.visit( node.value )
     op  = opmap[ type(node.op) ]
 
-    return '{0} {1} {0} {2} {3};\n'.format( lhs, self.assign, op, rhs )
+    return '{4}{0} {1} {0} {2} {3};'.format( lhs, self.assign, op, rhs,
+                                             self.indent )
+
+  #-----------------------------------------------------------------------
+  # visit_If
+  #-----------------------------------------------------------------------
+  def visit_If(self, node):
+
+    # Visit the body of the function
+    cond   = self.visit( node.test )
+    body   = self.fmt_body( node.body   )
+    orelse = self.fmt_body( node.orelse )
+
+    x = fmt("""
+    if ({}) begin
+    {}
+    end
+    else begin
+    {}
+    end
+    """, self.indent ).format( cond, body, orelse )
+
+    return x
 
   #-----------------------------------------------------------------------
   # visit_BinOp
   #-----------------------------------------------------------------------
   def visit_BinOp(self, node):
 
-    op  = opmap[ type(node.op) ]
-    return '({}{}{})'.format( node.left, op, node.right )
+    left  = self.visit( node.left )
+    op    = opmap[ type(node.op) ]
+    right = self.visit( node.left )
+    return '({}{}{})'.format( left, op, right )
 
   #-----------------------------------------------------------------------
   # visit_BoolOp
   #-----------------------------------------------------------------------
   def visit_BoolOp(self, node):
 
-    op  = opmap[ type(node.op) ]
-    abc = op.join( node.values )
-    return '({})'.format( abc )
+    op     = opmap[ type(node.op) ]
+    values = op.join( [self.visit(x) for x in node.values] )
+    return '({})'.format( values )
 
   #-----------------------------------------------------------------------
   # visit_UnaryOp
@@ -208,7 +256,29 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   def visit_UnaryOp(self, node):
 
     op  = opmap[ type(node.op) ]
-    return '{}{}'.format( op, node.operand )
+    return '{}{}'.format( op, self.visit(node.operand) )
+
+  #-----------------------------------------------------------------------
+  # visit_IfExp
+  #-----------------------------------------------------------------------
+  # Ternary operators (w = x if y else z).
+  def visit_IfExp(self, node):
+
+    test  = self.visit( node.test )
+    true  = self.visit( node.body )
+    false = self.visit( node.orelse )
+
+    return '{} ? {} : {}'.format( test, true, false )
+
+  #-----------------------------------------------------------------------
+  # visit_Compare
+  #-----------------------------------------------------------------------
+  def visit_Compare(self, node):
+    assert len(node.ops) == 1
+    left  = self.visit( node.left )
+    op    = opmap[ type(node.op) ]
+    right = self.visit( node.comparators[0] )
+    return '({} {} {})'.format( left, op, right )
 
   #-----------------------------------------------------------------------
   # visit_Attribute
