@@ -131,8 +131,10 @@ def fmt( string, indent ):
   yl = y.split('\n')
   z  = ''
   for i, x in enumerate( yl ):
-    if   x =='{}': z +=          x
-    elif x       : z += indent + x + '\n'
+    # TODO: kind of hacky
+    skip = x.startswith('{') and x.endswith('}')
+    if   skip : z +=          x
+    elif x    : z += indent + x + '\n'
   return z
 
 class TranslateBehavioralVerilog( ast.NodeVisitor ):
@@ -240,19 +242,19 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     assert isinstance( node.iter,   _ast.Slice )
     assert isinstance( node.target, _ast.Name  )
 
-    i     = node.target.id
-    lower = node.iter.lower
-    upper = node.iter.upper
-    step  = node.iter.step
+    i     = self.visit( node.target )
+    lower = self.visit( node.iter.lower )
+    upper = self.visit( node.iter.upper )
+    step  = self.visit( node.iter.step  )
 
     body  = self.fmt_body( node.body )
 
     x = fmt("""
-    for ({0}={1}; {0}<{2}; {0}={0}+{3})
+    for ({0}={1}; {0} < {2}; {0}={0}+{3})
     begin
     {4}
     end
-    """, self.indent ).format( id, lower, upper, step, body )
+    """, self.indent ).format( i, lower, upper, step, body )
 
     return x
 
@@ -322,6 +324,20 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_Num(self, node):
     return node.n
+
+  #-----------------------------------------------------------------------
+  # visit_Subscript
+  #-----------------------------------------------------------------------
+  def visit_Subscript(self, node):
+    signal = self.visit( node.value )
+    index  = self.visit( node.slice )
+    return '{}[{}]'.format( signal, index )
+
+  #-----------------------------------------------------------------------
+  # visit_Index
+  #-----------------------------------------------------------------------
+  def visit_Index(self, node):
+    return self.visit( node.value )
 
 
 #-------------------------------------------------------------------------

@@ -62,6 +62,26 @@ class AnnotateWithObjects( ast.NodeTransformer ):
     # Return the new_node
     return node
 
+  def visit_Subscript( self, node ):
+
+    # Visit the object being sliced
+    new_value = self.visit( node.value )
+
+    # Visit the index of the slice; stash and restore the current_obj
+    stash, self.current_obj = self.current_obj, None
+    new_slice = self.visit( node.slice )
+    self.current_obj = stash
+
+    # Update the current_obj to contain the obj returned by subscript
+    # TODO: check that type of all elements in item are identical
+    # TODO: won't work for lists that are initially empty
+    # TODO: what about lists that initially contain None?
+    if self.current_obj:
+      self.current_obj.update( '[]', self.current_obj.inst[0] )
+    node._object = self.current_obj.inst if self.current_obj else None
+
+    return node
+
 #-------------------------------------------------------------------------
 # RemoveValueNext
 #-------------------------------------------------------------------------
