@@ -125,6 +125,39 @@ class SimplifyDecorator( ast.NodeTransformer ):
     return ast.copy_location( new_node, node )
 
 #-------------------------------------------------------------------------
+# ThreeExprLoops
+#-------------------------------------------------------------------------
+# Replace calls to range()/xrange() in a for loop with a Slice object
+# describing the bounds (upper/lower/step) of the iteration.
+class ThreeExprLoops( ast.NodeTransformer ):
+
+  def visit_For( self, node ):
+
+    assert isinstance( node.iter,      _ast.Call ) # TODO: allow iterables
+    assert isinstance( node.iter.func, _ast.Name )
+    call = node.iter
+    assert call.func.id in ['range','xrange']
+
+    if   len( call.args ) == 1:
+      start = _ast.Num( n=0 )
+      stop  = call.args[0]
+      step  = _ast.Num( n=1 )
+    elif len( call.args ) == 2:
+      start = call.args[0]
+      stop  = call.args[1]
+      step  = _ast.Num( n=1 ) # TODO: should be an expression
+    elif len( call.args ) == 3:
+      start = call.args[0]
+      stop  = call.args[1]
+      step  = call.args[2]
+    else:
+      raise Exception("Invalid # of arguments to range function!")
+
+    node.iter = _ast.Slice( lower=start, upper=stop, step=step )
+
+    return node
+
+#-------------------------------------------------------------------------
 # GetRegsTempsArrays
 #-------------------------------------------------------------------------
 # Make the decorator contain text strings, not AST Trees
@@ -135,14 +168,9 @@ class GetRegsTempsArrays( ast.NodeVisitor ):
     self.visit( tree )
     return self.store
 
-  def visit_Name( self, node ):
-    if isinstance( node.ctx, _ast.Store ):
-      self.store.add( node._object )
-
-  def visit_Attribute( self, node ):
-    if isinstance( node.ctx, _ast.Store ):
-      self.store.add( node._object )
-    self.generic_visit( node )
+  def visit_Assign( self, node ):
+    assert len(node.targets) == 1
+    self.store.add( node.targets[0]._object )
 
 #------------------------------------------------------------------------
 # PyObj

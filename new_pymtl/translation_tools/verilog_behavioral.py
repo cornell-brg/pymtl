@@ -117,6 +117,7 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.SimplifyDecorator  (             ).visit( tree )
   tree = visitors.RemoveValueNext    (             ).visit( tree )
   tree = visitors.RemoveSelf         ( model       ).visit( tree )
+  tree = visitors.ThreeExprLoops     (             ).visit( tree )
 
   print_simple_ast( tree ) # DEBUG
 
@@ -228,6 +229,30 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     {}
     end
     """, self.indent ).format( cond, body, orelse )
+
+    return x
+
+  #-----------------------------------------------------------------------
+  # visit_For
+  #-----------------------------------------------------------------------
+  def visit_For(self, node):
+
+    assert isinstance( node.iter,   _ast.Slice )
+    assert isinstance( node.target, _ast.Name  )
+
+    i     = node.target.id
+    lower = node.iter.lower
+    upper = node.iter.upper
+    step  = node.iter.step
+
+    body  = self.fmt_body( node.body )
+
+    x = fmt("""
+    for ({0}={1}; {0}<{2}; {0}={0}+{3})
+    begin
+    {4}
+    end
+    """, self.indent ).format( id, lower, upper, step, body )
 
     return x
 
