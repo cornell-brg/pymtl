@@ -72,12 +72,13 @@ class AnnotateWithObjects( ast.NodeTransformer ):
     new_slice = self.visit( node.slice )
     self.current_obj = stash
 
-    # Update the current_obj to contain the obj returned by subscript
+    # Update the current_obj
     # TODO: check that type of all elements in item are identical
     # TODO: won't work for lists that are initially empty
     # TODO: what about lists that initially contain None?
-    if self.current_obj:
-      self.current_obj.update( '[]', self.current_obj.inst[0] )
+    # TODO: do we want the array, or do we want element 0 of the array...
+    #if self.current_obj:
+    #  self.current_obj.update( '[]', self.current_obj.inst[0] )
     node._object = self.current_obj.inst if self.current_obj else None
 
     return node
@@ -178,19 +179,43 @@ class ThreeExprLoops( ast.NodeTransformer ):
     return node
 
 #-------------------------------------------------------------------------
-# GetRegsTempsArrays
+# GetRegsIntsTempsArrays
 #-------------------------------------------------------------------------
-# Make the decorator contain text strings, not AST Trees
-class GetRegsTempsArrays( ast.NodeVisitor ):
+class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
   def get( self, tree ):
-    self.store  = set()
+    self.store   = set()
+    self.loopvar = set()
+    self.params  = set()
     self.visit( tree )
-    return self.store
+    return self.store, self.loopvar, self.params
+
+  def visit_Attribute( self, node ):
+    if isinstance( node._object, int ):
+      self.params.add( (node.attr, node._object) )
+    #self.generic_visit( node )
+
+  def visit_Name( self, node ):
+    if isinstance( node._object, int ):
+      self.params.add( (node.id, node._object) )
+    #self.generic_visit( node )
 
   def visit_Assign( self, node ):
     assert len(node.targets) == 1
-    self.store.add( node.targets[0]._object )
+    if not isinstance( node.targets[0]._object, list ):
+      self.store.add( node.targets[0]._object )
+    self.generic_visit( node )
+
+  def visit_For( self, node ):
+    assert isinstance( node.iter,   _ast.Slice )
+    assert isinstance( node.target, _ast.Name  )
+
+    self.loopvar.add( node.target.id )
+
+    self.generic_visit( node )
+
+  def visit_Subscript( self, node ):
+    print "xxxx", node.value.attr, node._object, node._object
 
 #------------------------------------------------------------------------
 # PyObj
@@ -206,3 +231,4 @@ class PyObj( object ):
     return getattr( self.inst, name )
   def __repr__( self ):
     return "PyObj( name={} inst={} )".format( self.name, type(self.inst) )
+

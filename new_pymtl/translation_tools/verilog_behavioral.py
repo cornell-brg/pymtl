@@ -28,16 +28,22 @@ def translate_logic_blocks( model, o ):
 
   # TODO: remove regs logic, move to own visitor that visits _ast.Store
   #       nodes!
-  regs  = set()
-  temps = []
-  array = []
+  regs   = set()
+  ints   = set()
+  params = set()
+  #temps = []
+  #array = set()
 
   for func in blocks:
 
     # Type Check the AST
     tree, src  = get_method_ast( func )
     new_tree   = ast_pipeline( tree, model, func )
-    regs      |= visitors.GetRegsTempsArrays().get( new_tree )
+    r,i,p      = visitors.GetRegsIntsParamsTempsArrays().get( new_tree )
+
+    regs      |= r
+    ints      |= i
+    params    |= p
 
 
     # Store the PyMTL source inline with the behavioral code
@@ -62,7 +68,18 @@ def translate_logic_blocks( model, o ):
       print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1,
           signal_to_str( signal, None, model ))
 
-  print >> o
+  # Print the parameter declarations
+  if params:
+    print   >> o, '  // param declarations'
+    for param, value in params:
+      print >> o, '  parameter {} = {};'.format( param, value )
+
+  # Print the int declarations
+  if ints:
+    print   >> o, '  // loop variable declarations'
+    for signal in ints:
+      print >> o, '  integer {};'.format( signal )
+
 
   ## Print the temporary declarations
   ## TODO: this doesn't really work, need to set type of temp
