@@ -320,7 +320,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   def visit_Compare(self, node):
     assert len(node.ops) == 1
     left  = self.visit( node.left )
-    op    = opmap[ type(node.op) ]
+    op    = opmap[ type(node.ops[0]) ]
     right = self.visit( node.comparators[0] )
     return '({} {} {})'.format( left, op, right )
 
@@ -355,6 +355,12 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_Index(self, node):
     return self.visit( node.value )
+
+  #-----------------------------------------------------------------------
+  # visit_Assert
+  #-----------------------------------------------------------------------
+  def visit_Assert(self, node):
+    return '{}// assert {}\n'.format( self.indent, self.visit(node.test) )
 
 
 #-------------------------------------------------------------------------
