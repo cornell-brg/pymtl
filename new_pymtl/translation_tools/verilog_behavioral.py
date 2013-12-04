@@ -92,7 +92,7 @@ def translate_logic_blocks( model, o ):
           print >> o, '  assign {0} = {1}[{2:3}];'.format(
               signal_to_str( port, None, model ), name, i )
       # Input Port
-      if isinstance( ports[0], InPort ):
+      elif isinstance( ports[0], InPort ):
         print >> o, '  wire   [{:4}:0] {}[0:{}];'.format(
             ports[0].nbits-1, name, len(ports)-1)
         for i, port in enumerate(ports):
