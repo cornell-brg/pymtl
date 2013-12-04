@@ -11,6 +11,7 @@ from ..ast_helpers import get_closure_dict
 # AnnotateWithObjects
 #-------------------------------------------------------------------------
 # Annotates AST Nodes with the live Python objects they reference.
+# TODO: store objects in PyObj wrapper, or not?
 class AnnotateWithObjects( ast.NodeTransformer ):
 
   def __init__( self, model, func ):
@@ -187,8 +188,9 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     self.store   = set()
     self.loopvar = set()
     self.params  = set()
+    self.arrays  = set()
     self.visit( tree )
-    return self.store, self.loopvar, self.params
+    return self.store, self.loopvar, self.params, self.arrays
 
   def visit_Attribute( self, node ):
     if isinstance( node._object, int ):
@@ -215,7 +217,13 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     self.generic_visit( node )
 
   def visit_Subscript( self, node ):
-    print "xxxx", node.value.attr, node._object, node._object
+    if isinstance( node._object, list ):
+      if   isinstance( node.value, _ast.Attribute ):
+        name = node.value.attr
+      elif isinstance( node.value, _ast.Name ):
+        name = node.value.id
+      self.arrays.add( (name, tuple( node._object )) )
+    # TODO: add writes to subscripts to store list
 
 #------------------------------------------------------------------------
 # PyObj

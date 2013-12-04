@@ -9,6 +9,7 @@ import StringIO
 import textwrap
 
 from ..ast_helpers import get_method_ast, print_simple_ast
+from ..signals     import InPort, OutPort
 
 # TODO: HACKY
 from verilog_structural import signal_to_str
@@ -31,20 +32,20 @@ def translate_logic_blocks( model, o ):
   regs   = set()
   ints   = set()
   params = set()
+  arrays = set()
   #temps = []
-  #array = set()
 
   for func in blocks:
 
     # Type Check the AST
     tree, src  = get_method_ast( func )
     new_tree   = ast_pipeline( tree, model, func )
-    r,i,p      = visitors.GetRegsIntsParamsTempsArrays().get( new_tree )
+    r,i,p,a    = visitors.GetRegsIntsParamsTempsArrays().get( new_tree )
 
     regs      |= r
     ints      |= i
     params    |= p
-
+    arrays    |= a
 
     # Store the PyMTL source inline with the behavioral code
     block_code = ("  // PYMTL SOURCE:\n"
@@ -58,8 +59,6 @@ def translate_logic_blocks( model, o ):
 
     # TODO: check for conflicts, ensure that signals are not written in
     #       two different behavioral blocks!
-
-  print regs
 
   # Print the reg declarations
   if regs:
@@ -79,6 +78,23 @@ def translate_logic_blocks( model, o ):
     print   >> o, '  // loop variable declarations'
     for signal in ints:
       print >> o, '  integer {};'.format( signal )
+
+  # Print the array declarations
+  if arrays:
+    print   >> o, '  // array declarations'
+    for name, ports in arrays:
+      print >> o, '  reg    [{:4}:0] {}[0:{}];'.format(
+          ports[0].nbits-1, name, len(ports)-1)
+      # TODO: check if input or output port
+      if isinstance( ports[0], OutPort ):
+        for i, port in enumerate(ports):
+          print >> o, '  assign {0} = {1}[{2:3}];'.format(
+              signal_to_str( port, None, model ), name, i )
+      else:
+        for i, port in enumerate(ports):
+          print >> o, '  assign {1}[{2:3}] = {0};'.format(
+              signal_to_str( port, None, model ), name, i )
+
 
 
   ## Print the temporary declarations
