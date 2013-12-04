@@ -65,8 +65,11 @@ def translate_logic_blocks( model, o ):
   if regs:
     print   >> o, '  // register declarations'
     for signal in regs:
-      print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1,
-          signal_to_str( signal, None, model ))
+      if isinstance( signal, tuple ):
+        print >> o, '  integer {};'.format( signal[0] );
+      else:
+        print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1,
+            signal_to_str( signal, None, model ))
 
   # Print the parameter declarations
   if params:

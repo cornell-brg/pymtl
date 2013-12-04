@@ -206,6 +206,9 @@ class InferTemporaryTypes( ast.NodeTransformer):
         obj.name = node.targets[0].id
         node.targets[0]._object = obj
 
+      elif isinstance( node.value, ast.Num ):
+        node.targets[0]._object = (node.targets[0].id, int( node.value.n ))
+
       else:
         raise Exception("Cannot infer type from {} node!"
                         .format( node.value ))
