@@ -92,13 +92,21 @@ def translate_logic_blocks( model, o ):
           print >> o, '  assign {0} = {1}[{2:3}];'.format(
               signal_to_str( port, None, model ), name, i )
       # Input Port
-      else:
+      if isinstance( ports[0], InPort ):
         print >> o, '  wire   [{:4}:0] {}[0:{}];'.format(
             ports[0].nbits-1, name, len(ports)-1)
         for i, port in enumerate(ports):
           print >> o, '  assign {1}[{2:3}] = {0};'.format(
               signal_to_str( port, None, model ), name, i )
-
+      # TODO: for Wires, we should really be sensing if
+      #       they are written or not to determine the
+      #       array declaration.
+      else:
+        print >> o, '  reg    [{:4}:0] {}[0:{}];'.format(
+            ports[0].nbits-1, name, len(ports)-1)
+        for i, port in enumerate(ports):
+          print >> o, '  assign {0} = {1}[{2:3}];'.format(
+              signal_to_str( port, None, model ), name, i )
 
 
   ## Print the temporary declarations
