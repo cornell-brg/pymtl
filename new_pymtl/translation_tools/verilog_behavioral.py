@@ -39,6 +39,7 @@ def translate_logic_blocks( model, o ):
 
     # Type Check the AST
     tree, src  = get_method_ast( func )
+    print src
     new_tree   = ast_pipeline( tree, model, func )
     r,i,p,a    = visitors.GetRegsIntsParamsTempsArrays().get( new_tree )
 
@@ -301,7 +302,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     left  = self.visit( node.left )
     op    = opmap[ type(node.op) ]
-    right = self.visit( node.left )
+    right = self.visit( node.right )
     return '({}{}{})'.format( left, op, right )
 
   #-----------------------------------------------------------------------
