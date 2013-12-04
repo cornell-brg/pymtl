@@ -70,18 +70,21 @@ def translate_logic_blocks( model, o ):
       else:
         print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1,
             signal_to_str( signal, None, model ))
+    print  >> o
 
   # Print the parameter declarations
   if params:
     print   >> o, '  // param declarations'
     for param, value in params:
       print >> o, '  parameter {} = {};'.format( param, value )
+    print  >> o
 
   # Print the int declarations
   if ints:
     print   >> o, '  // loop variable declarations'
     for signal in ints:
       print >> o, '  integer {};'.format( signal )
+    print  >> o
 
   # Print the array declarations
   if arrays:
@@ -110,6 +113,7 @@ def translate_logic_blocks( model, o ):
         for i, port in enumerate(ports):
           print >> o, '  assign {0} = {1}[{2:3}];'.format(
               signal_to_str( port, None, model ), name, i )
+    print  >> o
 
 
   ## Print the temporary declarations
@@ -259,8 +263,8 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     rhs = self.visit( node.value )
     op  = opmap[ type(node.op) ]
 
-    return '{4}{0} {1} {0} {2} {3};'.format( lhs, self.assign, op, rhs,
-                                             self.indent )
+    return '{4}{0} {1} {0} {2} {3};\n'.format( lhs, self.assign, op, rhs,
+                                               self.indent )
 
   #-----------------------------------------------------------------------
   # visit_If
@@ -395,6 +399,27 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     assert not node.step
     assert     node.lower
     assert     node.upper
+
+    # Special handling of variable part-selects
+    # TODO: make this more resilient?
+    # http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-884-complex-digital-systems-spring-2005/related-resources/verilog_2k1paper.pdf
+    if isinstance( node.upper, _ast.BinOp ):
+      assert isinstance( node.upper.op, (_ast.Add, _ast.Sub) )
+
+      lower   = self.visit( node.lower      )
+      left_op = self.visit( node.upper.left )
+      assert lower == left_op
+
+      # Widths for part selects can't be 0 (ie. select a single bit).
+      # This is a hacky work around.
+      if node.upper.right._object == 1:
+        return '{}'.format( lower )
+
+      op      = opmap[type(node.upper.op)]
+      upper   =  self.visit( node.upper.right )
+      return '{} {}: ({})-1'.format( lower, op, upper )
+
+    # Normal slices
     lower = self.visit( node.lower )
     upper = self.visit( node.upper )
     return '({})-1:{}'.format( upper, lower )
