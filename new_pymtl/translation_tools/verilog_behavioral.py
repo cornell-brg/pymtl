@@ -83,14 +83,17 @@ def translate_logic_blocks( model, o ):
   if arrays:
     print   >> o, '  // array declarations'
     for name, ports in arrays:
-      print >> o, '  reg    [{:4}:0] {}[0:{}];'.format(
-          ports[0].nbits-1, name, len(ports)-1)
-      # TODO: check if input or output port
+      # Output Port
       if isinstance( ports[0], OutPort ):
+        print >> o, '  reg    [{:4}:0] {}[0:{}];'.format(
+            ports[0].nbits-1, name, len(ports)-1)
         for i, port in enumerate(ports):
           print >> o, '  assign {0} = {1}[{2:3}];'.format(
               signal_to_str( port, None, model ), name, i )
+      # Input Port
       else:
+        print >> o, '  wire   [{:4}:0] {}[0:{}];'.format(
+            ports[0].nbits-1, name, len(ports)-1)
         for i, port in enumerate(ports):
           print >> o, '  assign {1}[{2:3}] = {0};'.format(
               signal_to_str( port, None, model ), name, i )
