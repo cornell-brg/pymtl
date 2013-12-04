@@ -180,8 +180,42 @@ class ThreeExprLoops( ast.NodeTransformer ):
     return node
 
 #-------------------------------------------------------------------------
+# InferTemporaryTypes
+#-------------------------------------------------------------------------
+import copy
+class InferTemporaryTypes( ast.NodeTransformer):
+
+  def visit_Assign( self, node ):
+    assert len(node.targets) == 1
+
+    # The LHS doesn't have a type, we need to infer it
+    if node.targets[0]._object == None:
+
+      # The LHS should be a Name node!
+      assert isinstance(node.targets[0], _ast.Name)
+
+      # Currently only support Name/Attributes on the RHS
+      # Copy the object returned by the RHS, set the name appropriately
+      if   isinstance( node.value, ast.Name ):
+        obj = copy.copy( node.value._object )
+        obj.name = node.targets[0].id
+        node.targets[0]._object = obj
+
+      elif isinstance( node.value, ast.Attribute ):
+        obj = copy.copy( node.value._object )
+        obj.name = node.targets[0].id
+        node.targets[0]._object = obj
+
+      else:
+        raise Exception("Cannot infer type from {} node!"
+                        .format( node.value ))
+
+    return node
+
+#-------------------------------------------------------------------------
 # GetRegsIntsTempsArrays
 #-------------------------------------------------------------------------
+# TODO: for loop temporaries (ComplexBitSplit)
 class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
   def get( self, tree ):

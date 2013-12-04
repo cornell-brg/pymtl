@@ -163,6 +163,7 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.RemoveValueNext    (             ).visit( tree )
   tree = visitors.RemoveSelf         ( model       ).visit( tree )
   tree = visitors.ThreeExprLoops     (             ).visit( tree )
+  tree = visitors.InferTemporaryTypes(             ).visit( tree )
 
   print_simple_ast( tree ) # DEBUG
 

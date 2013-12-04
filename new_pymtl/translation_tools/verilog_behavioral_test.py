@@ -96,6 +96,8 @@ def test_ValueWriteCheck():
   setup_sim( combinational.ValueWriteCheck( 16 ) )
 def test_SliceWriteCheck():
   setup_sim( combinational.SliceWriteCheck( 16 ) )
+import pytest
+@pytest.mark.xfail
 def test_SliceTempWriteCheck():
   setup_sim( combinational.SliceTempWriteCheck( 16 ) )
 def test_MultipleWrites():
