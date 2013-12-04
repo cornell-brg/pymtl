@@ -376,6 +376,17 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     return self.visit( node.value )
 
   #-----------------------------------------------------------------------
+  # visit_Slice
+  #-----------------------------------------------------------------------
+  def visit_Slice(self, node):
+    assert not node.step
+    assert     node.lower
+    assert     node.upper
+    lower = self.visit( node.lower )
+    upper = self.visit( node.upper )
+    return '({})-1:{}'.format( upper, lower )
+
+  #-----------------------------------------------------------------------
   # visit_Assert
   #-----------------------------------------------------------------------
   def visit_Assert(self, node):
