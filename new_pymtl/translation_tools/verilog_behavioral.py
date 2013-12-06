@@ -19,13 +19,13 @@ import visitors
 #-------------------------------------------------------------------------
 # translate_logic_blocks
 #-------------------------------------------------------------------------
-def translate_logic_blocks( model, o ):
+def translate_logic_blocks( model ):
 
   blocks = ( model.get_posedge_clk_blocks()
            + model.get_combinational_blocks()
            + model.get_tick_blocks() )
 
-  behavioral_code = StringIO.StringIO()
+  code  = ''
 
   # TODO: remove regs logic, move to own visitor that visits _ast.Store
   #       nodes!
@@ -39,7 +39,6 @@ def translate_logic_blocks( model, o ):
 
     # Type Check the AST
     tree, src  = get_method_ast( func )
-    print src
     new_tree   = ast_pipeline( tree, model, func )
     r,i,p,a    = visitors.GetRegsIntsParamsTempsArrays().get( new_tree )
 
@@ -56,100 +55,12 @@ def translate_logic_blocks( model, o ):
     visitor     = TranslateBehavioralVerilog()
     block_code += visitor.visit( new_tree )
 
-    print >> behavioral_code, block_code
+    code += block_code + '\n'
 
     # TODO: check for conflicts, ensure that signals are not written in
     #       two different behavioral blocks!
 
-  # Print the reg declarations
-  if regs:
-    print   >> o, '  // register declarations'
-    for signal in regs:
-      if isinstance( signal, tuple ):
-        print >> o, '  integer {};'.format( signal[0] );
-      else:
-        print >> o, '  reg    [{:4}:0] {};'.format( signal.nbits-1,
-            signal_to_str( signal, None, model ))
-    print  >> o
-
-  # Print the parameter declarations
-  if params:
-    print   >> o, '  // param declarations'
-    for param, value in params:
-      print >> o, '  parameter {} = {};'.format( param, value )
-    print  >> o
-
-  # Print the int declarations
-  if ints:
-    print   >> o, '  // loop variable declarations'
-    for signal in ints:
-      print >> o, '  integer {};'.format( signal )
-    print  >> o
-
-  # Print the array declarations
-  if arrays:
-    print   >> o, '  // array declarations'
-    for name, ports in arrays:
-      # Output Port
-      if isinstance( ports[0], OutPort ):
-        print >> o, '  reg    [{:4}:0] {}[0:{}];'.format(
-            ports[0].nbits-1, name, len(ports)-1)
-        for i, port in enumerate(ports):
-          print >> o, '  assign {0} = {1}[{2:3}];'.format(
-              signal_to_str( port, None, model ), name, i )
-      # Input Port
-      elif isinstance( ports[0], InPort ):
-        print >> o, '  wire   [{:4}:0] {}[0:{}];'.format(
-            ports[0].nbits-1, name, len(ports)-1)
-        for i, port in enumerate(ports):
-          print >> o, '  assign {1}[{2:3}] = {0};'.format(
-              signal_to_str( port, None, model ), name, i )
-      # TODO: for Wires, we should really be sensing if
-      #       they are written or not to determine the
-      #       array declaration.
-      else:
-        print >> o, '  reg    [{:4}:0] {}[0:{}];'.format(
-            ports[0].nbits-1, name, len(ports)-1)
-        for i, port in enumerate(ports):
-          print >> o, '  assign {0} = {1}[{2:3}];'.format(
-              signal_to_str( port, None, model ), name, i )
-    print  >> o
-
-
-  ## Print the temporary declarations
-  ## TODO: this doesn't really work, need to set type of temp
-  #if temps:
-  #  print   >> o, '  // temporary declarations'
-  #  for signal in temps:
-  #    print >> o, '  reg {};'.format( signal )
-
-  ## TODO: clean this up and move it somewhere else! Ugly!
-  #print >> o
-  #if array:
-  #  print   >> o, '  // temporary arrays'
-  #  for x in array:
-  #    # declare the array
-  #    nports = len( x )
-  #    nbits  = x[0].nbits
-  #    name   = x[0].name.split('[')[0]
-  #    if   isinstance( x[0], InPort  ):
-  #      print   >> o, '  wire   [{:4}:0] {}[0:{}];'.format( nbits-1, name, nports-1 )
-  #      for i in range( nports ):
-  #        print >> o, '  assign {0}[{1:3}] = {0}${1:03d};'.format( name, i )
-  #    elif isinstance( x[0], OutPort ):
-  #      print   >> o, '  reg    [{:4}:0] {}[0:{}];'.format( nbits-1, name, nports-1 )
-  #      for i in range( nports ):
-  #        print >> o, '  assign {0}${1:03d} = {0}[{1:3}];'.format( name, i )
-  #    elif isinstance( x[0], Wire ):
-  #      print   >> o, '  reg    [{:4}:0] {}[0:{}];'.format( nbits-1, name, nports-1 )
-  #    else:
-  #      raise Exception("Untranslatable array item!")
-
-  ## Print the temporary declarations
-
-  # Print the behavioral block code
-  print >> o
-  print >> o, behavioral_code.getvalue()
+  return code, (regs, ints, params, arrays)
 
 #-------------------------------------------------------------------------
 # ast_pipeline

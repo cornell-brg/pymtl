@@ -14,23 +14,25 @@ from ..signals import InPort, OutPort, Constant
 #-------------------------------------------------------------------------
 # Generate Verilog source for port declarations.
 def port_declarations( model, o ):
-  if not model.get_ports(): return
+  if not model.get_ports(): return ''
   port_list = [ port_decl( x ) for x in model.get_ports() ]
-  print >> o, start_ports
-  print >> o, port_delim.join( port_list )
-  print >> o, end_ports
-  print >> o
+  s  = start_ports + endl
+  s += port_delim.join( port_list ) + endl
+  s += end_ports + endl
+  s += endl
+  return s
 
 #------------------------------------------------------------------------
 # wire_declarations
 #-------------------------------------------------------------------------
 # Generate Verilog source for wire declarations.
 def wire_declarations( model, o ):
-  if not model.get_wires(): return
+  if not model.get_wires(): return ''
   wires = [ wire_decl( x ) for x in model.get_wires() ]
-  print >> o, '  // wire declarations'
-  print >> o, wire_delim.join( wires ) + wire_delim
-  print >> o
+  s  = '  // wire declarations' + endl
+  s += wire_delim.join( wires ) + wire_delim + endl
+  s += endl
+  return s
 
 #-------------------------------------------------------------------------
 # submodel_instances
@@ -38,8 +40,9 @@ def wire_declarations( model, o ):
 # Generate Verilog source for submodel instances.
 def submodel_instances( model, o ):
 
-  if not model.get_submodules(): return
+  if not model.get_submodules(): return ''
 
+  s = ''
   for submodel in model.get_submodules():
 
     # Create strings for port connections
@@ -54,20 +57,22 @@ def submodel_instances( model, o ):
 
     connections = pretty_align( connections, '(' )
     # Print the submodule instantiation
-    print >> o, '  // {} temporaries'.format( submodel_name )
-    print >> o, wire_delim.join( temporaries ) + wire_delim
-    print >> o, instance.format( submodel.class_name, submodel_name )
-    print >> o, tab + start_ports
-    print >> o, port_delim.join( connections )
-    print >> o, tab + end_ports
-    print >> o
+    s += '  // {} temporaries'.format( submodel_name ) + endl
+    s += wire_delim.join( temporaries ) + wire_delim + endl
+    s += instance.format( submodel.class_name, submodel_name ) + endl
+    s += tab + start_ports + endl
+    s += port_delim.join( connections ) + endl
+    s += tab + end_ports + endl
+    s += endl
+
+  return s
 
 #-------------------------------------------------------------------------
 # signal_assignments
 #-------------------------------------------------------------------------
 # Generate Verilog source for signal connections.
 def signal_assignments( model, o ):
-  if not model.get_connections(): return
+  if not model.get_connections(): return ''
 
   # Create all the assignment statements
   assignment_list = []
@@ -78,9 +83,11 @@ def signal_assignments( model, o ):
 
   assignment_list = pretty_align( assignment_list, '=' )
   # Print them in alphabetically sorted order (prettier)
-  print >> o, '  // signal connections'
-  print >> o, endl.join( sorted( assignment_list ) )
-  print >> o
+  s  = '  // signal connections' + endl
+  s += endl.join( sorted( assignment_list ) )
+  s += endl
+
+  return s
 
 #------------------------------------------------------------------------
 # verilog
@@ -182,3 +189,66 @@ def signal_to_str( node, addr, context ):
   # Return the string
   return prefix + mangle_name( node.name ) + suffix
 
+
+#-------------------------------------------------------------------------
+# create_declarations
+#-------------------------------------------------------------------------
+def create_declarations( model, regs, ints, params, arrays ):
+
+  scode = ''
+
+  # Print the reg declarations
+  if regs:
+    scode += '  // register declarations\n'
+    for signal in regs:
+      if isinstance( signal, tuple ):
+        scode += '  integer {};\n'.format( signal[0] );
+      else:
+        scode += '  reg    [{:4}:0] {};\n'.format( signal.nbits-1,
+            signal_to_str( signal, None, model ))
+    scode += '\n'
+
+  # Print the parameter declarations
+  if params:
+    scode += '  // param declarations\n'
+    for param, value in params:
+      scode += '  parameter {} = {};\n'.format( param, value )
+    scode += '\n'
+
+  # Print the int declarations
+  if ints:
+    scode += '  // loop variable declarations\n'
+    for signal in ints:
+      scode += '  integer {};\n'.format( signal )
+    scode += '\n'
+
+  # Print the array declarations
+  if arrays:
+    scode += '  // array declarations\n'
+    for name, ports in arrays:
+      # Output Port
+      if isinstance( ports[0], OutPort ):
+        scode += '  reg    [{:4}:0] {}[0:{}];\n'.format(
+            ports[0].nbits-1, name, len(ports)-1)
+        for i, port in enumerate(ports):
+          scode += '  assign {0} = {1}[{2:3}];\n'.format(
+              signal_to_str( port, None, model ), name, i )
+      # Input Port
+      elif isinstance( ports[0], InPort ):
+        scode += '  wire   [{:4}:0] {}[0:{}];\n'.format(
+            ports[0].nbits-1, name, len(ports)-1)
+        for i, port in enumerate(ports):
+          scode += '  assign {1}[{2:3}] = {0};\n'.format(
+              signal_to_str( port, None, model ), name, i )
+      # TODO: for Wires, we should really be sensing if
+      #       they are written or not to determine the
+      #       array declaration.
+      else:
+        scode += '  reg    [{:4}:0] {}[0:{}];\n'.format(
+            ports[0].nbits-1, name, len(ports)-1)
+        for i, port in enumerate(ports):
+          scode += '  assign {0} = {1}[{2:3}];\n'.format(
+              signal_to_str( port, None, model ), name, i )
+    scode += '\n'
+
+  return scode
