@@ -37,20 +37,19 @@ def translate( model, o=sys.stdout ):
 #-------------------------------------------------------------------------
 def translate_module( model, o ):
 
+  # Visit concurrent blocks in design
+  logic, symtab = translate_logic_blocks( model )
+
   print >> o, header   .format( model.class_name )
   print >> o, start_mod.format( model.class_name )
-
   # Structural Verilog
-  print >> o, port_declarations ( model, o ),
-  print >> o, wire_declarations ( model, o ),
-  print >> o, submodel_instances( model, o ),
-  print >> o, signal_assignments( model, o ),
-
-  # Behavioral Verilog
-  logic, symtab = translate_logic_blocks( model )
+  print >> o, port_declarations  ( model,  symtab ),
+  print >> o, wire_declarations  ( model,  symtab ),
+  print >> o, submodel_instances ( model,  symtab ),
+  print >> o, signal_assignments ( model,  symtab ),
   print >> o, create_declarations( model, *symtab )
+  # Behavioral Verilog
   print >> o, logic
-
   print >> o, end_mod  .format( model.class_name )
   print >> o
 

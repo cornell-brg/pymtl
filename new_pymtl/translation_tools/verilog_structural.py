@@ -13,7 +13,7 @@ from ..signals import InPort, OutPort, Constant
 # port_declarations
 #-------------------------------------------------------------------------
 # Generate Verilog source for port declarations.
-def port_declarations( model, o ):
+def port_declarations( model, symtab ):
   if not model.get_ports(): return ''
   port_list = [ port_decl( x ) for x in model.get_ports() ]
   s  = start_ports + endl
@@ -26,9 +26,11 @@ def port_declarations( model, o ):
 # wire_declarations
 #-------------------------------------------------------------------------
 # Generate Verilog source for wire declarations.
-def wire_declarations( model, o ):
+def wire_declarations( model, symtab ):
   if not model.get_wires(): return ''
-  wires = [ wire_decl( x ) for x in model.get_wires() ]
+  regs = symtab[0]
+  wires = [ wire_decl( x ) for x in model.get_wires() if x not in regs ]
+  if not wires: return ''
   s  = '  // wire declarations' + endl
   s += wire_delim.join( wires ) + wire_delim + endl
   s += endl
@@ -38,9 +40,10 @@ def wire_declarations( model, o ):
 # submodel_instances
 #-------------------------------------------------------------------------
 # Generate Verilog source for submodel instances.
-def submodel_instances( model, o ):
+def submodel_instances( model, symtab ):
 
   if not model.get_submodules(): return ''
+  regs = symtab[0]
 
   s = ''
   for submodel in model.get_submodules():
@@ -52,6 +55,10 @@ def submodel_instances( model, o ):
     for p in submodel.get_ports():
       port_name = mangle_name( p.name )
       temp_name = signal_to_str( p, None, model )
+      p._is_verilog_reg = p in regs
+      if p in regs:
+        regs.remove(p)
+
       temporaries.append( wire_to_str( p, None, model ) )
       connections.append( connection.format( port_name, temp_name ) )
 
@@ -71,7 +78,7 @@ def submodel_instances( model, o ):
 # signal_assignments
 #-------------------------------------------------------------------------
 # Generate Verilog source for signal connections.
-def signal_assignments( model, o ):
+def signal_assignments( model, symtab ):
   if not model.get_connections(): return ''
 
   # Create all the assignment statements
