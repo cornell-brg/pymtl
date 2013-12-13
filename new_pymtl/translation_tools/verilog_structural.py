@@ -55,17 +55,22 @@ def submodel_instances( model, symtab ):
     for p in submodel.get_ports():
       port_name = mangle_name( p.name )
       temp_name = signal_to_str( p, None, model )
-      p._is_verilog_reg = p in regs
+
       if p in regs:
         regs.remove(p)
+        temporaries.append( reg_to_str( p, None, model ) )
+      else:
+        temporaries.append( wire_to_str( p, None, model ) )
 
-      temporaries.append( wire_to_str( p, None, model ) )
       connections.append( connection.format( port_name, temp_name ) )
 
     connections = pretty_align( connections, '(' )
-    # Print the submodule instantiation
+
+    # Print the temporaries
     s += '  // {} temporaries'.format( submodel_name ) + endl
     s += wire_delim.join( temporaries ) + wire_delim + endl
+
+    # Print the submodule instantiation
     s += instance.format( submodel.class_name, submodel_name ) + endl
     s += tab + start_ports + endl
     s += port_delim.join( connections ) + endl
@@ -156,6 +161,13 @@ def pretty_align( assignment_list, char ):
 # TODO: replace
 def wire_to_str( port, slice_=None, parent=None ):
   return '  wire   [{:4}:0] {}'.format( port.nbits-1,
+                                signal_to_str( port, slice_, parent ) )
+
+#-------------------------------------------------------------------------
+# reg_to_str
+#-------------------------------------------------------------------------
+def reg_to_str( port, slice_=None, parent=None ):
+  return '  reg    [{:4}:0] {}'.format( port.nbits-1,
                                 signal_to_str( port, slice_, parent ) )
 
 #-------------------------------------------------------------------------

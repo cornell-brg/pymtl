@@ -115,6 +115,47 @@ class RemoveSelf( ast.NodeTransformer ):
     return node
 
 #-------------------------------------------------------------------------
+# FlattenSubmodAttrs
+#-------------------------------------------------------------------------
+# Transform AST branches for submodule signals. A PyMTL signal referenced
+# as 's.submodule.port' would appear in the AST as:
+#
+#   Attribute(port)
+#   |- Attribute(submodule)
+#
+# This visitor transforms the AST and name to 's.submodule_port':
+#
+#   Attribute(submodule_port)
+#
+class FlattenSubmodAttrs( ast.NodeTransformer ):
+
+  def __init__( self ):
+    self.submodule = None
+
+  def visit_Attribute( self, node ):
+
+    # Visit children
+    self.generic_visit( node )
+
+    # If the direct child of this attribute was a submodule then the node
+    # will be removed by the visitor. We must update our name to include
+    # submodule name for proper mangling.
+    if self.submodule:
+      new_node = _ast.Name( id  = '{}${}'.format(self.submodule, node.attr ),
+                            ctx = node.ctx )
+      new_node._object = node._object
+      node = new_node
+
+    # If this attribute is a submodel remove the node, set the submodule name
+    if hasattr( node._object, 'class_name' ):
+      self.submodule = node._object.name
+      return None
+
+    # Otherwise, clear the submodule name, return node unmodified
+    self.submodule = None
+    return ast.copy_location( node, node )
+
+#-------------------------------------------------------------------------
 # RemoveModule
 #-------------------------------------------------------------------------
 # Remove the module node.

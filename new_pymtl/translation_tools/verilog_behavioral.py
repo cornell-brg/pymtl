@@ -80,6 +80,7 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.SimplifyDecorator  (             ).visit( tree )
   tree = visitors.RemoveValueNext    (             ).visit( tree )
   tree = visitors.RemoveSelf         ( model       ).visit( tree )
+  tree = visitors.FlattenSubmodAttrs (             ).visit( tree )
   tree = visitors.ThreeExprLoops     (             ).visit( tree )
   tree = visitors.InferTemporaryTypes(             ).visit( tree )
 
