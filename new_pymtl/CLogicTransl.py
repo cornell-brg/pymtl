@@ -18,8 +18,6 @@ from BitStruct     import BitStruct
 from SignalValue   import SignalValueWrapper
 from CLogicHelpers import gen_cheader, gen_cdef, gen_csim, gen_pywrapper
 
-from VerilogTranslationTool import mangle_name
-
 #-------------------------------------------------------------------------
 # CLogicTransl
 #-------------------------------------------------------------------------
@@ -963,4 +961,18 @@ def mangle_idxs( name ):
     return "${:03d}".format( int(m.group('idx')) )
   # Return the mangled name
   return re.sub( indexing, replacement_string, name )
+
+#-------------------------------------------------------------------------
+# mangle_name
+#-------------------------------------------------------------------------
+def mangle_name( name ):
+  # Utility function
+  def replacement_string( m ):
+    return "${:03d}".format( int(m.group('idx')) )
+  # Return the mangled name
+  return re.sub( indexing, replacement_string, name.replace('.','_') )
+
+# Regex to match list indexing
+indexing = re.compile("(\[)(?P<idx>.*?)(\])")
+
 
