@@ -72,7 +72,7 @@ def create_cython( in_ports, out_ports, model_name,
   # Generate the Cython source code
   f = open( filename_pyx, 'w' )
 
-  pyx = ("from pymtl import *\n\n"
+  pyx = ("from new_pymtl import *\n\n"
          "cdef extern from 'verilated_vcd_c.h':\n"
          "  cdef cppclass VerilatedVcdC:\n"
          "    void open( char* )\n"
@@ -147,18 +147,18 @@ def create_cython( in_ports, out_ports, model_name,
     bitwidth = int( bitwidth )
 
     if bitwidth <= 64:
-      pyx += ("      self.{0}.{1} = {1}.value.uint\n"
+      pyx += ("      self.{0}.{1} = {1}.value.uint()\n"
               "\n".format( model_name, signal_name ))
     else:
       word_aligned = bitwidth/32
       for j in range( word_aligned ):
-        pyx += ("      self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint"
+        pyx += ("      self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint()"
                 "\n".format( model_name, signal_name, j, 32*j, 32*(j+1) ))
       if bitwidth % 32 != 0:
         idx = word_aligned
         start = word_aligned*32
         end = bitwidth
-        pyx += ("      self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint"
+        pyx += ("      self.{0}.{1}[{2}] = {1}.value[{3}:{4}].uint()"
                 "\n".format( model_name, signal_name, idx, start, end ))
 
       pyx += '\n'
@@ -219,7 +219,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   # Create module imports and the declaration for the PyMTL wrapper.
   w = ("from {0} import {1}\n"
        "from {0} import XTraceEverOn\n"
-       "from pymtl import *\n\n"
+       "from new_pymtl import *\n\n"
        "class {2}(Model):\n\n"
        "  def __init__(self):\n\n"
        "    self.{1} = {1}()\n"
@@ -257,56 +257,58 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
 
   # Register the sensitivity list.
   # Must be done explicitly since we dont access .value!
-  w += "\n    self.register_combinational( 'logic', [\n"
-  for name, bitwidth in in_ports:
-    name = name.replace('_M_', '.')
-    if 'IDX' in name:
-      prefix, idx = name.split('IDX')
-      name = '{}[{}]'.format( prefix, idx )
-    w += "                                 self.{},\n".format(name)
-  w += "                               ])\n\n"
+  #w += "\n    self.register_combinational( 'logic', [\n"
+  #for name, bitwidth in in_ports:
+  #  name = name.replace('_M_', '.')
+  #  if 'IDX' in name:
+  #    prefix, idx = name.split('IDX')
+  #    name = '{}[{}]'.format( prefix, idx )
+  #  w += "                                 self.{},\n".format(name)
+  #w += "                               ])\n\n"
 
-  #w += ("\n  @combinational"
-  w += ("\n  def logic(self):\n\n")
+  w += ("\n  def elaborate_logic( self ):"
+        "\n    @self.combinational"
+        "\n    def logic():")
 
-  w += ('    self.{0}.reset = self.reset.value.uint\n'
-        '\n'.format( xobj_name ))
+  w += ('\n      self.{0}.reset = self.reset.value.uint()'
+        .format( xobj_name ))
 
   for i in in_ports:
     temp = i[0].replace('_M_', '.')
     if 'IDX' in i[0]:
-      w += ('    self.{0}.{1} = self.{2}]'
-            '\n'.format( xobj_name, i[0], re.sub('IDX', '[', temp) ))
+      w += ('\n      self.{0}.{1} = self.{2}]'
+            .format( xobj_name, i[0], re.sub('IDX', '[', temp) ))
     else:
-      w += ('    self.{0}.{1} = self.{2}'
-           '\n'.format( xobj_name, i[0], temp ))
+      w += ('\n      self.{0}.{1} = self.{2}'
+            .format( xobj_name, i[0], temp ))
 
-  w += '\n    self.{0}.eval()\n\n'.format( xobj_name )
+  w += '\n      self.{0}.eval()'.format( xobj_name )
 
   for i in out_ports:
     temp = i[0].replace('_M_', '.')
     if 'IDX' in i[0]:
-      w += ('    self.{0}].value = self.{1}.{2}'
-            '\n'.format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
+      w += ('\n      self.{0}].value = self.{1}.{2}'
+            .format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
     else:
-      w += ('    self.{0}.value = self.{1}.{2}'
-            '\n'.format( temp, xobj_name, i[0] ))
+      w += ('\n      self.{0}.value = self.{1}.{2}'
+            .format( temp, xobj_name, i[0] ))
 
-  w += ("\n  @posedge_clk"
-        "\n  def tick(self):\n"
-        "\n    self.{0}.eval()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.clk = 1\n"
-        "\n    self.{0}.eval()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.dump()\n"
-        "\n    self.{0}.dump()\n\n".format( xobj_name ))
+      w += ("\n"
+            "\n    @self.posedge_clk"
+            "\n    def tick():"
+            "\n      self.{0}.eval()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.clk = 1"
+            "\n      self.{0}.eval()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.dump()"
+            "\n      self.{0}.dump()".format( xobj_name ))
 
 #  w += ("\n  @posedge_clk"
 #        "\n  def tick(self):\n"
@@ -317,13 +319,13 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   for i in out_ports:
     temp = i[0].replace('_M_', '.')
     if 'IDX' in i[0]:
-      w += ('    self.{0}].next = self.{1}.{2}'
-            '\n'.format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
+      w += ('\n      self.{0}].next = self.{1}.{2}'
+            .format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
     else:
-      w += ('    self.{0}.next = self.{1}.{2}'
-            '\n'.format( temp, xobj_name, i[0] ))
+      w += ('\n      self.{0}.next = self.{1}.{2}'
+            .format( temp, xobj_name, i[0] ))
 
-  w += '\n    self.{0}.clk = 0\n\n'.format( xobj_name )
+  w += '\n      self.{0}.clk = 0\n\n'.format( xobj_name )
 
   w += 'XTraceEverOn()'
 
