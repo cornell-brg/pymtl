@@ -212,6 +212,7 @@ def signal_to_str( node, addr, context ):
 #-------------------------------------------------------------------------
 # create_declarations
 #-------------------------------------------------------------------------
+# TODO: clean this up!
 def create_declarations( model, regs, ints, params, arrays ):
 
   scode = ''
