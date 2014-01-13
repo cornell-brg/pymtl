@@ -2,8 +2,8 @@
 # Unit Tests for Registers
 #=========================================================================
 
-from pymtl import *
-from regs  import *
+from new_pymtl import *
+from regs      import *
 
 from TestVectorSimulator import TestVectorSimulator
 

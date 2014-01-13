@@ -3,8 +3,8 @@
 #=========================================================================
 # Test suite for the network message type.
 
-from   pymtl  import *
-from   NetMsg import NetMsg
+from new_pymtl import *
+from NetMsg    import NetMsg
 
 def test_netmsg_fields():
 

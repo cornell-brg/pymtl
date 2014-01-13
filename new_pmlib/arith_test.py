@@ -2,8 +2,8 @@
 # Arithmetic Components Test Suite
 #=========================================================================
 
-from pymtl import *
-from arith import *
+from new_pymtl import *
+from arith     import *
 
 from TestVectorSimulator import TestVectorSimulator
 
