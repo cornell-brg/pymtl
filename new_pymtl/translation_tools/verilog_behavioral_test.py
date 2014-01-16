@@ -43,6 +43,9 @@ def test_MultipleWrites():
 def test_BuiltinFuncs():
   setup_sim( sequential.BuiltinFuncs() )
 
+def test_GetMSB():
+  setup_sim( sequential.GetMSB( 5 ) )
+
 #-------------------------------------------------------------------------
 # Combinational Logic
 #-------------------------------------------------------------------------

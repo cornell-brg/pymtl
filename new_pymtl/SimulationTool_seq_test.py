@@ -340,3 +340,28 @@ def test_BuiltinFuncs():
   assert model.zout == 0x0F
   assert model.sout == 0xFF
 
+#-------------------------------------------------------------------------
+# GetMSB
+#-------------------------------------------------------------------------
+# Verify using params as slices works.
+class GetMSB( Model ):
+  def __init__( s, nbits ):
+    s.msb = nbits - 1
+    s.in_ = InPort ( nbits )
+    s.out = OutPort(     1 )
+
+  def elaborate_logic( s ):
+    @s.posedge_clk
+    def logic():
+      s.out.next = s.in_[s.msb]
+
+def test_GetMSB():
+  model = GetMSB( 5 )
+  model.elaborate()
+  sim = setup_sim( model )
+
+  model.in_.value = 0b01010; sim.cycle(); assert model.out == 0
+  model.in_.value = 0b11010; sim.cycle(); assert model.out == 1
+  model.in_.value = 0b10000; sim.cycle(); assert model.out == 1
+  model.in_.value = 0b00001; sim.cycle(); assert model.out == 0
+

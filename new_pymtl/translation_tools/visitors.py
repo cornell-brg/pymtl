@@ -301,7 +301,11 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
       elif isinstance( node.value, _ast.Name ):
         name = node.value.id
       self.arrays.add( (name, tuple( node._object )) )
+
     # TODO: add writes to subscripts to store list
+
+    # visit slice to find params
+    self.visit( node.slice )
 
 #------------------------------------------------------------------------
 # PyObj
