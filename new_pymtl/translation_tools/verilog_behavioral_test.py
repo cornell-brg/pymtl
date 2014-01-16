@@ -6,6 +6,8 @@ from ..      import SimulationTool_seq_test  as sequential
 from ..      import SimulationTool_comb_test as combinational
 from verilog import check_compile as setup_sim
 
+import pytest
+
 #-------------------------------------------------------------------------
 # Sequential Logic
 #-------------------------------------------------------------------------
@@ -37,6 +39,10 @@ def test_SliceTempWriteCheck():
 
 def test_MultipleWrites():
   setup_sim( sequential.MultipleWrites() )
+
+@pytest.mark.xfail
+def test_BuiltinFuncs():
+  setup_sim( sequential.BuiltinFuncs() )
 
 #-------------------------------------------------------------------------
 # Combinational Logic
@@ -96,7 +102,6 @@ def test_ValueWriteCheck():
   setup_sim( combinational.ValueWriteCheck( 16 ) )
 def test_SliceWriteCheck():
   setup_sim( combinational.SliceWriteCheck( 16 ) )
-import pytest
 @pytest.mark.xfail
 def test_SliceTempWriteCheck():
   setup_sim( combinational.SliceTempWriteCheck( 16 ) )

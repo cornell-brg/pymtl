@@ -308,3 +308,35 @@ def test_MultipleWrites():
   assert model.out == 1   # FAILS
   sim.cycle()
   assert model.out == 1   # passes
+
+#-------------------------------------------------------------------------
+# BuiltinFuncs
+#-------------------------------------------------------------------------
+from new_pymtl import zext, sext
+class BuiltinFuncs( Model ):
+  def __init__( s ):
+    s.in_  = InPort ( 4 )
+    s.zout = OutPort( 8 )
+    s.sout = OutPort( 8 )
+
+  def elaborate_logic( s ):
+    @s.posedge_clk
+    def logic():
+      s.zout.next = zext( s.in_, 8 )
+      s.sout.next = sext( s.in_, 8 )
+
+def test_BuiltinFuncs():
+  model = BuiltinFuncs()
+  model.elaborate()
+  sim = setup_sim( model )
+
+  model.in_.value = 0x1
+  sim.cycle()
+  assert model.zout == 0x1
+  assert model.sout == 0x1
+
+  model.in_.value = 0xF
+  sim.cycle()
+  assert model.zout == 0x0F
+  assert model.sout == 0xFF
+
