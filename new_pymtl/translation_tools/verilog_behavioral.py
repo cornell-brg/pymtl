@@ -342,6 +342,31 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   def visit_Assert(self, node):
     return '{}// assert {}\n'.format( self.indent, self.visit(node.test) )
 
+  #-----------------------------------------------------------------------
+  # visit_Call
+  #-----------------------------------------------------------------------
+  def visit_Call(self, node):
+
+    # Can only translate calls generated from Name nodes
+    assert isinstance( node.func, _ast.Name )
+    func_name = self.visit( node.func )
+
+    # Handle sign extension
+    if func_name  == 'sext':
+      sig_name   = self.visit( node.args[0] )
+      sig_nbits  = node.args[0]._object.nbits
+      ext_nbits  = self.visit( node.args[1] )
+      return '{{ {{ {2} {{ {0}[{1}] }} }}, {0}[{1}:0] }}' \
+             .format( sig_name, sig_nbits-1, ext_nbits )
+
+    # Handle zero extension
+    if func_name  == 'zext':
+      sig_name   = self.visit( node.args[0] )
+      sig_nbits  = node.args[0]._object.nbits
+      ext_nbits  = self.visit( node.args[1] )
+      return "{{ {{ {2} {{ 1'b0 }} }}, {0}[{1}:0] }}" \
+             .format( sig_name, sig_nbits-1, ext_nbits )
+
 
 #-------------------------------------------------------------------------
 # opmap

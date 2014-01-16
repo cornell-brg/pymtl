@@ -40,7 +40,6 @@ def test_SliceTempWriteCheck():
 def test_MultipleWrites():
   setup_sim( sequential.MultipleWrites() )
 
-@pytest.mark.xfail
 def test_BuiltinFuncs():
   setup_sim( sequential.BuiltinFuncs() )
 
