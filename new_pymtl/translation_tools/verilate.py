@@ -18,8 +18,10 @@ import verilog_structural
 
 def verilate_model( filename, model_name ):
   # Verilate the translated module (warnings suppressed)
-  os.system( 'verilator -cc {0} -top-module {1} -trace -Wno-lint '
-             '-Wno-UNOPTFLAT'.format( filename, model_name ) )
+  cmd = 'rm -r obj_dir; verilator -cc {0} -top-module {1}' \
+        ' -trace -Wno-lint -Wno-UNOPTFLAT'.format( filename, model_name )
+  print cmd
+  os.system( cmd )
 
 #-------------------------------------------------------------------------
 # Cythonize Verilated Model
