@@ -6,6 +6,7 @@ import ast, _ast
 import re
 
 from ..ast_helpers import get_closure_dict
+from ..signals     import Wire
 
 #-------------------------------------------------------------------------
 # AnnotateWithObjects
@@ -250,8 +251,18 @@ class InferTemporaryTypes( ast.NodeTransformer):
       elif isinstance( node.value, ast.Num ):
         node.targets[0]._object = (node.targets[0].id, int( node.value.n ))
 
+      elif isinstance( node.value, ast.Call ):
+
+        func_name = node.value.func.id
+        nbits     = node.value.args[1]._object  # TODO: can this be a signal?
+        assert func_name in ['sext','zext']
+        assert isinstance( nbits, int )
+        obj      = Wire( nbits )
+        obj.name = node.targets[0].id
+        node.targets[0]._object = obj
+
       else:
-        raise Exception("Cannot infer type from {} node!"
+        raise Exception('Cannot infer type from {} node!'
                         .format( node.value ))
 
     return node
