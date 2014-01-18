@@ -295,28 +295,15 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
       w += ('\n      self.{0}.value = self.{1}.{2}'
             .format( temp, xobj_name, i[0] ))
 
-      w += ("\n"
-            "\n    @self.posedge_clk"
-            "\n    def tick():"
-            "\n      self.{0}.eval()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.clk = 1"
-            "\n      self.{0}.eval()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.dump()"
-            "\n      self.{0}.dump()".format( xobj_name ))
-
-#  w += ("\n  @posedge_clk"
-#        "\n  def tick(self):\n"
-#        "\n    self.{0}.eval()\n"
-#        "\n    self.{0}.clk = 1\n"
-#        "\n    self.{0}.eval()\n\n".format( xobj_name ))
+  w += ("\n"
+        "\n    @self.posedge_clk"
+        "\n    def tick():"
+        "\n      self.{0}.eval()"
+        #"\n      self.{0}.dump()" # TODO: not sure what dump is for...
+        "\n      self.{0}.clk = 1"
+        "\n      self.{0}.eval()"
+        #"\n      self.{0}.dump()"
+        .format( xobj_name ))
 
   for i in out_ports:
     temp = i[0].replace('_M_', '.')
