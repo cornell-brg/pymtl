@@ -18,8 +18,9 @@ import verilog_structural
 
 def verilate_model( filename, model_name ):
   # Verilate the translated module (warnings suppressed)
-  cmd = 'rm -r obj_dir; verilator -cc {0} -top-module {1}' \
-        ' -trace -Wno-lint -Wno-UNOPTFLAT'.format( filename, model_name )
+  cmd = 'rm -r obj_dir_{1}; verilator -cc {0} -top-module {1}' \
+        ' --Mdir obj_dir_{1} -trace -Wno-lint -Wno-UNOPTFLAT'   \
+        .format( filename, model_name )
   print cmd
   os.system( cmd )
 
@@ -27,9 +28,9 @@ def verilate_model( filename, model_name ):
 # Cythonize Verilated Model
 #-------------------------------------------------------------------------
 
-def cythonize_model():
+def cythonize_model( model_name ):
   # Cythonize the verilated module
-  os.system( 'python setup.py build_ext -i -f' )
+  os.system( 'python setup_{0}.py build_ext -i -f'.format( model_name ) )
 
 #-------------------------------------------------------------------------
 # Get PyMTL Model Ports
@@ -80,8 +81,8 @@ def create_cython( in_ports, out_ports, model_name,
          "    void open( char* )\n"
          "    void dump( int )\n"
          "    void close()\n\n"
-         "cdef extern from 'obj_dir/{0}.h':\n"
-         "  cdef cppclass {0}:\n".format( vobj_name ))
+         "cdef extern from 'obj_dir_{1}/{0}.h':\n"
+         "  cdef cppclass {0}:\n".format( vobj_name, model_name ))
 
   ports = [ ('clk', '1'), ('reset', '1') ] + in_ports + out_ports
   for signal_name, bitwidth in ports:
@@ -185,13 +186,15 @@ def create_cython( in_ports, out_ports, model_name,
 # Create Setup File
 #-------------------------------------------------------------------------
 
-def create_setup( filename_pyx, vobj_name ):
+def create_setup( filename_pyx, vobj_name, model_name ):
   # Generate setup.py
   verilator_include = '{}/include'.format( os.environ['VERILATOR_ROOT'] )
-  sources = [ '\"obj_dir/' + x + '\",' for x in os.listdir('obj_dir') if '.cpp' in x ]
+  dir_  = 'obj_dir_{0}'.format( model_name )
+  file_ = '"{0}/{{}}",'.format( dir_ )
+  sources = [ file_.format(x) for x in os.listdir(dir_) if '.cpp' in x ]
   sources = ' '.join(sources)
 
-  f = open( 'setup.py', 'w' )
+  f = open( 'setup_{0}.py'.format( model_name ), 'w' )
 
   f.write( "from distutils.core import setup\n"
            "from distutils.extension import Extension\n"
@@ -206,6 +209,8 @@ def create_setup( filename_pyx, vobj_name ):
            "                             language='c++' ) ],\n"
            "  cmdclass = {2}'build_ext': build_ext{3}\n"
            ")\n".format( vobj_name, filename_pyx, '{', '}', verilator_include, sources ) )
+
+  #raise Exception()
 
   f.close()
 
@@ -356,10 +361,10 @@ def verilog_to_pymtl( model, filename_v ):
                  filename_pyx, vobj_name )
 
   # Create setup.py
-  create_setup( filename_pyx, vobj_name )
+  create_setup( filename_pyx, vobj_name, model_name )
 
   # Cythonize the model
-  cythonize_model()
+  cythonize_model( model_name )
 
   # Create PyMTL wrapper for Cynthonized module
   create_pymtl_wrapper( in_ports, out_ports, model_name,
