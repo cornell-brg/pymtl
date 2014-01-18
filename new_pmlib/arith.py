@@ -123,7 +123,7 @@ class ZeroExtender( Model ):
 
     @s.combinational
     def comb_logic():
-      s.out.value = zext( s.in_, s.out_nbits)
+      s.out.value = zext( s.in_, s.out_nbits )
 
   def line_trace( s ):
     return "{} () {}".format( s.in_, s.out )

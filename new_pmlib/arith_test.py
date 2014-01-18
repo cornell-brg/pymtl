@@ -48,9 +48,9 @@ def test_adder( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[3] != '?':
-      assert model.out.value == test_vector[3]
+      assert model.out  == test_vector[3]
     if test_vector[4] != '?':
-      assert model.cout.value == test_vector[4]
+      assert model.cout == test_vector[4]
 
   # Run the test
 
@@ -97,7 +97,7 @@ def test_subtractor( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out.value == test_vector[2]
+      assert model.out == test_vector[2]
 
   # Run the test
 
@@ -123,7 +123,7 @@ def run_test_incrementer( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out.value == test_vector[1]
+      assert model.out == test_vector[1]
 
   # Run the test
 
@@ -195,7 +195,7 @@ def run_test_zero_extender( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out.value == test_vector[1]
+      assert model.out == test_vector[1]
 
   # Run the test
 
@@ -256,7 +256,7 @@ def run_test_sign_extender( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out.value == test_vector[1]
+      assert model.out == test_vector[1]
 
   # Run the test
 
@@ -339,7 +339,7 @@ def test_ZeroComparator( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out.value == test_vector[1]
+      assert model.out == test_vector[1]
 
   # Run the test
 
@@ -385,7 +385,7 @@ def test_EqComparator( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out.value == test_vector[2]
+      assert model.out == test_vector[2]
 
   # Run the test
 
@@ -434,7 +434,7 @@ def test_LtComparator( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out.value == test_vector[2]
+      assert model.out == test_vector[2]
 
   # Run the test
 
@@ -483,7 +483,7 @@ def test_GtComparator( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out.value == test_vector[2]
+      assert model.out == test_vector[2]
 
   # Run the test
 
@@ -509,7 +509,7 @@ def run_test_sign_unit( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out.value == test_vector[1]
+      assert model.out == test_vector[1]
 
   # Run the test
 
@@ -569,7 +569,7 @@ def run_test_unsign_unit( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out.value == test_vector[1]
+      assert model.out == test_vector[1]
 
   # Run the test
 
@@ -650,7 +650,7 @@ def test_LeftLogicalShifter( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out.value == test_vector[2]
+      assert model.out == test_vector[2]
 
   # Run the test
 
@@ -696,7 +696,7 @@ def test_RightLogicalShifter( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out.value == test_vector[2]
+      assert model.out == test_vector[2]
 
   # Run the test
 
