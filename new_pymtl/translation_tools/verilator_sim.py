@@ -26,19 +26,19 @@ def get_verilated( model_inst ):
   verilog_file = model_name + '.v'
   temp_file    = verilog_file + '.tmp'
 
-  verilog.translate( model_inst, open( verilog_file, 'w+' ) )
-  cached = False
+  #verilog.translate( model_inst, open( verilog_file, 'w+' ) )
+  #cached = False
 
-  # TODO
-  #if os.path.exists( verilog_file ):
-  #  verilog.translate( model_inst, open( temp_file, 'w+' ) )
-  #  cached = filecmp.cmp( temp_file, verilog_file )
-  #  if not cached:
-  #    os.system( ' diff %s %s'%( temp_file, verilog_file ))
-  #  os.rename( temp_file, verilog_file )
-  #else:
-  #  verilog.translate( model_inst, open( verilog_file, 'w+' ) )
-  #  cached = False
+  # Caching avoids regeneration/recompilation
+  if os.path.exists( verilog_file ):
+    verilog.translate( model_inst, open( temp_file, 'w+' ) )
+    cached = filecmp.cmp( temp_file, verilog_file )
+    if not cached:
+      os.system( ' diff %s %s'%( temp_file, verilog_file ))
+    os.rename( temp_file, verilog_file )
+  else:
+    verilog.translate( model_inst, open( verilog_file, 'w+' ) )
+    cached = False
 
   # Verilate the module only if we've updated the verilog source
   if not cached:
