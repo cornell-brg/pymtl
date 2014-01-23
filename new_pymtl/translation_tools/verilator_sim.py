@@ -1,21 +1,16 @@
-import verilog
-import verilate
+#===============================================================================
+# verilator_sim.py
+#===============================================================================
 
+from verilator_cython import verilog_to_pymtl
+
+import verilog
 import os
 import filecmp
 
-# TODO: figure out a way to replace module instantiation with dummy
-#       model that performs translate/verilation with provided
-#       parameters and then return the Wrapped/Verilated instance
-
-def translate_class( model_class, config=None ):
-  # TODO: currently assumes construct doesn't need any arguments
-  #       need to change it to take configuration parameters
-  model_inst = model_class()
-  model_inst.elaborate()
-  verilog_file = model_inst.class_name + '.v'
-  verilog.translate( model_inst, verilog_file )
-
+#------------------------------------------------------------------------------
+# get_verilated
+#------------------------------------------------------------------------------
 def get_verilated( model_inst ):
 
   model_inst.elaborate()
@@ -43,7 +38,7 @@ def get_verilated( model_inst ):
   # Verilate the module only if we've updated the verilog source
   if not cached:
     print "NOT CACHED", verilog_file
-    verilate.verilog_to_pymtl( model_inst, verilog_file )
+    verilog_to_pymtl( model_inst, verilog_file )
 
   # Use some trickery to import the verilated version of the model
   import sys
@@ -57,9 +52,3 @@ def get_verilated( model_inst ):
   model_inst.elaborate()
 
   return model_inst
-
-def verilate_model( model_class, src_file, config=None ):
-  # Translate the model to Verilog
-  translate_class( model_class )
-  # Verilate the generated Verilog into Python wrapped C++
-  verilate_model.verilog_to_pymtl( model_class, src_file )
