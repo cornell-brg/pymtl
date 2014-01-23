@@ -11,11 +11,53 @@ import math
 
 import verilog_structural
 
+#-------------------------------------------------------------------------
+# verilog_to_pymtl
+#-------------------------------------------------------------------------
+# Create a PyMTL compatible interface for Verilog HDL.
+def verilog_to_pymtl( model, filename_v ):
+
+  # TODO: clean this up
+  if   isinstance( model, str ):
+    model_name = model
+  elif isinstance( model, type ):
+    x = model()
+    model_name = x.__class__.__name__
+  else:
+    model_name = model.class_name
+
+  # Output file names
+  filename_pyx = model_name + '.pyx'
+  filename_w = 'W' + model_name + '.py'
+  vobj_name = 'V' + model_name
+  xobj_name = 'X' + model_name
+
+  # Verilate the model
+  # TODO: clean this up
+  verilate_model( filename_v, model_name )
+
+  # Get the ports of the module
+  in_ports, out_ports = get_model_ports( model )
+
+  # Create Cython
+  create_cython( in_ports, out_ports, model_name,
+                 filename_pyx, vobj_name )
+
+  # Create setup.py
+  create_setup( filename_pyx, vobj_name, model_name )
+
+  # Cythonize the model
+  cythonize_model( model_name )
+
+  # Create PyMTL wrapper for Cynthonized module
+  create_pymtl_wrapper( in_ports, out_ports, model_name,
+                        filename_w, vobj_name, xobj_name )
 
 #-------------------------------------------------------------------------
-# Verilate Translated PyMTL Model
+# verilate_model
 #-------------------------------------------------------------------------
-
+# Convert Verilog HDL into a C++ simulator using Verilator.
+# http://www.veripool.org/wiki/verilator
 def verilate_model( filename, model_name ):
   # Verilate the translated module (warnings suppressed)
   cmd = 'rm -r obj_dir_{1}; verilator -cc {0} -top-module {1}' \
@@ -25,17 +67,9 @@ def verilate_model( filename, model_name ):
   os.system( cmd )
 
 #-------------------------------------------------------------------------
-# Cythonize Verilated Model
+# get_model_ports
 #-------------------------------------------------------------------------
-
-def cythonize_model( model_name ):
-  # Cythonize the verilated module
-  os.system( 'python setup_{0}.py build_ext -i -f'.format( model_name ) )
-
-#-------------------------------------------------------------------------
-# Get PyMTL Model Ports
-#-------------------------------------------------------------------------
-
+# Return all input and output ports of a PyMTL model.
 def get_model_ports( model_name ):
   # TODO: clean this up, this is getting really messy...
   # Import the specified module
@@ -56,8 +90,11 @@ def get_model_ports( model_name ):
     model_inst = model_name
 
   # Collect the input/output ports
-  in_ports = model_inst.get_inports()
+  in_ports  = model_inst.get_inports()
   out_ports = model_inst.get_outports()
+
+  def verilog_name( port ):
+    return verilog_structural.mangle_name( port.name )
 
   in_ports = [ ( verilog_name( p ), str( p.nbits ) )
                for p in in_ports
@@ -67,9 +104,9 @@ def get_model_ports( model_name ):
   return in_ports, out_ports
 
 #-------------------------------------------------------------------------
-# Create Cython File
+# create_cython
 #-------------------------------------------------------------------------
-
+# Generate a Cython wrapper file for Verilated C++.
 def create_cython( in_ports, out_ports, model_name,
                    filename_pyx, vobj_name ):
   # Generate the Cython source code
@@ -183,9 +220,9 @@ def create_cython( in_ports, out_ports, model_name,
   f.close()
 
 #-------------------------------------------------------------------------
-# Create Setup File
+# create_setup
 #-------------------------------------------------------------------------
-
+# Create a setup.py file to compile the Cython Verilator wrapper.
 def create_setup( filename_pyx, vobj_name, model_name ):
   # Generate setup.py
   verilator_include = '{}/include'.format( os.environ['VERILATOR_ROOT'] )
@@ -215,9 +252,17 @@ def create_setup( filename_pyx, vobj_name, model_name ):
   f.close()
 
 #-------------------------------------------------------------------------
-# Create PyMTL Wrapper for Cythonized Verilog
+# cythonize_model
 #-------------------------------------------------------------------------
+# Create a Python interface to the Verilated C++ using Cython.
+def cythonize_model( model_name ):
+  # Cythonize the verilated module
+  os.system( 'python setup_{0}.py build_ext -i -f'.format( model_name ) )
 
+#-------------------------------------------------------------------------
+# create_pymtl_wrapper
+#-------------------------------------------------------------------------
+# Create PyMTL wrapper for Cythonized and Verilated Verilog source.
 def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
                           vobj_name, xobj_name ):
 
@@ -326,49 +371,6 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   f.write( w )
   f.close()
 
-#-------------------------------------------------------------------------
-# Create PyMTL Wrapper for Cythonized Verilog
-#-------------------------------------------------------------------------
-def verilog_name( port ):
-  return verilog_structural.mangle_name( port.name )
-
-def verilog_to_pymtl( model, filename_v ):
-
-  # TODO: clean this up
-  if   isinstance( model, str ):
-    model_name = model
-  elif isinstance( model, type ):
-    x = model()
-    model_name = x.__class__.__name__
-  else:
-    model_name = model.class_name
-
-  # Output file names
-  filename_pyx = model_name + '.pyx'
-  filename_w = 'W' + model_name + '.py'
-  vobj_name = 'V' + model_name
-  xobj_name = 'X' + model_name
-
-  # Verilate the model
-  # TODO: clean this up
-  verilate_model( filename_v, model_name )
-
-  # Get the ports of the module
-  in_ports, out_ports = get_model_ports( model )
-
-  # Create Cython
-  create_cython( in_ports, out_ports, model_name,
-                 filename_pyx, vobj_name )
-
-  # Create setup.py
-  create_setup( filename_pyx, vobj_name, model_name )
-
-  # Cythonize the model
-  cythonize_model( model_name )
-
-  # Create PyMTL wrapper for Cynthonized module
-  create_pymtl_wrapper( in_ports, out_ports, model_name,
-                        filename_w, vobj_name, xobj_name )
 
 #-------------------------------------------------------------------------
 # Main
