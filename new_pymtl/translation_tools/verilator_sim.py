@@ -2,7 +2,8 @@
 # verilator_sim.py
 #===============================================================================
 
-from verilator_cython import verilog_to_pymtl
+#from verilator_cython import verilog_to_pymtl
+from verilator_cffi import verilog_to_pymtl
 
 import verilog
 import os
