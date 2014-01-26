@@ -73,7 +73,7 @@ def translate_logic_blocks( model ):
 # - flatten bitstructs
 def ast_pipeline( tree, model, func ):
 
-  print_simple_ast( tree ) # DEBUG
+  #print_simple_ast( tree ) # DEBUG
 
   tree = visitors.AnnotateWithObjects( model, func ).visit( tree )
   tree = visitors.RemoveModule       (             ).visit( tree )
@@ -84,7 +84,7 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.ThreeExprLoops     (             ).visit( tree )
   tree = visitors.InferTemporaryTypes(             ).visit( tree )
 
-  print_simple_ast( tree ) # DEBUG
+  #print_simple_ast( tree ) # DEBUG
 
   return tree
 

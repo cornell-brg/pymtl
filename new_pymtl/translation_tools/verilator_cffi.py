@@ -123,9 +123,9 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
     }}
 
     // Verilator models
-    VSubtractor_nbits_16 * model;
-    VerilatedVcdC        * tfp;
-    unsigned int           trace_time;
+    V{model_name} * model;
+    VerilatedVcdC * tfp;
+    unsigned int trace_time;
 
     // Interface port pointers exposed via CFFI
     {port_decls}
@@ -297,6 +297,9 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
         @s.combinational
         def logic():
 
+          # Set reset
+          s._model.reset[0] = s.reset
+
           # Set inputs
           {set_inputs}
 
@@ -318,7 +321,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
           s._model.eval()
           s._model.trace()
 
-          {set_outputs_maybe}
+          {set_next}
 
           s._model.clk[0] = 0
 
@@ -367,7 +370,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
                        .format( v_name = v_name, py_name = py_name )
                      )
 
-  # Assigning output ports
+  # Assigning combinational output ports
   set_outputs = []
   for v_name, bitwidth in out_ports:
     py_name = v_name.replace('_M_', '.')
@@ -379,6 +382,22 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
                         .format( v_name = v_name, py_name = py_name )
                       )
 
+  # TODO: no way to distinguish between combinational and sequential
+  #       outputs, so we set outputs both ways...
+  #       This seems broken, but I can't think of a better way.
+
+  # Assigning sequential output ports
+  set_next = []
+  for v_name, bitwidth in out_ports:
+    py_name = v_name.replace('_M_', '.')
+    # TODO: handle port lists
+    #if 'IDX' in i[0]:
+    #  w += ('\n      s.{0}].value = s.{1}.{2}'
+    #        .format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
+    set_next.append( 's.{py_name}.next = s._model.{v_name}[0]' \
+                      .format( v_name = v_name, py_name = py_name )
+                    )
+
   py_src = textwrap.dedent( py_src )
   py_src = py_src.format(
       model_name  = model_name,
@@ -386,7 +405,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
       port_defs   = '\n    '  .join( port_defs ),
       set_inputs  = '\n      '.join( set_inputs ),
       set_outputs = '\n      '.join( set_outputs ),
-      set_outputs_maybe = "#TODO",
+      set_next    = '\n      '.join( set_next ),
   )
 
   # TODO: need to set outports after tick eval()?

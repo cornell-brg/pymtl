@@ -7,6 +7,7 @@ from verilator_cffi import verilog_to_pymtl
 
 import verilog
 import os
+import sys
 import filecmp
 
 #------------------------------------------------------------------------------
@@ -42,8 +43,7 @@ def get_verilated( model_inst ):
     verilog_to_pymtl( model_inst, verilog_file )
 
   # Use some trickery to import the verilated version of the model
-  import sys
-  sys.path.append('../build')
+  sys.path.append( os.getcwd() )
   __import__( 'W' + model_name )
   imported_module = sys.modules[ 'W'+model_name ]
 
