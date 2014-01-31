@@ -169,6 +169,7 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
     code = '{data_type} * {port_name}{array_size};'
 
     port_name, bitwidth = port
+    port_name = port_name.replace( '$', '__024' )
     bitwidth = int( bitwidth )
 
     if   bitwidth <= 8:  data_type = 'unsigned char'
@@ -186,9 +187,12 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
 
   # Utility function for creating port initializations
   def port_to_init( port ):
-    code = '{port_name} = &model->{port_name};'
+    code = '{verilator_name} = &model->{verilator_name};'
     port_name, bitwidth = port
-    return code.format( port_name = port_name )
+    # TODO: hack for verilator name mangling, make this cleaner?
+    verilator_name = port_name.replace( '$', '__024' )
+    return code.format( port_name      = port_name,
+                        verilator_name = verilator_name )
 
   # Create port declaration, initialization, and extern statements
   pfx = 'extern '
@@ -351,21 +355,34 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
     #s.{0} = [ {3}( {1} ) for x in range( {2} ) ]'
     #        '\n'.format( i[0], i[1], i[2], ptype ))
 
+    lists = []
     for port_name, bitwidth in ports:
-      port_defs.append( 's.{port_name} = {port_type}( {bitwidth} )' \
-                         .format( port_name = port_name,
-                                  port_type = port_type,
-                                  bitwidth  = bitwidth )
-                      )
+      # Port List
+      if '$' in port_name:
+        pfx = port_name.split('$')[0]
+        if pfx not in lists:
+          lists.append(pfx)
+          port_defs.append( 's.{} = []'.format( pfx ) )
+        port_defs.append( 's.{port_list}.append( {port_type}( {bitwidth} ) )' \
+                          .format( port_list = pfx,
+                                    port_type = port_type,
+                                    bitwidth  = bitwidth )
+                        )
+      else:
+        port_defs.append( 's.{port_name} = {port_type}( {bitwidth} )' \
+                           .format( port_name = port_name,
+                                    port_type = port_type,
+                                    bitwidth  = bitwidth )
+                        )
 
   # Assigning input ports
   set_inputs = []
   for v_name, bitwidth in in_ports:
     py_name = v_name.replace('_M_', '.')
-    # TODO: handle port lists
-    #if 'IDX' in i[0]:
-    #  w += ('\n      s.{0}.{1} = s.{2}]'
-    #        .format( xobj_name, i[0], re.sub('IDX', '[', temp) ))
+    if '$' in py_name:
+      name, idx = py_name.split('$')
+      py_name = '{name}[{idx}]'.format( name = name, idx = int(idx) )
+    v_name  = v_name.replace( '$', '__024' )
     set_inputs.append( 's._model.{v_name}[0] = s.{py_name}' \
                        .format( v_name = v_name, py_name = py_name )
                      )
@@ -374,10 +391,10 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   set_outputs = []
   for v_name, bitwidth in out_ports:
     py_name = v_name.replace('_M_', '.')
-    # TODO: handle port lists
-    #if 'IDX' in i[0]:
-    #  w += ('\n      s.{0}].value = s.{1}.{2}'
-    #        .format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
+    if '$' in py_name:
+      name, idx = py_name.split('$')
+      py_name = '{name}[{idx}]'.format( name = name, idx = int(idx) )
+    v_name  = v_name.replace( '$', '__024' )
     set_outputs.append( 's.{py_name}.value = s._model.{v_name}[0]' \
                         .format( v_name = v_name, py_name = py_name )
                       )
@@ -390,10 +407,10 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   set_next = []
   for v_name, bitwidth in out_ports:
     py_name = v_name.replace('_M_', '.')
-    # TODO: handle port lists
-    #if 'IDX' in i[0]:
-    #  w += ('\n      s.{0}].value = s.{1}.{2}'
-    #        .format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
+    if '$' in py_name:
+      name, idx = py_name.split('$')
+      py_name = '{name}[{idx}]'.format( name = name, idx = int(idx) )
+    v_name  = v_name.replace( '$', '__024' )
     set_next.append( 's.{py_name}.next = s._model.{v_name}[0]' \
                       .format( v_name = v_name, py_name = py_name )
                     )
