@@ -3,19 +3,23 @@
 #=========================================================================
 
 from new_pymtl import *
-from Mux import Mux
+from Mux       import Mux
 
 from TestVectorSimulator import TestVectorSimulator
+from new_pymtl.translation_tools.verilator_sim import get_verilated
 
 #-------------------------------------------------------------------------
 # Test Harness
 #-------------------------------------------------------------------------
 
-def run_test_mux( dump_vcd, ModelType, num_inputs, test_vectors ):
+def run_test_mux( dump_vcd, test_verilog,
+                  ModelType, num_inputs, test_vectors ):
 
   # Instantiate and elaborate the model
 
   model = ModelType(16, num_inputs)
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -40,8 +44,8 @@ def run_test_mux( dump_vcd, ModelType, num_inputs, test_vectors ):
 # Mux2 unit tests
 #-------------------------------------------------------------------------
 
-def test_mux2( dump_vcd ):
-  run_test_mux( dump_vcd, Mux, 2, [
+def test_mux2( dump_vcd, test_verilog ):
+  run_test_mux( dump_vcd, test_verilog, Mux, 2, [
     [ 0x0a0a, 0x0b0b, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0, 0x0a0a ],
     [ 0x0c0c, 0x0d0d, 1, 0x0d0d ],
@@ -52,8 +56,8 @@ def test_mux2( dump_vcd ):
 # Mux3 unit tests
 #-------------------------------------------------------------------------
 
-def test_mux3( dump_vcd ):
-  run_test_mux( dump_vcd, Mux, 3, [
+def test_mux3( dump_vcd, test_verilog ):
+  run_test_mux( dump_vcd, test_verilog, Mux, 3, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0, 0x0a0a ],
@@ -66,8 +70,8 @@ def test_mux3( dump_vcd ):
 # Mux4 unit tests
 #-------------------------------------------------------------------------
 
-def test_mux4( dump_vcd ):
-  run_test_mux( dump_vcd, Mux, 4, [
+def test_mux4( dump_vcd, test_verilog ):
+  run_test_mux( dump_vcd, test_verilog, Mux, 4, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 3, 0x0d0d ],
@@ -78,8 +82,8 @@ def test_mux4( dump_vcd ):
 # Mux5 unit tests
 #-------------------------------------------------------------------------
 
-def test_mux5( dump_vcd ):
-  run_test_mux( dump_vcd, Mux, 5, [
+def test_mux5( dump_vcd, test_verilog ):
+  run_test_mux( dump_vcd, test_verilog, Mux, 5, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 3, 0x0d0d ],
@@ -91,8 +95,8 @@ def test_mux5( dump_vcd ):
 # Mux6 unit tests
 #-------------------------------------------------------------------------
 
-def test_mux6( dump_vcd ):
-  run_test_mux( dump_vcd, Mux, 6, [
+def test_mux6( dump_vcd, test_verilog ):
+  run_test_mux( dump_vcd, test_verilog, Mux, 6, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 3, 0x0d0d ],
@@ -105,8 +109,8 @@ def test_mux6( dump_vcd ):
 # Mux7 unit tests
 #-------------------------------------------------------------------------
 
-def test_mux7( dump_vcd ):
-  run_test_mux( dump_vcd, Mux, 7, [
+def test_mux7( dump_vcd, test_verilog ):
+  run_test_mux( dump_vcd, test_verilog, Mux, 7, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 3, 0x0d0d ],
@@ -120,8 +124,8 @@ def test_mux7( dump_vcd ):
 # Mux8 unit tests
 #-------------------------------------------------------------------------
 
-def test_mux8( dump_vcd ):
-  run_test_mux( dump_vcd, Mux, 8, [
+def test_mux8( dump_vcd, test_verilog ):
+  run_test_mux( dump_vcd, test_verilog, Mux, 8, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 0x0202, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 0x0202, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 0x0202, 3, 0x0d0d ],
