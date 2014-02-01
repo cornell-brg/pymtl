@@ -846,3 +846,52 @@ def test_BundleComb():
   assert model.out.a == 4
   assert model.out.b == 10
 
+class BundleChain( Model ):
+  def __init__( s, nbits ):
+    s.nbits = nbits
+    s.in_   = InBundle ( nbits )
+    s.out   = OutBundle( nbits )
+  def elaborate_logic( s ):
+    s.submod = [ BundleChild( s.nbits ) for x in range( 2 ) ]
+    s.connect( s.in_,           s.submod[0].in_ )
+    s.connect( s.submod[0].out, s.submod[1].in_ )
+    s.connect( s.submod[1].out, s.out           )
+
+def test_BundleChain():
+  model = BundleChain( 16 )
+  sim = setup_sim( model )
+  model.in_.a.value = 2
+  model.in_.b.value = 3
+  sim.eval_combinational()
+  assert model.out.a == 2
+  assert model.out.b == 3
+  model.in_.a.value = 10
+  model.in_.b.value = 4
+  sim.eval_combinational()
+  assert model.out.a == 10
+  assert model.out.b == 4
+
+#-------------------------------------------------------------------------
+# GlobalConstants
+#-------------------------------------------------------------------------
+CONSTANT_A = 4
+CONSTANT_B = 7
+class GlobalConstants( Model ):
+  def __init__( s ):
+    s.sel = InPort ( 1 )
+    s.out = OutPort( 8 )
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.value = CONSTANT_A if s.sel else CONSTANT_B
+
+def test_GlobalConstants():
+  model = GlobalConstants()
+  sim   = setup_sim( model )
+  model.sel.value = 1
+  sim.eval_combinational()
+  assert model.out == 4
+  model.sel.value = 0
+  sim.eval_combinational()
+  assert model.out == 7
+

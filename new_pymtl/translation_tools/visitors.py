@@ -44,8 +44,12 @@ class AnnotateWithObjects( ast.NodeTransformer ):
 
   def visit_Name( self, node ):
 
-    # If the name is not in closed_vars, it is a local temporary
-    if   node.id not in self.closed_vars:
+    # Check if the name is a global constant
+    if   node.id in self.func.func_globals:
+      new_obj  = PyObj( '', self.func.func_globals[ node.id ] )
+
+    # If the name is not in closed_vars or func_globals, it's a local temporary
+    elif node.id not in self.closed_vars:
       new_obj  = None
 
     # If the name points to the model, this is a reference to self (or s)
