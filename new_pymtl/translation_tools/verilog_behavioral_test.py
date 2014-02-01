@@ -109,3 +109,5 @@ def test_SliceTempWriteCheck():
   setup_sim( combinational.SliceTempWriteCheck( 16 ) )
 def test_MultipleWrites():
   setup_sim( combinational.MultipleWrites( 4 ) )
+def test_BundleComb():
+  setup_sim( combinational.BundleChild( 16 ) )

@@ -7,6 +7,7 @@ import re
 
 from ..ast_helpers import get_closure_dict
 from ..signals     import Wire
+from ..PortBundle  import PortBundle
 
 #-------------------------------------------------------------------------
 # AnnotateWithObjects
@@ -147,13 +148,54 @@ class FlattenSubmodAttrs( ast.NodeTransformer ):
       new_node._object = node._object
       node = new_node
 
-    # If this attribute is a submodel remove the node, set the submodule name
+    # Attribute is a submodel remove the node, set the submodule name
     if hasattr( node._object, 'class_name' ):
       self.submodule = node._object.name
       return None
 
     # Otherwise, clear the submodule name, return node unmodified
     self.submodule = None
+    return ast.copy_location( node, node )
+
+#-------------------------------------------------------------------------
+# FlattenPortBundles
+#-------------------------------------------------------------------------
+# Transform AST branches for PortBundles ignals. A PyMTL signal referenced
+# as 's.portbundle.port' would appear in the AST as:
+#
+#   Attribute(port)
+#   |- Attribute(portbundle)
+#
+# This visitor transforms the AST and name to 's.submodule_port':
+#
+#   Attribute(portbundle_port)
+#
+class FlattenPortBundles( ast.NodeTransformer ):
+
+  def __init__( self ):
+    self.portbundle = None
+
+  def visit_Attribute( self, node ):
+
+    # Visit children
+    self.generic_visit( node )
+
+    # If the direct child of this attribute was a portbundle then the node
+    # will be removed by the visitor. We must update our name to include
+    # portbundle name for proper mangling.
+    if self.portbundle:
+      new_node = _ast.Name( id  = '{}_{}'.format(self.portbundle, node.attr ),
+                            ctx = node.ctx )
+      new_node._object = node._object
+      node = new_node
+
+    # Attribute is a PortBundle, remove the node, set the submodule name
+    if isinstance( node._object, PortBundle ):
+      self.portbundle = node.attr
+      return None
+
+    # Otherwise, clear the submodule name, return node unmodified
+    self.portbundle = None
     return ast.copy_location( node, node )
 
 #-------------------------------------------------------------------------

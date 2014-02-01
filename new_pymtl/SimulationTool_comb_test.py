@@ -808,3 +808,41 @@ class MultipleWrites( Model ):
 
 def test_MultipleWrites():
   passthrough_tester( MultipleWrites )
+
+#-------------------------------------------------------------------------
+# PortBundle
+#-------------------------------------------------------------------------
+# Test to catch strange simulator behavior
+from PortBundle import PortBundle, create_PortBundles
+
+class TestBundle( PortBundle ):
+  def __init__( s, nbits ):
+    s.a = InPort( nbits )
+    s.b = InPort( nbits )
+
+InBundle, OutBundle = create_PortBundles( TestBundle )
+
+class BundleChild( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InBundle ( nbits )
+    s.out = OutBundle( nbits )
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.a.value = s.in_.b
+      s.out.b.value = s.in_.a
+
+def test_BundleComb():
+  model = BundleChild( 16 )
+  sim = setup_sim( model )
+  model.in_.a.value = 2
+  model.in_.b.value = 3
+  sim.eval_combinational()
+  assert model.out.a == 3
+  assert model.out.b == 2
+  model.in_.a.value = 10
+  model.in_.b.value = 4
+  sim.eval_combinational()
+  assert model.out.a == 4
+  assert model.out.b == 10
+
