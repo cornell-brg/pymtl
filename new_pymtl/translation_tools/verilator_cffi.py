@@ -94,10 +94,10 @@ def get_model_ports( model_name ):
   def verilog_name( port ):
     return verilog_structural.mangle_name( port.name )
 
-  in_ports = [ ( verilog_name( p ), str( p.nbits ) )
+  in_ports = [ ( verilog_name( p ), p.nbits )
                for p in in_ports
                if not verilog_name( p ) in [ 'clk', 'reset' ] ]
-  out_ports = [ ( verilog_name( p ), str( p.nbits ) ) for p in out_ports ]
+  out_ports = [ ( verilog_name( p ), p.nbits ) for p in out_ports ]
 
   return in_ports, out_ports
 
@@ -163,7 +163,7 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
   """
 
   # Collect all the ports
-  ports = [ ('clk', '1'), ('reset', '1') ] + in_ports + out_ports
+  ports = [ ('clk', 1), ('reset', 1) ] + in_ports + out_ports
 
   # Utility function for creating port declarations
   def port_to_decl( port ):
@@ -171,7 +171,6 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
 
     port_name, bitwidth = port
     port_name = verilator_mangle( port_name )
-    bitwidth = int( bitwidth )
 
     if   bitwidth <= 8:  data_type = 'uint8_t'
     elif bitwidth <= 16: data_type = 'uint16_t'
@@ -185,7 +184,7 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
   def port_to_init( port ):
     code = '{verilator_name} = {dereference}model->{verilator_name};'
     port_name, bitwidth = port
-    dereference = '&' if int(bitwidth) <= 64 else ''
+    dereference = '&' if bitwidth <= 64 else ''
     # TODO: hack for verilator name mangling, make this cleaner?
     verilator_name = verilator_mangle( port_name )
     return code.format( port_name      = port_name,
