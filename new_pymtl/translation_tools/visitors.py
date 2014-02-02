@@ -326,6 +326,7 @@ class InferTemporaryTypes( ast.NodeTransformer):
 class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
   def get( self, tree ):
+    self._temp   = set()
     self.store   = set()
     self.loopvar = set()
     self.params  = set()
@@ -345,8 +346,14 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
   def visit_Assign( self, node ):
     assert len(node.targets) == 1
-    if isinstance( node.targets[0]._object, Signal ):
-      self.store.add( node.targets[0]._object )
+    obj = node.targets[0]._object
+    if   isinstance( obj, Signal ):
+      self.store.add( obj )
+      self._temp.add( obj.name )
+    # FIXME: super hacky handling of ints / signals
+    elif isinstance( obj, tuple ):
+      if not obj[0] in self._temp:
+        self.store.add( obj )
     self.generic_visit( node )
 
   def visit_For( self, node ):
