@@ -289,7 +289,8 @@ class InferTemporaryTypes( ast.NodeTransformer):
           node.targets[0]._object = (node.targets[0].id, node.value._object )
         else:
           obj = copy.copy( node.value._object )
-          obj.name = node.targets[0].id
+          obj.name   = node.targets[0].id
+          obj.parent = None
           node.targets[0]._object = obj
 
       elif isinstance( node.value, ast.Attribute ):
@@ -297,7 +298,8 @@ class InferTemporaryTypes( ast.NodeTransformer):
           node.targets[0]._object = (node.targets[0].id, node.value._object )
         else:
           obj = copy.copy( node.value._object )
-          obj.name = node.targets[0].id
+          obj.name   = node.targets[0].id
+          obj.parent = None
           node.targets[0]._object = obj
 
       elif isinstance( node.value, ast.Num ):

@@ -924,8 +924,8 @@ class IntTemporaries( Model ):
 
       s.update.value = next_state
 
-def test_IntTemporaries():
-  model = IntTemporaries()
+def temp_tester( ModelType ):
+  model = ModelType()
   sim   = setup_sim( model )
 
   model.state.value = model.STATE_A
@@ -957,4 +957,30 @@ def test_IntTemporaries():
   model.go   .value = 0
   sim.eval_combinational()
   assert model.update == model.STATE_C
+
+def test_IntTemporaries():
+  temp_tester( IntTemporaries )
+
+class IntSubTemporaries( IntTemporaries ):
+  def elaborate_logic( s ):
+
+    s.submod = PassThrough( 2 )
+    s.connect( s.state, s.submod.in_ )
+
+    @s.combinational
+    def logic():
+
+      next_state = s.submod.out
+
+      if   s.state == s.STATE_A and s.go:
+        next_state = s.STATE_B
+      elif s.state == s.STATE_B:
+        next_state = s.STATE_C
+      elif s.state == s.STATE_C and s.go:
+        next_state = s.STATE_A
+
+      s.update.value = next_state
+
+def test_IntSubTemporaries():
+  temp_tester( IntSubTemporaries )
 

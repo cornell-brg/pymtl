@@ -117,3 +117,5 @@ def test_GlobalConstants():
   setup_sim( combinational.GlobalConstants() )
 def test_IntTemporaries():
   setup_sim( combinational.IntTemporaries() )
+def test_IntSubTemporaries():
+  setup_sim( combinational.IntSubTemporaries() )
