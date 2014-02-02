@@ -110,6 +110,7 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
   c_src = """
     #include "obj_dir_{model_name}/V{model_name}.h"
     #include "stdio.h"
+    #include "stdint.h"
     #include "verilated.h"
     #include "verilated_vcd_c.h"
 
@@ -166,32 +167,29 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
 
   # Utility function for creating port declarations
   def port_to_decl( port ):
-    code = '{data_type} * {port_name}{array_size};'
+    code = '{data_type} * {port_name};'
 
     port_name, bitwidth = port
-    port_name = port_name.replace( '$', '__024' )
+    port_name = verilator_mangle( port_name )
     bitwidth = int( bitwidth )
 
-    if   bitwidth <= 8:  data_type = 'unsigned char'
-    elif bitwidth <= 16: data_type = 'unsigned short'
-    elif bitwidth <= 32: data_type = 'unsigned long'
-    elif bitwidth <= 64: data_type = 'unsigned long long'
-    else:                data_type = 'unsigned long'
-
-    if bitwidth > 64:
-      array_size = '[{0}]'.format( int ( math.ceil( bitwidth / 32.0 ) ) )
-    else:
-      array_size = ''
+    if   bitwidth <= 8:  data_type = 'uint8_t'
+    elif bitwidth <= 16: data_type = 'uint16_t'
+    elif bitwidth <= 32: data_type = 'uint32_t'
+    elif bitwidth <= 64: data_type = 'uint64_t'
+    else:                data_type = 'uint32_t'
 
     return code.format( **vars() )
 
   # Utility function for creating port initializations
   def port_to_init( port ):
-    code = '{verilator_name} = &model->{verilator_name};'
+    code = '{verilator_name} = {dereference}model->{verilator_name};'
     port_name, bitwidth = port
+    dereference = '&' if int(bitwidth) <= 64 else ''
     # TODO: hack for verilator name mangling, make this cleaner?
-    verilator_name = port_name.replace( '$', '__024' )
+    verilator_name = verilator_mangle( port_name )
     return code.format( port_name      = port_name,
+                        dereference    = dereference,
                         verilator_name = verilator_name )
 
   # Create port declaration, initialization, and extern statements
@@ -382,7 +380,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
     if '$' in py_name:
       name, idx = py_name.split('$')
       py_name = '{name}[{idx}]'.format( name = name, idx = int(idx) )
-    v_name  = v_name.replace( '$', '__024' )
+    v_name = verilator_mangle( v_name )
     set_inputs.append( 's._model.{v_name}[0] = s.{py_name}' \
                        .format( v_name = v_name, py_name = py_name )
                      )
@@ -394,7 +392,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
     if '$' in py_name:
       name, idx = py_name.split('$')
       py_name = '{name}[{idx}]'.format( name = name, idx = int(idx) )
-    v_name  = v_name.replace( '$', '__024' )
+    v_name = verilator_mangle( v_name )
     set_outputs.append( 's.{py_name}.value = s._model.{v_name}[0]' \
                         .format( v_name = v_name, py_name = py_name )
                       )
@@ -410,7 +408,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
     if '$' in py_name:
       name, idx = py_name.split('$')
       py_name = '{name}[{idx}]'.format( name = name, idx = int(idx) )
-    v_name  = v_name.replace( '$', '__024' )
+    v_name = verilator_mangle( v_name )
     set_next.append( 's.{py_name}.next = s._model.{v_name}[0]' \
                       .format( v_name = v_name, py_name = py_name )
                     )
@@ -442,3 +440,6 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   f.write( py_src )
   f.close()
 
+
+def verilator_mangle( signal_name ):
+  return signal_name.replace( '__', '___05F' ).replace( '$', '__024' )
