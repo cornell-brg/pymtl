@@ -115,3 +115,5 @@ def test_BundleChain():
   setup_sim( combinational.BundleChain( 16 ) )
 def test_GlobalConstants():
   setup_sim( combinational.GlobalConstants() )
+def test_IntTemporaries():
+  setup_sim( combinational.IntTemporaries() )

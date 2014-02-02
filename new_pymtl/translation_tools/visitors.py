@@ -6,7 +6,7 @@ import ast, _ast
 import re
 
 from ..ast_helpers import get_closure_dict
-from ..signals     import Wire
+from ..signals     import Wire, Signal
 from ..PortBundle  import PortBundle
 
 #-------------------------------------------------------------------------
@@ -285,14 +285,20 @@ class InferTemporaryTypes( ast.NodeTransformer):
       # Currently only support Name/Attributes on the RHS
       # Copy the object returned by the RHS, set the name appropriately
       if   isinstance( node.value, ast.Name ):
-        obj = copy.copy( node.value._object )
-        obj.name = node.targets[0].id
-        node.targets[0]._object = obj
+        if isinstance( node.value._object, int ):
+          node.targets[0]._object = (node.targets[0].id, node.value._object )
+        else:
+          obj = copy.copy( node.value._object )
+          obj.name = node.targets[0].id
+          node.targets[0]._object = obj
 
       elif isinstance( node.value, ast.Attribute ):
-        obj = copy.copy( node.value._object )
-        obj.name = node.targets[0].id
-        node.targets[0]._object = obj
+        if isinstance( node.value._object, int ):
+          node.targets[0]._object = (node.targets[0].id, node.value._object )
+        else:
+          obj = copy.copy( node.value._object )
+          obj.name = node.targets[0].id
+          node.targets[0]._object = obj
 
       elif isinstance( node.value, ast.Num ):
         node.targets[0]._object = (node.targets[0].id, int( node.value.n ))
@@ -339,7 +345,7 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
   def visit_Assign( self, node ):
     assert len(node.targets) == 1
-    if not isinstance( node.targets[0]._object, list ):
+    if isinstance( node.targets[0]._object, Signal ):
       self.store.add( node.targets[0]._object )
     self.generic_visit( node )
 

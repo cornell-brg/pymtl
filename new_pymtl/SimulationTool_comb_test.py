@@ -895,3 +895,66 @@ def test_GlobalConstants():
   sim.eval_combinational()
   assert model.out == 7
 
+#-------------------------------------------------------------------------
+# IntTemporaries
+#-------------------------------------------------------------------------
+class IntTemporaries( Model ):
+  def __init__( s ):
+
+    s.STATE_A = 0
+    s.STATE_B = 1
+    s.STATE_C = 2
+
+    s.go     = InPort ( 1 )
+    s.state  = InPort ( 2 )
+    s.update = OutPort( 2 )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+
+      next_state = s.state
+
+      if   s.state == s.STATE_A and s.go:
+        next_state = s.STATE_B
+      elif s.state == s.STATE_B:
+        next_state = s.STATE_C
+      elif s.state == s.STATE_C and s.go:
+        next_state = s.STATE_A
+
+      s.update.value = next_state
+
+def test_IntTemporaries():
+  model = IntTemporaries()
+  sim   = setup_sim( model )
+
+  model.state.value = model.STATE_A
+  model.go   .value = 0
+  sim.eval_combinational()
+  assert model.update == model.STATE_A
+
+  model.state.value = model.STATE_A
+  model.go   .value = 1
+  sim.eval_combinational()
+  assert model.update == model.STATE_B
+
+  model.state.value = model.STATE_B
+  model.go   .value = 1
+  sim.eval_combinational()
+  assert model.update == model.STATE_C
+
+  model.state.value = model.STATE_B
+  model.go   .value = 0
+  sim.eval_combinational()
+  assert model.update == model.STATE_C
+
+  model.state.value = model.STATE_C
+  model.go   .value = 1
+  sim.eval_combinational()
+  assert model.update == model.STATE_A
+
+  model.state.value = model.STATE_C
+  model.go   .value = 0
+  sim.eval_combinational()
+  assert model.update == model.STATE_C
+
