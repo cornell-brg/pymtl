@@ -12,6 +12,7 @@ import textwrap
 import verilog_structural
 
 from subprocess import check_output, STDOUT, CalledProcessError
+from ..signals  import InPort, OutPort
 
 #------------------------------------------------------------------------------
 # verilog_to_pymtl
@@ -48,8 +49,9 @@ def verilog_to_pymtl( model, filename_v ):
   create_shared_lib( model_name )
 
   # Create PyMTL wrapper for CFFI interface to Verilated model
-  create_pymtl_wrapper( in_ports, out_ports, model_name,
-                        filename_w, vobj_name, xobj_name, cdefs )
+  #pymtl_wrapper_from_ports( in_ports, out_ports, model_name,
+  pymtl_wrapper_from_model( model, model_name,
+                            filename_w, vobj_name, xobj_name, cdefs )
 
 #------------------------------------------------------------------------------
 # verilate_model
@@ -262,84 +264,75 @@ def create_shared_lib( model_name ):
     ))
 
 #------------------------------------------------------------------------------
-# create_pymtl_wrapper
+# pymtl wrapper template
 #------------------------------------------------------------------------------
-# Create PyMTL wrapper for CFFI interface of Verilated model.
-def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
-                          vobj_name, xobj_name, cdefs ):
 
-  py_src = """
-    from new_pymtl import *
-    from cffi      import FFI
+py_template = """
+  from new_pymtl import *
+  from cffi      import FFI
 
-    class {model_name}( Model ):
+  class {model_name}( Model ):
 
-      def __init__( s ):
+    def __init__( s ):
 
-        ffi = FFI()
-        ffi.cdef('''
-          void create_model( void );
-          void destroy_model( void );
-          void eval( void );
-          void trace( void );
+      ffi = FFI()
+      ffi.cdef('''
+        void create_model( void );
+        void destroy_model( void );
+        void eval( void );
+        void trace( void );
 
-          {port_decls}
-        ''')
+        {port_decls}
+      ''')
 
-        s._model = ffi.dlopen('./{model_name}.so')
-        s._model.create_model()
+      s._model = ffi.dlopen('./{model_name}.so')
+      s._model.create_model()
 
-        {port_defs}
+      {port_defs}
 
-      def __del__( s ):
-        s._model.destroy_model()
+    def __del__( s ):
+      s._model.destroy_model()
 
-      def elaborate_logic( s ):
-        @s.combinational
-        def logic():
+    def elaborate_logic( s ):
+      @s.combinational
+      def logic():
 
-          # Set reset
-          s._model.reset[0] = s.reset
+        # Set reset
+        s._model.reset[0] = s.reset
 
-          # Set inputs
-          {set_inputs}
+        # Set inputs
+        {set_inputs}
 
-          # Execute combinational logic
-          s._model.eval()
+        # Execute combinational logic
+        s._model.eval()
 
-          # Set outputs
-          {set_outputs}
+        # Set outputs
+        {set_outputs}
 
-        @s.posedge_clk
-        def tick():
+      @s.posedge_clk
+      def tick():
 
-          # Tick and capture VCD output
-          s._model.eval()
-          s._model.trace()
+        # Tick and capture VCD output
+        s._model.eval()
+        s._model.trace()
 
-          # Set clk high and repeat
-          s._model.clk[0] = 1
-          s._model.eval()
-          s._model.trace()
+        # Set clk high and repeat
+        s._model.clk[0] = 1
+        s._model.eval()
+        s._model.trace()
 
-          {set_next}
+        {set_next}
 
-          s._model.clk[0] = 0
+        s._model.clk[0] = 0
 
-  """
+"""
 
-  # TODO: handle PortBundles
-  # Any signals with an _M_ in the name are part of bundles, handle these
-  # specially by creating 'fake' PortBundle inner classes.
-  #from collections import defaultdict
-  #bundles = set()
-  #for name, width in in_ports + out_ports:
-  #  if '_M_' in name:
-  #    bundle_name, port_name = name.split('_M_')
-  #    bundles.add( bundle_name )
-  #for b in bundles:
-  #  w += ("    class {1}( PortBundle ): flip = False\n"
-  #        "    s.{0} = {1}()\n\n".format( b, b.capitalize() ) )
+#------------------------------------------------------------------------------
+# pymtl_wrapper_from_ports
+#------------------------------------------------------------------------------
+def pymtl_wrapper_from_ports( in_ports, out_ports, model_name, filename_w,
+                              vobj_name, xobj_name, cdefs ):
+
 
   # Declare the interface ports for the wrapper class.
   port_defs = []
@@ -347,10 +340,6 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
 
     # Replace all references to _M_ with .
     ports = [ ( name.replace('_M_', '.'), nbits ) for name, nbits in ports ]
-
-    # TODO: handle port lists
-    #s.{0} = [ {3}( {1} ) for x in range( {2} ) ]'
-    #        '\n'.format( i[0], i[1], i[2], ptype ))
 
     lists = []
     for port_name, bitwidth in ports:
@@ -412,7 +401,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
                       .format( v_name = v_name, py_name = py_name )
                     )
 
-  py_src = textwrap.dedent( py_src )
+  py_src = textwrap.dedent( py_template )
   py_src = py_src.format(
       model_name  = model_name,
       port_decls  = cdefs,
@@ -422,15 +411,108 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
       set_next    = '\n      '.join( set_next ),
   )
 
-  # TODO: need to set outports after tick eval()?
-  #for i in out_ports:
-  #  temp = i[0].replace('_M_', '.')
-  #  if 'IDX' in i[0]:
-  #    w += ('\n      s.{0}].next = s.{1}.{2}'
-  #          .format( re.sub('IDX', '[', temp), xobj_name, i[0] ))
-  #  else:
-  #    w += ('\n      s.{0}.next = s.{1}.{2}'
-  #          .format( temp, xobj_name, i[0] ))
+  # TODO: needed for tracing?
+  #w += 'XTraceEverOn()'
+
+  f = open( filename_w, 'w' )
+  f.write( py_src )
+  f.close()
+
+#------------------------------------------------------------------------------
+# pymtl_wrapper_from_model
+#------------------------------------------------------------------------------
+def pymtl_wrapper_from_model( model, model_name, filename_w,
+                              vobj_name, xobj_name, cdefs ):
+
+  port_defs = []
+  port_ins  = []
+  port_outs = []
+
+  # Utility function for instantiating Port objects
+  def port_inst( port ):
+    return '{port_type}( {bitwidth} )' \
+           .format( port_type = port.__class__.__name__,
+                    bitwidth  = port.nbits )
+
+  # Utility function for declaring a port member
+  def declare_port( port ):
+    return 's.{port_name} = {port_inst}' \
+           .format( port_name = port.name,
+                    port_inst = port_inst( port )
+                   )
+
+  # Utility function for declaring a port list member
+  def declare_port_list( name, port_list ):
+    ports      = [ port_inst( x ) for x in port_list ]
+    port_decls = ',\n      '.join( ports )
+    return 's.{list_name} = [\n      {port_decls}\n    ]' \
+           .format( list_name  = name,
+                    port_decls = port_decls )
+
+  # Verilog Name
+  def verilog_name( port ):
+    return verilog_structural.mangle_name( port.name )
+
+  for name, obj in model.__dict__.items():
+    if not name.startswith( '_' ):
+
+      if   isinstance( obj, (InPort, OutPort) ):
+        port_defs.append( declare_port( obj ) )
+      elif isinstance( obj, list ):
+        port_defs.append( declare_port_list( name, obj ) )
+      #elif isinstance( obj, PortBundle ):
+
+  for port in model.get_ports():
+    port._verilog_name   = verilog_structural.mangle_name( port.name )
+    port._verilator_name = verilator_mangle( port._verilog_name )
+
+  port_outs = model.get_outports()
+  port_ins  = [ x for x in model.get_inports() if
+                x.name not in ('clk','reset') ]
+
+  ## TODO: handle PortBundles
+  ## Any signals with an _M_ in the name are part of bundles, handle these
+  ## specially by creating 'fake' PortBundle inner classes.
+  ##from collections import defaultdict
+  ##bundles = set()
+  ##for name, width in in_ports + out_ports:
+  ##  if '_M_' in name:
+  ##    bundle_name, port_name = name.split('_M_')
+  ##    bundles.add( bundle_name )
+  ##for b in bundles:
+  ##  w += ("    class {1}( PortBundle ): flip = False\n"
+  ##        "    s.{0} = {1}()\n\n".format( b, b.capitalize() ) )
+
+  # Assigning input ports
+  set_inputs = []
+  for port in port_ins:
+    v_name, py_name = port._verilator_name, port.name
+    set_inputs.append( 's._model.{v_name}[0] = s.{py_name}' \
+                       .format( v_name  = v_name, py_name = port.name ) )
+
+  # TODO: no way to distinguish between combinational and sequential
+  #       outputs, so we set outputs both ways...
+  #       This seems broken, but I can't think of a better way.
+
+  # Assigning combinational and sequential output ports
+  set_outputs = []
+  set_next    = []
+  for port in port_outs:
+    v_name, py_name = port._verilator_name, port.name
+    set_outputs.append( 's.{py_name}.value = s._model.{v_name}[0]' \
+                        .format( v_name = v_name, py_name = py_name ) )
+    set_next.   append( 's.{py_name}.next = s._model.{v_name}[0]' \
+                        .format( v_name = v_name, py_name = py_name ) )
+
+  py_src = textwrap.dedent( py_template )
+  py_src = py_src.format(
+      model_name  = model_name,
+      port_decls  = cdefs,
+      port_defs   = '\n    '  .join( port_defs ),
+      set_inputs  = '\n      '.join( set_inputs ),
+      set_outputs = '\n      '.join( set_outputs ),
+      set_next    = '\n      '.join( set_next ),
+  )
 
   # TODO: needed for tracing?
   #w += 'XTraceEverOn()'
