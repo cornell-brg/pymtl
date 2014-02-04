@@ -15,7 +15,6 @@ from sys               import flags
 from SignalValue       import SignalValue
 from ast_helpers       import get_method_ast
 from ast_visitor       import DetectLoadsAndStores
-#from EventQueue        import new_cpp_queue, cpp_callback
 from SimulationMetrics import SimulationMetrics, DummyMetrics
 
 #-------------------------------------------------------------------------
@@ -559,27 +558,3 @@ class EventQueue( object ):
     if self.func_ids > len( self.func_bv ):
       self.func_bv.extend( [ False ] * 1000 )
     return id
-
-#class EventQueue( object ):
-#
-#  def __init__( self ):
-#    self.fifo     = new_cpp_queue()
-#    self.func_ids = 0
-#    assert self.fifo.len() == 0
-#
-#  def enq( self, cb, id):
-#    self.fifo.enq( cb, id )
-#
-#  def deq( self ):
-#    return self.fifo.deq()
-#
-#  def len( self ):
-#    return self.fifo.len()
-#
-#  def __len__( self ):
-#    return self.fifo.len()
-#
-#  def get_id( self ):
-#    id = self.func_ids
-#    self.func_ids += 1
-#    return id
