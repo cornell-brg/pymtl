@@ -308,7 +308,7 @@ py_template = """
         s._model.eval()
 
         # Set outputs
-        {set_outputs}
+        {set_comb}
 
       @s.posedge_clk
       def tick():
@@ -375,16 +375,16 @@ def pymtl_wrapper_from_ports( in_ports, out_ports, model_name, filename_w,
                      )
 
   # Assigning combinational output ports
-  set_outputs = []
+  set_comb = []
   for v_name, bitwidth in out_ports:
     py_name = v_name.replace('_M_', '.')
     if '$' in py_name:
       name, idx = py_name.split('$')
       py_name = '{name}[{idx}]'.format( name = name, idx = int(idx) )
     v_name = verilator_mangle( v_name )
-    set_outputs.append( 's.{py_name}.value = s._model.{v_name}[0]' \
-                        .format( v_name = v_name, py_name = py_name )
-                      )
+    set_comb.append( 's.{py_name}.value = s._model.{v_name}[0]' \
+                      .format( v_name = v_name, py_name = py_name )
+                    )
 
   # TODO: no way to distinguish between combinational and sequential
   #       outputs, so we set outputs both ways...
@@ -408,7 +408,7 @@ def pymtl_wrapper_from_ports( in_ports, out_ports, model_name, filename_w,
       port_decls  = cdefs,
       port_defs   = '\n    '  .join( port_defs ),
       set_inputs  = '\n      '.join( set_inputs ),
-      set_outputs = '\n      '.join( set_outputs ),
+      set_comb    = '\n      '.join( set_comb ),
       set_next    = '\n      '.join( set_next ),
   )
 
@@ -491,26 +491,44 @@ def pymtl_wrapper_from_model( model, model_name, filename_w,
   port_ins  = [ x for x in model.get_inports() if
                 x.name not in ('clk','reset') ]
 
+  # Utility function for determining assignment of wide ports
+  def get_indices( port ):
+    num_assigns = 1 if port.nbits <= 64 else (port.nbits-1)/32 + 1
+    if num_assigns == 1:
+      return [(0, "")]
+    return [ ( i, '[{}:{}]'.format( i*32, min( i*32+32, port.nbits) ) )
+             for i in range(num_assigns) ]
+
   # Assigning input ports
   set_inputs = []
   for port in port_ins:
     v_name, py_name = port._verilator_name, port.name
-    set_inputs.append( 's._model.{v_name}[0] = s.{py_name}' \
-                       .format( v_name  = v_name, py_name = port.name ) )
+    for idx, offset in get_indices( port ):
+      set_inputs.append( 's._model.{v_name}[{idx}] = s.{py_name}{offset}' \
+                         .format( v_name  = v_name,
+                                  py_name = port.name,
+                                  idx     = idx,
+                                  offset  = offset )
+                        )
 
   # TODO: no way to distinguish between combinational and sequential
   #       outputs, so we set outputs both ways...
   #       This seems broken, but I can't think of a better way.
 
   # Assigning combinational and sequential output ports
-  set_outputs = []
-  set_next    = []
+  set_comb = []
+  set_next = []
   for port in port_outs:
     v_name, py_name = port._verilator_name, port.name
-    set_outputs.append( 's.{py_name}.value = s._model.{v_name}[0]' \
-                        .format( v_name = v_name, py_name = py_name ) )
-    set_next.   append( 's.{py_name}.next = s._model.{v_name}[0]' \
-                        .format( v_name = v_name, py_name = py_name ) )
+    for idx, offset in get_indices( port ):
+      assign = 's.{py_name}{offset}.{sigtype} = s._model.{v_name}[{idx}]' \
+               .format( v_name  = v_name,
+                        py_name = port.name,
+                        idx     = idx,
+                        offset  = offset,
+                        sigtype = '{sigtype}' )
+      set_comb.append( assign.format( sigtype = 'value' ) )
+      set_next.append( assign.format( sigtype = 'next'  ) )
 
   # Fill in the template
   py_src = textwrap.dedent( py_template )
@@ -519,7 +537,7 @@ def pymtl_wrapper_from_model( model, model_name, filename_w,
       port_decls  = cdefs,
       port_defs   = '\n    '  .join( port_defs ),
       set_inputs  = '\n      '.join( set_inputs ),
-      set_outputs = '\n      '.join( set_outputs ),
+      set_comb    = '\n      '.join( set_comb ),
       set_next    = '\n      '.join( set_next ),
   )
 
