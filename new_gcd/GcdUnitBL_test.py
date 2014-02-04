@@ -7,19 +7,21 @@ from new_pmlib import TestSource, TestSink
 
 from GcdUnitBL import GcdUnitBL
 
+from new_pymtl.translation_tools.verilator_sim import get_verilated
+
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
 
 class TestHarness( Model ):
 
-  def __init__( s, ModelType, src_msgs, sink_msgs,
+  def __init__( s, gcd_model, src_msgs, sink_msgs,
                 src_delay, sink_delay ):
 
     # Instantiate models
 
     s.src  = TestSource ( 64, src_msgs,  src_delay  )
-    s.gcd  = ModelType        ()
+    s.gcd  = gcd_model
     s.sink = TestSink   ( 32, sink_msgs, sink_delay )
 
   def elaborate_logic( s ):
@@ -46,7 +48,7 @@ class TestHarness( Model ):
 def concat( a, b ):
   return ( a << 32 | b )
 
-def run_gcd_test( dump_vcd, vcd_file_name,
+def run_gcd_test( dump_vcd, vcd_file_name, test_verilog,
                   ModelType, src_delay, sink_delay ):
 
   # Test messages
@@ -64,7 +66,11 @@ def run_gcd_test( dump_vcd, vcd_file_name,
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( ModelType, src_msgs, sink_msgs,
+  model_under_test = ModelType()
+  if test_verilog:
+    model_under_test = get_verilated( model_under_test )
+
+  model = TestHarness( model_under_test, src_msgs, sink_msgs,
                        src_delay, sink_delay )
   model.elaborate()
 
@@ -95,7 +101,7 @@ def run_gcd_test( dump_vcd, vcd_file_name,
 
 def test_delay0x0( dump_vcd ):
   run_gcd_test( dump_vcd, "pex-gcd-GcdUnitBL_test_delay0x0.vcd",
-                GcdUnitBL, 0, 0 )
+                False, GcdUnitBL, 0, 0 )
 
 #-------------------------------------------------------------------------
 # GcdUnitBL unit test with delay = 10 x 5
@@ -103,7 +109,7 @@ def test_delay0x0( dump_vcd ):
 
 def test_delay10x5( dump_vcd ):
   run_gcd_test( dump_vcd, "pex-gcd-GcdUnitBL_test_delay10x5.vcd",
-                GcdUnitBL, 10, 5 )
+                False, GcdUnitBL, 10, 5 )
 
 #-------------------------------------------------------------------------
 # GcdUnitBL unit test with delay = 5 x 10
@@ -111,5 +117,5 @@ def test_delay10x5( dump_vcd ):
 
 def test_delay5x10( dump_vcd ):
   run_gcd_test( dump_vcd, "pex-gcd-GcdUnitBL_test_delay5x10.vcd",
-                GcdUnitBL, 5, 10 )
+                False, GcdUnitBL, 5, 10 )
 

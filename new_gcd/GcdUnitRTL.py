@@ -175,24 +175,24 @@ class GcdUnitCtrl( Model ):
     @s.combinational
     def state_transitions():
 
-      current_state = s.state.out
-      next_state    = s.state.out
+      curr_state = s.state.out
+      next_state = s.state.out
 
       # Transistions out of IDLE state
 
-      if ( current_state == s.STATE_IDLE ):
+      if ( curr_state == s.STATE_IDLE ):
         if ( s.in_val and s.in_rdy ):
           next_state = s.STATE_CALC
 
       # Transistions out of CALC state
 
-      if ( current_state == s.STATE_CALC ):
+      if ( curr_state == s.STATE_CALC ):
         if ( not s.is_a_lt_b and s.is_b_zero ):
           next_state = s.STATE_DONE
 
       # Transistions out of DONE state
 
-      if ( current_state == s.STATE_DONE ):
+      if ( curr_state == s.STATE_DONE ):
         if ( s.out_val and s.out_rdy ):
           next_state = s.STATE_IDLE
 
