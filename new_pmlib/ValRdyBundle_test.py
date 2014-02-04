@@ -9,12 +9,15 @@ from new_pmlib    import TestVectorSimulator
 
 from new_pymtl.translation_tools.verilator_sim import get_verilated
 
+import pytest
+
 #-------------------------------------------------------------------------
 # ValRdyQueue
 #-------------------------------------------------------------------------
 # Test Queue using the ValRdy interface.
 class ValRdyQueue( Model ):
 
+  @capture_args
   def __init__( s, nbits ):
 
     s.enq   = InValRdyBundle ( nbits )
@@ -54,35 +57,10 @@ class ValRdyQueue( Model ):
     return "{} () {}".format( s.enq, s.deq )
 
 #-------------------------------------------------------------------------
-# test_valrdy_sim
+# run_valrdy_test
 #-------------------------------------------------------------------------
-def test_valrdy_sim( dump_vcd, test_verilog ):
+def run_valrdy_test( dump_vcd, test_verilog, test_vectors, model ):
 
-  test_vectors = [
-
-    # Enqueue one element and then dequeue it
-    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
-    [ 1,      1,      0x0001,  0,      1,      '?'    ],
-    [ 0,      0,      0x0000,  1,      1,      0x0001 ],
-    [ 0,      1,      0x0000,  0,      0,      '?'    ],
-
-    # Fill in the queue and enq/deq at the same time
-    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
-    [ 1,      1,      0x0002,  0,      0,      '?'    ],
-    [ 1,      0,      0x0003,  1,      0,      0x0002 ],
-    [ 0,      0,      0x0003,  1,      0,      0x0002 ],
-    [ 1,      0,      0x0003,  1,      1,      0x0002 ],
-    [ 1,      1,      0x0003,  0,      1,      '?'    ],
-    [ 1,      0,      0x0004,  1,      1,      0x0003 ],
-    [ 1,      1,      0x0004,  0,      1,      '?'    ],
-    [ 0,      0,      0x0004,  1,      1,      0x0004 ],
-    [ 0,      1,      0x0004,  0,      1,      '?'    ],
-
-  ]
-
-  # Instantiate and elaborate the model
-
-  model = ValRdyQueue( 16 )
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -110,3 +88,76 @@ def test_valrdy_sim( dump_vcd, test_verilog ):
   #  sim.dump_vcd( "valrdy_test.vcd" )
 
   sim.run_test()
+
+#-------------------------------------------------------------------------
+# test_ValRdyQueue16
+#-------------------------------------------------------------------------
+def test_ValRdyQueue16( dump_vcd, test_verilog ):
+
+  test_vectors = [
+
+    # Enqueue one element and then dequeue it
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ 1,      1,      0x0001,  0,      1,      '?'    ],
+    [ 0,      0,      0x0000,  1,      1,      0x0001 ],
+    [ 0,      1,      0x0000,  0,      0,      '?'    ],
+
+    # Fill in the queue and enq/deq at the same time
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ 1,      1,      0x0002,  0,      0,      '?'    ],
+    [ 1,      0,      0x0003,  1,      0,      0x0002 ],
+    [ 0,      0,      0x0003,  1,      0,      0x0002 ],
+    [ 1,      0,      0x0003,  1,      1,      0x0002 ],
+    [ 1,      1,      0x0003,  0,      1,      '?'    ],
+    [ 1,      0,      0x0004,  1,      1,      0x0003 ],
+    [ 1,      1,      0x0004,  0,      1,      '?'    ],
+    [ 0,      0,      0x0004,  1,      1,      0x0004 ],
+    [ 0,      1,      0x0004,  0,      1,      '?'    ],
+
+  ]
+
+  model = ValRdyQueue( 16 )
+  run_valrdy_test( dump_vcd, test_verilog, test_vectors, model )
+
+#-------------------------------------------------------------------------
+# gen_long_vector
+#-------------------------------------------------------------------------
+def gen_long_vector( nbits ):
+
+  data = lambda char: int( str(char)*(nbits/4), 16 )
+
+  test_vectors = [
+
+    # Enqueue one element and then dequeue it
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ 1,      1,     data(1),  0,      1,      '?'    ],
+    [ 0,      0,     data(0),  1,      1,     data(1) ],
+    [ 0,      1,     data(0),  0,      0,      '?'    ],
+
+    # Fill in the queue and enq/deq at the same time
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ 1,      1,     data(2),  0,      0,      '?'    ],
+    [ 1,      0,     data(3),  1,      0,     data(2) ],
+    [ 0,      0,     data(3),  1,      0,     data(2) ],
+    [ 1,      0,     data(3),  1,      1,     data(2) ],
+    [ 1,      1,     data(3),  0,      1,      '?'    ],
+    [ 1,      0,     data(4),  1,      1,     data(3) ],
+    [ 1,      1,     data(4),  0,      1,      '?'    ],
+    [ 0,      0,     data(4),  1,      1,     data(4) ],
+    [ 0,      1,     data(4),  0,      1,      '?'    ],
+
+  ]
+
+  return test_vectors
+
+#-------------------------------------------------------------------------
+# test_ValRdyQueue32
+#-------------------------------------------------------------------------
+@pytest.mark.parametrize(
+  ('nbits'), [32, 64, 80, 128]
+)
+def test_ValRdyQueue32( dump_vcd, test_verilog, nbits ):
+  test_vectors = gen_long_vector( nbits )
+  model = ValRdyQueue( nbits )
+  run_valrdy_test( dump_vcd, test_verilog, test_vectors, model )
+
