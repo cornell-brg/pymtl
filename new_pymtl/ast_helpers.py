@@ -43,20 +43,17 @@ def print_ast(node, annotate_fields=True, include_attributes=False, indent='  ')
 #------------------------------------------------------------------------------
 # print_simple_ast
 #------------------------------------------------------------------------------
-# Print out Python AST with nice indenting. Borrowed shamelessly from:
+# Print out Python AST with nice indenting. Borrowed (with modification) from:
+# http://alexleone.blogspot.com/2010/01/python-ast-pretty-printer.html
 def print_simple_ast(node, indent=' '):
 
   def get_indent( level, pipe=True ):
-    if level == 0:
-      return ''
-    elif pipe:
-      return '  '*(level-1) + "|-"
-    else:
-      return '  '*(level-1)
+    if level == 0: return ''
+    elif pipe:     return '  '*(level-1) + "|-"
+    else:          return '  '*(level-1)
 
   def _format(node, field='', level=0):
     if isinstance(node, ast.AST):
-      #fields = [(a, _format(b, level)) for a, b in ast.iter_fields(node)]
 
       head_string  = get_indent( level ) + node.__class__.__name__
       head_string += " ({})".format(field) if field else ""
@@ -66,12 +63,9 @@ def print_simple_ast(node, indent=' '):
           continue
         if isinstance( value, (str, int, float, long) ):
           head_string +=  '  {} = {}'.format( label, value )
-          #pass
-          #string += indent*level + '|- %s = "%s"\n' % (label,value)
         elif not value:
           body_string += get_indent( level+1, pipe=True) + '{} ({})\n'.format( value, label )
         else:
-          #string += indent + '- %s = %s\n' % (label,value)
           body_string += _format( value, label, level+1 )
 
       return head_string + "\n" + body_string
