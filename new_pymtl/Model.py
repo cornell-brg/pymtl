@@ -69,6 +69,10 @@ class Model( object ):
   # Utility method to perform elaboration on a Model and it's submodules.
   def recurse_elaborate( self, current_model, instance_name ):
 
+    if current_model.is_elaborated():
+      raise Exception("Model {} has already been elaborated!"
+                      .format( current_model.class_name ) )
+
     # Add the target model to the set of all models
     self._model_classes.add( current_model )
 

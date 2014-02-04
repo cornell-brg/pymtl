@@ -711,7 +711,6 @@ def test_SliceWriteCheck():
   import pytest
 
   model = SliceWriteCheck( 16 )
-  model.elaborate()
   sim = setup_sim( model )
   assert model.out == 0
 
@@ -779,7 +778,6 @@ class SliceTempWriteCheck( Model ):
 
 def test_SliceTempWriteCheck():
   model = SliceTempWriteCheck( 16 )
-  model.elaborate()
   sim = setup_sim( model )
   assert model.out == 0
 

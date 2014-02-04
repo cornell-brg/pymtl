@@ -216,7 +216,6 @@ def test_SliceWriteCheck():
   import pytest
 
   model = SliceWriteCheck( 16 )
-  model.elaborate()
   sim = setup_sim( model )
   assert model.out == 0
 
@@ -269,7 +268,6 @@ class SliceTempWriteCheck( Model ):
 
 def test_SliceTempWriteCheck():
   model = SliceTempWriteCheck( 16 )
-  model.elaborate()
   sim = setup_sim( model )
   assert model.out == 0
 
@@ -297,7 +295,6 @@ class MultipleWrites( Model ):
 
 def test_MultipleWrites():
   model = MultipleWrites()
-  model.elaborate()
   sim = setup_sim( model )
 
   assert model.out == 0   # passes
@@ -327,7 +324,6 @@ class BuiltinFuncs( Model ):
 
 def test_BuiltinFuncs():
   model = BuiltinFuncs()
-  model.elaborate()
   sim = setup_sim( model )
 
   model.in_.value = 0x1
@@ -357,7 +353,6 @@ class GetMSB( Model ):
 
 def test_GetMSB():
   model = GetMSB( 5 )
-  model.elaborate()
   sim = setup_sim( model )
 
   model.in_.value = 0b01010; sim.cycle(); assert model.out == 0
