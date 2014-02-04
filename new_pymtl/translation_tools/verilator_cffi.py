@@ -11,8 +11,9 @@ import textwrap
 
 import verilog_structural
 
-from subprocess import check_output, STDOUT, CalledProcessError
-from ..signals  import InPort, OutPort
+from subprocess   import check_output, STDOUT, CalledProcessError
+from ..signals    import InPort, OutPort
+from ..PortBundle import PortBundle
 
 #------------------------------------------------------------------------------
 # verilog_to_pymtl
@@ -449,10 +450,27 @@ def pymtl_wrapper_from_model( model, model_name, filename_w,
            .format( list_name  = name,
                     port_decls = port_decls )
 
+  # Utility function for declaring a port bundle member
+  def declare_port_bundle( name, port_bundle ):
+    # TODO: the name splitting thing below is hacky...
+    ports      = [ 's.{0} = {1}'.format(x.name.split('.')[-1], port_inst( x ))
+                   for x in port_bundle.get_ports() ]
+    port_decls = '\n        '.join( ports )
+    #print port_bundle.name # TODO: add name field to port_bundle?
+    return 'class {class_name}( PortBundle ):\n'    \
+           '      flip = False\n'                   \
+           '      def __init__( s ):\n'             \
+           '        {port_decls}\n'                 \
+           '    s.{member_name} = {class_name}()\n' \
+           .format( port_decls  = port_decls,
+                    member_name = name,
+                    class_name  = name.capitalize() )
+
   # Verilog Name
   def verilog_name( port ):
     return verilog_structural.mangle_name( port.name )
 
+  # Create port, portlist, and portbundle declarations
   for name, obj in model.__dict__.items():
     if not name.startswith( '_' ):
 
@@ -460,28 +478,18 @@ def pymtl_wrapper_from_model( model, model_name, filename_w,
         port_defs.append( declare_port( obj ) )
       elif isinstance( obj, list ):
         port_defs.append( declare_port_list( name, obj ) )
-      #elif isinstance( obj, PortBundle ):
+      elif isinstance( obj, PortBundle ):
+        port_defs.append( declare_port_bundle( name, obj ) )
 
+  # Create port, portlist, and portbundle declarations
   for port in model.get_ports():
     port._verilog_name   = verilog_structural.mangle_name( port.name )
     port._verilator_name = verilator_mangle( port._verilog_name )
 
+  # Create separate lists of input/output ports that require assignment
   port_outs = model.get_outports()
   port_ins  = [ x for x in model.get_inports() if
                 x.name not in ('clk','reset') ]
-
-  ## TODO: handle PortBundles
-  ## Any signals with an _M_ in the name are part of bundles, handle these
-  ## specially by creating 'fake' PortBundle inner classes.
-  ##from collections import defaultdict
-  ##bundles = set()
-  ##for name, width in in_ports + out_ports:
-  ##  if '_M_' in name:
-  ##    bundle_name, port_name = name.split('_M_')
-  ##    bundles.add( bundle_name )
-  ##for b in bundles:
-  ##  w += ("    class {1}( PortBundle ): flip = False\n"
-  ##        "    s.{0} = {1}()\n\n".format( b, b.capitalize() ) )
 
   # Assigning input ports
   set_inputs = []
@@ -504,6 +512,7 @@ def pymtl_wrapper_from_model( model, model_name, filename_w,
     set_next.   append( 's.{py_name}.next = s._model.{v_name}[0]' \
                         .format( v_name = v_name, py_name = py_name ) )
 
+  # Fill in the template
   py_src = textwrap.dedent( py_template )
   py_src = py_src.format(
       model_name  = model_name,
