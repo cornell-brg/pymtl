@@ -305,6 +305,11 @@ class InferTemporaryTypes( ast.NodeTransformer):
       elif isinstance( node.value, ast.Num ):
         node.targets[0]._object = (node.targets[0].id, int( node.value.n ))
 
+      elif isinstance( node.value, ast.BoolOp ):
+        obj      = Wire( 1 )
+        obj.name = node.targets[0].id
+        node.targets[0]._object = obj
+
       elif isinstance( node.value, ast.Call ):
 
         func_name = node.value.func.id
