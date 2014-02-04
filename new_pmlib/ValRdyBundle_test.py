@@ -7,6 +7,8 @@ from new_pymtl    import *
 from ValRdyBundle import InValRdyBundle, OutValRdyBundle
 from new_pmlib    import TestVectorSimulator
 
+from new_pymtl.translation_tools.verilator_sim import get_verilated
+
 #-------------------------------------------------------------------------
 # ValRdyQueue
 #-------------------------------------------------------------------------
@@ -15,7 +17,7 @@ class ValRdyQueue( Model ):
 
   def __init__( s, nbits ):
 
-    s.enq   = InValRdyBundle( nbits )
+    s.enq   = InValRdyBundle ( nbits )
     s.deq   = OutValRdyBundle( nbits )
 
     s.full  = Wire( 1 )
@@ -54,7 +56,7 @@ class ValRdyQueue( Model ):
 #-------------------------------------------------------------------------
 # test_valrdy_sim
 #-------------------------------------------------------------------------
-def test_valrdy_sim( dump_vcd ):
+def test_valrdy_sim( dump_vcd, test_verilog ):
 
   test_vectors = [
 
@@ -81,6 +83,8 @@ def test_valrdy_sim( dump_vcd ):
   # Instantiate and elaborate the model
 
   model = ValRdyQueue( 16 )
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -101,37 +105,8 @@ def test_valrdy_sim( dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+
   #if dump_vcd:
   #  sim.dump_vcd( "valrdy_test.vcd" )
+
   sim.run_test()
-
-##-------------------------------------------------------------------------
-## Test Translation
-##-------------------------------------------------------------------------
-#
-#def test_valrdy_translation( ):
-#
-#    # Create temporary file to write out Verilog
-#
-#    temp_file = "valrdy_test.v"
-#    compile_cmd = ("iverilog -g2005 -Wall -Wno-sensitivity-entire-vector"
-#                    "-Wno-sensitivity-entire-array " + temp_file)
-#    fd = open( temp_file, 'w' )
-#
-#    # Instantiate and elaborate model
-#
-#    model = ValRdyQueue( 16 )
-#    model.elaborate()
-#
-#    # Translate
-#
-#    code = VerilogTranslationTool( model, fd )
-#    fd.close()
-#
-#    # Make sure translation compiles
-#    # TODO: figure out a way to group PortBundles during translation?
-#
-#    x = os.system( compile_cmd )
-#    assert x == 0
-
-
