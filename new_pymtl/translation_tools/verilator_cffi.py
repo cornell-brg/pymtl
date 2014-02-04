@@ -175,11 +175,11 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
     port_name, bitwidth = port
     port_name = verilator_mangle( port_name )
 
-    if   bitwidth <= 8:  data_type = 'uint8_t'
-    elif bitwidth <= 16: data_type = 'uint16_t'
-    elif bitwidth <= 32: data_type = 'uint32_t'
-    elif bitwidth <= 64: data_type = 'uint64_t'
-    else:                data_type = 'uint32_t'
+    if   bitwidth <= 8:  data_type = 'unsigned char'
+    elif bitwidth <= 16: data_type = 'unsigned short'
+    elif bitwidth <= 32: data_type = 'unsigned int'
+    elif bitwidth <= 64: data_type = 'unsigned long'
+    else:                data_type = 'unsigned int'
 
     return code.format( **vars() )
 
@@ -460,7 +460,7 @@ def pymtl_wrapper_from_model( model, model_name, filename_w,
     return 'class {class_name}( PortBundle ):\n'    \
            '      flip = False\n'                   \
            '      def __init__( s ):\n'             \
-           '        {port_decls}\n'                 \
+           '        {port_decls}\n\n'               \
            '    s.{member_name} = {class_name}()\n' \
            .format( port_decls  = port_decls,
                     member_name = name,
