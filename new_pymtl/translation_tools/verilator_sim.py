@@ -50,6 +50,5 @@ def get_verilated( model_inst ):
   # Get the model class from the module, instantiate and elaborate it
   model_class = imported_module.__dict__[ model_name ]
   model_inst = model_class()
-  model_inst.elaborate()
 
   return model_inst
