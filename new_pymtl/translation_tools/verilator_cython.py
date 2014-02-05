@@ -60,9 +60,9 @@ def verilog_to_pymtl( model, filename_v ):
 # http://www.veripool.org/wiki/verilator
 def verilate_model( filename, model_name ):
   # Verilate the translated module (warnings suppressed)
-  cmd = 'rm -r obj_dir_{1}; verilator -cc {0} -top-module {1}' \
+  cmd = 'rm -r obj_dir_{1}; {2}/bin/verilator -cc {0} -top-module {1}' \
         ' --Mdir obj_dir_{1} -trace -Wno-lint -Wno-UNOPTFLAT'   \
-        .format( filename, model_name )
+        .format( filename, model_name, os.environ['VERILATOR_ROOT'] )
   print cmd
   os.system( cmd )
 
