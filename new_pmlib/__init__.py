@@ -20,6 +20,7 @@ from TestSimpleSink      import TestSimpleSink
 from TestSink            import TestSink
 from TestSimpleNetSink   import TestSimpleNetSink
 from TestNetSink         import TestNetSink
+from SparseMemoryImage   import SparseMemoryImage
 
 from ValRdyBundle        import InValRdyBundle, OutValRdyBundle
 
