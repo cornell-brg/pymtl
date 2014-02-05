@@ -2,8 +2,8 @@
 # Sparse Memory Image Test Suite
 #=========================================================================
 
-from SparseMemoryImage       import SparseMemoryImage
-from ..ParcProc5stStall_test import requires_xcc
+from SparseMemoryImage import SparseMemoryImage
+from new_pymtl         import requires_xcc
 
 # Test start assembly fragment
 
