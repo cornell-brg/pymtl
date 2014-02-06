@@ -46,6 +46,8 @@ class TestSimpleSink( Model ):
       # expected. then increment the index.
 
       if in_go:
+        #print(s.in_.msg)
+        #print(s.msgs[s.idx])
         assert s.in_.msg == s.msgs[s.idx]
         s.idx = s.idx + 1
 

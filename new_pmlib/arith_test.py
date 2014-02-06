@@ -6,13 +6,12 @@ from new_pymtl import *
 from arith     import *
 
 from TestVectorSimulator import TestVectorSimulator
-from new_pymtl.translation_tools.verilator_sim import get_verilated
 
 #-------------------------------------------------------------------------
 # Adder unit test
 #-------------------------------------------------------------------------
 
-def test_adder( dump_vcd, test_verilog ):
+def test_adder( dump_vcd ):
 
   # Test vectors
 
@@ -35,8 +34,6 @@ def test_adder( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = Adder(16)
-  if test_verilog:
-    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -48,9 +45,9 @@ def test_adder( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[3] != '?':
-      assert model.out  == test_vector[3]
+      assert model.out.value == test_vector[3]
     if test_vector[4] != '?':
-      assert model.cout == test_vector[4]
+      assert model.cout.value == test_vector[4]
 
   # Run the test
 
@@ -63,7 +60,7 @@ def test_adder( dump_vcd, test_verilog ):
 # Subtractor unit test
 #-------------------------------------------------------------------------
 
-def test_subtractor( dump_vcd, test_verilog ):
+def test_subtractor( dump_vcd ):
 
   # Test vectors
 
@@ -85,8 +82,6 @@ def test_subtractor( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = Subtractor(16)
-  if test_verilog:
-    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -97,7 +92,7 @@ def test_subtractor( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out == test_vector[2]
+      assert model.out.value == test_vector[2]
 
   # Run the test
 
@@ -110,10 +105,11 @@ def test_subtractor( dump_vcd, test_verilog ):
 # Incrementer tests with varying incrementer amounts
 #-------------------------------------------------------------------------
 
-def run_test_incrementer( dump_vcd, model, test_vectors ):
+def run_test_incrementer( dump_vcd, increment_amount, test_vectors ):
 
   # Instantiate and elaborate the model
 
+  model = Incrementer( 16, increment_amount )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -123,21 +119,18 @@ def run_test_incrementer( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out == test_vector[1]
+      assert model.out.value == test_vector[1]
 
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "pmlib-arith-test_incrementer_ia" +
-                  str(incr_value) + ".vcd" )
+                  str(increment_amount) + ".vcd" )
   sim.run_test()
 
-def test_incrementer_ia1( dump_vcd, test_verilog ):
-  model = Incrementer( 16, 1 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_incrementer( dump_vcd, model, [
+def test_incrementer_ia1( dump_vcd ):
+  run_test_incrementer( dump_vcd, 1, [
     # in      out
     [ 0x0000, 0x0001 ],
     [ 0x0001, 0x0002 ],
@@ -148,11 +141,8 @@ def test_incrementer_ia1( dump_vcd, test_verilog ):
     [ 0xffff, 0x0000 ],
   ])
 
-def test_incrementer_ia123( dump_vcd, test_verilog ):
-  model = Incrementer( 16, 123 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_incrementer( dump_vcd, model, [
+def test_incrementer_ia123( dump_vcd ):
+  run_test_incrementer( dump_vcd, 123, [
     # in      out
     [ 0x0000, 0x007b ],
     [ 0x0001, 0x007c ],
@@ -163,11 +153,8 @@ def test_incrementer_ia123( dump_vcd, test_verilog ):
     [ 0xffff, 0x007a ],
   ])
 
-def test_incrementer_ia1024( dump_vcd, test_verilog ):
-  model = Incrementer( 16, 1024)
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_incrementer( dump_vcd, model, [
+def test_incrementer_ia1024( dump_vcd ):
+  run_test_incrementer( dump_vcd, 1024, [
     # in      out
     [ 0x0000, 0x0400 ],
     [ 0x0001, 0x0401 ],
@@ -182,10 +169,11 @@ def test_incrementer_ia1024( dump_vcd, test_verilog ):
 # ZeroExtender tests with varying bitwidths
 #-------------------------------------------------------------------------
 
-def run_test_zero_extender( dump_vcd, model, test_vectors ):
+def run_test_zero_extender( dump_vcd, in_nbits, out_nbits, test_vectors ):
 
   # Instantiate and elaborate the model
 
+  model = ZeroExtender( in_nbits, out_nbits )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -195,7 +183,7 @@ def run_test_zero_extender( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out == test_vector[1]
+      assert model.out.value == test_vector[1]
 
   # Run the test
 
@@ -205,21 +193,15 @@ def run_test_zero_extender( dump_vcd, model, test_vectors ):
                   "_i" + str(in_nbits) + "_o" + str(out_nbits) + ".vcd" )
   sim.run_test()
 
-def test_zero_extender_i1o4( dump_vcd, test_verilog ):
-  model = ZeroExtender( in_nbits=1, out_nbits=4 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_zero_extender( dump_vcd, model, [
+def test_zero_extender_i1o4( dump_vcd ):
+  run_test_zero_extender( dump_vcd, 1, 4, [
     # in   out
     [ 0x0, 0x0 ],
     [ 0x1, 0x1 ],
   ])
 
-def test_zero_extender_i2o4( dump_vcd, test_verilog ):
-  model = ZeroExtender( in_nbits=2, out_nbits=4 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_zero_extender( dump_vcd, model, [
+def test_zero_extender_i2o4( dump_vcd ):
+  run_test_zero_extender( dump_vcd, 2, 4, [
     # in   out
     [ 0x0, 0x0 ],
     [ 0x1, 0x1 ],
@@ -227,11 +209,8 @@ def test_zero_extender_i2o4( dump_vcd, test_verilog ):
     [ 0x3, 0x3 ],
   ])
 
-def test_zero_extender_i4o16( dump_vcd, test_verilog ):
-  model = ZeroExtender( in_nbits=4, out_nbits=16 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_zero_extender( dump_vcd, model, [
+def test_zero_extender_i4o16( dump_vcd ):
+  run_test_zero_extender( dump_vcd, 4, 16, [
     # in   out
     [ 0x0, 0x0000 ],
     [ 0x1, 0x0001 ],
@@ -243,10 +222,11 @@ def test_zero_extender_i4o16( dump_vcd, test_verilog ):
 # SignExtender tests with varying bitwidths
 #-------------------------------------------------------------------------
 
-def run_test_sign_extender( dump_vcd, model, test_vectors ):
+def run_test_sign_extender( dump_vcd, in_nbits, out_nbits, test_vectors ):
 
   # Instantiate and elaborate the model
 
+  model = SignExtender( in_nbits, out_nbits )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -256,7 +236,7 @@ def run_test_sign_extender( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out == test_vector[1]
+      assert model.out.value == test_vector[1]
 
   # Run the test
 
@@ -266,21 +246,15 @@ def run_test_sign_extender( dump_vcd, model, test_vectors ):
                   "_i" + str(in_nbits) + "_o" + str(out_nbits) + ".vcd" )
   sim.run_test()
 
-def test_sign_extender_i1o4( dump_vcd, test_verilog ):
-  model = SignExtender( in_nbits=1, out_nbits=4 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_sign_extender( dump_vcd, model, [
+def test_sign_extender_i1o4( dump_vcd ):
+  run_test_sign_extender( dump_vcd, 1, 4, [
     # in   out
     [ 0x0, 0x0 ],
     [ 0x1, 0xf ],
   ])
 
-def test_sign_extender_i2o4( dump_vcd, test_verilog ):
-  model = SignExtender( in_nbits=2, out_nbits=4 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_sign_extender( dump_vcd, model, [
+def test_sign_extender_i2o4( dump_vcd ):
+  run_test_sign_extender( dump_vcd, 2, 4, [
     # in   out
     [ 0x0, 0x0 ],
     [ 0x1, 0x1 ],
@@ -288,11 +262,8 @@ def test_sign_extender_i2o4( dump_vcd, test_verilog ):
     [ 0x3, 0xf ],
   ])
 
-def test_sign_extender_i4o16( dump_vcd, test_verilog ):
-  model = SignExtender( in_nbits=4, out_nbits=16 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_sign_extender( dump_vcd, model, [
+def test_sign_extender_i4o16( dump_vcd ):
+  run_test_sign_extender( dump_vcd, 4, 16, [
     # in   out
     [ 0x0, 0x0000 ],
     [ 0x1, 0x0001 ],
@@ -307,7 +278,7 @@ def test_sign_extender_i4o16( dump_vcd, test_verilog ):
 # ZeroComparator unit test
 #-------------------------------------------------------------------------
 
-def test_ZeroComparator( dump_vcd, test_verilog ):
+def test_ZeroComparator( dump_vcd ):
 
   # Test vectors
 
@@ -328,8 +299,6 @@ def test_ZeroComparator( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = ZeroComparator(16)
-  if test_verilog:
-    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -339,7 +308,7 @@ def test_ZeroComparator( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out == test_vector[1]
+      assert model.out.value == test_vector[1]
 
   # Run the test
 
@@ -352,7 +321,7 @@ def test_ZeroComparator( dump_vcd, test_verilog ):
 # EqComparator unit test
 #-------------------------------------------------------------------------
 
-def test_EqComparator( dump_vcd, test_verilog ):
+def test_EqComparator( dump_vcd ):
 
   # Test vectors
 
@@ -373,8 +342,6 @@ def test_EqComparator( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = EqComparator(16)
-  if test_verilog:
-    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -385,7 +352,7 @@ def test_EqComparator( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out == test_vector[2]
+      assert model.out.value == test_vector[2]
 
   # Run the test
 
@@ -398,7 +365,7 @@ def test_EqComparator( dump_vcd, test_verilog ):
 # LtComparator unit test
 #-------------------------------------------------------------------------
 
-def test_LtComparator( dump_vcd, test_verilog ):
+def test_LtComparator( dump_vcd ):
 
   # Test vectors
 
@@ -422,8 +389,6 @@ def test_LtComparator( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = LtComparator(16)
-  if test_verilog:
-    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -434,7 +399,7 @@ def test_LtComparator( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out == test_vector[2]
+      assert model.out.value == test_vector[2]
 
   # Run the test
 
@@ -447,7 +412,7 @@ def test_LtComparator( dump_vcd, test_verilog ):
 # GtComparator unit test
 #-------------------------------------------------------------------------
 
-def test_GtComparator( dump_vcd, test_verilog ):
+def test_GtComparator( dump_vcd ):
 
   # Test vectors
 
@@ -471,8 +436,6 @@ def test_GtComparator( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = GtComparator(16)
-  if test_verilog:
-    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -483,7 +446,7 @@ def test_GtComparator( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out == test_vector[2]
+      assert model.out.value == test_vector[2]
 
   # Run the test
 
@@ -496,10 +459,11 @@ def test_GtComparator( dump_vcd, test_verilog ):
 # SignUnit tests with varying bitwidths
 #-------------------------------------------------------------------------
 
-def run_test_sign_unit( dump_vcd, model, test_vectors ):
+def run_test_sign_unit( dump_vcd, nbits, test_vectors ):
 
   # Instantiate and elaborate the model
 
+  model = SignUnit( nbits )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -509,7 +473,7 @@ def run_test_sign_unit( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out == test_vector[1]
+      assert model.out.value == test_vector[1]
 
   # Run the test
 
@@ -518,11 +482,8 @@ def run_test_sign_unit( dump_vcd, model, test_vectors ):
     sim.dump_vcd( "pmlib-arith-test_sign_unit_n" + str(nbits) + ".vcd" )
   sim.run_test()
 
-def test_sign_unit_n4( dump_vcd, test_verilog ):
-  model = SignUnit( 4 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_sign_unit( dump_vcd, model, [
+def test_sign_unit_n4( dump_vcd ):
+  run_test_sign_unit( dump_vcd, 4, [
    # in      out
    [ 0b0000, 0b0000 ],
    [ 0b0001, 0b1111 ],
@@ -535,11 +496,8 @@ def test_sign_unit_n4( dump_vcd, test_verilog ):
    [ 0b1111, 0b0001 ],
   ])
 
-def test_sign_unit_n7( dump_vcd, test_verilog ):
-  model = SignUnit( 7 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_sign_unit( dump_vcd, model, [
+def test_sign_unit_n7( dump_vcd ):
+  run_test_sign_unit( dump_vcd, 7, [
    # in         out
    [ 0b0000000, 0b0000000 ],
    [ 0b0000001, 0b1111111 ],
@@ -556,10 +514,11 @@ def test_sign_unit_n7( dump_vcd, test_verilog ):
 # UnsignUnit tests with varying bitwidths
 #-------------------------------------------------------------------------
 
-def run_test_unsign_unit( dump_vcd, model, test_vectors ):
+def run_test_unsign_unit( dump_vcd, nbits, test_vectors ):
 
   # Instantiate and elaborate the model
 
+  model = UnsignUnit( nbits )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -569,7 +528,7 @@ def run_test_unsign_unit( dump_vcd, model, test_vectors ):
 
   def tv_out( model, test_vector ):
     if test_vector[1] != '?':
-      assert model.out == test_vector[1]
+      assert model.out.value == test_vector[1]
 
   # Run the test
 
@@ -578,11 +537,8 @@ def run_test_unsign_unit( dump_vcd, model, test_vectors ):
     sim.dump_vcd( "pmlib-arith-test_unsign_unit_n" + str(nbits) + ".vcd" )
   sim.run_test()
 
-def test_unsign_unit_n4( dump_vcd, test_verilog ):
-  model = UnsignUnit( 4 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_unsign_unit( dump_vcd, model, [
+def test_unsign_unit_n4( dump_vcd ):
+  run_test_unsign_unit( dump_vcd, 4, [
     # in      out
     [ 0b0000, 0b0000,],
     [ 0b0001, 0b0001,],
@@ -595,11 +551,8 @@ def test_unsign_unit_n4( dump_vcd, test_verilog ):
     [ 0b1111, 0b0001,],
   ])
 
-def test_unsign_unit_n7( dump_vcd, test_verilog ):
-  model = UnsignUnit( 7 )
-  if test_verilog:
-    model = get_verilated( model )
-  run_test_unsign_unit( dump_vcd, model, [
+def test_unsign_unit_n7( dump_vcd ):
+  run_test_unsign_unit( dump_vcd, 7, [
     # in     out
     [ 0b0000000, 0b0000000 ],
     [ 0b0000001, 0b0000001 ],
@@ -617,7 +570,7 @@ def test_unsign_unit_n7( dump_vcd, test_verilog ):
 # LeftLogicalShifter unit test
 #-------------------------------------------------------------------------
 
-def test_LeftLogicalShifter( dump_vcd, test_verilog ):
+def test_LeftLogicalShifter( dump_vcd ):
 
   # Test vectors
 
@@ -638,8 +591,6 @@ def test_LeftLogicalShifter( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = LeftLogicalShifter(6,3)
-  if test_verilog:
-    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -650,7 +601,7 @@ def test_LeftLogicalShifter( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out == test_vector[2]
+      assert model.out.value == test_vector[2]
 
   # Run the test
 
@@ -663,7 +614,7 @@ def test_LeftLogicalShifter( dump_vcd, test_verilog ):
 # RightLogicalShifter unit test
 #-------------------------------------------------------------------------
 
-def test_RightLogicalShifter( dump_vcd, test_verilog ):
+def test_RightLogicalShifter( dump_vcd ):
 
   # Test vectors
 
@@ -684,8 +635,6 @@ def test_RightLogicalShifter( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = RightLogicalShifter(6,3)
-  if test_verilog:
-    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -696,7 +645,7 @@ def test_RightLogicalShifter( dump_vcd, test_verilog ):
 
   def tv_out( model, test_vector ):
     if test_vector[2] != '?':
-      assert model.out == test_vector[2]
+      assert model.out.value == test_vector[2]
 
   # Run the test
 
