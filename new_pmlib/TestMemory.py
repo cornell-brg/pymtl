@@ -115,11 +115,15 @@ class TestMemory (Model):
 
     for i in xrange( s.nports ):
       memreq_str  = \
-        new_pmlib.valrdy.valrdy_to_str( str(s.mem.reqs[i].msg.value.uint()) + s.mem.memreq[i].line_trace(),
+        new_pmlib.valrdy.valrdy_to_str(
+          #  str(s.mem.reqs[i].msg.value.uint()) + s.mem.memreq[i].line_trace(),
+          s.mem.memreq[i].line_trace(),
           s.reqs[i].val, s.reqs[i].rdy )
 
       memresp_str = \
-        new_pmlib.valrdy.valrdy_to_str( str(s.resps[i].msg.value) + s.mem.memresp[i].line_trace(),
+        new_pmlib.valrdy.valrdy_to_str(
+          #str(s.resps[i].msg.value) + s.mem.memresp[i].line_trace(),
+          s.mem.memresp[i].line_trace(),
           s.resps[i].val, s.resps[i].rdy )
 
       memtrace_str += "|{} () {}" \

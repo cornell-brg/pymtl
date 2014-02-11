@@ -77,25 +77,14 @@ class TestSimpleMemory (Model):
     #s.memresp_go = [0]*s.nports
 
     # Actual memory
-
     s.mem = bytearray( s.mem_nbytes )
 
-    # Connect ready signals to inputs to ensure pipeline behavior
-
-    #for i in xrange( s.nports ):
-    #  s.connect( s.reqs[i].rdy, s.resps[i].rdy )
-
-    # TODO: hack to force comb logic to fire!
-    #s.fire_comb = Wire( 1 )
-
     # Connect memreq_msg port list to Unpack port list
-
     for i in xrange( s.nports ):
       s.connect( s.reqs[i].msg, s.memreq[i].bits )
 
 
     # Connect memresp_msg port list to Pack port list
-
     for i in xrange( s.nports ):
       s.connect( s.resps[i].msg, s.memresp[i].bits )
 
@@ -180,11 +169,6 @@ class TestSimpleMemory (Model):
           #   assert True, "Unrecognized request message type! {}" \
           #     .format( s.memreq_type[i] )
 
-        # The memresp message if valid if the buffer is full
-
-
-        # TODO: hack to force comb logic to fire!
-        #s.fire_comb.next = not s.fire_comb.value
 
     #-----------------------------------------------------------------------
     # Combinational Logic
@@ -202,11 +186,7 @@ class TestSimpleMemory (Model):
       for i in xrange( s.nports ):
 
         s.reqs[i].rdy.value  = ( not s.memreq_full[i] or s.resps[i].rdy )
-
         s.resps[i].val.value = s.memreq_full[i]
-
-      # TODO: hack to force comb logic to fire!
-      #s.fire_comb.value
 
   #-----------------------------------------------------------------------
   # Line tracing

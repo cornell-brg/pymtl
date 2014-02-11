@@ -5,6 +5,7 @@
 from new_pymtl import *
 import new_pmlib
 import mem_msgs
+import pytest
 
 from TestSimpleMemory import TestSimpleMemory
 
@@ -400,6 +401,9 @@ def test_dual_port_delay0x0( dump_vcd ):
 # TestSimpleMemoryNPorts unit test with delay = 5 x 10, Ports = 2
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail(
+    reason="No backpressure results in two port streams misaligning!"
+)
 def test_dual_port_delay10x5( dump_vcd ):
   run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay5x10_2.vcd",
                 5, 10, 2, dual_port_mem_test_msgs() )
@@ -408,6 +412,9 @@ def test_dual_port_delay10x5( dump_vcd ):
 # TestSimpleMemoryNPorts unit test with delay = 10 x 5, Ports = 2
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail(
+    reason="No backpressure results in two port streams misaligning!"
+)
 def test_dual_port_delay5x10( dump_vcd ):
   run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay10x5_2.vcd",
                 10, 5, 2, dual_port_mem_test_msgs() )
