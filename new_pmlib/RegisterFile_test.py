@@ -7,10 +7,12 @@ import new_pmlib
 
 from RegisterFile import RegisterFile
 
+from new_pymtl.translation_tools.verilator_sim import get_verilated
+
 #-------------------------------------------------------------------------
 # Test 1R1W Register File
 #-------------------------------------------------------------------------
-def test_regfile_1R1W( dump_vcd ):
+def test_regfile_1R1W( dump_vcd, test_verilog ):
 
   # Test vectors
 
@@ -36,6 +38,8 @@ def test_regfile_1R1W( dump_vcd ):
   # Instantiate and elaborate the model
 
   model = RegisterFile( nbits=16, nregs=8, rd_ports=1 )
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -60,7 +64,7 @@ def test_regfile_1R1W( dump_vcd ):
 #-------------------------------------------------------------------------
 # Test 2R1W Register File
 #-------------------------------------------------------------------------
-def test_regfile_2R1W( dump_vcd ):
+def test_regfile_2R1W( dump_vcd, test_verilog ):
 
   # Test vectors
 
@@ -79,6 +83,8 @@ def test_regfile_2R1W( dump_vcd ):
   # Instantiate and elaborate the model
 
   model = RegisterFile( nbits=16, nregs=8, rd_ports=2 )
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

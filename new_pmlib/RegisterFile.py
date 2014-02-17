@@ -11,16 +11,18 @@ class RegisterFile( Model ):
   @capture_args
   def __init__( s, nbits = 32, nregs = 32, rd_ports = 1 ):
 
-    s.nbits = nbits
     s.rd_ports = rd_ports
     s.nregs    = nregs
-    addr_bits     = int( math.ceil( math.log( nregs, 2 ) ) )
+    addr_bits  = int( math.ceil( math.log( nregs, 2 ) ) )
 
     s.rd_addr  = [ InPort( addr_bits ) for x in xrange(rd_ports) ]
     s.rd_data  = [ OutPort( nbits )    for x in xrange(rd_ports) ]
     s.wr_addr  = InPort( addr_bits )
     s.wr_data  = InPort( nbits )
     s.wr_en    = InPort( 1 )
+
+    s.nbits = nbits
+    s.nregs = nregs
 
   def elaborate_logic( s ):
 
@@ -31,9 +33,11 @@ class RegisterFile( Model ):
       for i in xrange( s.rd_ports ):
         # TODO: complains if no uint, list indices must be integers.
         #       How do we make this translatable?
-        raddr = s.rd_addr[i].value
-        assert raddr < s.nregs
-        s.rd_data[i].value = s.regs[ raddr ].value
+        #raddr = s.rd_addr[i]
+        #assert raddr < s.nregs
+        #s.rd_data[i].value = s.regs[ raddr ]
+        assert s.rd_addr[i] < s.nregs
+        s.rd_data[i].value = s.regs[ s.rd_addr[i] ]
 
     @s.posedge_clk
     def seq_logic():
@@ -45,8 +49,8 @@ class RegisterFile( Model ):
         #assert waddr < s.nregs
         #s.regs[ waddr ].next = s.wr_data.value
 
-        s.regs[ s.wr_addr.value ].next = s.wr_data.value
+        s.regs[ s.wr_addr ].next = s.wr_data
 
-    def line_trace( s ):
-      return [x.value for x in s.regs]
+  def line_trace( s ):
+    return [x.uint() for x in s.regs]
 
