@@ -13,6 +13,7 @@ import queues
 
 from Mux                 import Mux
 from Decoder             import Decoder
+from RegisterFile        import RegisterFile
 
 from TestVectorSimulator import TestVectorSimulator
 from TestSimpleSource    import TestSimpleSource
