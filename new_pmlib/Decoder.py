@@ -5,6 +5,8 @@
 from new_pymtl import *
 
 class Decoder( Model ):
+
+  @capture_args
   def __init__( s, sel_nbits, out_nbits ):
     s.in_ = InPort ( sel_nbits )
     s.out = OutPort( out_nbits )

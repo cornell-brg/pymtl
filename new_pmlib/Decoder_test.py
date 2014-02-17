@@ -4,6 +4,7 @@
 
 from new_pymtl import *
 from new_pmlib import TestVectorSimulator
+from new_pymtl.translation_tools.verilator_sim import get_verilated
 
 from Decoder   import Decoder
 
