@@ -12,6 +12,7 @@ import queues
 # List of single-class modules
 
 from Mux                 import Mux
+from Decoder             import Decoder
 
 from TestVectorSimulator import TestVectorSimulator
 from TestSimpleSource    import TestSimpleSource
