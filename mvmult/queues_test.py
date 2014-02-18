@@ -11,13 +11,15 @@ from queues import SingleElementBypassQueue
 from queues import SingleElementPipelinedQueue
 from queues import NormalQueue
 
+from new_pymtl.translation_tools.verilator_sim import get_verilated
+
 #------------------------------------------------------------------------------
 # TestHarness
 #------------------------------------------------------------------------------
 # Harness for tests using a TestSource and TestSink.
 class TestHarness( Model ):
 
-  def __init__( s, ModelType, src_msgs, sink_msgs,
+  def __init__( s, ModelType, test_verilog, src_msgs, sink_msgs,
                 src_delay, sink_delay, nbits ):
 
     # Instantiate models
@@ -25,6 +27,11 @@ class TestHarness( Model ):
     s.src    = pmlib.TestSource ( nbits, src_msgs,  src_delay  )
     s.queue  = ModelType        ( nbits )
     s.sink   = pmlib.TestSink   ( nbits, sink_msgs, sink_delay )
+
+    # Handle verilog testing
+
+    if test_verilog:
+      s.queue = get_verilated( s.queue )
 
   def elaborate_logic( s ):
 
@@ -81,6 +88,8 @@ def test_single_element_normal_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementNormalQueue( 16 )
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -125,7 +134,7 @@ def run_single_element_norm_q_test( dump_vcd, test_verilog, vcd_file_name,
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( ModelType, q_msgs, q_msgs,
+  model = TestHarness( ModelType, test_verilog, q_msgs, q_msgs,
                        src_delay, sink_delay, nbits )
   model.elaborate()
 
@@ -207,6 +216,8 @@ def test_single_element_bypass_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementBypassQueue( 16 )
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -251,7 +262,7 @@ def run_single_element_byp_q_test( dump_vcd, test_verilog, vcd_file_name,
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( ModelType, q_msgs, q_msgs,
+  model = TestHarness( ModelType, test_verilog, q_msgs, q_msgs,
                        src_delay, sink_delay, nbits )
   model.elaborate()
 
@@ -334,6 +345,8 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementPipelinedQueue( 16 )
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -378,7 +391,7 @@ def run_single_element_pipe_q_test( dump_vcd, test_verilog, vcd_file_name,
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( ModelType, q_msgs, q_msgs,
+  model = TestHarness( ModelType, test_verilog, q_msgs, q_msgs,
                        src_delay, sink_delay, nbits )
   model.elaborate()
 
@@ -441,6 +454,8 @@ def run_nelement_q_test( dump_vcd, test_verilog, ModelType,
   # Instantiate and elaborate the model
 
   model = ModelType( num_entries, 16 )
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
