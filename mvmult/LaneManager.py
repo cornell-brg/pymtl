@@ -18,12 +18,12 @@ class LaneManager( Model ):
     s.from_cpu    = InValRdyBundle( addr_nbits + data_nbits )
 
     # LaneManager -> Lanes
-    s.size    = [ OutPort( data_nbits ) for x in range( nlanes ) ]
-    s.r_baddr = [ OutPort( data_nbits ) for x in range( nlanes ) ]
-    s.v_baddr = [ OutPort( data_nbits ) for x in range( nlanes ) ]
-    s.d_baddr = [ OutPort( data_nbits ) for x in range( nlanes ) ]
-    s.go      = [ OutPort( 1 )          for x in range( nlanes ) ]
-    s.done    = [ InPort ( 1 )          for x in range( nlanes ) ]
+    s.size    = OutPort( data_nbits )
+    s.r_baddr = OutPort( data_nbits )
+    s.v_baddr = OutPort( data_nbits )
+    s.d_baddr = OutPort( data_nbits )
+    s.go      = OutPort( 1 )
+    s.done    = [ InPort ( 1 )        for x in range( nlanes ) ]
 
     # Config fields
     s.nlanes         = nlanes
@@ -54,23 +54,19 @@ class LaneManager( Model ):
     @s.posedge_clk
     def config_update():
 
-      # TODO: would like to be able to move this outside function def to create
-      #       multiple posedge_clk instances!
-      for i in range( s.nlanes ):
+      if s.reset:
+        s.go     .next = 0
+        s.size   .next = 0
+        s.r_baddr.next = 0
+        s.v_baddr.next = 0
+        s.d_baddr.next = 0
 
-        if s.reset:
-          s.go     [i].next = 0
-          s.size   [i].next = 0
-          s.r_baddr[i].next = 0
-          s.v_baddr[i].next = 0
-          s.d_baddr[i].next = 0
-
-        elif s.from_cpu.val and s.from_cpu.rdy:
-          if s.addr == 0: s.go     [i].next = s.data[0]
-          if s.addr == 1: s.size   [i].next = s.data
-          if s.addr == 2: s.r_baddr[i].next = s.data + (i*4*s.size[i])
-          if s.addr == 3: s.v_baddr[i].next = s.data
-          if s.addr == 4: s.d_baddr[i].next = s.data + (i*4)
+      elif s.from_cpu.val and s.from_cpu.rdy:
+        if s.addr == 0: s.go     .next = s.data[0]
+        if s.addr == 1: s.size   .next = s.data
+        if s.addr == 2: s.r_baddr.next = s.data
+        if s.addr == 3: s.v_baddr.next = s.data
+        if s.addr == 4: s.d_baddr.next = s.data
 
     #--------------------------------------------------------------------------
     # state_transition
@@ -82,7 +78,8 @@ class LaneManager( Model ):
       # Status
 
       do_config  = s.from_cpu.val and s.from_cpu.rdy
-      #do_compute = s.go[0]
+      do_compute = s.go
+      # TODO: is_done can't be a temporary due to lack of inference for BinOps
       s.is_done.value = 1
       for i in range( s.nlanes ):
         s.is_done.value = s.done[i] & s.is_done
@@ -94,7 +91,7 @@ class LaneManager( Model ):
       if   s.state == STATE_IDLE and do_config:
         s.state_next.value = STATE_CFG
 
-      elif s.state == STATE_CFG  and s.go[0]:
+      elif s.state == STATE_CFG  and do_compute:
         s.state_next.value = STATE_CALC
 
       elif s.state == STATE_CALC and s.is_done:
@@ -107,8 +104,7 @@ class LaneManager( Model ):
       elif s.state == STATE_CALC: s.from_cpu.rdy.value = 0
 
   def line_trace( s ):
-    return 'from_cpu: {} state: {} () go: {} done: {}'.format(
-        s.from_cpu, s.state,
-        " ".join([str(x.uint()) for x in s.go  ]),
+    return 'from_cpu: {} state: {} go: {} () done: {}'.format(
+        s.from_cpu, s.state, s.go,
         " ".join([str(x.uint()) for x in s.done]), )
 
