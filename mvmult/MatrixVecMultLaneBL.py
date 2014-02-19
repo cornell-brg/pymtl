@@ -12,6 +12,7 @@ LD_RSP_VECTOR = 3
 DO_MAC_OP     = 4
 ST_REQ_VECTOR = 5
 ST_RSP_VECTOR = 6
+IDLE          = 7
 
 class MatrixVecMultLaneBL( Model ):
 
@@ -41,7 +42,7 @@ class MatrixVecMultLaneBL( Model ):
     data    = s.memresp_params.data_slice
 
     s.counter = 0
-    s.state   = LD_REQ_MATRIX
+    s.state   = IDLE
     s.reg_a   = Bits( 32 )
     s.reg_b   = Bits( 32 )
     s.result  = Bits( 32 )
@@ -53,20 +54,17 @@ class MatrixVecMultLaneBL( Model ):
 
       if s.reset:
         s.counter = 0
-        s.state   = LD_REQ_MATRIX
-        s.result  = Bits( 64 )
-        return
-
-      # Config
-
-      if not s.go:
-        s.counter = 0
+        s.state   = IDLE
         s.result  = Bits( 64 )
         return
 
       # States
 
-      if   s.state == LD_REQ_MATRIX and s.go:
+      if   s.state == IDLE and not s.go:
+        s.counter = 0
+        s.result  = Bits( 64 )
+
+      elif (s.state == IDLE and s.go) or s.state == LD_REQ_MATRIX:
         r_addr = s.m_baseaddr + (s.lane_id * 4 * s.size) + s.counter
         s.req.msg .next = mk_req( rd, r_addr, 0, 0 )
         s.req.val .next = 1
@@ -112,7 +110,7 @@ class MatrixVecMultLaneBL( Model ):
       elif s.state == ST_RSP_VECTOR:
         s.req.val.next = 0
         if s.resp.val and s.resp.rdy:
-          s.state = LD_REQ_MATRIX
+          s.state = IDLE
           s.resp.rdy.next = 0
           s.done    .next = 1
 
@@ -123,7 +121,8 @@ class MatrixVecMultLaneBL( Model ):
                             'LD_RSP_VECTOR',
                             'DO_MAC_OP    ',
                             'ST_REQ_VECTOR',
-                            'ST_RSP_VECTOR'
+                            'ST_RSP_VECTOR',
+                            'IDLE',
                            ][ s.state ], s.result )
 
 

@@ -68,6 +68,9 @@ class LaneManager( Model ):
         if s.addr == 3: s.v_baddr.next = s.data
         if s.addr == 4: s.d_baddr.next = s.data
 
+      elif s.state_next == STATE_CALC:
+        s.go.next = 0
+
     #--------------------------------------------------------------------------
     # state_transition
     #--------------------------------------------------------------------------
