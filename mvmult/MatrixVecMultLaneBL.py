@@ -67,7 +67,7 @@ class MatrixVecMultLaneBL( Model ):
       # States
 
       if   s.state == LD_REQ_MATRIX and s.go:
-        r_addr = s.m_baseaddr + (s.lane_id * 4) + s.counter
+        r_addr = s.m_baseaddr + (s.lane_id * 4 * s.size) + s.counter
         s.req.msg .next = mk_req( rd, r_addr, 0, 0 )
         s.req.val .next = 1
         s.resp.rdy.next = 1
@@ -103,7 +103,7 @@ class MatrixVecMultLaneBL( Model ):
           s.state = LD_REQ_MATRIX
 
       elif s.state == ST_REQ_VECTOR:
-        d_addr = s.d_baseaddr + (s.lane_id * 4 * s.size )
+        d_addr = s.d_baseaddr + (s.lane_id * 4)
         s.req .msg.next = mk_req( wr, d_addr, 0, s.result )
         s.req .val.next = 1
         s.resp.rdy.next = 1

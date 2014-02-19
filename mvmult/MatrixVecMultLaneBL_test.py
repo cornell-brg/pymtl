@@ -35,7 +35,7 @@ class TestHarness( Model ):
 #------------------------------------------------------------------------------
 # run_mvmult_test
 #------------------------------------------------------------------------------
-def run_mvmult_test( dump_vcd, test_verilog, vcd_file_name, model,
+def run_mvmult_test( dump_vcd, test_verilog, vcd_file_name, model, lane_id,
                      src_matrix, src_vector, dest_vector ):
 
   model.elaborate()
@@ -48,7 +48,6 @@ def run_mvmult_test( dump_vcd, test_verilog, vcd_file_name, model,
 
   model.mem.load_memory( src_matrix  )
   model.mem.load_memory( src_vector  )
-  model.mem.load_memory( dest_vector )
 
   # Run the simulation
 
@@ -71,7 +70,7 @@ def run_mvmult_test( dump_vcd, test_verilog, vcd_file_name, model,
 
   dest_addr  = dest_vector[0]
   dest_value = dest_vector[1][0]
-  assert model.mem.mem.mem[ dest_addr ] == dest_value
+  assert model.mem.mem.mem[ dest_addr+(lane_id*4) ] == dest_value
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
@@ -101,8 +100,9 @@ def mem_array_32bit( base_addr, data ):
   ('mem_delay'), [0,5]
 )
 def test_mvmult_lane0_row0( dump_vcd, mem_delay ):
+  lane = 0
   run_mvmult_test( dump_vcd, False, "MVMult.vcd",
-                   TestHarness( 0, mem_delay ),
+                   TestHarness( lane, mem_delay ), lane,
                    mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16, 6, 8 ]),
@@ -112,8 +112,9 @@ def test_mvmult_lane0_row0( dump_vcd, mem_delay ):
   ('mem_delay'), [0,5]
 )
 def test_mvmult_lane0_row2( dump_vcd, mem_delay ):
+  lane = 0
   run_mvmult_test( dump_vcd, False, "MVMult.vcd",
-                   TestHarness( 0, mem_delay ),
+                   TestHarness( lane, mem_delay ), lane,
                    mem_array_32bit(  0, [ 1, 2, 1] ),
                    mem_array_32bit( 12, [ 1, 2, 3] ),
                    mem_array_32bit( 24, [ 8 ]),
@@ -122,12 +123,25 @@ def test_mvmult_lane0_row2( dump_vcd, mem_delay ):
 @pytest.mark.parametrize(
   ('mem_delay'), [0,5]
 )
-def test_mvmult_lane1_row0( dump_vcd, mem_delay ):
+def test_mvmult_lane2_row0( dump_vcd, mem_delay ):
+  lane = 2
   run_mvmult_test( dump_vcd, False, "MVMult.vcd",
-                   TestHarness( 1, mem_delay ),
+                   TestHarness( lane, mem_delay ), lane,
                    mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
-                   mem_array_32bit(160, [ 6, 8 ]),
+                   mem_array_32bit(160, [ 8 ]),
+                 )
+
+@pytest.mark.parametrize(
+  ('mem_delay'), [0,5]
+)
+def test_mvmult_lane1_row0( dump_vcd, mem_delay ):
+  lane = 1
+  run_mvmult_test( dump_vcd, False, "MVMult.vcd",
+                   TestHarness( lane, mem_delay ), lane,
+                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit( 80, [ 1, 2, 3 ]),
+                   mem_array_32bit(160, [ 6 ]),
                  )
 
 #------------------------------------------------------------------------------
@@ -187,7 +201,7 @@ def run_lane_managed_test( dump_vcd, test_verilog, vcd_file_name, model,
 
   model.mem.load_memory( src_matrix  )
   model.mem.load_memory( src_vector  )
-  model.mem.load_memory( dest_vector )
+  #model.mem.load_memory( dest_vector )
 
   # Run the simulation
 
@@ -198,9 +212,10 @@ def run_lane_managed_test( dump_vcd, test_verilog, vcd_file_name, model,
     sim.print_line_trace()
     sim.cycle()
 
-  dest_addr  = dest_vector[0]
-  dest_value = dest_vector[1][0]
-  assert model.mem.mem.mem[ dest_addr ] == dest_value
+  dest_addr   = dest_vector[0]
+  for i, dest_value in enumerate( dest_vector[1] ):
+    print model.mem.mem.mem[dest_addr+i], dest_value
+    assert model.mem.mem.mem[ dest_addr+i ] == dest_value
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
@@ -216,20 +231,35 @@ def config_msg( addr, value ):
   return concat([ Bits(3, addr), Bits(32, value) ])
 
 
-@pytest.mark.parametrize(
-  ('mem_delay'), [0,5]
-)
-def test_managed_1lane( dump_vcd, mem_delay ):
-  run_lane_managed_test( dump_vcd, False, "LaneManagedMMV.vcd",
-                  LaneManagerHarness( 1, mem_delay, 0,
-                     [ config_msg( 1,   3), # size
-                       config_msg( 2,   0), # r_addr
-                       config_msg( 3,  80), # v_addr
-                       config_msg( 4, 160), # d_addr
-                       config_msg( 0,   1), # go
-                     ]
-                   ),
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
-                   mem_array_32bit( 80, [ 1, 2, 3 ]),
-                   mem_array_32bit(160, [16, 6, 8 ]),
-                 )
+#@pytest.mark.parametrize(
+#  ('mem_delay'), [0,5]
+#)
+#def test_managed_1lane( dump_vcd, mem_delay ):
+#  run_lane_managed_test( dump_vcd, False, "LaneManagedMMV.vcd",
+#                  LaneManagerHarness( 1, mem_delay, 0,
+#                     [ config_msg( 1,   3), # size
+#                       config_msg( 2,   0), # r_addr
+#                       config_msg( 3,  80), # v_addr
+#                       config_msg( 4, 160), # d_addr
+#                       config_msg( 0,   1), # go
+#                     ]
+#                   ),
+#                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+#                   mem_array_32bit( 80, [ 1, 2, 3 ]),
+#                   mem_array_32bit(160, [16, 6, 8 ]),
+#                 )
+#
+#def test_managed_3lane( dump_vcd, mem_delay ):
+#  run_lane_managed_test( dump_vcd, False, "LaneManagedMMV.vcd",
+#                  LaneManagerHarness( 1, mem_delay, 0,
+#                     [ config_msg( 1,   3), # size
+#                       config_msg( 2,   0), # r_addr
+#                       config_msg( 3,  80), # v_addr
+#                       config_msg( 4, 160), # d_addr
+#                       config_msg( 0,   1), # go
+#                     ]
+#                   ),
+#                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+#                   mem_array_32bit( 80, [ 1, 2, 3 ]),
+#                   mem_array_32bit(160, [16, 6, 8 ]),
+#                 )
