@@ -214,7 +214,6 @@ def run_lane_managed_test( dump_vcd, test_verilog, vcd_file_name, model,
 
   dest_addr   = dest_vector[0]
   for i, dest_value in enumerate( dest_vector[1] ):
-    print model.mem.mem.mem[dest_addr+i], dest_value
     assert model.mem.mem.mem[ dest_addr+i ] == dest_value
 
   # Add a couple extra ticks so that the VCD dump is nicer
@@ -231,35 +230,38 @@ def config_msg( addr, value ):
   return concat([ Bits(3, addr), Bits(32, value) ])
 
 
-#@pytest.mark.parametrize(
-#  ('mem_delay'), [0,5]
-#)
-#def test_managed_1lane( dump_vcd, mem_delay ):
-#  run_lane_managed_test( dump_vcd, False, "LaneManagedMMV.vcd",
-#                  LaneManagerHarness( 1, mem_delay, 0,
-#                     [ config_msg( 1,   3), # size
-#                       config_msg( 2,   0), # r_addr
-#                       config_msg( 3,  80), # v_addr
-#                       config_msg( 4, 160), # d_addr
-#                       config_msg( 0,   1), # go
-#                     ]
-#                   ),
-#                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
-#                   mem_array_32bit( 80, [ 1, 2, 3 ]),
-#                   mem_array_32bit(160, [16, 6, 8 ]),
-#                 )
-#
-#def test_managed_3lane( dump_vcd, mem_delay ):
-#  run_lane_managed_test( dump_vcd, False, "LaneManagedMMV.vcd",
-#                  LaneManagerHarness( 1, mem_delay, 0,
-#                     [ config_msg( 1,   3), # size
-#                       config_msg( 2,   0), # r_addr
-#                       config_msg( 3,  80), # v_addr
-#                       config_msg( 4, 160), # d_addr
-#                       config_msg( 0,   1), # go
-#                     ]
-#                   ),
-#                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
-#                   mem_array_32bit( 80, [ 1, 2, 3 ]),
-#                   mem_array_32bit(160, [16, 6, 8 ]),
-#                 )
+@pytest.mark.parametrize(
+  ('mem_delay'), [0,5]
+)
+def test_managed_1lane( dump_vcd, mem_delay ):
+  run_lane_managed_test( dump_vcd, False, "LaneManagedMMV_1.vcd",
+                  LaneManagerHarness( 1, mem_delay, 0,
+                     [ config_msg( 1,   3), # size
+                       config_msg( 2,   0), # r_addr
+                       config_msg( 3,  80), # v_addr
+                       config_msg( 4, 160), # d_addr
+                       config_msg( 0,   1), # go
+                     ]
+                   ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit( 80, [ 1, 2, 3 ]),
+                   mem_array_32bit(160, [16]),
+                 )
+
+@pytest.mark.parametrize(
+  ('mem_delay'), [0,5]
+)
+def test_managed_3lane( dump_vcd, mem_delay ):
+  run_lane_managed_test( dump_vcd, False, "LaneManagedMMV_3.vcd",
+                  LaneManagerHarness( 3, mem_delay, 0,
+                     [ config_msg( 1,   3), # size
+                       config_msg( 2,   0), # r_addr
+                       config_msg( 3,  80), # v_addr
+                       config_msg( 4, 160), # d_addr
+                       config_msg( 0,   1), # go
+                     ]
+                   ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit( 80, [ 1, 2, 3 ]),
+                   mem_array_32bit(160, [16, 6, 8 ]),
+                 )
