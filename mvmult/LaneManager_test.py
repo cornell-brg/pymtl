@@ -20,7 +20,7 @@ def test_LaneManager_OneLane( dump_vcd, test_verilog ):
     model = get_verilated( model )
   model.elaborate()
 
-  data_nbits = model.data_nbits
+  data_nbits = 32
 
   # Define test input and output functions
 
@@ -81,7 +81,7 @@ def test_LaneManager_TwoLanes( dump_vcd, test_verilog ):
     model = get_verilated( model )
   model.elaborate()
 
-  data_nbits = model.data_nbits
+  data_nbits = 32
 
   # Define test input and output functions
 

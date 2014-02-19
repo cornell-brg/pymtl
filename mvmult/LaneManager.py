@@ -11,6 +11,7 @@ STATE_CALC = 2
 
 class LaneManager( Model ):
 
+  @capture_args
   def __init__( s, nlanes, addr_nbits=3, data_nbits=32 ):
 
     # CPU <-> LaneManager
@@ -74,16 +75,17 @@ class LaneManager( Model ):
     #--------------------------------------------------------------------------
     # state_transition
     #--------------------------------------------------------------------------
+    s.is_done = Wire( 1 )
     @s.combinational
     def state_transition():
 
       # Status
 
       do_config  = s.from_cpu.val and s.from_cpu.rdy
-      do_compute = s.go[0]
-      is_done    = 1
+      #do_compute = s.go[0]
+      s.is_done.value = 1
       for i in range( s.nlanes ):
-        is_done = s.done[i] & is_done
+        s.is_done.value = s.done[i] & s.is_done
 
       # State update
 
@@ -92,17 +94,17 @@ class LaneManager( Model ):
       if   s.state == STATE_IDLE and do_config:
         s.state_next.value = STATE_CFG
 
-      elif s.state == STATE_CFG  and do_compute:
+      elif s.state == STATE_CFG  and s.go[0]:
         s.state_next.value = STATE_CALC
 
-      elif s.state == STATE_CALC and is_done:
+      elif s.state == STATE_CALC and s.is_done:
         s.state_next.value = STATE_IDLE
 
       # Output ready
 
-      if   s.state == STATE_IDLE: s.from_cpu.rdy.value = True
-      elif s.state == STATE_CFG:  s.from_cpu.rdy.value = True
-      elif s.state == STATE_CALC: s.from_cpu.rdy.value = False
+      if   s.state == STATE_IDLE: s.from_cpu.rdy.value = 1
+      elif s.state == STATE_CFG:  s.from_cpu.rdy.value = 1
+      elif s.state == STATE_CALC: s.from_cpu.rdy.value = 0
 
   def line_trace( s ):
     return 'from_cpu: {} state: {} () go: {} done: {}'.format(
