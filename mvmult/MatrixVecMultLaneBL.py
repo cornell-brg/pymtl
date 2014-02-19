@@ -1,5 +1,5 @@
 #==============================================================================
-# MVMultFunc
+# MatrixVecMultLaneBL
 #==============================================================================
 
 from new_pymtl import *
@@ -13,9 +13,9 @@ DO_MAC_OP     = 4
 ST_REQ_VECTOR = 5
 ST_RSP_VECTOR = 6
 
-class MVMultFunc( Model ):
+class MatrixVecMultLaneBL( Model ):
 
-  def __init__( s, memreq_params, memresp_params ):
+  def __init__( s, lane_id, memreq_params, memresp_params ):
 
     s.m_baseaddr = InPort( 32 )
     s.v_baseaddr = InPort( 32 )
@@ -28,6 +28,7 @@ class MVMultFunc( Model ):
     s.req        = InValRdyBundle ( memreq_params.nbits  )
     s.resp       = OutValRdyBundle( memresp_params.nbits )
 
+    s.lane_id        = lane_id
     s.memreq_params  = memreq_params
     s.memresp_params = memresp_params
 
@@ -58,7 +59,8 @@ class MVMultFunc( Model ):
       # States
 
       if   s.state == LD_REQ_MATRIX and s.go:
-        s.req.msg .next = mk_req( rd, s.m_baseaddr + s.counter, 0, 0 )
+        r_addr = s.m_baseaddr + (s.lane_id * 4) + s.counter
+        s.req.msg .next = mk_req( rd, r_addr, 0, 0 )
         s.req.val .next = 1
         s.resp.rdy.next = 1
         s.state = LD_RSP_MATRIX
@@ -71,7 +73,8 @@ class MVMultFunc( Model ):
           s.resp.rdy.next = 0
 
       elif s.state == LD_REQ_VECTOR:
-        s.req .msg.next = mk_req( rd, s.v_baseaddr + s.counter, 0, 0 )
+        v_addr = s.v_baseaddr + s.counter
+        s.req .msg.next = mk_req( rd, v_addr, 0, 0 )
         s.req .val.next = 1
         s.resp.rdy.next = 1
         s.state = LD_RSP_VECTOR
@@ -92,7 +95,8 @@ class MVMultFunc( Model ):
           s.state = LD_REQ_MATRIX
 
       elif s.state == ST_REQ_VECTOR:
-        s.req .msg.next = mk_req( wr, s.d_baseaddr, 0, s.result )
+        d_addr = s.d_baseaddr + (s.lane_id * 4 * s.size )
+        s.req .msg.next = mk_req( wr, d_addr, 0, s.result )
         s.req .val.next = 1
         s.resp.rdy.next = 1
         s.state = ST_RSP_VECTOR
