@@ -115,4 +115,3 @@ class MVMultFunc( Model ):
                            ][ s.state ], s.result )
 
 
-

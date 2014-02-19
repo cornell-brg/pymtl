@@ -96,9 +96,19 @@ def mem_array_32bit( base_addr, data ):
 @pytest.mark.parametrize(
   ('mem_delay'), [0,5]
 )
-def test_mvmult( dump_vcd, mem_delay ):
+def test_mvmult_row1( dump_vcd, mem_delay ):
   run_mvmult_test( dump_vcd, False, "MVMult.vcd", mem_delay,
                    mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16, 6, 8 ]),
+                 )
+
+@pytest.mark.parametrize(
+  ('mem_delay'), [0,5]
+)
+def test_mvmult_row3( dump_vcd, mem_delay ):
+  run_mvmult_test( dump_vcd, False, "MVMult.vcd", mem_delay,
+                   mem_array_32bit(  0, [ 1, 2, 1] ),
+                   mem_array_32bit( 12, [ 1, 2, 3] ),
+                   mem_array_32bit( 24, [ 8 ]),
                  )
