@@ -49,6 +49,14 @@ class MatrixVecMultLaneBL( Model ):
     @s.tick
     def logic():
 
+      # Reset
+
+      if s.reset:
+        s.counter = 0
+        s.state   = LD_REQ_MATRIX
+        s.result  = Bits( 64 )
+        return
+
       # Config
 
       if not s.go:
