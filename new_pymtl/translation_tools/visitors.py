@@ -5,7 +5,7 @@
 import ast, _ast
 import re
 
-from ..ast_helpers import get_closure_dict
+from ..ast_helpers import get_closure_dict, print_simple_ast
 from ..signals     import Wire, Signal
 from ..PortBundle  import PortBundle
 
@@ -310,6 +310,11 @@ class InferTemporaryTypes( ast.NodeTransformer):
         obj.name = node.targets[0].id
         node.targets[0]._object = obj
 
+      elif isinstance( node.value, ast.Compare ):
+        obj      = Wire( 1 )
+        obj.name = node.targets[0].id
+        node.targets[0]._object = obj
+
       elif isinstance( node.value, ast.Call ):
 
         func_name = node.value.func.id
@@ -321,6 +326,7 @@ class InferTemporaryTypes( ast.NodeTransformer):
         node.targets[0]._object = obj
 
       else:
+        print_simple_ast( node )
         raise Exception('Cannot infer type from {} node!'
                         .format( node.value ))
 
