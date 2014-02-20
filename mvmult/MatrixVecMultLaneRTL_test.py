@@ -177,8 +177,9 @@ class LaneManagerHarness( Model ):
 
   def elaborate_logic( s ):
 
+    s.connect( s.src.out, s.mgr.from_cpu )
+
     for i in range( s.nlanes ):
-      s.connect( s.src.out,      s.mgr.from_cpu       )
 
       s.connect( s.mgr.size,     s.lane[i].size       )
       s.connect( s.mgr.r_baddr,  s.lane[i].m_baseaddr )
@@ -267,8 +268,8 @@ def test_managed_1lane( dump_vcd, test_verilog, mem_delay ):
 )
 def test_managed_3lane( dump_vcd, test_verilog, mem_delay ):
   run_lane_managed_test( dump_vcd, "LaneManagedMMV_3.vcd",
-                  LaneManagerHarness( 3, mem_delay, 0,
-                     [ config_msg( 1,   3), # size
+                  LaneManagerHarness( 3, mem_delay, 0, [
+                       config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr
                        config_msg( 3,  80), # v_addr
                        config_msg( 4, 160), # d_addr

@@ -23,7 +23,7 @@ class LaneManager( Model ):
     s.v_baddr = OutPort( data_nbits )
     s.d_baddr = OutPort( data_nbits )
     s.go      = OutPort( 1 )
-    s.done    = [ InPort ( 1 )        for x in range( nlanes ) ]
+    s.done    = [ InPort ( 1 ) for x in range( nlanes ) ]
 
     # Config fields
     s.nlanes         = nlanes
