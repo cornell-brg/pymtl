@@ -21,8 +21,8 @@ class MatrixVecMultLaneRTL( Model ):
     s.go         = InPort ( 1 )
     s.done       = OutPort( 1 )
 
-    s.req        = InValRdyBundle ( memreq_params.nbits  )
-    s.resp       = OutValRdyBundle( memresp_params.nbits )
+    s.req        = OutValRdyBundle( memreq_params.nbits  )
+    s.resp       = InValRdyBundle ( memresp_params.nbits )
 
     s.lane_id        = lane_id
     s.memreq_params  = memreq_params
@@ -60,7 +60,7 @@ class MatrixVecMultLaneRTL( Model ):
     return "{} {} {} {}{}{} > {}{}{}{}".format( s.ctrl.state,
                                s.dpath.count,
                                'L' if s.ctrl.c2d.last_item else ' ',
-                               'W' if s.ctrl.wait     else ' ',
+                               'W' if s.ctrl.pause    else ' ',
                                'V' if s.ctrl.stall_M0 else ' ',
                                'R' if s.ctrl.stall_M1 else ' ',
                                s.ctrl.ctrl_signals_M0[0:2],
@@ -81,10 +81,10 @@ class MatrixVecMultLaneDpath( Model ):
     s.d_baseaddr = InPort( 32 )
     s.size       = InPort( 32 )
 
-    s.req        = InValRdyBundle ( memreq_params.nbits  )
-    s.resp       = OutValRdyBundle( memresp_params.nbits )
+    s.req        = OutValRdyBundle( memreq_params.nbits  )
+    s.resp       = InValRdyBundle ( memresp_params.nbits )
 
-    s.c2d        = CtrlBundle()
+    s.c2d        = DpathBundle()
 
     s.lane_id        = lane_id
     s.memreq_params  = memreq_params
@@ -107,10 +107,11 @@ class MatrixVecMultLaneDpath( Model ):
 
     s.accum_out  = Wire(32)
 
-    addr  = s.memreq_params.addr_slice
-    data  = s.memreq_params.data_slice
-    len_  = s.memreq_params.len_slice
-    type_ = s.memreq_params.type_slice
+    m = s.memreq_params
+    addr0, addrN = m.addr_slice.start, m.addr_slice.stop
+    data0, dataN = m.data_slice.start, m.data_slice.stop
+    len0,  lenN  = m.len_slice.start,  m.len_slice.stop
+    type0, typeN = m.type_slice.start, m.type_slice.stop
 
     @s.combinational
     def stage_M0_comb():
@@ -133,10 +134,10 @@ class MatrixVecMultLaneDpath( Model ):
       elif s.c2d.data_sel == 1: s.store_data.value = s.accum_out
 
       # memory request
-      s.req.msg[addr ].value = s.base_addr + s.offset
-      s.req.msg[data ].value = s.store_data
-      s.req.msg[len_ ].value = 0
-      s.req.msg[type_].value = s.c2d.mem_type[1]
+      s.req.msg[addr0:addrN].value = s.base_addr + s.offset
+      s.req.msg[data0:dataN].value = s.store_data
+      s.req.msg[ len0: lenN].value = 0
+      s.req.msg[type0:typeN].value = s.c2d.mem_type[1]
 
       # last item status signal
       s.c2d.last_item.value = s.count == (s.size - 1)
@@ -156,8 +157,8 @@ class MatrixVecMultLaneDpath( Model ):
     @s.posedge_clk
     def stage_M1():
 
-      if s.c2d.reg_a_en: s.reg_a.next = s.resp.msg[data]
-      if s.c2d.reg_b_en: s.reg_b.next = s.resp.msg[data]
+      if s.c2d.reg_a_en: s.reg_a.next = s.resp.msg[data0:dataN]
+      if s.c2d.reg_b_en: s.reg_b.next = s.resp.msg[data0:dataN]
 
     #--------------------------------------------------------------------------
     # Stage X
@@ -203,10 +204,10 @@ class MatrixVecMultLaneCtrl( Model ):
     s.go         = InPort ( 1 )
     s.done       = OutPort( 1 )
 
-    s.req        = InValRdyBundle ( memreq_params.nbits  )
-    s.resp       = OutValRdyBundle( memresp_params.nbits )
+    s.req        = OutValRdyBundle( memreq_params.nbits  )
+    s.resp       = InValRdyBundle ( memresp_params.nbits )
 
-    s.c2d        = DpathBundle()
+    s.c2d        = CtrlBundle()
 
     s.lane_id        = lane_id
     s.memreq_params  = memreq_params
@@ -217,7 +218,7 @@ class MatrixVecMultLaneCtrl( Model ):
     s.state      = Wire( 3 )
     s.state_next = Wire( 3 )
 
-    s.wait       = Wire(1)
+    s.pause      = Wire(1)
     s.stall_M0   = Wire(1)
     s.stall_M1   = Wire(1)
 
@@ -337,11 +338,11 @@ class MatrixVecMultLaneCtrl( Model ):
 
       # Stall conditions
 
-      s.wait.value  = s.ctrl_signals_M0[5:7] == 2 and not s.ctrl_signals_A[11]
+      s.pause.value = s.ctrl_signals_M0[5:7] == 2 and not s.ctrl_signals_A[11]
       req_en        = s.ctrl_signals_M0[5:7] > 0
       resp_en       = s.ctrl_signals_M1[5:7] > 0
 
-      s.stall_M0.value = (req_en  and not s.req .rdy) or s.wait
+      s.stall_M0.value = (req_en  and not s.req .rdy) or s.pause
       s.stall_M1.value = (resp_en and not s.resp.val)
 
       any_stall = s.stall_M0 or s.stall_M1
