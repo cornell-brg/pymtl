@@ -10,6 +10,7 @@ from new_pmlib import InValRdyBundle, OutValRdyBundle
 #------------------------------------------------------------------------------
 class MatrixVecMultLaneRTL( Model ):
 
+  @capture_args
   def __init__( s, lane_id, memreq_params, memresp_params ):
 
     s.m_baseaddr = InPort( 32 )
