@@ -209,7 +209,7 @@ def run_lane_managed_test( dump_vcd, test_verilog, vcd_file_name, model,
   sim.reset()
 
   print
-  while not model.done() and sim.ncycles < 2000:
+  while not model.done() and sim.ncycles < 50:
     sim.print_line_trace()
     sim.cycle()
 

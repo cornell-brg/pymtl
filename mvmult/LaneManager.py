@@ -103,7 +103,7 @@ class LaneManager( Model ):
       # Output ready
 
       if   s.state == STATE_IDLE: s.from_cpu.rdy.value = 1
-      elif s.state == STATE_CFG:  s.from_cpu.rdy.value = 1
+      elif s.state == STATE_CFG:  s.from_cpu.rdy.value = not do_compute
       elif s.state == STATE_CALC: s.from_cpu.rdy.value = 0
 
   def line_trace( s ):

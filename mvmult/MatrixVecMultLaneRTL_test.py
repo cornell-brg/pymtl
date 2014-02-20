@@ -192,7 +192,7 @@ class LaneManagerHarness( Model ):
       s.connect( s.lane[i].resp, s.mem.resps[i]  )
 
   def done( s ):
-    return reduce( lambda x, y : x & y, [x.done for x in s.lane ] )
+    return s.src.done and s.mgr.from_cpu.rdy
 
   def line_trace( s ):
     #return "{} -> {}".format( s.accel.line_trace(), s.mem.line_trace() )
@@ -221,11 +221,12 @@ def run_lane_managed_test( dump_vcd, vcd_file_name, model,
   sim.reset()
 
   print
-  while not model.done() and sim.ncycles < 2000:
+  while not model.done() and sim.ncycles < 50:
     sim.print_line_trace()
     sim.cycle()
 
   assert model.done()
+
   dest_addr   = dest_vector[0]
   for i, dest_value in enumerate( dest_vector[1] ):
     assert model.mem.mem.mem[ dest_addr+i ] == dest_value
