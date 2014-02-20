@@ -67,6 +67,7 @@ def run_mvmult_test( dump_vcd, test_verilog, vcd_file_name, model, lane_id,
   while not model.done():
     sim.print_line_trace()
     sim.cycle()
+    model.lane.go.value = False
 
   dest_addr  = dest_vector[0]
   dest_value = dest_vector[1][0]

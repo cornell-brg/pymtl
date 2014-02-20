@@ -67,6 +67,7 @@ def run_mvmult_test( dump_vcd, test_verilog, vcd_file_name, model, lane_id,
   while not model.done() and sim.ncycles < 50:
     sim.print_line_trace()
     sim.cycle()
+    model.lane.go.value = False
 
   assert model.done()
 
@@ -110,41 +111,41 @@ def test_mvmult_lane0_row0( dump_vcd, mem_delay ):
                    mem_array_32bit(160, [16, 6, 8 ]),
                  )
 
-@pytest.mark.parametrize(
-  ('mem_delay'), [0]#[0,5]
-)
-def test_mvmult_lane0_row2( dump_vcd, mem_delay ):
-  lane = 0
-  run_mvmult_test( dump_vcd, False, "MVMult.vcd",
-                   TestHarness( lane, mem_delay ), lane,
-                   mem_array_32bit(  0, [ 1, 2, 1] ),
-                   mem_array_32bit( 12, [ 1, 2, 3] ),
-                   mem_array_32bit( 24, [ 8 ]),
-                 )
-
-@pytest.mark.parametrize(
-  ('mem_delay'), [0]#[0,5]
-)
-def test_mvmult_lane2_row0( dump_vcd, mem_delay ):
-  lane = 2
-  run_mvmult_test( dump_vcd, False, "MVMult.vcd",
-                   TestHarness( lane, mem_delay ), lane,
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
-                   mem_array_32bit( 80, [ 1, 2, 3 ]),
-                   mem_array_32bit(160, [ 8 ]),
-                 )
-
-@pytest.mark.parametrize(
-  ('mem_delay'), [0]#[0,5]
-)
-def test_mvmult_lane1_row0( dump_vcd, mem_delay ):
-  lane = 1
-  run_mvmult_test( dump_vcd, False, "MVMult.vcd",
-                   TestHarness( lane, mem_delay ), lane,
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
-                   mem_array_32bit( 80, [ 1, 2, 3 ]),
-                   mem_array_32bit(160, [ 6 ]),
-                 )
+#@pytest.mark.parametrize(
+#  ('mem_delay'), [0]#[0,5]
+#)
+#def test_mvmult_lane0_row2( dump_vcd, mem_delay ):
+#  lane = 0
+#  run_mvmult_test( dump_vcd, False, "MVMult.vcd",
+#                   TestHarness( lane, mem_delay ), lane,
+#                   mem_array_32bit(  0, [ 1, 2, 1] ),
+#                   mem_array_32bit( 12, [ 1, 2, 3] ),
+#                   mem_array_32bit( 24, [ 8 ]),
+#                 )
+#
+#@pytest.mark.parametrize(
+#  ('mem_delay'), [0]#[0,5]
+#)
+#def test_mvmult_lane2_row0( dump_vcd, mem_delay ):
+#  lane = 2
+#  run_mvmult_test( dump_vcd, False, "MVMult.vcd",
+#                   TestHarness( lane, mem_delay ), lane,
+#                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+#                   mem_array_32bit( 80, [ 1, 2, 3 ]),
+#                   mem_array_32bit(160, [ 8 ]),
+#                 )
+#
+#@pytest.mark.parametrize(
+#  ('mem_delay'), [0]#[0,5]
+#)
+#def test_mvmult_lane1_row0( dump_vcd, mem_delay ):
+#  lane = 1
+#  run_mvmult_test( dump_vcd, False, "MVMult.vcd",
+#                   TestHarness( lane, mem_delay ), lane,
+#                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+#                   mem_array_32bit( 80, [ 1, 2, 3 ]),
+#                   mem_array_32bit(160, [ 6 ]),
+#                 )
 
 #------------------------------------------------------------------------------
 # LaneManagerHarness
