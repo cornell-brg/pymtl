@@ -343,15 +343,17 @@ class MatrixVecMultLaneCtrl( Model ):
       s.stall_M0.value = (req_en  and not s.req .rdy) or s.wait
       s.stall_M1.value = (resp_en and not s.resp.val)
 
+      any_stall = s.stall_M0 or s.stall_M1
+
       # M0 Stage
 
       s.c2d.baddr_sel   .value = s.ctrl_signals_M0[0:2]
       s.c2d.offset_sel  .value = s.ctrl_signals_M0[2:4]
       s.c2d.data_sel    .value = s.ctrl_signals_M0[  4]
       s.c2d.count_reset .value = s.ctrl_signals_M0[ 12]
-      s.c2d.count_en    .value = s.ctrl_signals_M0[ 13]
+      s.c2d.count_en    .value = s.ctrl_signals_M0[ 13] and not any_stall
       s.c2d.mem_type    .value = s.ctrl_signals_M0[5:7]
-      s.req.val         .value = (req_en and not s.stall_M0 and not s.stall_M1)
+      s.req.val         .value = req_en and not any_stall
 
       # M1 Stage
 

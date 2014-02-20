@@ -100,7 +100,7 @@ def mem_array_32bit( base_addr, data ):
 #  1 2 1   3     8
 #
 @pytest.mark.parametrize(
-  ('mem_delay'), [0]#[0,5]
+  ('mem_delay'), [0,5]
 )
 def test_mvmult_lane0_row0( dump_vcd, mem_delay ):
   lane = 0
@@ -112,7 +112,7 @@ def test_mvmult_lane0_row0( dump_vcd, mem_delay ):
                  )
 
 @pytest.mark.parametrize(
-  ('mem_delay'), [0]#[0,5]
+  ('mem_delay'), [0,5]
 )
 def test_mvmult_lane0_row2( dump_vcd, mem_delay ):
   lane = 0
@@ -124,7 +124,7 @@ def test_mvmult_lane0_row2( dump_vcd, mem_delay ):
                  )
 
 @pytest.mark.parametrize(
-  ('mem_delay'), [0]#[0,5]
+  ('mem_delay'), [0,5]
 )
 def test_mvmult_lane2_row0( dump_vcd, mem_delay ):
   lane = 2
@@ -136,7 +136,7 @@ def test_mvmult_lane2_row0( dump_vcd, mem_delay ):
                  )
 
 @pytest.mark.parametrize(
-  ('mem_delay'), [0]#[0,5]
+  ('mem_delay'), [0,5]
 )
 def test_mvmult_lane1_row0( dump_vcd, mem_delay ):
   lane = 1
