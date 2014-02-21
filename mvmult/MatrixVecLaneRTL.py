@@ -1,14 +1,14 @@
 #==============================================================================
-# MatrixVecMultLaneRTL
+# MatrixVecLaneRTL
 #==============================================================================
 
 from new_pymtl import *
 from new_pmlib import InValRdyBundle, OutValRdyBundle
 
 #------------------------------------------------------------------------------
-# MatrixVecMultLaneRTL
+# MatrixVecLaneRTL
 #------------------------------------------------------------------------------
-class MatrixVecMultLaneRTL( Model ):
+class MatrixVecLaneRTL( Model ):
 
   @capture_args
   def __init__( s, lane_id, memreq_params, memresp_params ):
@@ -30,8 +30,8 @@ class MatrixVecMultLaneRTL( Model ):
 
   def elaborate_logic( s ):
 
-    s.dpath = MatrixVecMultLaneDpath( s.lane_id, s.memreq_params, s.memresp_params )
-    s.ctrl  = MatrixVecMultLaneCtrl ( s.lane_id, s.memreq_params, s.memresp_params )
+    s.dpath = MatrixVecLaneDpath( s.lane_id, s.memreq_params, s.memresp_params )
+    s.ctrl  = MatrixVecLaneCtrl ( s.lane_id, s.memreq_params, s.memresp_params )
 
     s.connect( s.dpath.c2d, s.ctrl.c2d )
 
@@ -70,9 +70,9 @@ class MatrixVecMultLaneRTL( Model ):
                              )
 
 #------------------------------------------------------------------------------
-# MatrixVecMultLaneDpath
+# MatrixVecLaneDpath
 #------------------------------------------------------------------------------
-class MatrixVecMultLaneDpath( Model ):
+class MatrixVecLaneDpath( Model ):
 
   def __init__( s, lane_id, memreq_params, memresp_params ):
 
@@ -191,13 +191,13 @@ class MatrixVecMultLaneDpath( Model ):
       if s.c2d.accum_reg_en: s.accum_reg.next = s.accum_out
 
 #------------------------------------------------------------------------------
-# MatrixVecMultLaneCtrl
+# MatrixVecLaneCtrl
 #------------------------------------------------------------------------------
 IDLE        = 0
 SEND_OP_LDA = 1
 SEND_OP_LDB = 2
 SEND_OP_ST  = 3
-class MatrixVecMultLaneCtrl( Model ):
+class MatrixVecLaneCtrl( Model ):
 
   def __init__( s, lane_id, memreq_params, memresp_params ):
 
@@ -375,7 +375,7 @@ class MatrixVecMultLaneCtrl( Model ):
 
 
 #------------------------------------------------------------------------------
-# MatrixVecMultLaneRTL
+# CtrlDpathBundle
 #------------------------------------------------------------------------------
 class CtrlDpathBundle( PortBundle ):
   def __init__( s ):

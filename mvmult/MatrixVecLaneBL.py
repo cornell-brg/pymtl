@@ -1,5 +1,5 @@
 #==============================================================================
-# MatrixVecMultLaneBL
+# MatrixVecLaneBL
 #==============================================================================
 
 from new_pymtl import *
@@ -14,7 +14,7 @@ ST_REQ_VECTOR = 5
 ST_RSP_VECTOR = 6
 IDLE          = 7
 
-class MatrixVecMultLaneBL( Model ):
+class MatrixVecLaneBL( Model ):
 
   def __init__( s, lane_id, memreq_params, memresp_params ):
 

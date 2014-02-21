@@ -5,8 +5,8 @@
 from new_pymtl   import *
 from new_pmlib   import InValRdyBundle, OutValRdyBundle, mem_msgs
 
-from LaneManager          import LaneManager
-from MatrixVecMultLaneRTL import MatrixVecMultLaneRTL
+from LaneManager      import LaneManager
+from MatrixVecLaneRTL import MatrixVecLaneRTL
 
 class MatrixVecCOP( Model ):
 
@@ -34,7 +34,7 @@ class MatrixVecCOP( Model ):
 
     s.mgr  = LaneManager( s.nlanes, s.cop_addr_nbits, s.cop_data_nbits )
 
-    s.lane = [ MatrixVecMultLaneRTL( x, s.memreq_params, s.memresp_params )
+    s.lane = [ MatrixVecLaneRTL( x, s.memreq_params, s.memresp_params )
                 for x in range( s.nlanes ) ]
 
     s.connect( s.from_cpu, s.mgr.from_cpu )

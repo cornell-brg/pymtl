@@ -115,7 +115,7 @@ def mem_array_32bit( base_addr, data ):
   ('mem_delay'), [0,5]
 )
 def test_managed_1lane( dump_vcd, test_verilog, mem_delay ):
-  run_lane_managed_test( dump_vcd, "MatrixVecCOP.vcd",
+  run_lane_managed_test( dump_vcd, "MatrixVecCOP_1lane.vcd",
                   SourceHarness( 1, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr
@@ -134,7 +134,7 @@ def test_managed_1lane( dump_vcd, test_verilog, mem_delay ):
   ('mem_delay'), [0,5]
 )
 def test_managed_3lane( dump_vcd, test_verilog, mem_delay ):
-  run_lane_managed_test( dump_vcd, "LaneManagedMMV_3.vcd",
+  run_lane_managed_test( dump_vcd, "MatrixVecCOP_3lane.vcd",
                   SourceHarness( 3, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr
