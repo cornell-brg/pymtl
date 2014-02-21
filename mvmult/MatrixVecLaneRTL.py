@@ -74,6 +74,7 @@ class MatrixVecLaneRTL( Model ):
 #------------------------------------------------------------------------------
 class MatrixVecLaneDpath( Model ):
 
+  @capture_args
   def __init__( s, lane_id, memreq_params, memresp_params ):
 
     s.m_baseaddr = InPort( 32 )
@@ -199,6 +200,7 @@ SEND_OP_LDB = 2
 SEND_OP_ST  = 3
 class MatrixVecLaneCtrl( Model ):
 
+  @capture_args
   def __init__( s, lane_id, memreq_params, memresp_params ):
 
     s.go         = InPort ( 1 )
