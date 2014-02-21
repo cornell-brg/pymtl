@@ -51,15 +51,18 @@ class LaneManager( Model ):
     s.connect( s.addr, s.from_cpu.msg[s.data_nbits:s.from_cpu.msg.nbits] )
     s.connect( s.data, s.from_cpu.msg[0:s.data_nbits] )
 
+    s.done_reg = Wire( s.nlanes )
+
     @s.posedge_clk
     def config_update():
 
       if s.reset:
-        s.go     .next = 0
-        s.size   .next = 0
-        s.r_baddr.next = 0
-        s.v_baddr.next = 0
-        s.d_baddr.next = 0
+        s.go      .next = 0
+        s.size    .next = 0
+        s.r_baddr .next = 0
+        s.v_baddr .next = 0
+        s.d_baddr .next = 0
+        s.done_reg.next = 0
 
       elif s.from_cpu.val and s.from_cpu.rdy:
         if s.addr == 0: s.go     .next = s.data[0]
@@ -67,9 +70,12 @@ class LaneManager( Model ):
         if s.addr == 2: s.r_baddr.next = s.data
         if s.addr == 3: s.v_baddr.next = s.data
         if s.addr == 4: s.d_baddr.next = s.data
+        s.done_reg.next = 0
 
       elif s.state_next == STATE_CALC:
-        s.go.next = 0
+        s.go      .next = 0
+        for i in range( s.nlanes ):
+          if s.done[i]: s.done_reg[i].next = 1
 
     #--------------------------------------------------------------------------
     # state_transition
@@ -85,7 +91,7 @@ class LaneManager( Model ):
       # TODO: is_done can't be a temporary due to lack of inference for BinOps
       s.is_done.value = 1
       for i in range( s.nlanes ):
-        s.is_done.value = s.done[i] & s.is_done
+        s.is_done.value = s.done_reg[i] & s.is_done
 
       # State update
 
@@ -107,7 +113,11 @@ class LaneManager( Model ):
       elif s.state == STATE_CALC: s.from_cpu.rdy.value = 0
 
   def line_trace( s ):
-    return 'from_cpu: {} state: {} go: {} () done: {}'.format(
-        s.from_cpu, s.state, s.go,
-        " ".join([str(x.uint()) for x in s.done]), )
+    return '{} {} {} {} {}'.format(
+        s.from_cpu,
+        ['IDL','CFG','CLC'][s.state],
+        'go' if s.go else '  ',
+        '{:0{width}b}'.format( s.done_reg.uint(), width=s.done_reg.nbits ),
+        'done' if s.is_done else '    '
+        )
 
