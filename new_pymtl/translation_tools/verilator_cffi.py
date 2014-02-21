@@ -444,11 +444,16 @@ def pymtl_wrapper_from_model( model, model_name, filename_w,
 
   # Utility function for declaring a port list member
   def declare_port_list( name, port_list ):
-    ports      = [ port_inst( x ) for x in port_list ]
+    # TODO: HACKY PORT BUNDLE HANDLING
+    fmt = 's.{list_name} = [\n      {port_decls}\n    ]'
+    if isinstance( port_list[0], PortBundle ):
+      fmt = declare_port_bundle( name, port_list[0] ) + '    ' + fmt
+      ports = [ '{}()'.format( name.capitalize() ) for x in port_list ]
+    else:
+      ports = [ port_inst( x ) for x in port_list ]
     port_decls = ',\n      '.join( ports )
-    return 's.{list_name} = [\n      {port_decls}\n    ]' \
-           .format( list_name  = name,
-                    port_decls = port_decls )
+    return fmt.format( list_name  = name,
+                       port_decls = port_decls )
 
   # Utility function for declaring a port bundle member
   def declare_port_bundle( name, port_bundle ):
@@ -476,10 +481,12 @@ def pymtl_wrapper_from_model( model, model_name, filename_w,
 
       if   isinstance( obj, (InPort, OutPort) ):
         port_defs.append( declare_port( obj ) )
-      elif isinstance( obj, list ):
-        port_defs.append( declare_port_list( name, obj ) )
       elif isinstance( obj, PortBundle ):
         port_defs.append( declare_port_bundle( name, obj ) )
+      # TODO: make this a PortList object?
+      elif isinstance( obj, list ) and \
+           isinstance( obj[0], (InPort, OutPort, PortBundle) ):
+        port_defs.append( declare_port_list( name, obj ) )
 
   # Create port, portlist, and portbundle declarations
   for port in model.get_ports():
