@@ -174,6 +174,7 @@ class MatrixVecLaneDpath( Model ):
 
     @s.posedge_clk
     def stage_X_seq():
+      if s.reset:          s.mul_reg.next = 0
       if s.c2d.mul_reg_en: s.mul_reg.next = s.mul_out.value
 
     #--------------------------------------------------------------------------
@@ -188,8 +189,9 @@ class MatrixVecLaneDpath( Model ):
       s.accum_out.value = s.mul_reg + s.accum_reg
 
     @s.posedge_clk
-    def stage_X_seq():
-      if s.c2d.accum_reg_en: s.accum_reg.next = s.accum_out
+    def stage_A_seq():
+      if   s.reset or s.c2d.count_reset: s.accum_reg.next = 0
+      elif s.c2d.accum_reg_en:           s.accum_reg.next = s.accum_out
 
 #------------------------------------------------------------------------------
 # MatrixVecLaneCtrl
