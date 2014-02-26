@@ -11,7 +11,7 @@ from new_pmlib import InValRdyBundle, OutValRdyBundle
 class MatrixVecLaneRTL( Model ):
 
   @capture_args
-  def __init__( s, lane_id, memreq_params, memresp_params ):
+  def __init__( s, lane_id, nmul_stages, memreq_params, memresp_params ):
 
     s.m_baseaddr = InPort( 32 )
     s.v_baseaddr = InPort( 32 )
@@ -25,13 +25,15 @@ class MatrixVecLaneRTL( Model ):
     s.resp       = InValRdyBundle ( memresp_params.nbits )
 
     s.lane_id        = lane_id
+    s.nmul_stages    = nmul_stages
     s.memreq_params  = memreq_params
     s.memresp_params = memresp_params
 
   def elaborate_logic( s ):
 
-    s.dpath = MatrixVecLaneDpath( s.lane_id, s.memreq_params, s.memresp_params )
-    s.ctrl  = MatrixVecLaneCtrl ( s.lane_id, s.memreq_params, s.memresp_params )
+    mreq, mresp = s.memreq_params, s.memresp_params
+    s.dpath = MatrixVecLaneDpath( s.lane_id, s.nmul_stages, mreq, mresp )
+    s.ctrl  = MatrixVecLaneCtrl ( s.lane_id, s.nmul_stages, mreq, mresp )
 
     s.connect( s.dpath.c2d, s.ctrl.c2d )
 
@@ -65,7 +67,7 @@ class MatrixVecLaneRTL( Model ):
                                'R' if s.ctrl.stall_M1 else ' ',
                                s.ctrl.ctrl_signals_M0[0:2],
                                s.ctrl.ctrl_signals_M1[0:2],
-                               s.ctrl.ctrl_signals_X [0:2],
+                               s.ctrl.ctrl_signals_X [0][0:2],
                                s.ctrl.ctrl_signals_A [0:2],
                              )
 
@@ -75,7 +77,7 @@ class MatrixVecLaneRTL( Model ):
 class MatrixVecLaneDpath( Model ):
 
   @capture_args
-  def __init__( s, lane_id, memreq_params, memresp_params ):
+  def __init__( s, lane_id, nmul_stages, memreq_params, memresp_params ):
 
     s.m_baseaddr = InPort( 32 )
     s.v_baseaddr = InPort( 32 )
@@ -88,6 +90,7 @@ class MatrixVecLaneDpath( Model ):
     s.c2d        = DpathBundle()
 
     s.lane_id        = lane_id
+    s.nmul_stages    = nmul_stages
     s.memreq_params  = memreq_params
     s.memresp_params = memresp_params
 
@@ -166,16 +169,15 @@ class MatrixVecLaneDpath( Model ):
     #--------------------------------------------------------------------------
 
     s.mul_out = Wire(32)
-    s.mul_reg = Wire(32)
 
-    @s.combinational
-    def stage_X_comb():
-      s.mul_out.value = s.reg_a * s.reg_b
-
-    @s.posedge_clk
-    def stage_X_seq():
-      if s.reset:          s.mul_reg.next = 0
-      if s.c2d.mul_reg_en: s.mul_reg.next = s.mul_out.value
+    s.mul = DummyMultiplier( nbits=32, nstages=s.nmul_stages )
+    s.connect_dict( {
+     s.mul.a       : s.reg_a,
+     s.mul.b       : s.reg_b,
+     s.mul.product : s.mul_out,
+    })
+    for i in range( s.nmul_stages ):
+      s.connect( s.mul.enables[i], s.c2d.mul_reg_en )
 
     #--------------------------------------------------------------------------
     # Stage A
@@ -186,7 +188,7 @@ class MatrixVecLaneDpath( Model ):
 
     @s.combinational
     def stage_A_comb():
-      s.accum_out.value = s.mul_reg + s.accum_reg
+      s.accum_out.value = s.mul_out + s.accum_reg
 
     @s.posedge_clk
     def stage_A_seq():
@@ -203,7 +205,7 @@ SEND_OP_ST  = 3
 class MatrixVecLaneCtrl( Model ):
 
   @capture_args
-  def __init__( s, lane_id, memreq_params, memresp_params ):
+  def __init__( s, lane_id, nmul_stages, memreq_params, memresp_params ):
 
     s.go         = InPort ( 1 )
     s.done       = OutPort( 1 )
@@ -214,6 +216,7 @@ class MatrixVecLaneCtrl( Model ):
     s.c2d        = CtrlBundle()
 
     s.lane_id        = lane_id
+    s.nmul_stages    = nmul_stages
     s.memreq_params  = memreq_params
     s.memresp_params = memresp_params
 
@@ -266,7 +269,7 @@ class MatrixVecLaneCtrl( Model ):
 
     s.ctrl_signals_M0 = Wire( 14 )
     s.ctrl_signals_M1 = Wire( 14 )
-    s.ctrl_signals_X  = Wire( 14 )
+    s.ctrl_signals_X  = [Wire( 14 ) for x in range(s.nmul_stages)]
     s.ctrl_signals_A  = Wire( 14 )
 
     @s.posedge_clk
@@ -276,10 +279,13 @@ class MatrixVecLaneCtrl( Model ):
       elif s.stall_M0: s.ctrl_signals_M1.next = 0
       else:            s.ctrl_signals_M1.next = s.ctrl_signals_M0
 
-      if   s.stall_M1: s.ctrl_signals_X .next = 0
-      else:            s.ctrl_signals_X .next = s.ctrl_signals_M1
+      if   s.stall_M1: s.ctrl_signals_X[0].next = 0
+      else:            s.ctrl_signals_X[0].next = s.ctrl_signals_M1
 
-      s.ctrl_signals_A.next = s.ctrl_signals_X
+      for i in range( 1, s.nmul_stages ):
+        s.ctrl_signals_X[i].next = s.ctrl_signals[i-1]
+
+      s.ctrl_signals_A.next = s.ctrl_signals_X[s.nmul_stages-1]
 
     @s.combinational
     def state_to_ctrl():
@@ -371,7 +377,7 @@ class MatrixVecLaneCtrl( Model ):
 
       # X  Stage
 
-      s.c2d.mul_reg_en  .value = s.ctrl_signals_X [  9]
+      s.c2d.mul_reg_en  .value = s.ctrl_signals_X [0][  9]
 
       # A  Stage
 
@@ -408,3 +414,39 @@ class CtrlDpathBundle( PortBundle ):
     s.accum_reg_en   = OutPort (1)
 
 CtrlBundle, DpathBundle = create_PortBundles( CtrlDpathBundle )
+
+#------------------------------------------------------------------------------
+# DummyMultiplier
+#------------------------------------------------------------------------------
+class DummyMultiplier( Model ):
+  def __init__( s, nbits, nstages ):
+    s.a       = InPort ( nbits )
+    s.b       = InPort ( nbits )
+    s.enables = InPort ( nstages )
+    s.product = OutPort( nbits )
+
+    s.nbits   = nbits
+    s.nstages = nstages
+
+  def elaborate_logic( s ):
+
+    s.regs = [ Wire( s.nbits ) for x in range( s.nstages ) ]
+
+    @s.posedge_clk
+    def mult_logic():
+      if s.reset:
+        for i in range( s.nstages ):
+          s.regs[i].next = 0
+      else:
+
+        print s.enables[0], s.a, s.b
+        if s.enables[0]:
+          s.regs[0].next = s.a * s.b
+
+        for i in range( 1, s.nstages ):
+          if s.enables[i]:
+            s.regs[i].next = s.regs[i-1]
+
+    s.connect( s.product, s.regs[-1] )
+
+

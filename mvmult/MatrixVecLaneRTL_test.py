@@ -16,13 +16,14 @@ import pytest
 #------------------------------------------------------------------------------
 class TestHarness( Model ):
 
-  def __init__( s, lane_id, mem_delay, test_verilog ):
+  def __init__( s, lane_id, nmul_stages, mem_delay, test_verilog ):
 
     memreq_params  = mem_msgs.MemReqParams( 32, 32 )
     memresp_params = mem_msgs.MemRespParams( 32 )
 
     s.mem  = TestMemory( memreq_params, memresp_params, 1, mem_delay )
-    s.lane = MatrixVecLaneRTL( lane_id, memreq_params, memresp_params )
+    s.lane = MatrixVecLaneRTL( lane_id, nmul_stages,
+                               memreq_params, memresp_params )
 
     if test_verilog:
       s.lane = get_verilated( s.lane )
@@ -110,7 +111,7 @@ def mem_array_32bit( base_addr, data ):
 def test_mvmult_lane0_row0( dump_vcd, test_verilog, mem_delay ):
   lane = 0
   run_mvmult_test( dump_vcd, "MVMult.vcd",
-                   TestHarness( lane, mem_delay, test_verilog ), lane,
+                   TestHarness( lane, 1, mem_delay, test_verilog ), lane,
                    mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16, 6, 8 ]),
@@ -122,7 +123,7 @@ def test_mvmult_lane0_row0( dump_vcd, test_verilog, mem_delay ):
 def test_mvmult_lane0_row2( dump_vcd, test_verilog, mem_delay ):
   lane = 0
   run_mvmult_test( dump_vcd, "MVMult.vcd",
-                   TestHarness( lane, mem_delay, test_verilog ), lane,
+                   TestHarness( lane, 1, mem_delay, test_verilog ), lane,
                    mem_array_32bit(  0, [ 1, 2, 1] ),
                    mem_array_32bit( 12, [ 1, 2, 3] ),
                    mem_array_32bit( 24, [ 8 ]),
@@ -134,7 +135,7 @@ def test_mvmult_lane0_row2( dump_vcd, test_verilog, mem_delay ):
 def test_mvmult_lane2_row0( dump_vcd, test_verilog, mem_delay ):
   lane = 2
   run_mvmult_test( dump_vcd, "MVMult.vcd",
-                   TestHarness( lane, mem_delay, test_verilog ), lane,
+                   TestHarness( lane, 1, mem_delay, test_verilog ), lane,
                    mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [ 8 ]),
@@ -146,7 +147,7 @@ def test_mvmult_lane2_row0( dump_vcd, test_verilog, mem_delay ):
 def test_mvmult_lane1_row0( dump_vcd, test_verilog, mem_delay ):
   lane = 1
   run_mvmult_test( dump_vcd, "MVMult.vcd",
-                   TestHarness( lane, mem_delay, test_verilog ), lane,
+                   TestHarness( lane, 1, mem_delay, test_verilog ), lane,
                    mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [ 6 ]),
@@ -164,7 +165,7 @@ class LaneManagerHarness( Model ):
 
     s.src   = TestSource( 3 + 32, config_msgs, src_delay )
     s.mgr   = LaneManager( nlanes )
-    s.lane  = [ MatrixVecLaneRTL( x, memreq_params, memresp_params )
+    s.lane  = [ MatrixVecLaneRTL( x, 1, memreq_params, memresp_params )
                 for x in range( nlanes ) ]
     s.mem   = TestMemory( memreq_params, memresp_params, nlanes, mem_delay )
 
