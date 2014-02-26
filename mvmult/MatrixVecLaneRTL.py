@@ -87,7 +87,7 @@ class MatrixVecLaneDpath( Model ):
     s.req        = OutValRdyBundle( memreq_params.nbits  )
     s.resp       = InValRdyBundle ( memresp_params.nbits )
 
-    s.c2d        = DpathBundle()
+    s.c2d        = DpathBundle( nmul_stages )
 
     s.lane_id        = lane_id
     s.nmul_stages    = nmul_stages
@@ -177,7 +177,7 @@ class MatrixVecLaneDpath( Model ):
      s.mul.product : s.mul_out,
     })
     for i in range( s.nmul_stages ):
-      s.connect( s.mul.enables[i], s.c2d.mul_reg_en )
+      s.connect( s.mul.enables[i], s.c2d.mul_reg_en[i] )
 
     #--------------------------------------------------------------------------
     # Stage A
@@ -213,7 +213,7 @@ class MatrixVecLaneCtrl( Model ):
     s.req        = OutValRdyBundle( memreq_params.nbits  )
     s.resp       = InValRdyBundle ( memresp_params.nbits )
 
-    s.c2d        = CtrlBundle()
+    s.c2d        = CtrlBundle( nmul_stages )
 
     s.lane_id        = lane_id
     s.nmul_stages    = nmul_stages
@@ -283,7 +283,7 @@ class MatrixVecLaneCtrl( Model ):
       else:            s.ctrl_signals_X[0].next = s.ctrl_signals_M1
 
       for i in range( 1, s.nmul_stages ):
-        s.ctrl_signals_X[i].next = s.ctrl_signals[i-1]
+        s.ctrl_signals_X[i].next = s.ctrl_signals_X[i-1]
 
       s.ctrl_signals_A.next = s.ctrl_signals_X[s.nmul_stages-1]
 
@@ -377,7 +377,8 @@ class MatrixVecLaneCtrl( Model ):
 
       # X  Stage
 
-      s.c2d.mul_reg_en  .value = s.ctrl_signals_X [0][  9]
+      for i in range( s.nmul_stages ):
+        s.c2d.mul_reg_en[i].value = s.ctrl_signals_X[i][9]
 
       # A  Stage
 
@@ -388,7 +389,7 @@ class MatrixVecLaneCtrl( Model ):
 # CtrlDpathBundle
 #------------------------------------------------------------------------------
 class CtrlDpathBundle( PortBundle ):
-  def __init__( s ):
+  def __init__( s, nmul_stages ):
 
     # M0 Stage Signals
 
@@ -407,7 +408,7 @@ class CtrlDpathBundle( PortBundle ):
 
     # X Stage Signals
 
-    s.mul_reg_en     = OutPort (1)
+    s.mul_reg_en     = OutPort (nmul_stages)
 
     # A Stage Signals
 
@@ -439,7 +440,6 @@ class DummyMultiplier( Model ):
           s.regs[i].next = 0
       else:
 
-        print s.enables[0], s.a, s.b
         if s.enables[0]:
           s.regs[0].next = s.a * s.b
 
