@@ -101,16 +101,18 @@ def signal_assignments( model, symtab ):
 
   return s
 
-#------------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # verilog
 #-------------------------------------------------------------------------
 tab         = '  '
 endl        = '\n'
 div         = '//' + '-'*72
 comment     = '// {}'
-header      = div + endl + comment + endl + div
+net_none    = '`default_nettype none'
+net_wire    = '`default_nettype wire'
+header      = div + endl + comment + endl + div + endl + net_none
 start_mod   = 'module {}'
-end_mod     = 'endmodule // {}'
+end_mod     = 'endmodule // {}' + endl + net_wire + endl
 start_ports = '('
 end_ports   = ');'
 instance    = tab + '{} {}'
