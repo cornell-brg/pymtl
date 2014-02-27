@@ -4,9 +4,10 @@
 
 import ast, _ast
 import re
+import warnings
 
 from ..ast_helpers import get_closure_dict, print_simple_ast
-from ..signals     import Wire, Signal
+from ..signals     import Wire, Signal, InPort, OutPort
 from ..PortBundle  import PortBundle
 
 #-------------------------------------------------------------------------
@@ -378,11 +379,18 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     self.generic_visit( node )
 
   def visit_Subscript( self, node ):
+    # Only create special array declarations if InPort or OutPort?
     if isinstance( node._object, list ):
       if   isinstance( node.value, _ast.Attribute ):
         name = node.value.attr
       elif isinstance( node.value, _ast.Name ):
         name = node.value.id
+      # TODO: _ast.Subscript, e.g.  some_signal[0][2:14] = rhs
+      else:
+        warnings.warn( "Translation can't determine name of array LHS!" )
+        print_simple_ast( node )
+        return
+
       self.arrays.add( (name, tuple( node._object )) )
 
     # TODO: add writes to subscripts to store list
