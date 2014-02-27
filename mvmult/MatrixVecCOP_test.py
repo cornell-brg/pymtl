@@ -15,7 +15,8 @@ import pytest
 #------------------------------------------------------------------------------
 class SourceHarness( Model ):
 
-  def __init__( s, nlanes, mem_delay, src_delay, config_msgs, test_verilog ):
+  def __init__( s, nlanes, nmul_stages, mem_delay, src_delay, config_msgs,
+                test_verilog ):
 
     cop_addr_nbits = 3
     cop_data_nbits = 32
@@ -27,8 +28,9 @@ class SourceHarness( Model ):
 
     s.src   = TestSource  ( cop_addr_nbits + cop_data_nbits,
                             config_msgs, src_delay )
-    s.cop   = MatrixVecCOP( nlanes, cop_addr_nbits, cop_data_nbits,
-                                    mem_addr_nbits, mem_data_nbits )
+    s.cop   = MatrixVecCOP( nlanes, nmul_stages,
+                            cop_addr_nbits, cop_data_nbits,
+                            mem_addr_nbits, mem_data_nbits )
     s.mem   = TestMemory  ( memreq_params, memresp_params,
                             nlanes, mem_delay )
 
@@ -110,13 +112,16 @@ def mem_array_32bit( base_addr, data ):
 #------------------------------------------------------------------------------
 # test_managed
 #------------------------------------------------------------------------------
-
+#  5 1 3   1    16
+#  1 1 1 . 2  =  6
+#  1 2 1   3     8
+#
 @pytest.mark.parametrize(
-  ('mem_delay'), [0,5]
+  ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
-def test_managed_1lane( dump_vcd, test_verilog, mem_delay ):
+def test_managed_1lane( dump_vcd, test_verilog, mem_delay, nmul_stages ):
   run_lane_managed_test( dump_vcd, "MatrixVecCOP_1lane.vcd",
-                  SourceHarness( 1, mem_delay, 0,
+                  SourceHarness( 1, nmul_stages, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr
                        config_msg( 3,  80), # v_addr
@@ -131,11 +136,11 @@ def test_managed_1lane( dump_vcd, test_verilog, mem_delay ):
                  )
 
 @pytest.mark.parametrize(
-  ('mem_delay'), [0,5]
+  ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
-def test_managed_3lane( dump_vcd, test_verilog, mem_delay ):
+def test_managed_3lane( dump_vcd, test_verilog, mem_delay, nmul_stages ):
   run_lane_managed_test( dump_vcd, "MatrixVecCOP_3lane.vcd",
-                  SourceHarness( 3, mem_delay, 0,
+                  SourceHarness( 3, nmul_stages, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr
                        config_msg( 3,  80), # v_addr

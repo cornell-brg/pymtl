@@ -11,12 +11,14 @@ from MatrixVecLaneRTL import MatrixVecLaneRTL
 class MatrixVecCOP( Model ):
 
   @capture_args
-  def __init__( s, nlanes, cop_addr_nbits=3, cop_data_nbits=32,
+  def __init__( s, nlanes, nmul_stages,
+                cop_addr_nbits=3, cop_data_nbits=32,
                 mem_addr_nbits=32, mem_data_nbits=32 ):
 
     # Config Params
 
     s.nlanes         = nlanes
+    s.nmul_stages    = nmul_stages
     s.cop_addr_nbits = cop_addr_nbits
     s.cop_data_nbits = cop_data_nbits
     s.memreq_params  = mem_msgs.MemReqParams( mem_addr_nbits, mem_data_nbits )
@@ -32,10 +34,13 @@ class MatrixVecCOP( Model ):
 
   def elaborate_logic( s ):
 
+    mreq  = s.memreq_params
+    mresp = s.memresp_params
+
     s.mgr  = LaneManager( s.nlanes, s.cop_addr_nbits, s.cop_data_nbits )
 
-    s.lane = [ MatrixVecLaneRTL( x, s.memreq_params, s.memresp_params )
-                for x in range( s.nlanes ) ]
+    s.lane = [ MatrixVecLaneRTL( x, s.nmul_stages, mreq, mresp )
+               for x in range( s.nlanes ) ]
 
     s.connect( s.from_cpu, s.mgr.from_cpu )
 
