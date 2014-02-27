@@ -368,6 +368,12 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
       return "{{ {{ {3}-{1} {{ 1'b0 }} }}, {0}[{2}:0] }}" \
              .format( sig_name, sig_nbits, sig_nbits-1, ext_nbits )
 
+    # Handle concatentation
+    if func_name  == 'concat':
+      for i in node.args[0].elts: assert isinstance( i, ast.Name )
+      signal_names = [ x.id for x in node.args[0].elts ]
+      return "{{ {signals} }}" \
+             .format( signals=','.join(signal_names) )
 
 #-------------------------------------------------------------------------
 # opmap

@@ -92,6 +92,15 @@ class AnnotateWithObjects( ast.NodeTransformer ):
 
     return node
 
+  def visit_List( self, node ):
+
+    node._object = []
+    for item in node.elts:
+      self.visit( item )
+      node._object.append( item._object )
+
+    return node
+
 #-------------------------------------------------------------------------
 # RemoveValueNext
 #-------------------------------------------------------------------------
@@ -320,12 +329,21 @@ class InferTemporaryTypes( ast.NodeTransformer):
       elif isinstance( node.value, ast.Call ):
 
         func_name = node.value.func.id
-        nbits     = node.value.args[1]._object  # TODO: can this be a signal?
-        assert func_name in ['sext','zext']
-        assert isinstance( nbits, int )
-        obj      = Wire( nbits )
-        obj.name = node.targets[0].id
-        node.targets[0]._object = obj
+        if func_name in ['sext', 'zext']:
+          nbits     = node.value.args[1]._object  # TODO: can this be a signal?
+          assert isinstance( nbits, int )
+          obj      = Wire( nbits )
+          obj.name = node.targets[0].id
+          node.targets[0]._object = obj
+        elif func_name == 'concat':
+          assert isinstance( node.value.args[0],         ast.List )
+          assert isinstance( node.value.args[0]._object, list     )
+          nbits    = sum( [x.nbits for x in node.value.args[0]._object ] )
+          obj      = Wire( nbits )
+          obj.name = node.targets[0].id
+          node.targets[0]._object = obj
+        else:
+          raise Exception( "Function is not translatable: {}".format( func_name ) )
 
       else:
         print_simple_ast( node )
