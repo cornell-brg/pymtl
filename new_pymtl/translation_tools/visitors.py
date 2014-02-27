@@ -8,6 +8,7 @@ import warnings
 
 from ..ast_helpers import get_closure_dict, print_simple_ast
 from ..signals     import Wire, Signal, InPort, OutPort
+from ..Bits        import Bits
 from ..PortBundle  import PortBundle
 
 #-------------------------------------------------------------------------
@@ -349,12 +350,12 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     return self.store, self.loopvar, self.params, self.arrays
 
   def visit_Attribute( self, node ):
-    if isinstance( node._object, int ):
+    if isinstance( node._object, (int,Bits) ):
       self.params.add( (node.attr, node._object) )
     #self.generic_visit( node )
 
   def visit_Name( self, node ):
-    if isinstance( node._object, int ):
+    if isinstance( node._object, (int,Bits) ):
       self.params.add( (node.id, node._object) )
     #self.generic_visit( node )
 

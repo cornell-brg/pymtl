@@ -232,7 +232,10 @@ def create_declarations( model, regs, ints, params, arrays ):
   if params:
     scode += '  // param declarations\n'
     for param, value in params:
-      scode += '  parameter {} = {};\n'.format( param, value )
+      rhs    = "{}'d{}".format( value.nbits, value.uint() ) \
+               if hasattr( value, 'nbits' ) else \
+               "{}"    .format( value )
+      scode += '  parameter {} = {};\n'.format( param, rhs )
     scode += '\n'
 
   # Print the int declarations
