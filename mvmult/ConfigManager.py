@@ -50,13 +50,16 @@ class ConfigManager( Model ):
     #--------------------------------------------------------------------------
     # state_transition
     #--------------------------------------------------------------------------
+
+    s.cfg_addr = Wire( s.addr_nbits )
+
     @s.combinational
     def state_transition():
 
-      cfg_addr        = s.proc2asla.msg[s.data_nbits:]
+      s.cfg_addr      = s.proc2asla.msg[s.data_nbits:s.data_nbits+s.addr_nbits]
 
       is_asla_cfg_go  = s.proc2asla.val and s.proc2asla.rdy
-      is_asla_calc_go = is_asla_cfg_go  and (cfg_addr == 0)
+      is_asla_calc_go = is_asla_cfg_go  and (s.cfg_addr == 0)
 
       s.state_next.value = s.state
 
@@ -94,16 +97,19 @@ class ConfigManager( Model ):
 
     s.connect( s.cfg_data, s.proc2asla.msg[0:s.data_nbits] )
 
+    # TODO: make temporary
+    s.cs = Wire( 3 )
+
     @s.combinational
     def output_signals():
 
-      if   s.state == STATE_IDLE: cs = concat([ y, y, n ])
-      elif s.state == STATE_CFG:  cs = concat([ y, y, n ])
-      elif s.state == STATE_CALC: cs = concat([ n, n, y ])
+      if   s.state == STATE_IDLE: s.cs.value = concat([ y, y, n ])
+      elif s.state == STATE_CFG:  s.cs.value = concat([ y, y, n ])
+      elif s.state == STATE_CALC: s.cs.value = concat([ n, n, y ])
 
-      s.proc2asla.rdy.value = cs[2]
-      decoder_en            = cs[1] and s.proc2asla.val
-      s.asla_go.value       = cs[0]
+      s.proc2asla.rdy.value = s.cs[2]
+      decoder_en            = s.cs[1] and s.proc2asla.val
+      s.asla_go.value       = s.cs[0]
 
       s.cfg_data.value    = s.proc2asla.msg[0:s.data_nbits]
       s.cfg_reg_wen.value = s.decoder.out if decoder_en == 1 else 0
