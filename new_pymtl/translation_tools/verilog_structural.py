@@ -228,14 +228,14 @@ def create_declarations( model, regs, ints, params, arrays ):
             signal_to_str( signal, None, model ))
     scode += '\n'
 
-  # Print the parameter declarations
+  # Print the localparam declarations
   if params:
-    scode += '  // param declarations\n'
+    scode += '  // localparam declarations\n'
     for param, value in params:
       rhs    = "{}'d{}".format( value.nbits, value.uint() ) \
                if hasattr( value, 'nbits' ) else \
                "{}"    .format( value )
-      scode += '  parameter {} = {};\n'.format( param, rhs )
+      scode += '  localparam {} = {};\n'.format( param, rhs )
     scode += '\n'
 
   # Print the int declarations
