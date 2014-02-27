@@ -113,7 +113,10 @@ def test_mvmult_lane0_row0( dump_vcd, test_verilog, mem_delay, nmul_stages ):
   run_mvmult_test( dump_vcd, "MVMult.vcd",
                    TestHarness( lane, nmul_stages, mem_delay, test_verilog ),
                    lane,
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   # NOTE: C++ has dummy data between rows when you have array**!
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99,
+                                          1, 1 ,1, 99,
+                                          1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16, 6, 8 ]),
                  )
@@ -139,7 +142,10 @@ def test_mvmult_lane2_row0( dump_vcd, test_verilog, mem_delay, nmul_stages ):
   run_mvmult_test( dump_vcd, "MVMult.vcd",
                    TestHarness( lane, nmul_stages, mem_delay, test_verilog ),
                    lane,
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   # NOTE: C++ has dummy data between rows when you have array**!
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99,
+                                          1, 1 ,1, 99,
+                                          1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [ 8 ]),
                  )
@@ -152,7 +158,9 @@ def test_mvmult_lane1_row0( dump_vcd, test_verilog, mem_delay, nmul_stages ):
   run_mvmult_test( dump_vcd, "MVMult.vcd",
                    TestHarness( lane, nmul_stages, mem_delay, test_verilog ),
                    lane,
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99,
+                                          1, 1 ,1, 99,
+                                          1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [ 6 ]),
                  )
@@ -265,7 +273,9 @@ def test_managed_1lane( dump_vcd, test_verilog, mem_delay, nmul_stages ):
                      ],
                      test_verilog
                    ),
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99,
+                                          1, 1 ,1, 99,
+                                          1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16]),
                  )
@@ -284,7 +294,9 @@ def test_managed_3lane( dump_vcd, test_verilog, mem_delay, nmul_stages ):
                      ],
                      test_verilog
                    ),
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99,
+                                          1, 1 ,1, 99,
+                                          1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16, 6, 8 ]),
                  )

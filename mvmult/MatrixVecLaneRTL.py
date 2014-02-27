@@ -120,7 +120,7 @@ class MatrixVecLaneDpath( Model ):
     @s.combinational
     def stage_M0_comb():
 
-      s.row_addr.value = s.m_baseaddr + (s.lane_id * s.size * 4)
+      s.row_addr.value = s.m_baseaddr + (s.lane_id * (s.size+1) * 4)
       s.vec_addr.value = s.v_baseaddr
       s.dst_addr.value = s.d_baseaddr + (s.lane_id * 4)
 
