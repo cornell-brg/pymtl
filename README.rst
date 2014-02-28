@@ -8,6 +8,7 @@ Prerequisites
 
  - Python2.7
  - virtualenv
+ - iverilog                      (for testing generated Verilog HDL)
  - verilator                     (for testing generated Verilog HDL)
  - PARC cross-compiler toolchain (for testing PARC processor model)
 
