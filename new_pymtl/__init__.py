@@ -31,6 +31,9 @@ requires_vmh = mark.skipif( not exists('../tests/build/vmh'),
 requires_iverilog  = mark.skipif( not( has('iverilog') ),
                                   reason='requires iverilog' )
 
+requires_verilator = mark.skipif( not( has('verilator') ),
+                                  reason='requires verilator' )
+
 #------------------------------------------------------------------------------
 # new_pymtl namespace
 #------------------------------------------------------------------------------
@@ -64,5 +67,6 @@ __all__ = [ # Model Construction
             'requires_xcc',
             'requires_vmh',
             'requires_iverilog',
+            'requires_verilator',
           ]
 

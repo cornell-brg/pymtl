@@ -1,6 +1,22 @@
-from verilator_sim  import get_verilated
-from new_pmlib.regs import Reg
+#=========================================================================
+# verilator_sim_test.py
+#=========================================================================
+
 from new_pymtl      import SimulationTool
+from verilator_sim  import get_verilated
+from new_pymtl      import requires_verilator
+from new_pmlib.regs import Reg
+
+#-------------------------------------------------------------------------
+# Test Config
+#-------------------------------------------------------------------------
+# Skip all tests in module if verilator is not installed
+
+pytestmark = requires_verilator
+
+#-------------------------------------------------------------------------
+# Test Function
+#-------------------------------------------------------------------------
 
 def reg_test( model ):
 
@@ -20,6 +36,10 @@ def reg_test( model ):
   assert vmodel.out == 10
   sim.cycle()
   assert vmodel.out == 12
+
+#-------------------------------------------------------------------------
+# Run Tests
+#-------------------------------------------------------------------------
 
 def test_reg8():
   reg_test( Reg(8) )
