@@ -28,6 +28,9 @@ requires_xcc = mark.skipif( not( has('maven-gcc') and has('maven-objdump') ),
 requires_vmh = mark.skipif( not exists('../tests/build/vmh'),
                             reason='requires vmh files' )
 
+requires_iverilog  = mark.skipif( not( has('iverilog') ),
+                                  reason='requires iverilog' )
+
 #------------------------------------------------------------------------------
 # new_pymtl namespace
 #------------------------------------------------------------------------------
@@ -60,5 +63,6 @@ __all__ = [ # Model Construction
             # py.test decorators
             'requires_xcc',
             'requires_vmh',
+            'requires_iverilog',
           ]
 

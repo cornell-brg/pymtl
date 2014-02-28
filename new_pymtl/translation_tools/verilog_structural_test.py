@@ -3,7 +3,15 @@
 #=========================================================================
 
 from ..      import SimulationTool_struct_test as structural
+from ..      import requires_iverilog
 from verilog import check_compile as setup_sim
+
+#-------------------------------------------------------------------------
+# Test Config
+#-------------------------------------------------------------------------
+# Skip all tests in module if iverilog is not installed
+
+pytestmark = requires_iverilog
 
 #-------------------------------------------------------------------------
 # Tests

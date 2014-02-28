@@ -4,9 +4,17 @@
 
 from ..      import SimulationTool_seq_test  as sequential
 from ..      import SimulationTool_comb_test as combinational
+from ..      import requires_iverilog
 from verilog import check_compile as setup_sim
 
 import pytest
+
+#-------------------------------------------------------------------------
+# Test Config
+#-------------------------------------------------------------------------
+# Skip all tests in module if iverilog is not installed
+
+pytestmark = requires_iverilog
 
 #-------------------------------------------------------------------------
 # Sequential Logic
