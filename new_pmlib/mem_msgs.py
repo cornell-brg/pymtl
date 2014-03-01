@@ -110,6 +110,10 @@ class MemReqParams:
 
     return bits
 
+  def __hash__( s ):
+    return hash( frozenset( (s.addr_nbits, s.data_nbits) ) )
+
+
 #-------------------------------------------------------------------------
 # MemReqFromBits
 #-------------------------------------------------------------------------
@@ -273,6 +277,9 @@ class MemRespParams:
     bits[ s.data_slice ] = data
 
     return bits
+
+  def __hash__( s ):
+    return hash( s.data_nbits )
 
 #-------------------------------------------------------------------------
 # MemRespFromBits
