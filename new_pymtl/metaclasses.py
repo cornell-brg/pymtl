@@ -74,8 +74,8 @@ class MetaCollectArgs( MetaListConstructor ):
       argdict[ key ] = value
 
     # Collect all keyword arguments
-    if argspec.defaults:
-      num_kwargs = len( argspec.defaults )
+    num_kwargs = len( argspec.args ) - len( args ) - 1
+    if argspec.defaults and num_kwargs:
       for i, arg_name in enumerate( argspec.args[-num_kwargs:] ):
         key, value = arg_name, argspec.defaults[ i ]
         if arg_name in kwargs:
