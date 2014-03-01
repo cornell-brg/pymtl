@@ -17,7 +17,6 @@ import pytest
 # Test Queue using the ValRdy interface.
 class ValRdyQueue( Model ):
 
-  @capture_args
   def __init__( s, nbits ):
 
     s.enq   = InValRdyBundle ( nbits )

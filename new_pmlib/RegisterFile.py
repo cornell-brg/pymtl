@@ -8,7 +8,6 @@ import math
 
 class RegisterFile( Model ):
 
-  @capture_args
   def __init__( s, nbits = 32, nregs = 32, rd_ports = 1 ):
 
     s.rd_ports = rd_ports

@@ -11,7 +11,6 @@ from new_pymtl import *
 # Multiplexor parameterizable by ports and bitwidth.
 class Mux( Model ):
 
-  @capture_args
   def __init__( s, nbits = 1, nports = 2 ):
 
     s.nports = nports
