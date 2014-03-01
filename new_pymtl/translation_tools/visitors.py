@@ -407,7 +407,7 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
       # TODO: _ast.Subscript, e.g.  some_signal[0][2:14] = rhs
       else:
         warnings.warn( "Translation can't determine name of array LHS!" )
-        print_simple_ast( node )
+        #print_simple_ast( node )
         return
 
       self.arrays.add( (name, tuple( node._object )) )

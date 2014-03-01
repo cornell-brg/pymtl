@@ -222,6 +222,7 @@ def create_declarations( model, regs, ints, params, arrays ):
   # Print the reg declarations
   if regs:
     scode += '  // register declarations\n'
+    regs = sorted( regs, key=lambda x: x.name )
     for signal in regs:
       if isinstance( signal, tuple ):
         scode += '  integer {};\n'.format( signal[0] );
@@ -232,6 +233,7 @@ def create_declarations( model, regs, ints, params, arrays ):
 
   # Print the localparam declarations
   if params:
+    params = sorted( params, key=lambda x: x[0] )
     scode += '  // localparam declarations\n'
     for param, value in params:
       rhs    = "{}'d{}".format( value.nbits, value.uint() ) \
@@ -242,6 +244,7 @@ def create_declarations( model, regs, ints, params, arrays ):
 
   # Print the int declarations
   if ints:
+    ints = sorted( ints )
     scode += '  // loop variable declarations\n'
     for signal in ints:
       scode += '  integer {};\n'.format( signal )
