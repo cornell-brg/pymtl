@@ -253,6 +253,7 @@ def create_declarations( model, regs, ints, params, arrays ):
 
   # Print the array declarations
   if arrays:
+    arrays = sorted( arrays, key=lambda x: x[0] )
     scode += '  // array declarations\n'
     for name, ports in arrays:
       # Output Port
