@@ -18,6 +18,7 @@ from PortBundle     import PortBundle
 import collections
 import inspect
 import warnings
+import math
 
 #=========================================================================
 # Model
@@ -195,9 +196,8 @@ class Model( object ):
     # If the @capture_args decorator has been used, generate a unique
     # name for the Model instance based on its parameters
     try:
-      for arg_name, arg_val in model._args.items():
-        name += "_{}_{}".format( arg_name, arg_val )
-      return name
+      suffix = abs( hash( frozenset( model._args.items() ) ) )
+      return name + '_' + hex( suffix )
     # No _args attribute, so no need to create a specialized name
     except AttributeError:
       return name
