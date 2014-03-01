@@ -360,7 +360,6 @@ class SingleElementBypassQueue (Model):
 
 class NormalQueueDpath (Model):
 
-  @capture_args
   def __init__( s, num_entries, data_nbits ):
 
     # Interface Ports
@@ -400,7 +399,6 @@ class NormalQueueDpath (Model):
 
 class NormalQueueCtrl (Model):
 
-  @capture_args
   def __init__( s, num_entries ):
 
     s.num_entries      = num_entries
@@ -525,7 +523,6 @@ class NormalQueueCtrl (Model):
 
 class NormalQueue ( Model ):
 
-  @capture_args
   def __init__( s, num_entries, data_nbits ):
 
     # TODO: add check to prevent instantiation of single element queue
@@ -601,7 +598,6 @@ class NormalQueue ( Model ):
 
 class SingleElementPipelinedQueueDpath (Model):
 
-  @capture_args
   def __init__( s, data_nbits ):
 
     # Interface Ports
@@ -633,7 +629,6 @@ class SingleElementPipelinedQueueDpath (Model):
 
 class SingleElementPipelinedQueueCtrl (Model):
 
-  @capture_args
   def __init__( s ):
 
     # Interface Ports
@@ -705,7 +700,6 @@ class SingleElementPipelinedQueueCtrl (Model):
 
 class SingleElementPipelinedQueue (Model):
 
-  @capture_args
   def __init__( s, data_nbits ):
 
     # Interface Ports

@@ -11,7 +11,6 @@ STATE_CALC = 2
 
 class LaneManager( Model ):
 
-  @capture_args
   def __init__( s, nlanes, addr_nbits=3, data_nbits=32 ):
 
     # CPU <-> LaneManager

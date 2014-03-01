@@ -8,7 +8,6 @@ from new_pymtl import *
 # Mux
 #------------------------------------------------------------------------------
 class Mux( Model ):
-  @capture_args
   def __init__( s, nports, data_nbits ):
     s.sel = InPort ( data_nbits )
     s.in_ = [ InPort( data_nbits ) for x in range( nports ) ]
@@ -36,7 +35,6 @@ class Mux( Model ):
 # Demux
 #------------------------------------------------------------------------------
 class Demux( Model ):
-  @capture_args
   def __init__( s, nports, data_nbits ):
     s.sel = InPort( data_nbits )
     s.in_ = InPort( data_nbits )

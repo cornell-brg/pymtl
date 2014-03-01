@@ -10,9 +10,8 @@ from MatrixVecLaneRTL import MatrixVecLaneRTL
 
 class MatrixVecCOP( Model ):
 
-  @capture_args
   def __init__( s, nlanes, nmul_stages,
-                cop_addr_nbits=3, cop_data_nbits=32,
+                cop_addr_nbits=3,  cop_data_nbits=32,
                 mem_addr_nbits=32, mem_data_nbits=32 ):
 
     # Config Params
