@@ -8,7 +8,7 @@
 # can be leveraged by a number of tools for various purposes (simulation,
 # translation into HDLs, etc).
 
-from metaclasses    import MetaListConstructor
+from metaclasses    import MetaCollectArgs
 from ConnectionEdge import ConnectionEdge
 from signals        import Signal, InPort, OutPort, Wire, Constant
 from PortBundle     import PortBundle
@@ -34,7 +34,7 @@ import math
 #
 class Model( object ):
 
-  __metaclass__ = MetaListConstructor
+  __metaclass__ = MetaCollectArgs
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -196,7 +196,9 @@ class Model( object ):
     # If the @capture_args decorator has been used, generate a unique
     # name for the Model instance based on its parameters
     try:
-      suffix = abs( hash( frozenset( model._args.items() ) ) )
+      hashables = frozenset({ x for x in model._args.items()
+                              if isinstance( x[1], collections.Hashable ) })
+      suffix = abs( hash( hashables ) )
       return name + '_' + hex( suffix )
     # No _args attribute, so no need to create a specialized name
     except AttributeError:
@@ -423,52 +425,6 @@ class Model( object ):
   def line_trace( self ):
     return ""
 
-#------------------------------------------------------------------------
-# Decorators
-#------------------------------------------------------------------------
 
-import inspect
-# Returns a traced version of the input function.
-# TODO: add to decorators section above
-def capture_args(fn):
-
-  #@functools.wraps(fn)
-  def wrapped(*v, **k):
-
-    # get the names of the functions arguments
-    argspec = inspect.getargspec( fn )
-
-    # the self pointer is always the first positional arg
-    self = v[0]
-
-    # create an argument dictionary
-    args = collections.OrderedDict()
-    # add all the positional arguments
-    for i in range(1, len(v)):
-      if isinstance( v[i], int ):
-        value = v[i]
-      else:
-        #raise Exception("Untranslatable param type!")
-        # WARNING: taking abs() of hash, increases chance of collision?
-        value = hex( abs( hash( v[i] )) )
-      key = argspec.args[ i ]
-      args[ key ] = value
-    # then add all the named arguments
-    for key, val in k.items():
-      if isinstance( val, int ):
-        value = val
-      else:
-        # WARNING: taking abs() of hash, increases chance of collision?
-        value = hex( abs( hash( val )) )
-      args[key] = value
-
-    # add the arguments and their values to the object so it can be
-    # used during static elaboration to create the name
-    self._args = args
-
-    return_val  = fn(*v, **k)
-    return return_val
-
-  return wrapped
-
-
+def capture_args( fn ):
+  return fn
