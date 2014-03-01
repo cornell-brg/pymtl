@@ -193,8 +193,7 @@ class Model( object ):
     # Base name is always just the class name
     name = model.__class__.__name__
 
-    # If the @capture_args decorator has been used, generate a unique
-    # name for the Model instance based on its parameters
+    # Generate a unique name for the Model instance based on its parameters
     try:
       hashables = frozenset({ x for x in model._args.items()
                               if isinstance( x[1], collections.Hashable ) })
@@ -425,6 +424,3 @@ class Model( object ):
   def line_trace( self ):
     return ""
 
-
-def capture_args( fn ):
-  return fn

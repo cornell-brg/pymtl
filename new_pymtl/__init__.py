@@ -3,7 +3,6 @@
 #------------------------------------------------------------------------------
 
 from Model          import Model
-from Model          import capture_args  # TEMPORARY
 from signals        import Wire, InPort, OutPort
 from Bits           import Bits
 from SimulationTool import SimulationTool
@@ -55,7 +54,6 @@ __all__ = [ # Model Construction
             # Tools
             'SimulationTool',
             # TEMPORARY
-            'capture_args',
             'CreateWrappedClass',
             # Helper Functions
             'get_nbits',
