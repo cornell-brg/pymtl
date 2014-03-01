@@ -222,7 +222,8 @@ def create_declarations( model, regs, ints, params, arrays ):
   # Print the reg declarations
   if regs:
     scode += '  // register declarations\n'
-    regs = sorted( regs, key=lambda x: x.name )
+    regs = sorted( regs,
+                   key=lambda x: x[0] if isinstance(x,tuple) else x.name )
     for signal in regs:
       if isinstance( signal, tuple ):
         scode += '  integer {};\n'.format( signal[0] );
