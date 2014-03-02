@@ -194,6 +194,7 @@ class Model( object ):
     name = model.__class__.__name__
 
     # Generate a unique name for the Model instance based on its parameters
+    # http://stackoverflow.com/a/5884123
     try:
       hashables = frozenset({ x for x in model._args.items()
                               if isinstance( x[1], collections.Hashable ) })

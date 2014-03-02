@@ -10,6 +10,19 @@ import collections
 from ..signals import InPort, OutPort, Constant
 
 #-------------------------------------------------------------------------
+# header
+#-------------------------------------------------------------------------
+def header( model, symtab ):
+  s    = title_bar.format( model.class_name )
+  for name, value in model._args.items():
+    value_str = '{}'.format( value )
+    if 'instance at' in value_str:
+      value_str = value_str.split(' at')[0] + '>'
+    s += '// {}: {}'.format( name, value_str ) + endl
+  s   += net_none + endl
+  return s
+
+#-------------------------------------------------------------------------
 # port_declarations
 #-------------------------------------------------------------------------
 # Generate Verilog source for port declarations.
@@ -107,13 +120,13 @@ def signal_assignments( model, symtab ):
 #-------------------------------------------------------------------------
 tab         = '  '
 endl        = '\n'
-div         = '//' + '-'*72
+div         = '//' + '-'*77
 comment     = '// {}'
 net_none    = '`default_nettype none'
 net_wire    = '`default_nettype wire'
-header      = div + endl + comment + endl + div + endl + net_none
+title_bar   = div + endl + comment + endl + div + endl
 start_mod   = 'module {}'
-end_mod     = 'endmodule // {}' + endl + net_wire + endl
+end_mod     = 'endmodule // {}' + endl + net_wire
 start_ports = '('
 end_ports   = ');'
 instance    = tab + '{} {}'

@@ -40,7 +40,7 @@ def translate_module( model, o ):
   # Visit concurrent blocks in design
   logic, symtab = translate_logic_blocks( model )
 
-  print >> o, header   .format( model.class_name )
+  print >> o, header             ( model,  symtab ),
   print >> o, start_mod.format( model.class_name )
   # Signal Declarations
   print >> o, port_declarations  ( model,  symtab ),
