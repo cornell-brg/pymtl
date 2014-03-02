@@ -56,10 +56,11 @@ def submodel_instances( model, symtab ):
       port_name = mangle_name( p.name )
       temp_name = signal_to_str( p, None, model )
 
-      if p in regs:
-        regs.remove(p)
-        temporaries.append( reg_to_str( p, None, model ) )
-      else:
+      # TODO: not needed since declared in create_declarations
+      #if p in regs:
+      #  regs.remove(p)
+      #  temporaries.append( reg_to_str( p, None, model ) )
+      if p not in regs:
         temporaries.append( wire_to_str( p, None, model ) )
 
       connections.append( connection.format( port_name, temp_name ) )
@@ -223,7 +224,9 @@ def create_declarations( model, regs, ints, params, arrays ):
   if regs:
     scode += '  // register declarations\n'
     regs = sorted( regs,
-                   key=lambda x: x[0] if isinstance(x,tuple) else x.name )
+                   key=lambda x: x[0] if isinstance(x,tuple)
+                                      else signal_to_str( x, None, model ) )
+
     for signal in regs:
       if isinstance( signal, tuple ):
         scode += '  integer {};\n'.format( signal[0] );

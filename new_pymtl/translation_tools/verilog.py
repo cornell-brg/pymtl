@@ -42,12 +42,13 @@ def translate_module( model, o ):
 
   print >> o, header   .format( model.class_name )
   print >> o, start_mod.format( model.class_name )
-  # Structural Verilog
+  # Signal Declarations
   print >> o, port_declarations  ( model,  symtab ),
   print >> o, wire_declarations  ( model,  symtab ),
+  print >> o, create_declarations( model, *symtab ),
+  # Structural Verilog
   print >> o, submodel_instances ( model,  symtab ),
-  print >> o, signal_assignments ( model,  symtab ),
-  print >> o, create_declarations( model, *symtab )
+  print >> o, signal_assignments ( model,  symtab )
   # Behavioral Verilog
   print >> o, logic
   print >> o, end_mod  .format( model.class_name )
