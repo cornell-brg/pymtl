@@ -982,3 +982,74 @@ class IntSubTemporaries( IntTemporaries ):
 def test_IntSubTemporaries():
   temp_tester( IntSubTemporaries )
 
+#-------------------------------------------------------------------------
+# ReduceAND
+#-------------------------------------------------------------------------
+class ReduceAND( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( 1 )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.value = reduce_and( s.in_ )
+
+def test_ReduceAND():
+  model = ReduceAND( 4 )
+  sim = setup_sim( model )
+
+  for i, o in zip([0b1111, 0b1010, 0b0101, 0b0000],[1,0,0,0]):
+    model.in_.value = i
+    sim.eval_combinational()
+    assert model.out == o
+
+#-------------------------------------------------------------------------
+# ReduceOR
+#-------------------------------------------------------------------------
+class ReduceOR( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( 1 )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.value = reduce_or( s.in_ )
+
+def test_ReduceOR():
+  model = ReduceOR( 4 )
+  sim = setup_sim( model )
+
+  for i, o in zip([0b1111, 0b1010, 0b0101, 0b0000],[1,1,1,0]):
+    model.in_.value = i
+    sim.eval_combinational()
+    assert model.out == o
+
+#-------------------------------------------------------------------------
+# ReduceXOR
+#-------------------------------------------------------------------------
+class ReduceXOR( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( 1 )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out.value = reduce_xor( s.in_ )
+
+def test_ReduceXOR():
+  model = ReduceXOR( 4 )
+  sim = setup_sim( model )
+
+  for i, o in zip([0b1111, 0b1010, 0b0101, 0b0000, 0b1001,
+                   0b1110, 0b1101, 0b1011, 0b0111,
+                   0b0001, 0b0010, 0b0100, 0b1000,],
+                  [0,0,0,0,0,
+                   1,1,1,1,
+                   1,1,1,1,]
+                  ):
+    model.in_.value = i
+    sim.eval_combinational()
+    assert model.out == o
