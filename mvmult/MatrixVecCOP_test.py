@@ -96,7 +96,7 @@ def run_lane_managed_test( dump_vcd, vcd_file_name, model,
 #------------------------------------------------------------------------------
 # Utility method for creating config messages
 def config_msg( addr, value ):
-  return concat([ Bits(3, addr), Bits(32, value) ])
+  return concat( Bits(3, addr), Bits(32, value) )
 
 #------------------------------------------------------------------------------
 # mem_array_32bit

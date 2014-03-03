@@ -103,9 +103,9 @@ class ConfigManager( Model ):
     @s.combinational
     def output_signals():
 
-      if   s.state == STATE_IDLE: s.cs.value = concat([ y, y, n ])
-      elif s.state == STATE_CFG:  s.cs.value = concat([ y, y, n ])
-      elif s.state == STATE_CALC: s.cs.value = concat([ n, n, y ])
+      if   s.state == STATE_IDLE: s.cs.value = concat( y, y, n )
+      elif s.state == STATE_CFG:  s.cs.value = concat( y, y, n )
+      elif s.state == STATE_CALC: s.cs.value = concat( n, n, y )
 
       s.proc2asla.rdy.value = s.cs[2]
       decoder_en            = s.cs[1] and s.proc2asla.val
