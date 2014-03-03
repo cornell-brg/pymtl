@@ -987,13 +987,16 @@ def test_IntSubTemporaries():
 #-------------------------------------------------------------------------
 class ReduceAND( Model ):
   def __init__( s, nbits ):
-    s.in_ = InPort ( nbits )
-    s.out = OutPort( 1 )
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( 1 )
+    s.out1 = OutPort( 1 )
 
   def elaborate_logic( s ):
     @s.combinational
     def logic():
-      s.out.value = reduce_and( s.in_ )
+      s.out0.value = reduce_and( s.in_ )
+      temp = reduce_and( s.in_ )
+      s.out1.value = temp
 
 def test_ReduceAND():
   model = ReduceAND( 4 )
@@ -1002,20 +1005,24 @@ def test_ReduceAND():
   for i, o in zip([0b1111, 0b1010, 0b0101, 0b0000],[1,0,0,0]):
     model.in_.value = i
     sim.eval_combinational()
-    assert model.out == o
+    assert model.out0 == o
+    assert model.out1 == o
 
 #-------------------------------------------------------------------------
 # ReduceOR
 #-------------------------------------------------------------------------
 class ReduceOR( Model ):
   def __init__( s, nbits ):
-    s.in_ = InPort ( nbits )
-    s.out = OutPort( 1 )
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( 1 )
+    s.out1 = OutPort( 1 )
 
   def elaborate_logic( s ):
     @s.combinational
     def logic():
-      s.out.value = reduce_or( s.in_ )
+      s.out0.value = reduce_or( s.in_ )
+      temp = reduce_or( s.in_ )
+      s.out1.value = temp
 
 def test_ReduceOR():
   model = ReduceOR( 4 )
@@ -1024,20 +1031,24 @@ def test_ReduceOR():
   for i, o in zip([0b1111, 0b1010, 0b0101, 0b0000],[1,1,1,0]):
     model.in_.value = i
     sim.eval_combinational()
-    assert model.out == o
+    assert model.out0 == o
+    assert model.out1 == o
 
 #-------------------------------------------------------------------------
 # ReduceXOR
 #-------------------------------------------------------------------------
 class ReduceXOR( Model ):
   def __init__( s, nbits ):
-    s.in_ = InPort ( nbits )
-    s.out = OutPort( 1 )
+    s.in_  = InPort ( nbits )
+    s.out0 = OutPort( 1 )
+    s.out1 = OutPort( 1 )
 
   def elaborate_logic( s ):
     @s.combinational
     def logic():
-      s.out.value = reduce_xor( s.in_ )
+      s.out0.value = reduce_xor( s.in_ )
+      temp = reduce_xor( s.in_ )
+      s.out1.value = temp
 
 def test_ReduceXOR():
   model = ReduceXOR( 4 )
@@ -1052,4 +1063,5 @@ def test_ReduceXOR():
                   ):
     model.in_.value = i
     sim.eval_combinational()
-    assert model.out == o
+    assert model.out0 == o
+    assert model.out1 == o
