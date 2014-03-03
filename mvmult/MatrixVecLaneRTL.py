@@ -168,7 +168,7 @@ class MatrixVecLaneDpath( Model ):
 
     s.mul_out = Wire(32)
 
-    s.mul = DummyMultiplier( nbits=32, nstages=s.nmul_stages )
+    s.mul = MatrixVecCOP_mul( nbits=32, nstages=s.nmul_stages )
     s.connect_dict( {
      s.mul.a       : s.reg_a,
      s.mul.b       : s.reg_b,
@@ -414,9 +414,10 @@ class CtrlDpathBundle( PortBundle ):
 CtrlBundle, DpathBundle = create_PortBundles( CtrlDpathBundle )
 
 #------------------------------------------------------------------------------
-# DummyMultiplier
+# MatrixVecCOP_mul
 #------------------------------------------------------------------------------
-class DummyMultiplier( Model ):
+# A dummy multiplier module, acts as a placeholder for DesignWare components.
+class MatrixVecCOP_mul( Model ):
   def __init__( s, nbits, nstages ):
     s.a       = InPort ( nbits )
     s.b       = InPort ( nbits )
