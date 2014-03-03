@@ -371,8 +371,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Handle concatentation
     if func_name  == 'concat':
-      for i in node.args: assert isinstance( i, ast.Name )
-      signal_names = [ x.id for x in node.args ]
+      signal_names = [ self.visit(x) for x in node.args ]
       return "{{ {signals} }}" \
              .format( signals=','.join(signal_names) )
 
