@@ -340,8 +340,9 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   # visit_Assert
   #-----------------------------------------------------------------------
+  # Currently skip Assert translations, add in the future?
   def visit_Assert(self, node):
-    return '{}// assert {}\n'.format( self.indent, self.visit(node.test) )
+    return ''
 
   #-----------------------------------------------------------------------
   # visit_Call
