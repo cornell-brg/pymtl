@@ -79,7 +79,6 @@ class LaneManager( Model ):
     #--------------------------------------------------------------------------
     # state_transition
     #--------------------------------------------------------------------------
-    s.is_done = Wire( 1 )
     @s.combinational
     def state_transition():
 
@@ -87,10 +86,7 @@ class LaneManager( Model ):
 
       do_config  = s.from_cpu.val and s.from_cpu.rdy
       do_compute = s.go
-      # TODO: is_done can't be a temporary due to lack of inference for BinOps
-      s.is_done.value = 1
-      for i in range( s.nlanes ):
-        s.is_done.value = s.done_reg[i] & s.is_done
+      is_done    = reduce_and( s.done_reg )
 
       # State update
 
@@ -102,7 +98,7 @@ class LaneManager( Model ):
       elif s.state == STATE_CFG  and do_compute:
         s.state_next.value = STATE_CALC
 
-      elif s.state == STATE_CALC and s.is_done:
+      elif s.state == STATE_CALC and is_done:
         s.state_next.value = STATE_IDLE
 
       # Output ready
@@ -117,6 +113,6 @@ class LaneManager( Model ):
         ['IDL','CFG','CLC'][s.state],
         'go' if s.go else '  ',
         '{:0{width}b}'.format( s.done_reg.uint(), width=s.done_reg.nbits ),
-        'done' if s.is_done else '    '
+        'done' if reduce_and(s.done_reg) else '    '
         )
 
