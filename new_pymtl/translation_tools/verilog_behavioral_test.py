@@ -127,3 +127,10 @@ def test_IntTemporaries():
   setup_sim( combinational.IntTemporaries() )
 def test_IntSubTemporaries():
   setup_sim( combinational.IntSubTemporaries() )
+
+def test_ReduceAND():
+  setup_sim( combinational.ReduceAND( 4 ) )
+def test_ReduceOR():
+  setup_sim( combinational.ReduceOR( 4 ) )
+def test_ReduceXOR():
+  setup_sim( combinational.ReduceXOR( 4 ) )

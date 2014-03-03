@@ -342,6 +342,10 @@ class InferTemporaryTypes( ast.NodeTransformer):
           obj      = Wire( nbits )
           obj.name = node.targets[0].id
           node.targets[0]._object = obj
+        elif func_name in ['reduce_and', 'reduce_or', 'reduce_xor']:
+          obj      = Wire( 1 )
+          obj.name = node.targets[0].id
+          node.targets[0]._object = obj
         else:
           raise Exception( "Function is not translatable: {}".format( func_name ) )
 

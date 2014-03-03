@@ -375,6 +375,23 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
       return "{{ {signals} }}" \
              .format( signals=','.join(signal_names) )
 
+    # Handle reduce and
+    if func_name  == 'reduce_and':
+      sig_name = self.visit( node.args[0] )
+      return "(&{sig_name})".format( sig_name=sig_name )
+
+    # Handle reduce or
+    if func_name  == 'reduce_or':
+      sig_name = self.visit( node.args[0] )
+      return "(|{sig_name})".format( sig_name=sig_name )
+
+    # Handle reduce xor
+    if func_name  == 'reduce_xor':
+      sig_name = self.visit( node.args[0] )
+      return "(^{sig_name})".format( sig_name=sig_name )
+
+    raise Exception( "Function is not translatable: {}".format( func_name ) )
+
 #-------------------------------------------------------------------------
 # opmap
 #-------------------------------------------------------------------------
