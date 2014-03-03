@@ -4,6 +4,7 @@
 # Collection of built-in helpers functions for the PyMTL framework.
 
 import math
+import operator
 
 # NOTE: circular imports between Bits and helpers, using 'import'
 #       instead of 'from Bits import' ensures pydoc still works
@@ -60,3 +61,24 @@ def concat( bits_list ):
     begin += bits.nbits
 
   return concat_bits
+
+#-------------------------------------------------------------------------
+# reduce_and
+#-------------------------------------------------------------------------
+def reduce_and( signal ):
+  return reduce( operator.and_, (signal[x] for x in xrange( signal.nbits )) )
+
+#-------------------------------------------------------------------------
+# reduce_or
+#-------------------------------------------------------------------------
+def reduce_or( signal ):
+  return reduce( operator.or_,  (signal[x] for x in xrange( signal.nbits )) )
+
+#-------------------------------------------------------------------------
+# reduce_xor
+#-------------------------------------------------------------------------
+# NOTE: Verilog iterates through MSB to LSB, so we must reverse iteration.
+def reduce_xor( signal ):
+  return reduce( operator.xor,
+                 (signal[x] for x in reversed( xrange( signal.nbits ) ))
+               )
