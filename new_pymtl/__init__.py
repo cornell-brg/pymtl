@@ -9,6 +9,7 @@ from SimulationTool import SimulationTool
 from PortBundle     import PortBundle, create_PortBundles
 from BitStruct      import BitStruct, BitStructDefinition, BitField
 from helpers        import get_nbits, get_sel_nbits, zext, sext, concat
+from helpers        import reduce_and, reduce_or, reduce_xor
 from SignalValue    import CreateWrappedClass
 
 #------------------------------------------------------------------------------
@@ -61,6 +62,9 @@ __all__ = [ # Model Construction
             'sext',
             'zext',
             'concat',
+            'reduce_and',
+            'reduce_or',
+            'reduce_xor',
             # py.test decorators
             'requires_xcc',
             'requires_vmh',
