@@ -336,9 +336,7 @@ class InferTemporaryTypes( ast.NodeTransformer):
           obj.name = node.targets[0].id
           node.targets[0]._object = obj
         elif func_name == 'concat':
-          assert isinstance( node.value.args[0],         ast.List )
-          assert isinstance( node.value.args[0]._object, list     )
-          nbits    = sum( [x.nbits for x in node.value.args[0]._object ] )
+          nbits    = sum( [x._object.nbits for x in node.value.args ] )
           obj      = Wire( nbits )
           obj.name = node.targets[0].id
           node.targets[0]._object = obj

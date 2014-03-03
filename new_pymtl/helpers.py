@@ -47,16 +47,17 @@ def sext( value, new_width ):
 # concat
 #-------------------------------------------------------------------------
 # Return a Bits which is the concatenation of the Bits in bits_list.
-def concat( bits_list ):
+def concat( *args ):
+  assert isinstance( args[0], Bits.Bits )
 
   # Calculate total new bitwidth
-  nbits = sum( [ x.nbits for x in bits_list ] )
+  nbits = sum( [ x.nbits for x in args ] )
 
   # Create new Bits and add each bits from bits_list to it
   concat_bits = Bits.Bits( nbits )
 
   begin = 0
-  for bits in reversed( bits_list ):
+  for bits in reversed( args ):
     concat_bits[ begin : begin+bits.nbits ] = bits
     begin += bits.nbits
 

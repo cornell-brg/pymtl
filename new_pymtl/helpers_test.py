@@ -86,11 +86,11 @@ def test_sext():
 
 def test_concat():
 
-  assert concat([ Bits(4,0xf), Bits(4,0x2) ]) == Bits( 8, 0xf2 )
-  assert concat([ Bits(2,0x2), Bits(4,0xf) ]) == Bits( 6, 0x2f )
+  assert concat( Bits(4,0xf), Bits(4,0x2) ) == Bits( 8, 0xf2 )
+  assert concat( Bits(2,0x2), Bits(4,0xf) ) == Bits( 6, 0x2f )
 
-  assert concat([ Bits(2,0x2), Bits(4,0), Bits(4,0xf) ]) == Bits( 10, 0x20f )
-  assert concat([ Bits(4,0x2), Bits(4,0), Bits(4,0xf) ]) == Bits( 12, 0x20f )
+  assert concat( Bits(2,0x2), Bits(4,0), Bits(4,0xf) ) == Bits( 10, 0x20f )
+  assert concat( Bits(4,0x2), Bits(4,0), Bits(4,0xf) ) == Bits( 12, 0x20f )
 
 def test_reduce_and():
 
