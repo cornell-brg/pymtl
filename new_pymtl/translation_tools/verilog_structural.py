@@ -28,6 +28,10 @@ def header( model, symtab ):
 # Generate Verilog source for port declarations.
 def port_declarations( model, symtab ):
   if not model.get_ports(): return ''
+  regs = symtab[0]
+  for port in model.get_ports():
+    port._is_reg = port in regs
+    if port._is_reg: regs.remove( port )
   port_list = [ port_decl( x ) for x in model.get_ports() ]
   s  = start_ports + endl
   s += port_delim.join( port_list ) + endl
@@ -131,6 +135,7 @@ start_ports = '('
 end_ports   = ');'
 instance    = tab + '{} {}'
 connection  = tab + tab + '.{} ( {} )'
+ioport_decl = tab + '{:6} {:4} [{:4}:0] {}'
 signal_decl = tab + '{:6} [{:4}:0] {}'
 port_delim  = ',' + endl
 wire_delim  = ';' + endl
@@ -142,14 +147,15 @@ assignment  = tab + 'assign {} = {};'
 def port_decl( port ):
 
   if   isinstance( port, InPort ):
-    type_ = 'input'
+    direction = 'input'
   elif isinstance( port, OutPort ):
-    type_ = 'output'
+    direction = 'output'
 
+  type_ = 'reg' if port._is_reg else 'wire'
   nbits = port.nbits - 1
   name  = mangle_name( port.name )
 
-  return signal_decl.format( type_, nbits, name )
+  return ioport_decl.format( direction, type_, nbits, name )
 
 #-------------------------------------------------------------------------
 # wire_decl
