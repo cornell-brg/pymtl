@@ -70,6 +70,33 @@ class MatrixVecLaneRTL( Model ):
                                s.ctrl.ctrl_signals_A [0:2],
                              )
 
+
+#------------------------------------------------------------------------------
+# Select Constants
+#------------------------------------------------------------------------------
+
+y   = Bits( 1, 1 )
+n   = Bits( 1, 0 )
+
+# mem_type
+na  = Bits( 2, 0 )
+ld  = Bits( 2, 1 )
+st  = Bits( 2, 2 )
+
+# data_sel
+#zer = Bits( 1, 0 )
+acm = Bits( 1, 1 )
+
+# offset_sel
+zro = Bits( 1, 0 )
+cnt = Bits( 1, 1 )
+
+# baddr_sel
+xxx = Bits( 2, 0 )
+row = Bits( 2, 0 )
+vec = Bits( 2, 1 )
+dst = Bits( 2, 2 )
+
 #------------------------------------------------------------------------------
 # MatrixVecLaneDpath
 #------------------------------------------------------------------------------
@@ -123,17 +150,17 @@ class MatrixVecLaneDpath( Model ):
       s.dst_addr.value = s.d_baseaddr + (s.lane_id * 4)
 
       # base_addr mux
-      if   s.c2d.baddr_sel == 0: s.base_addr.value = s.row_addr
-      elif s.c2d.baddr_sel == 1: s.base_addr.value = s.vec_addr
-      elif s.c2d.baddr_sel == 2: s.base_addr.value = s.dst_addr
+      if   s.c2d.baddr_sel == row: s.base_addr.value = s.row_addr
+      elif s.c2d.baddr_sel == vec: s.base_addr.value = s.vec_addr
+      elif s.c2d.baddr_sel == dst: s.base_addr.value = s.dst_addr
 
       # offset mux
-      if   s.c2d.offset_sel == 0: s.offset.value = 0
-      elif s.c2d.offset_sel == 1: s.offset.value = s.count << 2
+      if   s.c2d.offset_sel == zro: s.offset.value = 0
+      elif s.c2d.offset_sel == cnt: s.offset.value = s.count << 2
 
       # data mux
-      if   s.c2d.data_sel == 0: s.store_data.value = 0
-      elif s.c2d.data_sel == 1: s.store_data.value = s.accum_out
+      if   s.c2d.data_sel == zro: s.store_data.value = 0
+      elif s.c2d.data_sel == acm: s.store_data.value = s.accum_out
 
       # memory request
       s.req.msg[addr0:addrN].value = s.base_addr + s.offset
@@ -284,70 +311,34 @@ class MatrixVecLaneCtrl( Model ):
 
       s.ctrl_signals_A.next = s.ctrl_signals_X[s.nmul_stages-1]
 
+    s.L = Wire( 1 )
+
     @s.combinational
     def state_to_ctrl():
 
-      L = s.c2d.last_item
+      # TODO: cannot infer temporaries when an inferred temporary on the RHS!
+      s.L = s.c2d.last_item
 
+      # TODO: multiple assignments to a temporary results in duplicate decl error!
       # Encode signals sent down the pipeline based on State
+      #
+      #                            s.ctrl_signals_M0.value           count    last acm mul b   a   mem   data  off   baddr
+      #                            s.ctrl_signals_M0.value           en  rst  item en  en  en  en  type  sel   sel   sel
+      if   s.state == IDLE:        s.ctrl_signals_M0.value = concat( n,  y,   n,   n,  n,  n,  n,  na,   zro,  zro,  xxx )
+      elif s.state == SEND_OP_LDA: s.ctrl_signals_M0.value = concat( n,  n,   n,   n,  n,  n,  y,  ld,   zro,  cnt,  row )
+      elif s.state == SEND_OP_LDB: s.ctrl_signals_M0.value = concat( y,  n, s.L,   y,  y,  y,  n,  ld,   zro,  cnt,  vec )
+      elif s.state == SEND_OP_ST:  s.ctrl_signals_M0.value = concat( y,  n,   n,   n,  n,  n,  n,  st,   acm,  zro,  dst )
 
-      if   s.state == IDLE:
-        s.ctrl_signals_M0[0:2].value  = 0  # baddr_sel
-        s.ctrl_signals_M0[2:4].value  = 0  # offset_sel
-        s.ctrl_signals_M0[  4].value  = 0  # data_sel
-        s.ctrl_signals_M0[5:7].value  = 0  # mem_type
-        s.ctrl_signals_M0[  7].value  = 0  # reg_a_en
-        s.ctrl_signals_M0[  8].value  = 0  # reg_b_en
-        s.ctrl_signals_M0[  9].value  = 0  # mul_reg_en
-        s.ctrl_signals_M0[ 10].value  = 0  # accum_reg_en
-        s.ctrl_signals_M0[ 11].value  = 0  # last_item
-        s.ctrl_signals_M0[ 12].value  = 1  # count_reset
-        s.ctrl_signals_M0[ 13].value  = 0  # count_en
-      elif s.state == SEND_OP_LDA:
-        s.ctrl_signals_M0[0:2].value  = 0  # baddr_sel
-        s.ctrl_signals_M0[2:4].value  = 1  # offset_sel
-        s.ctrl_signals_M0[  4].value  = 0  # data_sel
-        s.ctrl_signals_M0[5:7].value  = 1  # mem_type
-        s.ctrl_signals_M0[  7].value  = 1  # reg_a_en
-        s.ctrl_signals_M0[  8].value  = 0  # reg_b_en
-        s.ctrl_signals_M0[  9].value  = 0  # mul_reg_en
-        s.ctrl_signals_M0[ 10].value  = 0  # accum_reg_en
-        s.ctrl_signals_M0[ 11].value  = 0  # last_item
-        s.ctrl_signals_M0[ 12].value  = 0  # count_reset
-        s.ctrl_signals_M0[ 13].value  = 0  # count_en
-      elif s.state == SEND_OP_LDB:
-        s.ctrl_signals_M0[0:2].value  = 1  # baddr_sel
-        s.ctrl_signals_M0[2:4].value  = 1  # offset_sel
-        s.ctrl_signals_M0[  4].value  = 0  # data_sel
-        s.ctrl_signals_M0[5:7].value  = 1  # mem_type
-        s.ctrl_signals_M0[  7].value  = 0  # reg_a_en
-        s.ctrl_signals_M0[  8].value  = 1  # reg_b_en
-        s.ctrl_signals_M0[  9].value  = 1  # mul_reg_en
-        s.ctrl_signals_M0[ 10].value  = 1  # accum_reg_en
-        s.ctrl_signals_M0[ 11].value  = L  # last_item
-        s.ctrl_signals_M0[ 12].value  = 0  # count_reset
-        s.ctrl_signals_M0[ 13].value  = 1  # count_en
-      elif s.state == SEND_OP_ST:
-        s.ctrl_signals_M0[0:2].value  = 2  # baddr_sel
-        s.ctrl_signals_M0[2:4].value  = 0  # offset_sel
-        s.ctrl_signals_M0[  4].value  = 1  # data_sel
-        s.ctrl_signals_M0[5:7].value  = 2  # mem_type
-        s.ctrl_signals_M0[  7].value  = 0  # reg_a_en
-        s.ctrl_signals_M0[  8].value  = 0  # reg_b_en
-        s.ctrl_signals_M0[  9].value  = 0  # mul_reg_en
-        s.ctrl_signals_M0[ 10].value  = 0  # accum_reg_en
-        s.ctrl_signals_M0[ 11].value  = 0  # last_item
-        s.ctrl_signals_M0[ 12].value  = 0  # count_reset
-        s.ctrl_signals_M0[ 13].value  = 1  # count_en
+      #s.ctrl_signals_M0.value = cs
 
     @s.combinational
     def ctrl_to_dpath():
 
       # Stall conditions
 
-      s.pause.value = s.ctrl_signals_M0[5:7] == 2 and not s.ctrl_signals_A[11]
-      req_en        = s.ctrl_signals_M0[5:7] > 0
-      resp_en       = s.ctrl_signals_M1[5:7] > 0
+      s.pause.value = s.ctrl_signals_M0[4:6] == 2 and not s.ctrl_signals_A[10]
+      req_en        = s.ctrl_signals_M0[4:6] > 0
+      resp_en       = s.ctrl_signals_M1[4:6] > 0
 
       s.stall_M0.value = (req_en  and not s.req .rdy) or s.pause
       s.stall_M1.value = (resp_en and not s.resp.val)
@@ -357,29 +348,29 @@ class MatrixVecLaneCtrl( Model ):
       # M0 Stage
 
       s.c2d.baddr_sel   .value = s.ctrl_signals_M0[0:2]
-      s.c2d.offset_sel  .value = s.ctrl_signals_M0[2:4]
-      s.c2d.data_sel    .value = s.ctrl_signals_M0[  4]
-      s.c2d.count_reset .value = s.ctrl_signals_M0[ 12]
-      s.c2d.count_en    .value = s.ctrl_signals_M0[ 13] and not any_stall
-      s.c2d.mem_type    .value = s.ctrl_signals_M0[5:7]
+      s.c2d.offset_sel  .value = s.ctrl_signals_M0[  2]
+      s.c2d.data_sel    .value = s.ctrl_signals_M0[  3]
+      s.c2d.count_reset .value = s.ctrl_signals_M0[ 11]
+      s.c2d.count_en    .value = s.ctrl_signals_M0[ 12] and not any_stall
+      s.c2d.mem_type    .value = s.ctrl_signals_M0[4:6]
       s.req.val         .value = req_en and not any_stall
 
       # M1 Stage
 
-      s.c2d.reg_a_en    .value = s.ctrl_signals_M1[  7]
-      s.c2d.reg_b_en    .value = s.ctrl_signals_M1[  8]
+      s.c2d.reg_a_en    .value = s.ctrl_signals_M1[  6]
+      s.c2d.reg_b_en    .value = s.ctrl_signals_M1[  7]
       s.resp.rdy        .value = resp_en and not s.stall_M1
-      s.done            .value = s.ctrl_signals_M1[5:7] == 2 and \
+      s.done            .value = s.ctrl_signals_M1[4:6] == 2 and \
                                  not s.stall_M1
 
       # X  Stage
 
       for i in range( s.nmul_stages ):
-        s.c2d.mul_reg_en[i].value = s.ctrl_signals_X[i][9]
+        s.c2d.mul_reg_en[i].value = s.ctrl_signals_X[i][8]
 
       # A  Stage
 
-      s.c2d.accum_reg_en.value = s.ctrl_signals_A [ 10]
+      s.c2d.accum_reg_en.value = s.ctrl_signals_A[9]
 
 
 #------------------------------------------------------------------------------
