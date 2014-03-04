@@ -531,6 +531,27 @@ def test_IfMux():
   mux_tester( IfMux )
 
 #-------------------------------------------------------------------------
+# SubscriptTemp
+#-------------------------------------------------------------------------
+class SubscriptTemp( Model ):
+  def __init__( s, nbits, nports=3 ):
+    assert nports == 3
+    s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
+    s.out = OutPort( nbits )
+    s.sel = InPort ( get_sel_nbits( nbits ) )
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      if   s.sel == 0: temp = s.in_[ 0 ]
+      elif s.sel == 1: temp = s.in_[ 1 ]
+      elif s.sel == 2: temp = s.in_[ 2 ]
+      else:            assert False
+      s.out.v = temp
+
+def test_SubscriptTemp():
+  mux_tester( SubscriptTemp )
+
+#-------------------------------------------------------------------------
 # splitslice_tester
 #-------------------------------------------------------------------------
 # Test slicing followed by combinational logic

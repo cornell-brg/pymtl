@@ -100,6 +100,8 @@ def test_Mux():
   setup_sim( combinational.Mux( 8, 4 ) )
 def test_IfMux():
   setup_sim( combinational.IfMux( 8 ) )
+def test_SubscriptTemp():
+  setup_sim( combinational.SubscriptTemp( 8 ) )
 def test_CombSlicePassThrough():
   setup_sim( combinational.CombSlicePassThrough() )
 def test_CombSlicePassThroughWire():

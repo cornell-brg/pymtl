@@ -326,6 +326,13 @@ class InferTemporaryTypes( ast.NodeTransformer):
         obj.name = node.targets[0].id
         node.targets[0]._object = obj
 
+      # TODO: assumes ast.Index does NOT contain a slice object
+      elif isinstance( node.value,       ast.Subscript ) \
+       and isinstance( node.value.slice, ast.Index     ):
+        obj      = Wire( 1 )
+        obj.name = node.targets[0].id
+        node.targets[0]._object = obj
+
       elif isinstance( node.value, ast.Call ):
 
         func_name = node.value.func.id
