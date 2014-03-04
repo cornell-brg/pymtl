@@ -361,13 +361,14 @@ class InferTemporaryTypes( ast.NodeTransformer):
 class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
   def get( self, tree ):
-    self._temp   = set()
-    self.store   = set()
-    self.loopvar = set()
-    self.params  = set()
-    self.arrays  = set()
+
+    self._temp     = set()
+    self.store     = {}
+    self.loopvar   = set()
+    self.params    = set()
+    self.arrays    = set()
     self.visit( tree )
-    return self.store, self.loopvar, self.params, self.arrays
+    return set( self.store.values() ), self.loopvar, self.params, self.arrays
 
   def visit_Attribute( self, node ):
     if isinstance( node._object, (int,Bits) ):
@@ -382,21 +383,18 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
   def visit_Assign( self, node ):
     assert len(node.targets) == 1
     obj = node.targets[0]._object
-    if   isinstance( obj, Signal ):
-      self.store.add( obj )
-      self._temp.add( obj.name )
-    # FIXME: super hacky handling of ints / signals
-    elif isinstance( obj, tuple ):
-      if not obj[0] in self._temp:
-        self.store.add( obj )
+    # NOTE:
+    # - currently possible to have inferences with different bitwidths
+    # - currently possible for a signal to be stored as both a reg and loopvar
+    #   handle this in verilog_structural.create_declarations
+    if   isinstance( obj, Signal ): self.store[ obj.fullname ] = obj
+    elif isinstance( obj, tuple ):  self.loopvar.add( obj[0] )
     self.generic_visit( node )
 
   def visit_For( self, node ):
     assert isinstance( node.iter,   _ast.Slice )
     assert isinstance( node.target, _ast.Name  )
-
     self.loopvar.add( node.target.id )
-
     self.generic_visit( node )
 
   def visit_Subscript( self, node ):

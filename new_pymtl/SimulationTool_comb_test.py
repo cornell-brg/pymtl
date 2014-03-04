@@ -1003,7 +1003,6 @@ class Concat( Model ):
 def test_Concat():
   model = Concat()
   sim = setup_sim( model )
-
   def test( i0, i1, i2, out ):
     model.in0.value = i0
     model.in1.value = i1
@@ -1011,7 +1010,35 @@ def test_Concat():
     sim.eval_combinational()
     assert model.out0 == out
     assert model.out1 == out
+  test( 1, 1,1, 0b1000101 )
+  test( 0, 0,0, 0b0000000 )
+  test( 1,15,3, 0b1111111 )
+  test( 0, 8,2, 0b0100010 )
+  test( 1, 5,1, 0b1010101 )
 
+#-------------------------------------------------------------------------
+# MultipleTempAssign
+#-------------------------------------------------------------------------
+
+class MultipleTempAssign( Concat ):
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out0.value = concat( s.in0, s.in1, s.in2 )
+      if s.in0: cs = concat( s.in0, s.in1, s.in2 )
+      else:     cs = concat( s.in0, s.in1, s.in2 )
+      s.out1.value = cs
+
+def test_MultipleTempAssign():
+  model = MultipleTempAssign()
+  sim = setup_sim( model )
+  def test( i0, i1, i2, out ):
+    model.in0.value = i0
+    model.in1.value = i1
+    model.in2.value = i2
+    sim.eval_combinational()
+    assert model.out0 == out
+    assert model.out1 == out
   test( 1, 1,1, 0b1000101 )
   test( 0, 0,0, 0b0000000 )
   test( 1,15,3, 0b1111111 )

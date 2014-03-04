@@ -57,7 +57,8 @@ class Signal( object ):
   # Return name of Signal with format 'parent_model_name.signal_name'.
   @property
   def fullname( self ):
-    return "{}.{}".format( self.parent.name, self.name )
+    parent_name = self.parent.name if self.parent else '?'
+    return "{}.{}".format( parent_name, self.name )
 
   #-----------------------------------------------------------------------
   # Protected attributes

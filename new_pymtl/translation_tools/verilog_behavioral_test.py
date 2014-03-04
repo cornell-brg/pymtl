@@ -130,6 +130,8 @@ def test_IntSubTemporaries():
 
 def test_Concat():
   setup_sim( combinational.Concat() )
+def test_MultipleTempAssign():
+  setup_sim( combinational.MultipleTempAssign() )
 def test_ReduceAND():
   setup_sim( combinational.ReduceAND( 4 ) )
 def test_ReduceOR():

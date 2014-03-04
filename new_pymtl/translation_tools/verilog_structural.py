@@ -242,16 +242,14 @@ def create_declarations( model, regs, ints, params, arrays ):
   # Print the reg declarations
   if regs:
     scode += '  // register declarations\n'
-    regs = sorted( regs,
-                   key=lambda x: x[0] if isinstance(x,tuple)
-                                      else signal_to_str( x, None, model ) )
+    regs   = sorted( regs, key=lambda x: signal_to_str( x, None, model ) )
 
     for signal in regs:
-      if isinstance( signal, tuple ):
-        scode += '  integer {};\n'.format( signal[0] );
-      else:
-        scode += '  reg    [{:4}:0] {};\n'.format( signal.nbits-1,
-            signal_to_str( signal, None, model ))
+      # If name also inferenced as an 'integer' type, declare as reg only
+      if signal.parent == None and signal.name in ints:
+        ints.remove( signal.name )
+      scode += '  reg    [{:4}:0] {};\n' \
+               .format( signal.nbits-1, signal_to_str( signal, None, model ))
     scode += '\n'
 
   # Print the localparam declarations
