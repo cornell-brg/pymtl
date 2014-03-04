@@ -322,14 +322,14 @@ class MatrixVecLaneCtrl( Model ):
       # TODO: multiple assignments to a temporary results in duplicate decl error!
       # Encode signals sent down the pipeline based on State
       #
-      #                            s.ctrl_signals_M0.value           count    last acm mul b   a   mem   data  off   baddr
-      #                            s.ctrl_signals_M0.value           en  rst  item en  en  en  en  type  sel   sel   sel
-      if   s.state == IDLE:        s.ctrl_signals_M0.value = concat( n,  y,   n,   n,  n,  n,  n,  na,   zro,  zro,  xxx )
-      elif s.state == SEND_OP_LDA: s.ctrl_signals_M0.value = concat( n,  n,   n,   n,  n,  n,  y,  ld,   zro,  cnt,  row )
-      elif s.state == SEND_OP_LDB: s.ctrl_signals_M0.value = concat( y,  n, s.L,   y,  y,  y,  n,  ld,   zro,  cnt,  vec )
-      elif s.state == SEND_OP_ST:  s.ctrl_signals_M0.value = concat( y,  n,   n,   n,  n,  n,  n,  st,   acm,  zro,  dst )
+      #                                       count    last acm mul b   a   mem   data  off   baddr
+      #                                       en  rst  item en  en  en  en  type  sel   sel   sel
+      if   s.state == IDLE:        cs = concat( n,  y,   n,   n,  n,  n,  n,  na,   zro,  zro,  xxx )
+      elif s.state == SEND_OP_LDA: cs = concat( n,  n,   n,   n,  n,  n,  y,  ld,   zro,  cnt,  row )
+      elif s.state == SEND_OP_LDB: cs = concat( y,  n, s.L,   y,  y,  y,  n,  ld,   zro,  cnt,  vec )
+      elif s.state == SEND_OP_ST:  cs = concat( y,  n,   n,   n,  n,  n,  n,  st,   acm,  zro,  dst )
 
-      #s.ctrl_signals_M0.value = cs
+      s.ctrl_signals_M0.value = cs
 
     @s.combinational
     def ctrl_to_dpath():
