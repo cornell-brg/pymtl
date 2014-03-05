@@ -65,7 +65,7 @@ def cycle( self, clk=0, reset=0 ):
 def gen_pywrapper( top_inports, top_outports ):
 
   def name_splitter( name ):
-    sig, idx = name.split('$')
+    sig, idx = name.split('_IDX')
     sig = [sig] + idx.split('_')
     nonidx, idx = [], []
     for s in sig:
@@ -89,7 +89,7 @@ def gen_pywrapper( top_inports, top_outports ):
       # Create ffi types
       for fullname, net, type_ in top_outports:
         name = fullname[4:]  # remove 'top_' from name
-        if '$' in name:
+        if '_IDX' in name:
           sig, idx = name_splitter(name)
           setattr( self, '_'+sig,
                   [self._ffi.new( type_+'*' ) for x in range(int(idx)+1)] )
@@ -112,7 +112,7 @@ def gen_pywrapper( top_inports, top_outports ):
     name = fullname[4:]  # remove 'top_' from name
     # Handle lists specially
     # TODO: super hacky, only works if top_inports sorted by name
-    if '$' in name:
+    if '_IDX' in name:
       sig, idx = name_splitter(name)
       idx = int(idx)
       cparams.append( 'self.{}[{}]'.format(sig,idx) )
@@ -126,7 +126,7 @@ def gen_pywrapper( top_inports, top_outports ):
     name = fullname[4:]  # remove 'top_' from name
     # Handle lists specially
     # TODO: super hacky, only works if top_outports sorted by name
-    if '$' in name:
+    if '_IDX' in name:
       sig, idx = name_splitter(name)
       idx = int(idx)
       cparams.append( 'self._{}[{}]'.format(sig,idx) )

@@ -71,7 +71,7 @@ def CLogicTransl( model, o=sys.stdout ):
           split = var.split('.')
           pfx = '_'.join( split[0:2] )
           sfx = '_'+'_'.join( split[2:]  ) if split[2:] else ''
-          vx = [ '&{}${:03}{}'.format(pfx,i,sfx) for i in range(len(obj)) ]
+          vx = [ '&{}_IDX{:03}{}'.format(pfx,i,sfx) for i in range(len(obj)) ]
           # Declare the variables if they don't exist yet
           for x in vx:
             if x[1:] not in all_ports:
@@ -958,7 +958,7 @@ def get_closure_dict( fn ):
 indexing = re.compile("(\[)(?P<idx>.*?)(\])")
 def mangle_idxs( name ):
   def replacement_string( m ):
-    return "${:03d}".format( int(m.group('idx')) )
+    return "_IDX{:03d}".format( int(m.group('idx')) )
   # Return the mangled name
   return re.sub( indexing, replacement_string, name )
 
@@ -968,7 +968,7 @@ def mangle_idxs( name ):
 def mangle_name( name ):
   # Utility function
   def replacement_string( m ):
-    return "${:03d}".format( int(m.group('idx')) )
+    return "_IDX{:03d}".format( int(m.group('idx')) )
   # Return the mangled name
   return re.sub( indexing, replacement_string, name.replace('.','_') )
 
