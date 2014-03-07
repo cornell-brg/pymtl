@@ -23,9 +23,6 @@ def get_verilated( model_inst ):
   verilog_file = model_name + '.v'
   temp_file    = verilog_file + '.tmp'
 
-  #verilog.translate( model_inst, open( verilog_file, 'w+' ) )
-  #cached = False
-
   # Write the output to a temporary file
   fd = open( temp_file, 'w+' )
   verilog.translate( model_inst, fd )

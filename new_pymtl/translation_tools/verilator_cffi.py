@@ -151,7 +151,9 @@ def create_c_wrapper( in_ports, out_ports, model_name, filename_cpp ):
 
     // Destructor
     void destroy_model() {{
-      delete model;
+      // TODO: this is probably a memory leak!
+      //       But pypy segfaults if uncommented...
+      //delete model;
       tfp->close();
     }}
 
