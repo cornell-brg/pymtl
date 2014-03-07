@@ -52,7 +52,7 @@ class MetaPortBundle( MetaListConstructor ):
     for port_name, port in inst.__dict__.items():
       port.name = port_name
       ports.append( port )
-    inst._ports = ports
+    inst._ports = sorted( ports, key=lambda x: x.name )
 
     # Return the instance
     return inst
