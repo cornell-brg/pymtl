@@ -12,6 +12,8 @@ from helpers        import get_nbits, get_sel_nbits, zext, sext, concat
 from helpers        import reduce_and, reduce_or, reduce_xor
 from SignalValue    import CreateWrappedClass
 
+from translation_tools.verilator_sim import get_verilated
+
 #------------------------------------------------------------------------------
 # py.test decorators
 #------------------------------------------------------------------------------
@@ -55,6 +57,7 @@ __all__ = [ # Model Construction
             # Tools
             'SimulationTool',
             # TEMPORARY
+            'get_verilated',
             'CreateWrappedClass',
             # Helper Functions
             'get_nbits',
