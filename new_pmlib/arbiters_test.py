@@ -13,11 +13,10 @@ from arbiters  import RoundRobinArbiterEn
 # run_test
 #------------------------------------------------------------------------------
 # Test driver for RoundRobinArbiter
-def run_test( dump_vcd, ModelType, nreqs, test_vectors ):
+def run_test( dump_vcd, model, test_vectors ):
 
   # Instantiate and elaborate the model
 
-  model = ModelType( nreqs )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -32,15 +31,19 @@ def run_test( dump_vcd, ModelType, nreqs, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "test_rr_arb" + str(nreqs) + ".vcd" )
+    sim.dump_vcd( "test_rr_arb" + model.nreqs + ".vcd" )
   sim.run_test()
 
 #------------------------------------------------------------------------------
 # test_rr_arb_4
 #------------------------------------------------------------------------------
 # RoundRobinArbiter with four requesters
-def test_rr_arb_4( dump_vcd ):
-  run_test( dump_vcd, RoundRobinArbiter, 4, [
+def test_rr_arb_4( dump_vcd, test_verilog ):
+  model = RoundRobinArbiter( 4 )
+  if test_verilog:
+    model = get_verilated( model )
+
+  run_test( dump_vcd, model, [
 
     # reqs     grants
     [ 0b0000,  0b0000 ],
@@ -74,11 +77,10 @@ def test_rr_arb_4( dump_vcd ):
 # run_en_test
 #------------------------------------------------------------------------------
 # Test driver for RoundRobinArbiterEn
-def run_en_test( dump_vcd, ModelType, nreqs, test_vectors ):
+def run_en_test( dump_vcd, model, test_vectors ):
 
   # Instantiate and elaborate the model
 
-  model = ModelType( nreqs )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -94,16 +96,20 @@ def run_en_test( dump_vcd, ModelType, nreqs, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "test_rr_arb_en" + str(nreqs) + ".vcd" )
+    sim.dump_vcd( "test_rr_arb_en" + model.nreqs + ".vcd" )
   sim.run_test()
 
 #------------------------------------------------------------------------------
 # test_rr_arb_en_4
 #------------------------------------------------------------------------------
 # RoundRobinArbiterEn with four requesters
-def test_rr_arb_en_4( dump_vcd ):
-  run_en_test( dump_vcd, RoundRobinArbiterEn, 4, [
+def test_rr_arb_en_4( dump_vcd, test_verilog ):
 
+  model = RoundRobinArbiterEn( 4 )
+  if test_verilog:
+    model = get_verilated( model )
+
+  run_en_test( dump_vcd, model, [
 
     # reqs     grants
     [ 0, 0b0000,  0b0000 ],
