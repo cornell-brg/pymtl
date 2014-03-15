@@ -296,3 +296,91 @@ def test_SliceWriteCheck():
   sim.cycle()
   with pytest.raises( AssertionError ):
     assert model.out == 0b10011001
+
+#-------------------------------------------------------------------------
+# OutputToRegInput
+#-------------------------------------------------------------------------
+# Test updates to slices.
+class OutputToRegInput( Model ):
+  def __init__( s, nbits ):
+    s.nbits  = nbits
+    s.in_    = InPort  ( nbits )
+    s.out    = OutPort ( nbits )
+    s.other  = OutPort ( nbits )
+  def elaborate_logic( s ):
+    s.reg = Register( s.nbits )
+    s.connect( s.in_, s.other )
+    s.connect( s.reg.in_, s.other )
+    for i in range( s.nbits ):
+      s.connect( s.reg.out[i], s.out[i]   )
+
+def test_OutputToRegInput():
+  register_tester( OutputToRegInput )
+
+#-------------------------------------------------------------------------
+# OutputToRegInputSlice
+#-------------------------------------------------------------------------
+class OutputToRegInputSlice( Model ):
+  def __init__( s, nbits ):
+    s.nbits  = nbits
+    s.in_    = InPort  ( nbits )
+    s.out    = OutPort ( nbits )
+    s.other  = OutPort ( nbits )
+  def elaborate_logic( s ):
+    s.reg = Register( s.nbits )
+    s.connect( s.in_, s.other )
+    for i in range( s.nbits ):
+      s.connect( s.reg.in_[i], s.other[i] )
+      s.connect( s.reg.out[i], s.out[i]   )
+
+@pytest.mark.xfail
+def test_OutputToRegInputSlice():
+  register_tester( OutputToRegInputSlice )
+
+#-------------------------------------------------------------------------
+# OutputToRegInput_Comb
+#-------------------------------------------------------------------------
+# Test updates to slices.
+class OutputToRegInput_Comb( Model ):
+  def __init__( s, nbits ):
+    s.nbits  = nbits
+    s.in_    = InPort  ( nbits )
+    s.out    = OutPort ( nbits )
+    s.other  = OutPort ( nbits )
+  def elaborate_logic( s ):
+    s.reg = Register( s.nbits )
+
+    @s.combinational
+    def comb():
+      s.other.value = s.in_
+
+    s.connect( s.reg.in_, s.other )
+    for i in range( s.nbits ):
+      s.connect( s.reg.out[i], s.out[i]   )
+
+def test_OutputToRegInput_Comb():
+  register_tester( OutputToRegInput_Comb )
+
+#-------------------------------------------------------------------------
+# OutputToRegInputSlice_Comb
+#-------------------------------------------------------------------------
+class OutputToRegInputSlice_Comb( Model ):
+  def __init__( s, nbits ):
+    s.nbits  = nbits
+    s.in_    = InPort  ( nbits )
+    s.out    = OutPort ( nbits )
+    s.other  = OutPort ( nbits )
+  def elaborate_logic( s ):
+    s.reg = Register( s.nbits )
+
+    @s.combinational
+    def comb():
+      s.other.value = s.in_
+
+    for i in range( s.nbits ):
+      s.connect( s.reg.in_[i], s.other[i] )
+      s.connect( s.reg.out[i], s.out[i]   )
+
+@pytest.mark.xfail
+def test_OutputToRegInputSlice_Comb():
+  register_tester( OutputToRegInputSlice_Comb )
