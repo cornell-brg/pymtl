@@ -311,8 +311,7 @@ class OutputToRegInput( Model ):
     s.reg = Register( s.nbits )
     s.connect( s.in_, s.other )
     s.connect( s.reg.in_, s.other )
-    for i in range( s.nbits ):
-      s.connect( s.reg.out[i], s.out[i]   )
+    s.connect( s.reg.out, s.out   )
 
 def test_OutputToRegInput():
   register_tester( OutputToRegInput )
@@ -331,7 +330,7 @@ class OutputToRegInputSlice( Model ):
     s.connect( s.in_, s.other )
     for i in range( s.nbits ):
       s.connect( s.reg.in_[i], s.other[i] )
-      s.connect( s.reg.out[i], s.out[i]   )
+    s.connect( s.reg.out, s.out   )
 
 @pytest.mark.xfail
 def test_OutputToRegInputSlice():
@@ -355,8 +354,7 @@ class OutputToRegInput_Comb( Model ):
       s.other.value = s.in_
 
     s.connect( s.reg.in_, s.other )
-    for i in range( s.nbits ):
-      s.connect( s.reg.out[i], s.out[i]   )
+    s.connect( s.reg.out, s.out   )
 
 def test_OutputToRegInput_Comb():
   register_tester( OutputToRegInput_Comb )
@@ -379,7 +377,7 @@ class OutputToRegInputSlice_Comb( Model ):
 
     for i in range( s.nbits ):
       s.connect( s.reg.in_[i], s.other[i] )
-      s.connect( s.reg.out[i], s.out[i]   )
+    s.connect( s.reg.out, s.out   )
 
 @pytest.mark.xfail
 def test_OutputToRegInputSlice_Comb():
