@@ -332,7 +332,6 @@ class OutputToRegInputSlice( Model ):
       s.connect( s.reg.in_[i], s.other[i] )
     s.connect( s.reg.out, s.out   )
 
-@pytest.mark.xfail
 def test_OutputToRegInputSlice():
   register_tester( OutputToRegInputSlice )
 
@@ -379,6 +378,5 @@ class OutputToRegInputSlice_Comb( Model ):
       s.connect( s.reg.in_[i], s.other[i] )
     s.connect( s.reg.out, s.out   )
 
-@pytest.mark.xfail
 def test_OutputToRegInputSlice_Comb():
   register_tester( OutputToRegInputSlice_Comb )

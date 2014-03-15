@@ -246,6 +246,11 @@ class Model( object ):
            isinstance( a, OutPort ) and isinstance( b, OutPort )):
       edge.swap_direction()
 
+    # Model OutPort connected to InPort of a submodule
+    elif ( a.parent in b.parent._submodules and
+           isinstance( a, InPort ) and isinstance( b, OutPort )):
+      edge.swap_direction()
+
     # Wire connected to InPort
     elif ( a.parent == b.parent and
            isinstance( a, Wire ) and isinstance( b, InPort )):
