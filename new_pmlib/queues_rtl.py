@@ -17,13 +17,8 @@ class SingleElementNormalQueue( Model ):
 
     # Interface Ports
 
-    s.enq_bits = InPort  ( data_nbits )
-    s.enq_val  = InPort  ( 1 )
-    s.enq_rdy  = OutPort ( 1 )
-
-    s.deq_bits = OutPort ( data_nbits )
-    s.deq_val  = OutPort ( 1 )
-    s.deq_rdy  = InPort  ( 1 )
+    s.enq = InValRdyBundle ( data_nbits )
+    s.deq = OutValRdyBundle( data_nbits )
 
   def elaborate_logic( s ):
 
@@ -34,15 +29,15 @@ class SingleElementNormalQueue( Model ):
 
     # Ctrl unit connections
 
-    s.connect( s.ctrl.enq_val, s.enq_val )
-    s.connect( s.ctrl.enq_rdy, s.enq_rdy )
-    s.connect( s.ctrl.deq_val, s.deq_val )
-    s.connect( s.ctrl.deq_rdy, s.deq_rdy )
+    s.connect( s.ctrl.enq_val, s.enq.val )
+    s.connect( s.ctrl.enq_rdy, s.enq.rdy )
+    s.connect( s.ctrl.deq_val, s.deq.val )
+    s.connect( s.ctrl.deq_rdy, s.deq.rdy )
 
     # Dpath unit connections
 
-    s.connect( s.dpath.enq_bits, s.enq_bits )
-    s.connect( s.dpath.deq_bits, s.deq_bits )
+    s.connect( s.dpath.enq_bits, s.enq.msg )
+    s.connect( s.dpath.deq_bits, s.deq.msg )
 
     # Control Signal connections (ctrl -> dpath)
 
@@ -53,17 +48,7 @@ class SingleElementNormalQueue( Model ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-
-    in_str = \
-      valrdy.valrdy_to_str( s.enq_bits.value,
-        s.enq_val.value, s.enq_rdy.value )
-
-    out_str = \
-      valrdy.valrdy_to_str( s.deq_bits.value,
-        s.deq_val.value, s.deq_rdy.value )
-
-    return "{} () {}"\
-      .format( in_str, out_str )
+    return "{} () {}".format( s.enq, s.deq )
 
 
 #-------------------------------------------------------------------------
@@ -124,17 +109,17 @@ class SingleElementNormalQueueCtrl( Model ):
       # wen control signal: set the write enable signal if the storage queue
       # is empty and a valid enqueue request is present
 
-      s.wen.value       = ~s.full.value & s.enq_val.value
+      s.wen.value = ~s.full & s.enq_val
 
       # enq_rdy signal is asserted when the single element queue storage is
       # empty
 
-      s.enq_rdy.value   = ~s.full.value
+      s.enq_rdy.value = ~s.full
 
       # deq_val signal is asserted when the single element queue storage is
       # full
 
-      s.deq_val.value   = s.full.value
+      s.deq_val.value = s.full
 
     @s.posedge_clk
     def seq():
@@ -143,14 +128,10 @@ class SingleElementNormalQueueCtrl( Model ):
       # transaction occurs, the full bit is set when the queue storage is
       # empty and a enqueue transaction occurs
 
-      if s.reset.value:
-        s.full.next = 0
-      elif   s.deq_rdy.value and s.deq_val.value:
-        s.full.next = 0
-      elif s.enq_rdy.value and s.enq_val.value:
-        s.full.next = 1
-      else:
-        s.full.next = s.full.value
+      if   s.reset:                 s.full.next = 0
+      elif s.deq_rdy and s.deq_val: s.full.next = 0
+      elif s.enq_rdy and s.enq_val: s.full.next = 1
+      else:                         s.full.next = s.full
 
 #=========================================================================
 # Single-Element Bypass Queue
@@ -163,13 +144,8 @@ class SingleElementBypassQueue( Model ):
 
     # Interface Ports
 
-    s.enq_bits = InPort  ( data_nbits )
-    s.enq_val  = InPort  ( 1 )
-    s.enq_rdy  = OutPort ( 1 )
-
-    s.deq_bits = OutPort ( data_nbits )
-    s.deq_val  = OutPort ( 1 )
-    s.deq_rdy  = InPort  ( 1 )
+    s.enq = InValRdyBundle ( data_nbits )
+    s.deq = OutValRdyBundle( data_nbits )
 
   def elaborate_logic( s ):
 
@@ -180,15 +156,15 @@ class SingleElementBypassQueue( Model ):
 
     # Ctrl unit connections
 
-    s.connect( s.ctrl.enq_val, s.enq_val )
-    s.connect( s.ctrl.enq_rdy, s.enq_rdy )
-    s.connect( s.ctrl.deq_val, s.deq_val )
-    s.connect( s.ctrl.deq_rdy, s.deq_rdy )
+    s.connect( s.ctrl.enq_val, s.enq.val )
+    s.connect( s.ctrl.enq_rdy, s.enq.rdy )
+    s.connect( s.ctrl.deq_val, s.deq.val )
+    s.connect( s.ctrl.deq_rdy, s.deq.rdy )
 
     # Dpath unit connections
 
-    s.connect( s.dpath.enq_bits, s.enq_bits )
-    s.connect( s.dpath.deq_bits, s.deq_bits )
+    s.connect( s.dpath.enq_bits, s.enq.msg )
+    s.connect( s.dpath.deq_bits, s.deq.msg )
 
     # Control Signal connections (ctrl -> dpath)
 
@@ -200,17 +176,7 @@ class SingleElementBypassQueue( Model ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-
-    in_str = \
-      valrdy.valrdy_to_str( s.enq_bits.value,
-        s.enq_val.value, s.enq_rdy.value )
-
-    out_str = \
-      valrdy.valrdy_to_str( s.deq_bits.value,
-        s.deq_val.value, s.deq_rdy.value )
-
-    return "{} () {}"\
-      .format( in_str, out_str )
+    return "{} () {}".format( s.enq, s.deq )
 
 
 #-------------------------------------------------------------------------
@@ -284,31 +250,29 @@ class SingleElementBypassQueueCtrl( Model ):
 
       # bypass is always enabled when the queue is empty
 
-      s.bypass_mux_sel.value = ~s.full.value
+      s.bypass_mux_sel.value = ~s.full
 
       # wen control signal: set the write enable signal if the storage queue
       # is empty and a valid enqueue request is present
 
-      s.wen.value            = ~s.full.value & s.enq_val.value
+      s.wen.value = ~s.full & s.enq_val
 
       # enq_rdy signal is asserted when the single element queue storage is
       # empty
 
-      s.enq_rdy.value        = ~s.full.value
+      s.enq_rdy.value = ~s.full
 
       # deq_val signal is asserted when the single element queue storage is
       # full or when the queue is empty but we are bypassing
 
-      s.deq_val.value        = s.full.value | ( ~s.full.value &
-                                  s.enq_val.value )
+      s.deq_val.value = s.full | ( ~s.full & s.enq_val )
 
       # TODO: figure out how to make these work as temporaries
       # helper signals
 
-      s.do_deq.value    = s.deq_rdy.value and s.deq_val.value
-      s.do_enq.value    = s.enq_rdy.value and s.enq_val.value
-      s.do_bypass.value = (~s.full.value and s.do_deq.value
-                              and s.do_enq.value)
+      s.do_deq.value    = s.deq_rdy and s.deq_val
+      s.do_enq.value    = s.enq_rdy and s.enq_val
+      s.do_bypass.value = ~s.full and s.do_deq and s.do_enq
 
     @s.posedge_clk
     def seq():
@@ -317,24 +281,18 @@ class SingleElementBypassQueueCtrl( Model ):
       #       don't match the Python semantics!
       ## helper signals
 
-      #do_deq    = s.deq_rdy.value and s.deq_val.value
-      #do_enq    = s.enq_rdy.value and s.enq_val.value
-      #do_bypass = ~s.full.value and do_deq and do_enq
+      #do_deq    = s.deq_rdy and s.deq_val
+      #do_enq    = s.enq_rdy and s.enq_val
+      #do_bypass = ~s.full and do_deq and do_enq
 
       # full bit calculation: the full bit is cleared when a dequeue
       # transaction occurs; the full bit is set when the queue storage is
       # empty and a enqueue transaction occurs and when we are not bypassing
 
-      if s.reset.value:
-        s.full.next = 0
-      #elif   do_deq:
-      elif   s.do_deq.value:
-        s.full.next = 0
-      #elif   do_enq and not do_bypass:
-      elif   s.do_enq.value and not s.do_bypass.value:
-        s.full.next = 1
-      else:
-        s.full.next = s.full.value
+      if   s.reset:                      s.full.next = 0
+      elif s.do_deq:                     s.full.next = 0
+      elif s.do_enq and not s.do_bypass: s.full.next = 1
+      else:                              s.full.next = s.full
 
 #=========================================================================
 # Multiple Entry Normal Queue
@@ -349,13 +307,8 @@ class NormalQueue( Model ):
 
     # Interface Ports
 
-    s.enq_bits         = InPort  ( data_nbits )
-    s.enq_val          = InPort  ( 1 )
-    s.enq_rdy          = OutPort ( 1 )
-
-    s.deq_bits         = OutPort ( data_nbits )
-    s.deq_val          = OutPort ( 1 )
-    s.deq_rdy          = InPort  ( 1 )
+    s.enq = InValRdyBundle ( data_nbits )
+    s.deq = OutValRdyBundle( data_nbits )
 
     s.num_free_entries = OutPort ( s.addr_nbits + 1 )
 
@@ -368,16 +321,16 @@ class NormalQueue( Model ):
 
     # Ctrl unit connections
 
-    s.connect( s.ctrl.enq_val,          s.enq_val          )
-    s.connect( s.ctrl.enq_rdy,          s.enq_rdy          )
-    s.connect( s.ctrl.deq_val,          s.deq_val          )
-    s.connect( s.ctrl.deq_rdy,          s.deq_rdy          )
+    s.connect( s.ctrl.enq_val,          s.enq.val          )
+    s.connect( s.ctrl.enq_rdy,          s.enq.rdy          )
+    s.connect( s.ctrl.deq_val,          s.deq.val          )
+    s.connect( s.ctrl.deq_rdy,          s.deq.rdy          )
     s.connect( s.ctrl.num_free_entries, s.num_free_entries )
 
     # Dpath unit connections
 
-    s.connect( s.dpath.enq_bits, s.enq_bits   )
-    s.connect( s.dpath.deq_bits, s.deq_bits   )
+    s.connect( s.dpath.enq_bits, s.enq.msg    )
+    s.connect( s.dpath.deq_bits, s.deq.msg    )
 
     # Control Signal connections (ctrl -> dpath)
 
@@ -390,17 +343,8 @@ class NormalQueue( Model ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
+    return "{} () {}".format( s.enq, s.deq )
 
-    in_str = \
-      valrdy.valrdy_to_str( s.enq_bits.value,
-        s.enq_val.value, s.enq_rdy.value )
-
-    out_str = \
-      valrdy.valrdy_to_str( s.deq_bits.value,
-        s.deq_val.value, s.deq_rdy.value )
-
-    return "{} ({}) {}"\
-      .format( in_str, s.num_free_entries.value, out_str )
 
 #-------------------------------------------------------------------------
 # Normal Queue Datapath
@@ -479,88 +423,78 @@ class NormalQueueCtrl( Model ):
     s.enq_ptr_inc      = Wire ( s.addr_nbits )
     s.deq_ptr_inc      = Wire ( s.addr_nbits )
 
+    s.full_next_cycle  = Wire ( 1 )
+
+    s.last_idx         = s.num_entries - 1
+
     @s.combinational
     def comb():
 
       # set output signals
 
-      s.empty.value  = (not s.full.value and
-                          (s.enq_ptr.value == s.deq_ptr.value))
+      s.empty.value   = not s.full and (s.enq_ptr == s.deq_ptr)
 
-      s.enq_rdy.value = not s.full.value
-      s.deq_val.value = not s.empty.value
+      s.enq_rdy.value = not s.full
+      s.deq_val.value = not s.empty
 
       # only enqueue/dequeue if valid and ready
 
-      s.do_enq.value = s.enq_rdy.value and s.enq_val.value
-      s.do_deq.value = s.deq_rdy.value and s.deq_val.value
+      s.do_enq.value = s.enq_rdy and s.enq_val
+      s.do_deq.value = s.deq_rdy and s.deq_val
 
       # set control signals
 
-      s.wen.value     = s.do_enq.value
-      s.waddr.value   = s.enq_ptr.value
-      s.raddr.value   = s.deq_ptr.value
+      s.wen.value     = s.do_enq
+      s.waddr.value   = s.enq_ptr
+      s.raddr.value   = s.deq_ptr
 
       # enq ptr incrementer
 
-      if s.enq_ptr.value == (s.num_entries - 1):
-        s.enq_ptr_inc.value = 0
-      else:
-        s.enq_ptr_inc.value = s.enq_ptr.value + 1
+      if s.enq_ptr == s.last_idx: s.enq_ptr_inc.value = 0
+      else:                       s.enq_ptr_inc.value = s.enq_ptr + 1
 
       # deq ptr incrementer
 
-      if s.deq_ptr.value == (s.num_entries - 1):
-        s.deq_ptr_inc.value = 0
-      else:
-        s.deq_ptr_inc.value = s.deq_ptr.value + 1
+      if s.deq_ptr == s.last_idx: s.deq_ptr_inc.value = 0
+      else:                       s.deq_ptr_inc.value = s.deq_ptr + 1
 
       # set the next ptr value
 
-      if s.do_enq.value:
-        s.enq_ptr_next.value = s.enq_ptr_inc.value
-      else:
-        s.enq_ptr_next.value = s.enq_ptr.value
+      if s.do_enq: s.enq_ptr_next.value = s.enq_ptr_inc
+      else:        s.enq_ptr_next.value = s.enq_ptr
 
-      if s.do_deq.value:
-        s.deq_ptr_next.value = s.deq_ptr_inc.value
-      else:
-        s.deq_ptr_next.value = s.deq_ptr.value
+      if s.do_deq: s.deq_ptr_next.value = s.deq_ptr_inc
+      else:        s.deq_ptr_next.value = s.deq_ptr
 
       # number of free entries calculation
 
-      if   s.reset.value:
+      if   s.reset:
         s.num_free_entries.value = s.num_entries
-      elif s.full.value:
+      elif s.full:
         s.num_free_entries.value = 0
-      elif s.empty.value:
+      elif s.empty:
         s.num_free_entries.value = s.num_entries
-      elif s.enq_ptr.value > s.deq_ptr.value:
-        s.num_free_entries.value = \
-          s.num_entries - ( s.enq_ptr - s.deq_ptr )
-      elif s.deq_ptr.value > s.enq_ptr.value:
-        s.num_free_entries.value = \
-          s.deq_ptr - s.enq_ptr
+      elif s.enq_ptr > s.deq_ptr:
+        s.num_free_entries.value = s.num_entries - ( s.enq_ptr - s.deq_ptr )
+      elif s.deq_ptr > s.enq_ptr:
+        s.num_free_entries.value = s.deq_ptr - s.enq_ptr
+
+      s.full_next_cycle.value = (s.do_enq and not s.do_deq and
+                                (s.enq_ptr_next == s.deq_ptr))
 
     @s.posedge_clk
     def seq():
 
-      if s.reset.value:
-        s.deq_ptr.next = 0
-        s.enq_ptr.next = 0
-      else:
-        s.deq_ptr.next = s.deq_ptr_next.value
-        s.enq_ptr.next = s.enq_ptr_next.value
+      if s.reset: s.deq_ptr.next = 0
+      else:       s.deq_ptr.next = s.deq_ptr_next
 
-      if s.reset.value:
-        s.full.next    = 0
-      elif (s.do_enq.value and not s.do_deq.value and
-            (s.enq_ptr_next.value == s.deq_ptr.value)):
-        s.full.next    = 1
-      elif (s.do_deq.value and s.full.value):
-        s.full.next    = 0
-      else:
-        s.full.next    = s.full.value
+      if s.reset: s.enq_ptr.next = 0
+      else:       s.enq_ptr.next = s.enq_ptr_next
+
+      if   s.reset:               s.full.next = 0
+      elif s.full_next_cycle:     s.full.next = 1
+      elif (s.do_deq and s.full): s.full.next = 0
+      else:                       s.full.next = s.full
 
 
 #=========================================================================
@@ -574,13 +508,8 @@ class SingleElementPipelinedQueue( Model ):
 
     # Interface Ports
 
-    s.enq_bits = InPort  ( data_nbits )
-    s.enq_val  = InPort  ( 1 )
-    s.enq_rdy  = OutPort ( 1 )
-
-    s.deq_bits = OutPort ( data_nbits )
-    s.deq_val  = OutPort ( 1 )
-    s.deq_rdy  = InPort  ( 1 )
+    s.enq = InValRdyBundle ( data_nbits )
+    s.deq = OutValRdyBundle( data_nbits )
 
   def elaborate_logic( s ):
 
@@ -591,15 +520,15 @@ class SingleElementPipelinedQueue( Model ):
 
     # Ctrl unit connections
 
-    s.connect( s.ctrl.enq_val, s.enq_val )
-    s.connect( s.ctrl.enq_rdy, s.enq_rdy )
-    s.connect( s.ctrl.deq_val, s.deq_val )
-    s.connect( s.ctrl.deq_rdy, s.deq_rdy )
+    s.connect( s.ctrl.enq_val, s.enq.val )
+    s.connect( s.ctrl.enq_rdy, s.enq.rdy )
+    s.connect( s.ctrl.deq_val, s.deq.val )
+    s.connect( s.ctrl.deq_rdy, s.deq.rdy )
 
     # Dpath unit connections
 
-    s.connect( s.dpath.enq_bits, s.enq_bits )
-    s.connect( s.dpath.deq_bits, s.deq_bits )
+    s.connect( s.dpath.enq_bits, s.enq.msg )
+    s.connect( s.dpath.deq_bits, s.deq.msg )
 
     # Control Signal connections (ctrl -> dpath)
 
@@ -610,17 +539,8 @@ class SingleElementPipelinedQueue( Model ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
+    return "{} () {}".format( s.enq, s.deq )
 
-    in_str = \
-      valrdy.valrdy_to_str( s.enq_bits.value,
-        s.enq_val.value, s.enq_rdy.value )
-
-    out_str = \
-      valrdy.valrdy_to_str( s.deq_bits.value,
-        s.deq_val.value, s.deq_rdy.value )
-
-    return "{} () {}"\
-      .format( in_str, out_str )
 
 #-------------------------------------------------------------------------
 # Single-Element Pipelined Queue Datapath
@@ -688,25 +608,23 @@ class SingleElementPipelinedQueueCtrl( Model ):
       # enq_rdy signal is asserted when the single element queue storage is
       # empty
 
-      s.enq_rdy.value        = ~s.full.value | ( s.full.value &
-                                  s.deq_rdy.value )
+      s.enq_rdy.value = ~s.full | ( s.full & s.deq_rdy )
 
       # deq_val signal is asserted when the single element queue storage is
       # full or when the queue is empty but we are bypassing
 
-      s.deq_val.value        = s.full.value
+      s.deq_val.value = s.full
 
       # wen control signal: set the write enable signal if the storage queue
       # is empty and a valid enqueue request is present
 
-      s.wen.value            = ( ~s.full.value | ( s.full.value &
-                                    s.deq_rdy.value ) ) & s.enq_val.value
+      s.wen.value = ( ~s.full | ( s.full & s.deq_rdy ) ) & s.enq_val
 
       # helper signals
 
-      s.do_deq.value  = s.deq_rdy.value & s.deq_val.value
-      s.do_enq.value  = s.enq_rdy.value & s.enq_val.value
-      s.do_pipe.value = s.full.value & s.do_deq.value & s.do_enq.value
+      s.do_deq.value  = s.deq_rdy & s.deq_val
+      s.do_enq.value  = s.enq_rdy & s.enq_val
+      s.do_pipe.value = s.full & s.do_deq & s.do_enq
 
     @s.posedge_clk
     def seq():
@@ -715,12 +633,8 @@ class SingleElementPipelinedQueueCtrl( Model ):
       # transaction occurs; the full bit is set when the queue storage is
       # empty and a enqueue transaction occurs and when we are not bypassing
 
-      if s.reset.value:
-        s.full.next = 0
-      elif   s.do_deq.value & ~s.do_pipe.value:
-        s.full.next = 0
-      elif   s.do_enq.value:
-        s.full.next = 1
-      else:
-        s.full.next = s.full.value
+      if   s.reset:               s.full.next = 0
+      elif s.do_deq & ~s.do_pipe: s.full.next = 0
+      elif s.do_enq:              s.full.next = 1
+      else:                       s.full.next = s.full
 
