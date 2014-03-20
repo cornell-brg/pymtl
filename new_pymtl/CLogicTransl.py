@@ -84,11 +84,9 @@ def CLogicTransl( model, o=sys.stdout ):
 
 
     # Declare parameters
-    params = [ ]
-    for name, net, type_ in top_inports:
-      params.append( ' {}   _{}'.format( type_, name ) )
-    for name, net, type_ in top_outports:
-      params.append( ' {} * _{}'.format( type_, name ) )
+    params = []
+    for name, net, type_ in top_inports[:2]:
+      params.append( '    {}   _{}'.format( type_, name ) )
     params = ',\n'.join( params )
 
     # Create the C header
@@ -99,7 +97,7 @@ def CLogicTransl( model, o=sys.stdout ):
     print >> o, '#define  False false'
     print >> o
 
-    print >> o, gen_cheader( params )
+    print >> o, gen_cheader( params, top_ports[2:] )
     print >> o, c_variables.getvalue()
     print >> o, c_functions.getvalue()
 
@@ -111,9 +109,9 @@ def CLogicTransl( model, o=sys.stdout ):
 
     # Set input ports from params
     print   >> o
-    print   >> o, '  /* Set all inputs    */'
-    for name, _, _ in top_inports:
-      print >> o, '  {0} = _{0};'.format( name )
+    print   >> o, '  /* Set clk/reset */'
+    print   >> o, '  top_clk   = _top_clk;'
+    print   >> o, '  top_reset = _top_reset;'
 
     # Execute all ticks
     print   >> o
@@ -129,17 +127,12 @@ def CLogicTransl( model, o=sys.stdout ):
       print >> o, '  {0} = {0}_next;'.format( s )
       #print >> o, '  printf("%s %d %s %d\\n","cur",{0},"next",{0});'.format( s )
 
-    # Update params from output ports
-    print   >> o
-    print   >> o, '  /* Assign all outputs */'
-    for name, _, _ in top_outports:
-      print >> o, '  *_{0} = {0};'.format( name )
 
     print   >> o, '}'
     print   >> o
 
     # Create the cdef and Python wrapper
-    cdef        = gen_cdef( params )
+    cdef        = gen_cdef( params, top_ports[2:] )
     CSimWrapper = gen_pywrapper( top_inports, top_outports )
 
     return cdef, CSimWrapper
@@ -172,7 +165,7 @@ def declare_signals( sim, ast_next, o ):
     for signal in net:
 
       name = mangle_name( signal.fullname )
-      print >>o, '{} &{}      = {};'     .format( type_, name, cname );
+      print >>o, '{} &{}      =  {};'      .format( type_, name, cname );
 
       # only create "next" if this signal was written to in @tick
       # NOTE: this will declare "net_next" twice if two different signals
@@ -197,6 +190,7 @@ def declare_signals( sim, ast_next, o ):
       elif name == 'top_reset':
         reset_port = (name, cname, type_)
       elif name.startswith('top'):
+        print >>o, '{} *   _{}      = &{};'.format( type_, name[4:], cname );
         top_ports.append( (name, cname, type_) );
 
   top_ports = [clk_port, reset_port] + sorted(top_ports)
