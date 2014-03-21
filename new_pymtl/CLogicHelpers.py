@@ -20,10 +20,16 @@ def gen_cppsim( clib, cdef ):
 # Create the string passed into ffi.cdef
 def gen_cdef( cycle_params, top_ports ):
   str_    = '\n'
-  str_   += 'void cycle({});\n'.format('\n'+cycle_params+'\n')
-  str_   += 'unsigned int  ncycles;\n'
+
+  str_   += 'typedef struct {\n'
   for name, net, type_ in top_ports:
-    str_ += '{} * _{};  // {}\n'.format( type_, name[4:], net )
+    str_ += '  {} {};  // {}\n'.format( type_, name[4:], net )
+  str_   += '} iface_t;\n\n'
+
+  str_   += 'void cycle({});\n\n'.format('\n'+cycle_params+'\n')
+
+  str_   += 'unsigned int  ncycles;\n'
+
   return str_
 
 #-------------------------------------------------------------------------
@@ -32,12 +38,18 @@ def gen_cdef( cycle_params, top_ports ):
 # Create the header for the simulator
 def gen_cheader( cycle_params, top_ports ):
   str_    = '\n'
+
   str_   += 'extern "C" {\n'
+
+  str_   += '  typedef struct {\n'
+  for name, net, type_ in top_ports:
+    str_ += '    {} {};  // {}\n'.format( type_, name[4:], net )
+  str_   += '  } iface_t;\n\n'
+
   str_   += '  extern void cycle({}  );\n'.format('\n'+cycle_params+'\n')
   str_   += '  extern unsigned int ncycles;\n'
-  for name, net, type_ in top_ports:
-    str_ += '  extern {} * _{}; // {}\n'.format( type_, name[4:], net )
-  str_   += '}\n'
+
+  str_   += '};\n'
   return str_
 
 #-------------------------------------------------------------------------
@@ -51,7 +63,7 @@ def cycle( self, clk=0, reset=0 ):
   {}
 
   # Cycle Call
-  self._cmodule.cycle( clk, reset )
+  self._cmodule.cycle( clk, reset, self._top )
 
   # Store Outputs
   {}
@@ -83,6 +95,7 @@ def gen_pywrapper( top_inports, top_outports ):
       #self._model    = model
       self._cmodule  = cmodule
       self._ffi      = ffi
+      self._top      = ffi.new("iface_t *")
 
     def reset( self ):
       self.cycle( reset=1 )
@@ -103,12 +116,12 @@ def gen_pywrapper( top_inports, top_outports ):
     if '_IDX' in name:
       sig, idx = name_splitter(name)
       idx = int(idx)
-      ld_inports.append( 'self._cmodule._{2}[0] = self.{0}[{1}]'
+      ld_inports.append( 'self._top[0].{2} = self.{0}[{1}]'
                          .format( sig, idx, name) )
       # Create "InPort" dummy attribute
       setattr( CSimWrapper,     sig, [0]*(idx+1) )
     else:
-      ld_inports.append( 'self._cmodule._{0}[0] = self.{0}'.format(name) )
+      ld_inports.append( 'self._top[0].{0} = self.{0}'.format(name) )
       # Create "InPort" dummy attribute
       setattr( CSimWrapper,     name , 0 )
 
@@ -120,12 +133,12 @@ def gen_pywrapper( top_inports, top_outports ):
     if '_IDX' in name:
       sig, idx = name_splitter(name)
       idx = int(idx)
-      st_outports.append( 'self.{0}[{1}] = self._cmodule._{2}[0]'
+      st_outports.append( 'self.{0}[{1}] = self._top[0].{2}'
                           .format( sig, idx, name ) )
       # Create "OutPort" dummy attribute
       setattr( CSimWrapper,     sig, [0]*(idx+1) )
     else:
-      st_outports.append( 'self.{0} = self._cmodule._{0}[0]'.format(name) )
+      st_outports.append( 'self.{0} = self._top[0].{0}'.format(name) )
       # Create "OutPort" dummy attribute
       # Create signal attribute
       setattr( CSimWrapper,     name , 0 )

@@ -87,6 +87,7 @@ def CLogicTransl( model, o=sys.stdout ):
     params = []
     for name, net, type_ in top_inports[:2]:
       params.append( '    {}   _{}'.format( type_, name ) )
+    params  .append( '    iface_t * top') 
     params = ',\n'.join( params )
 
     # Create the C header
@@ -109,9 +110,11 @@ def CLogicTransl( model, o=sys.stdout ):
 
     # Set input ports from params
     print   >> o
-    print   >> o, '  /* Set clk/reset */'
+    print   >> o, '  /* Set inports */'
     print   >> o, '  top_clk   = _top_clk;'
     print   >> o, '  top_reset = _top_reset;'
+    for name, _, _ in top_inports[2:]:
+      print >> o, '  {} = top->{};'.format( name, name[4:] )
 
     # Execute all ticks
     print   >> o
@@ -125,8 +128,12 @@ def CLogicTransl( model, o=sys.stdout ):
     print   >> o, '  /* Update all registers */'
     for s in shadows:
       print >> o, '  {0} = {0}_next;'.format( s )
-      #print >> o, '  printf("%s %d %s %d\\n","cur",{0},"next",{0});'.format( s )
 
+    # Update params from output ports
+    print   >> o
+    print   >> o, '  /* Assign all outputs */'
+    for name, _, _ in top_outports:
+      print >> o, '  top->{} = {};'.format( name[4:], name )
 
     print   >> o, '}'
     print   >> o
