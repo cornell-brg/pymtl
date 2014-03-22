@@ -97,41 +97,56 @@ def gen_pywrapper( top_inports, top_outports ):
       self._ffi      = ffi
       self._top      = ffi.new("iface_t *")
 
+      #-------------------------------------------------------------------
+      # CSimWrapper
+      #-------------------------------------------------------------------
       # Utilty ListWrapper class for lists of ports
       class ListWrapper( object ):
         def __init__( self, top ):
           #self._top = top
-          self._get = []
-          self._set = []
+          self._get = {}
+          self._set = {}
 
         def __getitem__( self, key ):
-          return self._get[ key ]()
+          return self._get[ key ]( self )
 
         def __setitem__( self, key, value ):
-          self._set[ key ]( value )
+          self._set[ key ]( self, value )
+
+      #-------------------------------------------------------------------
+      # create_fget
+      #-------------------------------------------------------------------
+      # Utilty method for creating fget
+      def create_fget( top, name ):
+        return lambda self: getattr( top[0], name )
+
+      #-------------------------------------------------------------------
+      # create_fset
+      #-------------------------------------------------------------------
+      # Utilty method for creating fset
+      def create_fset( top, name ):
+        return lambda self, value : setattr( top[0], name, value )
 
       # Add properties for all cffi exposed toplevel ports
       for fullname, net, type_ in top_inports[2:] + top_outports:
 
         name = fullname[4:]
-        print name
 
         # This signal is a list of ports, use a ListWrapper object )
         if '_IDX' in name:
           sig, idx = name_splitter(name)
+
           if not hasattr( self, sig ):
             setattr( self, sig, ListWrapper( self._top ) )
 
-          fget = lambda: getattr( self._top[0], name )
-          fset = lambda value : setattr( self._top[0], name, value )
-          getattr( self, sig )._get.insert( int(idx), fget )
-          getattr( self, sig )._set.insert( int(idx), fset )
+          getattr( self, sig )._get[int(idx)] = create_fget( self._top, name )
+          getattr( self, sig )._set[int(idx)] = create_fset( self._top, name )
 
         # This signal is a single port, create a property
         else:
-          fget = lambda self: getattr( self._top[0], name )
-          fset = lambda self, value: setattr( self._top[0], name, value )
-          setattr(self, name, property(fget, fset) )
+          fget = create_fget( self._top, name )
+          fset = create_fset( self._top, name )
+          setattr(self.__class__, name, property(fget, fset) )
 
     def reset( self ):
       self.cycle( reset=1 )
@@ -143,49 +158,6 @@ def gen_pywrapper( top_inports, top_outports ):
     @property
     def ncycles( self ):
       return self._cmodule.ncycles
-
-
-  #for fullname, net, type_  in top_inports[2:]:
-  #  name = fullname[4:]  # remove 'top_' from name
-  #  # Handle lists specially
-  #  # TODO: super hacky, only works if top_inports sorted by name
-  #  if '_IDX' in name:
-  #    sig, idx = name_splitter(name)
-  #    idx = int(idx)
-  #    ld_inports.append( 'self._top[0].{2} = self.{0}[{1}]'
-  #                       .format( sig, idx, name) )
-  #    # Create "InPort" dummy attribute
-  #    setattr( CSimWrapper,     sig, [0]*(idx+1) )
-  #  else:
-  #    ld_inports.append( 'self._top[0].{0} = self.{0}'.format(name) )
-  #    # Create "InPort" dummy attribute
-  #    setattr( CSimWrapper,     name , 0 )
-
-  ## Add output port attributes to CSimWrapper
-  #for fullname, net, type_ in top_outports:
-  #  name = fullname[4:]  # remove 'top_' from name
-  #  # Handle lists specially
-  #  # TODO: super hacky, only works if top_outports sorted by name
-  #  if '_IDX' in name:
-  #    sig, idx = name_splitter(name)
-  #    idx = int(idx)
-  #    st_outports.append( 'self.{0}[{1}] = self._top[0].{2}'
-  #                        .format( sig, idx, name ) )
-  #    # Create "OutPort" dummy attribute
-  #    setattr( CSimWrapper,     sig, [0]*(idx+1) )
-  #  else:
-  #    st_outports.append( 'self.{0} = self._top[0].{0}'.format(name) )
-  #    # Create "OutPort" dummy attribute
-  #    # Create signal attribute
-  #    setattr( CSimWrapper,     name , 0 )
-
-  # TODO: SUPER HACKY PYTHON CODEGEN
-  #code = cycle_templ.format( '\n  '.join( ld_inports  ),
-  #                           '\n  '.join( st_outports ) )
-
-  # Create cycle method code and add it to the CSimWrapper
-  #exec( code ) in locals()
-  #CSimWrapper.cycle = cycle
 
   return CSimWrapper
 
