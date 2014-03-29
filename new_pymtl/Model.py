@@ -98,6 +98,7 @@ class Model( object ):
     current_model._wires          = []
     current_model._inports        = []
     current_model._outports       = []
+    current_model._hports         = []
     current_model._submodules     = []
     if not hasattr( current_model, '_connections' ):
       current_model._connections = set()
@@ -127,7 +128,7 @@ class Model( object ):
   # check_type
   #-----------------------------------------------------------------------
   # Utility method to specialize elaboration actions based on object type.
-  def check_type( self, current_model, name, obj ):
+  def check_type( self, current_model, name, obj, nested=False ):
 
     # Wires
     if   isinstance( obj, Wire ):
@@ -140,17 +141,24 @@ class Model( object ):
       obj.name                = name
       obj.parent              = current_model
       current_model._inports += [ obj ]
+      if not nested:
+        current_model._hports  += [ obj ]
 
     # OutPorts
     elif isinstance( obj, OutPort ):
       obj.name                 = name
       obj.parent               = current_model
       current_model._outports += [ obj ]
+      if not nested:
+        current_model._hports  += [ obj ]
 
     # PortBundles
     elif isinstance( obj, PortBundle ):
+      obj.name = name
       for port in obj.get_ports():
-        self.check_type( current_model, name+'.'+port.name, port )
+        self.check_type( current_model, name+'.'+port.name, port, nested=True )
+      if not nested:
+        current_model._hports += [ obj ]
 
     # Submodules
     elif isinstance( obj, Model ):
@@ -178,11 +186,18 @@ class Model( object ):
       # TODO: hacky signal check, implement using SignalList instead?
       if obj and isinstance( obj[0], Signal ):
         current_model._temparrays.append( name )
+      if obj and isinstance( obj[0], (InPort,OutPort, PortBundle)):
+        obj = PortList( obj )
+        obj.name = name
+        assert '.' not in name
+        setattr( current_model, name, obj )
+        if not nested:
+          current_model._hports += [ obj ]
       # Iterate through each item in the list and recursively call the
       # check_type() utility function
       for i, item in enumerate(obj):
         item_name = "%s[%d]" % (name, i)
-        self.check_type( current_model, item_name, item )
+        self.check_type( current_model, item_name, item, nested=True )
 
   #-----------------------------------------------------------------------
   # gen_class_name
@@ -296,8 +311,11 @@ class Model( object ):
   def get_outports( self ):
     return self._outports
 
-  def get_ports( self ):
-    return self._inports + self._outports
+  def get_ports( self, preserve_hierarchy=False ):
+    if not preserve_hierarchy:
+      return self._inports + self._outports
+    else:
+      return self._hports
 
   def get_wires( self ):
     return self._wires
@@ -429,4 +447,9 @@ class Model( object ):
   # line tracing in the test harness. -cbatten
   def line_trace( self ):
     return ""
+
+
+class PortList( list ):
+  def get_ports( self ):
+    return self
 
