@@ -18,6 +18,8 @@ from BitStruct     import BitStruct
 from SignalValue   import SignalValueWrapper
 from CLogicHelpers import gen_cheader, gen_cdef, gen_csim, gen_pywrapper
 
+compiler = "g++ -O3 -fPIC -shared -o {libname} {csource}"
+
 #-------------------------------------------------------------------------
 # CLogicTransl
 #-------------------------------------------------------------------------
@@ -45,6 +47,9 @@ def CLogicTransl( model, o=sys.stdout ):
     outport_names  = ['top_'+mangle_name(x.name) for x in model.get_outports()]
     top_inports    = []
     top_outports   = []
+
+    for x in model.get_ports():
+      x.cpp_name = 'top_'+mangle_name( x.name )
 
     # Separate input and output ports
     for port in top_ports:

@@ -5,7 +5,7 @@
 import SimulationTool_seq_test    as sequential
 import SimulationTool_struct_test as structural
 
-from CLogicTransl import CLogicTransl
+from CLogicTransl import CLogicTransl, compiler
 from subprocess   import check_output, STDOUT, CalledProcessError
 from SignalValue  import CreateWrappedClass
 from Model        import *
@@ -14,8 +14,6 @@ from CLogicHelpers import gen_cppsim
 
 import tempfile
 import os
-
-compiler = "g++ -O3 -fPIC -shared -o {libname} {csource}"
 
 #-------------------------------------------------------------------------
 # translate
