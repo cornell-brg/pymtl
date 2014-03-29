@@ -1,12 +1,19 @@
-from cffi import FFI
+#=======================================================================
+# CLogicHelpers.py
+#=======================================================================
+
+from cffi       import FFI
+from PortBundle import PortBundle
+from signals    import InPort, OutPort
+from Model      import PortList
 
 # Create position independent code
 #cc_src = "g++ -O3 -fPIC -c -o {in}.cc {in}.h {out.o}"
 #cc_lib = "g++ -shared -o libCSim.o {out}.so"
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # gen_cppsim
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 def gen_cppsim( clib, cdef ):
   ffi = FFI()
   ffi.cdef( cdef )
@@ -14,9 +21,20 @@ def gen_cppsim( clib, cdef ):
   return cmodule, ffi
   #return wrap( cmodule )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# gen_csim
+#-----------------------------------------------------------------------
+# TODO: not implemented, only works if generated code is pure C
+def gen_csim( cstring, cdef ):
+  raise Exception("Doesn't currently work!")
+  ffi = FFI()
+  ffi.cdef( cdef )
+  clib = ffi.verify( cstring )
+  return clib
+
+#-----------------------------------------------------------------------
 # translate
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Create the string passed into ffi.cdef
 def gen_cdef( cycle_params, top_ports ):
   str_    = '\n'
@@ -29,12 +47,11 @@ def gen_cdef( cycle_params, top_ports ):
   str_   += 'void cycle({});\n\n'.format('\n'+cycle_params+'\n')
 
   str_   += 'unsigned int  ncycles;\n'
-  print str_
   return str_
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # gen_cheader
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Create the header for the simulator
 def gen_cheader( cycle_params, top_ports ):
   str_    = '\n'
@@ -52,25 +69,9 @@ def gen_cheader( cycle_params, top_ports ):
   str_   += '};\n'
   return str_
 
-#-------------------------------------------------------------------------
-# cycle_templ
-#-------------------------------------------------------------------------
-# Template for the cycle method in CSimWrapper
-cycle_templ = """
-def cycle( self, clk=0, reset=0 ):
-
-  # Load Inputs
-  {}
-
-  # Cycle Call
-  self._cmodule.cycle( clk, reset, self._top )
-
-  # Store Outputs
-  {}
-"""
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # gen_pywrapper
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Create the header for the simulator
 def gen_pywrapper( top_inports, top_outports ):
 
@@ -161,15 +162,75 @@ def gen_pywrapper( top_inports, top_outports ):
 
   return CSimWrapper
 
+#-----------------------------------------------------------------------
+# create_cpp_py_wrapper
+#-----------------------------------------------------------------------
+def create_cpp_py_wrapper( model, wrapper_filename ):
 
-#-------------------------------------------------------------------------
-# gen_csim
-#-------------------------------------------------------------------------
-# TODO: not implemented, only works if generated code is pure C
-def gen_csim( cstring, cdef ):
-  raise Exception("Doesn't currently work!")
-  ffi = FFI()
-  ffi.cdef( cdef )
-  clib = ffi.verify( cstring )
-  return clib
+  template_filename = '../new_pymtl/cpp_wrapper.templ.py'
+
+  # translate pymtl      to cpp, cdef
+  # compile   cpp        to so
+  # create    so,cdef    w  cffi
+  # create    pymtl_wrap w  pymtl_cppnames
+
+  port_defs   = []
+  set_inputs  = []
+  set_outputs = []
+
+  for x in  model.get_ports( preserve_hierarchy=True ):
+    recurse_port_hierarchy( x, port_defs )
+
+  for x in  model.get_inports():
+    if x.name in ['clk', 'reset']: continue  # TODO: remove me!
+    set_inputs.append( "s._top.{} = s.{}".format( x.cpp_name[4:], x.name ) )
+
+  for x in  model.get_outports():
+    set_outputs.append( "s.{}.v = s._top.{}".format( x.name, x.cpp_name[4:] ) )
+
+  # todo
+  cdefs       = ''
+
+  # pretty printing
+  indent_four = '\n    '
+  indent_six  = '\n      '
+
+  # create source
+  with open( template_filename , 'r' ) as template, \
+       open( wrapper_filename,   'w' ) as output:
+
+    py_src = template.read()
+    py_src = py_src.format(
+        model_name  = model.class_name,
+        port_decls  = cdefs,
+        port_defs   = indent_four.join( port_defs ),
+        set_inputs  = indent_six .join( set_inputs ),
+        set_outputs = indent_six .join( set_outputs ),
+    )
+
+    output.write( py_src )
+    #print py_src
+
+#-----------------------------------------------------------------------
+# recurse_port_hierarchy
+#-----------------------------------------------------------------------
+def recurse_port_hierarchy( p, list_ ):
+
+  if   isinstance( p, PortList ):
+    list_.append( "s.{} = [None]*{}".format( p.name, len(p) ) )
+    for child in p.get_ports():
+      recurse_port_hierarchy( child, list_ )
+
+  elif isinstance( p, PortBundle ):
+    list_.append( "s.{} = BundleProxy()".format( p.name ) )
+    for child in p.get_ports():
+      recurse_port_hierarchy( child, list_ )
+
+  # TODO: fix msg type
+  elif isinstance( p, InPort ):
+    list_.append( "s.{} = InPort( {} )".format( p.name, p.nbits ) )
+
+  # TODO: fix msg type
+  elif isinstance( p, OutPort ):
+    list_.append( "s.{} = OutPort( {} )".format( p.name, p.nbits ) )
 
