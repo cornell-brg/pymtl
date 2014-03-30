@@ -183,10 +183,12 @@ def create_cpp_py_wrapper( model, wrapper_filename ):
 
   for x in  model.get_inports():
     if x.name in ['clk', 'reset']: continue  # TODO: remove me!
-    set_inputs.append( "s._top.{} = s.{}".format( x.cpp_name[4:], x.name ) )
+    decl = "s._top.{} = s.{}.uint()".format( x.cpp_name[4:], x.name )
+    set_inputs.append( decl )
 
   for x in  model.get_outports():
-    set_outputs.append( "s.{}.v = s._top.{}".format( x.name, x.cpp_name[4:] ) )
+    decl = "s.{}.value = s._top.{}".format( x.name, x.cpp_name[4:] )
+    set_outputs.append( decl )
 
   # todo
   cdefs       = ''
@@ -223,8 +225,12 @@ def recurse_port_hierarchy( p, list_ ):
 
   elif isinstance( p, PortBundle ):
     list_.append( "s.{} = BundleProxy()".format( p.name ) )
+    list_.append( "s.{}._ports = []".format( p.name ) )
     for child in p.get_ports():
       recurse_port_hierarchy( child, list_ )
+      list_.append( "s.{}._ports.append( s.{} )".format( p.name, child.name ) )
+      temp = child.name.split('.')[-1]
+      list_.append( "s.{}.name = '{}'".format( child.name, temp ) )
 
   # TODO: fix msg type
   elif isinstance( p, InPort ):

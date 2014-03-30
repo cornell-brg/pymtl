@@ -155,6 +155,7 @@ class Model( object ):
     # PortBundles
     elif isinstance( obj, PortBundle ):
       obj.name = name
+      # TODO: clean this up...
       for port in obj.get_ports():
         self.check_type( current_model, name+'.'+port.name, port, nested=True )
       if not nested:

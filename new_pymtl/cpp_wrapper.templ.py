@@ -9,8 +9,8 @@ class {model_name}( Model ):
     s._ffi     = ffi
     s._top     = ffi.new("iface_t *")
 
-    class BundleProxy( object ):
-      pass
+    class BundleProxy( PortBundle ):
+      flip = False
 
     {port_defs}
 
@@ -26,11 +26,11 @@ class {model_name}( Model ):
       {set_inputs}
 
       # Cycle
-      self._cmodule.cycle( self.clk, self.reset, self._top )
-  
+      s._cmodule.cycle( s.clk, s.reset, s._top )
+
       # Set outputs
       {set_outputs}
 
   @property
-  def ncycles( self ):
-    return self._cmodule.ncycles
+  def ncycles( s ):
+    return s._cmodule.ncycles
