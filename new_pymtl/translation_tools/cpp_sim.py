@@ -2,10 +2,10 @@
 # cpp_sim.py
 #===============================================================================
 
-from CLogicTransl  import CLogicTransl as translate
-from CLogicTransl  import compiler
-from CLogicHelpers import gen_cppsim, create_cpp_py_wrapper
-from subprocess    import check_output, STDOUT, CalledProcessError
+from cpp         import CLogicTransl as translate
+from cpp         import compiler
+from cpp_helpers import gen_cppsim, create_cpp_py_wrapper
+from subprocess  import check_output, STDOUT, CalledProcessError
 
 import os
 import sys

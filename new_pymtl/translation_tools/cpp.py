@@ -1,22 +1,18 @@
 #=========================================================================
-# CLogicTransl_test.py
+# cpp.py
 #=========================================================================
 # Tool to translate PyMTL Models into a C simulation object.
 
-from   ast_helpers     import get_method_ast, print_simple_ast, print_ast
-from   SimulationTool  import SimulationTool
+from new_pymtl     import *
+from cpp_helpers   import gen_cheader, gen_cdef, gen_csim, gen_pywrapper
+from ..ast_helpers import get_method_ast, print_simple_ast, print_ast
+from ..SignalValue import SignalValueWrapper
 
 import sys
 import ast, _ast
 import collections
 import StringIO
 import re
-
-from signals       import InPort, OutPort, Wire, Constant
-from Bits          import Bits
-from BitStruct     import BitStruct
-from SignalValue   import SignalValueWrapper
-from CLogicHelpers import gen_cheader, gen_cdef, gen_csim, gen_pywrapper
 
 compiler = "g++ -O3 -fPIC -shared -o {libname} {csource}"
 

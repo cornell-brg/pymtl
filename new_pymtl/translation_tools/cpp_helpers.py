@@ -1,11 +1,10 @@
 #=======================================================================
-# CLogicHelpers.py
+# cpp_helpers.py
 #=======================================================================
 
-from cffi       import FFI
-from PortBundle import PortBundle
-from signals    import InPort, OutPort
-from Model      import PortList
+from new_pymtl import *
+from ..Model   import PortList
+from cffi      import FFI
 
 # Create position independent code
 #cc_src = "g++ -O3 -fPIC -c -o {in}.cc {in}.h {out.o}"
@@ -167,7 +166,7 @@ def gen_pywrapper( top_inports, top_outports ):
 #-----------------------------------------------------------------------
 def create_cpp_py_wrapper( model, wrapper_filename ):
 
-  template_filename = '../new_pymtl/cpp_wrapper.templ.py'
+  template_filename = '../new_pymtl/translation_tools/cpp_wrapper.templ.py'
 
   # translate pymtl      to cpp, cdef
   # compile   cpp        to so

@@ -1,19 +1,17 @@
 #=========================================================================
-# VerilogLogicTransl_test.py
+# cpp_test.py
 #=========================================================================
 
-import SimulationTool_seq_test    as sequential
-import SimulationTool_struct_test as structural
-
-from CLogicTransl import CLogicTransl, compiler
-from subprocess   import check_output, STDOUT, CalledProcessError
-from SignalValue  import CreateWrappedClass
-from Model        import *
-
-from CLogicHelpers import gen_cppsim
+from new_pymtl   import *
+from cpp         import CLogicTransl, compiler
+from cpp_helpers import gen_cppsim
+from subprocess  import check_output, STDOUT, CalledProcessError
 
 import tempfile
 import os
+
+from .. import SimulationTool_seq_test    as sequential
+from .. import SimulationTool_struct_test as structural
 
 #-------------------------------------------------------------------------
 # translate

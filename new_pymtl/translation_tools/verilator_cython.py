@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #=========================================================================
-# Verilate and Cythonize Translated PyMTL Models
+# verilator_cython.py
 #=========================================================================
 
 import fileinput

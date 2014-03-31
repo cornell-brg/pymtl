@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 #==============================================================================
-# Verilate and Cythonize Translated PyMTL Models
+# verilator_cffi.py
 #==============================================================================
 
 import sys
