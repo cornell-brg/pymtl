@@ -2,25 +2,13 @@
 # ast_tranformer_test.py
 #=========================================================================
 
-from ast_typer   import TypeAST
-from ast_helpers import get_method_ast, print_simple_ast, print_ast
-
-from Bits        import Bits
-
-class M( object ):
-  def __init__( self, *args ):
-    for x in args:
-      setattr( self, x, Bits(4) )
-  def lists( self, *args ):
-    for x in args:
-      setattr( self, x, [Bits(4)] )
-    return self
+from ast_transformer import *
+from ..ast_helpers   import get_method_ast, print_simple_ast, print_ast
 
 #-------------------------------------------------------------------------
-# check_ast
+# AST Transformer Checker: Function Decorator
 #-------------------------------------------------------------------------
-# Decorator for testing TypeAST.
-def check_ast( model ):
+def check_ast( ld, st ):
 
   def check_decorator( func ):
     tree, src = get_method_ast( func )
@@ -28,10 +16,13 @@ def check_ast( model ):
     print
     print src
 
-    #print_simple_ast( tree )
+    #print_ast( tree )
+    print_simple_ast( tree )
 
-    new_tree = TypeAST( model, func ).visit( tree )
+    #load, store = DetectLoadsAndStores().enter( tree )
+    new_tree = SimplifiedAST().visit( tree )
 
+    #print_ast( tree )
     print_simple_ast( new_tree )
 
     return func
@@ -43,21 +34,18 @@ def check_ast( model ):
 #-------------------------------------------------------------------------
 
 def test_assign():
-  s = M( 'out', 'in_' )
-  @check_ast( s )
-  def assign():
+  @check_ast( ['s.in_'], ['s.out.v'] )
+  def assign( s ):
     s.out.v = s.in_
 
 def test_assign_op():
-  s = M( 'out', 'a', 'b', 'c' )
-  @check_ast( s )
-  def assign_op():
+  @check_ast( ['s.a.v', 's.b', 's.c'], ['s.out.v'] )
+  def assign_op( s ):
     s.out.v = s.a.v + s.b + s.c
 
 def test_assign_temp():
-  s = M( 'in_', 'out' )
-  @check_ast( s )
-  def assign_temp():
+  @check_ast( ['s.in_', 'x'], ['x', 's.out.v'] )
+  def assign_temp( s ):
     x = s.in_
     s.out.v = x
 
@@ -66,51 +54,43 @@ def test_assign_temp():
 #-------------------------------------------------------------------------
 
 def test_rd_bit_idx_const():
-  s = M( 'out', 'a', 'b' )
-  @check_ast( s )
-  def rd_bit_idx_const():
+  @check_ast( ['s.a.v[?]', 's.b[?]'], ['s.out.v'] )
+  def rd_bit_idx_const( s ):
     s.out.v = s.a.v[ 0 ] + s.b[ 1 ]
 
 def test_rd_bit_idx_var():
-  s = M( 'out', 'a', 'b', 'c', 'd' )
-  @check_ast( s )
-  def rd_bit_idx_var():
+  @check_ast( ['s.c', 's.a.v[?]', 's.d', 's.b[?]'], ['s.out.v'] )
+  def rd_bit_idx_var( s ):
     s.out.v = s.a.v[ s.c ] & s.b[ s.d ]
 
 def test_rd_bit_idx_slice_const():
-  s = M( 'out', 'a', 'b' )
-  @check_ast( s )
-  def rd_bit_idx_slice_const():
+  @check_ast( ['s.a.v[?]', 's.b[?]'], ['s.out.v'] )
+  def rd_bit_idx_slice_const( s ):
     s.out.v = s.a.v[ 0:2 ] & s.b[ 4:8 ]
 
 def test_rd_bit_idx_slice_var():
-  s = M( 'out', 'a', 's0', 's1' )
-  @check_ast( s )
-  def rd_bit_idx_slice_var():
+  @check_ast( ['s.s0', 's.s1', 's.a.v[?]'], ['s.out.v'] )
+  def rd_bit_idx_slice_var( s ):
     s.out.v = s.a.v[ s.s0:s.s1 ]
 
 def test_wr_bit_idx_const():
-  s = M( 'out', 'in0', 'in1' )
-  @check_ast( s )
-  def wr_bit_idx_const():
+  @check_ast( ['s.in0', 's.in1'], ['s.out.v[?]'] )
+  def wr_bit_idx_const( s ):
     s.out.v[ 0 ] = s.in0 + s.in1
 
 def test_wr_bit_idx_var():
-  s = M( 'out', 'c', 'in0', 'in1' )
-  @check_ast( s )
-  def wr_bit_idx_var():
+  @check_ast( ['s.c', 's.in0', 's.in1'], ['s.out.v[?]'] )
+  def wr_bit_idx_var( s ):
     s.out.v[ s.c ] = s.in0 + s.in1
 
 def test_wr_bit_idx_slice_const():
-  s = M( 'out', 'in0' )
-  @check_ast( s )
-  def wr_bit_idx_slice_const():
+  @check_ast( ['s.in0[?]'], ['s.out.v[?]'] )
+  def wr_bit_idx_slice_const( s ):
     s.out.v[ 0:1 ] = s.in0[ 3:4 ]
 
 def test_wr_bit_idx_slice_var():
-  s = M( 'out', 's0', 's1', 'a' )
-  @check_ast( s )
-  def wr_bit_idx_slice_var():
+  @check_ast( ['s.s0', 's.s1', 's.a.v'], ['s.out.v[?]'] )
+  def wr_bit_idx_slice_var( s ):
     s.out.v[ s.s0:s.s1 ] = s.a.v
 
 #-------------------------------------------------------------------------
@@ -118,63 +98,53 @@ def test_wr_bit_idx_slice_var():
 #-------------------------------------------------------------------------
 
 def test_rd_list_idx_const():
-  s = M( 'out' ).lists( 'a', 'b' )
-  @check_ast( s )
-  def rd_list_idx_const():
+  @check_ast( ['s.a[?].v', 's.b[?].v'], ['s.out.v'] )
+  def rd_list_idx_const( s ):
     s.out.v = s.a[ 0 ].v + s.b[ 1 ].v
 
 def test_rd_list_idx_var():
-  s = M( 'out', 'c', 'd'  ).lists( 'a', 'b' )
-  @check_ast( s )
-  def rd_list_idx_var():
+  @check_ast( ['s.c', 's.a[?].v', 's.d', 's.b[?]'], ['s.out.v'] )
+  def rd_list_idx_var( s ):
     s.out.v = s.a[ s.c ].v & s.b[ s.d ]
 
 def test_rd_list_idx_slice_const():
-  s = M( 'out' ).lists( 'a', 'b' )
-  @check_ast( s )
-  def rd_list_idx_slice_const():
+  @check_ast( ['s.a[?].v', 's.b[?].v'], ['s.out.v'] )
+  def rd_list_idx_slice_const( s ):
     s.out.v = s.a[ 0:2 ].v & s.b[ 4:8 ].v
 
 def test_rd_list_idx_slice_var():
-  s = M( 'out', 's0', 's1' ).lists( 'a' )
-  @check_ast( s )
-  def rd_list_idx_slice_var():
+  @check_ast( ['s.s0', 's.s1', 's.a[?].v'], ['s.out.v'] )
+  def rd_list_idx_slice_var( s ):
     s.out.v = s.a[ s.s0:s.s1 ].v
 
 def test_wr_list_idx_const():
-  s = M( 'in0', 'in1' ).lists( 'out' )
-  @check_ast( s )
-  def wr_list_idx_const():
+  @check_ast( ['s.in0', 's.in1'], ['s.out[?].v'] )
+  def wr_list_idx_const( s ):
     s.out[ 0 ].v = s.in0 + s.in1
 
 def test_wr_list_idx_var():
-  s = M( 'c', 'in0', 'in1' ).lists( 'out' )
-  @check_ast( s )
-  def wr_list_idx_var():
+  @check_ast( ['s.c', 's.in0', 's.in1'], ['s.out[?].v'] )
+  def wr_list_idx_var( s ):
     s.out[ s.c ].v = s.in0 + s.in1
 
 def test_wr_list_idx_slice_const():
-  s = M( 'in0' ).lists( 'out' )
-  @check_ast( s )
-  def wr_list_idx_slice_const():
+  @check_ast( ['s.in0[?]'], ['s.out[?].v'] )
+  def wr_list_idx_slice_const( s ):
     s.out[ 0:1 ].v = s.in0[ 3:4 ]
 
 def test_wr_list_idx_slice_var():
-  s = M( 's0', 's1', 'a' ).lists( 'out' )
-  @check_ast( s )
-  def wr_list_idx_slice_var():
+  @check_ast( ['s.s0', 's.s1', 's.a.v'], ['s.out[?].v'] )
+  def wr_list_idx_slice_var( s ):
     s.out[ s.s0:s.s1 ].v = s.a.v
 
 def test_wr_list_idx_op():
-  s = M( 's0', 'a' ).lists( 'out' )
-  @check_ast( s )
-  def wr_list_idx_slice_op():
+  @check_ast( [], [] )
+  def wr_list_idx_slice_op( s ):
     s.out[i + s.s0].v = s.a.v
 
 def test_wr_list_idx_slice_op():
-  s = M( 's0', 'a' ).lists( 'out' )
-  @check_ast( s )
-  def wr_list_idx_slice_op():
+  @check_ast( [], [] )
+  def wr_list_idx_slice_op( s ):
     s.out[i:i + s.s0].v = s.a.v
 
 #-------------------------------------------------------------------------
@@ -182,18 +152,18 @@ def test_wr_list_idx_slice_op():
 #-------------------------------------------------------------------------
 
 def test_if_else():
-  s = M( 'if0', 'out', 'in0', 'in1' )
-  @check_ast( s )
-  def if_else():
+  # TODO: prevent duplication?
+  @check_ast( ['s.if0', 's.in0', 's.in1'], ['s.out.v', 's.out.v'] )
+  def if_else( s ):
     if s.if0:
       s.out.v = s.in0
     else:
       s.out.v = s.in1
 
 def test_if_elif_else():
-  s = M( 'if0', 'if1', 'out', 'in0', 'in1', 'in2' )
-  @check_ast( s )
-  def if_elif_else():
+  @check_ast( ['s.if0', 's.in0', 's.if1', 's.in1', 's.in2'],
+              ['s.out.v']*3 )
+  def if_elif_else( s ):
     if   s.if0:
       s.out.v = s.in0
     elif s.if1:
@@ -202,9 +172,9 @@ def test_if_elif_else():
       s.out.v = s.in2
 
 def test_if_elif_and():
-  s = M( 'if0', 'if1', 'if2', 'out', 'in0', 'in1', 'in2' )
-  @check_ast( s )
-  def if_elif_and():
+  @check_ast( ['s.if0', 's.if1', 's.in0', 's.if0', 's.if2', 's.in1', 's.in2'],
+              ['s.out.v']*3 )
+  def if_elif_and( s ):
     if   s.if0 and s.if1:
       s.out.v = s.in0
     elif s.if0 and s.if2:
@@ -213,9 +183,9 @@ def test_if_elif_and():
       s.out.v = s.in2
 
 def test_if_elif_elif():
-  s = M( 'if0', 'if1', 'if2', 'out', 'in0', 'in1', 'in2' )
-  @check_ast( s )
-  def if_elif_else():
+  @check_ast( ['s.if0', 's.in0', 's.if1', 's.in1', 's.if2', 's.in2'],
+              ['s.out.v']*3 )
+  def if_elif_else( s ):
     if   s.if0:
       s.out.v = s.in0
     elif s.if1:
@@ -224,9 +194,9 @@ def test_if_elif_elif():
       s.out.v = s.in2
 
 def test_nested_if():
-  s = M( 'if0', 'if1', 'if2', 'out', 'in0', 'in1' )
-  @check_ast( s )
-  def logic():
+  @check_ast( ['s.if0', 's.if1', 's.in0', 's.if2', 's.in1' ],
+              ['s.out.v']*2 )
+  def logic( s ):
     if s.if0:
       if   s.if1:
         s.out.v = s.in0
@@ -234,9 +204,9 @@ def test_nested_if():
         s.out.v = s.in1
 
 def test_nested_else():
-  s = M( 'if0', 'if1', 'if2', 'out', 'in0', 'in1' )
-  @check_ast( s )
-  def logic():
+  @check_ast( ['s.if0', 's.in0', 's.if1', 's.in0', 's.if2', 's.in1' ],
+              ['s.out.v']*3 )
+  def logic( s ):
     if s.if0:
       s.out.v = s.in0
     else:
@@ -246,9 +216,9 @@ def test_nested_else():
         s.out.v = s.in1
 
 def test_nested_elif():
-  s = M( 'if0', 'if1', 'if2', 'if3', 'out', 'in0', 'in1' )
-  @check_ast( s )
-  def logic():
+  @check_ast( ['s.if0', 's.in0', 's.if3', 's.if1', 's.in0', 's.if2', 's.in1' ],
+              ['s.out.v']*3 )
+  def logic( s ):
     if s.if0:
       s.out.v = s.in0
     elif s.if3:
@@ -261,16 +231,13 @@ def test_nested_elif():
 # For Loops
 #-------------------------------------------------------------------------
 def test_for_loop_const():
-  s = M()
-  a = [None]
-  # TODO: fails if a is empty, how to handle this?
-  @check_ast( s )
-  def logic():
+  @check_ast( [], [] )
+  def logic( s ):
     for i in range( 10 ):
       a[i] = i
 
-##-------------------------------------------------------------------------
-## While Loops
-##-------------------------------------------------------------------------
-## TODO
-#
+#-------------------------------------------------------------------------
+# While Loops
+#-------------------------------------------------------------------------
+# TODO
+

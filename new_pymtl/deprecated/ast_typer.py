@@ -7,8 +7,8 @@
 import ast, _ast
 import re
 
-from Bits    import Bits
-from signals import InPort, OutPort
+from ..Bits    import Bits
+from ..signals import InPort, OutPort
 
 #-------------------------------------------------------------------------
 # TypeAST
