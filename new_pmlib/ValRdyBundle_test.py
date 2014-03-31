@@ -7,8 +7,6 @@ from new_pymtl    import *
 from ValRdyBundle import InValRdyBundle, OutValRdyBundle
 from new_pmlib    import TestVectorSimulator
 
-from new_pymtl.translation_tools.verilator_sim import get_verilated
-
 import pytest
 
 #-------------------------------------------------------------------------

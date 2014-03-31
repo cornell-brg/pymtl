@@ -1,11 +1,11 @@
 #=========================================================================
-# mem_msgs Test Suite
+# mem_msgs_test.py
 #=========================================================================
 
 from new_pymtl import *
-import mem_msgs
+from new_pmlib import TestVectorSimulator
 
-from new_pmlib.TestVectorSimulator import TestVectorSimulator
+import mem_msgs
 
 #-------------------------------------------------------------------------
 # test_memreq_slices

@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# PyMTL components
+# model components
 #------------------------------------------------------------------------------
 
 from Model          import Model
@@ -11,8 +11,13 @@ from helpers        import get_nbits, get_sel_nbits, zext, sext, concat
 from helpers        import reduce_and, reduce_or, reduce_xor
 from SignalValue    import CreateWrappedClass
 
-from simulation.SimulationTool       import SimulationTool
-from translation_tools.verilator_sim import get_verilated
+#------------------------------------------------------------------------------
+# tools
+#------------------------------------------------------------------------------
+
+from simulation.SimulationTool import SimulationTool
+from translation.verilator_sim import get_verilated
+from translation.cpp_sim       import get_cpp
 
 #------------------------------------------------------------------------------
 # py.test decorators
@@ -58,6 +63,7 @@ __all__ = [ # Model Construction
             'SimulationTool',
             # TEMPORARY
             'get_verilated',
+            'get_cpp',
             'CreateWrappedClass',
             # Helper Functions
             'get_nbits',

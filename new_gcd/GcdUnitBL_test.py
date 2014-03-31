@@ -4,10 +4,7 @@
 
 from new_pymtl import *
 from new_pmlib import TestSource, TestSink
-
 from GcdUnitBL import GcdUnitBL
-
-from new_pymtl.translation_tools.verilator_sim import get_verilated
 
 #-------------------------------------------------------------------------
 # TestHarness

@@ -1,5 +1,5 @@
 #=========================================================================
-# PipeCtrl Unit Test
+# PipeCtrl_test.py
 #=========================================================================
 # We create a incrementer pipeline (IncrPipe) to test the PipeCtrl unit by
 # instantiating it in the control unit of the IncrPipe model. The pipeline

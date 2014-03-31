@@ -1,11 +1,10 @@
 #=========================================================================
-# Arithmetic Components Test Suite
+# arith_test.py
 #=========================================================================
 
 from new_pymtl import *
 from arith     import *
-
-from TestVectorSimulator import TestVectorSimulator
+from new_pmlib import TestVectorSimulator
 
 #-------------------------------------------------------------------------
 # Adder unit test

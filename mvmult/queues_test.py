@@ -11,8 +11,6 @@ from queues import SingleElementBypassQueue
 from queues import SingleElementPipelinedQueue
 from queues import NormalQueue
 
-from new_pymtl.translation_tools.verilator_sim import get_verilated
-
 #------------------------------------------------------------------------------
 # TestHarness
 #------------------------------------------------------------------------------

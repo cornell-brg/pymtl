@@ -1,13 +1,10 @@
 #=========================================================================
-# Register File Test
+# RegisterFile_test.py
 #=========================================================================
 
-from new_pymtl import *
-import new_pmlib
-
+from new_pymtl    import *
+from new_pmlib    import TestVectorSimulator
 from RegisterFile import RegisterFile
-
-from new_pymtl.translation_tools.verilator_sim import get_verilated
 
 #-------------------------------------------------------------------------
 # Test 1R1W Register File
@@ -56,7 +53,7 @@ def test_regfile_1R1W( dump_vcd, test_verilog ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "plab2-test_regfile_1R1W.vcd" )
   sim.run_test()
@@ -102,7 +99,7 @@ def test_regfile_2R1W( dump_vcd, test_verilog ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "plab2-test_regfile_2R1W.vcd" )
   sim.run_test()

@@ -7,8 +7,6 @@ from new_pmlib        import TestSource, TestMemory, mem_msgs
 from MatrixVecLaneRTL import MatrixVecLaneRTL
 from LaneManager      import LaneManager
 
-from new_pymtl.translation_tools.verilator_sim import get_verilated
-
 import pytest
 
 #------------------------------------------------------------------------------

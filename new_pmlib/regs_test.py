@@ -1,12 +1,10 @@
 #=========================================================================
-# Unit Tests for Registers
+# regs_test.py
 #=========================================================================
 
 from new_pymtl import *
+from new_pmlib import TestVectorSimulator
 from regs      import *
-
-from TestVectorSimulator import TestVectorSimulator
-from new_pymtl.translation_tools.verilator_sim import get_verilated
 
 import pytest
 

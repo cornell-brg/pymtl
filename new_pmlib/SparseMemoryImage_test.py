@@ -1,5 +1,5 @@
 #=========================================================================
-# Sparse Memory Image Test Suite
+# SparseMemoryImage_test.py
 #=========================================================================
 
 from SparseMemoryImage import SparseMemoryImage

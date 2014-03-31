@@ -166,7 +166,7 @@ def gen_pywrapper( top_inports, top_outports ):
 #-----------------------------------------------------------------------
 def create_cpp_py_wrapper( model, wrapper_filename ):
 
-  template_filename = '../new_pymtl/translation_tools/cpp_wrapper.templ.py'
+  template_filename = '../new_pymtl/translation/cpp_wrapper.templ.py'
 
   # translate pymtl      to cpp, cdef
   # compile   cpp        to so

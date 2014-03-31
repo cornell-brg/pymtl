@@ -1,10 +1,9 @@
 #=========================================================================
-# TestVectorSimulator Test Suite
+# TestVectorSimulator_test.py
 #=========================================================================
 
 from new_pymtl import *
-
-from TestVectorSimulator import TestVectorSimulator
+from new_pmlib import TestVectorSimulator
 
 #-------------------------------------------------------------------------
 # Incrementer
