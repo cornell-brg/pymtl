@@ -3,9 +3,7 @@
 #=========================================================================
 # Sequential logic tests for the SimulationTool class.
 
-from Model          import *
-from SimulationTool import *
-from Bits           import Bits
+from new_pymtl import *
 
 #-------------------------------------------------------------------------
 # Setup Sim

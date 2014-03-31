@@ -3,8 +3,7 @@
 #=========================================================================
 # Tests using wires for the SimulationTool class.
 
-from Model          import *
-from SimulationTool import *
+from new_pymtl import *
 
 import pytest
 

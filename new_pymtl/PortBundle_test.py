@@ -2,10 +2,9 @@
 # PortBundle Test Suite
 #=========================================================================
 
-from Model          import *
-from SimulationTool import *
-
-from PortBundle     import PortBundle, create_PortBundles
+from Model      import *
+from simulation import SimulationTool
+from PortBundle import PortBundle, create_PortBundles
 
 import new_pmlib
 

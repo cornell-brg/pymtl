@@ -3,9 +3,7 @@
 #=========================================================================
 # Structural composition tests for the SimulationTool class.
 
-from Model          import *
-from SimulationTool import *
-from Bits           import Bits
+from new_pymtl import *
 
 from SimulationTool_comb_test import verify_bit_blast, set_ports
 
@@ -627,7 +625,7 @@ def test_ConstantModule():
   assert model.out == 0b11011000
   sim.cycle()
 
-from PortBundle_test import InValRdyBundle, OutValRdyBundle
+from ..PortBundle_test import InValRdyBundle, OutValRdyBundle
 #from BitStruct_test  import MemMsg
 
 #-------------------------------------------------------------------------

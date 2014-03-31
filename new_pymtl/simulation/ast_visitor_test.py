@@ -3,8 +3,8 @@
 #=========================================================================
 # Tests for Python AST Visitors.
 
-from ast_visitor import *
-from ast_helpers import get_method_ast
+from ast_visitor   import *
+from ..ast_helpers import get_method_ast
 
 #-------------------------------------------------------------------------
 # AST Visitor Checker: Function Decorator

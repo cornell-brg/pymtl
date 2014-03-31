@@ -10,8 +10,8 @@ from subprocess  import check_output, STDOUT, CalledProcessError
 import tempfile
 import os
 
-from .. import SimulationTool_seq_test    as sequential
-from .. import SimulationTool_struct_test as structural
+from ..simulation import SimulationTool_seq_test    as sequential
+from ..simulation import SimulationTool_struct_test as structural
 
 #-------------------------------------------------------------------------
 # translate

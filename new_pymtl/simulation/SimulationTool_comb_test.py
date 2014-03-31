@@ -3,10 +3,7 @@
 #=========================================================================
 # Combinational logic tests for the SimulationTool class.
 
-from Model          import *
-from SimulationTool import *
-from helpers        import *
-from Bits           import Bits
+from new_pymtl import *
 
 #-------------------------------------------------------------------------
 # Setup Sim
@@ -832,8 +829,6 @@ def test_MultipleWrites():
 # PortBundle
 #-------------------------------------------------------------------------
 # Test to catch strange simulator behavior
-from PortBundle import PortBundle, create_PortBundles
-
 class TestBundle( PortBundle ):
   def __init__( s, nbits ):
     s.a = InPort( nbits )

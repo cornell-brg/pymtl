@@ -4,14 +4,14 @@
 
 from Model          import Model
 from signals        import Wire, InPort, OutPort
-from Bits           import Bits
-from SimulationTool import SimulationTool
 from PortBundle     import PortBundle, create_PortBundles
+from Bits           import Bits
 from BitStruct      import BitStruct, BitStructDefinition, BitField
 from helpers        import get_nbits, get_sel_nbits, zext, sext, concat
 from helpers        import reduce_and, reduce_or, reduce_xor
 from SignalValue    import CreateWrappedClass
 
+from simulation.SimulationTool       import SimulationTool
 from translation_tools.verilator_sim import get_verilated
 
 #------------------------------------------------------------------------------
