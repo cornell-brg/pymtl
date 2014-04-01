@@ -1,6 +1,6 @@
-#==============================================================================
+#=======================================================================
 # verilator_cffi.py
-#==============================================================================
+#=======================================================================
 
 import os
 
@@ -10,9 +10,9 @@ from subprocess   import check_output, STDOUT, CalledProcessError
 from ..signals    import InPort, OutPort
 from ..PortBundle import PortBundle
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # verilog_to_pymtl
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Create a PyMTL compatible interface for Verilog HDL.
 def verilog_to_pymtl( model, filename_v ):
 
@@ -40,9 +40,9 @@ def verilog_to_pymtl( model, filename_v ):
   #pymtl_wrapper_from_ports( in_ports, out_ports, model_name,
   create_verilator_py_wrapper( model, py_wrapper_file, cdefs )
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # verilate_model
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Convert Verilog HDL into a C++ simulator using Verilator.
 # http://www.veripool.org/wiki/verilator
 def verilate_model( filename, model_name ):
@@ -53,9 +53,9 @@ def verilate_model( filename, model_name ):
   print cmd
   os.system( cmd )
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # create_c_wrapper
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Generate a C wrapper file for Verilated C++.
 def create_c_wrapper( model, c_wrapper_file ):
 
@@ -111,9 +111,9 @@ def create_c_wrapper( model, c_wrapper_file ):
 
   return port_decls
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # create_shared_lib
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Compile the cpp wrapper into a shared library.
 def create_shared_lib( model_name, c_wrapper_file ):
 
@@ -161,9 +161,9 @@ def create_shared_lib( model_name, c_wrapper_file ):
       error   = e.output
     ))
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # create_verilator_py_wrapper
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 def create_verilator_py_wrapper( model, wrapper_filename, cdefs ):
 
   template_filename = '../new_pymtl/translation/verilator_wrapper.templ.py'

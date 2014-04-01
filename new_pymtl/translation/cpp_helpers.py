@@ -84,9 +84,9 @@ def gen_pywrapper( top_inports, top_outports ):
     idx = idx[0]
     return sig, idx
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # CSimWrapper
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Inner class for generated python wrapper.
   # TODO: better way?
   class CSimWrapper( object ):
@@ -97,9 +97,9 @@ def gen_pywrapper( top_inports, top_outports ):
       self._ffi      = ffi
       self._top      = ffi.new("iface_t *")
 
-      #-------------------------------------------------------------------
+      #-----------------------------------------------------------------
       # CSimWrapper
-      #-------------------------------------------------------------------
+      #-----------------------------------------------------------------
       # Utilty ListWrapper class for lists of ports
       class ListWrapper( object ):
         def __init__( self, top ):
@@ -113,16 +113,16 @@ def gen_pywrapper( top_inports, top_outports ):
         def __setitem__( self, key, value ):
           self._set[ key ]( self, value )
 
-      #-------------------------------------------------------------------
+      #-----------------------------------------------------------------
       # create_fget
-      #-------------------------------------------------------------------
+      #-----------------------------------------------------------------
       # Utilty method for creating fget
       def create_fget( top, name ):
         return lambda self: getattr( top[0], name )
 
-      #-------------------------------------------------------------------
+      #-----------------------------------------------------------------
       # create_fset
-      #-------------------------------------------------------------------
+      #-----------------------------------------------------------------
       # Utilty method for creating fset
       def create_fset( top, name ):
         return lambda self, value : setattr( top[0], name, value )

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-#=========================================================================
+#=======================================================================
 # verilator_cython.py
-#=========================================================================
+#=======================================================================
 
 import fileinput
 import sys
@@ -11,9 +11,9 @@ import math
 
 import verilog_structural
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # verilog_to_pymtl
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Create a PyMTL compatible interface for Verilog HDL.
 def verilog_to_pymtl( model, filename_v ):
 
@@ -53,9 +53,9 @@ def verilog_to_pymtl( model, filename_v ):
   create_pymtl_wrapper( in_ports, out_ports, model_name,
                         filename_w, vobj_name, xobj_name )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # verilate_model
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Convert Verilog HDL into a C++ simulator using Verilator.
 # http://www.veripool.org/wiki/verilator
 def verilate_model( filename, model_name ):
@@ -66,9 +66,9 @@ def verilate_model( filename, model_name ):
   print cmd
   os.system( cmd )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # get_model_ports
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Return all input and output ports of a PyMTL model.
 def get_model_ports( model_name ):
   # TODO: clean this up, this is getting really messy...
@@ -103,9 +103,9 @@ def get_model_ports( model_name ):
 
   return in_ports, out_ports
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # create_cython
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Generate a Cython wrapper file for Verilated C++.
 def create_cython( in_ports, out_ports, model_name,
                    filename_pyx, vobj_name ):
@@ -219,9 +219,9 @@ def create_cython( in_ports, out_ports, model_name,
   f.write( pyx )
   f.close()
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # create_setup
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Create a setup.py file to compile the Cython Verilator wrapper.
 def create_setup( filename_pyx, vobj_name, model_name ):
   # Generate setup.py
@@ -251,17 +251,17 @@ def create_setup( filename_pyx, vobj_name, model_name ):
 
   f.close()
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # cythonize_model
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Create a Python interface to the Verilated C++ using Cython.
 def cythonize_model( model_name ):
   # Cythonize the verilated module
   os.system( 'python setup_{0}.py build_ext -i -f'.format( model_name ) )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # create_pymtl_wrapper
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Create PyMTL wrapper for Cythonized and Verilated Verilog source.
 def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
                           vobj_name, xobj_name ):
@@ -372,9 +372,9 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   f.close()
 
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Main
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 if __name__ == '__main__':
 
