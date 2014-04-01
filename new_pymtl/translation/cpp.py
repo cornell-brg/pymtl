@@ -4,7 +4,7 @@
 # Tool to translate PyMTL Models into a C simulation object.
 
 from new_pymtl     import *
-from cpp_helpers   import gen_cheader, gen_cdef, gen_csim, gen_pywrapper
+from cpp_helpers   import gen_cheader, gen_cdef, gen_pywrapper
 from ..ast_helpers import get_method_ast, print_simple_ast, print_ast
 from ..SignalValue import SignalValueWrapper
 

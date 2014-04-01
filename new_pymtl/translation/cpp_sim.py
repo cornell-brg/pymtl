@@ -23,13 +23,13 @@ def get_cpp( model_inst ):
   model_name   = model_inst.class_name
   source_file  = model_name + '.cpp'
   temp_file    = model_name + '.cpp.tmp'
-  lib_file     = model_name + '.so'
   wrapper_file = model_name + '_cpp.py'
+  lib_file     = 'lib{}_cpp.so'.format( model_name )
 
   # Write the output to a temporary file
-  fd = open( temp_file, 'w+' )
-  cdef, _ = translate( model_inst, fd )
-  fd.close()
+  cdef = None
+  with open( temp_file, 'w+' ) as fd:
+    cdef, _ = translate( model_inst, fd )
 
   def do_work():
     cmd  = compiler.format( libname = lib_file,
@@ -43,7 +43,7 @@ def get_cpp( model_inst ):
                       )
     #csim, ffi = gen_cppsim ( lib_file, cdef )
     #sim       = CSimWrapper( csim, ffi )
-    create_cpp_py_wrapper( model_inst, wrapper_file )
+    create_cpp_py_wrapper( model_inst, cdef, lib_file, wrapper_file )
 
   # Check if the temporary file matches an existing file (caching)
   cached = False
@@ -67,12 +67,9 @@ def get_cpp( model_inst ):
   __import__( wrapper_file[:-3] )
   imported_module = sys.modules[ wrapper_file[:-3] ]
 
-  # TODO: move this into generated PyMTL cffi wrapper source?
-  clib = os.path.join( os.getcwd(), model_name+'.so' )
-  cmodule, ffi = gen_cppsim( clib, cdef )
-
   # Get the model class from the module, instantiate and elaborate it
   model_class = imported_module.__dict__[ model_name ]
-  model_inst = model_class( cmodule, ffi )
+  model_inst = model_class()
 
   return model_inst
+

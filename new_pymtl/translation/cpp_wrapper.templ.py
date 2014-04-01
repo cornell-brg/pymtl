@@ -3,10 +3,14 @@ from cffi      import FFI
 
 class {model_name}( Model ):
 
-  def __init__( s, cmodule, ffi ):
+  def __init__( s ):
 
-    s._cmodule = cmodule
-    s._ffi     = ffi
+    ffi = FFI()
+    ffi.cdef('''
+      {cdef}
+    ''')
+
+    s._cmodule = ffi.dlopen('./{lib_file}')
     s._top     = ffi.new("iface_t *")
 
     class BundleProxy( PortBundle ):

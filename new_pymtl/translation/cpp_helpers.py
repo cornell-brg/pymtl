@@ -21,18 +21,7 @@ def gen_cppsim( clib, cdef ):
   #return wrap( cmodule )
 
 #-----------------------------------------------------------------------
-# gen_csim
-#-----------------------------------------------------------------------
-# TODO: not implemented, only works if generated code is pure C
-def gen_csim( cstring, cdef ):
-  raise Exception("Doesn't currently work!")
-  ffi = FFI()
-  ffi.cdef( cdef )
-  clib = ffi.verify( cstring )
-  return clib
-
-#-----------------------------------------------------------------------
-# translate
+# gen_cdef
 #-----------------------------------------------------------------------
 # Create the string passed into ffi.cdef
 def gen_cdef( cycle_params, top_ports ):
@@ -164,7 +153,7 @@ def gen_pywrapper( top_inports, top_outports ):
 #-----------------------------------------------------------------------
 # create_cpp_py_wrapper
 #-----------------------------------------------------------------------
-def create_cpp_py_wrapper( model, wrapper_filename ):
+def create_cpp_py_wrapper( model, cdef, lib_file, wrapper_filename ):
 
   template_filename = '../new_pymtl/translation/cpp_wrapper.templ.py'
 
@@ -189,9 +178,6 @@ def create_cpp_py_wrapper( model, wrapper_filename ):
     decl = "s.{}.value = s._top.{}".format( x.name, x.cpp_name[4:] )
     set_outputs.append( decl )
 
-  # todo
-  cdefs       = ''
-
   # pretty printing
   indent_four = '\n    '
   indent_six  = '\n      '
@@ -203,7 +189,8 @@ def create_cpp_py_wrapper( model, wrapper_filename ):
     py_src = template.read()
     py_src = py_src.format(
         model_name  = model.class_name,
-        port_decls  = cdefs,
+        cdef        = cdef,
+        lib_file    = lib_file,
         port_defs   = indent_four.join( port_defs ),
         set_inputs  = indent_six .join( set_inputs ),
         set_outputs = indent_six .join( set_outputs ),
