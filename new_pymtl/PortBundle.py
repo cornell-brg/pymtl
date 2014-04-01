@@ -1,12 +1,12 @@
-#=========================================================================
+#=======================================================================
 # PortBundle
-#=========================================================================
-# This module defines a base class and utility function for creating user
-# defined port bundles.  A user first defines a template class which
-# subclasses PortBundle, and then passes this template class into the
-# create_PortBundles() utility function.  create_PortBundles()
-# will return two new classes that implement the two halves (Left and
-# Right) of the bundle interface.
+#=======================================================================
+# This module defines a base class and utility function for creating
+# user defined port bundles.  A user first defines a template class
+# which # subclasses PortBundle, and then passes this template class
+# into the # create_PortBundles() utility function.
+# create_PortBundles() will return two new classes that implement the
+# two halves (Left and Right) of the bundle interface.
 #
 #   def MyBundle( PortBundle ):
 #     def __init__( nbits ):
@@ -32,11 +32,10 @@
 from metaclasses import MetaListConstructor
 from signals     import InPort, OutPort
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # MetaPortBundle
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Metaclass that customizes PortBundle subclass creation
-
 class MetaPortBundle( MetaListConstructor ):
 
   def __call__( self, *args, **kwargs ):
@@ -57,20 +56,19 @@ class MetaPortBundle( MetaListConstructor ):
     # Return the instance
     return inst
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PortBundle
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Base class for user defined port bundles.  These port bundles should
 # create a definition class which subclasses PortBundle, and then pass
 # the defination class into create_PortBundles to create the input and
 # output versions of the bundle.
-
 class PortBundle( object ):
   __metaclass__ = MetaPortBundle
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _reverse
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Reverse Bundle Direction
   def _reverse( self ):
 
@@ -83,16 +81,16 @@ class PortBundle( object ):
 
     return self
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # get_ports
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Get list of ports in PortBundle.
   def get_ports( self ):
     return self._ports
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # create_PortBundles
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Utility function that takes a user defined PortBundle class and
 # generates the Left and Right (flipped and unflipped) versions of the
 # class.

@@ -1,7 +1,7 @@
-#=========================================================================
+#=======================================================================
 # debug_utils.py
-#=========================================================================
-# Collection of utility functions used for debugging the PyMTL framework.
+#=======================================================================
+# Collection of utility functions used for debugging models.
 
 import Model as model
 import sys

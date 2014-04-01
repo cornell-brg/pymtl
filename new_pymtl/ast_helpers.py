@@ -1,13 +1,13 @@
-#=========================================================================
+#=======================================================================
 # ast_helpers.py
-#=========================================================================
+#=======================================================================
 
 import inspect
 import ast, _ast
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # print_ast
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Print out Python AST with nice indenting. Borrowed shamelessly from:
 # http://alexleone.blogspot.com/2010/01/python-ast-pretty-printer.html
 def print_ast(node, annotate_fields=True, include_attributes=False, indent='  '):
@@ -40,10 +40,11 @@ def print_ast(node, annotate_fields=True, include_attributes=False, indent='  ')
     raise TypeError('expected AST, got %r' % node.__class__.__name__)
   print _format(node)
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # print_simple_ast
-#------------------------------------------------------------------------------
-# Print out Python AST with nice indenting. Borrowed (with modification) from:
+#-----------------------------------------------------------------------
+# Print out Python AST with nice indenting. Borrowed (with modification)
+# from:
 # http://alexleone.blogspot.com/2010/01/python-ast-pretty-printer.html
 def print_simple_ast(node, indent=' '):
 
@@ -82,9 +83,9 @@ def print_simple_ast(node, indent=' '):
     raise TypeError('expected AST, got %r' % node.__class__.__name__)
   print _format(node)
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # get_method_ast
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # In order to parse class methods and inner functions, we need to fix the
 # indentation whitespace or else the ast parser throws an "unexpected
 # ident" error.
@@ -97,9 +98,9 @@ def get_method_ast( func ):
   tree = ast.parse( new_src )
   return tree, new_src
 
-#------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # get_closure_dict
-#------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # http://stackoverflow.com/a/19416942
 def get_closure_dict( fn ):
   closure_objects = [c.cell_contents for c in fn.func_closure]

@@ -1,16 +1,17 @@
-#=========================================================================
+#=======================================================================
 # Model.py
-#=========================================================================
+#=======================================================================
 # Base modeling components for constructing hardware description models.
 #
 # This module contains a collection of classes that can be used to
 # construct MTL (pronounced metal) models. Once constructed, a MTL model
-# can be leveraged by a number of tools for various purposes (simulation,
-# translation into HDLs, etc).
+# can be leveraged by a number of tools for various purposes
+# (simulation, translation into HDLs, etc).
 
 from metaclasses    import MetaCollectArgs
 from ConnectionEdge import ConnectionEdge
 from signals        import Signal, InPort, OutPort, Wire, Constant
+from signal_lists   import PortList
 from PortBundle     import PortBundle
 
 #from physical      import PhysicalDimensions
@@ -20,25 +21,94 @@ import inspect
 import warnings
 import math
 
-#=========================================================================
+#=======================================================================
 # Model
-#=========================================================================
+#=======================================================================
 # User visible base class for hardware models.
 #
-# Provides utility classes for elaborating connectivity between components,
-# giving instantiated subcomponents proper names, and building datastructures
-# that can be leveraged by various MTL tools.
+# Provides utility classes for elaborating connectivity between
+# components, giving instantiated subcomponents proper names, and
+# building datastructures that can be leveraged by various tools.
 #
-# Any user implemented model that wishes to make use of the various MTL tools
-# should subclass this.
+# Any user implemented model that wishes to make use of the various
+# tools should subclass this.
 #
 class Model( object ):
 
   __metaclass__ = MetaCollectArgs
 
+  #=====================================================================
+  # Modeling API
+  #=====================================================================
+
+  #---------------------------------------------------------------------
+  # elaborate_logic (Abstract)
+  #---------------------------------------------------------------------
+  # Abstract method, must be implemented by subclasses!
+  # TODO: use abc module to create abstract method?
+  def elaborate_logic( self ):
+    raise NotImplementedError( "Model '{}' needs to implement the "
+                               "'elaborate_logic()' method!"
+                               "".format( self.class_name ) )
+
   #-----------------------------------------------------------------------
+  # line_trace
+  #-----------------------------------------------------------------------
+  # Having a default line trace makes it easier to just always enable
+  # line tracing in the test harness. -cbatten
+  def line_trace( self ):
+    return ""
+
+  #---------------------------------------------------------------------
+  # Decorators
+  #---------------------------------------------------------------------
+  # TODO: add documentation!
+
+  def tick( self, func ):
+    self._tick_blocks.append( func )
+    func._model = self
+    return func
+
+  def combinational( self, func ):
+    # DEBUG, make permanent to aid debugging?
+    #func.func_name = self.name + '.' + func.func_name
+    self._combinational_blocks.append( func )
+    func._model = self
+    return func
+
+  def posedge_clk( self, func ):
+    self._posedge_clk_blocks.append( func )
+    func._model = self
+    return func
+
+  #---------------------------------------------------------------------
+  # connect
+  #---------------------------------------------------------------------
+  def connect( self, left_port, right_port ):
+
+    if  isinstance( left_port, PortBundle ):
+      self._connect_bundle( left_port, right_port )
+    else:
+      self._connect_signal( left_port, right_port )
+
+    # elif isinstance( left_port, dict ):
+    #   self.connect_dict( left_port )
+
+  #-----------------------------------------------------------------------
+  # connect_dict
+  #-----------------------------------------------------------------------
+  def connect_dict( self, connections ):
+
+   for left_port, right_port in connections.iteritems():
+     self.connect( left_port, right_port )
+
+  #=====================================================================
+  # Tool API
+  #=====================================================================
+
+  #---------------------------------------------------------------------
   # elaborate
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Elaborate a MTL model (construct hierarchy, name modules, etc.).
   #
   # The elaborate() function must be called on an instantiated toplevel
@@ -49,26 +119,64 @@ class Model( object ):
     self._model_classes = set()
 
     # Recursively elaborate each model in the design, starting with top
-    self.recurse_elaborate( self, 'top' )
+    self._recurse_elaborate( self, 'top' )
 
-    # Recursively visit all connections in the design, set directionality
-    self.recurse_connections()
-
-  #-----------------------------------------------------------------------
-  # elaborate_logic (Abstract)
-  #-----------------------------------------------------------------------
-  # Abstract method, must be implemented by subclasses!
-  # TODO: use abc module to create abstract method?
-  def elaborate_logic( self ):
-    raise NotImplementedError( "Model '{}' needs to implement the "
-                               "'elaborate_logic()' method!"
-                               "".format( self.class_name ) )
+    # Visit all connections in the design, set directionality
+    self._recurse_connections()
 
   #-----------------------------------------------------------------------
-  # recurse_elaborate
+  # is_elaborated
   #-----------------------------------------------------------------------
-  # Utility method to perform elaboration on a Model and it's submodules.
-  def recurse_elaborate( self, current_model, instance_name ):
+  # Returns 'True' is elaborate() has been called on the Model.
+  def is_elaborated( self):
+    return hasattr( self, 'class_name' )
+
+  #---------------------------------------------------------------------
+  # Getters
+  #---------------------------------------------------------------------
+
+  def get_inports( self ):
+    return self._inports
+
+  def get_outports( self ):
+    return self._outports
+
+  def get_ports( self, preserve_hierarchy=False ):
+    if not preserve_hierarchy:
+      return self._inports + self._outports
+    else:
+      return self._hports
+
+  def get_wires( self ):
+    return self._wires
+
+  def get_submodules( self ):
+    return self._submodules
+
+  def get_localparams( self ):
+    return self._localparams
+
+  def get_connections( self ):
+    return self._connections
+
+  def get_tick_blocks( self ):
+    return self._tick_blocks
+
+  def get_posedge_clk_blocks( self ):
+    return self._posedge_clk_blocks
+
+  def get_combinational_blocks( self ):
+    return self._combinational_blocks
+
+  #=====================================================================
+  # Internal Methods
+  #=====================================================================
+
+  #---------------------------------------------------------------------
+  # _recurse_elaborate
+  #---------------------------------------------------------------------
+  # Use reflection to set model attributes and elaborate submodels.
+  def _recurse_elaborate( self, current_model, instance_name ):
 
     if current_model.is_elaborated():
       raise Exception("Model {} has already been elaborated!"
@@ -78,7 +186,7 @@ class Model( object ):
     self._model_classes.add( current_model )
 
     # Set Public Attributes
-    current_model.class_name = self.gen_class_name( current_model )
+    current_model.class_name = self._gen_class_name( current_model )
     current_model.parent     = None
     current_model.name       = instance_name
 
@@ -122,21 +230,19 @@ class Model( object ):
     # TODO: do all ports first?
     for name, obj in current_model.__dict__.items():
       if not name.startswith( '_' ):
-        self.check_type( current_model, name, obj )
+        self._check_type( current_model, name, obj )
 
-  #-----------------------------------------------------------------------
-  # check_type
-  #-----------------------------------------------------------------------
-  # Utility method to specialize elaboration actions based on object type.
-  def check_type( self, current_model, name, obj, nested=False ):
+  #---------------------------------------------------------------------
+  # _check_type
+  #---------------------------------------------------------------------
+  # Specialize elaboration actions based on object type.
+  def _check_type( self, current_model, name, obj, nested=False ):
 
-    # Wires
     if   isinstance( obj, Wire ):
       obj.name              = name
       obj.parent            = current_model
       current_model._wires += [ obj ]
 
-    # InPorts
     elif isinstance( obj, InPort ):
       obj.name                = name
       obj.parent              = current_model
@@ -144,7 +250,6 @@ class Model( object ):
       if not nested:
         current_model._hports  += [ obj ]
 
-    # OutPorts
     elif isinstance( obj, OutPort ):
       obj.name                 = name
       obj.parent               = current_model
@@ -152,24 +257,24 @@ class Model( object ):
       if not nested:
         current_model._hports  += [ obj ]
 
-    # PortBundles
+    # TODO: clean this up...
     elif isinstance( obj, PortBundle ):
       obj.name = name
-      # TODO: clean this up...
       for port in obj.get_ports():
-        self.check_type( current_model, name+'.'+port.name, port, nested=True )
+        self._check_type(current_model, name+'.'+port.name, port, nested=True)
       if not nested:
         current_model._hports += [ obj ]
 
     # Submodules
     elif isinstance( obj, Model ):
+      # TODO: remove, throw an exception in _recurse_elaborate
       if obj.is_elaborated():
-        # TODO: make an exception!
-        warnings.warn( "Model '{}' has two parents!!!"
-                       "".format( name ), Warning )
+        warnings.warn( "Model '{}::{}' has two parents!!!"
+                        .format( obj.__class__.__name__, name ) )
         return
+
       # Recursively call elaborate() on the submodule
-      self.recurse_elaborate( obj, name )
+      self._recurse_elaborate( obj, name )
       # Set attributes
       obj.parent                 = current_model
       current_model._submodules += [ obj ]
@@ -178,8 +283,8 @@ class Model( object ):
       obj.parent.connect( obj.reset, obj.parent.reset )
 
     # Local Parameters (int)
+    # TODO: add support for floats?
     elif isinstance( obj, int ):
-      # TODO: add support for floats?
       current_model._localparams.add( (name, obj) )
 
     # Lists of Signals
@@ -195,21 +300,21 @@ class Model( object ):
         if not nested:
           current_model._hports += [ obj ]
       # Iterate through each item in the list and recursively call the
-      # check_type() utility function
+      # _check_type() utility function
       for i, item in enumerate(obj):
         item_name = "%s[%d]" % (name, i)
-        self.check_type( current_model, item_name, item, nested=True )
+        self._check_type( current_model, item_name, item, nested=True )
 
-  #-----------------------------------------------------------------------
-  # gen_class_name
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
+  # _gen_class_name
+  #---------------------------------------------------------------------
   # Generate a unique class name for model instances.
-  def gen_class_name( self, model ):
+  def _gen_class_name( self, model ):
 
     # Base name is always just the class name
     name = model.__class__.__name__
 
-    # Generate a unique name for the Model instance based on its parameters
+    # Generate a unique name for the Model instance based on its params
     # http://stackoverflow.com/a/5884123
     try:
       hashables = frozenset({ x for x in model._args.items()
@@ -220,25 +325,25 @@ class Model( object ):
     except AttributeError:
       return name
 
-  #-----------------------------------------------------------------------
-  # recurse_connections
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
+  # _recurse_connections
+  #---------------------------------------------------------------------
   # Set the directionality on all connections in the design of a Model.
-  def recurse_connections(self):
+  def _recurse_connections(self):
 
     # Set direction of all connections
     for c in self._connections:
-      self.set_edge_direction( c )
+      self._set_edge_direction( c )
 
     # Recursively enter submodules
     for submodule in self._submodules:
-      submodule.recurse_connections()
+      submodule._recurse_connections()
 
-  #-----------------------------------------------------------------------
-  # set_edge_direction
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
+  # _set_edge_direction
+  #---------------------------------------------------------------------
   # Set the edge direction of a single ConnectionEdge.
-  def set_edge_direction(self, edge):
+  def _set_edge_direction(self, edge):
 
     a = edge.src_node
     b = edge.dest_node
@@ -292,89 +397,11 @@ class Model( object ):
            isinstance( a, InPort  ) and isinstance( b, OutPort )):
       edge.swap_direction()
 
-  #-----------------------------------------------------------------------
-  # __setattr__
-  #-----------------------------------------------------------------------
-
-  #def __setattr__( self, name, value ):
-  #  if name in self.__dict__ and isinstance( self.__dict__[ name ], Bits):
-  #    self.__dict__[ name ].uint = value
-  #  else:
-  #    self.__dict__[ name ] = value
-
-  #-----------------------------------------------------------------------
-  # Getters
-  #-----------------------------------------------------------------------
-
-  def get_inports( self ):
-    return self._inports
-
-  def get_outports( self ):
-    return self._outports
-
-  def get_ports( self, preserve_hierarchy=False ):
-    if not preserve_hierarchy:
-      return self._inports + self._outports
-    else:
-      return self._hports
-
-  def get_wires( self ):
-    return self._wires
-
-  def get_submodules( self ):
-    return self._submodules
-
-  def get_localparams( self ):
-    return self._localparams
-
-  def get_connections( self ):
-    return self._connections
-
-  def get_tick_blocks( self ):
-    return self._tick_blocks
-
-  def get_posedge_clk_blocks( self ):
-    return self._posedge_clk_blocks
-
-  def get_combinational_blocks( self ):
-    return self._combinational_blocks
-
-  #-----------------------------------------------------------------------
-  # Decorators
-  #-----------------------------------------------------------------------
-  # TODO: add documentation!
-
-  def tick( self, func ):
-    self._tick_blocks.append( func )
-    func._model = self
-    return func
-
-  def combinational( self, func ):
-    # DEBUG, make permanent to aid debugging?
-    #func.func_name = self.name + '.' + func.func_name
-    self._combinational_blocks.append( func )
-    func._model = self
-    return func
-
-  def posedge_clk( self, func ):
-    self._posedge_clk_blocks.append( func )
-    func._model = self
-    return func
-
-  #-----------------------------------------------------------------------
-  # connect
-  #-----------------------------------------------------------------------
-  def connect( self, left_port, right_port ):
-
-    if  isinstance( left_port, PortBundle ):
-      self.connect_bundle( left_port, right_port )
-    else:
-      self.connect_signal( left_port, right_port )
-
-  #-----------------------------------------------------------------------
-  # connect_signal
-  #-----------------------------------------------------------------------
-  def connect_signal( self, left_port, right_port ):
+  #---------------------------------------------------------------------
+  # _connect_signal
+  #---------------------------------------------------------------------
+  # Connect a single pair of Signal objects.
+  def _connect_signal( self, left_port, right_port ):
 
     # Can't connect a port to itself!
     assert left_port != right_port
@@ -390,23 +417,10 @@ class Model( object ):
     self._connections.add( connection_edge )
 
   #-----------------------------------------------------------------------
-  # connect_dict
+  # _connect_bundle
   #-----------------------------------------------------------------------
-  def connect_dict( self, connections ):
-
-   for left_port, right_port in connections.iteritems():
-     self.connect( left_port, right_port )
-
-  #def connect( left, right=None ):
-  # if type(left) == dict:
-  #   connect_dict( left )
-  # else:
-  #   connect_ports( left, right )
-
-  #-----------------------------------------------------------------------
-  # connect_bundle
-  #-----------------------------------------------------------------------
-  def connect_bundle( self, left_bundle, right_bundle ):
+  # Connect all Signal object pairs in a PortBundle.
+  def _connect_bundle( self, left_bundle, right_bundle ):
 
     # Can't connect a port to itself!
     assert left_bundle != right_bundle
@@ -414,43 +428,5 @@ class Model( object ):
     ports = zip( left_bundle.get_ports(), right_bundle.get_ports() )
 
     for left, right in ports:
-      self.connect_signal( left, right )
-
-  #-----------------------------------------------------------------------
-  # register_combinational
-  #-----------------------------------------------------------------------
-  # Explicitly register functions callbacks to the signals provided
-  # in sensitivity_list.
-  # TODO: Add this back in later?
-  #def register_combinational( self, func_name, sensitivity_list ):
-  #  self._newsenses = collections.defaultdict( list )
-  #  self._newsenses[ func_name ] = sensitivity_list
-
-  #-----------------------------------------------------------------------
-  # dump_physical_design
-  #-----------------------------------------------------------------------
-  # Print out the physical design.
-  # TODO: Add this back in later?
-  #def dump_physical_design( self, prefix='' ):
-  #  pass
-
-  #-----------------------------------------------------------------------
-  # is_elaborated
-  #-----------------------------------------------------------------------
-  # Returns 'True' is elaborate() has been called on the Model.
-  def is_elaborated( self):
-    return hasattr( self, 'class_name' )
-
-  #-----------------------------------------------------------------------
-  # line_trace
-  #-----------------------------------------------------------------------
-  # Having a default line trace makes it easier to just always enable
-  # line tracing in the test harness. -cbatten
-  def line_trace( self ):
-    return ""
-
-
-class PortList( list ):
-  def get_ports( self ):
-    return self
+      self._connect_signal( left, right )
 
