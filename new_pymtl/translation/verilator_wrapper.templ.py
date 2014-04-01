@@ -15,7 +15,7 @@ class {model_name}( Model ):
       {port_decls}
     ''')
 
-    s._model = ffi.dlopen('./{model_name}.so')
+    s._model = ffi.dlopen('./{lib_file}')
     s._model.create_model()
 
     class BundleProxy( PortBundle ):

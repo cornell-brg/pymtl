@@ -23,8 +23,8 @@ def get_verilated( model_inst ):
   verilog_file    = model_name + '.v'
   temp_file       = model_name + '.v.tmp'
   c_wrapper_file  = model_name + '_v.cpp'
-  lib_file        = model_name + '_v.so'
   py_wrapper_file = model_name + '_v.py'
+  lib_file        = 'lib{}_v.so'.format( model_name )
 
   # Write the output to a temporary file
   with open( temp_file, 'w+' ) as fd:
@@ -43,7 +43,8 @@ def get_verilated( model_inst ):
   # Verilate the module only if we've updated the verilog source
   if not cached:
     print "NOT CACHED", verilog_file
-    verilog_to_pymtl( model_inst, verilog_file )
+    verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
+                      lib_file, py_wrapper_file )
 
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )

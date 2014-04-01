@@ -14,16 +14,13 @@ from ..PortBundle import PortBundle
 # verilog_to_pymtl
 #-----------------------------------------------------------------------
 # Create a PyMTL compatible interface for Verilog HDL.
-def verilog_to_pymtl( model, filename_v ):
+def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
+                      lib_file, py_wrapper_file ):
 
   model_name = model.class_name
 
-  # Output file names
-  c_wrapper_file  = model_name + '_v.cpp'
-  py_wrapper_file = model_name + '_v.py'
-
   # Verilate the model
-  verilate_model( filename_v, model_name )  # TODO: clean this up
+  verilate_model( verilog_file, model_name )  # TODO: clean this up
 
   # Add names to ports of module
   for port in model.get_ports():
@@ -34,11 +31,11 @@ def verilog_to_pymtl( model, filename_v ):
   cdefs = create_c_wrapper( model, c_wrapper_file )
 
   # Create Shared C Library
-  create_shared_lib( model_name, c_wrapper_file )
+  create_shared_lib( model_name, c_wrapper_file, lib_file )
 
   # Create PyMTL wrapper for CFFI interface to Verilated model
   #pymtl_wrapper_from_ports( in_ports, out_ports, model_name,
-  create_verilator_py_wrapper( model, py_wrapper_file, cdefs )
+  create_verilator_py_wrapper( model, py_wrapper_file, lib_file, cdefs )
 
 #-----------------------------------------------------------------------
 # verilate_model
@@ -115,14 +112,14 @@ def create_c_wrapper( model, c_wrapper_file ):
 # create_shared_lib
 #-----------------------------------------------------------------------
 # Compile the cpp wrapper into a shared library.
-def create_shared_lib( model_name, c_wrapper_file ):
+def create_shared_lib( model_name, c_wrapper_file, lib_file ):
 
   # Compiler template string
   compile_cmd  = 'g++ {flags} -I {verilator} -o {libname} {cpp_sources}'
 
   flags        = '-O3 -fPIC -shared'
   verilator    = '{}/include'.format( os.environ['VERILATOR_ROOT'] )
-  libname      = '{model_name}.so'
+  libname      = lib_file
   cpp_sources  = ' '.join( [
                    'obj_dir_{model_name}/V{model_name}.cpp',
                    'obj_dir_{model_name}/V{model_name}__Syms.cpp',
@@ -164,7 +161,7 @@ def create_shared_lib( model_name, c_wrapper_file ):
 #-----------------------------------------------------------------------
 # create_verilator_py_wrapper
 #-----------------------------------------------------------------------
-def create_verilator_py_wrapper( model, wrapper_filename, cdefs ):
+def create_verilator_py_wrapper( model, wrapper_filename, lib_file, cdefs ):
 
   template_filename = '../new_pymtl/translation/verilator_wrapper.templ.py'
 
@@ -199,6 +196,7 @@ def create_verilator_py_wrapper( model, wrapper_filename, cdefs ):
     py_src = py_src.format(
         model_name  = model.class_name,
         port_decls  = cdefs,
+        lib_file    = lib_file,
         port_defs   = indent_four.join( port_defs ),
         set_inputs  = indent_six .join( set_inputs ),
         set_comb    = indent_six .join( set_comb ),
