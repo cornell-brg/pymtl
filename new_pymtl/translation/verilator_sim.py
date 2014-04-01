@@ -16,17 +16,19 @@ import filecmp
 def get_verilated( model_inst ):
 
   model_inst.elaborate()
-  model_name = model_inst.class_name
 
   # Translate the PyMTL module to Verilog, if we've already done
   # translation check if there's been any changes to the source
-  verilog_file = model_name + '.v'
-  temp_file    = verilog_file + '.tmp'
+  model_name      = model_inst.class_name
+  verilog_file    = model_name + '.v'
+  temp_file       = model_name + '.v.tmp'
+  c_wrapper_file  = model_name + '_v.cpp'
+  lib_file        = model_name + '_v.so'
+  py_wrapper_file = model_name + '_v.py'
 
   # Write the output to a temporary file
-  fd = open( temp_file, 'w+' )
-  verilog.translate( model_inst, fd )
-  fd.close()
+  with open( temp_file, 'w+' ) as fd:
+    verilog.translate( model_inst, fd )
 
   # Check if the temporary file matches an existing file (caching)
   cached = False
@@ -45,8 +47,8 @@ def get_verilated( model_inst ):
 
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )
-  __import__( 'W' + model_name )
-  imported_module = sys.modules[ 'W'+model_name ]
+  __import__( py_wrapper_file[:-3] )
+  imported_module = sys.modules[ py_wrapper_file[:-3] ]
 
   # Get the model class from the module, instantiate and elaborate it
   model_class = imported_module.__dict__[ model_name ]
