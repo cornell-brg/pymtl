@@ -1,6 +1,6 @@
-#=========================================================================
+#=======================================================================
 # SimulationTool.py
-#=========================================================================
+#=======================================================================
 # Tool for simulating hardware models.
 #
 # This module contains classes which construct a model simulator for
@@ -17,18 +17,18 @@ from ..ast_helpers     import get_method_ast
 from ast_visitor       import DetectLoadsAndStores
 from SimulationMetrics import SimulationMetrics, DummyMetrics
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SimulationTool
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # User visible class implementing a tool for simulating hardware models.
 #
-# This class takes a model instance and creates a simulator for execution
-# in the Python interpreter.
+# This class takes a model instance and creates a simulator for
+# execution in the Python interpreter.
 class SimulationTool( object ):
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # __init__
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Construct a simulator based on the provided model.
   def __init__( self, model, collect_metrics = False ):
 
@@ -67,16 +67,16 @@ class SimulationTool( object ):
     # Actually construct the simulator
     self._construct_sim()
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # eval_combinational
-  #-----------------------------------------------------------------------
-  # Evaluates all combinational logic blocks currently in the event queue.
+  #---------------------------------------------------------------------
+  # Evaluate all combinational logic blocks currently in the eventqueue.
   def eval_combinational( self ):
     pass
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _debug_eval
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Implementation of eval_combinational() for use during
   # develop-test-debug loops.
   def _dev_eval( self ):
@@ -85,34 +85,21 @@ class SimulationTool( object ):
       self.metrics.incr_comb_evals( func )
       func()
       self._current_func = None
-      #try:
-      #  self.metrics.incr_comb_evals( func )
-      #  func()
-      #  self._current_func = None
-      #except TypeError:
-      #  # TODO: can we catch this at static elaboration?
-      #  raise Exception("Concurrent block '{}' must take no parameters!\n"
-      #                  "file: {}\n"
-      #                  "line: {}\n"
-      #                  "".format( func.func_name,
-      #                             func.func_code.co_filename,
-      #                             func.func_code.co_firstlineno ) )
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _perf_eval
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Implementation of eval_combinataional () for use when benchmarking
   # models.
   def _perf_eval( self ):
     while self._event_queue.len():
-      #self._event_queue.eval()
       self._current_func = func = self._event_queue.deq()
       func()
       self._current_func = None
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # cycle
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Advances the simulator by a single clock cycle, executing all
   # sequential @tick and @posedge_clk blocks defined in the design, as
   # well as any @combinational blocks that have been added to the event
@@ -122,9 +109,9 @@ class SimulationTool( object ):
   def cycle( self ):
     pass
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _debug_cycle
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Implementation of cycle() for use during develop-test-debug loops.
   def _dev_cycle( self ):
 
@@ -162,9 +149,9 @@ class SimulationTool( object ):
     # Tell the metrics module to prepare for the next cycle
     self.metrics.incr_metrics_cycle()
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _perf_cycle
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Implementation of cycle() for use when benchmarking models.
   def _perf_cycle( self ):
 
@@ -186,9 +173,9 @@ class SimulationTool( object ):
     # Increment the simulator cycle count
     self.ncycles += 1
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # reset
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Sets the reset signal high and cycles the simulator.
   def reset( self ):
     self.model.reset.v = 1
@@ -196,16 +183,16 @@ class SimulationTool( object ):
     self.cycle()
     self.model.reset.v = 0
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # print_line_trace
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Print cycle number and line trace of model.
   def print_line_trace( self ):
     print "{:>3}:".format( self.ncycles ), self.model.line_trace()
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # add_event
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Add an event to the simulator event queue for later execution.
   #
   # This function will check if the written SignalValue instance has any
@@ -220,11 +207,6 @@ class SimulationTool( object ):
 
     self.metrics.incr_add_events()
 
-    # Execute all slice callbacks immediately
-
-    #for func in signal_value._slices:
-    #  func()
-
     # Place all other callbacks in the event queue for execution later
 
     for func in signal_value._callbacks:
@@ -232,19 +214,20 @@ class SimulationTool( object ):
       if func != self._current_func:
         self._event_queue.enq( func.cb, func.id )
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _construct_sim
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Construct a simulator for the provided model.
   def _construct_sim( self ):
     self._create_nets( self.model )
     self._insert_signal_values()
     self._register_decorated_functions( self.model )
     self._create_slice_callbacks()
+    self._register_cffi_updates()
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _create_nets
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Generate nets describing structural connections in the model.  Each
   # net describes a set of Signal objects which have been interconnected,
   # either directly or indirectly, by calls to connect().
@@ -265,6 +248,9 @@ class SimulationTool( object ):
     #pprint.pprint( model.get_connections(), indent=3 )
     #pprint.pprint( t, indent=3 )
 
+    #-------------------------------------------------------------------
+    # collect_signals
+    #-------------------------------------------------------------------
     # Utility function to collect all the Signal type objects (ports,
     # wires, constants) in the model.
     def collect_signals( model ):
@@ -276,6 +262,9 @@ class SimulationTool( object ):
 
     signals = collect_signals( model )
 
+    #-------------------------------------------------------------------
+    # valid_connection
+    #-------------------------------------------------------------------
     # Utility function to filter only supported connections: ports, and
     # wires.  No slices or Constants.
     def valid_connection( c ):
@@ -286,6 +275,9 @@ class SimulationTool( object ):
       else:
         return True
 
+    #-------------------------------------------------------------------
+    # iter_dfs
+    #-------------------------------------------------------------------
     # Iterative Depth-First-Search algorithm, borrowed from Listing 5-5
     # in 'Python Algorithms': http://www.apress.com/9781430232377/
     def iter_dfs( s ):
@@ -316,9 +308,9 @@ class SimulationTool( object ):
         signals.discard( i )
       self._nets.append( net )
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _insert_signal_values
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Transform each net into a single SignalValue object. Model attributes
   # currently referencing Signal objects will be modified to reference
   # the SignalValue object of their associated net instead.
@@ -332,11 +324,17 @@ class SimulationTool( object ):
 
     # Utility functions which create SignalValue callbacks.
 
+    #-------------------------------------------------------------------
+    # create_comb_update_cb
+    #-------------------------------------------------------------------
     def create_comb_update_cb( sim, svalue ):
       def notify_sim_comb_update():
         sim.add_event( svalue )
       return notify_sim_comb_update
 
+    #-------------------------------------------------------------------
+    # create_seq_update_cb
+    #-------------------------------------------------------------------
     def create_seq_update_cb( sim, svalue ):
       def notify_sim_seq_update():
         sim._register_queue.append( svalue )
@@ -389,9 +387,9 @@ class SimulationTool( object ):
         # (Needed for VCD tracing and slice logic generator).
         x._signalvalue = svalue
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _register_decorated_functions
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # Register all decorated @tick, @posedge_clk, and @combinational
   # functions with the simulator.  Sequential logic blocks get called
   # any time cycle() is called, combinational logic blocks are registered
@@ -403,6 +401,9 @@ class SimulationTool( object ):
     self._sequential_blocks.extend( model._tick_blocks )
     self._sequential_blocks.extend( model._posedge_clk_blocks )
 
+    #-------------------------------------------------------------------
+    # name_to_object
+    #-------------------------------------------------------------------
     # Utility function to turn attributes/names acquired from the ast
     # into Python objects
     # TODO: should never use eval... but this is easy
@@ -428,12 +429,15 @@ class SimulationTool( object ):
         x = eval( name )
         if   isinstance( x, SignalValue ): return x
         elif isinstance( x, list        ): return ( x, name, extra )
-        else:                                    raise NameError
+        else:                              raise NameError
       except NameError:
         warnings.warn( "Cannot add variable '{}' to sensitivity list."
                        "".format( name ), Warning )
         return None
 
+    #-------------------------------------------------------------------
+    # add_senses
+    #-------------------------------------------------------------------
     # Utility function to recursively add signals/lists of signals to
     # the sensitivity list.
     def add_senses( name ):
@@ -485,9 +489,9 @@ class SimulationTool( object ):
     for m in model.get_submodules():
       self._register_decorated_functions( m )
 
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # _create_slice_callbacks
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
   # All ConnectionEdges that contain bit slicing need to be turned into
   # combinational blocks.  This significantly simplifies the connection
   # graph update logic.
@@ -526,9 +530,25 @@ class SimulationTool( object ):
         self.metrics.reg_eval( func_ptr.cb, is_slice = True )
         #self._DEBUG_signal_cbs[ signal_value ].append( func_ptr )
 
-#-------------------------------------------------------------------------
+  #---------------------------------------------------------------------
+  # _register_cffi_updates
+  #---------------------------------------------------------------------
+  def _register_cffi_updates( self ):
+
+    def visit_models( m ):
+      if hasattr( m, '_cffi_update' ):
+        for port, func_ptr in m._cffi_update.items():
+          signal_value = port._signalvalue
+          signal_value.register_slice( func_ptr )
+      # TODO: make recursive
+      #for subm in m.get_submodules():
+      #  visit_models( subm )
+
+    visit_models( self.model )
+
+#-----------------------------------------------------------------------
 # EventQueue
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class EventQueue( object ):
 
   def __init__( self, initsize = 1000 ):

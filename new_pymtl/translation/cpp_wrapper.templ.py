@@ -18,16 +18,17 @@ class {model_name}( Model ):
 
     {port_defs}
 
+    # Set Input Callbacks
+    s._cffi_update = {{}}
+    {set_inputs}
+
   def elaborate_logic( s ):
 
     #@s.combinational
     #def logic():
 
-    @s.posedge_clk
-    def tick():
-
-      # Set inputs
-      {set_inputs}
+    @s.tick
+    def seq_logic():
 
       # Cycle
       s._cmodule.cycle( s.clk, s.reset, s._top )

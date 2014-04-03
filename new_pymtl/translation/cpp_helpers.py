@@ -166,15 +166,17 @@ def create_cpp_py_wrapper( model, cdef, lib_file, wrapper_filename ):
   set_inputs  = []
   set_outputs = []
 
-  for x in  model.get_ports( preserve_hierarchy=True ):
+  for x in model.get_ports( preserve_hierarchy=True ):
     recurse_port_hierarchy( x, port_defs )
 
-  for x in  model.get_inports():
+  for x in model.get_inports():
     if x.name in ['clk', 'reset']: continue  # TODO: remove me!
-    decl = "s._top.{} = s.{}.uint()".format( x.cpp_name[4:], x.name )
-    set_inputs.append( decl )
+    decl    = "lambda: setattr( s._top, '{}', s.{}.uint() )" \
+              .format( x.cpp_name[4:], x.name )
+    call    = "s._cffi_update[ s.{} ] = {}".format( x.name, decl )
+    set_inputs.append( call )
 
-  for x in  model.get_outports():
+  for x in model.get_outports():
     decl = "s.{}.value = s._top.{}".format( x.name, x.cpp_name[4:] )
     set_outputs.append( decl )
 
@@ -183,8 +185,8 @@ def create_cpp_py_wrapper( model, cdef, lib_file, wrapper_filename ):
   indent_six  = '\n      '
 
   # create source
-  with open( template_filename , 'r' ) as template, \
-       open( wrapper_filename,   'w' ) as output:
+  with open( template_filename, 'r' ) as template, \
+       open( wrapper_filename,  'w' ) as output:
 
     py_src = template.read()
     py_src = py_src.format(
@@ -192,7 +194,7 @@ def create_cpp_py_wrapper( model, cdef, lib_file, wrapper_filename ):
         cdef        = cdef,
         lib_file    = lib_file,
         port_defs   = indent_four.join( port_defs ),
-        set_inputs  = indent_six .join( set_inputs ),
+        set_inputs  = indent_four.join( set_inputs ),
         set_outputs = indent_six .join( set_outputs ),
     )
 
