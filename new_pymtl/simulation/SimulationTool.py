@@ -17,6 +17,8 @@ from ..ast_helpers     import get_method_ast
 from ast_visitor       import DetectLoadsAndStores
 from SimulationMetrics import SimulationMetrics, DummyMetrics
 
+from sim_utils         import connections_to_nets
+
 #-----------------------------------------------------------------------
 # SimulationTool
 #-----------------------------------------------------------------------
@@ -40,16 +42,20 @@ class SimulationTool( object ):
 
     self.model                = model
     self.ncycles              = 0
-    self._nets                = []
+
     self._sequential_blocks   = []
     self._register_queue      = []
     self._event_queue         = EventQueue()
     self._current_func        = None
-    self._slice_connects      = set() # TODO: temporary hack
+
+    self._nets                = None # TODO: remove me
+
     #self._DEBUG_signal_cbs    = collections.defaultdict(list)
+
 
     # Only collect metrics if they are enabled, otherwise replace
     # with a dummy collection class.
+
     if collect_metrics:
       self.metrics            = SimulationMetrics()
     else:
@@ -57,6 +63,7 @@ class SimulationTool( object ):
 
     # If the -O flag was passed to Python, use the perf implementation
     # of cycle, otherwise use the dev version.
+
     if flags.optimize:
       self.cycle              = self._perf_cycle
       self.eval_combinational = self._perf_eval
@@ -64,8 +71,16 @@ class SimulationTool( object ):
       self.cycle              = self._dev_cycle
       self.eval_combinational = self._dev_eval
 
-    # Actually construct the simulator
-    self._construct_sim()
+
+    # Construct a simulator for the provided model.
+
+    nets, slice_connections = connections_to_nets( self.model )
+    self._insert_signal_values( nets )
+    self._register_decorated_functions( self.model )
+    self._create_slice_callbacks( slice_connections )
+    self._register_cffi_updates()
+
+    self._nets = nets
 
   #---------------------------------------------------------------------
   # eval_combinational
@@ -214,99 +229,6 @@ class SimulationTool( object ):
       if func != self._current_func:
         self._event_queue.enq( func.cb, func.id )
 
-  #---------------------------------------------------------------------
-  # _construct_sim
-  #---------------------------------------------------------------------
-  # Construct a simulator for the provided model.
-  def _construct_sim( self ):
-    self._create_nets( self.model )
-    self._insert_signal_values()
-    self._register_decorated_functions( self.model )
-    self._create_slice_callbacks()
-    self._register_cffi_updates()
-
-  #---------------------------------------------------------------------
-  # _create_nets
-  #---------------------------------------------------------------------
-  # Generate nets describing structural connections in the model.  Each
-  # net describes a set of Signal objects which have been interconnected,
-  # either directly or indirectly, by calls to connect().
-  def _create_nets( self, model ):
-
-    # DEBUG
-    #print 70*'-'
-    #print "Model:", model
-    #print "Ports:"
-    #pprint.pprint( model.get_ports(), indent=3 )
-    #print "Submodules:"
-    #pprint.pprint( model.get_submodules(), indent=3 )
-
-    #def a_printer( some_set ):
-    #  return [ x.parent.name + '.' + x.name for x in some_set ]
-    #t = [ a_printer( [ x.src_node, x.dest_node] ) for x in model.get_connections() ]
-    #print "Connections:"
-    #pprint.pprint( model.get_connections(), indent=3 )
-    #pprint.pprint( t, indent=3 )
-
-    #-------------------------------------------------------------------
-    # collect_signals
-    #-------------------------------------------------------------------
-    # Utility function to collect all the Signal type objects (ports,
-    # wires, constants) in the model.
-    def collect_signals( model ):
-      self.metrics.reg_model( model )
-      signals = set( model.get_ports() + model.get_wires() )
-      for m in model.get_submodules():
-        signals.update( collect_signals( m ) )
-      return signals
-
-    signals = collect_signals( model )
-
-    #-------------------------------------------------------------------
-    # valid_connection
-    #-------------------------------------------------------------------
-    # Utility function to filter only supported connections: ports, and
-    # wires.  No slices or Constants.
-    def valid_connection( c ):
-      if c.src_slice != None or c.dest_slice != None:
-        # TEMPORARY HACK, remove slice connections from connections?
-        self._slice_connects.add( c )
-        return False
-      else:
-        return True
-
-    #-------------------------------------------------------------------
-    # iter_dfs
-    #-------------------------------------------------------------------
-    # Iterative Depth-First-Search algorithm, borrowed from Listing 5-5
-    # in 'Python Algorithms': http://www.apress.com/9781430232377/
-    def iter_dfs( s ):
-      S, Q = set(), []
-      Q.append( s )
-      while Q:
-        u = Q.pop()
-        if u in S: continue
-        S.add( u )
-        connected_signals = [ x.other( u ) for x in u.connections
-                              if valid_connection( x ) ]
-        Q.extend( connected_signals )
-        #yield u
-      return S
-
-    # Initially signals contains all the Signal type objects in the
-    # model.  We perform a depth-first search on the connections of each
-    # Signal object, and remove connected objects from the signals set.
-    # The result is a collection of nets describing structural
-    # connections in the design. Each independent net will later be
-    # transformed into a single SignalValue object.
-    while signals:
-      s = signals.pop()
-      net = iter_dfs( s )
-      for i in net:
-        #if i is not s:
-        #  signals.remove( i )
-        signals.discard( i )
-      self._nets.append( net )
 
   #---------------------------------------------------------------------
   # _insert_signal_values
@@ -314,13 +236,7 @@ class SimulationTool( object ):
   # Transform each net into a single SignalValue object. Model attributes
   # currently referencing Signal objects will be modified to reference
   # the SignalValue object of their associated net instead.
-  def _insert_signal_values( self ):
-
-    # DEBUG
-    #print
-    #print "NODE SETS"
-    #for set in self._nets:
-    #  print '    ', [ x.parent.name + '.' + x.name for x in set ]
+  def _insert_signal_values( self, nets ):
 
     # Utility functions which create SignalValue callbacks.
 
@@ -343,7 +259,7 @@ class SimulationTool( object ):
     # Each grouping represents a single SignalValue object. Perform a swap
     # so that all attributes currently pointing to Signal objects in this
     # grouping instead point to the SignalValue.
-    for group in self._nets:
+    for group in nets:
 
       # Get an element out of the set and use it to determine the bitwidth
       # of the net, needed to create a properly sized SignalValue object.
@@ -495,7 +411,7 @@ class SimulationTool( object ):
   # All ConnectionEdges that contain bit slicing need to be turned into
   # combinational blocks.  This significantly simplifies the connection
   # graph update logic.
-  def _create_slice_callbacks( self ):
+  def _create_slice_callbacks( self, slice_connects ):
 
     # Utility function to create our callback
     def create_slice_cb_closure( c ):
@@ -510,7 +426,7 @@ class SimulationTool( object ):
         dest_bits.v = src[ src_addr ]
       return slice_cb
 
-    for c in self._slice_connects:
+    for c in slice_connects:
       src = c.src_node._signalvalue
       # If slice is connect to a Constant, don't create a callback.
       # Just write the constant value now.
@@ -545,6 +461,7 @@ class SimulationTool( object ):
       #  visit_models( subm )
 
     visit_models( self.model )
+
 
 #-----------------------------------------------------------------------
 # EventQueue
