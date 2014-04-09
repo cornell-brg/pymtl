@@ -83,34 +83,21 @@ class SimulationTool( object ):
     self._nets = nets
 
   #---------------------------------------------------------------------
-  # eval_combinational
+  # reset
   #---------------------------------------------------------------------
-  # Evaluate all combinational logic blocks currently in the eventqueue.
-  def eval_combinational( self ):
-    pass
+  # Sets the reset signal high and cycles the simulator.
+  def reset( self ):
+    self.model.reset.v = 1
+    self.cycle()
+    self.cycle()
+    self.model.reset.v = 0
 
   #---------------------------------------------------------------------
-  # _debug_eval
+  # print_line_trace
   #---------------------------------------------------------------------
-  # Implementation of eval_combinational() for use during
-  # develop-test-debug loops.
-  def _dev_eval( self ):
-    while self._event_queue.len():
-      self._current_func = func = self._event_queue.deq()
-      self.metrics.incr_comb_evals( func )
-      func()
-      self._current_func = None
-
-  #---------------------------------------------------------------------
-  # _perf_eval
-  #---------------------------------------------------------------------
-  # Implementation of eval_combinataional () for use when benchmarking
-  # models.
-  def _perf_eval( self ):
-    while self._event_queue.len():
-      self._current_func = func = self._event_queue.deq()
-      func()
-      self._current_func = None
+  # Print cycle number and line trace of model.
+  def print_line_trace( self ):
+    print "{:>3}:".format( self.ncycles ), self.model.line_trace()
 
   #---------------------------------------------------------------------
   # cycle
@@ -189,21 +176,34 @@ class SimulationTool( object ):
     self.ncycles += 1
 
   #---------------------------------------------------------------------
-  # reset
+  # eval_combinational
   #---------------------------------------------------------------------
-  # Sets the reset signal high and cycles the simulator.
-  def reset( self ):
-    self.model.reset.v = 1
-    self.cycle()
-    self.cycle()
-    self.model.reset.v = 0
+  # Evaluate all combinational logic blocks currently in the eventqueue.
+  def eval_combinational( self ):
+    pass
 
   #---------------------------------------------------------------------
-  # print_line_trace
+  # _debug_eval
   #---------------------------------------------------------------------
-  # Print cycle number and line trace of model.
-  def print_line_trace( self ):
-    print "{:>3}:".format( self.ncycles ), self.model.line_trace()
+  # Implementation of eval_combinational() for use during
+  # develop-test-debug loops.
+  def _dev_eval( self ):
+    while self._event_queue.len():
+      self._current_func = func = self._event_queue.deq()
+      self.metrics.incr_comb_evals( func )
+      func()
+      self._current_func = None
+
+  #---------------------------------------------------------------------
+  # _perf_eval
+  #---------------------------------------------------------------------
+  # Implementation of eval_combinataional () for use when benchmarking
+  # models.
+  def _perf_eval( self ):
+    while self._event_queue.len():
+      self._current_func = func = self._event_queue.deq()
+      func()
+      self._current_func = None
 
   #---------------------------------------------------------------------
   # add_event
@@ -228,7 +228,6 @@ class SimulationTool( object ):
       self.metrics.incr_add_callbk()
       if func != self._current_func:
         self._event_queue.enq( func.cb, func.id )
-
 
   #---------------------------------------------------------------------
   # _insert_signal_values
