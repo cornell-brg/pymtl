@@ -7,6 +7,7 @@ from new_pymtl     import *
 from cpp_helpers   import gen_cheader, gen_cdef, gen_pywrapper
 from ..ast_helpers import get_method_ast, print_simple_ast, print_ast
 from ..SignalValue import SignalValueWrapper
+from ..simulation  import sim_utils
 
 import sys
 import ast, _ast
@@ -22,22 +23,25 @@ compiler = "g++ -O3 -fPIC -shared -o {libname} {csource}"
 # TODO: same as Verilog, reduce code dup
 def CLogicTransl( model, o=sys.stdout ):
 
-    # Create the python simulator
-    sim = SimulationTool( model )
-
     c_functions = StringIO.StringIO()
     c_variables = StringIO.StringIO()
+
+    signals    = sim_utils.collect_signals( model )
+    nets, _    = sim_utils.signals_to_nets( signals )
+    seq_blocks = sim_utils.register_seq_blocks( model )
+    # TODO: update translation so that this is unneeded?
+    sim_utils.insert_signal_values( None, nets )
 
     # Visit tick functions, save register information
     ast_next  = []
     localvars = {}
-    for func in sim._sequential_blocks:
+    for func in seq_blocks:
       r, l = translate_func( func, c_functions )
       ast_next.extend( r )
       localvars.update( l )
 
     # Print signal declarations, use reg information
-    top_ports, all_ports, shadows =  declare_signals( sim, ast_next, c_variables )
+    top_ports, all_ports, shadows = declare_signals(nets, ast_next, c_variables)
 
     inport_names   = ['top_'+mangle_name(x.name) for x in model.get_inports() ]
     outport_names  = ['top_'+mangle_name(x.name) for x in model.get_outports()]
@@ -120,7 +124,7 @@ def CLogicTransl( model, o=sys.stdout ):
     # Execute all ticks
     print   >> o
     print   >> o, '  /* Execute all ticks */'
-    for x in sim._sequential_blocks:
+    for x in seq_blocks:
       print >> o, '  {}_{}();'.format( mangle_idxs(x._model.name), x.func_name)
     print   >> o, '  ncycles++;'
 
@@ -149,7 +153,7 @@ def CLogicTransl( model, o=sys.stdout ):
 #-----------------------------------------------------------------------
 # declare_signals
 #-----------------------------------------------------------------------
-def declare_signals( sim, ast_next, o ):
+def declare_signals( nets, ast_next, o ):
 
   clk_port     = None
   reset_port   = None
@@ -157,7 +161,7 @@ def declare_signals( sim, ast_next, o ):
   all_ports    = []
 
   shadows = []
-  for id_, n in enumerate( sim._nets ):
+  for id_, n in enumerate( nets ):
 
     # each net is a set, convert it to a list
     net   = list( n )
