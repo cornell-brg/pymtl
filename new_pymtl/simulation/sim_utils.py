@@ -153,24 +153,38 @@ def insert_signal_values( sim, nets ):
       x._signalvalue = svalue
 
 #---------------------------------------------------------------------
-# register_decorated_functions
+# register_seq_blocks
 #---------------------------------------------------------------------
-# Register all decorated @tick, @posedge_clk, and @combinational
-# functions with the simulator.  Sequential logic blocks get called
-# any time cycle() is called, combinational logic blocks are registered
-# with SignalValue objects and get added to the event queue as values
-# change.
-def register_decorated_functions( model, event_queue, sequential_blocks ):
+# Register all decorated @tick and  @posedge_clk functions.
+# Sequential logic blocks get executed any time cycle() is called.
+def register_seq_blocks( model ):
 
-  # Add all cycle driven functions
+  all_models = []
+  def create_model_list( current ):
+    all_models.append( current )
+    for m in current.get_submodules():
+      create_model_list( m )
 
-  sequential_blocks.extend( model._tick_blocks )
-  sequential_blocks.extend( model._posedge_clk_blocks )
+  create_model_list( model )
+
+  sequential_blocks = []
+  for i in all_models:
+    sequential_blocks.extend( i.get_tick_blocks()+i.get_posedge_clk_blocks() )
+
+  return sequential_blocks
+
+#---------------------------------------------------------------------
+# register_comb_blocks
+#---------------------------------------------------------------------
+# Register all decorated @combinational functions with the simulator.
+# Combinational logic blocks are registered with SignalValue objects
+# and get added to the event queue when values are updated.
+def register_comb_blocks( model, event_queue ):
 
   # Get the sensitivity list of each event driven (combinational) block
   # TODO: do before or after we swap value nodes?
 
-  for func in model._combinational_blocks:
+  for func in model.get_combinational_blocks():
     tree, _ = get_method_ast( func )
     loads, stores = DetectLoadsAndStores().enter( tree )
     for name in loads:
@@ -201,7 +215,7 @@ def register_decorated_functions( model, event_queue, sequential_blocks ):
 
   # Recursively perform for submodules
   for m in model.get_submodules():
-    register_decorated_functions( m, event_queue, sequential_blocks )
+    register_comb_blocks( m, event_queue )
 
 #-----------------------------------------------------------------------
 # _add_senses

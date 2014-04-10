@@ -72,15 +72,16 @@ class SimulationTool( object ):
 
     signals                 = sim.collect_signals( model )
     nets, slice_connections = sim.signals_to_nets( signals )
+    sequential_blocks       = sim.register_seq_blocks( model )
 
     sim.insert_signal_values( self, nets )
 
-    sim.register_decorated_functions( model, self._event_queue,
-                                      self._sequential_blocks )
+    sim.register_comb_blocks  ( model, self._event_queue )
     sim.create_slice_callbacks( slice_connections, self._event_queue )
-    sim.register_cffi_updates( model )
+    sim.register_cffi_updates ( model )
 
-    self._nets = nets
+    self._nets              = nets
+    self._sequential_blocks = sequential_blocks
 
   #---------------------------------------------------------------------
   # reset
