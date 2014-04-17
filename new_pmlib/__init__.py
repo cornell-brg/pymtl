@@ -14,6 +14,7 @@ import queues
 from Mux                 import Mux
 from Decoder             import Decoder
 from RegisterFile        import RegisterFile
+from Crossbar            import Crossbar
 
 from TestVectorSimulator import TestVectorSimulator
 from TestSimpleSource    import TestSimpleSource
