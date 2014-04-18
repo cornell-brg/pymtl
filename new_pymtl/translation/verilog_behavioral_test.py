@@ -140,7 +140,6 @@ def test_ReduceOR():
   setup_sim( combinational.ReduceOR( 4 ) )
 def test_ReduceXOR():
   setup_sim( combinational.ReduceXOR( 4 ) )
-@pytest.mark.xfail
 def test_NestedLoops():
   setup_sim( combinational.NestedLoops( 3 ) )
 def test_NestedLoopsStruct():

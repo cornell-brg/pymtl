@@ -375,6 +375,7 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     self.loopvar   = set()
     self.params    = set()
     self.arrays    = set()
+    self.arrayelms = set()
     self.visit( tree )
     return set( self.store.values() ), self.loopvar, self.params, self.arrays
 
@@ -390,14 +391,18 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
   def visit_Assign( self, node ):
     assert len(node.targets) == 1
+
+    self.generic_visit( node )
+
     obj = node.targets[0]._object
+
     # NOTE:
     # - currently possible to have inferences with different bitwidths
     # - currently possible for a signal to be stored as both a reg and loopvar
     #   handle this in verilog_structural.create_declarations
-    if   isinstance( obj, Signal ): self.store[ obj.fullname ] = obj
+    if   obj in self.arrayelms:     return
+    elif isinstance( obj, Signal ): self.store[ obj.fullname ] = obj
     elif isinstance( obj, tuple ):  self.loopvar.add( obj[0] )
-    self.generic_visit( node )
 
   def visit_For( self, node ):
     assert isinstance( node.iter,   _ast.Slice )
@@ -408,9 +413,12 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
   def visit_Subscript( self, node ):
 
     # TODO: Check for PortList/WireList explicitly?
-    # TODO: add writes to subscripts to store list
     if isinstance( node._object, list ):
       self.arrays.add( node._object )
+      self.arrayelms.update( node._object )
+
+    # visit value to find nested subscripts
+    self.visit( node.value )
 
     # visit slice to find params
     self.visit( node.slice )
