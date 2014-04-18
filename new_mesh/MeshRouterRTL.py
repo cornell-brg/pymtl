@@ -161,7 +161,7 @@ class MeshRouterRTLCtrl( Model ):
       s.connect( s.routes[i].dest, s.c2d[i].inbuf_msg.dest )
 
     @s.combinational
-    def logic():
+    def arb_req():
 
       for i in range( 5 ):
 
@@ -173,11 +173,8 @@ class MeshRouterRTLCtrl( Model ):
         s.arbiters[i].reqs[3].value = s.c2d[3].inbuf_val and s.routes[3].route[i]
         s.arbiters[i].reqs[4].value = s.c2d[4].inbuf_val and s.routes[4].route[i]
 
-        print '{:05b}'.format( s.arbiters[i].reqs.uint() ),
-      print
-
     @s.combinational
-    def logic2():
+    def set_ctrl_signals():
 
       for i in range( 5 ):
 
@@ -206,10 +203,6 @@ class MeshRouterRTLCtrl( Model ):
         elif s.arbiters[i].grants == 0b10000: s.c2d[i].xbar_sel.value = 4
         else                                : s.c2d[i].xbar_sel.value = 0
 
-        print s.c2d[i].xbar_sel,
-
-      print
-      print [s.c2d[i].outbuf_val.uint() for i in range(5)]
 
 #=======================================================================
 # CtrlDpathBundle
