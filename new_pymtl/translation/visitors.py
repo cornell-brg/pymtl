@@ -86,9 +86,9 @@ class AnnotateWithObjects( ast.NodeTransformer ):
     # TODO: won't work for lists that are initially empty
     # TODO: what about lists that initially contain None?
     # TODO: do we want the array, or do we want element 0 of the array...
-    #if self.current_obj:
-    #  self.current_obj.update( '[]', self.current_obj.inst[0] )
     node._object = self.current_obj.inst if self.current_obj else None
+    if self.current_obj:
+      self.current_obj.update( '[]', self.current_obj.inst[0] )
 
     return node
 
@@ -253,6 +253,7 @@ class SimplifyDecorator( ast.NodeTransformer ):
 class ThreeExprLoops( ast.NodeTransformer ):
 
   def visit_For( self, node ):
+    self.generic_visit( node )
 
     assert isinstance( node.iter,      _ast.Call ) # TODO: allow iterables
     assert isinstance( node.iter.func, _ast.Name )
@@ -405,21 +406,11 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     self.generic_visit( node )
 
   def visit_Subscript( self, node ):
-    # Only create special array declarations if InPort or OutPort?
-    if isinstance( node._object, list ):
-      if   isinstance( node.value, _ast.Attribute ):
-        name = node.value.attr
-      elif isinstance( node.value, _ast.Name ):
-        name = node.value.id
-      # TODO: _ast.Subscript, e.g.  some_signal[0][2:14] = rhs
-      else:
-        warnings.warn( "Translation can't determine name of array LHS!" )
-        #print_simple_ast( node )
-        return
 
-      self.arrays.add( (name, tuple( node._object )) )
-
+    # TODO: Check for PortList/WireList explicitly?
     # TODO: add writes to subscripts to store list
+    if isinstance( node._object, list ):
+      self.arrays.add( node._object )
 
     # visit slice to find params
     self.visit( node.slice )

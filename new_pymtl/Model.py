@@ -11,7 +11,7 @@
 from metaclasses    import MetaCollectArgs
 from ConnectionEdge import ConnectionEdge
 from signals        import Signal, InPort, OutPort, Wire, Constant
-from signal_lists   import PortList
+from signal_lists   import PortList, WireList
 from PortBundle     import PortBundle
 
 #from physical      import PhysicalDimensions
@@ -153,9 +153,6 @@ class Model( object ):
   def get_submodules( self ):
     return self._submodules
 
-  def get_localparams( self ):
-    return self._localparams
-
   def get_connections( self ):
     return self._connections
 
@@ -217,13 +214,6 @@ class Model( object ):
     if not hasattr( current_model, '_newsenses' ):
       current_model._newsenses   = collections.defaultdict( list )
 
-    # Verilog translation specific variables
-    current_model._localparams = set()
-    current_model._tempwires   = {}
-    current_model._temparrays  = []
-    current_model._tempregs    = []
-    current_model._loopvars    = []
-
     # Inspect all user defined model attributes (signals, signal lists,
     # submodels, etc). Set their names, parents, and add them to the
     # appropriate private attribute lists.
@@ -282,16 +272,13 @@ class Model( object ):
       obj.parent.connect( obj.clk,   obj.parent.clk   )
       obj.parent.connect( obj.reset, obj.parent.reset )
 
-    # Local Parameters (int)
-    # TODO: add support for floats?
-    elif isinstance( obj, int ):
-      current_model._localparams.add( (name, obj) )
-
     # Lists of Signals
     elif isinstance( obj, list ):
-      # TODO: hacky signal check, implement using SignalList instead?
-      if obj and isinstance( obj[0], Signal ):
-        current_model._temparrays.append( name )
+      if obj and isinstance( obj[0], Wire):
+        obj = WireList( obj )
+        obj.name = name
+        assert '.' not in name
+        setattr( current_model, name, obj )
       if obj and isinstance( obj[0], (InPort,OutPort, PortBundle)):
         obj = PortList( obj )
         obj.name = name
