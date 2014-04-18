@@ -1144,3 +1144,56 @@ def test_ReduceXOR():
     sim.eval_combinational()
     assert model.out0 == o
     assert model.out1 == o
+
+#-------------------------------------------------------------------------
+# NestedLoops
+#-------------------------------------------------------------------------
+class NestedLoops( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort [ nbits ]( nbits )
+    s.out = OutPort[ nbits ]( nbits )
+    s.nbits = nbits
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      for i in range( s.nbits ):
+        for j in range( s.nbits ):
+          s.out[i][j].value = s.in_[j][i]
+
+class NestedLoopsStruct( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InPort [ nbits ]( nbits )
+    s.out = OutPort[ nbits ]( nbits )
+    s.nbits = nbits
+
+  def elaborate_logic( s ):
+    for i in range( s.nbits ):
+      for j in range( s.nbits ):
+        s.connect( s.out[i][j], s.in_[j][i] )
+
+def verify_nested_loops( ModelType ):
+  model = ModelType( 3 )
+  sim   = setup_sim( model )
+
+  model.in_[0].value = 0b111
+  model.in_[1].value = 0b000
+  model.in_[2].value = 0b010
+  sim.eval_combinational()
+  assert model.out[0] == 0b001
+  assert model.out[1] == 0b101
+  assert model.out[2] == 0b001
+  model.in_[0].value = 0b011
+  model.in_[1].value = 0b110
+  model.in_[2].value = 0b101
+  sim.eval_combinational()
+  assert model.out[0] == 0b101
+  assert model.out[1] == 0b011
+  assert model.out[2] == 0b110
+
+def test_NestedLoopsStruct():
+  verify_nested_loops( NestedLoopsStruct )
+
+def test_NestedLoops():
+  verify_nested_loops( NestedLoops )
+
