@@ -148,3 +148,5 @@ def test_NestedLoopsStruct():
   setup_sim( combinational.NestedLoopsStruct( 3 ) )
 def test_ListOfPortBundles():
   setup_sim( combinational.ListOfPortBundles() )
+def test_ListOfModules():
+  setup_sim( combinational.ListOfModules() )

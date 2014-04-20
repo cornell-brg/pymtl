@@ -276,29 +276,37 @@ def create_declarations( model, regs, ints, params, arrays ):
     arrays = sorted( arrays, key=lambda x: x.name )
     scode += '  // array declarations\n'
     for ports in arrays:
+
+      first = ports[0]
+
       # Output Port
-      if isinstance( ports[0], OutPort ):
+      if   (isinstance( first, OutPort ) and first.parent == model) or \
+           (isinstance( first, InPort  ) and first.parent != model):
         scode += '  reg    [{:4}:0] {}[0:{}];\n'.format(
-            ports[0].nbits-1, ports.name, len(ports)-1)
+            first.nbits-1, ports.name, len(ports)-1)
         for i, port in enumerate(ports):
           scode += '  assign {0} = {1}[{2:3}];\n'.format(
               signal_to_str( port, None, model ), ports.name, i )
+
       # Input Port
-      elif isinstance( ports[0], InPort ):
+      elif (isinstance( first, InPort  ) and first.parent == model) or \
+           (isinstance( first, OutPort ) and first.parent != model):
         scode += '  wire   [{:4}:0] {}[0:{}];\n'.format(
-            ports[0].nbits-1, ports.name, len(ports)-1)
+            first.nbits-1, ports.name, len(ports)-1)
         for i, port in enumerate(ports):
           scode += '  assign {1}[{2:3}] = {0};\n'.format(
               signal_to_str( port, None, model ), ports.name, i )
+
       # TODO: for Wires, we should really be sensing if
       #       they are written or not to determine the
       #       array declaration.
       else:
         scode += '  reg    [{:4}:0] {}[0:{}];\n'.format(
-            ports[0].nbits-1, ports.name, len(ports)-1)
+            first.nbits-1, ports.name, len(ports)-1)
         for i, port in enumerate(ports):
           scode += '  assign {0} = {1}[{2:3}];\n'.format(
               signal_to_str( port, None, model ), ports.name, i )
+
     scode += '\n'
 
   return scode

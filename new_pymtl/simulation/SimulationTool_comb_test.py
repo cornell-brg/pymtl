@@ -1226,4 +1226,34 @@ def test_ListOfPortBundles():
   assert model.out[1].a == 5
   assert model.out[1].b == 4
 
+#-------------------------------------------------------------------------
+# ListOfSubmodules
+#-------------------------------------------------------------------------
+class ListOfModules( Model ):
+  def __init__( s ):
+    s.in_ = [ InPort ( 4 ) for x in range(2) ]
+    s.out = [ OutPort( 4 ) for x in range(2) ]
 
+  def elaborate_logic( s ):
+    s.mod = [ PassThrough( 4 ) for x in range(2) ]
+
+    @s.combinational
+    def logic():
+      for i in range( 2 ):
+        s.mod[i].in_.value = s.in_[i]
+        s.out[i].value     = s.mod[i].out
+
+def test_ListOfModules():
+  model = ListOfModules()
+  sim   = setup_sim( model )
+
+  model.in_[0].value = 2
+  model.in_[1].value = 4
+  sim.eval_combinational()
+  assert model.out[0] == 2
+  assert model.out[1] == 4
+  model.in_[0].value = 5
+  model.in_[1].value = 6
+  sim.eval_combinational()
+  assert model.out[0] == 5
+  assert model.out[1] == 6

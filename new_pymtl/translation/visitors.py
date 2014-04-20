@@ -246,7 +246,8 @@ class FlattenListAttrs( ast.NodeTransformer ):
     # SubModel List
     if self.attr   and isinstance( node._object[0], Model ):
       node.attr = '{}${}'.format( node.attr, self.attr )
-      node._object = [ getattr( x, self.attr ) for x in node._object ]
+      node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
+      node._object.name = node.attr
 
     # PortBundle List
     elif self.attr and isinstance( node._object[0], PortBundle ):
@@ -277,7 +278,9 @@ class FlattenListAttrs( ast.NodeTransformer ):
     if self.attr:
       self.generic_visit( node )
       if   isinstance( node._object[0], Model ):
-        node._object = [ getattr( x, self.attr ) for x in node._object ]
+        name = '{}${}'.format( node._object[0].name.split('[')[0], self.attr )
+        node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
+        node._object.name = name
       elif isinstance( node._object[0], PortBundle ):
         name = '{}_{}'.format( node._object.name, self.attr )
         node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
