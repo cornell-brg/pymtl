@@ -1197,3 +1197,33 @@ def test_NestedLoopsStruct():
 def test_NestedLoops():
   verify_nested_loops( NestedLoops )
 
+#-------------------------------------------------------------------------
+# ListOfPortBundles
+#-------------------------------------------------------------------------
+class ListOfPortBundles( Model ):
+  def __init__( s ):
+    s.in_ = [ InBundle ( 4 ) for x in range(2) ]
+    s.out = [ OutBundle( 4 ) for x in range(2) ]
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      for i in range( 2 ):
+        s.out[i].a.value = s.in_[i].b
+        s.out[i].b.value = s.in_[i].a
+
+def test_ListOfPortBundles():
+  model = ListOfPortBundles()
+  sim   = setup_sim( model )
+
+  model.in_[0].a.value = 2
+  model.in_[0].b.value = 3
+  model.in_[1].a.value = 4
+  model.in_[1].b.value = 5
+  sim.eval_combinational()
+  assert model.out[0].a == 3
+  assert model.out[0].b == 2
+  assert model.out[1].a == 5
+  assert model.out[1].b == 4
+
+

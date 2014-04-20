@@ -6,10 +6,12 @@ import ast, _ast
 import re
 import warnings
 
-from ..ast_helpers import get_closure_dict, print_simple_ast
-from ..signals     import Wire, Signal, InPort, OutPort
-from ..Bits        import Bits
-from ..PortBundle  import PortBundle
+from ..ast_helpers  import get_closure_dict, print_simple_ast
+from ..signals      import Wire, Signal, InPort, OutPort
+from ..Bits         import Bits
+from ..Model        import Model
+from ..PortBundle   import PortBundle
+from ..signal_lists import PortList
 
 #-------------------------------------------------------------------------
 # AnnotateWithObjects
@@ -175,7 +177,7 @@ class FlattenSubmodAttrs( ast.NodeTransformer ):
 #-------------------------------------------------------------------------
 # FlattenPortBundles
 #-------------------------------------------------------------------------
-# Transform AST branches for PortBundles ignals. A PyMTL signal referenced
+# Transform AST branches for PortBundle signals. A PyMTL signal referenced
 # as 's.portbundle.port' would appear in the AST as:
 #
 #   Attribute(port)
@@ -212,6 +214,76 @@ class FlattenPortBundles( ast.NodeTransformer ):
     # Otherwise, clear the submodule name, return node unmodified
     self.portbundle = None
     return ast.copy_location( node, node )
+
+#-------------------------------------------------------------------------
+# FlattenListAttrs
+#-------------------------------------------------------------------------
+# Transform AST branches for attribute accesses from indexed objects.
+# Attributes referenced as 's.sig[i].attr' would appear in the AST as:
+#
+#   Attribute(attr)
+#   |- Subscript()
+#      |- Attribute(sig)
+#      |- Index()
+#         |- Name(i)
+#
+# This visitor transforms the AST and name to 's.sig_attr[i]':
+#
+#   Subscript()
+#   |- Attribute(sig_attr)
+#   |- Index()
+#      |- Name(i)
+#
+class FlattenListAttrs( ast.NodeTransformer ):
+
+  def __init__( self ):
+    self.attr = None
+
+  def visit_Attribute( self, node ):
+
+    # If a parent node is going to be removed, update this name
+
+    # SubModel List
+    if self.attr   and isinstance( node._object[0], Model ):
+      node.attr = '{}${}'.format( node.attr, self.attr )
+      node._object = [ getattr( x, self.attr ) for x in node._object ]
+
+    # PortBundle List
+    elif self.attr and isinstance( node._object[0], PortBundle ):
+      node.attr = '{}_{}'.format( node.attr, self.attr )
+      node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
+      node._object.name = node.attr
+
+    # Unknown!!!
+    elif self.attr:
+      raise Exception( "Don't know how to flatten this!" )
+
+    # Exit early if theres no value attribute
+    if not hasattr( node, 'value' ):
+      return node
+
+    # If the child is a subscript node, this node will be removed
+    if isinstance( node.value, ast.Subscript ):
+      self.attr = node.attr
+      self.generic_visit( node )
+      self.attr = None
+      node = node.value
+
+    return ast.copy_location( node, node )
+
+  def visit_Subscript( self, node ):
+
+    # Update the _object in Subscript too!
+    if self.attr:
+      self.generic_visit( node )
+      if   isinstance( node._object[0], Model ):
+        node._object = [ getattr( x, self.attr ) for x in node._object ]
+      elif isinstance( node._object[0], PortBundle ):
+        name = '{}_{}'.format( node._object.name, self.attr )
+        node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
+        node._object.name = name
+
+    return node
 
 #-------------------------------------------------------------------------
 # RemoveModule

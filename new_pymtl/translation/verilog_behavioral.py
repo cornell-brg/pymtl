@@ -82,6 +82,7 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.RemoveSelf         ( model       ).visit( tree )
   tree = visitors.FlattenSubmodAttrs (             ).visit( tree )
   tree = visitors.FlattenPortBundles (             ).visit( tree )
+  tree = visitors.FlattenListAttrs   (             ).visit( tree )
   tree = visitors.ThreeExprLoops     (             ).visit( tree )
   tree = visitors.InferTemporaryTypes(             ).visit( tree )
 
