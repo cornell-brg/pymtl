@@ -12,7 +12,7 @@ from MeshRouterRTL import MeshRouterRTL
 
 class TestHarness (Model):
 
-  def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay,
+  def __init__( s, test_verilog, src_msgs, sink_msgs, src_delay, sink_delay,
                 id_, nrouters, nmessages, payload_nbits, nentries ):
     s.src_msgs      = src_msgs
     s.sink_msgs     = sink_msgs
@@ -23,6 +23,7 @@ class TestHarness (Model):
     s.nmessages     = nmessages
     s.payload_nbits = payload_nbits
     s.nentries      = nentries
+    s.test_verilog  = test_verilog
 
   def elaborate_logic( s ):
 
@@ -39,6 +40,9 @@ class TestHarness (Model):
     s.sink   = [ TestNetSink ( msg_type(), s.sink_msgs[x], s.sink_delay )
                  for x in xrange( 5 ) ]
 
+    if s.test_verilog:
+      s.router = get_verilated( s.router )
+
     # connect
 
     for i in xrange( 5 ):
@@ -52,17 +56,20 @@ class TestHarness (Model):
     return done_flag
 
   def line_trace( s ):
-    in_ = ' '.join( [ x.out.to_str( x.out.msg.dest ) for x in s.src ] )
-    out = ' '.join( [ x.in_.to_str( x.in_.msg.dest ) for x in s.sink ] )
+    #in_ = ' '.join( [ x.out.to_str( x.out.msg.dest ) for x in s.src ] )
+    #out = ' '.join( [ x.in_.to_str( x.in_.msg.dest ) for x in s.sink ] )
+    in_ = ' '.join( [ x.out.to_str( x.out.msg ) for x in s.src ] )
+    out = ' '.join( [ x.in_.to_str( x.in_.msg ) for x in s.sink ] )
     return in_ + ' >>> ' + s.router.line_trace() + ' >>> '+ out
 
 #-----------------------------------------------------------------------
 # Run test
 #-----------------------------------------------------------------------
 
-def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
-                 test_msgs, id_, nrouters, nmessages,
-                 payload_nbits, num_entries ):
+def run_net_test( dump_vcd, test_verilog,
+                  vcd_file_name, src_delay, sink_delay,
+                  test_msgs, id_, nrouters, nmessages,
+                  payload_nbits, num_entries ):
 
   # src/sink msgs
 
@@ -71,7 +78,8 @@ def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( src_msgs, sink_msgs, src_delay, sink_delay,
+  model = TestHarness( test_verilog,
+                       src_msgs, sink_msgs, src_delay, sink_delay,
                        id_, nrouters, nmessages,
                        payload_nbits, num_entries )
   model.elaborate()
@@ -177,32 +185,32 @@ def basic_msgs():
 # Router basic unit test with delay = 0 x 0, id = 1
 #-----------------------------------------------------------------------
 
-def test_router_basic_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterBasic_delay0x0.vcd", 0, 0,
+def test_router_basic_delay0x0( dump_vcd, test_verilog ):
+  run_net_test( dump_vcd, test_verilog, "TRouterBasic_delay0x0.vcd", 0, 0,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 #-----------------------------------------------------------------------
 # Router basic unit test with delay = 5 x 0, id = 1
 #-----------------------------------------------------------------------
 
-def test_router_basic_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterBasic_delay5x0.vcd", 5, 0,
+def test_router_basic_delay5x0( dump_vcd, test_verilog ):
+  run_net_test( dump_vcd, test_verilog, "TRouterBasic_delay5x0.vcd", 5, 0,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 #-----------------------------------------------------------------------
 # Router basic unit test with delay = 0 x 5, id = 1
 #-----------------------------------------------------------------------
 
-def test_router_basic_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterBasic_delay0x5.vcd", 0, 5,
+def test_router_basic_delay0x5( dump_vcd, test_verilog ):
+  run_net_test( dump_vcd, test_verilog, "TRouterBasic_delay0x5.vcd", 0, 5,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 #-----------------------------------------------------------------------
 # Router basic unit test with delay = 3 x 8, id = 1
 #-----------------------------------------------------------------------
 
-def test_router_basic_delay3x8( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterBasic_delay3x8.vcd", 3, 8,
+def test_router_basic_delay3x8( dump_vcd, test_verilog ):
+  run_net_test( dump_vcd, test_verilog, "TRouterBasic_delay3x8.vcd", 3, 8,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 #-----------------------------------------------------------------------
@@ -251,20 +259,20 @@ def hotspot_msgs():
 # Router hotspot unit test with delay = 0 x 0, id = 1
 #-----------------------------------------------------------------------
 
-def test_router_hotspot_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 0, 0,
+def test_router_hotspot_delay0x0( dump_vcd, test_verilog ):
+  run_net_test( dump_vcd, test_verilog, "TRouterHotspot_delay0x0.vcd", 0, 0,
                 hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
-def test_router_hotspot_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 5, 0,
+def test_router_hotspot_delay5x0( dump_vcd, test_verilog ):
+  run_net_test( dump_vcd, test_verilog, "TRouterHotspot_delay0x0.vcd", 5, 0,
                 hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
-def test_router_hotspot_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 0, 5,
+def test_router_hotspot_delay0x5( dump_vcd, test_verilog ):
+  run_net_test( dump_vcd, test_verilog, "TRouterHotspot_delay0x0.vcd", 0, 5,
                 hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
-def test_router_hotspot_delay3x8( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 3, 8,
+def test_router_hotspot_delay3x8( dump_vcd, test_verilog ):
+  run_net_test( dump_vcd, test_verilog, "TRouterHotspot_delay0x0.vcd", 3, 8,
                 hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 # TODO: arbitration test, need specific order

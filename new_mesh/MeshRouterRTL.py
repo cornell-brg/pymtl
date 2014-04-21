@@ -214,7 +214,7 @@ class CtrlDpathBundle( PortBundle ):
     s.inbuf_msg  = InPort ( msg_type )
     s.inbuf_val  = InPort ( 1 )
     s.inbuf_rdy  = OutPort( 1 )
-    s.xbar_sel   = InPort ( 3 )
+    s.xbar_sel   = OutPort( 3 )
     s.outbuf_val = OutPort( 1 )
     s.outbuf_rdy = InPort ( 1 )
 
@@ -243,18 +243,23 @@ class RouteCompute( Model ):
     s.route = OutPort( 5 )
 
   def elaborate_logic( s ):
+
+    s.x_dest = Wire( s.dest.nbits )
+    s.y_dest = Wire( s.dest.nbits )
+
     @s.combinational
     def logic():
 
-      x_dest = s.dest % s.xnodes
-      y_dest = s.dest / s.xnodes
+      # TODO: bitwidth inference for % and / don't work
+      s.x_dest = s.dest % s.xnodes
+      s.y_dest = s.dest / s.xnodes
 
-      if   x_dest < s.x: s.route.value = s.WEST
-      elif x_dest > s.x: s.route.value = s.EAST
-      elif y_dest < s.y: s.route.value = s.NORTH
-      elif y_dest > s.y: s.route.value = s.SOUTH
+      if   s.x_dest < s.x: s.route.value = s.WEST
+      elif s.x_dest > s.x: s.route.value = s.EAST
+      elif s.y_dest < s.y: s.route.value = s.NORTH
+      elif s.y_dest > s.y: s.route.value = s.SOUTH
       else:
-        assert x_dest == s.x
-        assert y_dest == s.y
+        assert s.x_dest == s.x
+        assert s.y_dest == s.y
         s.route.value = s.TERM
 
