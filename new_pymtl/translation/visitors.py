@@ -276,7 +276,6 @@ class FlattenListAttrs( ast.NodeTransformer ):
 
     # Update the _object in Subscript too!
     if self.attr:
-      self.generic_visit( node )
       if   isinstance( node._object[0], Model ):
         name = '{}${}'.format( node._object[0].name.split('[')[0], self.attr )
         node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
@@ -285,6 +284,8 @@ class FlattenListAttrs( ast.NodeTransformer ):
         name = '{}_{}'.format( node._object.name, self.attr )
         node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
         node._object.name = name
+
+    self.generic_visit( node )
 
     return node
 

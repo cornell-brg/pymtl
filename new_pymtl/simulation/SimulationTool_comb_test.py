@@ -1227,7 +1227,7 @@ def test_ListOfPortBundles():
   assert model.out[1].b == 4
 
 #-------------------------------------------------------------------------
-# ListOfSubmodules
+# ListOfModules
 #-------------------------------------------------------------------------
 class ListOfModules( Model ):
   def __init__( s ):
@@ -1243,8 +1243,8 @@ class ListOfModules( Model ):
         s.mod[i].in_.value = s.in_[i]
         s.out[i].value     = s.mod[i].out
 
-def test_ListOfModules():
-  model = ListOfModules()
+def list_of_modules_tester( ModelType ):
+  model = ModelType()
   sim   = setup_sim( model )
 
   model.in_[0].value = 2
@@ -1257,3 +1257,27 @@ def test_ListOfModules():
   sim.eval_combinational()
   assert model.out[0] == 5
   assert model.out[1] == 6
+
+def test_ListOfModules():
+  list_of_modules_tester( ListOfModules )
+
+#-------------------------------------------------------------------------
+# ListOfModulesBitslice
+#-------------------------------------------------------------------------
+class ListOfModulesBitslice( Model ):
+  def __init__( s ):
+    s.in_ = [ InPort ( 4 ) for x in range(2) ]
+    s.out = [ OutPort( 4 ) for x in range(2) ]
+
+  def elaborate_logic( s ):
+    s.mod = [ PassThrough( 4 ) for x in range(2) ]
+
+    @s.combinational
+    def logic():
+      for i in range( 2 ):
+        for j in range( 4 ):
+          s.mod[i].in_[j].value = s.in_[i][j]
+          s.out[i][j].value     = s.mod[i].out[j]
+
+def test_ListOfModulesBitslice():
+  list_of_modules_tester( ListOfModulesBitslice )

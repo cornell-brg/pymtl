@@ -150,3 +150,5 @@ def test_ListOfPortBundles():
   setup_sim( combinational.ListOfPortBundles() )
 def test_ListOfModules():
   setup_sim( combinational.ListOfModules() )
+def test_ListOfModulesBitslice():
+  setup_sim( combinational.ListOfModulesBitslice() )
