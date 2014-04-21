@@ -8,8 +8,8 @@ class Crossbar( Model ):
 
   def __init__( s, nports, nbits ):
 
-    s.nports = nports
-    sel_nbits   = get_sel_nbits( nports )
+    s.nports  = nports
+    sel_nbits = get_sel_nbits( nports )
 
     # Interface Ports
 
