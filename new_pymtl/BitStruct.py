@@ -169,3 +169,8 @@ class BitStruct( Bits ):
     #print "-CALL", type( self )
     return type( self )( self.nbits )
 
+  #---------------------------------------------------------------------
+  # __hash__
+  #---------------------------------------------------------------------
+  def __hash__( self ):
+    return hash( (self.__class__.__name__, self._uint) )
