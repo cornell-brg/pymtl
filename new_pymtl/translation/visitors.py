@@ -446,7 +446,7 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
   def get( self, tree ):
 
-    self._temp     = set()
+    self._is_lhs   = False
     self.store     = {}
     self.loopvar   = set()
     self.params    = set()
@@ -468,7 +468,10 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
   def visit_Assign( self, node ):
     assert len(node.targets) == 1
 
-    self.generic_visit( node )
+    self._is_lhs = True
+    self.visit( node.targets[0] )
+    self._is_lhs = False
+    self.visit( node.value )
 
     obj = node.targets[0]._object
 
@@ -490,7 +493,14 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
     # TODO: Check for PortList/WireList explicitly?
     if isinstance( node._object, list ):
-      self.arrays.add( node._object )
+
+      # Keep track if this array ever appears on the lhs
+      # (if so, should be declared reg)
+      try:                   node._object.is_lhs |= self._is_lhs
+      except AttributeError: node._object.is_lhs  = self._is_lhs
+
+      # Add arrays to our tracking datastructures
+      self.arrays   .add   ( node._object )
       self.arrayelms.update( node._object )
 
     # visit value to find nested subscripts

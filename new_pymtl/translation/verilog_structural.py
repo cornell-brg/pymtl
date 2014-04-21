@@ -280,8 +280,7 @@ def create_declarations( model, regs, ints, params, arrays ):
       first = ports[0]
 
       # Output Port
-      if   (isinstance( first, OutPort ) and first.parent == model) or \
-           (isinstance( first, InPort  ) and first.parent != model):
+      if ports.is_lhs:
         scode += '  reg    [{:4}:0] {}[0:{}];\n'.format(
             first.nbits-1, ports.name, len(ports)-1)
         for i, port in enumerate(ports):
@@ -289,22 +288,11 @@ def create_declarations( model, regs, ints, params, arrays ):
               signal_to_str( port, None, model ), ports.name, i )
 
       # Input Port
-      elif (isinstance( first, InPort  ) and first.parent == model) or \
-           (isinstance( first, OutPort ) and first.parent != model):
+      else:
         scode += '  wire   [{:4}:0] {}[0:{}];\n'.format(
             first.nbits-1, ports.name, len(ports)-1)
         for i, port in enumerate(ports):
           scode += '  assign {1}[{2:3}] = {0};\n'.format(
-              signal_to_str( port, None, model ), ports.name, i )
-
-      # TODO: for Wires, we should really be sensing if
-      #       they are written or not to determine the
-      #       array declaration.
-      else:
-        scode += '  reg    [{:4}:0] {}[0:{}];\n'.format(
-            first.nbits-1, ports.name, len(ports)-1)
-        for i, port in enumerate(ports):
-          scode += '  assign {0} = {1}[{2:3}];\n'.format(
               signal_to_str( port, None, model ), ports.name, i )
 
     scode += '\n'

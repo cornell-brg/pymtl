@@ -1281,3 +1281,53 @@ class ListOfModulesBitslice( Model ):
 
 def test_ListOfModulesBitslice():
   list_of_modules_tester( ListOfModulesBitslice )
+
+#-------------------------------------------------------------------------
+# ListOfWires
+#-------------------------------------------------------------------------
+class ListOfWires( Model ):
+  def __init__( s ):
+    s.in_ = [ InPort ( 4 ) for x in range(2) ]
+    s.out = [ OutPort( 4 ) for x in range(2) ]
+
+  def elaborate_logic( s ):
+    s.wire_rd = [ Wire( 4 ) for x in range(2) ]
+    s.wire_wr = [ Wire( 4 ) for x in range(2) ]
+
+    for i in range(2):
+      s.connect( s.in_[i], s.wire_rd[i] )
+      s.connect( s.out[i], s.wire_wr[i] )
+
+    @s.combinational
+    def logic():
+      for i in range(2):
+        s.wire_wr[i].value = s.wire_rd[i]
+
+def test_ListOfWires():
+  list_of_modules_tester( ListOfWires )
+
+#-------------------------------------------------------------------------
+# ListOfMixedUseWires
+#-------------------------------------------------------------------------
+# This works fine in Python Simulation, but does not translate into
+# Verilog correctly because we assume all elements of a list of wires
+# will have the same assignment structure!
+class ListOfMixedUseWires( Model ):
+  def __init__( s ):
+    s.in_ = [ InPort ( 4 ) for x in range(2) ]
+    s.out = [ OutPort( 4 ) for x in range(2) ]
+
+  def elaborate_logic( s ):
+    s.wires = [ Wire( 4 ) for x in range(2) ]
+
+    s.connect( s.in_[0], s.wires[0] )
+
+    @s.combinational
+    def logic():
+      s.out  [0].value = s.wires[0]
+      s.wires[1].value = s.in_  [1]
+
+    s.connect( s.out[1], s.wires[1] )
+
+def test_ListOfMixedUseWires():
+  list_of_modules_tester( ListOfMixedUseWires )

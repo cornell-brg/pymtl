@@ -152,3 +152,8 @@ def test_ListOfModules():
   setup_sim( combinational.ListOfModules() )
 def test_ListOfModulesBitslice():
   setup_sim( combinational.ListOfModulesBitslice() )
+def test_ListOfWires():
+  setup_sim( combinational.ListOfWires() )
+@pytest.mark.xfail
+def test_ListOfMixedUseWires():
+  setup_sim( combinational.ListOfMixedUseWires() )
