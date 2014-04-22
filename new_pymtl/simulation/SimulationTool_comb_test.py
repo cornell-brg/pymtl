@@ -5,6 +5,8 @@
 
 from new_pymtl import *
 
+import pytest
+
 #-------------------------------------------------------------------------
 # Setup Sim
 #-------------------------------------------------------------------------
@@ -726,7 +728,6 @@ class SliceWriteCheck( Model ):
     s.connect( s.out, s.m0.out )
 
 def test_SliceWriteCheck():
-  import pytest
 
   model = SliceWriteCheck( 16 )
   sim = setup_sim( model )
@@ -1331,3 +1332,28 @@ class ListOfMixedUseWires( Model ):
 
 def test_ListOfMixedUseWires():
   list_of_modules_tester( ListOfMixedUseWires )
+
+#-------------------------------------------------------------------------
+# RaiseException
+#-------------------------------------------------------------------------
+class RaiseException( Model ):
+  def __init__( s ):
+    s.in_ = InPort ( 2 )
+    s.out = OutPort( 2 )
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      if s.in_ < 3: s.out.value = s.in_
+      else:         raise Exception("Invalid state!")
+
+def test_RaiseException():
+  model = RaiseException()
+  sim   = setup_sim( model )
+
+  model.in_.value = 0; sim.cycle(); assert model.out == 0
+  model.in_.value = 1; sim.cycle(); assert model.out == 1
+  model.in_.value = 2; sim.cycle(); assert model.out == 2
+  with pytest.raises( Exception ):
+    model.in_.value = 3; sim.cycle()
+

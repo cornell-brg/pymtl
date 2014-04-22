@@ -157,3 +157,6 @@ def test_ListOfWires():
 @pytest.mark.xfail
 def test_ListOfMixedUseWires():
   setup_sim( combinational.ListOfMixedUseWires() )
+def test_RaiseException():
+  setup_sim( combinational.RaiseException() )
+

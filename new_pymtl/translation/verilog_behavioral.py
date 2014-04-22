@@ -393,6 +393,12 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     raise Exception( "Function is not translatable: {}".format( func_name ) )
 
+  #-----------------------------------------------------------------------
+  # visit_Raise
+  #-----------------------------------------------------------------------
+  def visit_Raise(self, node):
+    return fmt( '$display("An Exception was raised!!!");', self.indent )
+
 #-----------------------------------------------------------------------
 # opmap
 #-----------------------------------------------------------------------
