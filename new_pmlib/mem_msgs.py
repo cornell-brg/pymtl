@@ -109,7 +109,11 @@ class MemReqParams:
     bits[ s.data_slice ] = data
 
     return bits
-
+    
+  def unpck_req(s , bits):
+    b = Bits(s.nbits,value = bits)
+    return (b[s.type_slice],b[s.addr_slice],b[s.len_slice],b[s.data_slice])
+    
   def __hash__( s ):
     return hash( frozenset( (s.addr_nbits, s.data_nbits) ) )
 
@@ -277,7 +281,11 @@ class MemRespParams:
     bits[ s.data_slice ] = data
 
     return bits
-
+  
+  def unpck_resp(s, bits):
+    b = Bits(s.nbits, value=bits)
+    return (b[s.type_slice],b[s.len_slice],b[s.data_slice])
+  
   def __hash__( s ):
     return hash( s.data_nbits )
 
