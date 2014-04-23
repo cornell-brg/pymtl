@@ -386,7 +386,18 @@ class ConstantToSlice( ast.NodeTransformer ):
 import copy
 class InferTemporaryTypes( ast.NodeTransformer):
 
+  def __init__( self ):
+    self.infer_dict = {}
+
+  def _insert( self, node, value ):
+    node.targets[0]._object = value
+    self.infer_dict[ node.targets[0].id ] = value
+
   def visit_Assign( self, node ):
+
+    # First visit the RHS to update Name nodes that have been inferred
+    self.visit( node.value )
+
     assert len(node.targets) == 1
 
     # The LHS doesn't have a type, we need to infer it
@@ -395,45 +406,44 @@ class InferTemporaryTypes( ast.NodeTransformer):
       # The LHS should be a Name node!
       assert isinstance(node.targets[0], _ast.Name)
 
-      # Currently only support Name/Attributes on the RHS
       # Copy the object returned by the RHS, set the name appropriately
       if   isinstance( node.value, ast.Name ):
         if isinstance( node.value._object, int ):
-          node.targets[0]._object = (node.targets[0].id, node.value._object )
+          self._insert( node, (node.targets[0].id, node.value._object ) )
         else:
           obj = copy.copy( node.value._object )
           obj.name   = node.targets[0].id
           obj.parent = None
-          node.targets[0]._object = obj
+          self._insert( node, obj )
 
       elif isinstance( node.value, ast.Attribute ):
         if isinstance( node.value._object, int ):
-          node.targets[0]._object = (node.targets[0].id, node.value._object )
+          self._insert( node, (node.targets[0].id, node.value._object ) )
         else:
           obj = copy.copy( node.value._object )
           obj.name   = node.targets[0].id
           obj.parent = None
-          node.targets[0]._object = obj
+          self._insert( node, obj )
 
       elif isinstance( node.value, ast.Num ):
-        node.targets[0]._object = (node.targets[0].id, int( node.value.n ))
+        self._insert( node, (node.targets[0].id, int( node.value.n )) )
 
       elif isinstance( node.value, ast.BoolOp ):
         obj      = Wire( 1 )
         obj.name = node.targets[0].id
-        node.targets[0]._object = obj
+        self._insert( node, obj )
 
       elif isinstance( node.value, ast.Compare ):
         obj      = Wire( 1 )
         obj.name = node.targets[0].id
-        node.targets[0]._object = obj
+        self._insert( node, obj )
 
       # TODO: assumes ast.Index does NOT contain a slice object
       elif isinstance( node.value,       ast.Subscript ) \
        and isinstance( node.value.slice, ast.Index     ):
         obj      = Wire( 1 )
         obj.name = node.targets[0].id
-        node.targets[0]._object = obj
+        self._insert( node, obj )
 
       elif isinstance( node.value, ast.Call ):
 
@@ -443,23 +453,33 @@ class InferTemporaryTypes( ast.NodeTransformer):
           assert isinstance( nbits, int )
           obj      = Wire( nbits )
           obj.name = node.targets[0].id
-          node.targets[0]._object = obj
+          self._insert( node, obj )
         elif func_name == 'concat':
           nbits    = sum( [x._object.nbits for x in node.value.args ] )
           obj      = Wire( nbits )
           obj.name = node.targets[0].id
-          node.targets[0]._object = obj
+          self._insert( node, obj )
         elif func_name in ['reduce_and', 'reduce_or', 'reduce_xor']:
           obj      = Wire( 1 )
           obj.name = node.targets[0].id
-          node.targets[0]._object = obj
+          self._insert( node, obj )
         else:
+          print_simple_ast( node )
           raise Exception( "Function is not translatable: {}".format( func_name ) )
 
       else:
         print_simple_ast( node )
         raise Exception('Cannot infer type from {} node!'
                         .format( node.value ))
+
+    return node
+
+  def visit_Name( self, node ):
+    try:
+      if node._object == None:
+        node._object = self.infer_dict[ node.id ]
+    except KeyError:
+      pass
 
     return node
 
