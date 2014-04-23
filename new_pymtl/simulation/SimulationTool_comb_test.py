@@ -1357,3 +1357,31 @@ def test_RaiseException():
   with pytest.raises( Exception ):
     model.in_.value = 3; sim.cycle()
 
+#-------------------------------------------------------------------------
+# SliceConst
+#-------------------------------------------------------------------------
+A = slice(0,2)
+class SliceConst( Model ):
+  B = slice(2,4)
+  def __init__( s ):
+    s.in_ = InPort ( 6 )
+    s.out = OutPort( 6 )
+    s.C   = slice(4,6)
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      s.out[   A ].value = s.in_[   A ]
+      s.out[ s.B ].value = s.in_[ s.B ]
+      s.out[ s.C ].value = s.in_[ s.C ]
+
+def test_SliceConst():
+  model = SliceConst()
+  sim   = setup_sim( model )
+
+  model.in_.value = 0b101010
+  sim.eval_combinational()
+  assert model.out == 0b101010
+  model.in_.value = 0b111000
+  sim.eval_combinational()
+  assert model.out == 0b111000

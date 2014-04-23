@@ -84,6 +84,7 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.FlattenPortBundles (             ).visit( tree )
   tree = visitors.FlattenListAttrs   (             ).visit( tree )
   tree = visitors.ThreeExprLoops     (             ).visit( tree )
+  tree = visitors.ConstantToSlice    (             ).visit( tree )
   tree = visitors.InferTemporaryTypes(             ).visit( tree )
 
   #print_simple_ast( tree ) # DEBUG

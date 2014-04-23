@@ -356,6 +356,31 @@ class ThreeExprLoops( ast.NodeTransformer ):
     return node
 
 #-------------------------------------------------------------------------
+# ConstantToSlice
+#-------------------------------------------------------------------------
+class ConstantToSlice( ast.NodeTransformer ):
+
+  def visit_Attribute( self, node ):
+    self.generic_visit( node )
+    if isinstance( node._object, slice ):
+      assert not node._object.step
+      new_node = ast.Slice( ast.Num( node._object.start ),
+                            ast.Num( node._object.stop ),
+                            None )
+      return ast.copy_location( new_node, node )
+    return node
+
+  def visit_Name( self, node ):
+    self.generic_visit( node )
+    if isinstance( node._object, slice ):
+      assert not node._object.step
+      new_node = ast.Slice( ast.Num( node._object.start ),
+                            ast.Num( node._object.stop ),
+                            None )
+      return ast.copy_location( new_node, node )
+    return node
+
+#-------------------------------------------------------------------------
 # InferTemporaryTypes
 #-------------------------------------------------------------------------
 import copy
