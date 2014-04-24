@@ -439,8 +439,13 @@ class InferTemporaryTypes( ast.NodeTransformer):
         self._insert( node, obj )
 
       # TODO: assumes ast.Index does NOT contain a slice object
-      elif isinstance( node.value,       ast.Subscript ) \
-       and isinstance( node.value.slice, ast.Index     ):
+      elif isinstance( node.value,       ast.Subscript ) and \
+           isinstance( node.value.slice, ast.Index     ):
+
+        if isinstance( node.value.slice.value, ast.Slice ):
+          raise Exception('Cannot infer "{}": RHS slice wider than a single bit!'
+                          .format( node.targets[0].id ) )
+
         obj      = Wire( 1 )
         obj.name = node.targets[0].id
         self._insert( node, obj )
