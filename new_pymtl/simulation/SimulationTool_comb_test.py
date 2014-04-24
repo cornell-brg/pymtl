@@ -1385,3 +1385,36 @@ def test_SliceConst():
   model.in_.value = 0b111000
   sim.eval_combinational()
   assert model.out == 0b111000
+
+#-------------------------------------------------------------------------
+# BitsConst
+#-------------------------------------------------------------------------
+class BitsConst( Model ):
+  def __init__( s ):
+    s.in_  = InPort (2)
+    s.out1 = OutPort(8)
+    #s.out2 = OutPort(8)
+  def elaborate_logic( s ):
+    # TODO: Bits stored as members do not simulate!
+    #s.a = Bits(2,   1)
+    #s.b = Bits(2, 0x1)
+    #s.c = Bits(2,0b10)
+    @s.combinational
+    def logic():
+      s.out1.value = concat( s.in_, Bits(2, 0), Bits(2, 0x1), Bits(2, 0b10) )
+      #s.out2.value = concat( s.in_, s.a, s.b, s.c )
+
+def test_BitsConst():
+  model = BitsConst()
+  sim   = setup_sim( model )
+
+  model.in_.value = 0b10
+  sim.eval_combinational()
+  assert model.out1 == 0b10000110
+  #assert model.out2 == 0b10010110
+  model.in_.value = 0b11
+  sim.eval_combinational()
+  assert model.out1 == 0b11000110
+  #assert model.out2 == 0b11010110
+
+

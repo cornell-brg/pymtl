@@ -392,6 +392,12 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
       sig_name = self.visit( node.args[0] )
       return "(^{sig_name})".format( sig_name=sig_name )
 
+    # Handle Bits
+    if func_name  == 'Bits':
+      nbits = self.visit( node.args[0] )
+      value = self.visit( node.args[1] ) if len(node.args) == 2 else '0'
+      return "{nbits}'d{value}".format( nbits=nbits, value=value )
+
     raise Exception( "Function is not translatable: {}".format( func_name ) )
 
   #-----------------------------------------------------------------------

@@ -161,4 +161,6 @@ def test_RaiseException():
   setup_sim( combinational.RaiseException() )
 def test_SliceConst():
   setup_sim( combinational.SliceConst() )
+def test_BitsConst():
+  setup_sim( combinational.BitsConst() )
 
