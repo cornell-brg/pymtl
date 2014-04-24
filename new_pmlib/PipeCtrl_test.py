@@ -25,10 +25,9 @@
 # TestSink merely holds the expected value based on the increments
 
 from new_pymtl import *
-from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-from PipeCtrl import PipeCtrl
-
-import new_pmlib
+from new_pmlib import InValRdyBundle, OutValRdyBundle
+from new_pmlib import TestSource, TestSink, regs, arith
+from PipeCtrl  import PipeCtrl
 
 # Constants
 
@@ -88,7 +87,7 @@ class IncrPipeDpath (Model):
     # A Stage
     #---------------------------------------------------------------------
 
-    s.a_reg  = new_pmlib.regs.RegEn( TRANSACTION_NBITS )
+    s.a_reg  = regs.RegEn( TRANSACTION_NBITS )
 
     # input msg coming from the TestSource
 
@@ -99,7 +98,7 @@ class IncrPipeDpath (Model):
     # B Stage
     #---------------------------------------------------------------------
 
-    s.b_reg  = new_pmlib.regs.RegEn( TRANSACTION_NBITS )
+    s.b_reg  = regs.RegEn( TRANSACTION_NBITS )
 
     s.connect( s.b_reg.in_,     s.a_reg.out )
     s.connect( s.b_reg.en,      s.b_reg_en  )
@@ -112,12 +111,12 @@ class IncrPipeDpath (Model):
     # C Stage
     #---------------------------------------------------------------------
 
-    s.c_reg  = new_pmlib.regs.RegEn( nbits )
+    s.c_reg  = regs.RegEn( nbits )
 
     s.connect( s.c_reg.in_, s.b_reg.out[VALUE] )
     s.connect( s.c_reg.en,  s.c_reg_en         )
 
-    s.c_incr = new_pmlib.arith.Incrementer( nbits, increment_amount = 1 )
+    s.c_incr = arith.Incrementer( nbits, increment_amount = 1 )
 
     s.connect( s.c_incr.in_, s.c_reg.out )
 
@@ -125,12 +124,12 @@ class IncrPipeDpath (Model):
     # D Stage
     #---------------------------------------------------------------------
 
-    s.d_reg  = new_pmlib.regs.RegEn( nbits )
+    s.d_reg  = regs.RegEn( nbits )
 
     s.connect( s.d_reg.in_, s.c_incr.out )
     s.connect( s.d_reg.en,  s.d_reg_en   )
 
-    s.d_incr = new_pmlib.arith.Incrementer( nbits, increment_amount = 1 )
+    s.d_incr = arith.Incrementer( nbits, increment_amount = 1 )
 
     s.connect( s.d_incr.in_, s.d_reg.out )
 
@@ -138,12 +137,12 @@ class IncrPipeDpath (Model):
     # E Stage
     #---------------------------------------------------------------------
 
-    s.e_reg  = new_pmlib.regs.RegEn( nbits )
+    s.e_reg  = regs.RegEn( nbits )
 
     s.connect( s.e_reg.in_, s.d_incr.out )
     s.connect( s.e_reg.en,  s.e_reg_en   )
 
-    s.e_incr = new_pmlib.arith.Incrementer( nbits, increment_amount = 1 )
+    s.e_incr = arith.Incrementer( nbits, increment_amount = 1 )
 
     s.connect( s.e_incr.in_, s.e_reg.out )
 
@@ -585,13 +584,16 @@ class IncrPipe (Model):
 class TestHarness (Model):
 
   def __init__( s, ModelType, src_msgs, sink_msgs,
-                src_delay, sink_delay ):
+                src_delay, sink_delay, test_verilog ):
 
     # Instantiate models
 
-    s.src        = new_pmlib.TestSource ( 17, src_msgs,  src_delay  )
-    s.incr_pipe  = ModelType        ( 8 )
-    s.sink       = new_pmlib.TestSink   ( 8, sink_msgs, sink_delay )
+    s.src        = TestSource ( 17, src_msgs,  src_delay  )
+    s.incr_pipe  = ModelType  ( 8 )
+    s.sink       = TestSink   ( 8, sink_msgs, sink_delay )
+
+    if test_verilog:
+      s.incr_pipe = get_verilated( s.incr_pipe )
 
   def elaborate_logic( s ):
 
@@ -611,12 +613,12 @@ class TestHarness (Model):
 #-------------------------------------------------------------------------
 
 def run_incr_pipe_test( dump_vcd, vcd_file_name, src_msgs, sink_msgs,
-                        ModelType, src_delay, sink_delay ):
+                        ModelType, src_delay, sink_delay, test_verilog ):
 
   # Instantiate and elaborate the model
 
   model = TestHarness( ModelType, src_msgs, sink_msgs,
-                       src_delay, sink_delay )
+                       src_delay, sink_delay, test_verilog )
   model.elaborate()
 
   # Create a simulator using the simulation tool
@@ -680,25 +682,25 @@ sink_simple_msgs = [
     8,
   ]
 
-def test_simple_pipe_delay_0x0( dump_vcd ):
+def test_simple_pipe_delay_0x0( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_simple_pipe_delay_0x0.vcd",
                       src_simple_msgs, sink_simple_msgs,
-                      IncrPipe, 0, 0 )
+                      IncrPipe, 0, 0, test_verilog )
 
-def test_simple_pipe_delay_5x0( dump_vcd ):
+def test_simple_pipe_delay_5x0( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_simple_pipe_delay_5x0.vcd",
                       src_simple_msgs, sink_simple_msgs,
-                      IncrPipe, 5, 0 )
+                      IncrPipe, 5, 0, test_verilog )
 
-def test_simple_pipe_delay_0x5( dump_vcd ):
+def test_simple_pipe_delay_0x5( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_simple_pipe_delay_0x5.vcd",
                       src_simple_msgs, sink_simple_msgs,
-                      IncrPipe, 0, 5 )
+                      IncrPipe, 0, 5, test_verilog )
 
-def test_simple_pipe_delay_4x9( dump_vcd ):
+def test_simple_pipe_delay_4x9( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_simple_pipe_delay_4x9.vcd",
                       src_simple_msgs, sink_simple_msgs,
-                      IncrPipe, 4, 9 )
+                      IncrPipe, 4, 9, test_verilog )
 
 #-------------------------------------------------------------------------
 # Stall Pipeline Test - no squashes
@@ -729,25 +731,25 @@ sink_stall_msgs = [
     8,
   ]
 
-def test_stall_pipe_delay_0x0( dump_vcd ):
+def test_stall_pipe_delay_0x0( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_stall_pipe_delay_0x0.vcd",
                       src_stall_msgs, sink_stall_msgs,
-                      IncrPipe, 0, 0 )
+                      IncrPipe, 0, 0, test_verilog )
 
-def test_stall_pipe_delay_5x0( dump_vcd ):
+def test_stall_pipe_delay_5x0( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_stall_pipe_delay_5x0.vcd",
                       src_stall_msgs, sink_stall_msgs,
-                      IncrPipe, 5, 0 )
+                      IncrPipe, 5, 0, test_verilog )
 
-def test_stall_pipe_delay_0x5( dump_vcd ):
+def test_stall_pipe_delay_0x5( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_stall_pipe_delay_0x5.vcd",
                       src_stall_msgs, sink_stall_msgs,
-                      IncrPipe, 0, 5 )
+                      IncrPipe, 0, 5, test_verilog )
 
-def test_stall_pipe_delay_4x9( dump_vcd ):
+def test_stall_pipe_delay_4x9( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_stall_pipe_delay_4x9.vcd",
                       src_stall_msgs, sink_stall_msgs,
-                      IncrPipe, 4, 9 )
+                      IncrPipe, 4, 9, test_verilog )
 
 #-------------------------------------------------------------------------
 # Squash Pipeline Test - no stalls
@@ -764,10 +766,10 @@ def test_stall_pipe_delay_4x9( dump_vcd ):
 
 src_squash_msgs = [
     mk_req( 0, 0, STAGE_C, 1 ),
-    mk_req( 0, 0, 0, 2 ),
-    mk_req( 0, 0, 0, 3 ),
+    mk_req( 0, 0,       0, 2 ),
+    mk_req( 0, 0,       0, 3 ),
     mk_req( 0, 0, STAGE_B, 4 ),
-    mk_req( 0, 0, 0, 5 ),
+    mk_req( 0, 0,       0, 5 ),
   ]
 
 sink_squash_msgs = [
@@ -778,7 +780,7 @@ sink_squash_msgs = [
     #8, squashed
   ]
 
-def test_squash_pipe_delay_0x0( dump_vcd ):
+def test_squash_pipe_delay_0x0( dump_vcd, test_verilog ):
   run_incr_pipe_test( dump_vcd, "test_squash_pipe_delay_0x0.vcd",
                       src_squash_msgs, sink_squash_msgs,
-                      IncrPipe, 0, 0 )
+                      IncrPipe, 0, 0, test_verilog )
