@@ -39,8 +39,8 @@ class AnnotateWithObjects( ast.NodeTransformer ):
         self.current_obj.update( node.attr, x )
       except AttributeError:
         if node.attr not in ['next', 'value', 'n', 'v']:
-          raise Exception("Error: Unknown attribute for this object: {}"
-                          .format( node.attr ) )
+          raise Exception('Unknown attribute "{}" in model "{}"'
+                          .format( node.attr, self.model.__class__ ))
 
     node._object = self.current_obj.inst if self.current_obj else None
 
@@ -395,9 +395,10 @@ class ConstantToSlice( ast.NodeTransformer ):
 # InferTemporaryTypes
 #-------------------------------------------------------------------------
 import copy
-class InferTemporaryTypes( ast.NodeTransformer):
+class InferTemporaryTypes( ast.NodeTransformer ):
 
-  def __init__( self ):
+  def __init__( self, model ):
+    self.model      = model
     self.infer_dict = {}
 
   def _insert( self, node, value ):
@@ -454,8 +455,11 @@ class InferTemporaryTypes( ast.NodeTransformer):
            isinstance( node.value.slice, ast.Index     ):
 
         if isinstance( node.value.slice.value, ast.Slice ):
-          raise Exception('Cannot infer "{}": RHS slice wider than a single bit!'
-                          .format( node.targets[0].id ) )
+          signal_name = node.targets[0].id
+          model_name  = self.model.__class__
+          raise Exception('Cannot infer "{}" in model "{}": '
+                          'RHS slice wider than a single bit!'
+                          .format( signal_name, model_name ) )
 
         obj      = Wire( 1 )
         obj.name = node.targets[0].id
@@ -481,12 +485,13 @@ class InferTemporaryTypes( ast.NodeTransformer):
           self._insert( node, obj )
         else:
           print_simple_ast( node )
-          raise Exception( "Function is not translatable: {}".format( func_name ) )
+          raise Exception('Function "{}" in model "{}" is not translatable!'
+                          .format( func_name, self.model.__class__ ) )
 
       else:
         print_simple_ast( node )
-        raise Exception('Cannot infer type from {} node!'
-                        .format( node.value ))
+        raise Exception('Cannot infer type from "{}" nodes in model "{}"!'
+                        .format( node.value, self.model.__class__ ) )
 
     return node
 
