@@ -1417,4 +1417,40 @@ def test_BitsConst():
   assert model.out1 == 0b11000110
   #assert model.out2 == 0b11010110
 
+#-------------------------------------------------------------------------
+# SubmodPortBundles
+#-------------------------------------------------------------------------
+class SubmodPortBundles( Model ):
+  def __init__( s ):
+    s.in_ = InBundle ( 4 )
+    s.out = OutBundle( 4 )
+  def elaborate_logic( s ):
+    s.submod = BundleChild( 4 )
+    @s.combinational
+    def logic1():
+      s.submod.in_.a.value = s.in_.a
+      s.submod.in_.b.value = s.in_.b
+    @s.combinational
+    def logic2():
+      s.out.a.value = s.submod.out.a
+      s.out.b.value = s.submod.out.b
 
+def test_SubmodPortBundles():
+
+  model = SubmodPortBundles()
+  sim = setup_sim( model )
+  model.in_.a.value = 2
+  model.in_.b.value = 3
+  sim.eval_combinational()
+  assert model.out.a == 3
+  assert model.out.b == 2
+  model.in_.a.value = 10
+  model.in_.b.value = 4
+  sim.eval_combinational()
+  assert model.out.a == 4
+  assert model.out.b == 10
+
+#-------------------------------------------------------------------------
+# ListOfSubmodPortBundles
+#-------------------------------------------------------------------------
+# TODO

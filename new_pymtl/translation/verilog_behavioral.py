@@ -66,10 +66,8 @@ def translate_logic_blocks( model ):
 # ast_pipeline
 #-----------------------------------------------------------------------
 # TODO:
-# ? remove index nodes (replace with integer?)
 # ? replace Subscript nodes with BitSlice if they reference a Bits
 # ? replace Subscript nodes with ArrayIndex if they reference a list
-# - flatten port bundles
 # - flatten bitstructs
 def ast_pipeline( tree, model, func ):
 

@@ -215,6 +215,17 @@ class FlattenPortBundles( ast.NodeTransformer ):
     self.portbundle = None
     return ast.copy_location( node, node )
 
+  def visit_Name( self, node ):
+
+    # Name is a PortBundle, remove the node, set the submodule name
+    if isinstance( node._object, PortBundle ):
+      self.portbundle = node.id
+      return None
+
+    # Otherwise, clear the submodule name, return node unmodified
+    self.portbundle = None
+    return node
+
 #-------------------------------------------------------------------------
 # FlattenListAttrs
 #-------------------------------------------------------------------------
