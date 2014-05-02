@@ -43,10 +43,20 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
 # Convert Verilog HDL into a C++ simulator using Verilator.
 # http://www.veripool.org/wiki/verilator
 def verilate_model( filename, model_name ):
-  # Verilate the translated module (warnings suppressed)
-  cmd = 'rm -r obj_dir_{1}; {2}/bin/verilator -cc {0} -top-module {1}' \
-        ' --Mdir obj_dir_{1} -trace -Wno-lint -Wno-UNOPTFLAT'   \
-        .format( filename, model_name, os.environ['VERILATOR_ROOT'] )
+
+  # TODO: add '-trace' to options if --dump-vcd flag is set
+  verilator_flags = '-Wno-lint -Wno-UNOPTFLAT'
+
+  # NOTE: remove the obj_dir because issues with staleness...
+  cmd = 'rm -r obj_dir_{model_name}; '        \
+        '{vroot}/bin/verilator -cc {source}'  \
+        '  -top-module {model_name} --Mdir obj_dir_{model_name} {opts}'  \
+        .format( source     = filename,
+                 model_name = model_name,
+                 vroot      = os.environ['VERILATOR_ROOT'],
+                 opts       = verilator_flags,
+               )
+
   print cmd
   os.system( cmd )
 
@@ -112,21 +122,63 @@ def create_c_wrapper( model, c_wrapper_file ):
 # create_shared_lib
 #-----------------------------------------------------------------------
 # Compile the cpp wrapper into a shared library.
+#
+# Verilator suggests:
+#
+# For best performance, run Verilator with the "-O3 --x-assign=fast
+# --noassert" flags. The -O3 flag will require longer compile times, and
+# --x-assign=fast may increase the risk of reset bugs in trade for
+# performance; see the above documentation for these flags.
+#
+# Minor Verilog code changes can also give big wins. You should not have
+# any UNOPTFLAT warnings from Verilator. Fixing these warnings can
+# result in huge improvements; one user fixed their one UNOPTFLAT
+# warning by making a simple change to a clock latch used to gate clocks
+# and gained a 60% performance improvement.
+#
+# Beyond that, the performance of a Verilated model depends mostly on
+# your C++ compiler and size of your CPU's caches.
+#
+# By default, the lib/verilated.mk file has optimization
+# turned off. This is for the benefit of new users, as it improves
+# compile times at the cost of runtimes. To add optimization as the
+# default, set one of three variables, OPT, OPT_FAST, or OPT_SLOW
+# lib/verilated.mk. Or, use the -CFLAGS and/or -LDFLAGS option on the
+# verilator command line to pass the flags directly to the compiler or
+# linker. Or, just for one run, pass them on the command line to make:
+#
+#   make OPT_FAST="-O2" -f Vour.mk Vour__ALL.a
+
+# OPT_FAST specifies optimizations for those programs that are part of
+# the fast path, mostly code that is executed every cycle. OPT_SLOW
+# specifies optimizations for slow-path files (plus tracing), which
+# execute only rarely, yet take a long time to compile with optimization
+# on. OPT specifies overall optimization and affects all compiles,
+# including those OPT_FAST and OPT_SLOW affect. For best results, use
+# OPT="-O2", and link with "-static". Nearly the same results can be had
+# with much better compile times with OPT_FAST="-O1 -fstrict-aliasing".
+# Higher optimization such as "-O3" may help, but gcc compile times may
+# be excessive under O3 on even medium sized designs. Alternatively,
+# some larger designs report better performance using "-Os".
+#
+# http://www.veripool.org/projects/verilator/wiki/Manual-verilator
+#
 def create_shared_lib( model_name, c_wrapper_file, lib_file ):
 
   # Compiler template string
   compile_cmd  = 'g++ {flags} -I {verilator} -o {libname} {cpp_sources}'
 
-  flags        = '-O3 -fPIC -shared'
+  flags        = '-O1 -fstrict-aliasing -fPIC -shared'
   verilator    = '{}/include'.format( os.environ['VERILATOR_ROOT'] )
   libname      = lib_file
   cpp_sources  = ' '.join( [
                    'obj_dir_{model_name}/V{model_name}.cpp',
                    'obj_dir_{model_name}/V{model_name}__Syms.cpp',
-                   'obj_dir_{model_name}/V{model_name}__Trace.cpp',
-                   'obj_dir_{model_name}/V{model_name}__Trace__Slow.cpp',
                    '{verilator}/verilated.cpp',
-                   '{verilator}/verilated_vcd_c.cpp',
+                   # TODO: add trace sources if --dump-vcd flag is set
+                   #'obj_dir_{model_name}/V{model_name}__Trace.cpp',
+                   #'obj_dir_{model_name}/V{model_name}__Trace__Slow.cpp',
+                   #'{verilator}/verilated_vcd_c.cpp',
                    '{c_wrapper}'
                  ])
 

@@ -15,7 +15,8 @@ extern "C" {{
 
 // Verilator models
 V{model_name} * model;
-VerilatedVcdC * tfp;
+// TODO: make vcd tracing dependent on --dump-vcd flag
+//VerilatedVcdC * tfp;
 unsigned int trace_time;
 
 // Interface port pointers exposed via CFFI
@@ -24,13 +25,13 @@ unsigned int trace_time;
 // Constructor
 void create_model() {{
   model = new V{model_name}();
-  tfp   = new VerilatedVcdC();
+  //tfp   = new VerilatedVcdC();
 
   // Enable tracing
-  Verilated::traceEverOn( true );
+  //Verilated::traceEverOn( true );
   trace_time = 0;
-  model->trace( tfp, 99 );
-  tfp->open( "{model_name}.vcd" );
+  //model->trace( tfp, 99 );
+  //tfp->open( "{model_name}.vcd" );
 
   // Initialize interface pointers
   {port_inits}
@@ -41,12 +42,12 @@ void destroy_model() {{
   // TODO: this is probably a memory leak!
   //       But pypy segfaults if uncommented...
   //delete model;
-  tfp->close();
+  //tfp->close();
 }}
 
 void trace() {{
   trace_time += 1;
-  tfp->dump( trace_time );
+  //tfp->dump( trace_time );
 }}
 
 void eval() {{
