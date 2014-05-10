@@ -165,4 +165,6 @@ def test_BitsConst():
   setup_sim( combinational.BitsConst() )
 def test_SubmodPortBundles():
   setup_sim( combinational.SubmodPortBundles() )
+def test_VariablePartSelects():
+  setup_sim( combinational.VariablePartSelects(4) )
 

@@ -1454,3 +1454,32 @@ def test_SubmodPortBundles():
 # ListOfSubmodPortBundles
 #-------------------------------------------------------------------------
 # TODO
+
+#-------------------------------------------------------------------------
+# VariablePartSelects
+#-------------------------------------------------------------------------
+class VariablePartSelects( Model ):
+  def __init__( s, nchunks ):
+    s.in_ = InPort ( nchunks*4 )
+    s.out = OutPort( nchunks*4 )
+    s.chunks = nchunks
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      for i in range( s.chunks ):
+        s.out[4*i:4*i+4].value = s.in_[4*i:4*i+4]
+
+def test_VariablePartSelects():
+
+  model = VariablePartSelects(3)
+  sim = setup_sim( model )
+  model.in_.value = 0xF0F
+  sim.eval_combinational()
+  assert model.out == 0xF0F
+  model.in_.value = 0xFF0
+  sim.eval_combinational()
+  assert model.out == 0xFF0
+  model.in_.value = 0x000
+  sim.eval_combinational()
+  assert model.out == 0x000

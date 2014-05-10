@@ -325,12 +325,18 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
       # Widths for part selects can't be 0 (ie. select a single bit).
       # This is a hacky work around.
-      if node.upper.right._object == 1:
-        return '{}'.format( lower )
+      try:
+        if node.upper.right._object == 1:
+          return '{}'.format( lower )
+      # Num AST members dont have _objects...
+      except AttributeError:
+        assert isinstance( node.upper.right, _ast.Num )
+        if node.upper.right.n == 1:
+          return '{}'.format( lower )
 
       op      = opmap[type(node.upper.op)]
       upper   =  self.visit( node.upper.right )
-      return '{} {}: ({})-1'.format( lower, op, upper )
+      return '{} {}: {}'.format( lower, op, upper )
 
     # Normal slices
     lower = self.visit( node.lower )
