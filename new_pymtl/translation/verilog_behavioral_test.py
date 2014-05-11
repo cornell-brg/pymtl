@@ -167,4 +167,6 @@ def test_SubmodPortBundles():
   setup_sim( combinational.SubmodPortBundles() )
 def test_VariablePartSelects():
   setup_sim( combinational.VariablePartSelects(4) )
+def test_InferFuncCall():
+  setup_sim( combinational.InferFuncCall() )
 

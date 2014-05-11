@@ -398,7 +398,9 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Handle Bits
     if func_name  == 'Bits':
-      nbits = self.visit( node.args[0] )
+      if isinstance( node.args[0], ast.Num ): nbits = node.args[0].n
+      else:                                   nbits = node.args[0]._object
+      assert isinstance( nbits, int )
       value = self.visit( node.args[1] ) if len(node.args) == 2 else '0'
       return "{nbits}'d{value}".format( nbits=nbits, value=value )
 

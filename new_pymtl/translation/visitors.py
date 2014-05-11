@@ -469,24 +469,30 @@ class InferTemporaryTypes( ast.NodeTransformer ):
 
         func_name = node.value.func.id
         if func_name in ['sext', 'zext']:
-          nbits     = node.value.args[1]._object  # TODO: can this be a signal?
+          print_simple_ast( node.value )
+          nbits_arg = node.value.args[1]
+          if isinstance( nbits_arg, ast.Num ): nbits = nbits_arg.n
+          else:                                nbits = nbits_arg._object
           assert isinstance( nbits, int )
           obj      = Wire( nbits )
-          obj.name = node.targets[0].id
-          self._insert( node, obj )
         elif func_name == 'concat':
           nbits    = sum( [x._object.nbits for x in node.value.args ] )
           obj      = Wire( nbits )
-          obj.name = node.targets[0].id
-          self._insert( node, obj )
         elif func_name in ['reduce_and', 'reduce_or', 'reduce_xor']:
           obj      = Wire( 1 )
-          obj.name = node.targets[0].id
-          self._insert( node, obj )
+        elif func_name == 'Bits':
+          nbits_arg = node.value.args[0]
+          if isinstance( nbits_arg, ast.Num ): nbits = nbits_arg.n
+          else:                                nbits = nbits_arg._object
+          assert isinstance( nbits, int )
+          obj      = Wire( nbits )
         else:
           print_simple_ast( node )
-          raise Exception('Function "{}" in model "{}" is not translatable!'
+          raise Exception('Cannot infer type from Function "{}" in model "{}"!'
                           .format( func_name, self.model.__class__ ) )
+
+        obj.name = node.targets[0].id
+        self._insert( node, obj )
 
       else:
         print_simple_ast( node )

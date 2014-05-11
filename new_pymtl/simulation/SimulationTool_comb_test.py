@@ -1483,3 +1483,54 @@ def test_VariablePartSelects():
   model.in_.value = 0x000
   sim.eval_combinational()
   assert model.out == 0x000
+
+#-------------------------------------------------------------------------
+# InferFuncCall
+#-------------------------------------------------------------------------
+class InferFuncCall( Model ):
+  def __init__( s ):
+    s.in_ = InPort ( 4 )
+    s.o1  = OutPort( 8 )
+    s.o2  = OutPort( 8 )
+    s.o3  = OutPort( 8 )
+    s.o1c = OutPort( 8 )
+    s.o2c = OutPort( 8 )
+    s.o3c = OutPort( 8 )
+    s.tmp = 8
+
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      a = sext( s.in_, 8 )
+      b = zext( s.in_, 8 )
+      c = Bits(     8, 4 )
+      d = sext( s.in_, s.tmp )
+      e = zext( s.in_, s.tmp )
+      f = Bits( s.tmp, 4 )
+      s.o1 .value = a
+      s.o2 .value = b
+      s.o3 .value = c
+      s.o1c.value = d
+      s.o2c.value = e
+      s.o3c.value = f
+
+def test_InferFuncCall():
+
+  model = InferFuncCall()
+  sim = setup_sim( model )
+  model.in_.value = 0x7
+  sim.cycle()
+  assert model.o1  == 0x7
+  assert model.o2  == 0x7
+  assert model.o3  == 0x4
+  assert model.o1c == 0x7
+  assert model.o2c == 0x7
+  assert model.o3c == 0x4
+  model.in_.value = 0xF
+  sim.cycle()
+  assert model.o1  == 0xFF
+  assert model.o2  == 0xF
+  assert model.o3  == 0x4
+  assert model.o1c == 0xFF
+  assert model.o2c == 0xF
+  assert model.o3c == 0x4
