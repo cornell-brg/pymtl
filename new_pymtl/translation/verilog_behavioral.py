@@ -315,7 +315,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Special handling of variable part-selects
     # TODO: make this more resilient?
-    # http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-884-complex-digital-systems-spring-2005/related-resources/verilog_2k1paper.pdf
+    # http://www.sutherland-hdl.com/papers/2000-HDLCon-paper_Verilog-2000.pdf
     if isinstance( node.upper, _ast.BinOp ):
       assert isinstance( node.upper.op, (_ast.Add, _ast.Sub) )
 
