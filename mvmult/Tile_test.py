@@ -7,7 +7,7 @@ from new_pymtl                  import *
 from new_pmlib                  import mem_msgs
 from new_pmlib.TestMemory       import TestMemory
 from new_pmlib.TestProcManager  import TestProcManager
-from new_proc.ParcProc5stBypass import ParcProc5stBypass
+from Tile                       import Tile
 
 #-----------------------------------------------------------------------
 # TestHarness
@@ -20,9 +20,7 @@ class TestHarness( Model ):
   def __init__( s, ModelType, memreq_params, memresp_params,
                 mem_delay, sparse_mem_img, test_verilog ):
 
-    mem_delay = 0    # TODO: why is this 0...
-
-    s.proc     = ModelType( reset_vector=0x00000400 )
+    s.tile     = ModelType( reset_vector=0x00000400 )
     s.mem      = TestMemory( memreq_params, memresp_params, 2,
                              mem_delay, mem_nbytes=2**24  )
     s.proc_mgr = TestProcManager( s.mem, sparse_mem_img )
@@ -34,31 +32,28 @@ class TestHarness( Model ):
 
     # Connect Manager Signals
 
-    s.connect( s.proc_mgr.proc_go,     s.proc.go         )
-    s.connect( s.proc_mgr.proc_status, s.proc.status     )
+    s.connect( s.proc_mgr.proc_go,     s.tile.go         )
+    s.connect( s.proc_mgr.proc_status, s.tile.status     )
 
-    # Instruction Memory Request/Response Signals
+    # Memory Request/Response Signals
 
-    s.connect( s.proc.imemreq,  s.mem.reqs[0]  )
-    s.connect( s.proc.imemresp, s.mem.resps[0] )
-
-    # Data Memory Request/Response Signals
-
-    s.connect( s.proc.dmemreq,  s.mem.reqs[1]  )
-    s.connect( s.proc.dmemresp, s.mem.resps[1] )
+    s.connect( s.tile.memreq [0], s.mem.reqs [0] )
+    s.connect( s.tile.memresp[0], s.mem.resps[0] )
+    s.connect( s.tile.memreq [1], s.mem.reqs [1] )
+    s.connect( s.tile.memresp[1], s.mem.resps[1] )
 
   #---------------------------------------------------------------------
   # done
   #---------------------------------------------------------------------
   def done( s ):
-    return s.proc_mgr.done.value
+    return s.proc_mgr.done
 
   #---------------------------------------------------------------------
   # line_trace
   #---------------------------------------------------------------------
   def line_trace( s ):
     return s.proc_mgr.line_trace() + \
-           s.proc.line_trace() + \
+           s.tile.line_trace() + \
            s.mem.line_trace()
 
 #-----------------------------------------------------------------------
@@ -100,7 +95,7 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
     sim.cycle()
 
   assert model.done()
-  assert model.proc.status.value.uint() == expected_result
+  assert model.tile.status == expected_result
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
@@ -112,7 +107,7 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
 # run_bypass_proc_test
 #-----------------------------------------------------------------------
 def run_bypass_proc_test( dump_vcd, test_verilog, vcd_file_name, input_list ):
-  run_proc_test( ParcProc5stBypass, test_verilog,
+  run_proc_test( Tile, test_verilog,
                  dump_vcd, vcd_file_name, input_list )
 
 #---------------------------------------------------------------------------
