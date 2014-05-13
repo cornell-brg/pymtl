@@ -26,7 +26,7 @@ class TestHarness( Model ):
     s.proc_mgr = TestProcManager( s.mem, sparse_mem_img )
 
     if test_verilog:
-      s.proc = get_verilated( s.proc )
+      s.tile = get_verilated( s.tile )
 
   def elaborate_logic( s ):
 
