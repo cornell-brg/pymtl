@@ -1453,7 +1453,61 @@ def test_SubmodPortBundles():
 #-------------------------------------------------------------------------
 # ListOfSubmodPortBundles
 #-------------------------------------------------------------------------
-# TODO
+#TODO
+
+#-------------------------------------------------------------------------
+# SubmodPortBundlesList
+#-------------------------------------------------------------------------
+class BundleListChild( Model ):
+  def __init__( s, nbits ):
+    s.in_ = InBundle [2]( nbits )
+    s.out = OutBundle[2]( nbits )
+  def elaborate_logic( s ):
+    @s.combinational
+    def logic():
+      for i in range(2):
+        s.out[i].a.value = s.in_[i].b
+        s.out[i].b.value = s.in_[i].a
+
+class SubmodPortBundlesList( Model ):
+  def __init__( s ):
+    s.in_ = InBundle [2]( 4 )
+    s.out = OutBundle[2]( 4 )
+  def elaborate_logic( s ):
+    s.submod = BundleListChild( 4 )
+    @s.combinational
+    def logic1():
+      for i in range(2):
+        s.submod.in_[i].a.value = s.in_[i].a
+        s.submod.in_[i].b.value = s.in_[i].b
+    @s.combinational
+    def logic2():
+      for i in range(2):
+        s.out[i].a.value = s.submod.out[i].a
+        s.out[i].b.value = s.submod.out[i].b
+
+def test_SubmodPortBundlesList():
+
+  model = SubmodPortBundlesList()
+  sim = setup_sim( model )
+  model.in_[0].a.value = 2
+  model.in_[0].b.value = 3
+  model.in_[1].a.value = 4
+  model.in_[1].b.value = 5
+  sim.eval_combinational()
+  assert model.out[0].a == 3
+  assert model.out[0].b == 2
+  assert model.out[1].a == 5
+  assert model.out[1].b == 4
+  model.in_[0].a.value = 10
+  model.in_[0].b.value = 4
+  model.in_[1].a.value = 10
+  model.in_[1].b.value = 4
+  sim.eval_combinational()
+  assert model.out[0].a == 4
+  assert model.out[0].b == 10
+  assert model.out[1].a == 4
+  assert model.out[1].b == 10
 
 #-------------------------------------------------------------------------
 # VariablePartSelects
