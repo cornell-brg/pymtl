@@ -165,6 +165,9 @@ def test_BitsConst():
   setup_sim( combinational.BitsConst() )
 def test_SubmodPortBundles():
   setup_sim( combinational.SubmodPortBundles() )
+@pytest.mark.xfail
+def test_ListOfSubmodPortBundles():
+  setup_sim( combinational.ListOfSubmodPortBundles() )
 def test_SubmodPortBundlesList():
   setup_sim( combinational.SubmodPortBundlesList() )
 def test_VariablePartSelects():

@@ -1453,7 +1453,45 @@ def test_SubmodPortBundles():
 #-------------------------------------------------------------------------
 # ListOfSubmodPortBundles
 #-------------------------------------------------------------------------
-#TODO
+class ListOfSubmodPortBundles( Model ):
+  def __init__( s ):
+    s.in_ = InBundle [2]( 4 )
+    s.out = OutBundle[2]( 4 )
+  def elaborate_logic( s ):
+    s.submod = BundleChild[2]( 4 )
+    @s.combinational
+    def logic1():
+      for i in range(2):
+        s.submod[i].in_.a.value = s.in_[i].a
+        s.submod[i].in_.b.value = s.in_[i].b
+    @s.combinational
+    def logic2():
+      for i in range(2):
+        s.out[i].a.value = s.submod[i].out.a
+        s.out[i].b.value = s.submod[i].out.b
+
+def test_ListOfSubmodPortBundles():
+
+  model = ListOfSubmodPortBundles()
+  sim = setup_sim( model )
+  model.in_[0].a.value = 2
+  model.in_[0].b.value = 3
+  model.in_[1].a.value = 4
+  model.in_[1].b.value = 5
+  sim.eval_combinational()
+  assert model.out[0].a == 3
+  assert model.out[0].b == 2
+  assert model.out[1].a == 5
+  assert model.out[1].b == 4
+  model.in_[0].a.value = 10
+  model.in_[0].b.value = 4
+  model.in_[1].a.value = 10
+  model.in_[1].b.value = 4
+  sim.eval_combinational()
+  assert model.out[0].a == 4
+  assert model.out[0].b == 10
+  assert model.out[1].a == 4
+  assert model.out[1].b == 10
 
 #-------------------------------------------------------------------------
 # SubmodPortBundlesList
