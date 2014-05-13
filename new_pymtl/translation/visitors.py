@@ -292,11 +292,46 @@ class FlattenListAttrs( ast.NodeTransformer ):
         node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
         node._object.name = name
       elif isinstance( node._object[0], PortBundle ):
-        name = '{}_{}'.format( node._object.name, self.attr )
+        if   isinstance( node.value, ast.Name ):
+          bundle_name = node.value.id
+        elif isinstance( node.value, ast.Attribute ):
+          bundle_name = node.value.attr
+        else:
+          raise Exception()
+        name = '{}_{}'.format( bundle_name, self.attr )
         node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
         node._object.name = name
+      else:
+        raise Exception()
 
-    self.generic_visit( node )
+    # Visit the slice
+    stash = self.attr
+    self.attr = None
+    node.slice = self.visit( node.slice )
+    self.attr = stash
+
+    # Visit the value
+    node.value = self.visit( node.value )
+
+    return node
+
+  def visit_Name( self, node ):
+
+    # SubModel List
+    if self.attr   and isinstance( node._object[0], Model ):
+      node.id = '{}${}'.format( node.id, self.attr )
+      node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
+      node._object.name = node.id
+
+    # PortBundle List
+    elif self.attr and isinstance( node._object[0], PortBundle ):
+      node.id = '{}_{}'.format( node.id, self.attr )
+      node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
+      node._object.name = node.id
+
+    # Unknown!!!
+    elif self.attr:
+      raise Exception( "Don't know how to flatten this!" )
 
     return node
 
