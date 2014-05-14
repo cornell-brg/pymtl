@@ -11,7 +11,7 @@ from MatrixVecLaneRTL import MatrixVecLaneRTL
 class MatrixVecCOP( Model ):
 
   def __init__( s, nlanes, nmul_stages,
-                cop_addr_nbits=3,  cop_data_nbits=32,
+                cop_addr_nbits=5,  cop_data_nbits=32,
                 mem_addr_nbits=32, mem_data_nbits=32 ):
 
     # Config Params
@@ -26,6 +26,7 @@ class MatrixVecCOP( Model ):
     # Interface
 
     s.from_cpu  = InValRdyBundle( cop_addr_nbits + cop_data_nbits )
+    s.to_cpu    = OutPort       ( 1 )
     s.lane_req  = [ OutValRdyBundle( s.memreq_params .nbits )
                     for x in range( s.nlanes ) ]
     s.lane_resp = [ InValRdyBundle ( s.memresp_params.nbits )
@@ -42,6 +43,7 @@ class MatrixVecCOP( Model ):
                for x in range( s.nlanes ) ]
 
     s.connect( s.from_cpu, s.mgr.from_cpu )
+    s.connect( s.to_cpu,   s.mgr.to_cpu   )
 
     for i in range( s.nlanes ):
       s.connect( s.mgr.size,     s.lane[i].size       )

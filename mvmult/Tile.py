@@ -37,8 +37,8 @@ class Tile( Model ):
     nmul_stages = 4
 
     s.proc     = ParcProc5stBypass( reset_vector=0x00000400 )
-    s.cop      = MatrixVecCOP( nlanes, nmul_stages,
-                               cop_addr_nbits=3,  cop_data_nbits=32,
+    s.cp2      = MatrixVecCOP( nlanes, nmul_stages,
+                               cop_addr_nbits=5,  cop_data_nbits=32,
                                mem_addr_nbits=32, mem_data_nbits=32 )
 
     s.connect( s.go,         s.proc.go       )
@@ -48,15 +48,15 @@ class Tile( Model ):
     #s.connect( s.memreq [1], s.proc.dmemreq  )
     #s.connect( s.memresp[1], s.proc.dmemresp )
 
-   # s.connect( s.cop .from_cpu, s.proc.to_cop )
+    s.connect( s.cp2.from_cpu, s.proc.to_cp2   )
+    s.connect( s.cp2.to_cpu,   s.proc.from_cp2 )
 
     @s.combinational
     def logic():
-      if 0:
-      #if s.proc.to_cop.val:
-        s.memreq [1].msg.value = s.cop.lane_req [0].msg
-        s.memreq [1].val.value = s.cop.lane_req [0].val
-        s.memresp[1].rdy.value = s.cop.lane_resp[0].rdy
+      if not s.cp2.from_cpu.rdy:
+        s.memreq [1].msg.value = s.cp2.lane_req [0].msg
+        s.memreq [1].val.value = s.cp2.lane_req [0].val
+        s.memresp[1].rdy.value = s.cp2.lane_resp[0].rdy
       else:
         s.memreq [1].msg.value = s.proc.dmemreq    .msg
         s.memreq [1].val.value = s.proc.dmemreq    .val
@@ -65,13 +65,9 @@ class Tile( Model ):
     s.connect( s.memresp[1].msg, s.proc.dmemresp    .msg )
     s.connect( s.memresp[1].val, s.proc.dmemresp    .val )
     s.connect( s.memreq [1].rdy, s.proc.dmemreq     .rdy )
-    s.connect( s.memresp[1].msg, s.cop .lane_resp[0].msg )
-    s.connect( s.memresp[1].val, s.cop .lane_resp[0].val )
-    s.connect( s.memreq [1].rdy, s.cop .lane_req[0] .rdy )
-
-    #s.coproc.from_cpu [0]
-    #s.coproc.lane_req [0]
-    #s.coproc.lane_resp[0]
+    s.connect( s.memresp[1].msg, s.cp2 .lane_resp[0].msg )
+    s.connect( s.memresp[1].val, s.cp2 .lane_resp[0].val )
+    s.connect( s.memreq [1].rdy, s.cp2 .lane_req[0] .rdy )
 
   #---------------------------------------------------------------------
   # line_trace

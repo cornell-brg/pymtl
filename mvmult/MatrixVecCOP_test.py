@@ -16,7 +16,7 @@ class SourceHarness( Model ):
   def __init__( s, nlanes, nmul_stages, mem_delay, src_delay, config_msgs,
                 test_verilog ):
 
-    cop_addr_nbits = 3
+    cop_addr_nbits = 5
     cop_data_nbits = 32
     mem_addr_nbits = 32
     mem_data_nbits = 32
