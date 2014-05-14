@@ -174,7 +174,7 @@ class LaneManagerHarness( Model ):
     memreq_params  = mem_msgs.MemReqParams( 32, 32 )
     memresp_params = mem_msgs.MemRespParams( 32 )
 
-    s.src   = TestSource( 3 + 32, config_msgs, src_delay )
+    s.src   = TestSource( 5 + 32, config_msgs, src_delay )
     s.mgr   = LaneManager( nlanes )
     s.lane  = [ MatrixVecLaneRTL( x, nmul_stages, memreq_params, memresp_params )
                 for x in range( nlanes ) ]

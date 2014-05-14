@@ -5,16 +5,17 @@
 from new_pymtl import *
 from new_pmlib import InValRdyBundle
 
-STATE_IDLE = 0
-STATE_CFG  = 1
-STATE_CALC = 2
+STATE_CFG  = 0
+STATE_CALC = 1
+STATE_DONE = 2
 
 class LaneManager( Model ):
 
-  def __init__( s, nlanes, addr_nbits=3, data_nbits=32 ):
+  def __init__( s, nlanes, addr_nbits=5, data_nbits=32 ):
 
     # CPU <-> LaneManager
     s.from_cpu    = InValRdyBundle( addr_nbits + data_nbits )
+    s.to_cpu      = OutPort       ( 1 )
 
     # LaneManager -> Lanes
     s.size    = OutPort( data_nbits )
@@ -39,7 +40,7 @@ class LaneManager( Model ):
     @s.posedge_clk
     def state_update():
 
-      if s.reset: s.state.next = STATE_IDLE
+      if s.reset: s.state.next = STATE_CFG
       else:       s.state.next = s.state_next
 
     #--------------------------------------------------------------------------
@@ -72,9 +73,17 @@ class LaneManager( Model ):
         s.done_reg.next = 0
 
       elif s.state_next == STATE_CALC:
-        s.go      .next = 0
+
+        # Check each lane for completion.
         for i in range( s.nlanes ):
           if s.done[i]: s.done_reg[i].next = 1
+
+        # Lanes make take different amounts of time, and may transition to IDLE
+        # before the LaneManager transitions to DONE. We need to set go low
+        # before reaching STATE_DONE, so we do it as soon as we transition to
+        # STATE_CALC; this ensures go is only high for 1 cycle.
+
+        s.go.next = 0
 
     #--------------------------------------------------------------------------
     # state_transition
@@ -84,35 +93,37 @@ class LaneManager( Model ):
 
       # Status
 
-      do_config  = s.from_cpu.val and s.from_cpu.rdy
-      do_compute = s.go
-      is_done    = reduce_and( s.done_reg )
+      do_config     = s.from_cpu.val and s.from_cpu.rdy
+      start_compute = s.addr == 0 and s.data == 1
+      is_done       = reduce_and( s.done_reg )
 
       # State update
 
       s.state_next.value = s.state
 
-      if   s.state == STATE_IDLE and do_config:
-        s.state_next.value = STATE_CFG
-
-      elif s.state == STATE_CFG  and do_compute:
+      if   s.state == STATE_CFG and do_config and start_compute:
         s.state_next.value = STATE_CALC
 
       elif s.state == STATE_CALC and is_done:
-        s.state_next.value = STATE_IDLE
+        s.state_next.value = STATE_DONE
 
-      # Output ready
+      elif s.state == STATE_DONE:
+        s.state_next.value = STATE_CFG
 
-      if   s.state == STATE_IDLE: s.from_cpu.rdy.value = 1
-      elif s.state == STATE_CFG:  s.from_cpu.rdy.value = not do_compute
-      elif s.state == STATE_CALC: s.from_cpu.rdy.value = 0
+      # Output rdy and to_cpu
+
+      s.from_cpu.rdy.value = s.state == STATE_CFG
+      s.to_cpu      .value = s.state == STATE_DONE
 
   def line_trace( s ):
-    return '{} {} {} {} {}'.format(
-        s.from_cpu,
-        ['IDL','CFG','CLC'][s.state],
-        'go' if s.go else '  ',
-        '{:0{width}b}'.format( s.done_reg.uint(), width=s.done_reg.nbits ),
-        'done' if reduce_and(s.done_reg) else '    '
-        )
+    return '{cfg_msg} {state:4} {go:2} {done_reg} {done:4}'.format(
+              cfg_msg  = s.from_cpu,
+              state    = ['CFG','CALC','DONE'][s.state],
+              go       = 'go'   if s.go     else '',
+              done     = 'done' if s.to_cpu else '',
+              done_reg = '{:0{width}b}'.format(
+                            concat( *s.done ).uint(),
+                            width = len( s.done )
+                          )
+           )
 
