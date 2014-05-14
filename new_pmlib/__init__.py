@@ -24,6 +24,7 @@ from TestSink            import TestSink
 from TestSimpleNetSink   import TestSimpleNetSink
 from TestNetSink         import TestNetSink
 from TestMemory          import TestMemory
+from TestProcManager     import TestProcManager
 from SparseMemoryImage   import SparseMemoryImage
 
 from ValRdyBundle        import InValRdyBundle, OutValRdyBundle
