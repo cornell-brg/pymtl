@@ -117,7 +117,7 @@ class TestHarness( Model ):
 # run_proc_test
 #-----------------------------------------------------------------------
 # function to drive the unit tests
-def run_proc_test( test_verilog, dump_vcd, vcd_file, input_list ):
+def run_proc_test( dump_vcd, test_verilog, vcd_file, input_list ):
 
   # Instantiate and elaborate the model
 
