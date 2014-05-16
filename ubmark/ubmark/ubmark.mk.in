@@ -20,4 +20,5 @@ ubmark_install_prog_srcs = \
   ubmark-bin-search.c \
   ubmark-masked-filter.c \
   ubmark-mvmult.c \
+  ubmark-mvmult-cp2.c \
 

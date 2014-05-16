@@ -83,7 +83,7 @@ int main( int argc, char* argv[] )
     int temp = 0;
 
     test_stats_on( temp );
-    mvmult_scalar( dest, matrix, vector, R, C );
+    mvmult_scalar( dest, (int*) matrix, vector, R, C );
     test_stats_off( temp );
 
     verify_results( dest, ref, size );
