@@ -133,9 +133,9 @@ def mtc2_1x1():
     ( test_start +
   """
       li    $1, 1
-      la    $2, tdata_2
-      la    $3, tdata_3
-      la    $4, tdata_4
+      la    $2, matrix
+      la    $3, vector
+      la    $4, dest
       li    $5, 1
       nop
       nop
@@ -157,21 +157,93 @@ def mtc2_1x1():
   """
    .data
    .align 4
-      tdata_2: .word 0x00000004
-      tdata_3: .word 0x00000002
-      tdata_4: .word 0x00000000
+      matrix:  .word 0x00000004
+      vector:  .word 0x00000002
+      dest:    .word 0x00000000
   """ )
 
-  mem_delay       = 0
   sparse_mem_img  = SparseMemoryImage( asm_str = asm_str )
   expected_result = 8
 
-  return [ mem_delay, sparse_mem_img, expected_result ]
+  return [ sparse_mem_img, expected_result ]
 
 @requires_xcc
-def test_mtc2_1x1( dump_vcd, test_verilog ):
+def test_mtc2_1x1_delay0( dump_vcd, test_verilog ):
   run_bypass_proc_test( dump_vcd, test_verilog, "test_mtc2_1x1.vcd",
-                        mtc2_1x1() )
+                        [0]+mtc2_1x1() )
+@requires_xcc
+def test_mtc2_1x1_delay5( dump_vcd, test_verilog ):
+  run_bypass_proc_test( dump_vcd, test_verilog, "test_mtc2_1x1.vcd",
+                        [5]+mtc2_1x1() )
+
+def mtc2_3x3():
+
+  asm_str = \
+    ( test_start +
+  """
+      li    $1, 3
+      la    $2, matrix0
+      la    $3, vector0
+      la    $4, dest0
+      li    $5, 1
+      mtc2  $1, $1
+      mtc2  $2, $2
+      mtc2  $3, $3
+      mtc2  $4, $4
+      mtc2  $5, $0
+      la    $2, matrix3
+      la    $7, dest1
+      mtc2  $2, $2
+      mtc2  $7, $4
+      mtc2  $5, $0
+      la    $2, matrix6
+      la    $8, dest2
+      mtc2  $2, $2
+      mtc2  $8, $4
+      mtc2  $5, $0
+      lw    $1, 0($4)
+      lw    $2, 0($7)
+      lw    $3, 0($8)
+      addu  $6, $1, $2
+      addu  $6, $6, $3
+      mtc0  $6, $1
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+  """
+    + test_end +
+  """
+   .data
+   .align 4
+      matrix0: .word 0x00000005
+      matrix1: .word 0x00000001
+      matrix2: .word 0x00000003
+      matrix3: .word 0x00000001
+      matrix4: .word 0x00000001
+      matrix5: .word 0x00000001
+      matrix6: .word 0x00000001
+      matrix7: .word 0x00000002
+      matrix8: .word 0x00000001
+      vector0: .word 0x00000001
+      vector1: .word 0x00000002
+      vector2: .word 0x00000003
+      dest0:   .word 0x00000000
+      dest1:   .word 0x00000000
+      dest2:   .word 0x00000000
+  """ )
+
+  sparse_mem_img  = SparseMemoryImage( asm_str = asm_str )
+  expected_result = 30
+
+  return [ sparse_mem_img, expected_result ]
+
+@requires_xcc
+def test_mtc2_3x3_delay0( dump_vcd, test_verilog ):
+  run_bypass_proc_test( dump_vcd, test_verilog, "test_mtc2_3x3.vcd",
+                        [0]+mtc2_3x3() )
+@requires_xcc
+def test_mtc2_3x3_delay5( dump_vcd, test_verilog ):
+  run_bypass_proc_test( dump_vcd, test_verilog, "test_mtc2_3x3.vcd",
+                        [5]+mtc2_3x3() )
 
 #---------------------------------------------------------------------------
 # 0. bypass logic direct test
