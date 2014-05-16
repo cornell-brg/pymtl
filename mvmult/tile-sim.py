@@ -63,7 +63,7 @@ def parse_cmdline():
   # Additional command line arguments for the simulator
 
   p.add_argument( "--bmark",
-    choices=["vvadd","bsearch","cmult","mfilter","mvmult"] )
+    choices=["vvadd","bsearch","cmult","mfilter","mvmult","mvmult-cp2"] )
 
   p.add_argument( "--dump-vcd", nargs='?',
                   default=False, const="dump.vcd" )
@@ -160,6 +160,12 @@ def ubmark_mvmult():
   sparse_mem_img = SparseMemoryImage( vmh_filename = bmark_file )
   return [ mem_delay, sparse_mem_img ]
 
+def ubmark_mvmult_cp2():
+  bmark_file     = vmh_dir + 'ubmark-mvmult-cp2.vmh'
+  mem_delay      = 0
+  sparse_mem_img = SparseMemoryImage( vmh_filename = bmark_file )
+  return [ mem_delay, sparse_mem_img ]
+
 #-----------------------------------------------------------------------
 # main()
 #-----------------------------------------------------------------------
@@ -170,11 +176,12 @@ def main():
   # Determine which bmark to run
 
   bmarks_dict = {
-    'vvadd'   : ubmark_vvadd(),
-    'bsearch' : ubmark_bsearch(),
-    'cmult'   : ubmark_cmult(),
-    'mfilter' : ubmark_mfilter(),
-    'mvmult'  : ubmark_mvmult(),
+    'vvadd'      : ubmark_vvadd(),
+    'bsearch'    : ubmark_bsearch(),
+    'cmult'      : ubmark_cmult(),
+    'mfilter'    : ubmark_mfilter(),
+    'mvmult'     : ubmark_mvmult(),
+    'mvmult-cp2' : ubmark_mvmult_cp2(),
   }
 
   # Instantiate and elaborate the model
