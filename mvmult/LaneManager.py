@@ -48,8 +48,13 @@ class LaneManager( Model ):
     #--------------------------------------------------------------------------
     s.addr = Wire( s.addr_nbits )
     s.data = Wire( s.data_nbits )
-    s.connect( s.addr, s.from_cpu.msg[s.data_nbits:s.from_cpu.msg.nbits] )
-    s.connect( s.data, s.from_cpu.msg[0:s.data_nbits] )
+
+    # TODO: replace this with temporaries (issue #78 + #79)
+    # TODO: make open slices translatable (issue #80)
+    @s.combinational
+    def temp():
+      s.addr.value = s.from_cpu.msg[s.data_nbits:s.from_cpu.msg.nbits]
+      s.data.value = s.from_cpu.msg[0:s.data_nbits]
 
     s.done_reg = Wire( s.nlanes )
 
