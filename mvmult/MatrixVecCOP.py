@@ -56,4 +56,10 @@ class MatrixVecCOP( Model ):
       s.connect( s.lane_req[i],  s.lane[i].req        )
       s.connect( s.lane_resp[i], s.lane[i].resp       )
 
+  def line_trace( s ):
+    addr = s.from_cpu.to_str( s.from_cpu.msg[32:35] )
+    data = s.from_cpu.to_str( s.from_cpu.msg[  :32] )
+    go   = 'G' if s.mgr.go else ' '
+    done = 'D' if s.to_cpu else ' '
+    return '|{} {} {}{}|'.format( addr, data, go, done )
 

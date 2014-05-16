@@ -3,11 +3,12 @@
 #=========================================================================
 # ParcProc5stBypass assembly tests driver
 
-from new_pymtl                  import *
-from new_pmlib                  import mem_msgs
-from new_pmlib.TestMemory       import TestMemory
-from new_pmlib.TestProcManager  import TestProcManager
-from Tile                       import Tile
+from new_pymtl import *
+from new_pmlib import mem_msgs
+from new_pmlib import TestMemory
+from new_pmlib import TestProcManager
+from new_pmlib import SparseMemoryImage
+from Tile      import Tile
 
 #-----------------------------------------------------------------------
 # TestHarness
@@ -109,6 +110,68 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
 def run_bypass_proc_test( dump_vcd, test_verilog, vcd_file_name, input_list ):
   run_proc_test( Tile, test_verilog,
                  dump_vcd, vcd_file_name, input_list )
+
+#---------------------------------------------------------------------------
+# X. mtc2 tests - matrix vector multiplier specific
+#---------------------------------------------------------------------------
+
+test_start = """
+  .text;
+  .align  4;
+  .global _test;
+  .ent    _test;
+  _test:
+"""
+
+test_end   = """
+  .end    _test;
+"""
+
+def mtc2_1x1():
+
+  asm_str = \
+    ( test_start +
+  """
+      li    $1, 1
+      la    $2, tdata_2
+      la    $3, tdata_3
+      la    $4, tdata_4
+      li    $5, 1
+      nop
+      nop
+      nop
+      mtc2  $1, $1
+      mtc2  $2, $2
+      mtc2  $3, $3
+      mtc2  $4, $4
+      mtc2  $5, $0
+      nop
+      nop
+      nop
+      lw    $6, 0($4)
+      mtc0  $6, $1
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+  """
+    + test_end +
+  """
+   .data
+   .align 4
+      tdata_2: .word 0x00000004
+      tdata_3: .word 0x00000002
+      tdata_4: .word 0x00000000
+  """ )
+
+  mem_delay       = 0
+  sparse_mem_img  = SparseMemoryImage( asm_str = asm_str )
+  expected_result = 8
+
+  return [ mem_delay, sparse_mem_img, expected_result ]
+
+@requires_xcc
+def test_mtc2_1x1( dump_vcd, test_verilog ):
+  run_bypass_proc_test( dump_vcd, test_verilog, "test_mtc2_1x1.vcd",
+                        mtc2_1x1() )
 
 #---------------------------------------------------------------------------
 # 0. bypass logic direct test

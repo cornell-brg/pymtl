@@ -77,5 +77,5 @@ class Tile( Model ):
   # line_trace
   #---------------------------------------------------------------------
   def line_trace( s ):
-    return s.proc.line_trace()
+    return s.proc.line_trace() + s.cp2.line_trace()
 
