@@ -23,8 +23,8 @@ class Tile( Model ):
 
     s.go        = InPort   ( 1  )
     s.status    = OutPort  ( 32 )
-    #s.stats_en  = OutPort  ( 1  )
-    #s.num_insts = OutPort  ( 32 )
+    s.stats_en  = OutPort  ( 1  )
+    s.num_insts = OutPort  ( 32 )
 
     # Memory Interface
 
@@ -41,15 +41,19 @@ class Tile( Model ):
                                cop_addr_nbits=5,  cop_data_nbits=32,
                                mem_addr_nbits=32, mem_data_nbits=32 )
 
-    s.connect( s.go,         s.proc.go       )
-    s.connect( s.status,     s.proc.status   )
-    s.connect( s.memreq [0], s.proc.imemreq  )
-    s.connect( s.memresp[0], s.proc.imemresp )
-    #s.connect( s.memreq [1], s.proc.dmemreq  )
-    #s.connect( s.memresp[1], s.proc.dmemresp )
+    s.connect( s.go,           s.proc.go        )
+    s.connect( s.status,       s.proc.status    )
+    s.connect( s.stats_en,     s.proc.stats_en  )
+    s.connect( s.num_insts,    s.proc.num_insts )
 
-    s.connect( s.cp2.from_cpu, s.proc.to_cp2   )
-    s.connect( s.cp2.to_cpu,   s.proc.from_cp2 )
+    s.connect( s.cp2.from_cpu, s.proc.to_cp2    )
+    s.connect( s.cp2.to_cpu,   s.proc.from_cp2  )
+
+    s.connect( s.memreq [0],   s.proc.imemreq   )
+    s.connect( s.memresp[0],   s.proc.imemresp  )
+
+    ##s.connect( s.memreq [1], s.proc.dmemreq  )
+    ##s.connect( s.memresp[1], s.proc.dmemresp )
 
     @s.combinational
     def logic():
