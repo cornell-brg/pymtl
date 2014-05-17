@@ -21,7 +21,10 @@ class TestHarness( Model ):
   def __init__( s, ModelType, memreq_params, memresp_params,
                 mem_delay, sparse_mem_img, test_verilog ):
 
-    s.tile     = ModelType( reset_vector=0x00000400 )
+    data_nbits = memreq_params.data_nbits
+
+    s.tile     = ModelType( reset_vector   = 0x00000400,
+                            mem_data_nbits = data_nbits )
     s.mem      = TestMemory( memreq_params, memresp_params, 2,
                              mem_delay, mem_nbytes=2**24  )
     s.proc_mgr = TestProcManager( s.mem, sparse_mem_img )
@@ -65,8 +68,10 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
 
   # Instantiate and elaborate the model
 
-  memreq_params  = mem_msgs.MemReqParams( 32, 32 )
-  memresp_params = mem_msgs.MemRespParams( 32 )
+  memreq_params  = mem_msgs.MemReqParams( 32, 128 )
+  memresp_params = mem_msgs.MemRespParams( 128 )
+  #memreq_params  = mem_msgs.MemReqParams( 32, 32 )
+  #memresp_params = mem_msgs.MemRespParams( 32 )
 
   # input_list parameters
 
@@ -91,7 +96,7 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
   print ""
 
   sim.reset()
-  while not model.done() and sim.ncycles < 3000:
+  while not model.done() and sim.ncycles < 4000:
     sim.print_line_trace()
     sim.cycle()
 
