@@ -49,6 +49,8 @@ def translate_module( model, o ):
   # Structural Verilog
   print >> o, submodel_instances ( model,  symtab ),
   print >> o, signal_assignments ( model,  symtab )
+  # Array Declarations
+  print >> o, array_declarations ( model,  symtab ),
   # Behavioral Verilog
   print >> o, logic
   print >> o, end_mod  .format( model.class_name )

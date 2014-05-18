@@ -11,7 +11,7 @@ from ..signals      import Wire, Signal, InPort, OutPort
 from ..Bits         import Bits
 from ..Model        import Model
 from ..PortBundle   import PortBundle
-from ..signal_lists import PortList
+from ..signal_lists import PortList, WireList
 
 #-------------------------------------------------------------------------
 # AnnotateWithObjects
@@ -144,7 +144,7 @@ class RemoveSelf( ast.NodeTransformer ):
 #
 # This visitor transforms the AST and name to 's.submodule_port':
 #
-#   Attribute(submodule_port)
+#   Attribute(submodule$port)
 #
 class FlattenSubmodAttrs( ast.NodeTransformer ):
 
@@ -544,6 +544,46 @@ class InferTemporaryTypes( ast.NodeTransformer ):
       pass
 
     return node
+
+#-------------------------------------------------------------------------
+# PortListNameHack
+#-------------------------------------------------------------------------
+# Temporary hack to handle cases where
+class PortListNameHack( ast.NodeTransformer ):
+
+  def __init__( self, model ):
+    self.model = model
+
+  def visit_Subscript( self, node ):
+
+    self.generic_visit( node )
+    plist = node._object
+
+    # skip check if this isn't a PortList or WireList
+
+    if not isinstance( plist, (PortList, WireList) ):
+      return node
+
+    # if the PortList parent is not the same as the current modules parent, but
+    # there is no '$' in the name, it's been named improperly! fix it!
+
+    if plist[0].parent != self.model and not '$' in plist.name:
+
+      # this only works if all children of the list have the same parent, throw
+      # an error if we can detect that that is not the case
+
+      if len( plist) > 1 and plist[0].parent != plist[1].parent:
+        raise Exception( "Error during translation!" )
+
+      # generate the updated name, and also make a copy of the PortList to make
+      # sure we aren't impacting any other AST references to this object
+
+      name              = '{}${}'.format( plist[0].parent.name, plist.name )
+      node._object      = PortList( node._object )
+      node._object.name = name
+
+    return node
+
 
 #-------------------------------------------------------------------------
 # GetRegsIntsTempsArrays

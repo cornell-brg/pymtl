@@ -271,6 +271,17 @@ def create_declarations( model, regs, ints, params, arrays ):
       scode += '  integer {};\n'.format( signal )
     scode += '\n'
 
+  return scode
+
+#-----------------------------------------------------------------------
+# array_declarations
+#-----------------------------------------------------------------------
+# TODO: clean this up!
+def array_declarations( model, symtab ):
+
+  arrays = symtab[-1]
+  scode  = ''
+
   # Print the array declarations
   if arrays:
     arrays = sorted( arrays, key=lambda x: x.name )
@@ -298,3 +309,5 @@ def create_declarations( model, regs, ints, params, arrays ):
     scode += '\n'
 
   return scode
+
+
