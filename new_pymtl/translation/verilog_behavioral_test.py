@@ -163,6 +163,8 @@ def test_SliceConst():
   setup_sim( combinational.SliceConst() )
 def test_BitsConst():
   setup_sim( combinational.BitsConst() )
+def test_SubmodPortList():
+  setup_sim( combinational.SubmodPortList() )
 def test_SubmodPortBundles():
   setup_sim( combinational.SubmodPortBundles() )
 @pytest.mark.xfail

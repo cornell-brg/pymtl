@@ -1418,6 +1418,27 @@ def test_BitsConst():
   #assert model.out2 == 0b11010110
 
 #-------------------------------------------------------------------------
+# SubmodPortList
+#-------------------------------------------------------------------------
+class SubmodPortList( Model ):
+  def __init__( s ):
+    s.in_ = InPort [2]( 4 )
+    s.out = OutPort[2]( 4 )
+  def elaborate_logic( s ):
+    s.submod = ListOfWires()
+    @s.combinational
+    def logic_in():
+      s.submod.in_[0].value = s.in_[0]
+      s.submod.in_[1].value = s.in_[1]
+    @s.combinational
+    def logic_out():
+      s.out[0].value = s.submod.out[0]
+      s.out[1].value = s.submod.out[1]
+
+def test_SubmodPortList():
+  list_of_modules_tester( SubmodPortList )
+
+#-------------------------------------------------------------------------
 # SubmodPortBundles
 #-------------------------------------------------------------------------
 class SubmodPortBundles( Model ):
