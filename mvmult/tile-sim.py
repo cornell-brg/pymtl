@@ -21,6 +21,7 @@
 #  --stats <fname>     Dump stats to given file name <fname>
 #
 #  --test-verilog      Use verilog translated version of processor
+#  --elaborate_only    Only perform elaboration
 #
 #
 # The processor simulator. Provide the benchmark name to run the
@@ -72,7 +73,8 @@ def parse_cmdline():
 
   p.add_argument( "--stats",    nargs='?', default=False, const="-" )
 
-  p.add_argument( "--test-verilog", action="store_true" )
+  p.add_argument( "--test-verilog",   action="store_true" )
+  p.add_argument( "--elaborate_only", action="store_true" )
 
   opts = p.parse_args()
   if opts.help: p.error()
@@ -195,6 +197,7 @@ def main():
 
   model = SimHarness( Tile, bmarks_dict[ opts.bmark ], opts.test_verilog )
   model.elaborate()
+  if opts.elaborate_only: return
 
   # Create a simulator using the simulation tool
 
@@ -243,5 +246,7 @@ def main():
   sim.cycle()
   sim.cycle()
   sim.cycle()
+
+  print "Simulation done! Executed: {} cycles".format( sim.ncycles )
 
 main()
