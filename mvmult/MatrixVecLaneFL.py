@@ -1,5 +1,5 @@
 #==============================================================================
-# MatrixVecLaneBL
+# MatrixVecLaneFL
 #==============================================================================
 
 from new_pymtl import *
@@ -14,7 +14,7 @@ ST_REQ_VECTOR = 5
 ST_RSP_VECTOR = 6
 IDLE          = 7
 
-class MatrixVecLaneBL( Model ):
+class MatrixVecLaneFL( Model ):
 
   def __init__( s, lane_id, memreq_params, memresp_params ):
 
@@ -65,7 +65,7 @@ class MatrixVecLaneBL( Model ):
         s.result  = Bits( 64 )
 
       elif (s.state == IDLE and s.go) or s.state == LD_REQ_MATRIX:
-        r_addr = s.m_baseaddr + (s.lane_id * 4 * s.size) + s.counter
+        r_addr = s.m_baseaddr + (s.lane_id * 4 * (s.size+1)) + s.counter
         s.req.msg .next = mk_req( rd, r_addr, 0, 0 )
         s.req.val .next = 1
         s.resp.rdy.next = 1

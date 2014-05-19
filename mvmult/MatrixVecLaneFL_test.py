@@ -1,10 +1,10 @@
 #==============================================================================
-# MatrixVecLaneBL_test
+# MatrixVecLaneFL_test
 #==============================================================================
 
 from new_pymtl       import *
 from new_pmlib       import TestSource, TestMemory, mem_msgs
-from MatrixVecLaneBL import MatrixVecLaneBL
+from MatrixVecLaneFL import MatrixVecLaneFL
 from LaneManager     import LaneManager
 
 import pytest
@@ -20,7 +20,7 @@ class TestHarness( Model ):
     memresp_params = mem_msgs.MemRespParams( 32 )
 
     s.mem  = TestMemory( memreq_params, memresp_params, 1, mem_delay )
-    s.lane = MatrixVecLaneBL( lane_id, memreq_params, memresp_params )
+    s.lane = MatrixVecLaneFL( lane_id, memreq_params, memresp_params )
 
   def elaborate_logic( s ):
     s.connect( s.lane.req , s.mem.reqs [0]  )
@@ -54,6 +54,7 @@ def run_mvmult_test( dump_vcd, test_verilog, vcd_file_name, model, lane_id,
   sim.reset()
 
   # Set the inputs
+  print src_matrix[0]
   model.lane.m_baseaddr.value = src_matrix [0]
   model.lane.v_baseaddr.value = src_vector [0]
   model.lane.d_baseaddr.value = dest_vector[0]
@@ -104,7 +105,7 @@ def test_mvmult_lane0_row0( dump_vcd, mem_delay ):
   lane = 0
   run_mvmult_test( dump_vcd, False, "MVMult.vcd",
                    TestHarness( lane, mem_delay ), lane,
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99, 1, 1 ,1, 99, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16, 6, 8 ]),
                  )
@@ -128,7 +129,7 @@ def test_mvmult_lane2_row0( dump_vcd, mem_delay ):
   lane = 2
   run_mvmult_test( dump_vcd, False, "MVMult.vcd",
                    TestHarness( lane, mem_delay ), lane,
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99, 1, 1 ,1, 99, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [ 8 ]),
                  )
@@ -140,7 +141,7 @@ def test_mvmult_lane1_row0( dump_vcd, mem_delay ):
   lane = 1
   run_mvmult_test( dump_vcd, False, "MVMult.vcd",
                    TestHarness( lane, mem_delay ), lane,
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99, 1, 1 ,1, 99, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [ 6 ]),
                  )
@@ -157,7 +158,7 @@ class LaneManagerHarness( Model ):
 
     s.src   = TestSource( 5 + 32, config_msgs, src_delay )
     s.mgr   = LaneManager( nlanes )
-    s.lane  = [ MatrixVecLaneBL( x, memreq_params, memresp_params )
+    s.lane  = [ MatrixVecLaneFL( x, memreq_params, memresp_params )
                 for x in range( nlanes ) ]
     s.mem   = TestMemory( memreq_params, memresp_params, nlanes, mem_delay )
 
@@ -244,7 +245,7 @@ def test_managed_1lane( dump_vcd, mem_delay ):
                        config_msg( 0,   1), # go
                      ]
                    ),
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99, 1, 1 ,1, 99, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16]),
                  )
@@ -262,7 +263,7 @@ def test_managed_3lane( dump_vcd, mem_delay ):
                        config_msg( 0,   1), # go
                      ]
                    ),
-                   mem_array_32bit(  0, [ 5, 1 ,3, 1, 1 ,1, 1, 2 ,1] ),
+                   mem_array_32bit(  0, [ 5, 1 ,3, 99, 1, 1 ,1, 99, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
                    mem_array_32bit(160, [16, 6, 8 ]),
                  )
