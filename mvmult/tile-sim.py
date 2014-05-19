@@ -7,10 +7,12 @@
 #  -v --verbose        Verbose mode
 #
 #  --bmark <bmark-name> Choose benchmark to run
-#                        vvadd    : vector-vector addition
-#                        bsearch  : binary search
-#                        cmult    : complex multiplication
-#                        mfilter  : masked filter
+#                        vvadd      : vector-vector addition
+#                        bsearch    : binary search
+#                        cmult      : complex multiplication
+#                        mfilter    : masked filter
+#                        mvmult     : matrix-vector multiply
+#                        mvmult-cp2 : matrix-vector multiply coprocessor
 #
 #  --dump-vcd          Dump vcd to dump.vcd
 #  --dump-vcd <fname>  Dump vcd to given file name <fname>
@@ -32,12 +34,12 @@ import re
 import random
 
 from   new_pymtl import *
-import new_pmlib
 
-from new_pmlib.SparseMemoryImage import SparseMemoryImage
-from new_pmlib.TestMemory        import TestMemory
-from new_pmlib.TestProcManager   import TestProcManager
-from Tile                        import Tile
+from new_pmlib import SparseMemoryImage
+from new_pmlib import TestMemory
+from new_pmlib import TestProcManager
+from new_pmlib import mem_msgs
+from Tile      import Tile
 
 #-------------------------------------------------------------------------
 # Command line processing
@@ -89,12 +91,17 @@ class SimHarness( Model ):
     mem_delay       = input_params[0]
     sparse_mem_img  = input_params[1]
 
+    cache = True
+
     # Instantiate models
 
-    memreq_params  = new_pmlib.mem_msgs.MemReqParams( 32, 32 )
-    memresp_params = new_pmlib.mem_msgs.MemRespParams( 32 )
+    data_nbits = 128 if cache else 32
 
-    s.tile     = ModelType( reset_vector = 0x00000400 )
+    memreq_params  = mem_msgs.MemReqParams( 32, data_nbits )
+    memresp_params = mem_msgs.MemRespParams( data_nbits )
+
+    s.tile     = ModelType( reset_vector   = 0x00000400,
+                            mem_data_nbits = data_nbits )
 
     s.mem      = TestMemory( memreq_params, memresp_params, 2,
                              mem_delay, mem_nbytes=2**24  )
