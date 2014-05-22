@@ -7,7 +7,6 @@
 import pisa_encoding
 import pytest
 import struct
-import elf
 
 from SparseMemoryImage import SparseMemoryImage
 
