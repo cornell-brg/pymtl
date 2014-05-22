@@ -25,7 +25,7 @@ class IsaImpl (object):
 
   def __init__( self, nbits, inst_encoding_table, inst_fields ):
 
-    self.nbits                   = 32
+    self.nbits                   = nbits
     self.inst_encoding_table     = inst_encoding_table
     self.asm_field_funcs_dict    = {}
     self.disasm_field_funcs_dict = {}
