@@ -158,7 +158,12 @@ class Bits( SignalValue ):
       elif stop is None:
         stop = self.nbits
 
+      stop  = int( stop  )
+      start = int( start )
+
       # Verify our ranges are sane
+      if not (start < stop):
+        raise IndexError('Start index is not less than stop index')
       if not (0 <= start < stop <= self.nbits):
         raise IndexError('Bits index out of range')
 

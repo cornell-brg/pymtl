@@ -510,3 +510,14 @@ def test_index_bits():
   with pytest.raises( IndexError ):
     data[ c ]
 
+def test_slice_bits():
+
+  data = Bits( 8, 0b1101 )
+
+  # Indexing into a bits
+  x = Bits( 4, 2  )
+  assert data[ : ]   == 0b1101
+  assert data[x: ]   == 0b11
+  assert data[ :x]   == 0b01
+  with pytest.raises( IndexError ):
+    assert data[x:x] == 0b1
