@@ -22,6 +22,7 @@ class Bits( SignalValue ):
   def __init__( self, nbits, value = 0, trunc = False ):
 
     value = int( value )
+    nbits = int( nbits )
 
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0

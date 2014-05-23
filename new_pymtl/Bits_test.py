@@ -420,8 +420,6 @@ def test_constructor():
   assert Bits( 4 ) == Bits( 4, 0 )
   assert Bits( 4 ).uint() == 0
 
-#@pytest.mark.xfail
-# Disable construction from Bits, currently only accepts ints/longs
 def test_construct_from_bits():
 
   assert Bits( 4, Bits(4, -2) ).uint() == 0b1110
@@ -440,6 +438,8 @@ def test_construct_from_bits():
   assert Bits( 32, ~c + 1 )        == 0x00000000
   d = Bits( 4, -1 )
   assert Bits( 8, d )              == 0x0F
+
+  assert Bits( Bits(4,4), 1 ).uint() == 1
 
 def test_str():
 
