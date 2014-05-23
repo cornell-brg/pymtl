@@ -66,13 +66,13 @@ def test_set_bit():
 def test_bit_bounds_checking():
 
   x = Bits( 4, 0b1100 )
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     assert x[-1] == 1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     assert x[8] == 1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     x[-1] = 1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     x[4] = 1
   with pytest.raises( AssertionError ):
     x[0] = 2
@@ -113,17 +113,17 @@ def test_set_slice():
 def test_slice_bounds_checking():
 
   x = Bits( 4, 0b1100 )
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     assert x[1:5]  == 0b10
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     assert x[-1:2] == 0b10
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     assert x[2:1]  == 0b10
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     x[1:5]  = 0b10
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     x[-1:2] = 0b10
-  with pytest.raises( AssertionError ):
+  with pytest.raises( IndexError ):
     x[2:1]  = 0b10
   # FIXED
   # Bits objects constructed with another Bits object provided as a value
@@ -458,7 +458,7 @@ def test_str():
   #  assert Bits(  4, Bits(32,2) ).__str__() == "2"
   assert Bits(  4, Bits(32,2) ).__str__() == "2"
 
-def test_index():
+def test_index_array():
 
   data = range( 2**4 )
 
@@ -473,6 +473,32 @@ def test_index():
   # Larger bitwidths work as long as the list is big enough
   a = Bits( 8, 4  )
   assert data[ a ] == 4
+
+  # If not, regular indexing error
+  b = Bits( 8, 20 )
+  with pytest.raises( IndexError ):
+    data[ b ]
+
+  # Same with negative that become out of range when converted to unsigned
+  c = Bits( 8, -1 )
+  with pytest.raises( IndexError ):
+    data[ c ]
+
+def test_index_bits():
+
+  data = Bits( 8, 0b11001010 )
+
+  # Indexing into a bits
+  x = Bits( 4, 3  )
+  assert data[ x ] == 1
+
+  # Note, this converts -10 to unsigned, so 6!
+  y = Bits( 4, -10 )
+  assert data[ y ] == 1
+
+  # Larger bitwidths work as long as the list is big enough
+  a = Bits( 8, 4  )
+  assert data[ a ] == 0
 
   # If not, regular indexing error
   b = Bits( 8, 20 )
