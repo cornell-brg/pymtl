@@ -4,7 +4,7 @@ from new_pmlib import TestSource, TestSink
 
 import new_pmlib.mem_msgs   as     mem_msgs
 
-from CycleApproximateSimpleCache import CycleApproximateSimpleCache
+from CycleApproximateSimpleCache import CL_Cache
 from TestCacheResp32Sink        import TestCacheResp32Sink
 from   new_pmlib.TestMemory import TestMemory
 #-------------------------------------------------------------------------
@@ -24,19 +24,19 @@ class TestHarness (Model):
 
     # Instantiate models
 
-    s.src   = new_pmlib.TestSource( creq_params.nbits, src_msgs,  src_delay )
-    s.cache = CycleApproximateSimpleCache()
+    s.src   = new_pmlib.TestSource( creq_params.nbits, src_msgs,  10 )
+    s.cache = CL_Cache()
     s.mem   = TestMemory( mreq_params, mresp_params, 1, mem_delay )
-    s.sink  = TestCacheResp32Sink(  cresp_params, sink_msgs, sink_delay )
+    s.sink  = TestCacheResp32Sink(  cresp_params, sink_msgs, 10 )
 
   def elaborate_logic( s ):
 
     # connect
 
-    s.connect( s.src.out,       s.cache.in_src  )
-    s.connect( s.cache.out_mem,  s.mem.reqs[0]     )
-    s.connect( s.cache.in_mem, s.mem.resps[0]    )
-    s.connect( s.sink.in_,      s.cache.out_sink )
+    s.connect( s.src.out,       s.cache.cachereq )
+    s.connect( s.cache.memreq,  s.mem.reqs[0]     )
+    s.connect( s.cache.memresp, s.mem.resps[0]    )
+    s.connect( s.sink.in_,      s.cache.cacheresp)
 
   def done( s ):
 
@@ -191,7 +191,7 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
   model.cache.valid_bits[ 0 ][ 0 ] = True
   model.cache.dirty_bits[ 0 ][ 0 ] = False
 
-  model.cache.taglines[ 0 ][ 0 ] = 32760
+  model.cache.taglines[ 0 ][ 0 ] = Bits(24,value=0xFFF)
   model.cache.cachelines[ 0 ][ 0 ] = \
     Bits(128,value=0xdeadbeecdeadbeeddeadbeeedeadbeef)
 
