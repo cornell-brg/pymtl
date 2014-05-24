@@ -1,17 +1,20 @@
+#=======================================================================
+# DirectMapped_test.py
+#=======================================================================
+
 from new_pymtl import *
-import new_pmlib
 from new_pmlib import TestSource, TestSink
 
-import new_pmlib.mem_msgs   as     mem_msgs
-
 from CycleApproximateSimpleCache import CL_Cache
-from TestCacheResp32Sink        import TestCacheResp32Sink
-from   new_pmlib.TestMemory import TestMemory
-#-------------------------------------------------------------------------
-# TestHarness
-#-------------------------------------------------------------------------
+from TestCacheResp32Sink         import TestCacheResp32Sink
+from new_pmlib.TestMemory        import TestMemory
 
-class TestHarness (Model):
+import new_pmlib.mem_msgs as mem_msgs
+
+#-----------------------------------------------------------------------
+# TestHarness
+#-----------------------------------------------------------------------
+class TestHarness( Model ):
 
   def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay, mem_delay,
                 mem_nbytes, addr_nbits, data_nbits, line_nbits ):
@@ -24,19 +27,19 @@ class TestHarness (Model):
 
     # Instantiate models
 
-    s.src   = new_pmlib.TestSource( creq_params.nbits, src_msgs,  10 )
+    s.src   = TestSource( creq_params.nbits, src_msgs, 10 )
     s.cache = CL_Cache()
     s.mem   = TestMemory( mreq_params, mresp_params, 1, mem_delay )
-    s.sink  = TestCacheResp32Sink(  cresp_params, sink_msgs, 10 )
+    s.sink  = TestCacheResp32Sink ( cresp_params, sink_msgs, 10 )
 
   def elaborate_logic( s ):
 
     # connect
 
-    s.connect( s.src.out,       s.cache.cachereq )
-    s.connect( s.cache.memreq,  s.mem.reqs[0]     )
+    s.connect( s.src.out,       s.cache.cachereq  )
+    s.connect( s.cache.memreq,  s.mem.reqs [0]    )
     s.connect( s.cache.memresp, s.mem.resps[0]    )
-    s.connect( s.sink.in_,      s.cache.cacheresp)
+    s.connect( s.sink.in_,      s.cache.cacheresp )
 
   def done( s ):
 
@@ -45,13 +48,13 @@ class TestHarness (Model):
 
   def line_trace( s ):
     return s.cache.line_trace() + " " + s.sink.line_trace()
-    
+
 #-------------------------------------------------------------------------
 # DirectMappedWriteBackCache Unit Test
 #-------------------------------------------------------------------------
 
 def run_SimpleCache_test( dump_vcd, vcd_file_name,
-                                src_delay, sink_delay, mem_delay ):
+                          src_delay, sink_delay, mem_delay ):
 
   # Parameters
 
@@ -191,9 +194,9 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
   model.cache.valid_bits[ 0 ][ 0 ] = True
   model.cache.dirty_bits[ 0 ][ 0 ] = False
 
-  model.cache.taglines[ 0 ][ 0 ] = Bits(24,value=0xFFF)
-  model.cache.cachelines[ 0 ][ 0 ] = \
-    Bits(128,value=0xdeadbeecdeadbeeddeadbeeedeadbeef)
+  model.cache.taglines  [ 0 ][ 0 ] = Bits( 24,  value=0xFFF )
+  model.cache.cachelines[ 0 ][ 0 ] = Bits( 128,
+      value=0xdeadbeecdeadbeeddeadbeeedeadbeef )
 
   # Begin Simulation
 
@@ -207,7 +210,6 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
   sim.cycle()
   sim.cycle()
   sim.cycle()
-  
+
 def test_cache( dump_vcd ):
-  run_SimpleCache_test(dump_vcd,
-    "DirectMapCache.vcd",0,0,0)
+  run_SimpleCache_test( dump_vcd, "DirectMapCache.vcd", 0, 0, 0 )
