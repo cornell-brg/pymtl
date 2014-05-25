@@ -19,27 +19,62 @@ class TestHarness( Model ):
   def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay, mem_delay,
                 mem_nbytes, addr_nbits, data_nbits, line_nbits ):
 
-    creq_params  = mem_msgs.MemReqParams ( addr_nbits, data_nbits )
-    cresp_params = mem_msgs.MemRespParams( data_nbits )
+    s.creq_params  = mem_msgs.MemReqParams ( addr_nbits, data_nbits )
+    s.cresp_params = mem_msgs.MemRespParams( data_nbits )
 
-    mreq_params  = mem_msgs.MemReqParams ( addr_nbits, line_nbits )
-    mresp_params = mem_msgs.MemRespParams( line_nbits )
+    s.mreq_params  = mem_msgs.MemReqParams ( addr_nbits, line_nbits )
+    s.mresp_params = mem_msgs.MemRespParams( line_nbits )
 
     # Instantiate models
 
-    s.src   = TestSource( creq_params.nbits, src_msgs, 10 )
+    s.src   = TestSource( s.creq_params.nbits, src_msgs,  0 )
     s.cache = CL_Cache()
-    s.mem   = TestMemory( mreq_params, mresp_params, 1, mem_delay )
-    s.sink  = TestCacheResp32Sink ( cresp_params, sink_msgs, 10 )
+    s.mem   = TestMemory( s.mreq_params, s.mresp_params, 1, 0 )
+    s.sink  = TestCacheResp32Sink(  s.cresp_params, sink_msgs, 0 )
 
+    s.out_data  = InPort(s.mreq_params.data_nbits)
+    s.in_data  = InPort(s.mreq_params.data_nbits)
+    
   def elaborate_logic( s ):
-
-    # connect
-
-    s.connect( s.src.out,       s.cache.cachereq  )
-    s.connect( s.cache.memreq,  s.mem.reqs [0]    )
-    s.connect( s.cache.memresp, s.mem.resps[0]    )
-    s.connect( s.sink.in_,      s.cache.cacheresp )
+    s.connect( s.src.out.msg[s.creq_params.type_slice], s.cache.cachereq_msg_type)
+    s.connect( s.src.out.msg[s.creq_params.addr_slice], s.cache.cachereq_msg_addr)
+    s.connect( s.src.out.msg[s.creq_params.data_slice], s.cache.cachereq_msg_data)
+    s.connect( s.src.out.msg[s.creq_params.len_slice], s.cache.cachereq_msg_len)
+    s.connect( s.src.out.val, s.cache.cachereq_val)
+    s.connect( s.src.out.rdy, s.cache.cachereq_rdy)
+    
+    
+    for x in range(len(s.cache.memreq_msg_data)):
+      s.connect( s.cache.memreq_msg_data[x],  s.out_data[x*32:(x+1)*32])
+      
+    s.connect( s.cache.memreq_msg_addr,  s.mem.reqs[0].msg[s.mreq_params.addr_slice])
+    s.connect( s.cache.memreq_msg_len,   s.mem.reqs[0].msg[s.mreq_params.len_slice])
+    s.connect( s.cache.memreq_msg_type,  s.mem.reqs[0].msg[s.mreq_params.type_slice])
+    s.connect( s.cache.memreq_rdy, s.mem.reqs[0].rdy)
+    s.connect( s.cache.memreq_val, s.mem.reqs[0].val)
+    
+    
+    
+    for x in range(len(s.cache.memreq_msg_data)):
+      s.connect(s.cache.memresp_msg_data[x], s.in_data[x*32:(x+1)*32])
+    
+    s.connect( s.cache.memresp_msg_len,   s.mem.resps[0].msg[s.mresp_params.len_slice])
+    s.connect( s.cache.memresp_msg_type,  s.mem.resps[0].msg[s.mresp_params.type_slice])
+    s.connect( s.cache.memresp_rdy, s.mem.resps[0].rdy)
+    s.connect( s.cache.memresp_val, s.mem.resps[0].val)
+    
+    s.connect( s.sink.in_.msg[s.cresp_params.type_slice], s.cache.cacheresp_msg_type)
+    s.connect( s.sink.in_.msg[s.cresp_params.data_slice], s.cache.cacheresp_msg_data)
+    s.connect( s.sink.in_.msg[s.cresp_params.len_slice], s.cache.cacheresp_msg_len)
+    s.connect( s.sink.in_.val, s.cache.cacheresp_val)
+    s.connect( s.sink.in_.rdy, s.cache.cacheresp_rdy)
+    
+    
+    #TODO moving these assignments above using s.connect instead caused problems
+    @s.combinational
+    def logic():
+      s.mem.reqs[0].msg[s.mreq_params.data_slice].value = s.out_data
+      s.in_data.value = s.mem.resps[0].msg[s.mresp_params.data_slice]
 
   def done( s ):
 
@@ -194,13 +229,24 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
   model.cache.valid_bits[ 0 ][ 0 ] = True
   model.cache.dirty_bits[ 0 ][ 0 ] = False
 
-  model.cache.taglines  [ 0 ][ 0 ] = Bits( 24,  value=0xFFF )
-  model.cache.cachelines[ 0 ][ 0 ] = Bits( 128,
-      value=0xdeadbeecdeadbeeddeadbeeedeadbeef )
+  model.cache.taglines[ 0 ][ 0 ] = Bits(24,value=0xFFF)
+  model.cache.cachelines[ 0 ][ 0 ][ 3 ] = \
+    Bits(32,value=0xdeadbeec)
+  model.cache.cachelines[ 0 ][ 0 ][ 2 ] = \
+    Bits(32,value=0xdeadbeed)
+  model.cache.cachelines[ 0 ][ 0 ][ 1 ] = \
+    Bits(32,value=0xdeadbeee)
+  model.cache.cachelines[ 0 ][ 0 ][ 0 ] = \
+    Bits(32,value=0xdeadbeef)
+
 
   # Begin Simulation
 
   while not model.done():
+    #print "OUT_DATA", model.out_data
+    #print "IN_DATA", model.in_data
+    #print "MEMORY REQ", model.mem.reqs[0]
+    #print "MEMORY RESP", model.mem.resps[0]
     sim.print_line_trace()
     sim.cycle()
 
