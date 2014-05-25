@@ -25,14 +25,25 @@ class RegisterFile( Model ):
 
     s.rd_addr  = [ InPort( addr_bits ) for x in xrange(rd_ports) ]
     s.rd_data  = [ OutPort( nbits )    for x in xrange(rd_ports) ]
-    if wr_ports == 1:
-      s.wr_addr  = InPort( addr_bits )
-      s.wr_data  = InPort( nbits )
-      s.wr_en    = InPort( 1 )
-    else:
-      s.wr_addr  = [ InPort( addr_bits ) for x in range(wr_ports) ]
-      s.wr_data  = [ InPort( nbits )     for x in range(wr_ports) ]
-      s.wr_en    = [ InPort( 1 )         for x in range(wr_ports) ]
+
+    # TODO: temporary hacky handling for up to 2 write_ports, fix!
+    assert wr_ports <= 2
+    s.wr_addr  = InPort( addr_bits )
+    s.wr_data  = InPort( nbits )
+    s.wr_en    = InPort( 1 )
+    if wr_ports == 2:
+      s.wr_addr2 = InPort( addr_bits )
+      s.wr_data2 = InPort( nbits )
+      s.wr_en2   = InPort( 1 )
+
+    #if wr_ports == 1:
+    #  s.wr_addr  = InPort( addr_bits )
+    #  s.wr_data  = InPort( nbits )
+    #  s.wr_en    = InPort( 1 )
+    #else:
+    #  s.wr_addr  = [ InPort( addr_bits ) for x in range(wr_ports) ]
+    #  s.wr_data  = [ InPort( nbits )     for x in range(wr_ports) ]
+    #  s.wr_en    = [ InPort( 1 )         for x in range(wr_ports) ]
 
   #---------------------------------------------------------------------
   # elaborate_logic()
@@ -81,9 +92,15 @@ class RegisterFile( Model ):
 
       @s.posedge_clk
       def seq_logic_multiple_wr():
-        for i in range( s.wr_ports ):
-          if s.wr_en[i]:
-            s.regs[ s.wr_addr[i] ].next = s.wr_data[i]
+        if s.wr_en:  s.regs[ s.wr_addr ] .next = s.wr_data
+        if s.wr_en2: s.regs[ s.wr_addr2 ].next = s.wr_data2
+
+      # TODO: fix translation of this!
+      #@s.posedge_clk
+      #def seq_logic_multiple_wr():
+      #  for i in range( s.wr_ports ):
+      #    if s.wr_en[i]:
+      #      s.regs[ s.wr_addr[i] ].next = s.wr_data[i]
 
     #-------------------------------------------------------------------
     # Sequential write logic, multiple write ports, constant zero
@@ -92,9 +109,15 @@ class RegisterFile( Model ):
 
       @s.posedge_clk
       def seq_logic_multiple_wr():
-        for i in range( s.wr_ports ):
-          if s.wr_en[i] and s.wr_addr[i] != 0:
-            s.regs[ s.wr_addr[i] ].next = s.wr_data[i]
+        if s.wr_en  and s.wr_addr  != 0: s.regs[ s.wr_addr  ].next = s.wr_data
+        if s.wr_en2 and s.wr_addr2 != 0: s.regs[ s.wr_addr2 ].next = s.wr_data2
+
+      # TODO: fix translation of this!
+      #@s.posedge_clk
+      #def seq_logic_multiple_wr():
+      #  for i in range( s.wr_ports ):
+      #    if s.wr_en[i] and s.wr_addr[i] != 0:
+      #      s.regs[ s.wr_addr[i] ].next = s.wr_data[i]
 
 
   def line_trace( s ):
