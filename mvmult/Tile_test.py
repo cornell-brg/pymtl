@@ -250,6 +250,43 @@ def test_mtc2_3x3_delay5( dump_vcd, test_verilog ):
   run_bypass_proc_test( dump_vcd, test_verilog, "test_mtc2_3x3.vcd",
                         [5]+mtc2_3x3() )
 
+
+def j_after_ld_stall():
+
+  asm_str = \
+    ( test_start +
+  """
+      li    $5, 0
+      la    $2, val0
+      nop; nop; nop; nop; nop;
+      lw    $3, 0($2)
+      addiu $4, $4, 1
+      j     1f
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+   1: addiu $5, $5, 1
+      mtc0  $5, $1
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+      mtc0  $4, $1
+  """
+    + test_end +
+  """
+   .data
+   .align 4
+      val0: .word 0x00000005
+  """ )
+
+  sparse_mem_img  = SparseMemoryImage( asm_str = asm_str )
+  expected_result = 1
+
+  return [ sparse_mem_img, expected_result ]
+
+@requires_xcc
+def test_j_after_ld_stall( dump_vcd, test_verilog ):
+  run_bypass_proc_test( dump_vcd, test_verilog, "test_j_after_ld_stall.vcd",
+                        [0]+j_after_ld_stall() )
+
 #---------------------------------------------------------------------------
 # 0. bypass logic direct test
 #---------------------------------------------------------------------------
