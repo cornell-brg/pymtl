@@ -1,11 +1,13 @@
 #=======================================================================
 
-from new_pymtl                  import *
-from new_pmlib                  import mem_msgs
-from new_pmlib                  import InValRdyBundle, OutValRdyBundle
-from new_proc.ParcProc5stBypass import ParcProc5stBypass
-from new_mem                    import DirectMappedWriteBackCache
-from MatrixVecCOP               import MatrixVecCOP
+from new_pymtl                     import *
+from new_pmlib                     import mem_msgs
+from new_pmlib                     import InValRdyBundle, OutValRdyBundle
+from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul
+from new_mem                       import DirectMappedWriteBackCache
+from MatrixVecCOP                  import MatrixVecCOP
+
+Processor = ParcProcPipelinedMul
 
 #-----------------------------------------------------------------------
 # Tile
@@ -39,7 +41,7 @@ class Tile( Model ):
     nlanes      = 1
     nmul_stages = 4
 
-    s.proc     = ParcProc5stBypass( reset_vector=0x00000400 )
+    s.proc     = Processor( reset_vector=0x00000400 )
     s.cp2      = MatrixVecCOP( nlanes, nmul_stages,
                                cop_addr_nbits=5,
                                cop_data_nbits=32,
