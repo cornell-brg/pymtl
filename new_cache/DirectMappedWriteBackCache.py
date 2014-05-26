@@ -15,10 +15,12 @@ from   SRAMs import SRAMBitsComb_rst_1rw
 from   SRAMs import SRAMBitsSync_rst_1rw
 from   SRAMs import SRAMBytesSync_rst_1rw
 
+r = Bits(1,0)
+w = Bits(1,1)
+
 #-------------------------------------------------------------------------
 # DirectMappedWriteBackCacheCtrl
 #-------------------------------------------------------------------------
-
 class DirectMappedWriteBackCacheCtrl (Model):
 
 #--- gen-harness : begin cut ---------------------------------------------
@@ -51,10 +53,10 @@ class DirectMappedWriteBackCacheCtrl (Model):
 
     s.cachereq_enq_val = OutPort ( 1 )
     s.cachereq_deq_rdy = OutPort ( 1 )
-    
+
     s.cacheresp_enq_val = OutPort ( 1 )
     s.cacheresp_deq_rdy = OutPort ( 1 )
-    
+
     s.cachereq_en     = OutPort ( 1 )
     s.memresp_en      = OutPort ( 1 )
     s.wr_shamt        = OutPort ( 5 )
@@ -83,10 +85,10 @@ class DirectMappedWriteBackCacheCtrl (Model):
 
     s.cachereq_enq_rdy = InPort ( 1 )
     s.cachereq_deq_val = InPort ( 1 )
-    
+
     s.cacheresp_enq_rdy = InPort ( 1 )
     s.cacheresp_deq_val = InPort ( 1 )
-    
+
   def elaborate_logic( s ):
 
     #---------------------------------------------------------------------
@@ -133,11 +135,11 @@ class DirectMappedWriteBackCacheCtrl (Model):
 
     @s.combinational
     def state_transitions():
-    
+
       #Read and Write shortcuts
       r = Bits(1,0)
       w = Bits(1,1)
-      
+
       current_state = s.state.out
       next_state    = s.state.out
 
@@ -164,7 +166,7 @@ class DirectMappedWriteBackCacheCtrl (Model):
               next_state = s.ST_TAG_CHECK
           else: #write
             next_state = s.ST_DATA_ACCESS
-            
+
         elif ~dirty & ~s.match:
           next_state = s.ST_REFILL_REQ
         elif  dirty & ~s.match:
@@ -246,9 +248,6 @@ class DirectMappedWriteBackCacheCtrl (Model):
       n = Bits(1,0)
       y = Bits(1,1)
 
-      r = Bits(1,0)
-      w = Bits(1,1)
-
       # Write request enable helper signal
 
       w_h = s.cachereq_type
@@ -268,7 +267,7 @@ class DirectMappedWriteBackCacheCtrl (Model):
       s.cachereq_rdy.value      = s.cachereq_enq_rdy;
       s.cacheresp_deq_rdy.value = s.cacheresp_rdy;
       s.cacheresp_val.value     = s.cacheresp_deq_val;
-      
+
       s.cachereq_enq_val.value  = cs[ 8 ] & s.cachereq_val
       s.cachereq_en.value       = cs[ 7 ]
       s.cachereq_deq_rdy.value  = cs[ 6 ]
@@ -282,32 +281,28 @@ class DirectMappedWriteBackCacheCtrl (Model):
       # Mealy Output Signals
 
       s.is_match = s.valid_bits.rdata & s.tag_match
-      
+
       if    s.state.out == s.ST_TAG_CHECK:
         if s.cachereq_type == r:
           if s.is_match:
-            if s.cacheresp_enq_rdy:
-              pass
-            else:
-              s.cachereq_deq_rdy.value = 0;
-              s.cachereq_en.value = 0;
+            if not s.cacheresp_enq_rdy:
+              s.cachereq_deq_rdy.value = 0
+              s.cachereq_en.value      = 0
           else:
-            s.cachereq_deq_rdy.value  = 0;
-            s.cachereq_en.value = 0;
-            s.cacheresp_enq_val.value = 0;
+            s.cachereq_deq_rdy.value  = 0
+            s.cachereq_en.value       = 0
+            s.cacheresp_enq_val.value = 0
         elif s.cachereq_type == w:
-          s.cachereq_deq_rdy.value  = 0;
-          s.cachereq_en.value = 0;
-          s.cacheresp_enq_val.value = 0;
-      
+          s.cachereq_deq_rdy.value  = 0
+          s.cachereq_en.value       = 0
+          s.cacheresp_enq_val.value = 0
+
       elif  s.state.out == s.ST_DATA_ACCESS:
-        if s.cacheresp_enq_rdy:
-          pass
-        else:
-          s.cachereq_deq_rdy.value = 0 
-          s.cachereq_en.value  = 0;
-      
-      
+        if not s.cacheresp_enq_rdy:
+          s.cachereq_deq_rdy.value = 0
+          s.cachereq_en.value      = 0
+
+
       if   ( s.state.out == s.ST_REFILL_DO ):
         s.tag_array_wen.value  = 0
         s.data_array_wen.value = w_h
@@ -434,7 +429,7 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     s.mreq  = new_pmlib.mem_msgs.MemReqParams ( s.addr_nbits, line_nbits )
     s.mresp = new_pmlib.mem_msgs.MemRespParams( line_nbits )
-    
+
     # number of bytes in data "word"
 
     data_nbytes = s.data_nbits / 8
@@ -497,13 +492,13 @@ class DirectMappedWriteBackCacheDpath (Model):
     # Control Signals (ctrl -> dpath)
     #---------------------------------------------------------------------
 
-    
+
     s.cachereq_enq_val     = InPort  ( 1 )
     s.cachereq_deq_rdy     = InPort  ( 1 )
-    
+
     s.cacheresp_enq_val     = InPort  ( 1 )
     s.cacheresp_deq_rdy     = InPort  ( 1 )
-    
+
     s.cachereq_en     = InPort ( 1 )
     s.memresp_en      = InPort ( 1 )
     s.wr_shamt        = InPort ( 5 )
@@ -529,10 +524,10 @@ class DirectMappedWriteBackCacheDpath (Model):
     s.cachereq_off    = OutPort ( 4 )
     s.cachereq_off_h  = OutPort ( 4 )
     s.tag_match       = OutPort ( 1 )
-    
+
     s.cachereq_enq_rdy     = OutPort ( 1 )
     s.cachereq_deq_val     = OutPort ( 1 )
-    
+
     s.cacheresp_enq_rdy     = OutPort ( 1 )
     s.cacheresp_deq_val     = OutPort ( 1 )
 
@@ -544,7 +539,7 @@ class DirectMappedWriteBackCacheDpath (Model):
     #---------------------------------------------------------------------
     # Datapath
     #---------------------------------------------------------------------
-    
+
     s.cachereq_queue_out = Wire(s.creq.nbits)
     # cachereq_queue
     s.cachereq_queue = m = SingleElementSkidQueue(s.creq.nbits)
@@ -552,34 +547,34 @@ class DirectMappedWriteBackCacheDpath (Model):
       m.enq.val : s.cachereq_enq_val,
       m.enq.rdy : s.cachereq_enq_rdy,
       m.enq.msg : s.cachereq_msg,
-      
+
       m.deq.rdy : s.cachereq_deq_rdy,
       m.deq.val : s.cachereq_deq_val,
       m.deq.msg : s.cachereq_queue_out
     })
-    
+
     #cacheresp_queue
     s.cacheresp_queue = m = SingleElementBypassQueue(s.cresp.nbits)
     s.connect_dict({
       m.enq.val : s.cacheresp_enq_val,
       m.enq.rdy : s.cacheresp_enq_rdy,
-            
+
       m.deq.msg : s.cacheresp_msg,
       m.deq.rdy : s.cacheresp_deq_rdy,
       m.deq.val : s.cacheresp_deq_val
     })
-    
+
     #hold register
     s.cachereq_hold_reg = m = new_pmlib.regs.RegEn( s.creq.nbits )
     s.connect_dict({
       m.en  : s.cachereq_en
     })
-    
+
     s.cachereq_addr_h     = Wire(s.creq.addr_nbits)
     s.cachereq_addr       = Wire(s.creq.addr_nbits)
     s.cachereq_data       = Wire(s.creq.data_nbits)
 
-    
+
     # cachereq_addr_mux
 
     s.cachereq_addr_mux = m = new_pmlib.Mux( s.addr_nbits, 2 )
@@ -697,15 +692,13 @@ class DirectMappedWriteBackCacheDpath (Model):
     #s.connect( s.cacheresp_msg[ s.cresp.data_slice ], s.out_data_shifter.out )
 
     # TODO: temporary hack to work around issue #79
-    
-    
-    
+
     @s.combinational
     def temp():
-    
+
       s.cachereq_addr_h      .value = s.cachereq_hold_reg.out [ s.creq.addr_slice ]
       s.cachereq_type        .value = s.cachereq_hold_reg.out [ s.creq.type_slice ]
-      
+
       s.cachereq_addr        .value = s.cachereq_queue.deq.msg[ s.creq.addr_slice ]
       s.cachereq_len         .value = s.cachereq_queue.deq.msg[ s.creq.len_slice  ]
       s.cachereq_data        .value = s.cachereq_queue.deq.msg[ s.creq.data_slice ]
@@ -713,7 +706,7 @@ class DirectMappedWriteBackCacheDpath (Model):
       s.cachereq_off_h       .value = s.cachereq_addr_h[ 0:4        ]
       s.valid_idx            .value = s.cachereq_addr_h[ s.creq_idx ]
       s.dirty_idx            .value = s.cachereq_addr_h[ s.creq_idx ]
-      
+
       s.cachereq_hold_reg.in_[ s.creq.type_slice ].value = s.cachereq_queue.deq.msg[ s.creq.type_slice ]
       s.cachereq_hold_reg.in_[ s.creq.addr_slice ].value = s.cachereq_queue.deq.msg[ s.creq.addr_slice ]
       s.cachereq_hold_reg.in_[ s.creq.len_slice  ].value = s.cachereq_queue.deq.msg[ s.creq.len_slice  ]
@@ -839,19 +832,18 @@ class DirectMappedWriteBackCache (Model):
     s.connect( s.ctrl.rd_shamt,       s.dpath.rd_shamt       )
     s.connect( s.ctrl.cacheresp_type, s.dpath.cacheresp_type )
     s.connect( s.ctrl.cacheresp_len,  s.dpath.cacheresp_len  )
-    
-    
+
     # Connect Queue Signals
     s.connect( s.ctrl.cachereq_deq_rdy,  s.dpath.cachereq_deq_rdy  )
     s.connect( s.ctrl.cachereq_deq_val,  s.dpath.cachereq_deq_val  )
     s.connect( s.ctrl.cachereq_enq_val,  s.dpath.cachereq_enq_val  )
     s.connect( s.ctrl.cachereq_enq_rdy,  s.dpath.cachereq_enq_rdy  )
-    
+
     s.connect( s.ctrl.cacheresp_deq_rdy,  s.dpath.cacheresp_deq_rdy  )
     s.connect( s.ctrl.cacheresp_deq_val,  s.dpath.cacheresp_deq_val  )
     s.connect( s.ctrl.cacheresp_enq_val,  s.dpath.cacheresp_enq_val  )
     s.connect( s.ctrl.cacheresp_enq_rdy,  s.dpath.cacheresp_enq_rdy  )
-    
+
 
     # Connect status signals (ctrl <- dpath)
 
