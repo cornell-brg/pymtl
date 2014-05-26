@@ -9,6 +9,7 @@ from new_pmlib import TestVectorSimulator, TestSource, TestSink
 from queues_rtl import SingleElementNormalQueue
 from queues_rtl import SingleElementBypassQueue
 from queues_rtl import SingleElementPipelinedQueue
+from queues_rtl import SingleElementSkidQueue
 from queues_rtl import NormalQueue
 
 #=========================================================================
@@ -526,4 +527,52 @@ def test_queue_3( dump_vcd, test_verilog ):
     [ 0,      1,      0x0000,  1,      1,      0x0007 ],
     [ 0,      1,      0x0000,  0,      1,      '?'    ],
   ])
+
+#-------------------------------------------------------------------------
+# Single Element Skid Queue
+#-------------------------------------------------------------------------
+def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
+
+  test_vectors = [
+
+    # Enqueue one element and then dequeue it
+    # enq.val enq.rdy enq.bits deq.val deq.rdy deq.bits
+    [ 1,      1,      0x0001,  1,      1,      0x0001 ],
+    [ 1,      0,      0x0006,  1,      0,      0x0001 ],
+    [ 1,      1,      0x0006,  1,      1,      0x0006 ],
+    [ 0,      1,      0x0008,  1,      1,      0x0006 ],
+    [ 0,      1,      0x0008,  0,      0,      0x0006 ],
+    [ 1,      1,      0x000a,  1,      1,      0x000a ],
+    [ 0,      1,      0x000c,  1,      1,      0x000a ]
+
+  ]
+
+  # Instantiate and elaborate the model
+
+  model = SingleElementSkidQueue( 16 )
+  if test_verilog:
+    model = get_verilated( model )
+  model.elaborate()
+
+  # Define functions mapping the test vector to ports in model
+
+  def tv_in( model, test_vector ):
+
+    model.enq.val.value = test_vector[0]
+    model.enq.msg.value = test_vector[2]
+    model.deq.rdy.value = test_vector[4]
+
+  def tv_out( model, test_vector ):
+
+    assert model.enq.rdy.value    == test_vector[1]
+    assert model.deq.val.value    == test_vector[3]
+    if not test_vector[5] == '?':
+      assert model.deq.msg.value == test_vector[5]
+
+  # Run the test
+
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  if dump_vcd:
+    sim.dump_vcd( "SingleElementPipelinedQueue_tv.vcd" )
+  sim.run_test()
 

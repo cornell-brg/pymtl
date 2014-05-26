@@ -176,7 +176,7 @@ class SingleElementBypassQueue( Model ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return "{} () {}".format( s.enq, s.deq )
+    return "{} (v{},r{}) {}".format( s.enq, s.deq.val, s.deq.rdy, s.deq )
 
 
 #-------------------------------------------------------------------------
@@ -638,3 +638,162 @@ class SingleElementPipelinedQueueCtrl( Model ):
       elif s.do_enq:              s.full.next = 1
       else:                       s.full.next = s.full
 
+#=========================================================================
+# Single-Element Bypass Queue
+#=========================================================================
+class SingleElementSkidQueue( Model ):
+
+  def __init__( s, data_nbits ):
+
+    s.data_nbits = data_nbits
+
+    # Interface Ports
+
+    s.enq = InValRdyBundle ( data_nbits )
+    s.deq = OutValRdyBundle( data_nbits )
+
+  def elaborate_logic( s ):
+
+    # Ctrl and Dpath unit instantiation
+
+    s.ctrl  = SingleElementSkidQueueCtrl ()
+    s.dpath = SingleElementSkidQueueDpath( s.data_nbits )
+
+    # Ctrl unit connections
+
+    s.connect( s.ctrl.enq_val, s.enq.val )
+    s.connect( s.ctrl.enq_rdy, s.enq.rdy )
+    s.connect( s.ctrl.deq_val, s.deq.val )
+    s.connect( s.ctrl.deq_rdy, s.deq.rdy )
+
+    # Dpath unit connections
+
+    s.connect( s.dpath.enq_bits, s.enq.msg )
+    s.connect( s.dpath.deq_bits, s.deq.msg )
+
+    # Control Signal connections (ctrl -> dpath)
+
+    s.connect( s.dpath.wen,            s.ctrl.wen            )
+    s.connect( s.dpath.bypass_mux_sel, s.ctrl.bypass_mux_sel )
+
+  #-----------------------------------------------------------------------
+  # Line tracing
+  #-----------------------------------------------------------------------
+
+  def line_trace( s ):
+    return "{} ({}, {}) {}".format( s.enq,s.ctrl.do_bypass,s.enq.msg, s.deq )
+
+
+#-------------------------------------------------------------------------
+# Single-Element Bypass Queue Datapath
+#-------------------------------------------------------------------------
+class SingleElementSkidQueueDpath( Model ):
+
+  def __init__( s, data_nbits ):
+
+    s.data_nbits = data_nbits
+
+    # Interface Ports
+
+    s.enq_bits      = InPort  ( data_nbits )
+    s.deq_bits      = OutPort ( data_nbits )
+
+    # Control signal (ctrl -> dpath)
+
+    s.wen            = InPort ( 1 )
+    s.bypass_mux_sel = InPort ( 1 )
+
+  def elaborate_logic( s ):
+
+    # Queue storage
+
+    s.queue = regs.RegEn( s.data_nbits )
+
+    s.connect( s.queue.en,  s.wen      )
+    s.connect( s.queue.in_, s.enq_bits )
+
+    # Bypass mux
+
+    s.bypass_mux = Mux( s.data_nbits, 2 )
+
+    s.connect( s.bypass_mux.in_[0], s.queue.out      )
+    s.connect( s.bypass_mux.in_[1], s.enq_bits       )
+    s.connect( s.bypass_mux.sel,    s.bypass_mux_sel )
+    s.connect( s.bypass_mux.out,    s.deq_bits       )
+
+#-------------------------------------------------------------------------
+# Single-Element Skid Queue Control
+#-------------------------------------------------------------------------
+#This queue is similiar to a bypass queue, but when a value is bypassed
+#it is saved into the queue anyways.
+#Able to dequeue and enqueue on the same clock edge.
+class SingleElementSkidQueueCtrl( Model ):
+
+  def __init__( s ):
+
+    # Interface Ports
+
+    s.enq_val        = InPort  ( 1 )
+    s.enq_rdy        = OutPort ( 1 )
+    s.deq_val        = OutPort ( 1 )
+    s.deq_rdy        = InPort  ( 1 )
+
+    # Control signal (ctrl -> dpath)
+
+    s.wen            = OutPort ( 1 )
+    s.bypass_mux_sel = OutPort ( 1 )
+
+  def elaborate_logic( s ):
+
+    # Full bit storage
+
+    s.full           = Wire ( 1 )
+    # TODO: figure out how to make these work as temporaries
+    s.do_deq         = Wire ( 1 )
+    s.do_enq         = Wire ( 1 )
+    s.do_bypass      = Wire ( 1 )
+
+    @s.combinational
+    def comb():
+
+      #Dequeue is valid if the queue has an element or is bypassing
+      s.deq_val.value = s.full | ( ~s.full & s.enq_val )
+
+      #Dequeue only if the sink is ready and the deq is valid
+      s.do_deq.value    = s.deq_rdy and s.deq_val
+      
+      #Queue can take a new element if the queue is empty or if 
+      #queue is dequeuing
+      s.enq_rdy.value   = ~s.full | s.do_deq;
+      
+      s.do_enq.value    = s.enq_rdy and s.enq_val
+      
+      s.wen.value       = s.do_enq
+      
+      s.do_bypass.value = s.do_deq and s.do_enq
+      
+      s.bypass_mux_sel.value = s.do_bypass
+
+    @s.posedge_clk
+    def seq():
+
+      # TODO: can't use temporaries here, verilog simulation semantics
+      #       don't match the Python semantics!
+      ## helper signals
+
+      #do_deq    = s.deq_rdy and s.deq_val
+      #do_enq    = s.enq_rdy and s.enq_val
+      #do_bypass = ~s.full and do_deq and do_enq
+
+      # full bit calculation: the full bit is cleared when a dequeue
+      # transaction occurs and a new enque is not happening or when 
+      # an element is bypassed; 
+      # the full bit is set when the queue storage is
+      # empty and a enqueue transaction occurs or when the queue is full
+      # and both a enqueue and dequeue are occuring
+      
+
+      if   s.reset:                      s.full.next = 0
+      elif s.do_deq and not s.do_enq:    s.full.next = 0
+      elif s.do_enq:                     s.full.next = 1                    
+      else:                              s.full.next = s.full
