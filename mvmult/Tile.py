@@ -4,8 +4,10 @@ from new_pymtl                     import *
 from new_pmlib                     import mem_msgs
 from new_pmlib                     import InValRdyBundle, OutValRdyBundle
 from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul
-from new_mem                       import DirectMappedWriteBackCache
 from MatrixVecCOP                  import MatrixVecCOP
+
+# Cache with single-cycle hit lantency
+from new_cache.DirectMappedWriteBackCache import DirectMappedWriteBackCache
 
 Processor = ParcProcPipelinedMul
 
