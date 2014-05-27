@@ -54,12 +54,12 @@ pisa_encoding_table = \
 
   # Register-immediate arithmetic, logical, and comparison instructions
 
-  [ "addiu rt, rs, imm_sext",  0xfc000000, 0x24000000, ],
-  [ "andi  rt, rs, imm_zext",  0xfc000000, 0x30000000, ],
-  [ "ori   rt, rs, imm_zext",  0xfc000000, 0x34000000, ],
-  [ "xori  rt, rs, imm_zext",  0xfc000000, 0x38000000, ],
-  [ "slti  rt, rs, imm_sext",  0xfc000000, 0x28000000, ],
-  [ "sltiu rt, rs, imm_sext",  0xfc000000, 0x2c000000, ],
+  [ "addiu rt, rs, imm_sext",  0xfc000000, 0x24000000 ],
+  [ "andi  rt, rs, imm_zext",  0xfc000000, 0x30000000 ],
+  [ "ori   rt, rs, imm_zext",  0xfc000000, 0x34000000 ],
+  [ "xori  rt, rs, imm_zext",  0xfc000000, 0x38000000 ],
+  [ "slti  rt, rs, imm_sext",  0xfc000000, 0x28000000 ],
+  [ "sltiu rt, rs, imm_sext",  0xfc000000, 0x2c000000 ],
 
   # Shift instructions
 
@@ -111,6 +111,7 @@ pisa_encoding_table = \
   [ "bgtz  rs, imm_btarg",     0xfc1f0000, 0x1c000000 ],
   [ "bltz  rs, imm_btarg",     0xfc1f0000, 0x04000000 ],
   [ "bgez  rs, imm_btarg",     0xfc1f0000, 0x04010000 ],
+
 ]
 
 #=========================================================================
@@ -128,12 +129,15 @@ pisa_encoding_table = \
 # Define slice for each field
 #-------------------------------------------------------------------------
 
-pisa_field_slice_rs    = slice( 21, 26 )
-pisa_field_slice_rt    = slice( 16, 21 )
-pisa_field_slice_rd    = slice( 11, 16 )
-pisa_field_slice_imm   = slice(  0, 16 )
-pisa_field_slice_shamt = slice(  6, 11 )
-pisa_field_slice_jtarg = slice(  0, 26 )
+pisa_field_slice_rs     = slice( 21, 26 )
+pisa_field_slice_rt     = slice( 16, 21 )
+pisa_field_slice_rd     = slice( 11, 16 )
+pisa_field_slice_imm    = slice(  0, 16 )
+pisa_field_slice_shamt  = slice(  6, 11 )
+pisa_field_slice_jtarg  = slice(  0, 26 )
+
+pisa_field_slice_opcode = slice( 26, 32 )
+pisa_field_slice_func   = slice(  0,  6 )
 
 #-------------------------------------------------------------------------
 # rs assembly/disassembly functions
@@ -214,7 +218,21 @@ def disassemble_field_rc0( bits ):
 #-------------------------------------------------------------------------
 
 def assemble_field_imm_zext( bits, sym, pc, field_str ):
-  imm = int(field_str,0)
+
+  # Check to see if the immediate field derives from a label
+  if field_str[0] == "%":
+    label_addr = Bits( 32, sym[ field_str[4:-1] ] )
+
+    if field_str.startswith( "%hi[" ):
+      imm = label_addr[16:32]
+    elif field_str.startswith( "%lo[" ):
+      imm = label_addr[0:16]
+    else:
+      assert False
+
+  else:
+    imm = int(field_str,0)
+
   assert imm < (1 << 16)
   bits[ pisa_field_slice_imm ] = imm
 
@@ -228,7 +246,7 @@ def disassemble_field_imm_zext( bits ):
 def assemble_field_imm_sext( bits, sym, pc, field_str ):
   imm = int(field_str,0)
   if imm > 0:
-    assert imm < (1 << 15)
+    assert imm < (1 << 16)
   else:
     assert -imm < (1 << 15)
   bits[ pisa_field_slice_imm ] = imm
@@ -253,7 +271,12 @@ def disassemble_field_shamt( bits ):
 #-------------------------------------------------------------------------
 
 def assemble_field_jtarg( bits, sym, pc, field_str ):
-  jtarg_byte_addr = sym[field_str]
+
+  if sym.has_key( field_str ):
+    jtarg_byte_addr = sym[field_str]
+  else:
+    jtarg_byte_addr = int(field_str,0)
+
   bits[ pisa_field_slice_jtarg ] = jtarg_byte_addr >> 2
 
 def disassemble_field_jtarg( bits ):
@@ -264,7 +287,12 @@ def disassemble_field_jtarg( bits ):
 #-------------------------------------------------------------------------
 
 def assemble_field_imm_btarg( bits, sym, pc, field_str ):
-  btarg_byte_addr = sym[field_str]
+
+  if sym.has_key( field_str ):
+    btarg_byte_addr = sym[field_str]
+  else:
+    btarg_byte_addr = int(field_str,0)
+
   bits[ pisa_field_slice_imm ] = (btarg_byte_addr - pc - 4) >> 2
 
 def disassemble_field_imm_btarg( bits ):
@@ -308,12 +336,25 @@ def assemble_inst( sym, pc, inst_str ):
 
 def assemble( asm_code ):
 
+  # If asm_code is a single string, then put it in a list to simplify the
+  # rest of the logic.
+
+  asm_code_list = asm_code
+  if isinstance( asm_code, str ):
+    asm_code_list = [ asm_code ]
+
+  # Create a single list of lines
+
+  asm_list = []
+  for asm_seq in asm_code_list:
+    asm_list.extend( asm_seq.splitlines() )
+
   # First pass to create symbol table. This is obviously very simplistic.
   # We can maybe make it more robust in the future.
 
-  addr = 0x00001000
+  addr = 0x00000400
   sym  = {}
-  for line in asm_code.splitlines():
+  for line in asm_list:
     line = line.partition('#')[0]
     line = line.strip()
 
@@ -336,12 +377,14 @@ def assemble( asm_code ):
 
   # Second pass to assemble text section
 
-  addr            = 0x00001000
+  asm_list_idx    = 0
+  addr            = 0x00000400
   text_bytes      = bytearray()
   mngr2proc_bytes = bytearray()
   proc2mngr_bytes = bytearray()
 
-  for line in asm_code.splitlines():
+  for line in asm_list:
+    asm_list_idx += 1
     line = line.partition('#')[0]
     line = line.strip()
 
@@ -363,12 +406,14 @@ def assemble( asm_code ):
 
         if '<' in line:
           (temp,sep,value) = line.partition('<')
-          mngr2proc_bytes.extend(struct.pack("<I",int(value,0)))
+          bits = Bits( 32, int(value,0) )
+          mngr2proc_bytes.extend(struct.pack("<I",bits))
           inst_str = temp
 
         elif '>' in line:
           (temp,sep,value) = line.partition('>')
-          proc2mngr_bytes.extend(struct.pack("<I",int(value,0)))
+          bits = Bits( 32, int(value,0) )
+          proc2mngr_bytes.extend(struct.pack("<I",bits))
           inst_str = temp
 
         bits = assemble_inst( sym, addr, inst_str )
@@ -378,7 +423,7 @@ def assemble( asm_code ):
   # Assemble data section
 
   data_bytes = bytearray()
-  for line in asm_code.splitlines():
+  for line in asm_list[asm_list_idx:]:
     line = line.partition('#')[0]
     line = line.strip()
 
@@ -394,10 +439,20 @@ def assemble( asm_code ):
       data_bytes.extend(struct.pack("<I",int(value,0)))
       addr += 4
 
+    elif line.startswith(".hword"):
+      (cmd,sep,value) = line.partition(' ')
+      data_bytes.extend(struct.pack("<H",int(value,0)))
+      addr += 2
+
+    elif line.startswith(".byte"):
+      (cmd,sep,value) = line.partition(' ')
+      data_bytes.extend(struct.pack("<B",int(value,0)))
+      addr += 1
+
   # Construct the corresponding section objects
 
   text_section = \
-    SparseMemoryImage.Section( ".text", 0x1000, text_bytes )
+    SparseMemoryImage.Section( ".text", 0x0400, text_bytes )
 
   data_section = SparseMemoryImage.Section( ".data", 0x2000, data_bytes )
 
@@ -430,8 +485,86 @@ def assemble( asm_code ):
 def disassemble_inst( inst_bits ):
   return pisa_isa_impl.disassemble_inst( inst_bits )
 
-def decode_inst_name( inst_bits ):
-  return pisa_isa_impl.decode_inst_name( inst_bits )
+def decode_inst_name( inst ):
+
+  # Originally I was just using this:
+  #
+  #  return pisa_isa_impl.decode_inst_name( inst_bits )
+  #
+  # which basically just does a linear search in the encoding table to
+  # find a match. Eventually, I think we should figure out a way to
+  # automatically turn the encoding table into some kind of fast
+  # tree-bsaed search, but for now we just explicitly create a big case
+  # statement to do the instruction name decode.
+
+  # Short names
+
+  op   = pisa_field_slice_opcode
+  func = pisa_field_slice_func
+  rt   = pisa_field_slice_rt
+  rs   = pisa_field_slice_rs
+
+  inst_name = ""
+
+  if     inst       == 0:        inst_name = "nop"   #  2,
+  elif   inst[op]   == 0b001001: inst_name = "addiu" # 11,
+  elif   inst[op]   == 0b001101: inst_name = "ori"   # 13,
+  elif   inst[op]   == 0b001111: inst_name = "lui"   # 23,
+  elif   inst[op]   == 0b100011: inst_name = "lw"    # 29,
+  elif   inst[op]   == 0b101011: inst_name = "sw"    # 34,
+  elif   inst[op]   == 0b000011: inst_name = "jal"   # 38,
+  elif   inst[op]   == 0b000101: inst_name = "bne"   # 42,
+  elif   inst[op]   == 0b010000:                     #
+    if   inst[rs]   == 0b00100:  inst_name = "mtc0"  #  1,
+    elif inst[rs]   == 0b00000:  inst_name = "mfc0"  #  0,
+  elif   inst[op]   == 0b010010:                     #
+    if   inst[rs]   == 0b00100:  inst_name = "mtc2"  # 47,
+  elif   inst[op]   == 0b000000:                     #
+    if   inst[func] == 0b100001: inst_name = "addu"  #  3,
+    elif inst[func] == 0b001000: inst_name = "jr"    # 39,
+    elif inst[func] == 0b000000: inst_name = "sll"   # 17,
+    elif inst[func] == 0b000010: inst_name = "srl"   # 18,
+    elif inst[func] == 0b000011: inst_name = "sra"   # 19,
+    elif inst[func] == 0b000100: inst_name = "sllv"  # 20,
+    elif inst[func] == 0b000110: inst_name = "srlv"  # 21,
+    elif inst[func] == 0b000111: inst_name = "srav"  # 22,
+    elif inst[func] == 0b100011: inst_name = "subu"  #  4,
+    elif inst[func] == 0b100100: inst_name = "and"   #  5,
+    elif inst[func] == 0b100101: inst_name = "or"    #  6,
+    elif inst[func] == 0b100110: inst_name = "xor"   #  7,
+    elif inst[func] == 0b100111: inst_name = "nor"   #  8,
+    elif inst[func] == 0b101010: inst_name = "slt"   #  9,
+    elif inst[func] == 0b101011: inst_name = "sltu"  # 10,
+    elif inst[func] == 0b001001: inst_name = "jalr"  # 40,
+  elif   inst[op]   == 0b001100: inst_name = "andi"  # 12,
+  elif   inst[op]   == 0b001110: inst_name = "xori"  # 14,
+  elif   inst[op]   == 0b001010: inst_name = "slti"  # 15,
+  elif   inst[op]   == 0b001011: inst_name = "sltiu" # 16,
+  elif   inst[op]   == 0b011100: inst_name = "mul"   # 24,
+  elif   inst[op]   == 0b100111:                     #
+    if   inst[func] == 0b000101: inst_name = "div"   # 25,
+    elif inst[func] == 0b000111: inst_name = "divu"  # 26,
+    elif inst[func] == 0b000110: inst_name = "rem"   # 27,
+    elif inst[func] == 0b001000: inst_name = "remu"  # 28,
+  elif   inst[op]   == 0b100001: inst_name = "lh"    # 30,
+  elif   inst[op]   == 0b100101: inst_name = "lhu"   # 31,
+  elif   inst[op]   == 0b100000: inst_name = "lb"    # 32,
+  elif   inst[op]   == 0b100100: inst_name = "lbu"   # 33,
+  elif   inst[op]   == 0b101001: inst_name = "sh"    # 35,
+  elif   inst[op]   == 0b101000: inst_name = "sb"    # 36,
+  elif   inst[op]   == 0b000010: inst_name = "j"     # 37,
+  elif   inst[op]   == 0b000011: inst_name = "jal"   # 38,
+  elif   inst[op]   == 0b000100: inst_name = "beq"   # 41,
+  elif   inst[op]   == 0b000110: inst_name = "blez"  # 43,
+  elif   inst[op]   == 0b000111: inst_name = "bgtz"  # 44,
+  elif   inst[op]   == 0b000001:                     #
+    if   inst[rt]   == 0b00000:  inst_name = "bltz"  # 45,
+    elif inst[rt]   == 0b00001:  inst_name = "bgez"  # 46,
+
+  if inst_name == "":
+    raise AssertionError( "Illegal instruction {}!".format(inst) )
+
+  return inst_name
 
 def disassemble( mem_image ):
 
@@ -445,10 +578,11 @@ def disassemble( mem_image ):
   asm_code = ""
   for i in xrange(0,len(text_section.data),4):
 
+    print hex(addr+i)
+
     bits = struct.unpack_from("<I",buffer(text_section.data,i,4))[0]
     inst_str= disassemble_inst( Bits(32,bits) )
     disasm_line = " {:0>8x}  {:0>8x}  {}\n".format( addr+i, bits, inst_str )
     asm_code += disasm_line
 
   return asm_code
-

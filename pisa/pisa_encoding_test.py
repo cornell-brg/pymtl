@@ -151,6 +151,12 @@ def test_pisa_inst_ori():
   check( "ori   r11, r12, 3",       0x358b0003, "ori   r11, r12, 0003" )
   check( "ori   r29, r31, 3",       0x37fd0003, "ori   r29, r31, 0003" )
 
+  sym = { "label_a": 0xdeadbeef, "label_b": 0xcafe1234 }
+  check_sym( sym, 0x1000, "ori r1, r2, %lo[label_a]", 0x3441beef, "ori   r01, r02, beef" )
+  check_sym( sym, 0x1000, "ori r1, r2, %hi[label_a]", 0x3441dead, "ori   r01, r02, dead" )
+  check_sym( sym, 0x1000, "ori r1, r2, %lo[label_b]", 0x34411234, "ori   r01, r02, 1234" )
+  check_sym( sym, 0x1000, "ori r1, r2, %hi[label_b]", 0x3441cafe, "ori   r01, r02, cafe" )
+
 def test_pisa_inst_xori():
   check( "xori  r1,  r2,  3",       0x38410003, "xori  r01, r02, 0003" )
   check( "xori  r1,  r2,  003",     0x38410003, "xori  r01, r02, 0003" )
@@ -237,6 +243,12 @@ def test_pisa_inst_lui():
   check( "lui r04,3",               0x3c040003, "lui   r04, 0003" )
   check( "lui r11, 3",              0x3c0b0003, "lui   r11, 0003" )
   check( "lui r29, 3",              0x3c1d0003, "lui   r29, 0003" )
+
+  sym = { "label_a": 0xdeadbeef, "label_b": 0xcafe1234 }
+  check_sym( sym, 0x1000, "lui r1, %lo[label_a]", 0x3c01beef, "lui   r01, beef" )
+  check_sym( sym, 0x1000, "lui r1, %hi[label_a]", 0x3c01dead, "lui   r01, dead" )
+  check_sym( sym, 0x1000, "lui r1, %lo[label_b]", 0x3c011234, "lui   r01, 1234" )
+  check_sym( sym, 0x1000, "lui r1, %hi[label_b]", 0x3c01cafe, "lui   r01, cafe" )
 
 #-------------------------------------------------------------------------
 # Multiply/divide instructions
@@ -462,9 +474,6 @@ def test_invalid_field_imm_zext():
 def test_invalid_field_imm_sext():
 
   with pytest.raises( AssertionError ):
-    pisa_encoding.assemble_inst( {}, 0, "addiu r1, r2, 0xffff" )
-
-  with pytest.raises( AssertionError ):
     pisa_encoding.assemble_inst( {}, 0, "addiu r1, r2, -0xffff" )
 
 def test_invalid_field_shamt():
@@ -517,7 +526,7 @@ def test_assemble_without_ctrl():
 
   # Create a reference text section by using binutils
 
-  text_section = mk_section( ".text", 0x1000,
+  text_section = mk_section( ".text", 0x0400,
   [
     0x34012000, # li   at, 0x2000
     0x34022004, # li   v0, 0x2004
@@ -600,7 +609,7 @@ def test_assemble_with_ctrl():
 
   # Create a reference text section by using binutils
 
-  text_section = mk_section( ".text", 0x1000,
+  text_section = mk_section( ".text", 0x0400,
   [
     0x24010004, # li    at, 4
     0x34022000, # li    v0, 0x2000
@@ -673,7 +682,7 @@ def test_assemble_with_prog_mngr():
 
   # Create a reference text section by using binutils
 
-  text_section = mk_section( ".text", 0x1000,
+  text_section = mk_section( ".text", 0x0400,
   [
     0x40010800, # mfc0 at, mngr2proc
     0x40020800, # mfc0 v0, mngr2proc
