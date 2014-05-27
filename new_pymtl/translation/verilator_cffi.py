@@ -45,7 +45,8 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
 def verilate_model( filename, model_name ):
 
   # TODO: add '-trace' to options if --dump-vcd flag is set
-  verilator_flags = '-Wno-lint -Wno-UNOPTFLAT'
+  verilator_flags = '-Wno-lint -Wno-UNOPTFLAT ' \
+                    '--unroll-count 1000000 --unroll-stmts 1000000'
 
   # NOTE: remove the obj_dir because issues with staleness...
   cmd = 'rm -r obj_dir_{model_name}; '        \
