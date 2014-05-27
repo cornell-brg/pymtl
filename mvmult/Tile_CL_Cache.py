@@ -1,20 +1,16 @@
 #=======================================================================
 
-from new_pymtl                     import *
-from new_pmlib                     import mem_msgs
-from new_pmlib                     import InValRdyBundle, OutValRdyBundle
-from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul
-from MatrixVecCOP                  import MatrixVecCOP
-
-# Cache with single-cycle hit lantency
-from new_cache.DirectMappedWriteBackCache import DirectMappedWriteBackCache
-
-Processor = ParcProcPipelinedMul
+from new_pymtl                  import *
+from new_pmlib                  import mem_msgs
+from new_pmlib                  import InValRdyBundle, OutValRdyBundle
+from new_proc.ParcProc5stBypass import ParcProc5stBypass
+from new_cache                  import CL_Cache
+from MatrixVecCOP               import MatrixVecCOP
 
 #-----------------------------------------------------------------------
 # Tile
 #-----------------------------------------------------------------------
-class Tile( Model ):
+class Tile_CL_Cache( Model ):
 
   #---------------------------------------------------------------------
   # __init__
@@ -43,7 +39,7 @@ class Tile( Model ):
     nlanes      = 1
     nmul_stages = 4
 
-    s.proc     = Processor( reset_vector=0x00000400 )
+    s.proc     = ParcProc5stBypass( reset_vector=0x00000400 )
     s.cp2      = MatrixVecCOP( nlanes, nmul_stages,
                                cop_addr_nbits=5,
                                cop_data_nbits=32,
@@ -98,14 +94,8 @@ class Tile( Model ):
   #---------------------------------------------------------------------
   def enable_caches( s ):
 
-    s.icache   = DirectMappedWriteBackCache( mem_nbytes=256,
-                                             addr_nbits=32,
-                                             data_nbits=32,
-                                             line_nbits=s.mem_data_nbits )
-    s.dcache   = DirectMappedWriteBackCache( mem_nbytes=256,
-                                             addr_nbits=32,
-                                             data_nbits=32,
-                                             line_nbits=s.mem_data_nbits )
+    s.icache   = CL_Cache()
+    s.dcache   = CL_Cache()
 
     # Connect the proc instruction port to icache, icache to memory
 
@@ -146,7 +136,9 @@ class Tile( Model ):
   #---------------------------------------------------------------------
   def line_trace( s ):
     return s.proc.line_trace() + s.cp2.line_trace()
-    #return s.proc.line_trace() + \
-    #    " I$ {} {}".format(s.proc.imemreq, s.proc.imemresp) + \
-    #    " D$ {} {}".format(s.proc.dmemreq, s.proc.dmemresp)
+  #  return s.proc.line_trace() + \
+  #"[] {} {} {} []".format( s.proc.dpath.snoop_unit_F.in_, s.proc.dpath.snoop_unit_F.out, s.proc.dpath.imemresp_msg ) + \
+  #"{} {}".format(s.proc.imemreq, s.proc.imemresp)
+  ##"{} {}".format(s.proc.imemresp, s.icache.cacheresp) + \
+  ##s.icache.line_trace()
 

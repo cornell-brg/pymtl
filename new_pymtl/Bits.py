@@ -22,6 +22,7 @@ class Bits( SignalValue ):
   def __init__( self, nbits, value = 0, trunc = False ):
 
     value = int( value )
+    nbits = int( nbits )
 
     # Make sure width is non-zero and that we have space for the value
     assert nbits > 0
@@ -158,8 +159,14 @@ class Bits( SignalValue ):
       elif stop is None:
         stop = self.nbits
 
+      stop  = int( stop  )
+      start = int( start )
+
       # Verify our ranges are sane
-      assert 0 <= start < stop <= self.nbits
+      if not (start < stop):
+        raise IndexError('Start index is not less than stop index')
+      if not (0 <= start < stop <= self.nbits):
+        raise IndexError('Bits index out of range')
 
       # Create a new Bits object containing the slice value and return it
       nbits = stop - start
@@ -170,8 +177,11 @@ class Bits( SignalValue ):
     # Handle integers
     else:
 
+      addr = int(addr)
+
       # Verify the index is sane
-      assert 0 <= addr < self.nbits
+      if not (0 <= addr < self.nbits):
+        raise IndexError('Bits index out of range')
 
       # Create a new Bits object containing the bit value and return it
       value = (self._uint & (1 << addr)) >> addr
@@ -209,7 +219,8 @@ class Bits( SignalValue ):
         stop = self.nbits
 
       # Verify our ranges are sane
-      assert 0 <= start < stop <= self.nbits
+      if not (0 <= start < stop <= self.nbits):
+        raise IndexError('Bits index out of range')
 
       nbits = stop - start
 
@@ -230,7 +241,8 @@ class Bits( SignalValue ):
     else:
 
       # Verify the index and values are sane
-      assert 0 <= addr < self.nbits
+      if not (0 <= addr < self.nbits):
+        raise IndexError('Bits index out of range')
       assert 0 <= value <= 1
 
       # Clear the bits we want to set

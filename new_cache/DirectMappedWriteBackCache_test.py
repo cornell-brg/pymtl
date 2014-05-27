@@ -1,80 +1,51 @@
-#=======================================================================
-# DirectMapped_test.py
-#=======================================================================
+#=========================================================================
+# DirectedMappedWriteBackCache Unit Test
+#=========================================================================
 
-from new_pymtl import *
-from new_pmlib import TestSource, TestSink
+from   new_pymtl import *
+import new_pmlib
 
-from CycleApproximateSimpleCache import CL_Cache
-from TestCacheResp32Sink         import TestCacheResp32Sink
-from new_pmlib.TestMemory        import TestMemory
+import new_pmlib.mem_msgs   as     mem_msgs
+import new_pmlib.valrdy     as     valrdy
+from   new_pmlib.TestMemory import TestMemory
 
-import new_pmlib.mem_msgs as mem_msgs
+from TestCacheResp32Sink        import TestCacheResp32Sink
+from DirectMappedWriteBackCache import DirectMappedWriteBackCache
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # TestHarness
-#-----------------------------------------------------------------------
-class TestHarness( Model ):
+#-------------------------------------------------------------------------
+
+class TestHarness (Model):
 
   def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay, mem_delay,
-                mem_nbytes, addr_nbits, data_nbits, line_nbits ):
+                mem_nbytes, addr_nbits, data_nbits, line_nbits, test_verilog ):
 
-    s.creq_params  = mem_msgs.MemReqParams ( addr_nbits, data_nbits )
-    s.cresp_params = mem_msgs.MemRespParams( data_nbits )
+    creq_params  = mem_msgs.MemReqParams ( addr_nbits, data_nbits )
+    cresp_params = mem_msgs.MemRespParams( data_nbits )
 
-    s.mreq_params  = mem_msgs.MemReqParams ( addr_nbits, line_nbits )
-    s.mresp_params = mem_msgs.MemRespParams( line_nbits )
+    mreq_params  = mem_msgs.MemReqParams ( addr_nbits, line_nbits )
+    mresp_params = mem_msgs.MemRespParams( line_nbits )
 
     # Instantiate models
 
-    s.src   = TestSource( s.creq_params.nbits, src_msgs,  0 )
-    s.cache = CL_Cache()
-    s.mem   = TestMemory( s.mreq_params, s.mresp_params, 1, 0 )
-    s.sink  = TestCacheResp32Sink(  s.cresp_params, sink_msgs, 0 )
+    s.src   = new_pmlib.TestSource( creq_params.nbits, src_msgs,  src_delay )
+    s.cache = DirectMappedWriteBackCache( mem_nbytes, addr_nbits,
+                                             data_nbits, line_nbits )
+    s.mem   = TestMemory( mreq_params, mresp_params, 1, mem_delay )
+    s.sink  = TestCacheResp32Sink(  cresp_params, sink_msgs, sink_delay )
 
-    s.out_data  = InPort(s.mreq_params.data_nbits)
-    s.in_data  = InPort(s.mreq_params.data_nbits)
-    
+    if test_verilog:
+      s.cache = get_verilated( s.cache )
+
   def elaborate_logic( s ):
-    s.connect( s.src.out.msg[s.creq_params.type_slice], s.cache.cachereq_msg_type)
-    s.connect( s.src.out.msg[s.creq_params.addr_slice], s.cache.cachereq_msg_addr)
-    s.connect( s.src.out.msg[s.creq_params.data_slice], s.cache.cachereq_msg_data)
-    s.connect( s.src.out.msg[s.creq_params.len_slice], s.cache.cachereq_msg_len)
-    s.connect( s.src.out.val, s.cache.cachereq_val)
-    s.connect( s.src.out.rdy, s.cache.cachereq_rdy)
-    
-    
-    for x in range(len(s.cache.memreq_msg_data)):
-      s.connect( s.cache.memreq_msg_data[x],  s.out_data[x*32:(x+1)*32])
-      
-    s.connect( s.cache.memreq_msg_addr,  s.mem.reqs[0].msg[s.mreq_params.addr_slice])
-    s.connect( s.cache.memreq_msg_len,   s.mem.reqs[0].msg[s.mreq_params.len_slice])
-    s.connect( s.cache.memreq_msg_type,  s.mem.reqs[0].msg[s.mreq_params.type_slice])
-    s.connect( s.cache.memreq_rdy, s.mem.reqs[0].rdy)
-    s.connect( s.cache.memreq_val, s.mem.reqs[0].val)
-    
-    
-    
-    for x in range(len(s.cache.memreq_msg_data)):
-      s.connect(s.cache.memresp_msg_data[x], s.in_data[x*32:(x+1)*32])
-    
-    s.connect( s.cache.memresp_msg_len,   s.mem.resps[0].msg[s.mresp_params.len_slice])
-    s.connect( s.cache.memresp_msg_type,  s.mem.resps[0].msg[s.mresp_params.type_slice])
-    s.connect( s.cache.memresp_rdy, s.mem.resps[0].rdy)
-    s.connect( s.cache.memresp_val, s.mem.resps[0].val)
-    
-    s.connect( s.sink.in_.msg[s.cresp_params.type_slice], s.cache.cacheresp_msg_type)
-    s.connect( s.sink.in_.msg[s.cresp_params.data_slice], s.cache.cacheresp_msg_data)
-    s.connect( s.sink.in_.msg[s.cresp_params.len_slice], s.cache.cacheresp_msg_len)
-    s.connect( s.sink.in_.val, s.cache.cacheresp_val)
-    s.connect( s.sink.in_.rdy, s.cache.cacheresp_rdy)
-    
-    
-    #TODO moving these assignments above using s.connect instead caused problems
-    @s.combinational
-    def logic():
-      s.mem.reqs[0].msg[s.mreq_params.data_slice].value = s.out_data
-      s.in_data.value = s.mem.resps[0].msg[s.mresp_params.data_slice]
+
+    # connect
+
+    s.connect( s.src.out,       s.cache.cachereq  )
+    s.connect( s.cache.memreq,  s.mem.reqs[0]     )
+    s.connect( s.cache.memresp, s.mem.resps[0]    )
+    s.connect( s.sink.in_,      s.cache.cacheresp )
 
   def done( s ):
 
@@ -82,14 +53,14 @@ class TestHarness( Model ):
     return done
 
   def line_trace( s ):
-    return s.cache.line_trace() + " " + s.sink.line_trace()
+    return s.cache.line_trace()
 
 #-------------------------------------------------------------------------
 # DirectMappedWriteBackCache Unit Test
 #-------------------------------------------------------------------------
 
-def run_SimpleCache_test( dump_vcd, vcd_file_name,
-                          src_delay, sink_delay, mem_delay ):
+def run_DirectMappedWriteBackCache_test( dump_vcd, test_verilog, vcd_file_name,
+                                         src_delay, sink_delay, mem_delay ):
 
   # Parameters
 
@@ -127,18 +98,18 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
     #-----------------------------------------------------------------------
     # Throw Away tests
     #-----------------------------------------------------------------------
-    #Tests 1-3
-    mk_req( rd,   0x000fff00, 0,  0x00000000 ), mk_resp( rd,   0,   0xdeadbeef ),
-    mk_req( wr,   0x000fff00, 0,  0xaaaa0000 ), mk_resp( wr,   0,   0x00000000 ),
-    mk_req( rd,   0x000fff00, 0,  0x00000000 ), mk_resp( rd,   0,   0xaaaa0000 ),
+
+    #mk_req( rd,   0x000fff00, 0,  0x00000000 ), mk_resp( rd,   0,   0xdeadbeec ),
+    #mk_req( wr,   0x000fff00, 0,  0xaaaa0000 ), mk_resp( wr,   0,   0x00000000 ),
+    #mk_req( rd,   0x000fff00, 0,  0x00000000 ), mk_resp( rd,   0,   0xaaaa0000 ),
 
     # Simple Test, write word and read word back
-    #Tests 4-5
+
     mk_req( wr,   0x00000000, 0,  0x0a0a0a0a ), mk_resp( wr,   0,   0x00000000 ),
     mk_req( rd,   0x00000000, 0,  0x00000000 ), mk_resp( rd,   0,   0x0a0a0a0a ),
 
     # Write to valid cache line, make sure all words are hits
-    #Tests 6-11
+
     mk_req( wr,   0x00000004, 0,  0x0b0b0b0b ), mk_resp( wr,   0,   0x00000000 ),
     mk_req( wr,   0x00000008, 0,  0x0c0c0c0c ), mk_resp( wr,   0,   0x00000000 ),
     mk_req( wr,   0x0000000c, 0,  0x0d0d0d0d ), mk_resp( wr,   0,   0x00000000 ),
@@ -147,33 +118,33 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
     mk_req( rd,   0x0000000c, 0,  0x00000000 ), mk_resp( rd,   0,   0x0d0d0d0d ),
 
     # Evict cache line, write to refill line, read word back
-    #Tests 12-15
+
     mk_req( wr,   0x0000ff08, 0,  0xdeadbeef ), mk_resp( wr,   0,   0x00000000 ),
     mk_req( rd,   0x0000ff08, 0,  0x00000000 ), mk_resp( rd,   0,   0xdeadbeef ),
     mk_req( wr,   0x0000ff04, 0,  0xff00ff00 ), mk_resp( wr,   0,   0x00000000 ),
     mk_req( rd,   0x0000ff04, 0,  0x00000000 ), mk_resp( rd,   0,   0xff00ff00 ),
 
     # Refill a new cache line
-    #Tests 16-19
+
     mk_req( wr,   0x0000ab20, 0,  0xabcdefff ), mk_resp( wr,   0,   0x00000000 ),
     mk_req( rd,   0x0000ab20, 0,  0x00000000 ), mk_resp( rd,   0,   0xabcdefff ),
     mk_req( wr,   0x0000ab2c, 0,  0x01234567 ), mk_resp( wr,   0,   0x00000000 ),
     mk_req( rd,   0x0000ab2c, 0,  0x00000000 ), mk_resp( rd,   0,   0x01234567 ),
 
     # Make sure old line is still hitting
-    #Tests 20-21
+
     mk_req( rd,   0x0000ff08, 0,  0x00000000 ), mk_resp( rd,   0,   0xdeadbeef ),
     mk_req( rd,   0x0000ff04, 0,  0x00000000 ), mk_resp( rd,   0,   0xff00ff00 ),
 
     # Read the evicted line, make sure data was written back
-    #Tests 22-25
+
     mk_req( rd,   0x00000000, 0,  0x00000000 ), mk_resp( rd,   0,   0x0a0a0a0a ),
     mk_req( rd,   0x00000004, 0,  0x00000000 ), mk_resp( rd,   0,   0x0b0b0b0b ),
     mk_req( rd,   0x00000008, 0,  0x00000000 ), mk_resp( rd,   0,   0x0c0c0c0c ),
     mk_req( rd,   0x0000000c, 0,  0x00000000 ), mk_resp( rd,   0,   0x0d0d0d0d ),
 
     # Test byte accesses
-    #Tests 26-33
+
     mk_req( wr,   0x00000008, 0,  0x0a0b0c0d ), mk_resp( wr,   0,   0x00000000 ),
     mk_req( wr,   0x00000008, 1,  0xdeadbeef ), mk_resp( wr,   1,   0x00000000 ),
     mk_req( rd,   0x00000008, 1,  0x00000000 ), mk_resp( rd,   1,   0x000000ef ),
@@ -203,7 +174,7 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
 
   model = TestHarness( src_msgs, sink_msgs, src_delay, sink_delay,
                        mem_delay, mem_nbytes, addr_nbits, data_nbits,
-                       line_nbits )
+                       line_nbits, test_verilog )
   model.elaborate()
 
   # Create a simulator using the simulation tool
@@ -226,27 +197,18 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
   # Intialize cache line 0
   # You can initialize more locations here
 
-  model.cache.valid_bits[ 0 ][ 0 ] = True
-  model.cache.dirty_bits[ 0 ][ 0 ] = False
+  #model.cache.ctrl.valid_bits.mem[ 0 ].value = 1
+  #model.cache.ctrl.dirty_bits.mem[ 0 ].value = 0
 
-  model.cache.taglines[ 0 ][ 0 ] = Bits(24,value=0xFFF)
-  model.cache.cachelines[ 0 ][ 0 ][ 3 ] = \
-    Bits(32,value=0xdeadbeec)
-  model.cache.cachelines[ 0 ][ 0 ][ 2 ] = \
-    Bits(32,value=0xdeadbeed)
-  model.cache.cachelines[ 0 ][ 0 ][ 1 ] = \
-    Bits(32,value=0xdeadbeee)
-  model.cache.cachelines[ 0 ][ 0 ][ 0 ] = \
-    Bits(32,value=0xdeadbeef)
+  #model.cache.dpath.tag_array.SRAM.mem[ 0 ].value = \
+  #  0x000fff
 
+  #model.cache.dpath.data_array.SRAM.mem[ 0 ].value = \
+  #  0xdeadbeefdeadbeeedeadbeeddeadbeec
 
   # Begin Simulation
 
   while not model.done():
-    #print "OUT_DATA", model.out_data
-    #print "IN_DATA", model.in_data
-    #print "MEMORY REQ", model.mem.reqs[0]
-    #print "MEMORY RESP", model.mem.resps[0]
     sim.print_line_trace()
     sim.cycle()
 
@@ -255,7 +217,38 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
   sim.cycle()
   sim.cycle()
   sim.cycle()
-  sim.cycle()
 
-def test_cache( dump_vcd ):
-  run_SimpleCache_test( dump_vcd, "DirectMapCache.vcd", 0, 0, 0 )
+#-------------------------------------------------------------------------
+# DirectMappedWriteBackCache src_delay = 0, sink_delay = 0, mem_delay = 0
+#-------------------------------------------------------------------------
+
+def test_cache_delay_0x0_0( dump_vcd, test_verilog ):
+  run_DirectMappedWriteBackCache_test( dump_vcd, test_verilog,
+    "DirectMappedWriteBackCache_test_delay_0x0_0.vcd", 0, 0, 0 )
+
+#-------------------------------------------------------------------------
+# DirectMappedWriteBackCache src_delay = 4, sink_delay = 0, mem_delay = 10
+#-------------------------------------------------------------------------
+
+def test_cache_delay_4x0_10( dump_vcd, test_verilog ):
+  run_DirectMappedWriteBackCache_test( dump_vcd, test_verilog,
+    "DirectMappedWriteBackCache_test_delay_4x0_10.vcd", 4, 0, 10 )
+
+#-------------------------------------------------------------------------
+# DirectMappedWriteBackCache src_delay = 0, sink_delay = 6, mem_delay = 10
+#-------------------------------------------------------------------------
+
+def test_cache_delay_0x6_10( dump_vcd, test_verilog ):
+  run_DirectMappedWriteBackCache_test( dump_vcd, test_verilog,
+    "DirectMappedWriteBackCache_test_delay_0x6_10.vcd", 0, 6, 10 )
+
+#-------------------------------------------------------------------------
+# DirectMappedWriteBackCache src_delay = 8, sink_delay = 6, mem_delay = 12
+#-------------------------------------------------------------------------
+
+def test_cache_delay_8x6_12( dump_vcd, test_verilog ):
+  run_DirectMappedWriteBackCache_test( dump_vcd, test_verilog,
+    "DirectMappedWriteBackCache_test_delay_8x6_12.vcd", 8, 6, 12 )
+
+
+
