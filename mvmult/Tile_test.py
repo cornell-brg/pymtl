@@ -302,7 +302,10 @@ def mul_scoreboard_clear_bug():
       nop; nop; nop; nop;
       nop; nop; nop; nop;
       mul  $12,  $3, $2
-      mtc0  $4, $1
+      mtc0 $12,  $1
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+      mtc0  $2, $1
       nop; nop; nop; nop;
       nop; nop; nop; nop;
   """
