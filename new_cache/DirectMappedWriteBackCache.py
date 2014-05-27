@@ -136,10 +136,6 @@ class DirectMappedWriteBackCacheCtrl (Model):
     @s.combinational
     def state_transitions():
 
-      #Read and Write shortcuts
-      r = Bits(1,0)
-      w = Bits(1,1)
-
       current_state = s.state.out
       next_state    = s.state.out
 
