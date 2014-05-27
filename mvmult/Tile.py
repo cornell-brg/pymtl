@@ -146,9 +146,7 @@ class Tile( Model ):
   #---------------------------------------------------------------------
   def line_trace( s ):
     return s.proc.line_trace() + s.cp2.line_trace()
-  #  return s.proc.line_trace() + \
-  #"[] {} {} {} []".format( s.proc.dpath.snoop_unit_F.in_, s.proc.dpath.snoop_unit_F.out, s.proc.dpath.imemresp_msg ) + \
-  #"{} {}".format(s.proc.imemreq, s.proc.imemresp)
-  ##"{} {}".format(s.proc.imemresp, s.icache.cacheresp) + \
-  ##s.icache.line_trace()
+    #return s.proc.line_trace() + \
+    #    " I$ {} {}".format(s.proc.imemreq, s.proc.imemresp) + \
+    #    " D$ {} {}".format(s.proc.dmemreq, s.proc.dmemresp)
 
