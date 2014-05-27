@@ -5,6 +5,7 @@
 
 from PisaInst import PisaInst
 from pisa_encoding import assemble_inst
+
 import pytest
 
 #-------------------------------------------------------------------------

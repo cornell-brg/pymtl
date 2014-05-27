@@ -101,7 +101,6 @@ class IsaImpl (object):
 
     raise AssertionError( "Illegal instruction {}!".format( inst_bits ) )
 
-
   #-----------------------------------------------------------------------
   # decode_name
   #-----------------------------------------------------------------------

@@ -8,6 +8,7 @@
 # Date   : May 22, 2014
 
 from new_pymtl import Bits
+
 import pisa_encoding
 
 class PisaInst (object):

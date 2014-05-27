@@ -37,10 +37,11 @@ def test_sections():
   for data_ints in data_ints_b:
     data_bytes_b.extend(struct.pack("<I",data_int))
 
-  # Create a second section section and add it to the sparse memory image
+  # Create a second section section and add it to the sparse memory
+  # image. Use the alternative syntax for adding a section.
 
   section_b = SparseMemoryImage.Section( ".data", 0x2000, data_bytes_b )
-  mem_image.add_section( section_b )
+  mem_image.add_section( ".data", 0x2000, data_bytes_b )
 
   # Retrieve and check both sections
 

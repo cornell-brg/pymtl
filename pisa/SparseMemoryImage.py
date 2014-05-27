@@ -45,8 +45,12 @@ class SparseMemoryImage (object):
   # add/get sections
   #-----------------------------------------------------------------------
 
-  def add_section( self, section ):
-    self.sections.append( section )
+  def add_section( self, section, addr=None, data=None ):
+    if isinstance( section, SparseMemoryImage.Section ):
+      self.sections.append( section )
+    else:
+      sec = SparseMemoryImage.Section( section, addr, data )
+      self.sections.append( sec )
 
   def get_section( self, section_name ):
     for section in self.sections:
