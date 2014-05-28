@@ -1,3 +1,7 @@
+#=======================================================================
+# CycleApproximateSimpleCache.py
+#=======================================================================
+
 from new_pymtl          import *
 from new_pmlib          import InValRdyBundle, OutValRdyBundle
 from new_pmlib          import mem_msgs
@@ -15,10 +19,16 @@ STATE_READ     = 2
 STATE_EVICT    = 3
 STATE_COMPLETE = 4
 
-## (In a few places) HARD CODED FOR THE DEFAULT ARGUMENTS
-#TODO rename and add headers
+#-----------------------------------------------------------------------
+# CL_Cache
+#-----------------------------------------------------------------------
+# (In a few places) HARD CODED FOR THE DEFAULT ARGUMENTS
+# TODO rename and add headers
 class CL_Cache( Model ):
 
+  #---------------------------------------------------------------------
+  # __init__
+  #---------------------------------------------------------------------
   def __init__( s, line_nbytes   = 16, cache_nlines = 16, n_ways      = 1,
                    address_nbits = 32, data_nbits   = 32, hit_penalty = 0,
                    miss_penalty  = 0 ):
@@ -85,21 +95,11 @@ class CL_Cache( Model ):
     s.miss_penalty = miss_penalty
     s.hit_penalty  = hit_penalty
 
+    s.idx = Bits(32)
 
-  def fake_stall( s , penalty ):
-    if s.stall_count < penalty:
-      s.stall_count        = s.stall_count + 1
-      s.cachereq_rdy .next = 0
-      s.cacheresp_val.next = 0
-      s.memresp_rdy  .next = 0
-      s.memreq_val   .next = 0
-      return True
-    else:
-      return False
-
-  def rshift(s,val,n):
-      return (val % 0x100000000) >> n
-
+  #---------------------------------------------------------------------
+  # elaborate_logic
+  #---------------------------------------------------------------------
   def elaborate_logic( s ):
 
     #Shorter Names
@@ -130,7 +130,9 @@ class CL_Cache( Model ):
     s.tag         = Bits(32,value = 0)
 
 
-
+    #-------------------------------------------------------------------
+    # logic
+    #-------------------------------------------------------------------
     @s.tick
     def logic():
       nsets  = s.n_sets
@@ -211,8 +213,8 @@ class CL_Cache( Model ):
                 #s.cachelines[s.set][s.curr_way.value][offset:offset+length].value = Bits(length,value=s.data.value,trunc = True).value
                 assert not s.length == 0
                 #TODO :( bits translatable
-                idx = s.set*nways*nwords + s.curr_way*nwords + s.word_offset
-                s.cachelines[idx].value = (s.cachelines[idx]
+                s.idx = s.set*nways*nwords + s.curr_way*nwords + s.word_offset
+                s.cachelines[s.idx].value = (s.cachelines[s.idx]
                     & (0xFFFFFFFF ^                        \
                     (((1 << s.length.uint()) - 1) <<                       \
                     (s.byte_offset.uint()*8)))) |                          \
@@ -344,8 +346,32 @@ class CL_Cache( Model ):
           s.arbitration[s.set] = (s.curr_way + 1) % s.n_ways
           s.buffer_full = False
 
+  #---------------------------------------------------------------------
+  # fake_stall
+  #---------------------------------------------------------------------
+  def fake_stall( s , penalty ):
+    if s.stall_count < penalty:
+      s.stall_count        = s.stall_count + 1
+      s.cachereq_rdy .next = 0
+      s.cacheresp_val.next = 0
+      s.memresp_rdy  .next = 0
+      s.memreq_val   .next = 0
+      return True
+    else:
+      return False
+
+  #---------------------------------------------------------------------
+  # rshift
+  #---------------------------------------------------------------------
+  def rshift(s,val,n):
+      return (val % 0x100000000) >> n
+
+
+  #---------------------------------------------------------------------
+  # line_trace
+  #---------------------------------------------------------------------
+  # TODO clean up and provide more useful info
   def line_trace( s ):
-    #TODO clean up and provide more useful info
     #return '{} {} {} {}'.format( s.state, s.buffer, s.cacheresp, s.cachereq )
     return "TODO"
 
