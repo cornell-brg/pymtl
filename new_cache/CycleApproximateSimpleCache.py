@@ -135,6 +135,21 @@ class CL_Cache( Model ):
     @s.tick
     def logic():
 
+      if s.reset:
+        s.state       = s.STATE_READY
+        s.buffer_full = False
+        s.stall_count = False
+        s.sent_mem    = False
+        s.set.value         = 0
+        s.word_offset.value = 0
+        s.byte_offset.value = 0
+        s.tag.value         = 0
+        for i in range( s.nsets*s.nways ):
+          s.dirty_bits[i] = False
+          s.valid_bits[i] = False
+        for i in range( s.nsets ):
+          s.arbitration[i] = 0
+
       s.in_go  = s.cachereq_val  and s.cachereq_rdy
       s.out_go = s.cacheresp_val and s.cacheresp_rdy
 
