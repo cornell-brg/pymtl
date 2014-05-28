@@ -95,7 +95,8 @@ class CL_Cache( Model ):
     s.miss_penalty = miss_penalty
     s.hit_penalty  = hit_penalty
 
-    s.idx = Bits(32)
+    s.idx  = Bits(32)
+    s.mask = Bits(32)
 
   #---------------------------------------------------------------------
   # elaborate_logic
@@ -329,10 +330,13 @@ class CL_Cache( Model ):
         s.cacheresp_msg_len.next  = s.ilength
 
         s.idx = s.set*s.nways*s.nwords + s.curr_way*s.nwords + s.word_offset
-        s.cacheresp_msg_data.next =                                   \
-          s.rshift(s.cachelines[s.idx] &   \
-          (((1 << s.length.uint()) - 1) << (s.byte_offset.uint()*8)), \
-          (s.byte_offset.uint()*8))
+
+        if   s.length == 32: s.mask = 0xFFFFFFFF
+        elif s.length ==  8: s.mask = 0xFF   << (s.byte_offset.uint() * 8)
+        elif s.length == 16: s.mask = 0xFFFF << (s.byte_offset.uint() * 8)
+
+        s.cacheresp_msg_data.next = \
+            s.rshift( s.cachelines[s.idx] & s.mask, s.byte_offset.uint()*8 )
 
         s.cacheresp_val.next = 1
 
