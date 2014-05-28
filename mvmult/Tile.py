@@ -19,12 +19,15 @@ class Tile( Model ):
   #---------------------------------------------------------------------
   # __init__
   #---------------------------------------------------------------------
-  def __init__( s, reset_vector = 0, mem_data_nbits = 32 ):
+  def __init__( s, reset_vector = 0, mem_data_nbits = 32,
+                   cache_nbytes = 16384 ):
 
     mreq  = mem_msgs.MemReqParams ( 32, mem_data_nbits )
     mresp = mem_msgs.MemRespParams( mem_data_nbits )
 
     s.mem_data_nbits = mem_data_nbits
+    s.cache_nbytes   = cache_nbytes
+
 
     # TestProcManager Interface
 
@@ -98,11 +101,11 @@ class Tile( Model ):
   #---------------------------------------------------------------------
   def enable_caches( s ):
 
-    s.icache   = DirectMappedWriteBackCache( mem_nbytes=256,
+    s.icache   = DirectMappedWriteBackCache( mem_nbytes=s.cache_nbytes,
                                              addr_nbits=32,
                                              data_nbits=32,
                                              line_nbits=s.mem_data_nbits )
-    s.dcache   = DirectMappedWriteBackCache( mem_nbytes=256,
+    s.dcache   = DirectMappedWriteBackCache( mem_nbytes=s.cache_nbytes,
                                              addr_nbits=32,
                                              data_nbits=32,
                                              line_nbits=s.mem_data_nbits )
@@ -146,7 +149,7 @@ class Tile( Model ):
   #---------------------------------------------------------------------
   def line_trace( s ):
     return s.proc.line_trace() + s.cp2.line_trace()
-    #return s.proc.line_trace() + \
+    #return s.proc.line_trace() + s.cp2.line_trace() + \
     #    " I$ {} {}".format(s.proc.imemreq, s.proc.imemresp) + \
     #    " D$ {} {}".format(s.proc.dmemreq, s.proc.dmemresp)
 
