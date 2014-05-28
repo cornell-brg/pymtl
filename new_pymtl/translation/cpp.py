@@ -350,7 +350,7 @@ class TranslateLogic( ast.NodeVisitor ):
     self.regs      = []
     self.localvars = {}
     self.arrays    = []
-    self.funcs     = []
+    self.funcs     = set()
 
     self.assign = '='
 
@@ -368,7 +368,7 @@ class TranslateLogic( ast.NodeVisitor ):
       args = []
       stash = self.o
       self.o = StringIO.StringIO()
-      for x, y in zip(node.args.defaults[1:], node.args.args[1:]):
+      for x, y in zip(node.args.defaults, node.args.args[1:]):
         self.visit( x )
         args.append( "{} {}".format( 'int', y.id ) )
       self.o = stash
@@ -377,7 +377,7 @@ class TranslateLogic( ast.NodeVisitor ):
       args  = []
 
     print >> self.o
-    print >> self.o, '  // logic for {}()'.format( self.model.name, node.name )
+    print >> self.o, '  // logic for {}_{}()'.format( self.model.name, node.name )
     print >> self.o, '  {} {}_{}( {} ) {{'.format(
         rtype,
         mangle_idxs(self.model.name),
@@ -745,12 +745,12 @@ class TranslateLogic( ast.NodeVisitor ):
     elif isinstance( node.func, _ast.Attribute ):
 
       if hasattr( self.model, node.func.attr ):
-        self.funcs.append( getattr( self.model, node.func.attr ) )
+        self.funcs.add( getattr( self.model, node.func.attr ) )
         fname = node.func.attr
         print >> self.o, "{}_{}(".format( mangle_idxs(self.model.name),
                                           fname ),
         for i, arg in enumerate( node.args ):
-          if i != 0: print >> self.o, ","
+          if i != 0: print >> self.o, ",",
           self.visit( node.args[i] )
         print >> self.o, ")",
         return
@@ -786,6 +786,8 @@ class TranslateLogic( ast.NodeVisitor ):
         else:
           node.func.value._object._kind = node.args[0]._object
         print >> self.o, ")",
+      elif node.func.attr == 'uint':
+        pass
       else:
         raise Exception('Unsupported method: {}'.format(node.func.attr))
 
