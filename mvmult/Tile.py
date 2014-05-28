@@ -22,8 +22,8 @@ class Tile( Model ):
   def __init__( s, reset_vector = 0, mem_data_nbits = 32,
                    cache_nbytes = 16384 ):
 
-    mreq  = mem_msgs.MemReqParams ( 32, mem_data_nbits )
-    mresp = mem_msgs.MemRespParams( mem_data_nbits )
+    s.req_msg = mem_msgs.MemReqParams ( 32, mem_data_nbits )
+    s.rsp_msg = mem_msgs.MemRespParams( mem_data_nbits )
 
     s.mem_data_nbits = mem_data_nbits
     s.cache_nbytes   = cache_nbytes
@@ -38,8 +38,8 @@ class Tile( Model ):
 
     # Memory Interface
 
-    s.memreq  = OutValRdyBundle[2]( mreq.nbits  )
-    s.memresp = InValRdyBundle [2]( mresp.nbits )
+    s.memreq  = OutValRdyBundle[2]( s.req_msg.nbits  )
+    s.memresp = InValRdyBundle [2]( s.rsp_msg.nbits )
 
   def elaborate_logic( s ):
 

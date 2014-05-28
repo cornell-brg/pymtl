@@ -6,6 +6,7 @@ from new_pmlib                  import InValRdyBundle, OutValRdyBundle
 from new_proc.ParcProc5stBypass import ParcProc5stBypass
 from new_cache                  import CL_Cache
 from MatrixVecCOP               import MatrixVecCOP
+from new_cache.DirectMappedWriteBackCache import DirectMappedWriteBackCache
 
 #-----------------------------------------------------------------------
 # Tile
@@ -15,12 +16,14 @@ class Tile_CL_Cache( Model ):
   #---------------------------------------------------------------------
   # __init__
   #---------------------------------------------------------------------
-  def __init__( s, reset_vector = 0, mem_data_nbits = 32 ):
+  def __init__( s, reset_vector = 0, mem_data_nbits = 32,
+                   cache_nbytes = 256 ):
 
-    mreq  = mem_msgs.MemReqParams ( 32, mem_data_nbits )
-    mresp = mem_msgs.MemRespParams( mem_data_nbits )
+    s.req_msg = mreq  = mem_msgs.MemReqParams ( 32, mem_data_nbits )
+    s.rsp_msg = mresp = mem_msgs.MemRespParams( mem_data_nbits )
 
     s.mem_data_nbits = mem_data_nbits
+    s.cache_nbytes   = cache_nbytes
 
     # TestProcManager Interface
 
@@ -94,6 +97,129 @@ class Tile_CL_Cache( Model ):
   #---------------------------------------------------------------------
   def enable_caches( s ):
 
+    s.icache   = CL_Cache                  ( cache_nlines  = s.cache_nbytes / s.mem_data_nbits*8,
+                                             address_nbits =32,
+                                             data_nbits    =32,
+                                             hit_penalty   = 1,
+                                             miss_penalty  = 2,
+                                             line_nbytes   = s.mem_data_nbits/8 )
+
+    #s.icache   = DirectMappedWriteBackCache( mem_nbytes=s.cache_nbytes,
+    #                                         addr_nbits=32,
+    #                                         data_nbits=32,
+    #                                         line_nbits=s.mem_data_nbits )
+    s.dcache   = DirectMappedWriteBackCache( mem_nbytes=s.cache_nbytes,
+                                             addr_nbits=32,
+                                             data_nbits=32,
+                                             line_nbits=s.mem_data_nbits )
+
+    #s.icache = get_cpp( s.icache )
+
+    req = mem_msgs.MemReqParams ( 32, 32 )
+    rsp = mem_msgs.MemRespParams( 32 )
+    mreq = s.req_msg
+    mrsp = s.rsp_msg
+
+    #s.connect( s.proc.imemreq.msg[req.data_slice], s.icache.cachereq_msg_data   )
+    #s.connect( s.proc.imemreq.msg[req.addr_slice], s.icache.cachereq_msg_addr   )
+    #s.connect( s.proc.imemreq.msg[req.len_slice ], s.icache.cachereq_msg_len    )
+    #s.connect( s.proc.imemreq.msg[req.type_slice], s.icache.cachereq_msg_type   )
+
+    # Connect the proc instruction port to icache, icache to memory
+    @s.combinational
+    def fixme_1():
+
+      s.icache.cachereq_msg_data.value = s.proc.imemreq.msg[req.data_slice]
+      s.icache.cachereq_msg_addr.value = s.proc.imemreq.msg[req.addr_slice]
+      s.icache.cachereq_msg_len .value = s.proc.imemreq.msg[req.len_slice ]
+      s.icache.cachereq_msg_type.value = s.proc.imemreq.msg[req.type_slice]
+
+    s.connect( s.proc.imemreq.val,                 s.icache.cachereq_val   )
+    s.connect( s.proc.imemreq.rdy,                 s.icache.cachereq_rdy   )
+
+    @s.combinational
+    def fixme_1():
+      s.proc.imemresp.msg[rsp.data_slice].value = s.icache.cacheresp_msg_data
+      s.proc.imemresp.msg[rsp.len_slice ].value = s.icache.cacheresp_msg_len
+      s.proc.imemresp.msg[rsp.type_slice].value = s.icache.cacheresp_msg_type
+
+    #s.connect( s.proc.imemresp.msg[rsp.data_slice], s.icache.cacheresp_msg_data   )
+    #s.connect( s.proc.imemresp.msg[rsp.len_slice ], s.icache.cacheresp_msg_len    )
+    #s.connect( s.proc.imemresp.msg[rsp.type_slice], s.icache.cacheresp_msg_type   )
+    s.connect( s.proc.imemresp.val,                 s.icache.cacheresp_val   )
+    s.connect( s.proc.imemresp.rdy,                 s.icache.cacheresp_rdy   )
+
+    @s.combinational
+    def fixme_3():
+      s.memreq[0].msg[ 0: 32].value          = s.icache.memreq_msg_data[0]
+      s.memreq[0].msg[32: 64].value          = s.icache.memreq_msg_data[1]
+      s.memreq[0].msg[64: 96].value          = s.icache.memreq_msg_data[2]
+      s.memreq[0].msg[96:128].value          = s.icache.memreq_msg_data[3]
+      s.memreq[0].msg[mreq.addr_slice].value = s.icache.memreq_msg_addr
+      s.memreq[0].msg[mreq.len_slice ].value = s.icache.memreq_msg_len
+      s.memreq[0].msg[mreq.type_slice].value = s.icache.memreq_msg_type
+
+    #s.connect( s.memreq[0].msg[ 0: 32],            s.icache.memreq_msg_data[0]  )
+    #s.connect( s.memreq[0].msg[32: 64],            s.icache.memreq_msg_data[1]  )
+    #s.connect( s.memreq[0].msg[64: 96],            s.icache.memreq_msg_data[2]  )
+    #s.connect( s.memreq[0].msg[96:128],            s.icache.memreq_msg_data[3]  )
+    #s.connect( s.memreq[0].msg[mreq.addr_slice],         s.icache.memreq_msg_addr   )
+    #s.connect( s.memreq[0].msg[mreq.len_slice ],         s.icache.memreq_msg_len    )
+    #s.connect( s.memreq[0].msg[mreq.type_slice],         s.icache.memreq_msg_type   )
+    s.connect( s.memreq[0].val,                          s.icache.memreq_val   )
+    s.connect( s.memreq[0].rdy,                          s.icache.memreq_rdy   )
+
+    @s.combinational
+    def fixme_4():
+      s.icache.memresp_msg_data[0].value = s.memresp[0].msg[ 0: 32]
+      s.icache.memresp_msg_data[1].value = s.memresp[0].msg[32: 64]
+      s.icache.memresp_msg_data[2].value = s.memresp[0].msg[64: 96]
+      s.icache.memresp_msg_data[3].value = s.memresp[0].msg[96:128]
+      s.icache.memresp_msg_len    .value = s.memresp[0].msg[mrsp.len_slice ]
+      s.icache.memresp_msg_type   .value = s.memresp[0].msg[mrsp.type_slice]
+
+    #s.connect( s.memresp[0].msg[ 0: 32],                 s.icache.memresp_msg_data[0]  )
+    #s.connect( s.memresp[0].msg[32: 64],                 s.icache.memresp_msg_data[1]  )
+    #s.connect( s.memresp[0].msg[64: 96],                 s.icache.memresp_msg_data[2]  )
+    #s.connect( s.memresp[0].msg[96:128],                 s.icache.memresp_msg_data[3]  )
+    #s.connect( s.memresp[0].msg[mrsp.len_slice ],         s.icache.memresp_msg_len    )
+    #s.connect( s.memresp[0].msg[mrsp.type_slice],         s.icache.memresp_msg_type   )
+    s.connect( s.memresp[0].val,                          s.icache.memresp_val   )
+    s.connect( s.memresp[0].rdy,                          s.icache.memresp_rdy   )
+
+    # Multiplex accel and proc data req msg/val and data resp rdy to dcache
+
+    @s.combinational
+    def logic():
+      if not s.cp2.from_cpu.rdy:
+        s.dcache.cachereq .msg.value = s.cp2.lane_req [0].msg
+        s.dcache.cachereq .val.value = s.cp2.lane_req [0].val
+        s.dcache.cacheresp.rdy.value = s.cp2.lane_resp[0].rdy
+      else:
+        s.dcache.cachereq .msg.value = s.proc.dmemreq    .msg
+        s.dcache.cachereq .val.value = s.proc.dmemreq    .val
+        s.dcache.cacheresp.rdy.value = s.proc.dmemresp   .rdy
+
+    # Connect accel and proc data resp msg/val and req rdy to dcache
+
+    s.connect( s.dcache.cacheresp.msg, s.proc.dmemresp    .msg )
+    s.connect( s.dcache.cacheresp.val, s.proc.dmemresp    .val )
+    s.connect( s.dcache.cachereq .rdy, s.proc.dmemreq     .rdy )
+    s.connect( s.dcache.cacheresp.msg, s.cp2 .lane_resp[0].msg )
+    s.connect( s.dcache.cacheresp.val, s.cp2 .lane_resp[0].val )
+    s.connect( s.dcache.cachereq .rdy, s.cp2 .lane_req [0].rdy )
+
+    # Connect the dcache to memory
+
+    s.connect( s.memreq [1],           s.dcache.memreq  )
+    s.connect( s.memresp[1],           s.dcache.memresp )
+
+
+  #---------------------------------------------------------------------
+  # TODO: enable_caches()
+  #---------------------------------------------------------------------
+  def TODO_enable_caches( s ):
+
     s.icache   = CL_Cache()
     s.dcache   = CL_Cache()
 
@@ -135,7 +261,21 @@ class Tile_CL_Cache( Model ):
   # line_trace
   #---------------------------------------------------------------------
   def line_trace( s ):
+    return s.proc.line_trace() + s.cp2.line_trace() + \
+        " I$ {} {}".format(s.proc.imemreq, s.proc.imemresp) + \
+        " x {} {} {} {} {}".format( s.icache.memreq_msg_addr,
+                                 s.icache.memreq_msg_data[3],
+                                 s.icache.memreq_msg_data[2],
+                                 s.icache.memreq_msg_data[1],
+                                 s.icache.memreq_msg_data[0], ) + \
+        " X {} {} {} {}".format( s.icache.memresp_msg_data[3],
+                                 s.icache.memresp_msg_data[2],
+                                 s.icache.memresp_msg_data[1],
+                                 s.icache.memresp_msg_data[0], ) + \
+        " IM {} {}".format(s.memreq[0], s.memresp[0])
+
     return s.proc.line_trace() + s.cp2.line_trace()
+        #" D$ {} {}".format(s.proc.dmemreq, s.proc.dmemresp)
   #  return s.proc.line_trace() + \
   #"[] {} {} {} []".format( s.proc.dpath.snoop_unit_F.in_, s.proc.dpath.snoop_unit_F.out, s.proc.dpath.imemresp_msg ) + \
   #"{} {}".format(s.proc.imemreq, s.proc.imemresp)
