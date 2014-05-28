@@ -6,8 +6,9 @@ import pytest
 import pisa
 import struct
 
-from new_pymtl import *
-from new_pmlib import *
+from new_pymtl  import *
+from new_pmlib  import *
+from mvmult_fl  import MatrixVecFL
 
 from ParcProcFL import ParcProcFL
 
@@ -26,18 +27,13 @@ class TestHarness (Model):
     memreq_p  = mem_msgs.MemReqParams(32,32)
     memresp_p = mem_msgs.MemRespParams(32)
 
-    # Instantiate src/sink for proc/mngr
+    # Instantiate models
 
-    s.src   = TestSource ( 32, [], 0 )
-    s.sink  = TestSink   ( 32, [], 0 )
-
-    # Instantiate processor
-
-    s.proc  = ParcProcFL ()
-
-    # Instantiate test memory
-
-    s.mem   = TestMemory ( memreq_p, memresp_p, 2, mem_delay )
+    s.src    = TestSource  ( 32, [], 0 )
+    s.sink   = TestSink    ( 32, [], 0 )
+    s.proc   = ParcProcFL  ()
+    s.mem    = TestMemory  ( memreq_p, memresp_p, 3, mem_delay )
+    s.mvmult = MatrixVecFL ()
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -45,14 +41,27 @@ class TestHarness (Model):
 
   def elaborate_logic( s ):
 
-    s.connect( s.src.out,       s.proc.mngr2proc )
-    s.connect( s.sink.in_,      s.proc.proc2mngr )
+    # Processor <-> Proc/Mngr
 
-    s.connect( s.proc.imemreq,  s.mem.reqs[0]    )
-    s.connect( s.proc.imemresp, s.mem.resps[0]   )
+    s.connect( s.proc.mngr2proc, s.src.out         )
+    s.connect( s.proc.proc2mngr, s.sink.in_        )
 
-    s.connect( s.proc.dmemreq,  s.mem.reqs[1]    )
-    s.connect( s.proc.dmemresp, s.mem.resps[1]   )
+    # Processor <-> Memory
+
+    s.connect( s.proc.imemreq,   s.mem.reqs[0]     )
+    s.connect( s.proc.imemresp,  s.mem.resps[0]    )
+    s.connect( s.proc.dmemreq,   s.mem.reqs[1]     )
+    s.connect( s.proc.dmemresp,  s.mem.resps[1]    )
+
+    # Processor <-> Accelerator
+
+    s.connect( s.proc.to_cp2,    s.mvmult.from_cpu )
+    s.connect( s.proc.from_cp2,  s.mvmult.to_cpu   )
+
+    # Accelerator <-> Memory
+
+    s.connect( s.mvmult.memreq,  s.mem.reqs[2]     )
+    s.connect( s.mvmult.memresp, s.mem.resps[2]    )
 
   #-----------------------------------------------------------------------
   # load
@@ -98,9 +107,10 @@ class TestHarness (Model):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return s.src.line_trace()  + " > " + \
-           s.proc.line_trace() + " " + \
-           s.mem.line_trace()  + " > " + \
+    return s.src.line_trace()    + " > " + \
+           s.proc.line_trace()   + " " + \
+           s.mvmult.line_trace() + " " + \
+           s.mem.line_trace()    + " > " + \
            s.sink.line_trace()
 
 #-------------------------------------------------------------------------
@@ -929,5 +939,17 @@ import pisa.pisa_inst_bgez_test
   asm_test( pisa.pisa_inst_bgez_test.gen_random_test           ),
 ])
 def test_bgez( name, test ):
+  run_test( test )
+
+#-------------------------------------------------------------------------
+# test_basic
+#-------------------------------------------------------------------------
+
+import pisa.pisa_inst_mtc2_test
+
+@pytest.mark.parametrize( "name,test", [
+  asm_test( pisa.pisa_inst_mtc2_test.gen_basic_test ),
+])
+def test_mtc2( name, test ):
   run_test( test )
 

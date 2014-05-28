@@ -12,11 +12,12 @@
 # Author : Christopher Batten
 # Date   : May 16, 2014
 
-from new_pymtl import Bits
-from IsaImpl import IsaImpl
-from SparseMemoryImage import SparseMemoryImage
-
 import struct
+
+from new_pymtl         import Bits
+
+from IsaImpl           import IsaImpl
+from SparseMemoryImage import SparseMemoryImage
 
 #=========================================================================
 # Encoding Table
@@ -111,6 +112,10 @@ pisa_encoding_table = \
   [ "bgtz  rs, imm_btarg",     0xfc1f0000, 0x1c000000 ],
   [ "bltz  rs, imm_btarg",     0xfc1f0000, 0x04000000 ],
   [ "bgez  rs, imm_btarg",     0xfc1f0000, 0x04010000 ],
+
+  # CP2 instructions
+
+  [ "mtc2  rt, rc2",           0xffe007ff, 0x48800000 ],
 
 ]
 
@@ -214,6 +219,24 @@ def disassemble_field_rc0( bits ):
   return "r{:0>2}".format( bits[ pisa_field_slice_rd ].uint() )
 
 #-------------------------------------------------------------------------
+# rc2 assembly/disassembly functions
+#-------------------------------------------------------------------------
+
+def assemble_field_rc2( bits, sym, pc, field_str ):
+
+  # Register specifiers must begin with an "r"
+  assert field_str[0] == "r"
+
+  # Register specifier must be between 0 and 4
+  reg_specifier = int(field_str.lstrip("r"))
+  assert 0 <= reg_specifier <= 5
+
+  bits[ pisa_field_slice_rd ] = reg_specifier
+
+def disassemble_field_rc2( bits ):
+  return "r{:0>2}".format( bits[ pisa_field_slice_rd ].uint() )
+
+#-------------------------------------------------------------------------
 # imm_zext assembly/disassembly functions
 #-------------------------------------------------------------------------
 
@@ -311,6 +334,7 @@ pisa_fields = \
   "rt"        : [ assemble_field_rt,        disassemble_field_rt        ],
   "rd"        : [ assemble_field_rd,        disassemble_field_rd        ],
   "rc0"       : [ assemble_field_rc0,       disassemble_field_rc0       ],
+  "rc2"       : [ assemble_field_rc2,       disassemble_field_rc2       ],
   "imm_zext"  : [ assemble_field_imm_zext,  disassemble_field_imm_zext  ],
   "imm_sext"  : [ assemble_field_imm_sext,  disassemble_field_imm_sext  ],
   "shamt"     : [ assemble_field_shamt,     disassemble_field_shamt     ],

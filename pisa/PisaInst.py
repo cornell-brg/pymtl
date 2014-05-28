@@ -7,9 +7,9 @@
 # Author : Christopher Batten
 # Date   : May 22, 2014
 
-from new_pymtl import Bits
-
 import pisa_encoding
+
+from new_pymtl import Bits
 
 class PisaInst (object):
 

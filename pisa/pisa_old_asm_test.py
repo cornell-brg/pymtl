@@ -139,5 +139,5 @@ def test( tmpdir, asm_test ):
 
   # Verify that the return value is one
 
-  assert sim.return_value.uint() == 1
+  assert sim.status.uint() == 1
 

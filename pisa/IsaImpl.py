@@ -15,7 +15,7 @@
 # Date   : May 16, 2014
 
 from new_pymtl import Bits
-from string import translate,maketrans
+from string    import translate,maketrans
 
 class IsaImpl (object):
 

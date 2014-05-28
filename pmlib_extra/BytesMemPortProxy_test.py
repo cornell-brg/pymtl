@@ -7,8 +7,7 @@ import pytest
 from new_pymtl import *
 from new_pmlib import *
 
-from pisa              import Bytes
-from GreenletWrapper   import GreenletWrapper
+from pmlib_extra       import Bytes
 from BytesMemPortProxy import BytesMemPortProxy
 
 #-------------------------------------------------------------------------
@@ -45,9 +44,7 @@ def test_mem_copy():
 # MemCopy
 #-------------------------------------------------------------------------
 # An example model that simply copies n bytes from a source pointer to a
-# destination pointer in a memory. We can use greenlets to wrap the plain
-# function implementation so that it can correctly interact with the
-# val/rdy interfaces.
+# destination pointer in a memory.
 
 class MemCopy (Model):
 
@@ -61,6 +58,7 @@ class MemCopy (Model):
     s.src_ptr  = src_ptr
     s.dest_ptr = dest_ptr
     s.nbytes   = nbytes
+    s.done     = False
 
     # Short names
 
@@ -76,47 +74,36 @@ class MemCopy (Model):
 
     s.mem = BytesMemPortProxy( mreq_p, mresp_p, s.memreq, s.memresp )
 
-    # Greenlet for functional implementation
-
-    s.mem_copy = GreenletWrapper(mem_copy)
-
   #-----------------------------------------------------------------------
   # elaborate_logic
   #-----------------------------------------------------------------------
 
   def elaborate_logic( s ):
 
-    @s.tick
+    # This looks like a regular tick block, but because it is a
+    # pausable_tick there is something more sophisticated is going on.
+    # The first time we call the tick, the mem_copy function will try to
+    # ready from memory. This will get proxied to the BytesMemPortProxy
+    # which will create a memory request and send it out the memreq port.
+    # Since we do not have the data yet, we cannot return the data to the
+    # mem_copy function so instead we use greenlets to switch back to the
+    # pausable tick function. The next time we call tick we jump back
+    # into the BytesMemPortProxy object to see if the response has
+    # returned. When the response eventually returns, the
+    # BytesMemPortProxy object will return the data and the underlying
+    # mem_copy function will move onto writing the memory.
+
+    @s.pausable_tick
     def logic():
-
-      # This looks like a plain function call, but the greenlets mean
-      # that something more sophisticated is going on. The first time we
-      # call this wrapper function, the underlying mem_copy function will
-      # try ready from the memory. This will get proxied to the
-      # BytesMemPortProxy which will create a memory request and send it
-      # out the memreq port. Since we do not have the data yet, we cannot
-      # return the data to the underlying vvadd function so instead we
-      # use greenlets to switch back to the tick function. If we had code
-      # after this it would be executed. The next time we call tick, we
-      # call the wrapper function again, and essentially we jump back
-      # into the BytesMemPortProxy object to see if the response has
-      # returned. When the response eventually returns, the
-      # BytesMemPortProxy object will return the data and the underlying
-      # mem_copy function will move onto writing the memory.
-
-      s.mem_copy( s.mem, s.src_ptr, s.dest_ptr, s.nbytes )
+      mem_copy( s.mem, s.src_ptr, s.dest_ptr, s.nbytes )
+      s.done = True
 
   #-----------------------------------------------------------------------
   # done
   #-----------------------------------------------------------------------
 
   def done( s ):
-
-    # GreenletWrapper objects include a done method which indicates when
-    # they underlying vvadd function has completely finished its
-    # execution.
-
-    return s.mem_copy.done()
+    return s.done
 
   #-----------------------------------------------------------------------
   # line_trace
@@ -151,7 +138,7 @@ class TestHarness (Model):
     s.connect( s.mcopy.memresp, s.mem.resps[0] )
 
   def done( s ):
-    return s.mcopy.done()
+    return s.mcopy.done
 
   def line_trace( s ):
     return s.mcopy.line_trace() + " " + s.mem.line_trace()

@@ -2,9 +2,18 @@
 # Modular Python Build System __init__ file
 #=========================================================================
 
+# List of collection modules
+
+import elf
+import pisa_inst_test_utils
+
 # List of single-class modules
 
-from Bytes import Bytes
+from IsaImpl            import IsaImpl
+from PisaInst           import PisaInst
+from PisaSemantics      import PisaSemantics
+from PisaSim            import PisaSim
+from SparseMemoryImage  import SparseMemoryImage
 
 # Test Cases: Basic instructions
 
@@ -82,4 +91,3 @@ from Bytes import Bytes
 # import pisa_inst_bgtz_test
 # import pisa_inst_bltz_test
 # import pisa_inst_bgez_test
-

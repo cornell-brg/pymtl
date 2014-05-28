@@ -6,13 +6,15 @@
 # Author : Christopher Batten
 # Date   : May 22, 2014
 
-from new_pymtl     import Bits
-from Bytes         import Bytes
-from PisaInst      import PisaInst
-from PisaSemantics import PisaSemantics
-
 import collections
 import struct
+
+from new_pymtl     import Bits
+from mvmult_fl     import MatrixVec
+from pmlib_extra   import Bytes
+
+from PisaInst      import PisaInst
+from PisaSemantics import PisaSemantics
 
 class PisaSim (object):
 
@@ -54,11 +56,16 @@ class PisaSim (object):
     self.proc2mngr_queue     = collections.deque()
     self.proc2mngr_ref_queue = collections.deque()
 
+    # Create the accelerator
+
+    self.xcel_mvmult = MatrixVec( self.mem )
+
     # Construct the ISA semantics object
 
     self.isa = PisaSemantics( self.mem,
                               self.mngr2proc_queue,
-                              self.proc2mngr_queue )
+                              self.proc2mngr_queue,
+                              self.xcel_mvmult )
 
   #-----------------------------------------------------------------------
   # reset

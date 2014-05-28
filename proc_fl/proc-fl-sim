@@ -28,12 +28,9 @@ import time
 
 from new_pymtl import *
 from new_pmlib import *
+from pisa      import *
 
 from ParcProcFL import ParcProcFL
-
-from pisa                   import elf
-from pisa.SparseMemoryImage import SparseMemoryImage
-from pisa.pisa_encoding     import assemble,disassemble
 
 #-------------------------------------------------------------------------
 # Command line processing

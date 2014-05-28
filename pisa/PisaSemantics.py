@@ -6,10 +6,8 @@
 # Author : Christopher Batten
 # Date   : May 22, 2014
 
-from new_pymtl import Bits
-from new_pymtl import helpers
-from new_pymtl.helpers import concat
-from PisaInst import PisaInst
+from new_pymtl import Bits,concat,helpers
+from PisaInst  import PisaInst
 
 #-------------------------------------------------------------------------
 # Syntax Helpers
@@ -50,14 +48,18 @@ class PisaSemantics (object):
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( self, memory, mngr2proc_queue, proc2mngr_queue ):
+  def __init__( self, memory, mngr2proc_queue, proc2mngr_queue,
+                xcel_mvmult=None ):
 
-    self.M  = memory
+    self.M = memory
 
     self.mngr2proc_queue = mngr2proc_queue
     self.proc2mngr_queue = proc2mngr_queue
 
-    self.R  = PisaSemantics.RegisterFile()
+    self.xcel_mvmult = xcel_mvmult
+
+    self.R     = PisaSemantics.RegisterFile()
+    self.R_CP2 = PisaSemantics.RegisterFile()
 
     self.reset()
 
@@ -374,6 +376,22 @@ class PisaSemantics (object):
       s.PC += 4
 
   #-----------------------------------------------------------------------
+  # CP2 instructions
+  #-----------------------------------------------------------------------
+
+  def execute_mtc2( s, inst ):
+
+    if   inst.rd == 1: s.xcel_mvmult.set_size      ( s.R[inst.rt] )
+    elif inst.rd == 2: s.xcel_mvmult.set_src0_addr ( s.R[inst.rt] )
+    elif inst.rd == 3: s.xcel_mvmult.set_src1_addr ( s.R[inst.rt] )
+    elif inst.rd == 4: s.xcel_mvmult.set_dest_addr ( s.R[inst.rt] )
+
+    elif inst.rd == 0 and s.R[inst.rt] == 1:
+      s.xcel_mvmult.go()
+
+    s.PC += 4
+
+  #-----------------------------------------------------------------------
   # exec
   #-----------------------------------------------------------------------
 
@@ -430,6 +448,8 @@ class PisaSemantics (object):
     'bgtz'  : execute_bgtz,
     'bltz'  : execute_bltz,
     'bgez'  : execute_bgez,
+
+    'mtc2'  : execute_mtc2,
 
   }
 

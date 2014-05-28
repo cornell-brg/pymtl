@@ -2,18 +2,19 @@
 # ParcProcFL
 #=========================================================================
 
-from   new_pymtl import *
-from   new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-
-import new_pmlib
 import greenlet
 
-from pisa.PisaSemantics import PisaSemantics
-from pisa.PisaInst      import PisaInst
+from new_pymtl import *
+from new_pmlib import *
 
-from GreenletWrapper    import GreenletWrapper
-from BytesMemPortProxy  import BytesMemPortProxy
-from QueuePortProxy     import InQueuePortProxy,OutQueuePortProxy
+from pisa         import PisaSemantics
+from pisa         import PisaInst
+
+from pmlib_extra  import GreenletWrapper,BytesMemPortProxy
+from pmlib_extra  import InQueuePortProxy,OutQueuePortProxy
+
+from mvmult_fl    import MatrixVecProxy
+from mvmult_fl    import InMatrixVecBundle,OutMatrixVecBundle
 
 class ParcProcFL( Model ):
 
@@ -26,8 +27,8 @@ class ParcProcFL( Model ):
     s.reset_vector = reset_vector
     s.test_en      = test_en
 
-    mreq_p  = new_pmlib.mem_msgs.MemReqParams ( 32, 32 )
-    mresp_p = new_pmlib.mem_msgs.MemRespParams( 32 )
+    mreq_p  = mem_msgs.MemReqParams ( 32, 32 )
+    mresp_p = mem_msgs.MemRespParams( 32 )
 
     # TestProcManager Interface (only used when test_en=False)
 
@@ -53,22 +54,29 @@ class ParcProcFL( Model ):
 
     # Coprocessor Interface
 
-    # s.to_cp2   = OutValRdyBundle( 5+32 )
-    # s.from_cp2 = InPort( 1 )
+    s.to_cp2   = OutValRdyBundle( 5+32 )
+    s.from_cp2 = InMatrixVecBundle()
 
-    # Proxies
+    # Memory Proxy
 
-    s.mem = BytesMemPortProxy( mreq_p, mresp_p,
-                                     s.dmemreq, s.dmemresp )
+    s.imem = BytesMemPortProxy( mreq_p, mresp_p, s.imemreq, s.imemresp )
+    s.dmem = BytesMemPortProxy( mreq_p, mresp_p, s.dmemreq, s.dmemresp )
+
+    # Queue Proxies
 
     s.mngr2proc_queue = InQueuePortProxy  ( s.mngr2proc )
     s.proc2mngr_queue = OutQueuePortProxy ( s.proc2mngr )
 
+    # Accelerator Proxy
+
+    s.xcel_mvmult = MatrixVecProxy( s.to_cp2, s.from_cp2 )
+
     # Construct the ISA semantics object
 
-    s.isa = PisaSemantics( s.mem,
+    s.isa = PisaSemantics( s.dmem,
                            s.mngr2proc_queue,
-                           s.proc2mngr_queue )
+                           s.proc2mngr_queue,
+                           s.xcel_mvmult )
 
     # Reset
 
@@ -79,16 +87,11 @@ class ParcProcFL( Model ):
   #-----------------------------------------------------------------------
 
   def reset( s ):
-    print "resetting"
 
     # Copies of pc and inst
 
     s.pc   = Bits( 32, 0x00000400 )
     s.inst = Bits( 32, 0x00000000 )
-
-    # Greenlet wrapper for run function
-
-    s.run_wrapper = GreenletWrapper(s.run)
 
     # Stats
 
@@ -100,12 +103,19 @@ class ParcProcFL( Model ):
     s.isa.reset()
 
   #-----------------------------------------------------------------------
-  # Functional implementation
+  # Elaboration
   #-----------------------------------------------------------------------
 
-  def run( s ):
+  def elaborate_logic( s ):
 
-    while True:
+    @s.pausable_tick
+    def logic():
+
+      # Wait for the go signal
+
+      if not s.go and not s.test_en:
+        return
+
       try:
 
         # Update instruction counts
@@ -121,7 +131,7 @@ class ParcProcFL( Model ):
         # Fetch instruction
 
         s.pc   = s.isa.PC.uint()
-        s.inst = PisaInst( s.mem[ s.pc : s.pc+4 ] )
+        s.inst = PisaInst( s.imem[ s.pc : s.pc+4 ] )
 
         # Set trace string in case the execution function yeilds
 
@@ -141,29 +151,14 @@ class ParcProcFL( Model ):
 
         s.trace = "{:0>8x} {:<20}".format( s.pc, s.inst )
 
-        # Yield so we always only execute one instruction per cycle
-
-        greenlet.getcurrent().parent.switch(0)
-
       except:
         print "Unexpected error at PC={:0>8x}!".format(s.pc)
         raise
-
-  #-----------------------------------------------------------------------
-  # Elaboration
-  #-----------------------------------------------------------------------
-
-  def elaborate_logic( s ):
-
-    @s.tick
-    def logic():
-      if s.test_en or s.go:
-        s.run_wrapper()
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return s.trace
+    return s.trace + " " + s.xcel_mvmult.line_trace()
 

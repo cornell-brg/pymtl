@@ -8,7 +8,6 @@ import collections
 from new_pymtl import *
 from new_pmlib import *
 
-from GreenletWrapper import GreenletWrapper
 from QueuePortProxy  import InQueuePortProxy,OutQueuePortProxy
 
 #-------------------------------------------------------------------------
@@ -40,9 +39,7 @@ def test_queue_copy():
 # QueueCopy
 #-------------------------------------------------------------------------
 # An example model that simply copies n messages from an input val/rdy
-# interface to an output val/rdy interface. We can use greenlets to wrap
-# the plain function implementation so that it can correctly interact
-# with the val/rdy interfaces.
+# interface to an output val/rdy interface.
 
 class QueueCopy (Model):
 
@@ -64,36 +61,31 @@ class QueueCopy (Model):
     s.in_queue  = InQueuePortProxy  ( s.in_ )
     s.out_queue = OutQueuePortProxy ( s.out )
 
-    # Greenlet for functional implementation
-
-    s.queue_copy = GreenletWrapper(queue_copy)
-
   #-----------------------------------------------------------------------
   # elaborate_logic
   #-----------------------------------------------------------------------
 
   def elaborate_logic( s ):
 
-    @s.tick
+    # This looks like a regular tick block, but because it is a
+    # pausable_tick there is something more sophisticated is going on.
+    # The first time we call the tick, the queue_copy function will try
+    # and access the input queue. This will get proxied to the
+    # InQueuePortProxy object which will check the val/rdy interface. If
+    # the interface is not valid, we cannot return the data to the
+    # underlying queue_copy function so instead we use greenlets to
+    # switch back to the pausable tick function. The next time we call
+    # tick, we call the wrapper function again, and essentially we jump
+    # back into the InQueuePortProxy object to see if the interface is
+    # valid yet. When the interface is eventually valid, the
+    # InQueuePortProxy object will return the data and the underlying
+    # queue_copy function will move onto the next element. Currently the
+    # queue port proxy objects include infinite internal queues so the
+    # output queue can never stall.
+
+    @s.pausable_tick
     def logic():
-
-      # This looks like a plain function call, but the greenlets mean
-      # that something more sophisticated is going on. The first time we
-      # call this wrapper function, the underlying queue_copy function
-      # will try and access the input queue. This will get proxied to the
-      # InQueuePortProxy object which will check the val/rdy interface.
-      # If the interface is not valid, we cannot return the data to the
-      # underlying queue_copy function so instead we use greenlets to
-      # switch back to the tick function. The next time we call tick, we
-      # call the wrapper function again, and essentially we jump back
-      # into the InQueuePortProxy object to see if the interface is valid
-      # yet. When the interface is eventually valid, the InQueuePortProxy
-      # object will return the data and the underlying queue_copy
-      # function will move onto the next element. Currently the queue
-      # port proxy objects include infinite internal queues so the output
-      # queue can never stall.
-
-      s.queue_copy( s.nmsgs, s.in_queue, s.out_queue )
+      queue_copy( s.nmsgs, s.in_queue, s.out_queue )
 
   #-----------------------------------------------------------------------
   # line_trace
