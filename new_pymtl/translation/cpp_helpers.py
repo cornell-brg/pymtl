@@ -208,7 +208,8 @@ def recurse_port_hierarchy( p, list_ ):
 
   if   isinstance( p, PortList ):
     list_.append( "s.{} = [None]*{}".format( p.name, len(p) ) )
-    for child in p.get_ports():
+    #for child in p.get_ports():
+    for child in p._ports:
       recurse_port_hierarchy( child, list_ )
 
   elif isinstance( p, PortBundle ):

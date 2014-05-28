@@ -280,7 +280,9 @@ class Model( object ):
         assert '.' not in name
         setattr( current_model, name, obj )
       if obj and isinstance( obj[0], (InPort,OutPort, PortBundle)):
-        obj = PortList( obj )
+        temp = PortList( obj )
+        temp._ports = obj
+        obj = temp
         obj.name = name
         assert '.' not in name
         setattr( current_model, name, obj )
