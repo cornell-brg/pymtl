@@ -325,9 +325,9 @@ def register_cffi_updates( model ):
       for port, func_ptr in m._cffi_update.items():
         signal_value = port._signalvalue
         signal_value.register_slice( func_ptr )
-    # TODO: make recursive
-    #for subm in m.get_submodules():
-    #  visit_models( subm )
+    else:
+      for subm in m.get_submodules():
+        visit_models( subm )
 
   visit_models( model )
 
