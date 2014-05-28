@@ -132,7 +132,7 @@ def main():
   # Display the result value from the simulator
 
   print ""
-  print " Simulator return value =", sim.return_value
+  print " Simulator status =", sim.status
 
   # Display statistics
 

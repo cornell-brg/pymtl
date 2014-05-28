@@ -33,7 +33,7 @@ class PisaSim (object):
     # return_value attribute.
 
     self.test_en = test_en
-    self.return_value = 0
+    self.status  = 0
 
     # If tracing is true then output line tracing
 
@@ -66,14 +66,15 @@ class PisaSim (object):
 
   def reset( self ):
 
-    self.isa.PC = Bits( 32, 0x0000400 )
+    self.isa.PC         = Bits( 32, 0x0000400 )
+    self.isa.status     = 0
 
-    self.return_value   = 0
+    self.status         = 0
     self.num_total_inst = 0
     self.num_inst       = 0
 
   #-----------------------------------------------------------------------
-  # load_program
+  # load
   #-----------------------------------------------------------------------
 
   def load( self, mem_image ):
@@ -154,14 +155,15 @@ class PisaSim (object):
 
         # Check the proc2mngr queue
 
-        if self.proc2mngr_queue:
-          if self.test_en:
+        if self.test_en:
+          if self.proc2mngr_queue:
             assert self.proc2mngr_queue[0] == self.proc2mngr_ref_queue[0]
             self.proc2mngr_queue.popleft()
             self.proc2mngr_ref_queue.popleft()
             done = not bool(self.proc2mngr_ref_queue)
-          else:
-            self.return_value = self.proc2mngr_queue.popleft()
+        else:
+          if self.isa.status != 0:
+            self.status = self.isa.status
             done = True
 
     except:

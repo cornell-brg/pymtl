@@ -586,3 +586,4 @@ def disassemble( mem_image ):
     asm_code += disasm_line
 
   return asm_code
+

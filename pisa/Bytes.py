@@ -13,8 +13,16 @@ import binascii
 
 class Bytes (object):
 
+  #-----------------------------------------------------------------------
+  # Constructor
+  #-----------------------------------------------------------------------
+
   def __init__( self, size ):
-    self.mem  = bytearray(size)
+    self.mem = bytearray(size)
+
+  #-----------------------------------------------------------------------
+  # setitem
+  #-----------------------------------------------------------------------
 
   def __setitem__( self, key, value ):
 
@@ -26,19 +34,13 @@ class Bytes (object):
       if isinstance( key, slice ):
         start_addr = int(key.start)
         stop_addr  = int(key.stop)
-      elif isinstance( key, int ):
-        start_addr = key
-        stop_addr  = key+1
-      elif isinstance( key, Bits ):
-        start_addr = int(key)
       else:
-        raise TypeError( "Invalid key type" )
+        start_addr = int(key)
+        stop_addr  = int(key)+1
 
       self.mem[start_addr:stop_addr] = value
 
-    elif isinstance( value, Bits ):
-
-      assert value.nbits % 8 == 0
+    else:
 
       start_addr = 0
       num_bytes  = 0
@@ -46,20 +48,22 @@ class Bytes (object):
       if isinstance( key, slice ):
         start_addr = int(key.start)
         num_bytes  = int(key.stop) - int(key.start)
-      elif isinstance( key, int ):
-        start_addr = key
-        num_bytes  = 1
-      elif isinstance( key, Bits ):
+      else:
         start_addr = int(key)
         num_bytes  = 1
+
+      if isinstance( value, Bits ):
+        bits = value
+        assert value.nbits % 8 == 0
       else:
-        raise TypeError( "Invalid key type" )
+        bits = Bits( num_bytes*8, value )
 
       for i in xrange(num_bytes):
-        self.mem[start_addr+i] = value[i*8:i*8+8]
+        self.mem[start_addr+i] = bits[i*8:i*8+8]
 
-    else:
-      raise TypeError( "Invalid value type" )
+  #-----------------------------------------------------------------------
+  # getitem
+  #-----------------------------------------------------------------------
 
   def __getitem__( self, key ):
 
@@ -75,18 +79,20 @@ class Bytes (object):
 
       return bits
 
-    elif isinstance( key, int ):
-      return Bits( 8, struct.unpack_from("<B",buffer(self.mem,key,1))[0] )
-
-    elif isinstance( key, Bits ):
+    else:
       idx = int(key)
       return Bits( 8, struct.unpack_from("<B",buffer(self.mem,idx,1))[0] )
 
-    else:
-      raise TypeError( "Invalid key type" )
+  #-----------------------------------------------------------------------
+  # eq
+  #-----------------------------------------------------------------------
 
   def __eq__( self, other ):
     return self.mem == other.mem
+
+  #-----------------------------------------------------------------------
+  # str
+  #-----------------------------------------------------------------------
 
   def __str__( self ):
     return binascii.hexlify(self.mem)

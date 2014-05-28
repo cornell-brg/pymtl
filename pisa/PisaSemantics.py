@@ -58,9 +58,18 @@ class PisaSemantics (object):
     self.proc2mngr_queue = proc2mngr_queue
 
     self.R  = PisaSemantics.RegisterFile()
-    self.PC = Bits( 32, 0x00000400 )
 
-    self.stats_en = False
+    self.reset()
+
+  #-----------------------------------------------------------------------
+  # reset
+  #-----------------------------------------------------------------------
+
+  def reset( s ):
+
+    s.PC = Bits( 32, 0x00000400 )
+    s.stats_en = False
+    s.status   = 0
 
   #-----------------------------------------------------------------------
   # Basic Instructions
@@ -87,13 +96,12 @@ class PisaSemantics (object):
 
   def execute_mtc0( s, inst ):
 
-    # This is a big of a hack, but the old assembly tests treat CP0
-    # register 1 as tohost, while the new approach with proc/mngr uses
-    # register 2 to communicate back to the host. So for now we treat
-    # writes to _either_ CP0 register 1 or 2 basically the same.
+    # CP0 register: status
+    if inst.rd == 1:
+      s.status = s.R[inst.rt]
 
     # CP0 register: proc2mngr
-    if inst.rd == 1 or inst.rd == 2:
+    elif inst.rd == 2:
       bits = s.R[inst.rt]
       s.proc2mngr_str = str(bits)
       s.proc2mngr_queue.append( bits )
