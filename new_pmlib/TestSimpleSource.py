@@ -34,7 +34,8 @@ class TestSimpleSource( Model ):
       # Handle reset
 
       if s.reset:
-        s.out.msg.next = s.msgs[0]
+        if s.msgs:
+          s.out.msg.next = s.msgs[0]
         s.out.val.next = False
         s.done.next    = False
         return
@@ -42,7 +43,8 @@ class TestSimpleSource( Model ):
       # Check if we have more messages to send.
 
       if ( s.idx == len(s.msgs) ):
-        s.out.msg.next = s.msgs[0]
+        if s.msgs:
+          s.out.msg.next = s.msgs[0]
         s.out.val.next = False
         s.done.next    = True
         return

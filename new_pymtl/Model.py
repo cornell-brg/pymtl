@@ -21,6 +21,8 @@ import inspect
 import warnings
 import math
 
+from greenlet import greenlet
+
 #=======================================================================
 # Model
 #=======================================================================
@@ -80,6 +82,46 @@ class Model( object ):
     self._posedge_clk_blocks.append( func )
     func._model = self
     return func
+
+  #---------------------------------------------------------------------
+  # pausable_tick
+  #---------------------------------------------------------------------
+  # Experimental support for creating tick blocks where we can pause the
+  # execution within the tick block. This avoids the need for creating a
+  # GreenletWrapper explicitly.
+
+  def pausable_tick( self, func ):
+
+    # The inner_wrapper function is the one which we will wrap in a
+    # greenlet. It calls the tick function forever. It pauses after each
+    # call to the tick function, but the tick function itself can also
+    # pause.
+
+    def inner_wrapper():
+      while True:
+
+        # Call the tick function
+
+        func()
+
+        # Yield so we always only do one tick per cycle
+
+        greenlet.getcurrent().parent.switch(0)
+
+    # Create a greenlet and save it with the model. Note that we
+    # currently only allow a single pausable_tick per model.
+
+    self._pausable_tick = greenlet(inner_wrapper)
+
+    # The outer_wrapper is what will become the new tick function. This
+    # is what gets added to the tick list.
+
+    def outer_wrapper():
+      self._pausable_tick.switch()
+
+    self._tick_blocks.append( outer_wrapper )
+    outer_wrapper._model = self
+    return outer_wrapper
 
   #---------------------------------------------------------------------
   # connect
