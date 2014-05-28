@@ -59,8 +59,13 @@ class CL_Cache( Model ):
     s.address_nbits = address_nbits
     s.data_nbits    = data_nbits
     s.line_nbytes   = line_nbytes
+
     s.n_ways        = n_ways
     s.n_sets        = (cache_nlines)/(n_ways)
+    s.nwords        = line_nbytes / 4
+
+    nsets = s.n_sets
+    nways = s.n_ways
 
     #Set index accesses for pieces of address
     s.offset_start = 0
@@ -70,14 +75,12 @@ class CL_Cache( Model ):
     s.tag_start    = s.set_end
     s.tag_end      = address_nbits
 
-    s.cachelines  = [[[Bits(32) for k in range(line_nbytes/4)] \
-                      for j in range(n_ways)] \
-                      for i in xrange(s.n_sets)]
-    s.taglines    = [[Bits(32) for i in range(n_ways)] \
-                      for j in range(s.n_sets)]
-    s.dirty_bits  = [[False for i in range(n_ways)] for j in range(s.n_sets)]
-    s.valid_bits  = [[False for i in range(n_ways)] for j in range(s.n_sets)]
-    s.arbitration = [0] * s.n_sets
+
+    s.cachelines  = [ Bits(32) for k in range( nsets * nways * s.nwords ) ]
+    s.taglines    = [ Bits(32) for i in range( nsets * nways ) ]
+    s.dirty_bits  = [ False    for i in range( nsets * nways ) ]
+    s.valid_bits  = [ False    for i in range( nsets * nways ) ]
+    s.arbitration = [0] * nsets
 
     s.miss_penalty = miss_penalty
     s.hit_penalty  = hit_penalty
@@ -130,6 +133,9 @@ class CL_Cache( Model ):
 
     @s.tick
     def logic():
+      nsets  = s.n_sets
+      nways  = s.n_ways
+      nwords = s.nwords
 
       in_go  = s.cachereq_val  and s.cachereq_rdy
       out_go = s.cacheresp_val and s.cacheresp_rdy
@@ -177,9 +183,9 @@ class CL_Cache( Model ):
           s.cachereq_rdy.next = 0
 
       #Search Tag Array First
-          while s.curr_way.value < len(s.taglines[s.set]):
-            if s.tag == s.taglines[s.set][s.curr_way] \
-               and s.valid_bits[s.set][s.curr_way]:
+          while s.curr_way < nways:
+            if s.tag == s.taglines[s.set*nways + s.curr_way] \
+               and s.valid_bits[s.set*nways + s.curr_way]:
               break
 
             s.curr_way.value = s.curr_way + 1
@@ -188,7 +194,7 @@ class CL_Cache( Model ):
           if s.curr_way >= s.n_ways:
             s.sent_mem = False
 
-            if(s.dirty_bits[s.set][s.arbitration[s.set]]):
+            if s.dirty_bits[s.set*nways + s.arbitration[s.set]]:
               s.state = STATE_EVICT
 
             else:
@@ -205,9 +211,9 @@ class CL_Cache( Model ):
                 #s.cachelines[s.set][s.curr_way.value][offset:offset+length].value = Bits(length,value=s.data.value,trunc = True).value
                 assert not s.length == 0
                 #TODO :( bits translatable
-                s.cachelines[s.set][s.curr_way]                            \
-                  [s.word_offset].value = (s.cachelines[s.set][s.curr_way] \
-                    [s.word_offset] & (0xFFFFFFFF ^                        \
+                idx = s.set*nways*nwords + s.curr_way*nwords + s.word_offset
+                s.cachelines[idx].value = (s.cachelines[idx]
+                    & (0xFFFFFFFF ^                        \
                     (((1 << s.length.uint()) - 1) <<                       \
                     (s.byte_offset.uint()*8)))) |                          \
                     ((s.data.uint() & ((1 << s.length.uint()) - 1)) <<     \
@@ -221,16 +227,18 @@ class CL_Cache( Model ):
         if(not s.sent_mem):
           s.curr_way.value = s.arbitration[s.set]
           s.eaddr.value = 0
-          s.eaddr.value = (s.taglines[s.set][s.curr_way] << s.tag_start) | (s.set << s.set_start)
+          s.eaddr.value = ((s.taglines[s.set*nways + s.curr_way] <<
+                            s.tag_start) | (s.set << s.set_start))
 
           s.memreq_val.next = 1
           s.memreq_msg_type.value = wr
           s.memreq_msg_addr.value = s.eaddr
           s.memreq_msg_len.value = 0
-          s.memreq_msg_data[0].value = s.cachelines[s.set][s.curr_way][0]
-          s.memreq_msg_data[1].value = s.cachelines[s.set][s.curr_way][1]
-          s.memreq_msg_data[2].value = s.cachelines[s.set][s.curr_way][2]
-          s.memreq_msg_data[3].value = s.cachelines[s.set][s.curr_way][3]
+          s.idx = s.set*nways*nwords + s.curr_way*nwords
+          s.memreq_msg_data[0].value = s.cachelines[s.idx + 0]
+          s.memreq_msg_data[1].value = s.cachelines[s.idx + 1]
+          s.memreq_msg_data[2].value = s.cachelines[s.idx + 2]
+          s.memreq_msg_data[3].value = s.cachelines[s.idx + 3]
 
 
           if s.miss_penalty == 0:
@@ -290,27 +298,28 @@ class CL_Cache( Model ):
 
             if s.memresp_val and s.memresp_rdy:
               s.memresp_rdy.next = 0
-              s.cachelines[s.set][s.curr_way][0].value = s.memresp_msg_data[0]
-              s.cachelines[s.set][s.curr_way][1].value = s.memresp_msg_data[1]
-              s.cachelines[s.set][s.curr_way][2].value = s.memresp_msg_data[2]
-              s.cachelines[s.set][s.curr_way][3].value = s.memresp_msg_data[3]
+              s.idx = s.set*nways*nwords + s.curr_way*nwords
+              s.cachelines[s.idx + 0].value = s.memresp_msg_data[0]
+              s.cachelines[s.idx + 1].value = s.memresp_msg_data[1]
+              s.cachelines[s.idx + 2].value = s.memresp_msg_data[2]
+              s.cachelines[s.idx + 3].value = s.memresp_msg_data[3]
 
-              s.taglines[s.set][s.curr_way].value = (s.addr >> s.tag_start)
+              s.taglines[s.set*nways + s.curr_way].value = (s.addr >> s.tag_start)
 
-              s.valid_bits[s.set][s.curr_way] = True
+              s.valid_bits[s.set*nways + s.curr_way] = True
 
               if s.type == wr:
-                s.cachelines[s.set][s.curr_way]                            \
-                  [s.word_offset].value = (s.cachelines[s.set][s.curr_way] \
-                    [s.word_offset] & (0xFFFFFFFF ^                        \
+                s.idx = s.set*nways*nwords + s.curr_way*nwords + s.word_offset
+                s.cachelines[ s.idx ].value = (s.cachelines[s.idx ]
+                    & (0xFFFFFFFF ^                        \
                     (((1 << s.length.uint()) - 1) <<                       \
                     (s.byte_offset.uint()*8)))) |                          \
                     ((s.data.uint() & ((1 << s.length.uint()) - 1)) <<     \
                     s.byte_offset.uint()*8)
-                s.dirty_bits[s.set][s.curr_way] = True
+                s.dirty_bits[s.set*nways + s.curr_way] = True
 
               elif s.type == rd:
-                s.dirty_bits[s.set][s.curr_way] = False
+                s.dirty_bits[s.set*nways + s.curr_way] = False
 
               s.state = STATE_COMPLETE
               s.sent_mem = False
@@ -321,10 +330,13 @@ class CL_Cache( Model ):
 
         s.cacheresp_msg_type.next = s.type
         s.cacheresp_msg_len.next  = s.ilength
+
+        s.idx = s.set*nways*nwords + s.curr_way*nwords + s.word_offset
         s.cacheresp_msg_data.next =                                   \
-          s.rshift(s.cachelines[s.set][s.curr_way][s.word_offset] &   \
+          s.rshift(s.cachelines[s.idx] &   \
           (((1 << s.length.uint()) - 1) << (s.byte_offset.uint()*8)), \
           (s.byte_offset.uint()*8))
+
         s.cacheresp_val.next = 1
 
         if s.cacheresp_rdy:

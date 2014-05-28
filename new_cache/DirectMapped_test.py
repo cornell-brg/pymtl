@@ -29,6 +29,7 @@ class TestHarness( Model ):
 
     s.src   = TestSource( s.creq_params.nbits, src_msgs,  0 )
     s.cache = CL_Cache()
+    #s.cache = get_cpp( s.cache )
     s.mem   = TestMemory( s.mreq_params, s.mresp_params, 1, 0 )
     s.sink  = TestCacheResp32Sink(  s.cresp_params, sink_msgs, 0 )
 
@@ -226,17 +227,17 @@ def run_SimpleCache_test( dump_vcd, vcd_file_name,
   # Intialize cache line 0
   # You can initialize more locations here
 
-  model.cache.valid_bits[ 0 ][ 0 ] = True
-  model.cache.dirty_bits[ 0 ][ 0 ] = False
+  model.cache.valid_bits[ 0 * 0 ] = True
+  model.cache.dirty_bits[ 0 * 0 ] = False
 
-  model.cache.taglines[ 0 ][ 0 ] = Bits(24,value=0xFFF)
-  model.cache.cachelines[ 0 ][ 0 ][ 3 ] = \
+  model.cache.taglines[ 0 * 0 ] = Bits(24,value=0xFFF)
+  model.cache.cachelines[ 0 * 0 + 3 ] = \
     Bits(32,value=0xdeadbeec)
-  model.cache.cachelines[ 0 ][ 0 ][ 2 ] = \
+  model.cache.cachelines[ 0 * 0 + 2 ] = \
     Bits(32,value=0xdeadbeed)
-  model.cache.cachelines[ 0 ][ 0 ][ 1 ] = \
+  model.cache.cachelines[ 0 * 0 + 1 ] = \
     Bits(32,value=0xdeadbeee)
-  model.cache.cachelines[ 0 ][ 0 ][ 0 ] = \
+  model.cache.cachelines[ 0 * 0 + 0 ] = \
     Bits(32,value=0xdeadbeef)
 
 
