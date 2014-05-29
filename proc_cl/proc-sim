@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 #=========================================================================
-# proc-fl-sim [options] <elf-file>
+# proc-sim [options] <elf-file>
 #=========================================================================
 #
 #  -h --help     Display this message
 #  -v --verbose  Verbose mode
 #     --trace    Turn on line tracing
 #
-#     --impl     Choose MatrixVec implementation (default fl)
+#     --proc-impl  Choose ParcProc implementation (default fl)
+#                  fl : functional-level model
+#                  cl : cycle-level model
+#
+#     --xcel-impl  Choose MatrixVec implementation (default fl)
 #                  fl : functional-level model
 #                  cl : cycle-level model
 #
@@ -34,7 +38,8 @@ from new_pymtl import *
 from new_pmlib import *
 from pisa      import *
 
-from ParcProcFL import ParcProcFL
+from proc_fl    import ParcProcFL
+from ParcProcCL import ParcProcCL
 from mvmult_fl  import MatrixVecFL
 from mvmult_cl  import MatrixVecCL
 
@@ -61,8 +66,9 @@ def parse_cmdline():
 
   # Additional commane line arguments for the simulator
 
-  p.add_argument( "--trace",    action="store_true" )
-  p.add_argument( "--impl",     default="fl", choices=["fl","cl"] )
+  p.add_argument( "--trace",     action="store_true" )
+  p.add_argument( "--proc-impl", default="fl", choices=["fl","cl"] )
+  p.add_argument( "--xcel-impl", default="fl", choices=["fl","cl"] )
 
   p.add_argument( "elf_file" )
 
@@ -81,7 +87,7 @@ class TestHarness (Model):
   # constructor
   #-----------------------------------------------------------------------
 
-  def __init__( s, XcelModel, mem_delay ):
+  def __init__( s, ProcModel, XcelModel ):
 
     # Create parameters
 
@@ -92,8 +98,8 @@ class TestHarness (Model):
 
     s.src    = TestSource  ( 32, [], 0 )
     s.sink   = TestSink    ( 32, [], 0 )
-    s.proc   = ParcProcFL  ( test_en=False )
-    s.mem    = TestMemory  ( memreq_p, memresp_p, 3, mem_delay )
+    s.proc   = ProcModel   ( test_en=False )
+    s.mem    = TestMemory  ( memreq_p, memresp_p, 3, 10 )
     s.mvmult = XcelModel   ()
 
   #-----------------------------------------------------------------------
@@ -196,16 +202,26 @@ def main():
   binrewrite_bytes = binrewrite_mem_image.get_section(".text").data
   mem_image.add_section( ".binrewrite", 0x1008, binrewrite_bytes )
 
-  # Determine which model to use in the simulator
+  # Determine which processor model to use in the simulator
 
-  model_impl_dict = {
+  proc_impl_dict = {
+    'fl' : ParcProcFL,
+    'cl' : ParcProcCL,
+  }
+
+  # Determine which accelerator model to use in the simulator
+
+  xcel_impl_dict = {
     'fl' : MatrixVecFL,
     'cl' : MatrixVecCL,
   }
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( model_impl_dict[opts.impl], 0 )
+  model = TestHarness(
+    proc_impl_dict[opts.proc_impl],
+    xcel_impl_dict[opts.xcel_impl]
+  )
   model.elaborate()
 
   # Load the program into the model

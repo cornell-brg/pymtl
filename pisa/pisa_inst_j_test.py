@@ -19,34 +19,34 @@ def gen_basic_test():
   return """
 
     # Use r3 to track the control flow pattern
-    addiu r3, r0, 0
-
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-
-    j   label_a
-    ori r3, r3, 0b01
-
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-
-  label_a:
-    ori r3, r3, 0b10
+    addiu r3, r0, 0   # 00
+                      #
+    nop               # 04
+    nop                #  8
+    nop                #  c
+    nop                # 10
+    nop                # 14
+    nop                # 18
+    nop                # 1c
+    nop                # 20
+                       #
+    j   label_a         # 24
+    ori r3, r3, 0b01    # 28
+                        #
+    nop                 # 2c
+    nop                 # 30
+    nop                 # 34
+    nop                 # 38
+    nop                 # 3c
+    nop                 # 40
+    nop                 # 44
+    nop                 # 48
+                        #
+  label_a:              #
+    ori r3, r3, 0b10    # 4c
 
     # Only the second bit should be set if jump was taken
-    mtc0  r3, proc2mngr > 0b10
+    mtc0  r3, proc2mngr > 0b10   #50
 
   """
 
@@ -93,4 +93,3 @@ def test( name, test ):
   sim = PisaSim( trace_en=True )
   sim.load( pisa_encoding.assemble( test() ) )
   sim.run()
-

@@ -11,7 +11,7 @@ from new_pmlib  import *
 from mvmult_fl  import MatrixVecFL
 from mvmult_cl  import MatrixVecCL
 
-from ParcProcFL import ParcProcFL
+from ParcProcCL import ParcProcCL
 
 from pisa.pisa_inst_test_utils import asm_test
 
@@ -32,7 +32,7 @@ class TestHarness (Model):
 
     s.src    = TestSource  ( 32, [], 0 )
     s.sink   = TestSink    ( 32, [], 0 )
-    s.proc   = ParcProcFL  ()
+    s.proc   = ParcProcCL  ()
     s.mem    = TestMemory  ( memreq_p, memresp_p, 3, mem_delay )
     s.mvmult = XcelModel   ()
 

@@ -7,8 +7,8 @@ import collections
 from new_pymtl import *
 from new_pmlib import *
 
-from mvmult_fl import InMatrixVecBundle,OutMatrixVecBundle
-from Queue     import Queue
+from mvmult_fl   import InMatrixVecBundle,OutMatrixVecBundle
+from pmlib_extra import Queue
 
 class MatrixVecCL (Model):
 

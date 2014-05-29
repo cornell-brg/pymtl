@@ -59,7 +59,6 @@ class PisaSemantics (object):
     self.xcel_mvmult = xcel_mvmult
 
     self.R     = PisaSemantics.RegisterFile()
-    self.R_CP2 = PisaSemantics.RegisterFile()
 
     self.reset()
 
