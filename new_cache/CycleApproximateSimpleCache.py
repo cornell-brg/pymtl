@@ -34,7 +34,7 @@ class CL_Cache( Model ):
   #---------------------------------------------------------------------
   def __init__( s, line_nbytes   = 16, cache_nlines = 16, nways       = 1,
                    address_nbits = 32, data_nbits   = 32, hit_penalty = 0,
-                   miss_penalty  = 0 ):
+                   miss_penalty  = 0,  id = 0 ):
 
     #Val Ready Cache
     s.creq_len = int(ceil(log(data_nbits/8, 2)))
@@ -95,8 +95,9 @@ class CL_Cache( Model ):
     s.miss_penalty = miss_penalty
     s.hit_penalty  = hit_penalty
 
-    s.idx  = Bits(32)
-    s.mask = Bits(32)
+    s.idx     = Bits(32)
+    s.mask    = Bits(32)
+    s.wr_mask = Bits(32)
 
   #---------------------------------------------------------------------
   # elaborate_logic
@@ -220,17 +221,27 @@ class CL_Cache( Model ):
                 s.state = s.STATE_COMPLETE
 
               elif(s.type == s.WR):
+
+
                 #TODO Support Bits Constructor in @s.tick
                 #s.cachelines[s.set][s.curr_way.value][offset:offset+length].value = Bits(length,value=s.data.value,trunc = True).value
                 assert not s.length == 0
                 #TODO :( bits translatable
+
+                if   s.length == 32: s.mask = 0xFFFFFFFF
+                elif s.length ==  8: s.mask = 0xFF   << (s.byte_offset.uint() * 8)
+                elif s.length == 16: s.mask = 0xFFFF << (s.byte_offset.uint() * 8)
+
+                if   s.length == 32: s.wr_mask = 0xFFFFFFFF
+                elif s.length ==  8: s.wr_mask = 0xFF
+                elif s.length == 16: s.wr_mask = 0xFFFF
+
                 s.idx = s.set*s.nways*s.nwords + s.curr_way*s.nwords + s.word_offset
-                s.cachelines[s.idx].value = (s.cachelines[s.idx]
-                    & (0xFFFFFFFF ^                        \
-                    (((1 << s.length.uint()) - 1) <<                       \
-                    (s.byte_offset.uint()*8)))) |                          \
-                    ((s.data.uint() & ((1 << s.length.uint()) - 1)) <<     \
-                    s.byte_offset.uint()*8)
+
+                s.cachelines[s.idx].value = \
+                    (s.cachelines[s.idx] & (0xFFFFFFFF ^ s.mask)) \
+                    | ((s.data.uint() & s.wr_mask) << s.byte_offset.uint() * 8 )
+
                 s.state = s.STATE_COMPLETE
 
               s.stall_count = 0
@@ -322,13 +333,21 @@ class CL_Cache( Model ):
               s.valid_bits[s.set*s.nways + s.curr_way] = True
 
               if s.type == s.WR:
+
+                if   s.length == 32: s.mask = 0xFFFFFFFF
+                elif s.length ==  8: s.mask = 0xFF   << (s.byte_offset.uint() * 8)
+                elif s.length == 16: s.mask = 0xFFFF << (s.byte_offset.uint() * 8)
+
+                if   s.length == 32: s.wr_mask = 0xFFFFFFFF
+                elif s.length ==  8: s.wr_mask = 0xFF
+                elif s.length == 16: s.wr_mask = 0xFFFF
+
                 s.idx = s.set*s.nways*s.nwords + s.curr_way*s.nwords + s.word_offset
-                s.cachelines[ s.idx ].value = (s.cachelines[s.idx ]
-                    & (0xFFFFFFFF ^                        \
-                    (((1 << s.length.uint()) - 1) <<                       \
-                    (s.byte_offset.uint()*8)))) |                          \
-                    ((s.data.uint() & ((1 << s.length.uint()) - 1)) <<     \
-                    s.byte_offset.uint()*8)
+
+                s.cachelines[s.idx].value = \
+                    (s.cachelines[s.idx] & (0xFFFFFFFF ^ s.mask)) \
+                    | ((s.data.uint() & s.wr_mask) << s.byte_offset.uint() * 8 )
+
                 s.dirty_bits[s.set*s.nways + s.curr_way] = True
 
               elif s.type == s.RD:
