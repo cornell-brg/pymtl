@@ -56,9 +56,10 @@ class TestHarness( Model ):
   # line_trace
   #---------------------------------------------------------------------
   def line_trace( s ):
-    return s.proc_mgr.line_trace() + \
-           s.tile.line_trace() + \
-           s.mem.line_trace()
+    return s.tile.line_trace()
+    #return s.proc_mgr.line_trace() + \
+    #       s.tile.line_trace() + \
+    #       s.mem.line_trace()
 
 #-----------------------------------------------------------------------
 # run_proc_test
@@ -249,6 +250,94 @@ def test_mtc2_3x3_delay0( dump_vcd, test_verilog ):
 def test_mtc2_3x3_delay5( dump_vcd, test_verilog ):
   run_bypass_proc_test( dump_vcd, test_verilog, "test_mtc2_3x3.vcd",
                         [5]+mtc2_3x3() )
+
+
+def j_after_ld_stall():
+
+  asm_str = \
+    ( test_start +
+  """
+      li    $5, 0
+      la    $2, val0
+      nop; nop; nop; nop; nop;
+      lw    $3, 0($2)
+      addiu $4, $4, 1
+      j     1f
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+   1: addiu $5, $5, 1
+      mtc0  $5, $1
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+      mtc0  $4, $1
+  """
+    + test_end +
+  """
+   .data
+   .align 4
+      val0: .word 0x00000005
+  """ )
+
+  sparse_mem_img  = SparseMemoryImage( asm_str = asm_str )
+  expected_result = 1
+
+  return [ sparse_mem_img, expected_result ]
+
+@requires_xcc
+def test_j_after_ld_stall( dump_vcd, test_verilog ):
+  run_bypass_proc_test( dump_vcd, test_verilog, "test_j_after_ld_stall.vcd",
+                        [0]+j_after_ld_stall() )
+
+def mul_scoreboard_clear_bug():
+
+  asm_str = \
+    ( test_start +
+  """
+      la    $1, val1
+      li    $2, 2
+      li    $3, 3
+      nop; nop; nop; nop;
+      lw   $11,  0($1)
+      lw   $11, 16($1)
+      mul   $3, $2, $3
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+      mul  $12,  $3, $2
+      mtc0 $12,  $1
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+      mtc0  $2, $1
+      nop; nop; nop; nop;
+      nop; nop; nop; nop;
+  """
+    + test_end +
+  """
+   .data
+   .align 4
+      val1: .word 0x00000001
+      val2: .word 0x00000002
+      val3: .word 0x00000003
+      val4: .word 0x00000004
+      val5: .word 0x00000005
+      val6: .word 0x00000006
+      val7: .word 0x00000007
+      val8: .word 0x00000008
+      val9: .word 0x00000009
+      valA: .word 0x0000000a
+      valB: .word 0x0000000b
+      valC: .word 0x0000000c
+      valD: .word 0x0000000d
+  """ )
+
+  sparse_mem_img  = SparseMemoryImage( asm_str = asm_str )
+  expected_result = 12
+
+  return [ sparse_mem_img, expected_result ]
+
+@requires_xcc
+def test_mul_scoreboard_clear_bug( dump_vcd, test_verilog ):
+  run_bypass_proc_test( dump_vcd, test_verilog, "test_j_after_ld_stall.vcd",
+                        [0]+mul_scoreboard_clear_bug() )
 
 #---------------------------------------------------------------------------
 # 0. bypass logic direct test
