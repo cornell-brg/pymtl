@@ -9,6 +9,7 @@ import struct
 from new_pymtl  import *
 from new_pmlib  import *
 from mvmult_fl  import MatrixVecFL
+from mvmult_cl  import MatrixVecCL
 
 from ParcProcFL import ParcProcFL
 
@@ -20,7 +21,7 @@ class TestHarness (Model):
   # constructor
   #-----------------------------------------------------------------------
 
-  def __init__( s, mem_delay ):
+  def __init__( s, XcelModel, mem_delay ):
 
     # Create parameters
 
@@ -33,7 +34,7 @@ class TestHarness (Model):
     s.sink   = TestSink    ( 32, [], 0 )
     s.proc   = ParcProcFL  ()
     s.mem    = TestMemory  ( memreq_p, memresp_p, 3, mem_delay )
-    s.mvmult = MatrixVecFL ()
+    s.mvmult = XcelModel   ()
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -117,11 +118,11 @@ class TestHarness (Model):
 # run_test
 #-------------------------------------------------------------------------
 
-def run_test( gen_test ):
+def run_test( gen_test, XcelModel=MatrixVecFL ):
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( 0 )
+  model = TestHarness( XcelModel, 0 )
   model.elaborate()
 
   # Assemble the test program
@@ -942,7 +943,7 @@ def test_bgez( name, test ):
   run_test( test )
 
 #-------------------------------------------------------------------------
-# test_basic
+# mtc2 (with functional-level mvmult impl)
 #-------------------------------------------------------------------------
 
 import pisa.pisa_inst_mtc2_test
@@ -950,6 +951,12 @@ import pisa.pisa_inst_mtc2_test
 @pytest.mark.parametrize( "name,test", [
   asm_test( pisa.pisa_inst_mtc2_test.gen_basic_test ),
 ])
-def test_mtc2( name, test ):
+def test_mtc2_fl( name, test ):
   run_test( test )
+
+@pytest.mark.parametrize( "name,test", [
+  asm_test( pisa.pisa_inst_mtc2_test.gen_basic_test ),
+])
+def test_mtc2_cl( name, test ):
+  run_test( test, MatrixVecCL )
 
