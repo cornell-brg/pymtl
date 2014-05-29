@@ -123,7 +123,7 @@ class TestMemory (Model):
       memresp_str = \
         new_pmlib.valrdy.valrdy_to_str(
           #str(s.resps[i].msg.value) + s.mem.memresp[i].line_trace(),
-          s.mem.memresp[i].line_trace(),
+          s.resps[i].msg,
           s.resps[i].val, s.resps[i].rdy )
 
       memtrace_str += "|{} () {}" \
