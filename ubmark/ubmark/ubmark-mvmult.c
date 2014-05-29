@@ -25,31 +25,6 @@ void mvmult_scalar( int* resultvector, int* matrix, int* vector, int R, int C )
   }
 }
 
-////__attribute__ ((noinline))
-//void mvmult_coprocessor( int*  resultvector, int** matrix, int*  vector,
-//                         int R, int C, int nlanes )
-//{
-//  int  size    = C;
-//  for( int i = 0; i < R; i+=nlanes ) {
-//    int* r_baddr = &(matrix[i][0]);
-//    int* v_baddr = &(vector[0]);
-//    int* d_baddr = &(resultvector[i]);
-//    //std::cout << "addr: " << &(matrix[i  ][0]) << "value: " << matrix[i  ][0] << std::endl;
-//    //std::cout << "addr: " << &(matrix[i+1][0]) << "value: " << matrix[i+1][0] << std::endl;
-//    // TODO: add native code
-//    #ifdef _MIPS_ARCH_MAVEN
-//    // TODO: left shift by two in order to avoid unaligned branch warning,
-//    //       but processor still sees the unshifted version...
-//    __asm__ __volatile__ ( "xloop %0, %1;" : : "r"(size),    "i"(1<<2) : "memory" );
-//    __asm__ __volatile__ ( "xloop %0, %1;" : : "r"(r_baddr), "i"(2<<2) : "memory" );
-//    __asm__ __volatile__ ( "xloop %0, %1;" : : "r"(v_baddr), "i"(3<<2) : "memory" );
-//    __asm__ __volatile__ ( "xloop %0, %1;" : : "r"(d_baddr), "i"(4<<2) : "memory" );
-//    __asm__ __volatile__ ( "mtvps $0, $0;" : :                         :          );
-//    #endif
-//  }
-//}
-
-
 //------------------------------------------------------------------------
 // verify_results
 //------------------------------------------------------------------------
@@ -82,8 +57,12 @@ int main( int argc, char* argv[] )
 
     int temp = 0;
 
-    test_stats_on( temp );
+    // warmup
     mvmult_scalar( dest, (int*) matrix, vector, R, C );
+
+    test_stats_on( temp );
+    for ( i = 0; i < 1; i++ )
+      mvmult_scalar( dest, (int*) matrix, vector, R, C );
     test_stats_off( temp );
 
     verify_results( dest, ref, size );
