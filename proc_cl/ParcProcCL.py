@@ -264,7 +264,7 @@ class ParcProcCL (Model):
 
     # CP0 register: status
     if inst.rd == 1:
-      s.status = s.R[inst.rt]
+      s.status.next = s.R[inst.rt]
 
     # CP0 register: proc2mngr
     elif inst.rd == 2:
@@ -888,7 +888,7 @@ class ParcProcCL (Model):
       # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
       s.imemreq.val.next = 0
-      if not s.imemreq_queue.empty():
+      if not s.imemreq_queue.empty() and s.go:
         s.imemreq.val.next = 1
         s.imemreq.msg.next = s.imemreq_queue.front()
 
