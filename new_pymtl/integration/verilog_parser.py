@@ -34,18 +34,22 @@ def header_parser():
   identifier  = Regex("[a-zA-Z_][a-zA-Z0-9_\$]*")
   comment     = cppStyleComment.suppress()
 
+  size = Group( Optional( '[' + SkipTo(']') + ']' ) )
+
   # Params
 
-  end_param = Literal(',') | Literal(')')
-  param     = 'parameter' + identifier + '=' + SkipTo(end_param)
+  end_param = Literal(',') + 'parameter' | Literal(')') + '('
+  ptype     = Optional( oneOf('integer real realtime time') )
+  # NOTE: this isn't completely right, good enough for parsing valid Verilog
+  param     = 'parameter' + ptype + size + identifier + '=' \
+            + SkipTo(end_param)
 
-  list_of_params = '#' + '(' + delimitedList( param ) + ')'
+  list_of_params = '#(' + delimitedList( param ) + ')'
 
   # Ports
 
   dir_    = Optional( oneOf('input output inout') )
   type_   = Optional( oneOf('wire reg') )
-  size    = Group( Optional( '[' + SkipTo(']') + ']' ) )
   port    = dir_ + type_ + size + identifier
 
   list_of_ports = '(' + delimitedList( port ) + ')'
@@ -66,7 +70,9 @@ def header_parser():
   port             .setParseAction( dbg('port' )  )#.setDebug()
   #module           .setParseAction( dbg('module') )#.setDebug()
 
-  return OneOrMore( module ).ignore( comment )
+  file_ = SkipTo('module') + OneOrMore( module ) + SkipTo( StringEnd() )
+
+  return file_.ignore( comment )
 
 #-----------------------------------------------------------------------
 # Notes from BNF
@@ -107,7 +113,7 @@ def header_parser():
 # module_keyword ::= module | macromodule
 #
 # module_parameter_port_list ::=
-#    ( parameter_declaration { , parameter_declaration } )
+#    #( parameter_declaration { , parameter_declaration } )
 #
 # list_of_ports ::= ( port { , port } )
 #

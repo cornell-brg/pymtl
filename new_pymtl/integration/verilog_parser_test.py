@@ -3,7 +3,9 @@
 #=======================================================================
 
 import pytest
-from   verilog_parser import header_parser
+import os
+
+from verilog_parser import header_parser
 
 #-----------------------------------------------------------------------
 # test cases
@@ -140,6 +142,68 @@ def j(): return """\
   endmodule
 """
 
+def k(): return """\
+  `ifdef SOMETHING
+  `define SOMETHING
+  module mod_a
+  #( parameter a = 2 )
+  (
+    input  in,
+    output out
+  );
+  endmodule
+  //`endif
+"""
+def l(): return """\
+  `ifdef SOMETHING
+  `define SOMETHING
+  module mod_a
+  #( parameter a = 2 )
+  (
+    input  in,
+    output out
+  );
+  endmodule
+  module mod_b
+  #( parameter a = 2 )
+  (
+    input  in,
+    output out
+  );
+  endmodule
+  //`endif
+"""
+
+def m(): return """\
+module vc_MemPortWidthAdapter
+#(
+  parameter p_addr_sz = 32,
+  parameter p_proc_data_sz = 32,
+  //parameter p_mem_data_sz = 128
+
+  // Local constants not meant to be set from outside the module
+  //parameter c_proc_req_msg_sz  = `VC_MEM_REQ_MSG_SZ(p_addr_sz,p_proc_data_sz),
+  parameter c_proc_resp_msg_sz = `VC_MEM_RESP_MSG_SZ(p_proc_data_sz)
+)(
+  input  [c_proc_req_msg_sz-1:0]  procreq_msg,
+  output [c_proc_resp_msg_sz-1:0] procresp_msg
+);
+endmodule
+"""
+
+def n(): return """\
+module vc_TraceWithValRdy
+#(
+  parameter integer NUMBITS      = 1,
+  parameter integer FORMAT_CHARS = 2,
+  parameter [(FORMAT_CHARS<<3)-1:0] FORMAT = "%x"
+)(
+  input  [(NUMCHARS<<3)-1:0] istr,
+  input  [NUMBITS-1:0]       bits
+);
+endmodule
+"""
+
 def y(): return """\
 module fulladder ( carry, sum, in1, in2, in3 );
 endmodule
@@ -157,10 +221,32 @@ endmodule
 # test_simple
 #-----------------------------------------------------------------------
 @pytest.mark.parametrize( 'src',
-  [a, b, c, d, e, f, g, h, i, j, y, x]
+  [a, b, c, d, e, f, g, h, i, j, k, l, m, n, y, x]
 )
 def test_simple( src ):
-  source = header_parser()
-  source.parseString( src(), parseAll=True )
+  parser = header_parser()
+  parser.parseString( src(), parseAll=True )
+
+#-----------------------------------------------------------------------
+# test_simple
+#-----------------------------------------------------------------------
+home  = os.path.expanduser('~')
+path  = '{}/vc/git-brg/pyparc/vc'.format(home)
+
+if os.path.exists( path ):
+  files = os.listdir( path )
+  files = ( x for x in files if not x.endswith('.t.v' ) and x.endswith('.v') )
+  files = [ os.path.join( path, x ) for x in files ]
+else:
+  files = []
+
+@pytest.mark.parametrize( 'filename', files )
+def test_files( filename ):
+
+  parser = header_parser()
+  print filename
+  parser.parseFile( filename )
+
+
 
 
