@@ -3,13 +3,14 @@
 #=======================================================================
 # Resources:
 #
+# - http://pyparsing.wikispaces.com/HowToUsePyparsing
 # - http://ingeneur.wordpress.com/2007/10/29/pyparsing-with-verilog/
 # - http://eikke.com/pyparsing-introduction-bnf-to-code/
 
 from pyparsing import Literal, Word, Keyword, alphanums, Regex
 from pyparsing import Group, ZeroOrMore, OneOrMore, oneOf, delimitedList
-from pyparsing import Optional, SkipTo, StringEnd
-from pyparsing import cppStyleComment, restOfLine
+from pyparsing import Optional, SkipTo, StringEnd, restOfLine, LineEnd
+from pyparsing import cppStyleComment, dblSlashComment
 from pyparsing import ParseException
 import sys
 
@@ -68,11 +69,13 @@ def header_parser():
   module_identifier.setParseAction( dbg('modname') )#.setDebug()
   param            .setParseAction( dbg('param')  )#.setDebug()
   port             .setParseAction( dbg('port' )  )#.setDebug()
-  #module           .setParseAction( dbg('module') )#.setDebug()
+  #module           .setParseAction( dbg('module', 1) )#.setDebug()
 
-  file_ = SkipTo('module') + OneOrMore( module ) + SkipTo( StringEnd() )
+  file_ = SkipTo('module', ignore=comment )     + \
+          OneOrMore( module ).ignore( comment ) + \
+          SkipTo( StringEnd() )
 
-  return file_.ignore( comment )
+  return file_
 
 #-----------------------------------------------------------------------
 # Notes from BNF
@@ -207,9 +210,10 @@ def header_parser():
 # dbg
 #-----------------------------------------------------------------------
 # Utility debugging method
-def dbg( label ):
+def dbg( label, tkn_id=None ):
   def action( s, tkn, smt ):
-    print label, smt
+    if tkn_id: print label, smt[tkn_id]
+    else:      print label, smt
   return action
 
 #-----------------------------------------------------------------------
