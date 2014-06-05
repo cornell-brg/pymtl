@@ -11,7 +11,7 @@ from pyparsing import Literal, Word, Keyword, alphanums, Regex
 from pyparsing import Group, ZeroOrMore, OneOrMore, oneOf, delimitedList
 from pyparsing import Optional, SkipTo, StringEnd, restOfLine, LineEnd
 from pyparsing import cppStyleComment, dblSlashComment
-from pyparsing import ParseException
+from pyparsing import ParseException, Suppress
 import sys
 
 #-----------------------------------------------------------------------
@@ -35,45 +35,60 @@ def header_parser():
   identifier  = Regex("[a-zA-Z_][a-zA-Z0-9_\$]*")
   comment     = cppStyleComment.suppress()
 
-  size = Group( Optional( '[' + SkipTo(']') + ']' ) )
+  size = Group(
+    Optional( Suppress('[') + SkipTo(']') + Suppress(']') )
+  )
 
   # Params
 
   end_param = Literal(',') + 'parameter' | Literal(')') + '('
   ptype     = Optional( oneOf('integer real realtime time') )
-  # NOTE: this isn't completely right, good enough for parsing valid Verilog
-  param     = 'parameter' + ptype + size + identifier + '=' \
-            + SkipTo(end_param)
 
-  list_of_params = '#(' + delimitedList( param ) + ')'
+  # NOTE: this isn't completely right, good enough for parsing valid Verilog
+  param = Group(
+    'parameter' + ptype + size + identifier +
+    Suppress('=') + SkipTo(end_param)
+  )
+
+  list_of_params = Group(
+    Suppress('#(') + delimitedList( param ) + Suppress(')')
+  )
 
   # Ports
 
   dir_    = Optional( oneOf('input output inout') )
   type_   = Optional( oneOf('wire reg') )
-  port    = dir_ + type_ + size + identifier
+  port    = Group(
+    dir_ + type_ + size + identifier
+  )
 
-  list_of_ports = '(' + delimitedList( port ) + ')'
+  list_of_ports = Group(
+    Suppress('(') + delimitedList( port ) + Suppress(')')
+  )
 
   # Module
 
-  module_identifier = Group(identifier)
+  module_identifier = identifier
 
-  module = 'module' + module_identifier + \
-            Optional( list_of_params )  + \
-            Optional( list_of_ports  )  + \
-            ';' + SkipTo('endmodule') + 'endmodule'
+  module = Group(
+    Suppress('module') +
+    module_identifier +
+    Optional( list_of_params )  +
+    Optional( list_of_ports  )  +
+    Suppress(';') +
+    SkipTo('endmodule') + Suppress('endmodule')
+  )
 
   # Debug
-  print
-  module_identifier.setParseAction( dbg('modname') )#.setDebug()
-  param            .setParseAction( dbg('param')  )#.setDebug()
-  port             .setParseAction( dbg('port' )  )#.setDebug()
+  #print
+  #module_identifier.setParseAction( dbg('modname') )#.setDebug()
+  #param            .setParseAction( dbg('param')  )#.setDebug()
+  #port             .setParseAction( dbg('port' )  )#.setDebug()
   #module           .setParseAction( dbg('module', 1) )#.setDebug()
 
-  file_ = SkipTo('module', ignore=comment )     + \
-          OneOrMore( module ).ignore( comment ) + \
-          SkipTo( StringEnd() )
+  file_ = SkipTo('module', ignore=comment ).suppress() + \
+          OneOrMore( module ).ignore( comment )        + \
+          SkipTo( StringEnd() ).suppress()
 
   return file_
 
