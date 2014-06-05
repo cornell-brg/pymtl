@@ -72,9 +72,9 @@ def header_parser():
 
   module = Group(
     Suppress('module') +
-    module_identifier +
-    Optional( list_of_params )  +
-    Optional( list_of_ports  )  +
+    module_identifier('module_name') +
+    Optional( list_of_params('params') )  +
+    Optional( list_of_ports ('ports' ) )  +
     Suppress(';') +
     SkipTo('endmodule') + Suppress('endmodule')
   )

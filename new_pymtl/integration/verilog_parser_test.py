@@ -14,7 +14,7 @@ from verilog_parser import header_parser
 def a(): return """\
 module tester;
 endmodule
-"""
+""", 'tester', 0, 0
 
 def b(): return """\
 module vc_QueueCtrl1
@@ -28,7 +28,7 @@ module vc_QueueCtrl1
   output bypass_mux_sel
 );
 endmodule
-"""
+""", 'vc_QueueCtrl1', 0, 8
 
 def c(): return """\
 module vc_QueueCtrl1
@@ -42,7 +42,7 @@ module vc_QueueCtrl1
   output bypass_mux_sel
 );
 endmodule
-"""
+""", 'vc_QueueCtrl1', 0, 8
 
 def d(): return """\
 module vc_QueueCtrl1
@@ -56,7 +56,7 @@ module vc_QueueCtrl1
   output [2-1:0] bypass_mux_sel
 );
 endmodule
-"""
+""", 'vc_QueueCtrl1', 0, 8
 
 def e(): return """\
 //module vc_QueueCtrl1 #( parameter TYPE = `VC_QUEUE_NORMAL )
@@ -71,7 +71,7 @@ module vc_QueueCtrl1 //#( parameter TYPE = `VC_QUEUE_NORMAL )
   output bypass_mux_sel  // Used to control bypass mux for bypass queues
 );
 endmodule
-"""
+""", 'vc_QueueCtrl1', 0, 8
 
 def f(): return """\
 module vc_QueueCtrl1 #( parameter TYPE = `VC_QUEUE_NORMAL )
@@ -85,7 +85,7 @@ module vc_QueueCtrl1 #( parameter TYPE = `VC_QUEUE_NORMAL )
   output bypass_mux_sel  // Used to control bypass mux for bypass queues
 );
 endmodule
-"""
+""", 'vc_QueueCtrl1', 1, 8
 
 def g(): return """\
 // comment
@@ -96,7 +96,7 @@ module simple /* comment */
   output out // comment
 );
 endmodule
-"""
+""", 'simple', 0, 2
 
 def h(): return """\
   module vc_RoundRobinArbChain
@@ -113,7 +113,7 @@ def h(): return """\
     output                kout    // Kill out
   );
   endmodule
-"""
+""", 'vc_RoundRobinArbChain', 2, 6
 
 def i(): return """\
   module mod_a #( parameter a = 2, parameter b = 3 )
@@ -122,7 +122,7 @@ def i(): return """\
     output out
   );
   endmodule
-"""
+""", 'mod_a', 2, 2
 
 def j(): return """\
   module mod_a
@@ -140,7 +140,7 @@ def j(): return """\
     output out
   );
   endmodule
-"""
+""", 'mod_a', 1, 2
 
 def k(): return """\
   `ifdef SOMETHING
@@ -153,7 +153,8 @@ def k(): return """\
   );
   endmodule
   //`endif
-"""
+""", 'mod_a', 1, 2
+
 def l(): return """\
   `ifdef SOMETHING
   `define SOMETHING
@@ -172,24 +173,24 @@ def l(): return """\
   );
   endmodule
   //`endif
-"""
+""", 'mod_a', 1, 2
 
 def m(): return """\
 module vc_MemPortWidthAdapter
 #(
   parameter p_addr_sz = 32,
   parameter p_proc_data_sz = 32,
-  //parameter p_mem_data_sz = 128
+  parameter p_mem_data_sz = 128,
 
   // Local constants not meant to be set from outside the module
-  //parameter c_proc_req_msg_sz  = `VC_MEM_REQ_MSG_SZ(p_addr_sz,p_proc_data_sz),
+  parameter c_proc_req_msg_sz  = `VC_MEM_REQ_MSG_SZ(p_addr_sz,p_proc_data_sz),
   parameter c_proc_resp_msg_sz = `VC_MEM_RESP_MSG_SZ(p_proc_data_sz)
 )(
   input  [c_proc_req_msg_sz-1:0]  procreq_msg,
   output [c_proc_resp_msg_sz-1:0] procresp_msg
 );
 endmodule
-"""
+""", 'vc_MemPortWidthAdapter', 5, 2
 
 def n(): return """\
 module vc_TraceWithValRdy
@@ -202,12 +203,12 @@ module vc_TraceWithValRdy
   input  [NUMBITS-1:0]       bits
 );
 endmodule
-"""
+""", 'vc_TraceWithValRdy', 3, 2
 
 def y(): return """\
 module fulladder ( carry, sum, in1, in2, in3 );
 endmodule
-"""
+""", 'fulladder', 0, 5
 
 def x(): return """\
 module fulladder ( carry, sum, in1, in2, in3 );
@@ -215,7 +216,7 @@ module fulladder ( carry, sum, in1, in2, in3 );
   output carry, sum;
   //xor U5 ( in1, n3, sum );
 endmodule
-"""
+""", 'fulladder', 0, 5
 
 #-----------------------------------------------------------------------
 # test_simple
@@ -224,8 +225,20 @@ endmodule
   [a, b, c, d, e, f, g, h, i, j, k, l, m, n, y, x]
 )
 def test_simple( src ):
+
+  code, module_name, nparams, nports = src()
+
   parser = header_parser()
-  parser.parseString( src(), parseAll=True )
+  tokens = parser.parseString( code, parseAll=True )
+
+  # x contains only tokens from first module encountered
+  x = tokens[0].asDict()
+
+  assert x['module_name'] == module_name
+  if nparams:
+    assert len(x['params']) == nparams
+  if nports:
+    assert len(x['ports']) == nports
 
 #-----------------------------------------------------------------------
 # test_simple
@@ -245,7 +258,7 @@ def test_files( filename ):
 
   parser = header_parser()
   print filename
-  parser.parseFile( filename )
+  x = parser.parseFile( filename )
 
 
 
