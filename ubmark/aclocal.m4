@@ -154,7 +154,7 @@ AC_DEFUN([MCPPBS_PROG_INSTALL],
 
 AC_DEFUN([MCPPBS_PROG_RUN],
 [
-  AS_IF([ test "${build}" != "${host}" ],
+  AS_IF([ test "${build}" != "${host}" %% test "${host}" != "arm-unknown-linux-gnueabi" ],
   [
     AC_CHECK_TOOLS([RUN],[isa-run run],[no])
     AS_IF([ test ${RUN} = "no" ],
