@@ -62,7 +62,7 @@ Model Development
 The first thing you should do anytime you plan on working with PyMTL is change
 to the repository build directory and activate the virtualenv::
 
-  % cd ~/vc/git-brg/PyMTL
+  % cd ~/vc/git-brg/pymtl
   % source ~/venvs/2.7/bin/activate
 
 The top-level repo directory should have the following layout:
