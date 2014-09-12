@@ -42,8 +42,8 @@ Checkout the repo::
 
   % mkdir -p ~/vc/git-brg
   % cd ~/vc/git-brg
-  % https://github.com/dmlockhart/PyMTL.git
-  % cd PyMTL
+  % https://github.com/dmlockhart/pymtl.git
+  % cd pymtl
 
 Create a build directory and run the tests::
 
