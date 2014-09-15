@@ -35,7 +35,7 @@ Create a new Python virtualenv and activate it::
 
 Install Python package prerequisites using pip::
 
-  % pip install yolk pytest pytest-xdist cffi
+  % pip install yolk pytest pytest-xdist cffi greenlets
   % yolk -l
 
 Checkout the repo::
