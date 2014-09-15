@@ -30,3 +30,6 @@ from SparseMemoryImage   import SparseMemoryImage
 from ValRdyBundle        import InValRdyBundle, OutValRdyBundle
 
 from NetMsg              import NetMsg
+from MemMsg              import MemReqMsg
+from MemMsg              import MemRespMsg
+

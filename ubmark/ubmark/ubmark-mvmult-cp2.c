@@ -16,6 +16,7 @@ void mvmult_cp2( int* resultvector, int* matrix, int* vector,
   int i    = 0;
   int go   = 1;
   int size = C;
+  int result = -1;
 
   for( i = 0; i < R; i+=nlanes ) {
     int* r_baddr = &(matrix[i*C]);
@@ -30,6 +31,8 @@ void mvmult_cp2( int* resultvector, int* matrix, int* vector,
     __asm__ __volatile__ ( "mtc2 %0, $3;" : : "r"(v_baddr) : "memory" );
     __asm__ __volatile__ ( "mtc2 %0, $4;" : : "r"(d_baddr) : "memory" );
     __asm__ __volatile__ ( "mtc2 %0, $0;" : : "r"(go)      : "memory" );
+    __asm__ __volatile__ ( "mfc2 %0, $5;" : : "r"(result)  : "memory" );
+    __asm__ __volatile__ ( "sw $5, 0($4);" : : "r"(result),"r"(d_baddr) : "memory" );
     #endif
   }
 }

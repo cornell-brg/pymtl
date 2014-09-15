@@ -1,5 +1,5 @@
 #=========================================================================
-# NetMsg
+# MemMsg
 #=========================================================================
 # TODO DESCRIPTION
 
@@ -53,5 +53,14 @@ class MemRespMsg ( BitStructDefinition ):
     s.data = BitField( s.data_nbits )
 
     #TODO mk_msg
+
+  def unpck( s, msg):
+
+    resp = s()
+    resp.value = msg
+    return resp
+
+
+
     
   
