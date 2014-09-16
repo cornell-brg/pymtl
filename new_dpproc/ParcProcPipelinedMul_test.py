@@ -23,6 +23,7 @@ from   parcv2_mul_pipelined import *
   mul_pipeline_add_waw,
   mul_pipeline_fill,
 ])
+@requires_xcc
 def test_mul_pipeline( dump_vcd, test_verilog, asm_test ):
   run_bypass_proc_test( dump_vcd, test_verilog, "todo.vcd", asm_test() )
 
