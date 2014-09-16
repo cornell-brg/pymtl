@@ -46,6 +46,7 @@ class TestHarness (Model):
 
     s.connect( s.proc.mngr2proc, s.src.out         )
     s.connect( s.proc.proc2mngr, s.sink.in_        )
+    s.connect( s.proc.go,        1                 )
 
     # Processor <-> Memory
 
