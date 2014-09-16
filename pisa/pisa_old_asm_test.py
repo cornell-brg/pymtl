@@ -8,6 +8,7 @@ import pytest
 import subprocess
 import os
 import elf
+import new_pymtl
 
 from PisaSim import PisaSim
 
@@ -100,6 +101,7 @@ asm_tests = \
 # reader to read the test into a sparse memory image, load the sparse
 # memory image into the PISA simulator, and then run the simulation.
 
+@new_pymtl.requires_xcc
 @pytest.mark.parametrize( "asm_test", asm_tests )
 def test( tmpdir, asm_test ):
 
