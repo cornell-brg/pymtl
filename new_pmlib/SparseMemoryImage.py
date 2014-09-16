@@ -63,11 +63,9 @@ SECTIONS
 #-------------------------------------------------------------------------------
 
 def execute( cmd ):
-  # print cmd
-  try:
-    subprocess.call( cmd, shell=True )
-  except  subprocess.CalledProcessError, err:
-    print "ERROR: " + err.output
+  # Throws a CalledProcessError if the command is not available; don't catch,
+  # let this propagate up to the user!
+  subprocess.check_call( cmd, shell=True )
 
 #-------------------------------------------------------------------------------
 # Sparse Memory Image Class
