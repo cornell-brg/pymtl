@@ -166,6 +166,7 @@ def run_proc_test( dump_vcd, test_verilog, vcd_file, input_list ):
 # test_dummy_addiu_no_hazards
 #-----------------------------------------------------------------------
 from new_proc.parcv1_addiu import addiu_no_hazards
+@requires_xcc
 def test_dummy_addiu_no_hazards( dump_vcd, test_verilog ):
   run_proc_test( dump_vcd, test_verilog, "bypass_addiu_no_hazards.vcd",
                  addiu_no_hazards()+[0] )
@@ -205,6 +206,7 @@ def mtc2_no_hazards():
 #-----------------------------------------------------------------------
 # run mtc2 tests
 #-----------------------------------------------------------------------
+@requires_xcc
 def test_dummy_mtc2_no_hazards( dump_vcd, test_verilog ):
   run_proc_test( dump_vcd, test_verilog, "mtc2_no_hazards.vcd",
                  mtc2_no_hazards() )
