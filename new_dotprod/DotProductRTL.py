@@ -18,8 +18,6 @@ class DotProduct( Model ):
 
     s.nmul_stages = nmul_stages
 
-  def elaborate_logic( s ):
-
     s.dpath = DotProductDpath( s.nmul_stages, s.memreq, s.memresp )
     s.ctrl  = DotProductCtrl ( s.nmul_stages, s.memreq, s.memresp )
 
@@ -44,6 +42,8 @@ class DotProduct( Model ):
   def line_trace( s ):
     return "| {} {} {} {}|".format(s.ctrl.state, s.dpath.count, s.dpath.accum_reg, s.ctrl.pause)
 
+  def elaborate_logic( s ):
+    pass
 #------------------------------------------------------------------------------
 # Select Constants
 #------------------------------------------------------------------------------
@@ -75,6 +75,9 @@ dst = Bits( 2, 2 )
 #------------------------------------------------------------------------------
 class DotProductDpath( Model ):
 
+  def elaborate_logic( s ):
+    pass
+
   def __init__( s, nmul_stages, memreq, memresp,
                 data_nbits=32, addr_nbits=5 ):
 
@@ -95,7 +98,6 @@ class DotProductDpath( Model ):
     s.memreq  = memreq
     s.memresp = memresp
 
-  def elaborate_logic( s ):
 
     #--------------------------------------------------------------------------
     # Stage M0
@@ -113,24 +115,6 @@ class DotProductDpath( Model ):
 
     s.accum_out  = Wire( 32 )
 
-    @s.posedge_clk
-    def stage_IDLE_seq():
-      addr = s.from_cpu.msg[ s.addr_slice ]
-      data = s.from_cpu.msg[ s.data_slice ]
-      if s.reset:
-        s.c2d.go.next   = 0
-        s.size.next     = 0
-        s.row_addr.next = 0
-        s.vec_addr.next = 0
-
-      elif s.c2d.update:
-        if   addr == 0: s.c2d.go  .next = s.from_cpu.msg[0]
-        elif addr == 1: s.size    .next = data
-        elif addr == 2: s.row_addr.next = data
-        elif addr == 3: s.vec_addr.next = data
-
-      else:
-        s.c2d.go.next = 0
 
     @s.combinational
     def stage_M0_comb():
@@ -153,6 +137,19 @@ class DotProductDpath( Model ):
 
     @s.posedge_clk
     def stage_M0_seq():
+      data = [s.c2d.go, s.size, s.row_addr, s.vec_addr]
+      addr_t = s.from_cpu.msg[ s.addr_slice ] # this will be removed
+      data_t = s.from_cpu.msg[ s.data_slice ] # same here
+
+      if s.reset:
+        for wire in data: wire.next = 0
+
+      elif s.c2d.update:
+        data[addr_t].next = data_t
+
+      else:
+        s.c2d.go.next = 0
+
       if   s.c2d.count_reset: s.count.next = 0
       elif s.c2d.count_en:    s.count.next = s.count + 1
 
@@ -213,6 +210,9 @@ DONE        = 4
 
 class DotProductCtrl( Model ):
 
+  def elaborate_logic( s ):
+    pass
+
   def __init__( s, nmul_stages, memreq, memresp,
                 data_nbits=32, addr_nbits=5 ):
 
@@ -226,7 +226,7 @@ class DotProductCtrl( Model ):
 
     s.nmul_stages = nmul_stages
 
-  def elaborate_logic( s ):
+  
 
     s.state      = Wire( 3 )
     s.state_next = Wire( 3 )

@@ -61,25 +61,41 @@ class Model( object ):
   def line_trace( self ):
     return ""
 
+  def __call__(self):
+    self._tick_blocks          = []
+    self._posedge_clk_blocks   = []
+    self._model._combinational_blocks = []
+
+    super( MetaCollectArgs, self ).__call__( *args, **kwargs )
+
   #---------------------------------------------------------------------
   # Decorators
   #---------------------------------------------------------------------
   # TODO: add documentation!
 
   def tick( self, func ):
-    self._tick_blocks.append( func )
+    try:
+      self._tick_blocks.append( func )
+    except: 
+      self._tick_blocks = [func]
     func._model = self
     return func
 
   def combinational( self, func ):
     # DEBUG, make permanent to aid debugging?
     #func.func_name = self.name + '.' + func.func_name
-    self._combinational_blocks.append( func )
+    try:
+      self._combinational_blocks.append( func )
+    except:
+      self._combinational_blocks = [func]
     func._model = self
     return func
 
   def posedge_clk( self, func ):
-    self._posedge_clk_blocks.append( func )
+    try:
+      self._posedge_clk_blocks.append( func )
+    except:
+      self._posedge_clk_blocks = [func]
     func._model = self
     return func
 
@@ -234,9 +250,18 @@ class Model( object ):
     current_model.reset      = InPort(1)
 
     # Initialize function lists for concurrent blocks
-    current_model._tick_blocks          = []
-    current_model._posedge_clk_blocks   = []
-    current_model._combinational_blocks = []
+    try:
+      current_model._tick_blocks[0]
+    except:
+      current_model._tick_blocks          = []
+    try:
+      current_model._posedge_clk_blocks[0]
+    except:
+      current_model._posedge_clk_blocks   = []
+    try:
+      current_model._combinational_blocks[0]
+    except:
+      current_model._combinational_blocks = []
 
     # Call user implemented elaborate_logic() function
     current_model.elaborate_logic()

@@ -61,7 +61,6 @@ class MetaCollectArgs( MetaListConstructor ):
   # arguments are stored as an OrderedDict in the _args field of the
   # instance so they can be used later.
   def __call__( self, *args, **kwargs ):
-
     # Get the constructor prototype
     argspec = inspect.getargspec( self.__init__ )
 
