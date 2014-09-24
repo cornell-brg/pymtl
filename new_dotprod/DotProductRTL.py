@@ -39,11 +39,11 @@ load = Bits( 1, 0 )
 #zer = Bits( 1, 0 )
 acm = Bits( 1, 1 )
 
-# offset_sel
+# offset_sel_M0
 zro = Bits( 1, 0 )
 cnt = Bits( 1, 1 )
 
-# baddr_sel
+# baddr_sel_M0
 xxx = Bits( 2, 0 )
 row = Bits( 2, 0 )
 vec = Bits( 2, 1 )
@@ -78,27 +78,29 @@ class DotProductDpath( Model ):
 
     s.accum_out  = Wire( 32 )
 
+    s.mem_addr   = Wire( 32 )
+
 
     @s.combinational
     def stage_M0_comb():
 
       # base_addr mux
-      if   s.cs.baddr_sel == row: s.base_addr.value = s.row_addr
-      elif s.cs.baddr_sel == vec: s.base_addr.value = s.vec_addr
+      if   s.cs.baddr_sel_M0 == row: s.base_addr.value = s.row_addr
+      elif s.cs.baddr_sel_M0 == vec: s.base_addr.value = s.vec_addr
 
       # offset mux
-      if   s.cs.offset_sel == zro: s.offset.value = 0
-      elif s.cs.offset_sel == cnt: s.offset.value = s.count << 2
+      if   s.cs.offset_sel_M0 == zro: s.offset.value = 0
+      elif s.cs.offset_sel_M0 == cnt: s.offset.value = s.count << 2
 
       # memory request
-      mem_addr = s.base_addr + s.offset
+      s.mem_addr.value = s.base_addr + s.offset
       s.mem_ifc.p2c_msg.data.value = 0
-      s.mem_ifc.p2c_msg.addr.value = mem_addr
+      s.mem_ifc.p2c_msg.addr.value = s.mem_addr
       s.mem_ifc.p2c_msg.type.value = load
       s.mem_ifc.p2c_msg.len .value = 0
 
       # last item status signal
-      s.ss.last_item.value = s.count == (s.size - 1)
+      s.ss.last_item_M0.value = s.count == (s.size - 1)
 
     @s.posedge_clk
     def stage_M0_seq():
@@ -106,22 +108,22 @@ class DotProductDpath( Model ):
       data = s.cpu_ifc.p2c_msg.data
 
       if s.reset:
-        s.ss.go   .next = 0
+        s.ss.go_M0   .next = 0
         s.size    .next = 0
         s.row_addr.next = 0
         s.vec_addr.next = 0
 
-      elif s.cs.update:
-        if   addr == 0: s.ss.go   .next = data
+      elif s.cs.update_M0:
+        if   addr == 0: s.ss.go_M0   .next = data
         elif addr == 1: s.size    .next = data
         elif addr == 2: s.row_addr.next = data
         elif addr == 3: s.vec_addr.next = data
 
       else:
-        s.ss.go.next = 0
+        s.ss.go_M0.next = 0
 
-      if   s.cs.count_reset: s.count.next = 0
-      elif s.cs.count_en:    s.count.next = s.count + 1
+      if   s.cs.count_reset_M0: s.count.next = 0
+      elif s.cs.count_en_M0:    s.count.next = s.count + 1
 
     #--------------------------------------------------------------------------
     # Stage M1
@@ -132,8 +134,8 @@ class DotProductDpath( Model ):
 
     @s.posedge_clk
     def stage_M1():
-      if s.cs.reg_a_en: s.reg_a.next = s.mem_ifc.c2p_msg.data
-      if s.cs.reg_b_en: s.reg_b.next = s.mem_ifc.c2p_msg.data
+      if s.cs.reg_a_en_M1: s.reg_a.next = s.mem_ifc.c2p_msg.data
+      if s.cs.reg_b_en_M1: s.reg_b.next = s.mem_ifc.c2p_msg.data
 
     #--------------------------------------------------------------------------
     # Stage X
@@ -148,7 +150,7 @@ class DotProductDpath( Model ):
      s.mul.product : s.mul_out,
     })
     for i in range( nmul_stages ):
-      s.connect( s.mul.enables[i], s.cs.mul_reg_en[i] )
+      s.connect( s.mul.enables[i], s.cs.mul_reg_en_M1[i] )
 
     #--------------------------------------------------------------------------
     # Stage A
@@ -164,8 +166,8 @@ class DotProductDpath( Model ):
 
     @s.posedge_clk
     def stage_A_seq():
-      if   s.reset or s.cs.count_reset: s.accum_reg.next = 0
-      elif s.cs.accum_reg_en:           s.accum_reg.next = s.accum_out
+      if   s.reset or s.cs.count_reset_A:  s.accum_reg.next = 0
+      elif s.cs.accum_reg_en_A:            s.accum_reg.next = s.accum_out
     
 
   def elaborate_logic( s ):
@@ -207,7 +209,7 @@ class DotProductCtrl( Model ):
     #--------------------------------------------------------------------------
 
     @s.posedge_clk
-    def state_update():
+    def state_update_M0():
       if   s.reset:    s.state.next = IDLE
       elif s.stall_M0: s.state.next = s.state
       else:            s.state.next = s.state_next
@@ -220,14 +222,14 @@ class DotProductCtrl( Model ):
 
       s.state_next.value = s.state
 
-      if   s.state == IDLE        and s.ss.go:
+      if   s.state == IDLE        and s.ss.go_M0:
         s.state_next.value = SEND_OP_LDA
 
       elif s.state == SEND_OP_LDA and send_req:
         s.state_next.value = SEND_OP_LDB
 
       elif s.state == SEND_OP_LDB and send_req:
-        if s.ss.last_item:
+        if s.ss.last_item_M0:
           s.state_next.value = SEND_OP_ST
         else:
           s.state_next.value = SEND_OP_LDA
@@ -268,7 +270,7 @@ class DotProductCtrl( Model ):
     def state_to_ctrl():
 
       # TODO: cannot infer temporaries when an inferred temporary on the RHS!
-      s.L = s.ss.last_item
+      s.L = s.ss.last_item_M0
 
       # TODO: multiple assignments to a temporary results in duplicate decl error!
       # Encode signals sent down the pipeline based on State
@@ -302,29 +304,28 @@ class DotProductCtrl( Model ):
 
       # M0 Stage
 
-      s.cs.baddr_sel   .value = s.ctrl_signals_M0[0:2]
-      s.cs.offset_sel  .value = s.ctrl_signals_M0[  2]
-      s.cs.data_sel    .value = s.ctrl_signals_M0[  3]
-      s.cs.count_reset .value = s.ctrl_signals_M0[ 11]
-      s.cs.count_en    .value = s.ctrl_signals_M0[ 12] and not s.any_stall
-      s.cs.mem_type    .value = s.ctrl_signals_M0[4:6]
-      s.cs.update      .value = s.ctrl_signals_M0[ 13] and s.cpu_ifc.p2c_val
+      s.cs.baddr_sel_M0   .value = s.ctrl_signals_M0[0:2]
+      s.cs.offset_sel_M0  .value = s.ctrl_signals_M0[  2]
+      s.cs.count_reset_M0 .value = s.ctrl_signals_M0[ 11]
+      s.cs.count_reset_A  .value = s.cs.count_reset_M0
+      s.cs.count_en_M0    .value = s.ctrl_signals_M0[ 12] and not s.any_stall
+      s.cs.update_M0      .value = s.ctrl_signals_M0[ 13] and s.cpu_ifc.p2c_val
       s.mem_ifc.p2c_val.value = req_en and not s.any_stall
 
       # M1 Stage
 
-      s.cs.reg_a_en    .value = s.ctrl_signals_M1[  6]
-      s.cs.reg_b_en    .value = s.ctrl_signals_M1[  7]
+      s.cs.reg_a_en_M1    .value = s.ctrl_signals_M1[  6]
+      s.cs.reg_b_en_M1    .value = s.ctrl_signals_M1[  7]
       s.mem_ifc.c2p_rdy.value = resp_en and not s.stall_M1
 
       # X  Stage
 
       for i in range( s.nmul_stages ):
-        s.cs.mul_reg_en[i].value = s.ctrl_signals_X[i][8]
+        s.cs.mul_reg_en_M1[i].value = s.ctrl_signals_X[i][8]
 
       # A Stage
 
-      s.cs.accum_reg_en.value = s.ctrl_signals_A[9]
+      s.cs.accum_reg_en_A.value = s.ctrl_signals_A[9]
 
   def elaborate_logic( s ):
     pass
@@ -337,33 +338,33 @@ class CtrlSignals( BitStructDefinition ):
 
     # M0 Stage Signals
 
-    s.baddr_sel      = BitField (2)
-    s.offset_sel     = BitField (1)
-    s.data_sel       = BitField (1)
-    s.count_reset    = BitField (1)
-    s.count_en       = BitField (1)
-    s.mem_type       = BitField (2)
+    s.baddr_sel_M0   = BitField (2)
+    s.offset_sel_M0  = BitField (1)
+    s.count_reset_M0 = BitField (1)
+    s.count_en_M0    = BitField (1)
 
     # M1 Stage Signals
 
-    s.reg_a_en       = BitField (1)
-    s.reg_b_en       = BitField (1)
+    s.reg_a_en_M1    = BitField (1)
+    s.reg_b_en_M1    = BitField (1)
 
     # X Stage Signals
 
-    s.mul_reg_en     = BitField (nmul_stages)
+    s.mul_reg_en_M1  = BitField (nmul_stages)
 
     # A Stage Signals
 
-    s.accum_reg_en   = BitField (1)
+    s.accum_reg_en_A = BitField (1)
+    s.count_reset_A  = BitField (1)
+
 
     #IDLE State Signals
-    s.update         = BitField (1)
+    s.update_M0         = BitField (1)
 
 class StatusSignals( BitStructDefinition ):
   def __init__(s):
-    s.go             = BitField (1)
-    s.last_item      = BitField (1)
+    s.go_M0             = BitField (1)
+    s.last_item_M0      = BitField (1)
     
 
 #------------------------------------------------------------------------------
