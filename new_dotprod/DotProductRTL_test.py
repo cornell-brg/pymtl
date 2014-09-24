@@ -6,7 +6,7 @@ from new_pymtl        import *
 from new_pmlib        import TestSource, TestMemory, mem_msgs
 from DotProductRTL    import DotProduct
 from new_pmlib        import MemMsg
-from new_pmlib        import CoProcMsg
+from new_pmlib        import CP2Msg
 
 import pytest
 
@@ -23,7 +23,7 @@ class TestHarness( Model ):
 
     s.mem  = TestMemory( s.memreq_params, s.memresp_params, 1, mem_delay )
     mem_ifc = MemMsg   ( 32, 32)
-    cpu_ifc = CoProcMsg( 5, 32 )
+    cpu_ifc = CP2Msg   ( 5, 32 )
 
     s.lane = DotProduct(mem_ifc, cpu_ifc )
 
@@ -164,7 +164,7 @@ def test_dotproduct( dump_vcd, test_verilog, mem_delay, nmul_stages ):
 @pytest.mark.parametrize(
   ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
-def test_dotproduct2( dump_vcd, test_verilog, mem_delay, nmul_stages ):
+def test_2dotprod( dump_vcd, test_verilog, mem_delay, nmul_stages ):
   lane = 0
   run_mvmult_test( dump_vcd, "DP.vcd",
                    TestHarness( lane, nmul_stages, mem_delay, test_verilog ),

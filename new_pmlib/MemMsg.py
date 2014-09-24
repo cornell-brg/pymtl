@@ -19,7 +19,7 @@ class MemMsg( object ):
 
 class MemReqMsg( BitStructDefinition ):
 
-  def __init__( s, addr_nbits, data_nbits):
+  def __init__( s, addr_nbits, data_nbits ):
 
     s.type_nbits = 1
     s.addr_nbits = addr_nbits

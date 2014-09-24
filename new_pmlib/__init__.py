@@ -32,5 +32,5 @@ from ParentChildBundle   import ParentBundle, ChildBundle
 
 from NetMsg              import NetMsg
 from MemMsg              import MemMsg
-from CoProcMsg           import CoProcMsg
+from CP2Msg              import CP2Msg
 

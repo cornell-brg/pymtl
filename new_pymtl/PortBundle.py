@@ -78,7 +78,7 @@ class PortBundle( object ):
         self.__dict__[var_name] = OutPort ( var_obj.msg_type )
       elif isinstance( var_obj, OutPort ):
         self.__dict__[var_name] = InPort  ( var_obj.msg_type )
-
+      
     return self
 
   #---------------------------------------------------------------------

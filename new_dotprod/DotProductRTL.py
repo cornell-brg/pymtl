@@ -14,14 +14,7 @@ class DotProduct( Model ):
     s.dpath = DotProductDpath( mem_ifc_types, cpu_ifc_types )
     s.ctrl  = DotProductCtrl ( mem_ifc_types, cpu_ifc_types )
 
-    s.connect( s.dpath.cs,  s.ctrl.cs )
-    s.connect( s.dpath.ss,  s.ctrl.ss )
-
-    s.connect( s.cpu_ifc, s.dpath.cpu_ifc )
-    s.connect( s.cpu_ifc, s.ctrl.cpu_ifc  )
-
-    s.connect( s.mem_ifc, s.dpath.mem_ifc )
-    s.connect( s.mem_ifc, s.ctrl.mem_ifc  )
+    s.auto_connect(s.dpath, s.ctrl)
 
   def line_trace( s ):
     return "| {} {} {} {}|".format(s.ctrl.state, s.dpath.count, s.dpath.accum_reg, s.ctrl.pause)

@@ -288,6 +288,9 @@ class Model( object ):
     for name, obj in current_model.__dict__.items():
       if not name.startswith( '_' ):
         self._check_type( current_model, name, obj )
+    if hasattr( current_model, '_auto_connects' ):
+      current_model._auto_connect()
+
 
   #---------------------------------------------------------------------
   # _check_type
@@ -386,7 +389,6 @@ class Model( object ):
   #---------------------------------------------------------------------
   # Set the directionality on all connections in the design of a Model.
   def _recurse_connections(self):
-
     # Set direction of all connections
     for c in self._connections:
       self._set_edge_direction( c )
@@ -458,10 +460,8 @@ class Model( object ):
   #---------------------------------------------------------------------
   # Connect a single pair of Signal objects.
   def _connect_signal( self, left_port, right_port ):
-
     # Can't connect a port to itself!
     assert left_port != right_port
-
     # Create the connection
     connection_edge = ConnectionEdge( left_port, right_port )
 
@@ -485,4 +485,45 @@ class Model( object ):
 
     for left, right in ports:
       self._connect_signal( left, right )
+
+  def _port_dict( self, lst ):
+
+    dictionary = {}
+    for port in lst:
+      if not port.name == 'clk' and not port.name == 'reset':
+        dictionary[port.name] = port
+    return dictionary
+
+  def _auto_help( self, p1, p2, p3, m2, m3):
+
+    dict1 = self._port_dict(p1)
+    dict2 = self._port_dict(p2)
+    dict3 = self._port_dict(p3)
+
+    for key in dict1:
+      if key in dict2:
+        self.connect(dict1[key],dict2[key])
+        del dict2[key]
+      if key in dict3:
+        self.connect(dict1[key],dict3[key])
+        del dict3[key]
+
+    for key in dict3:
+      if key in dict2:
+        self.connect(dict2[key], dict3[key])
+
+  def _auto_connect(self):
+    for m1,m2 in self._auto_connects:
+      ports1 = m1.get_ports()
+      ports2 = m2.get_ports() if m2 is not None else []
+      self._auto_help(self._inports+self._outports, ports1, ports2, m1, m2)
+
+  def auto_connect( self, m1, m2 = None ):
+    if not hasattr( self, '_auto_connects' ):
+      self._auto_connects = []
+    self._auto_connects.append((m1,m2))
+
+
+
+
 
