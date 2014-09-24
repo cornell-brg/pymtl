@@ -28,8 +28,9 @@ from TestProcManager     import TestProcManager
 from SparseMemoryImage   import SparseMemoryImage
 
 from ValRdyBundle        import InValRdyBundle, OutValRdyBundle
+from ParentChildBundle   import ParentBundle, ChildBundle
 
 from NetMsg              import NetMsg
-from MemMsg              import MemReqMsg
-from MemMsg              import MemRespMsg
+from MemMsg              import MemMsg
+from CoProcMsg           import CoProcMsg
 

@@ -3,6 +3,8 @@
 from new_pymtl                       import *
 from new_pmlib                       import mem_msgs
 from new_pmlib                       import InValRdyBundle, OutValRdyBundle
+from new_pmlib                       import MemMsg
+from new_pmlib                       import CoProcMsg
 from new_dpproc.ParcProcPipelinedMul import ParcProcPipelinedMul
 from DotProductRTL                   import DotProduct
 
@@ -47,22 +49,37 @@ class Tile( Model ):
     nmul_stages = 4
 
     s.proc     = Processor( reset_vector=0x00000400 )
+
+    mem_ifc = MemMsg   ( 32, 32)
+    cpu_ifc = CoProcMsg( 5, 32 )
+
     s.cp2      = DotProduct(   nmul_stages,
-                               cop_addr_nbits=5,
-                               cop_data_nbits=32,
-                               mem_addr_nbits=32,
-                               mem_data_nbits=32 )
+                               mem_ifc,
+                               cpu_ifc )
 
     s.connect( s.go,           s.proc.go        )
     s.connect( s.status,       s.proc.status    )
     s.connect( s.stats_en,     s.proc.stats_en  )
     s.connect( s.num_insts,    s.proc.num_insts )
 
-    s.connect( s.cp2.from_cpu, s.proc.to_cp2    )
+    to_cp2_msg = Wire( 37 )
+    to_cp2_val = Wire( 1  )
+    to_cp2_rdy = Wire( 1  )
+
+    s.connect( s.cp2.from_cpu.msg, to_cp2_msg   )
+    s.connect( s.cp2.from_cpu.val, to_cp2_val   )
+    s.connect( s.cp2.from_cpu.rdy, to_cp2_rdy   )
     s.connect( s.cp2.to_cpu,   s.proc.from_cp2  )
 
     if s.mem_data_nbits == 32: s.disable_caches()
     else:                      s.enable_caches ()
+
+    @s.combinational:
+    def connect_bitstructs():
+      s.cp2.cpu_ifc.p2c_msg.value = to_cp2_msg
+      s.cp2.cpu_ifc.p2c_val.value = to_cp2_val
+      to_cp2_rdy.value = s.cp2.cpu_ifc.p2c_rdy
+
 
   #---------------------------------------------------------------------
   # disable_caches

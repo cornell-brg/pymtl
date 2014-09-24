@@ -208,4 +208,8 @@ class _SignalSlice( object ):
   def connections( self, value ):
     self._signal.connections = value
 
+  def __getitem__( self, addr ):
+    #TODO THIS ONLY WORKS FOR SLICE + INT
+    return self._signal[self._addr.start+addr]
+
 

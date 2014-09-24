@@ -4,7 +4,9 @@
 
 from new_pymtl        import *
 from new_pmlib        import TestSource, TestMemory, mem_msgs
-from DotProductRTL import DotProduct
+from DotProductRTL    import DotProduct
+from new_pmlib        import MemMsg
+from new_pmlib        import CoProcMsg
 
 import pytest
 
@@ -16,21 +18,50 @@ class TestHarness( Model ):
   def __init__( s, lane_id, nmul_stages, mem_delay, test_verilog ):
 
 
-    memreq_params  = mem_msgs.MemReqParams( 32, 32 )
-    memresp_params = mem_msgs.MemRespParams( 32 )
+    s.memreq_params  = mem_msgs.MemReqParams( 32, 32 )
+    s.memresp_params = mem_msgs.MemRespParams( 32 )
 
-    s.mem  = TestMemory( memreq_params, memresp_params, 1, mem_delay )
-    s.lane = DotProduct( nmul_stages )
+    s.mem  = TestMemory( s.memreq_params, s.memresp_params, 1, mem_delay )
+    mem_ifc = MemMsg   ( 32, 32)
+    cpu_ifc = CoProcMsg( 5, 32 )
+
+    s.lane = DotProduct(mem_ifc, cpu_ifc )
 
     if test_verilog:
       s.lane = get_verilated( s.lane )
 
+
   def elaborate_logic( s ):
-    s.connect( s.lane.req , s.mem.reqs [0] )
-    s.connect( s.lane.resp, s.mem.resps[0] )
+    s.mem_req =  Wire( s.memreq_params.nbits  )
+    s.mem_resp = Wire( s.memresp_params.nbits )
+
+    @s.combinational
+    def connect_structs():
+      s.mem_req.value = s.lane.mem_ifc.p2c_msg
+      s.mem.reqs[0].msg.value = s.memreq_params.mk_req(
+        s.lane.mem_ifc.p2c_msg.type,
+        s.lane.mem_ifc.p2c_msg.addr,
+        s.lane.mem_ifc.p2c_msg.len,
+        s.lane.mem_ifc.p2c_msg.data)
+
+      s.mem_resp.value = s.mem.resps[0].msg
+      print "RESP", s.mem.resps[0].msg[s.memresp_params.data_slice]
+      tup = s.memresp_params.unpck_resp(s.mem_resp)
+      print "REQ ", s.mem.reqs[0].msg[s.memreq_params.addr_slice], s.lane.mem_ifc.p2c_msg.addr
+      s.lane.mem_ifc.c2p_msg.type.value = tup[0]
+      s.lane.mem_ifc.c2p_msg.len.value = tup[1]
+      s.lane.mem_ifc.c2p_msg.data.value = tup[2]
+
+      s.mem.reqs[0].val.value = s.lane.mem_ifc.p2c_val
+      s.lane.mem_ifc.p2c_rdy.value = s.mem.reqs[0].rdy
+
+      s.mem.resps[0].rdy.value =  s.lane.mem_ifc.c2p_rdy
+      s.lane.mem_ifc.c2p_val.value = s.mem.resps[0].val
+
+
 
   def done( s ):
-    return s.lane.to_cpu.val
+    return s.lane.cpu_ifc.c2p_val
 
   def line_trace( s ):
     return "{} -> {}".format( s.lane.line_trace(), s.mem.line_trace() )
@@ -63,34 +94,34 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   go = True
 
   sim.cycle()
-  model.lane.from_cpu.val.value = 1
-  model.lane.from_cpu.msg[0:32] = size
-  model.lane.from_cpu.msg[32:37] = 1
+  model.lane.cpu_ifc.p2c_val.value = 1
+  model.lane.cpu_ifc.p2c_msg.data = size
+  model.lane.cpu_ifc.p2c_msg.addr = 1
 
   sim.cycle()
-  model.lane.from_cpu.val.value = 1
-  model.lane.from_cpu.msg[0:32] = m_baseaddr
-  model.lane.from_cpu.msg[32:37] = 2
+  model.lane.cpu_ifc.p2c_val.value = 1
+  model.lane.cpu_ifc.p2c_msg.data = m_baseaddr
+  model.lane.cpu_ifc.p2c_msg.addr = 2
 
   sim.cycle()
-  model.lane.from_cpu.val.value = 1
-  model.lane.from_cpu.msg[0:32] = v_baseaddr
-  model.lane.from_cpu.msg[32:37] = 3
+  model.lane.cpu_ifc.p2c_val.value = 1
+  model.lane.cpu_ifc.p2c_msg.data = v_baseaddr
+  model.lane.cpu_ifc.p2c_msg.addr = 3
 
   sim.cycle()
-  model.lane.from_cpu.val.value = 1
-  model.lane.from_cpu.msg[0:32] = go
-  model.lane.from_cpu.msg[32:37] = 0
+  model.lane.cpu_ifc.p2c_val.value = 1
+  model.lane.cpu_ifc.p2c_msg.data = go
+  model.lane.cpu_ifc.p2c_msg.addr = 0
 
   while not model.done() and sim.ncycles < 100:
     sim.print_line_trace()
     sim.cycle()
-    model.lane.from_cpu.val.value = 0
+    model.lane.cpu_ifc.p2c_val.value = 0
   sim.print_line_trace()
   assert model.done()
 
 
-  assert exp_value == model.lane.to_cpu.msg
+  assert exp_value == model.lane.cpu_ifc.c2p_msg
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
