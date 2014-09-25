@@ -66,27 +66,31 @@ class DotProductDpath( Model ):
 
     #--- Stage M0 --------------------------------------------------------
 
-    s.count      = Wire( 32 )
-
-    s.p2c_data = [ Wire ( 32 ) for x in range( 3 ) ]
+    s.count     = Wire ( 32 )
+    s.src0_addr = Wire ( 32 )
+    s.src1_addr = Wire ( 32 )
+    s.size      = Wire ( 32 )
 
     @s.combinational
     def stage_M0_comb():
       # base_addr mux
-      if   s.cs.baddr_sel_M0 == row: base_addr = s.p2c_data[src0]
-      else:                          base_addr = s.p2c_data[src1]
+      if   s.cs.baddr_sel_M0 == row: base_addr = s.src0_addr
+      else:                          base_addr = s.src1_addr
 
       # memory request
       s.mem_ifc.p2c_msg.value = 0
       s.mem_ifc.p2c_msg.addr.value = base_addr + (s.count << 2)
 
       # last item status signal
-      s.ss.last_item_M0.value = s.count == (s.p2c_data[size] - 1)
+      s.ss.last_item_M0.value = s.count == (s.size - 1)
 
     @s.posedge_clk
     def stage_M0_seq():
+      addr = s.cpu_ifc.p2c_msg.addr
       if s.cs.update_M0:
-        s.p2c_data[s.cpu_ifc.p2c_msg.addr-1] = s.cpu_ifc.p2c_msg.data
+        if   addr == 1: s.size      = s.cpu_ifc.p2c_msg.data
+        elif addr == 2: s.src0_addr = s.cpu_ifc.p2c_msg.data
+        elif addr == 3: s.src1_addr = s.cpu_ifc.p2c_msg.data
 
       if   s.cs.count_reset_M0: s.count.next = 0
       elif s.cs.count_en_M0:    s.count.next = s.count + 1
