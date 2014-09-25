@@ -40,4 +40,4 @@ class ParentChildBundle( PortBundle ):
 #-------------------------------------------------------------------------
 # Create InValRdyBundle and OutValRdyBundle
 #-------------------------------------------------------------------------
-ParentBundle, ChildBundle = create_PortBundles( ParentChildBundle )
+ParentReqRespBundle, ChildReqRespBundle = create_PortBundles( ParentChildBundle )

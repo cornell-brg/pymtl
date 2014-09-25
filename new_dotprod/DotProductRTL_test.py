@@ -96,22 +96,20 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   sim.cycle()
   model.lane.cpu_ifc.p2c_val.value = 1
   model.lane.cpu_ifc.p2c_msg.data = size
-  model.lane.cpu_ifc.p2c_msg.addr = 1
+  model.lane.cpu_ifc.p2c_msg.addr.value = 1
+  print model.lane.cpu_ifc.p2c_msg.addr
 
   sim.cycle()
   model.lane.cpu_ifc.p2c_val.value = 1
   model.lane.cpu_ifc.p2c_msg.data = m_baseaddr
-  model.lane.cpu_ifc.p2c_msg.addr = 2
+  model.lane.cpu_ifc.p2c_msg.addr.value = 2
+  print model.lane.cpu_ifc.p2c_msg.addr
 
   sim.cycle()
   model.lane.cpu_ifc.p2c_val.value = 1
   model.lane.cpu_ifc.p2c_msg.data = v_baseaddr
-  model.lane.cpu_ifc.p2c_msg.addr = 3
-
-  sim.cycle()
-  model.lane.cpu_ifc.p2c_val.value = 1
-  model.lane.cpu_ifc.p2c_msg.data = go
-  model.lane.cpu_ifc.p2c_msg.addr = 0
+  model.lane.cpu_ifc.p2c_msg.addr.value = 3
+  print model.lane.cpu_ifc.p2c_msg.addr
 
   while not model.done() and sim.ncycles < 100:
     sim.print_line_trace()

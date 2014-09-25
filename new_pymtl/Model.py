@@ -518,7 +518,7 @@ class Model( object ):
       ports2 = m2.get_ports() if m2 is not None else []
       self._auto_help(self._inports+self._outports, ports1, ports2, m1, m2)
 
-  def auto_connect( self, m1, m2 = None ):
+  def connect_auto( self, m1, m2 = None ):
     if not hasattr( self, '_auto_connects' ):
       self._auto_connects = []
     self._auto_connects.append((m1,m2))
