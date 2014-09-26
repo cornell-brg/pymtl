@@ -16,7 +16,7 @@ class DotProduct( Model ):
     s.connect_auto(s.dpath, s.ctrl)
 
   def line_trace( s ):
-    return "| {} {} {} {}|".format(s.ctrl.state, s.dpath.count, s.dpath.accum_reg, s.ctrl.pause)
+    return "| {} {} {} {}|".format(s.ctrl.state, s.dpath.count, s.dpath.accum_reg_A, s.ctrl.pause)
 
   def elaborate_logic( s ):
     pass
@@ -64,73 +64,66 @@ class DotProductDpath( Model ):
     s.cs = InPort ( CtrlSignals()   )
     s.ss = OutPort( StatusSignals() )
 
-    #--- Stage M0 --------------------------------------------------------
+    #--- Stage M --------------------------------------------------------
 
-    s.count     = Wire ( 32 )
-    s.src0_addr = Wire ( 32 )
-    s.src1_addr = Wire ( 32 )
-    s.size      = Wire ( 32 )
-
-    @s.combinational
-    def stage_M0_comb():
-      # base_addr mux
-      if   s.cs.baddr_sel_M0 == row: base_addr = s.src0_addr
-      else:                          base_addr = s.src1_addr
-
-      # memory request
-      s.mem_ifc.p2c_msg.value = 0
-      s.mem_ifc.p2c_msg.addr.value = base_addr + (s.count << 2)
-
-      # last item status signal
-      s.ss.last_item_M0.value = s.count == (s.size - 1)
+    s.count       = Wire ( cpu_ifc_types.req.data.nbits  )
+    s.size        = Wire ( cpu_ifc_types.req.data.nbits  )
+    s.scr0_addr_M = Wire ( mem_ifc_types.req.addr.nbits  )
+    s.src1_addr_M = Wire ( mem_ifc_types.req.addr.nbits  )
+    s.src0_data_M = Wire ( mem_ifc_types.resp.data.nbits )
+    s.src1_data_M = Wire ( mem_ifc_types.resp.data.nbits )
 
     @s.posedge_clk
     def stage_M0_seq():
       addr = s.cpu_ifc.p2c_msg.addr
       if s.cs.update_M0:
-        if   addr == 1: s.size      = s.cpu_ifc.p2c_msg.data
-        elif addr == 2: s.src0_addr = s.cpu_ifc.p2c_msg.data
-        elif addr == 3: s.src1_addr = s.cpu_ifc.p2c_msg.data
+        if   addr == 1: s.size        = s.cpu_ifc.p2c_msg.data
+        elif addr == 2: s.scr0_addr_M = s.cpu_ifc.p2c_msg.data
+        elif addr == 3: s.src1_addr_M = s.cpu_ifc.p2c_msg.data
 
       if   s.cs.count_reset_M0: s.count.next = 0
       elif s.cs.count_en_M0:    s.count.next = s.count + 1
 
-    #--- Stage M1 --------------------------------------------------------
+      if s.cs.src0_en_M1: s.src0_data_M.next = s.mem_ifc.c2p_msg.data
+      if s.cs.src1_en_M1: s.src1_data_M.next = s.mem_ifc.c2p_msg.data
 
-    s.src0_M1 = Wire( 32 )
-    s.src1_M1 = Wire( 32 )
+    @s.combinational
+    def stage_M0_comb():
+      # base_addr mux
+      if   s.cs.baddr_sel_M0 == row: base_addr_M = s.scr0_addr_M
+      else:                          base_addr_M = s.src1_addr_M
 
-    @s.posedge_clk
-    def stage_M1():
-      if s.cs.src0_M1_en_M1: s.src0_M1.next = s.mem_ifc.c2p_msg.data
-      if s.cs.src1_M1_en_M1: s.src1_M1.next = s.mem_ifc.c2p_msg.data
+      # memory request
+      s.mem_ifc.p2c_msg.value = 0
+      s.mem_ifc.p2c_msg.addr.value = base_addr_M + (s.count << 2)
+
+      # last item status signal
+      s.ss.last_item_M0.value = s.count == (s.size - 1)
 
     #--- Stage X ---------------------------------------------------------
 
-    s.mul_out = Wire(32)
+    s.result_X = Wire( cpu_ifc_types.req.data.nbits )
 
-    s.mul = IntegerPipelinedMultiplier( nbits=32, nstages=4 )
-    s.connect_dict( { s.mul.a       : s.src0_M1,
-                      s.mul.b       : s.src1_M1,
-                      s.mul.product : s.mul_out } )
-    for i in range( 4 ):
-      s.connect( s.mul.enables[i], s.cs.mul_reg_en_M1[i] )
+    s.mul = IntPipelinedMultiplier( nbits=cpu_ifc_types.req.data.nbits,
+                                    nstages=4 )
+    s.connect_dict( { s.mul.op_a       : s.src0_data_M,
+                      s.mul.op_b       : s.src1_data_M,
+                      s.mul.product    : s.result_X } )
 
     #--- Stage A ----------------------------------------------------------
 
-    s.accum_out = Wire(32)
-    s.accum_reg = Wire(32)
-
-    @s.combinational
-    def stage_A_comb():
-      s.accum_out.value = s.mul_out + s.accum_reg
-      s.cpu_ifc.c2p_msg.value = s.accum_reg
+    s.accum_out   = Wire( cpu_ifc_types.resp.data.nbits )
+    s.accum_reg_A = Wire( cpu_ifc_types.resp.data.nbits )
 
     @s.posedge_clk
     def stage_A_seq():
-      if   s.reset or s.cs.count_reset_A:  s.accum_reg.next = 0
-      elif s.cs.accum_reg_en_A:            s.accum_reg.next = s.accum_out
-    
+      if   s.reset or s.cs.count_reset_A:  s.accum_reg_A.next = 0
+      elif s.cs.accum_reg_en_A:            s.accum_reg_A.next = s.accum_out
+
+    @s.combinational
+    def stage_A_comb():
+      s.accum_out.value = s.result_X + s.accum_reg_A
+      s.cpu_ifc.c2p_msg.value = s.accum_reg_A
 
   def elaborate_logic( s ):
     pass
@@ -281,8 +274,8 @@ class DotProductCtrl( Model ):
 
       # M1 Stage
 
-      s.cs.src0_M1_en_M1    .value = s.ctrl_signals_M1[  6]
-      s.cs.src1_M1_en_M1    .value = s.ctrl_signals_M1[  7]
+      s.cs.src0_en_M1    .value = s.ctrl_signals_M1[  6]
+      s.cs.src1_en_M1    .value = s.ctrl_signals_M1[  7]
       s.mem_ifc.c2p_rdy.value = resp_en and not s.stall_M1
 
       # X  Stage
@@ -312,8 +305,8 @@ class CtrlSignals( BitStructDefinition ):
 
     # M1 Stage Signals
 
-    s.src0_M1_en_M1    = BitField (1)
-    s.src1_M1_en_M1    = BitField (1)
+    s.src0_en_M1    = BitField (1)
+    s.src1_en_M1    = BitField (1)
 
     # X Stage Signals
 
@@ -340,9 +333,9 @@ class StatusSignals( BitStructDefinition ):
 # A dummy multiplier module, acts as a placeholder for DesignWare components.
 class IntegerPipelinedMultiplier( Model ):
   def __init__( s, nbits, nstages ):
-    s.a       = InPort ( nbits )
-    s.b       = InPort ( nbits )
-    s.enables = InPort ( nstages )
+    s.op_a    = InPort ( nbits )
+    s.op_b    = InPort ( nbits )
+    
     s.product = OutPort( nbits )
 
     s.nbits   = nbits
@@ -358,13 +351,10 @@ class IntegerPipelinedMultiplier( Model ):
         for i in range( s.nstages ):
           s.regs[i].next = 0
       else:
-
-        if s.enables[0]:
-          s.regs[0].next = s.a * s.b
+        s.regs[0].next = s.op_a * s.op_b
 
         for i in range( 1, s.nstages ):
-          if s.enables[i]:
-            s.regs[i].next = s.regs[i-1]
+          s.regs[i].next = s.regs[i-1]
 
     s.connect( s.product, s.regs[-1] )
 
