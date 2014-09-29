@@ -1,11 +1,10 @@
-#------------------------------------------------------------------------------
 #==============================================================================
 # MatrixVecLaneBL_test
 #==============================================================================
 
 from new_pymtl        import *
 from new_pmlib        import TestSource, TestMemory, mem_msgs
-from DotProductFL     import DotProduct
+from DotProductCL    import DotProduct
 from new_pmlib        import MemMsg
 from new_pmlib        import CP2Msg
 
@@ -94,28 +93,32 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   size = len(src_vector[1]) / 4
   go = True
 
+  model.lane.cpu_ifc.p2c_val.next = 1
+  model.lane.cpu_ifc.p2c_msg.data.next = size
+  model.lane.cpu_ifc.p2c_msg.addr.next = 1
+  print model.lane.cpu_ifc.p2c_msg.addr
+  sim.print_line_trace()
   sim.cycle()
-  model.lane.cpu_ifc.p2c_val.value = 1
-  model.lane.cpu_ifc.p2c_msg.data = size
-  model.lane.cpu_ifc.p2c_msg.addr.value = 1
-  #print model.lane.cpu_ifc.p2c_msg.addr
 
+  model.lane.cpu_ifc.p2c_val.next = 1
+  model.lane.cpu_ifc.p2c_msg.data.next = m_baseaddr
+  model.lane.cpu_ifc.p2c_msg.addr.next = 2
+  print model.lane.cpu_ifc.p2c_msg.addr
+  sim.print_line_trace()
   sim.cycle()
-  model.lane.cpu_ifc.p2c_val.value = 1
-  model.lane.cpu_ifc.p2c_msg.data = m_baseaddr
-  model.lane.cpu_ifc.p2c_msg.addr.value = 2
-  #print model.lane.cpu_ifc.p2c_msg.addr
 
+  model.lane.cpu_ifc.p2c_val.next = 1
+  model.lane.cpu_ifc.p2c_msg.next = v_baseaddr
+  model.lane.cpu_ifc.p2c_msg.addr.next = 3
+  print model.lane.cpu_ifc.p2c_msg.addr
+  sim.print_line_trace()
   sim.cycle()
-  model.lane.cpu_ifc.p2c_val.value = 1
-  model.lane.cpu_ifc.p2c_msg.data = v_baseaddr
-  model.lane.cpu_ifc.p2c_msg.addr.value = 3
-  #print model.lane.cpu_ifc.p2c_msg.addr
 
   while not model.done() and sim.ncycles < 100:
     sim.print_line_trace()
     sim.cycle()
     model.lane.cpu_ifc.p2c_val.value = 0
+    print model.lane.mem_ifc.p2c_rdy,model.lane.mem_ifc.p2c_val
   sim.print_line_trace()
   assert model.done()
 
