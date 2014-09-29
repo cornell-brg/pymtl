@@ -58,7 +58,9 @@ class MemRespMsg ( BitStructDefinition ):
     s.len  = BitField( s.len_nbits  )
     s.data = BitField( s.data_nbits )
 
-    #TODO mk_msg
+  def mk_resp(s, type_, len_, data):
+    pass
+
 
   def unpck( s, msg):
 

@@ -17,6 +17,9 @@ class ParentChildBundle( PortBundle ):
   #-----------------------------------------------------------------------
   # Interface for the ValRdy PortBundle.
   def __init__( self, msgtype ):
+    self.req  = msgtype.req
+    self.resp = msgtype.resp
+
     self.p2c_msg = InPort ( msgtype.req )
     self.p2c_val = InPort ( 1 )
     self.p2c_rdy = OutPort( 1 )

@@ -135,7 +135,11 @@ class Model( object ):
     def outer_wrapper():
       self._pausable_tick.switch()
 
-    self._tick_blocks.append( outer_wrapper )
+    try:
+      self._tick_blocks.append( outer_wrapper )
+    except:
+      self._tick_blocks = [ outer_wrapper ]
+
     outer_wrapper._model = self
     return outer_wrapper
 
