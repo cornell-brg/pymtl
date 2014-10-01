@@ -12,7 +12,7 @@ from new_pmlib import ParentReqRespBundle, ChildReqRespBundle
 from mvmult_fl   import InMatrixVecBundle,OutMatrixVecBundle
 from pmlib_extra import Queue
 
-class DotProduct (Model):
+class DotProductCL (Model):
 
   def elaborate_logic( s ):
     pass
@@ -178,7 +178,7 @@ class DotProduct (Model):
             s.valid[2] = True
             s.trace_X0 = "w1"
 
-          if s.valid[0] and s.valid[1] and s.valid[2]:
+          elif creg == 0:
             s.state    = s.STATE_L0
             s.counter  = s.size
             s.trace_X0 = "go"

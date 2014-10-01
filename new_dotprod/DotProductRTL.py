@@ -4,7 +4,7 @@ from new_pmlib import ParentReqRespBundle, ChildReqRespBundle
 
 nmul_stages = 4
 
-class DotProduct( Model ):
+class DotProductRTL( Model ):
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
     s.cpu_ifc = ChildReqRespBundle ( cpu_ifc_types )
@@ -77,9 +77,10 @@ class DotProductDpath( Model ):
     def stage_M0_seq():
       creg = s.cpu_ifc.req_msg.creg
       if s.cs.update_M0:
-        if   creg == 1: s.size        = s.cpu_ifc.req_msg.data
-        elif creg == 2: s.scr0_addr_M = s.cpu_ifc.req_msg.data
-        elif creg == 3: s.src1_addr_M = s.cpu_ifc.req_msg.data
+        if   creg == 1: s.size       .next = s.cpu_ifc.req_msg.data
+        elif creg == 2: s.scr0_addr_M.next = s.cpu_ifc.req_msg.data
+        elif creg == 3: s.src1_addr_M.next = s.cpu_ifc.req_msg.data
+        elif creg == 0: s.ss.go      .next = True
 
       if   s.cs.count_reset_M0: s.count.next = 0
       elif s.cs.count_en_M0:    s.count.next = s.count + 1
@@ -173,7 +174,7 @@ class DotProductCtrl( Model ):
 
       send_req  = s.mem_ifc.req_val and s.mem_ifc.req_rdy
       recv_resp = s.mem_ifc.resp_val and s.mem_ifc.resp_rdy
-      go        = s.valid[0] and s.valid[1] and s.valid[2]
+      go        = s.ss.go
 
       s.state_next.value = s.state
 
@@ -242,11 +243,9 @@ class DotProductCtrl( Model ):
 
       s.cpu_ifc.req_rdy.value = s.state == IDLE
       s.cpu_ifc.resp_val.value = s.state == DONE
-      print s.cpu_ifc.req_msg.creg, s.reset, s.cpu_ifc.req_val
+
       if s.state == DONE or s.reset:
         s.valid.value = 0
-      elif s.state == IDLE and s.cpu_ifc.req_val:
-        s.valid[s.cpu_ifc.req_msg.creg-1].value = 1
 
     @s.combinational
     def ctrl_to_dpath():
@@ -325,6 +324,7 @@ class StatusSignals( BitStructDefinition ):
 
   def __init__(s):
     s.last_item_M0      = BitField (1)
+    s.go                = BitField (1)
     
 
 #------------------------------------------------------------------------------

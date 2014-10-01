@@ -15,7 +15,7 @@ class ListMemPortAdapter (object):
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( s, parent, mod ):
+  def __init__( s, parent ):
 
     # Shorter names
 
@@ -24,7 +24,6 @@ class ListMemPortAdapter (object):
     s.rd             = 0
     s.wr             = 1
 
-    s.mod = mod
     # References to the memory request and response ports
 
     s.memreq         = parent
@@ -126,11 +125,14 @@ class ListMemPortAdapter (object):
     s.base = addr
     s.base_set = True
 
+  def set_size( s, size):
+    s.size = size
+
   def __len__( s ):
-    return s.mod.size
+    return s.size
 
   def __iter__( s ):
-    for x in range(s.mod.size):
+    for x in range(s.size):
       yield s[x]
 
 

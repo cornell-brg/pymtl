@@ -4,7 +4,7 @@
 
 from new_pymtl        import *
 from new_pmlib        import TestSource, TestMemory, mem_msgs
-from DotProductCL    import DotProduct
+from DotProductCL     import DotProductCL as DotProduct
 from new_pmlib        import MemMsg
 from new_pmlib        import CP2Msg
 
@@ -110,6 +110,13 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.next = v_baseaddr
   model.lane.cpu_ifc.req_msg.creg.next = 3
+  print model.lane.cpu_ifc.req_msg.creg
+  sim.print_line_trace()
+  sim.cycle()
+
+  model.lane.cpu_ifc.req_val.next = 1
+  model.lane.cpu_ifc.req_msg.next = True
+  model.lane.cpu_ifc.req_msg.creg.next = 0
   print model.lane.cpu_ifc.req_msg.creg
   sim.print_line_trace()
   sim.cycle()
