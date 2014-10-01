@@ -99,6 +99,9 @@ class Model( object ):
     func._model = self
     return func
 
+  def tick_fl( self, func ):
+    return self.pausable_tick(func)
+
   #---------------------------------------------------------------------
   # pausable_tick
   #---------------------------------------------------------------------

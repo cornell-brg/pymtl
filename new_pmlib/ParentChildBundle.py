@@ -20,13 +20,13 @@ class ParentChildBundle( PortBundle ):
     self.req  = msgtype.req
     self.resp = msgtype.resp
 
-    self.p2c_msg = InPort ( msgtype.req )
-    self.p2c_val = InPort ( 1 )
-    self.p2c_rdy = OutPort( 1 )
+    self.req_msg = InPort ( msgtype.req )
+    self.req_val = InPort ( 1 )
+    self.req_rdy = OutPort( 1 )
 
-    self.c2p_msg = InPort ( msgtype.resp )
-    self.c2p_val = InPort ( 1 )
-    self.c2p_rdy = OutPort( 1 )
+    self.resp_msg = InPort ( msgtype.resp )
+    self.resp_val = InPort ( 1 )
+    self.resp_rdy = OutPort( 1 )
 
   #-----------------------------------------------------------------------
   # to_str

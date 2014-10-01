@@ -58,7 +58,7 @@ class DotProduct (Model):
     s.mk_req         = s.mem_ifc.req.mk_msg
     s.rd             = 0
     s.wr             = 1
-    s.data_nbytes    = s.mem_ifc.p2c_msg.data.nbits/8
+    s.data_nbytes    = s.mem_ifc.req_msg.data.nbits/8
 
     # Types of transactions that can go down the pipeline
 
@@ -78,15 +78,15 @@ class DotProduct (Model):
 
     # Currently we can never really stall the response port
 
-    s.connect( s.mem_ifc.c2p_rdy, 1 )
+    s.connect( s.mem_ifc.resp_rdy, 1 )
 
     @s.tick
     def logic():
 
       # Toggle done bit
 
-      if s.cpu_ifc.c2p_val and s.cpu_ifc.c2p_rdy:
-        s.cpu_ifc.c2p_val.next = 0
+      if s.cpu_ifc.resp_val and s.cpu_ifc.resp_rdy:
+        s.cpu_ifc.resp_val.next = 0
         s.valid = [False] * 3
 
       # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -94,7 +94,7 @@ class DotProduct (Model):
       # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       # If memory request was accepted then pop it off memreq queue
 
-      if s.mem_ifc.p2c_val and s.mem_ifc.p2c_rdy:
+      if s.mem_ifc.req_val and s.mem_ifc.req_rdy:
         s.memreq_queue.deq()
 
       # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,17 +105,17 @@ class DotProduct (Model):
       if not s.pipe_queue_X0X1.empty():
 
         if s.pipe_queue_X0X1.front() == s.XACT_TYPE_L0:
-          if s.mem_ifc.c2p_val:
+          if s.mem_ifc.resp_val:
             s.pipe_queue_X0X1.deq()
-            s.src0_X1 = s.mem_ifc.c2p_msg.data
+            s.src0_X1 = s.mem_ifc.resp_msg.data
             s.trace_X1 = "L0"
           else:
             s.trace_X1 = "# "
 
         elif s.pipe_queue_X0X1.front() == s.XACT_TYPE_L1:
-          if s.mem_ifc.c2p_val:
+          if s.mem_ifc.resp_val:
             s.pipe_queue_X0X1.deq()
-            s.accumulator_X1 += ( s.src0_X1 * s.mem_ifc.c2p_msg.data )
+            s.accumulator_X1 += ( s.src0_X1 * s.mem_ifc.resp_msg.data )
             s.trace_X1 = "L1"
           else:
             s.trace_X1 = "# "
@@ -132,7 +132,7 @@ class DotProduct (Model):
 
         elif s.pipe_queue_X0X1.front() == s.XACT_TYPE_DONE:
           s.pipe_queue_X0X1.deq()
-          s.cpu_ifc.c2p_val.next = 1
+          s.cpu_ifc.resp_val.next = 1
           s.trace_X1 = "D "
 
       # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -141,8 +141,8 @@ class DotProduct (Model):
 
       s.trace_X0 = "  "
 
-      s.cpu_ifc.p2c_rdy.next = 0
-      s.mem_ifc.p2c_val.next   = 0
+      s.cpu_ifc.req_rdy.next = 0
+      s.mem_ifc.req_val.next   = 0
 
       # STATE: CMD
 
@@ -150,7 +150,7 @@ class DotProduct (Model):
 
         # Set output signals
 
-        s.cpu_ifc.p2c_rdy.next = 1
+        s.cpu_ifc.req_rdy.next = 1
 
         # Send a none transaction down the pipeline
 
@@ -158,22 +158,22 @@ class DotProduct (Model):
 
         # Process command
 
-        if s.cpu_ifc.p2c_val and s.cpu_ifc.p2c_rdy:
+        if s.cpu_ifc.req_val and s.cpu_ifc.req_rdy:
 
-          addr = s.cpu_ifc.p2c_msg.addr
-          data = s.cpu_ifc.p2c_msg.data
+          creg = s.cpu_ifc.req_msg.creg
+          data = s.cpu_ifc.req_msg.data
 
-          if   addr == 1:
+          if   creg == 1:
             s.size = data
             s.valid[0] = True
             s.trace_X0 = "ws"
 
-          elif addr == 2:
+          elif creg == 2:
             s.src0_addr = data
             s.valid[1] = True
             s.trace_X0 = "w0"
 
-          elif addr == 3:
+          elif creg == 3:
             s.src1_addr = data
             s.valid[2] = True
             s.trace_X0 = "w1"
@@ -258,7 +258,7 @@ class DotProduct (Model):
         elif s.pipe_queue_X0X1.full():
           s.trace_X0 = "#x"
         else:
-          s.cpu_ifc.c2p_msg.next = s.accumulator_X1
+          s.cpu_ifc.resp_msg.next = s.accumulator_X1
           s.pipe_queue_X0X1.enq( s.XACT_TYPE_SD )
 
           s.state     = s.STATE_WAIT2
@@ -288,17 +288,17 @@ class DotProduct (Model):
       # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
       if not s.memreq_queue.empty():
-        s.mem_ifc.p2c_val.next = 1
-        s.mem_ifc.p2c_msg.next = s.memreq_queue.front()
+        s.mem_ifc.req_val.next = 1
+        s.mem_ifc.req_msg.next = s.memreq_queue.front()
       else:
-        s.mem_ifc.p2c_val.next = 0
+        s.mem_ifc.req_val.next = 0
 
   #-----------------------------------------------------------------------
   # done
   #-----------------------------------------------------------------------
 
   def done( s ):
-    return s.cpu_ifc.c2p_val
+    return s.cpu_ifc.resp_val
 
   #-----------------------------------------------------------------------
   # line_trace

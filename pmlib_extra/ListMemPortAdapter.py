@@ -9,13 +9,13 @@
 
 from greenlet import greenlet
 
-class BytesMemPortProxy (object):
+class ListMemPortAdapter (object):
 
   #-----------------------------------------------------------------------
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( s, parent ):
+  def __init__( s, parent, mod ):
 
     # Shorter names
 
@@ -24,11 +24,15 @@ class BytesMemPortProxy (object):
     s.rd             = 0
     s.wr             = 1
 
+    s.mod = mod
     # References to the memory request and response ports
 
     s.memreq         = parent
     s.memresp        = parent
 
+    s.size = 0
+    s.base = 0
+    s.base_set = False
     s.trace          = " "
 
   #-----------------------------------------------------------------------
@@ -44,14 +48,14 @@ class BytesMemPortProxy (object):
       nbytes = int(key.stop) - int(key.start)
     else:
       addr   = int(key)
-      nbytes = 1
+      nbytes = 4
 
     len_ = nbytes if nbytes < s.memreq.req.data.nbits/8 else 0
 
     # Create a memory request to send out memory request port
 
     s.trace = "r"
-    s.memreq.req_msg.next  = s.mk_req( s.rd, addr, len_, 0 )
+    s.memreq.req_msg.next  = s.mk_req( s.rd, s.base + 4 * addr, len_, 0 )
     s.memreq.req_val.next  = 1
     s.memresp.resp_rdy.next = 1
 
@@ -88,14 +92,14 @@ class BytesMemPortProxy (object):
       nbytes = int(key.stop) - int(key.start)
     else:
       addr   = int(key)
-      nbytes = 1
+      nbytes = 4
 
     len_ = nbytes if nbytes < s.data_nbytes else 0
 
     # Create a memory request to send out memory request port
 
     s.trace = "w"
-    s.memreq.req_msg.next  = s.mk_msg( s.wr, addr, len_, value )
+    s.memreq.req_msg.next  = s.mk_msg( s.wr, s.base + 4 * addr, len_, value )
     s.memreq.req_val.next  = 1
     s.memresp.resp_rdy.next = 1
 
@@ -118,6 +122,20 @@ class BytesMemPortProxy (object):
     s.memreq.req_val.next  = 0
     s.memresp.resp_rdy.next = 0
 
+  def set_base( s, addr ):
+    s.base = addr
+    s.base_set = True
+
+  def __len__( s ):
+    return s.mod.size
+
+  def __iter__( s ):
+    for x in range(s.mod.size):
+      yield s[x]
+
+
+  def is_rdy( s ):
+    return s.base_set and s.mod.size > 0
   #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------

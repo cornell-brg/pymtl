@@ -37,31 +37,31 @@ class TestHarness( Model ):
 
     @s.combinational
     def connect_structs():
-      s.mem_req.value = s.lane.mem_ifc.p2c_msg
+      s.mem_req.value = s.lane.mem_ifc.req_msg
       s.mem.reqs[0].msg.value = s.memreq_params.mk_req(
-        s.lane.mem_ifc.p2c_msg.type,
-        s.lane.mem_ifc.p2c_msg.addr,
-        s.lane.mem_ifc.p2c_msg.len,
-        s.lane.mem_ifc.p2c_msg.data)
+        s.lane.mem_ifc.req_msg.type,
+        s.lane.mem_ifc.req_msg.addr,
+        s.lane.mem_ifc.req_msg.len,
+        s.lane.mem_ifc.req_msg.data)
 
       s.mem_resp.value = s.mem.resps[0].msg
       print "RESP", s.mem.resps[0].msg[s.memresp_params.data_slice]
       tup = s.memresp_params.unpck_resp(s.mem_resp)
-      print "REQ ", s.mem.reqs[0].msg[s.memreq_params.addr_slice], s.lane.mem_ifc.p2c_msg.addr
-      s.lane.mem_ifc.c2p_msg.type.value = tup[0]
-      s.lane.mem_ifc.c2p_msg.len.value = tup[1]
-      s.lane.mem_ifc.c2p_msg.data.value = tup[2]
+      print "REQ ", s.mem.reqs[0].msg[s.memreq_params.addr_slice], s.lane.mem_ifc.req_msg.addr
+      s.lane.mem_ifc.resp_msg.type.value = tup[0]
+      s.lane.mem_ifc.resp_msg.len.value = tup[1]
+      s.lane.mem_ifc.resp_msg.data.value = tup[2]
 
-      s.mem.reqs[0].val.value = s.lane.mem_ifc.p2c_val
-      s.lane.mem_ifc.p2c_rdy.value = s.mem.reqs[0].rdy
+      s.mem.reqs[0].val.value = s.lane.mem_ifc.req_val
+      s.lane.mem_ifc.req_rdy.value = s.mem.reqs[0].rdy
 
-      s.mem.resps[0].rdy.value =  s.lane.mem_ifc.c2p_rdy
-      s.lane.mem_ifc.c2p_val.value = s.mem.resps[0].val
+      s.mem.resps[0].rdy.value =  s.lane.mem_ifc.resp_rdy
+      s.lane.mem_ifc.resp_val.value = s.mem.resps[0].val
 
 
 
   def done( s ):
-    return s.lane.cpu_ifc.c2p_val
+    return s.lane.cpu_ifc.resp_val
 
   def line_trace( s ):
     return "{} -> {}".format( s.lane.line_trace(), s.mem.line_trace() )
@@ -93,37 +93,37 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   size = len(src_vector[1]) / 4
   go = True
 
-  model.lane.cpu_ifc.p2c_val.next = 1
-  model.lane.cpu_ifc.p2c_msg.data.next = size
-  model.lane.cpu_ifc.p2c_msg.addr.next = 1
-  print model.lane.cpu_ifc.p2c_msg.addr
+  model.lane.cpu_ifc.req_val.next = 1
+  model.lane.cpu_ifc.req_msg.data.next = size
+  model.lane.cpu_ifc.req_msg.creg.next = 1
+  print model.lane.cpu_ifc.req_msg.creg
   sim.print_line_trace()
   sim.cycle()
 
-  model.lane.cpu_ifc.p2c_val.next = 1
-  model.lane.cpu_ifc.p2c_msg.data.next = m_baseaddr
-  model.lane.cpu_ifc.p2c_msg.addr.next = 2
-  print model.lane.cpu_ifc.p2c_msg.addr
+  model.lane.cpu_ifc.req_val.next = 1
+  model.lane.cpu_ifc.req_msg.data.next = m_baseaddr
+  model.lane.cpu_ifc.req_msg.creg.next = 2
+  print model.lane.cpu_ifc.req_msg.creg
   sim.print_line_trace()
   sim.cycle()
 
-  model.lane.cpu_ifc.p2c_val.next = 1
-  model.lane.cpu_ifc.p2c_msg.next = v_baseaddr
-  model.lane.cpu_ifc.p2c_msg.addr.next = 3
-  print model.lane.cpu_ifc.p2c_msg.addr
+  model.lane.cpu_ifc.req_val.next = 1
+  model.lane.cpu_ifc.req_msg.next = v_baseaddr
+  model.lane.cpu_ifc.req_msg.creg.next = 3
+  print model.lane.cpu_ifc.req_msg.creg
   sim.print_line_trace()
   sim.cycle()
 
   while not model.done() and sim.ncycles < 100:
     sim.print_line_trace()
     sim.cycle()
-    model.lane.cpu_ifc.p2c_val.value = 0
-    print model.lane.mem_ifc.p2c_rdy,model.lane.mem_ifc.p2c_val
+    model.lane.cpu_ifc.req_val.value = 0
+    print model.lane.mem_ifc.req_rdy,model.lane.mem_ifc.req_val
   sim.print_line_trace()
   assert model.done()
 
 
-  assert exp_value == model.lane.cpu_ifc.c2p_msg
+  assert exp_value == model.lane.cpu_ifc.resp_msg
 
   # Add a couple extra ticks so that the VCD dump is nicer
 

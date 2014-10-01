@@ -75,17 +75,17 @@ class DotProductDpath( Model ):
 
     @s.posedge_clk
     def stage_M0_seq():
-      addr = s.cpu_ifc.p2c_msg.addr
+      creg = s.cpu_ifc.req_msg.creg
       if s.cs.update_M0:
-        if   addr == 1: s.size        = s.cpu_ifc.p2c_msg.data
-        elif addr == 2: s.scr0_addr_M = s.cpu_ifc.p2c_msg.data
-        elif addr == 3: s.src1_addr_M = s.cpu_ifc.p2c_msg.data
+        if   creg == 1: s.size        = s.cpu_ifc.req_msg.data
+        elif creg == 2: s.scr0_addr_M = s.cpu_ifc.req_msg.data
+        elif creg == 3: s.src1_addr_M = s.cpu_ifc.req_msg.data
 
       if   s.cs.count_reset_M0: s.count.next = 0
       elif s.cs.count_en_M0:    s.count.next = s.count + 1
 
-      if s.cs.src0_en_M1: s.src0_data_M.next = s.mem_ifc.c2p_msg.data
-      if s.cs.src1_en_M1: s.src1_data_M.next = s.mem_ifc.c2p_msg.data
+      if s.cs.src0_en_M1: s.src0_data_M.next = s.mem_ifc.resp_msg.data
+      if s.cs.src1_en_M1: s.src1_data_M.next = s.mem_ifc.resp_msg.data
 
     @s.combinational
     def stage_M0_comb():
@@ -94,8 +94,8 @@ class DotProductDpath( Model ):
       else:                          base_addr_M = s.src1_addr_M
 
       # memory request
-      s.mem_ifc.p2c_msg.value = 0
-      s.mem_ifc.p2c_msg.addr.value = base_addr_M + (s.count << 2)
+      s.mem_ifc.req_msg.value = 0
+      s.mem_ifc.req_msg.addr.value = base_addr_M + (s.count << 2)
 
       # last item status signal
       s.ss.last_item_M0.value = s.count == (s.size - 1)
@@ -123,7 +123,7 @@ class DotProductDpath( Model ):
     @s.combinational
     def stage_A_comb():
       s.accum_out.value = s.result_X + s.accum_reg_A
-      s.cpu_ifc.c2p_msg.value = s.accum_reg_A
+      s.cpu_ifc.resp_msg.value = s.accum_reg_A
 
   def elaborate_logic( s ):
     pass
@@ -171,8 +171,8 @@ class DotProductCtrl( Model ):
     @s.combinational
     def state_transition():
 
-      send_req  = s.mem_ifc.p2c_val and s.mem_ifc.p2c_rdy
-      recv_resp = s.mem_ifc.c2p_val and s.mem_ifc.c2p_rdy
+      send_req  = s.mem_ifc.req_val and s.mem_ifc.req_rdy
+      recv_resp = s.mem_ifc.resp_val and s.mem_ifc.resp_rdy
       go        = s.valid[0] and s.valid[1] and s.valid[2]
 
       s.state_next.value = s.state
@@ -192,7 +192,7 @@ class DotProductCtrl( Model ):
       elif s.state == SEND_OP_ST and not s.any_stall:
         s.state_next.value = DONE
 
-      elif s.state == DONE and s.cpu_ifc.c2p_rdy:
+      elif s.state == DONE and s.cpu_ifc.resp_rdy:
         s.state_next.value = IDLE
 
     #--------------------------------------------------------------------------
@@ -240,13 +240,13 @@ class DotProductCtrl( Model ):
 
       s.ctrl_signals_M0.value = cs
 
-      s.cpu_ifc.p2c_rdy.value = s.state == IDLE
-      s.cpu_ifc.c2p_val.value = s.state == DONE
-      print s.cpu_ifc.p2c_msg.addr, s.reset, s.cpu_ifc.p2c_val
+      s.cpu_ifc.req_rdy.value = s.state == IDLE
+      s.cpu_ifc.resp_val.value = s.state == DONE
+      print s.cpu_ifc.req_msg.creg, s.reset, s.cpu_ifc.req_val
       if s.state == DONE or s.reset:
         s.valid.value = 0
-      elif s.state == IDLE and s.cpu_ifc.p2c_val:
-        s.valid[s.cpu_ifc.p2c_msg.addr-1].value = 1
+      elif s.state == IDLE and s.cpu_ifc.req_val:
+        s.valid[s.cpu_ifc.req_msg.creg-1].value = 1
 
     @s.combinational
     def ctrl_to_dpath():
@@ -257,8 +257,8 @@ class DotProductCtrl( Model ):
       req_en        = s.ctrl_signals_M0[4:6] > 0
       resp_en       = s.ctrl_signals_M1[4:6] > 0
 
-      s.stall_M0.value = (req_en  and not s.mem_ifc.p2c_rdy) or s.pause
-      s.stall_M1.value = (resp_en and not s.mem_ifc.c2p_val)
+      s.stall_M0.value = (req_en  and not s.mem_ifc.req_rdy) or s.pause
+      s.stall_M1.value = (resp_en and not s.mem_ifc.resp_val)
 
       s.any_stall.value = s.stall_M0 or s.stall_M1
 
@@ -269,14 +269,14 @@ class DotProductCtrl( Model ):
       s.cs.count_reset_M0 .value = s.ctrl_signals_M0[ 11]
       s.cs.count_reset_A  .value = s.cs.count_reset_M0
       s.cs.count_en_M0    .value = s.ctrl_signals_M0[ 12] and not s.any_stall
-      s.cs.update_M0      .value = s.ctrl_signals_M0[ 13] and s.cpu_ifc.p2c_val
-      s.mem_ifc.p2c_val.value = req_en and not s.any_stall
+      s.cs.update_M0      .value = s.ctrl_signals_M0[ 13] and s.cpu_ifc.req_val
+      s.mem_ifc.req_val.value = req_en and not s.any_stall
 
       # M1 Stage
 
       s.cs.src0_en_M1    .value = s.ctrl_signals_M1[  6]
       s.cs.src1_en_M1    .value = s.ctrl_signals_M1[  7]
-      s.mem_ifc.c2p_rdy.value = resp_en and not s.stall_M1
+      s.mem_ifc.resp_rdy.value = resp_en and not s.stall_M1
 
       # X  Stage
 
@@ -331,7 +331,7 @@ class StatusSignals( BitStructDefinition ):
 # MatrixVecCOP_mul
 #------------------------------------------------------------------------------
 # A dummy multiplier module, acts as a placeholder for DesignWare components.
-class IntegerPipelinedMultiplier( Model ):
+class IntPipelinedMultiplier( Model ):
   def __init__( s, nbits, nstages ):
     s.op_a    = InPort ( nbits )
     s.op_b    = InPort ( nbits )
