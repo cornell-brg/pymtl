@@ -45,9 +45,7 @@ class TestHarness( Model ):
         s.lane.mem_ifc.req_msg.data)
 
       s.mem_resp.value = s.mem.resps[0].msg
-      print "RESP", s.mem.resps[0].msg[s.memresp_params.data_slice]
       tup = s.memresp_params.unpck_resp(s.mem_resp)
-      print "REQ ", s.mem.reqs[0].msg[s.memreq_params.addr_slice], s.lane.mem_ifc.req_msg.addr
       s.lane.mem_ifc.resp_msg.type.value = tup[0]
       s.lane.mem_ifc.resp_msg.len.value = tup[1]
       s.lane.mem_ifc.resp_msg.data.value = tup[2]

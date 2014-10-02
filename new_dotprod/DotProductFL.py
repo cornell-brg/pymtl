@@ -35,7 +35,7 @@ class DotProductFL( Model ):
         elif req.creg == 2: s.src0.set_base( req.data )
         elif req.creg == 3: s.src1.set_base( req.data )
         elif req.creg == 0:
-          result = numpy.dot( s.src0, s.src1 )
+          result = sum([x*y for x,y in zip(s.src0, s.src1)])
           s.cpu.push_resp( result )
 
   #-----------------------------------------------------------------------
@@ -43,7 +43,7 @@ class DotProductFL( Model ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return "(" + str(s.cpu.req_q.empty()) + ")"
+    return "(" + str(s.cpu_ifc.resp_val) + str(s.cpu_ifc.resp_rdy) + ")"
 
   def elaborate_logic( s ):
     pass

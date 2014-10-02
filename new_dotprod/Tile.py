@@ -4,14 +4,16 @@ from new_pymtl                       import *
 from new_pmlib                       import mem_msgs
 from new_pmlib                       import InValRdyBundle, OutValRdyBundle
 from new_pmlib                       import MemMsg
-from new_pmlib                       import CoProcMsg
+from new_pmlib                       import CP2Msg
 from new_dpproc.ParcProcPipelinedMul import ParcProcPipelinedMul
-from DotProductRTL                   import DotProduct
+from DotProductRTL                   import DotProductRTL
+from DotProductFL                    import DotProductFL
 
 # Cache with single-cycle hit lantency
 from new_cache.DirectMappedWriteBackCache import DirectMappedWriteBackCache
 
 Processor = ParcProcPipelinedMul
+DotProduct = DotProductFL
 
 #-----------------------------------------------------------------------
 # Tile
@@ -51,34 +53,44 @@ class Tile( Model ):
     s.proc     = Processor( reset_vector=0x00000400 )
 
     mem_ifc = MemMsg   ( 32, 32)
-    cpu_ifc = CoProcMsg( 5, 32 )
+    cpu_ifc = CP2Msg   ( 5, 32 )
 
-    s.cp2      = DotProduct(   nmul_stages,
-                               mem_ifc,
-                               cpu_ifc )
+    s.cp2      = DotProduct(mem_ifc, cpu_ifc )
 
     s.connect( s.go,           s.proc.go        )
     s.connect( s.status,       s.proc.status    )
     s.connect( s.stats_en,     s.proc.stats_en  )
     s.connect( s.num_insts,    s.proc.num_insts )
 
-    to_cp2_msg = Wire( 37 )
-    to_cp2_val = Wire( 1  )
-    to_cp2_rdy = Wire( 1  )
+    s.to_cp2_msg = Wire( 37 )
+    s.to_cp2_val = Wire( 1  )
+    s.to_cp2_rdy = Wire( 1  )
 
-    s.connect( s.cp2.from_cpu.msg, to_cp2_msg   )
-    s.connect( s.cp2.from_cpu.val, to_cp2_val   )
-    s.connect( s.cp2.from_cpu.rdy, to_cp2_rdy   )
-    s.connect( s.cp2.to_cpu,   s.proc.from_cp2  )
+    s.from_cp2_msg = Wire( 32 )
+    s.from_cp2_val = Wire( 1  )
+    s.from_cp2_rdy = Wire( 1  )
+
+    s.connect( s.proc.to_cp2.msg, s.to_cp2_msg   )
+    s.connect( s.proc.to_cp2.val, s.to_cp2_val   )
+    s.connect( s.proc.to_cp2.rdy, s.to_cp2_rdy   )
+
+
+    s.connect( s.from_cp2_msg, s.proc.from_cp2.msg  )
+    s.connect( s.from_cp2_val, s.proc.from_cp2.val  )
+    s.connect( s.from_cp2_rdy, s.proc.from_cp2.rdy  )
 
     if s.mem_data_nbits == 32: s.disable_caches()
     else:                      s.enable_caches ()
 
-    @s.combinational:
+    @s.combinational
     def connect_bitstructs():
-      s.cp2.cpu_ifc.p2c_msg.value = to_cp2_msg
-      s.cp2.cpu_ifc.p2c_val.value = to_cp2_val
-      to_cp2_rdy.value = s.cp2.cpu_ifc.p2c_rdy
+      s.cp2.cpu_ifc.req_msg.value = s.to_cp2_msg
+      s.cp2.cpu_ifc.req_val.value = s.to_cp2_val
+      s.to_cp2_rdy.value = s.cp2.cpu_ifc.req_rdy
+
+      s.from_cp2_msg.value = s.cp2.cpu_ifc.resp_msg
+      s.cp2.cpu_ifc.resp_rdy.value = s.from_cp2_rdy
+      s.from_cp2_val.value = s.cp2.cpu_ifc.resp_val.value
 
 
   #---------------------------------------------------------------------
@@ -95,23 +107,27 @@ class Tile( Model ):
 
     @s.combinational
     def logic():
-      if not s.cp2.state == 0:
-        s.memreq [1].msg.value = s.cp2.req.msg
-        s.memreq [1].val.value = s.cp2.req.val
-        s.memresp[1].rdy.value = s.cp2.resp.rdy
+      if s.cp2.mem_ifc.req_val or s.cp2.mem_ifc.resp_rdy:
+        s.memreq [1].msg.value = s.cp2.mem_ifc.req_msg
+        s.memreq [1].val.value = s.cp2.mem_ifc.req_val
+        s.memresp[1].rdy.value = s.cp2.mem_ifc.resp_rdy
       else:
         s.memreq [1].msg.value = s.proc.dmemreq    .msg
         s.memreq [1].val.value = s.proc.dmemreq    .val
         s.memresp[1].rdy.value = s.proc.dmemresp   .rdy
+
+      s.cp2.mem_ifc.resp_msg.value = s.memresp[1].msg
+      s.cp2.mem_ifc.resp_val.value = s.memresp[1].val
+      s.cp2.mem_ifc.req_rdy.value = s.memreq [1].rdy
+
+
 
     # Connect accel and proc data resp msg/val and req rdy to memory
 
     s.connect( s.memresp[1].msg, s.proc.dmemresp    .msg )
     s.connect( s.memresp[1].val, s.proc.dmemresp    .val )
     s.connect( s.memreq [1].rdy, s.proc.dmemreq     .rdy )
-    s.connect( s.memresp[1].msg, s.cp2.resp.msg )
-    s.connect( s.memresp[1].val, s.cp2.resp.val )
-    s.connect( s.memreq [1].rdy, s.cp2.req.rdy )
+    
 
   #---------------------------------------------------------------------
   # enable_caches()
@@ -169,7 +185,7 @@ class Tile( Model ):
   # line_trace
   #---------------------------------------------------------------------
   def line_trace( s ):
-    return s.proc.line_trace() +"( {} {} {} {})".format(s.proc.dpath.wb_mux_W.out, s.proc.dpath.wb_mux_W_sel, s.proc.dpath.wb_mux_W.out, s.proc.dpath.rf_wen_W[0]) +s.cp2.line_trace()
+    return s.proc.line_trace() + s.cp2.line_trace()
     #return s.proc.line_trace() + s.cp2.line_trace() + \
     #    " I$ {} {}".format(s.proc.imemreq, s.proc.imemresp) + \
     #    " D$ {} {}".format(s.proc.dmemreq, s.proc.dmemresp)

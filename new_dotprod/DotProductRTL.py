@@ -16,7 +16,7 @@ class DotProductRTL( Model ):
     s.connect_auto(s.dpath, s.ctrl)
 
   def line_trace( s ):
-    return "| {} {} {} {}|".format(s.ctrl.state, s.dpath.count, s.dpath.accum_reg_A, s.ctrl.pause)
+    return "| {} {} {} {} {} |".format(s.ctrl.state, s.dpath.count, s.dpath.accum_reg_A, s.dpath.cs.accum_reg_en_A, s.dpath.accum_out)
 
   def elaborate_logic( s ):
     pass
@@ -68,7 +68,7 @@ class DotProductDpath( Model ):
 
     s.count       = Wire ( cpu_ifc_types.req.data.nbits  )
     s.size        = Wire ( cpu_ifc_types.req.data.nbits  )
-    s.scr0_addr_M = Wire ( mem_ifc_types.req.addr.nbits  )
+    s.src0_addr_M = Wire ( mem_ifc_types.req.addr.nbits  )
     s.src1_addr_M = Wire ( mem_ifc_types.req.addr.nbits  )
     s.src0_data_M = Wire ( mem_ifc_types.resp.data.nbits )
     s.src1_data_M = Wire ( mem_ifc_types.resp.data.nbits )
@@ -77,10 +77,12 @@ class DotProductDpath( Model ):
     def stage_M0_seq():
       creg = s.cpu_ifc.req_msg.creg
       if s.cs.update_M0:
+        print s.cpu_ifc.req_msg.data, creg
         if   creg == 1: s.size       .next = s.cpu_ifc.req_msg.data
-        elif creg == 2: s.scr0_addr_M.next = s.cpu_ifc.req_msg.data
+        elif creg == 2: s.src0_addr_M.next = s.cpu_ifc.req_msg.data
         elif creg == 3: s.src1_addr_M.next = s.cpu_ifc.req_msg.data
         elif creg == 0: s.ss.go      .next = True
+      else: s.ss.go = False 
 
       if   s.cs.count_reset_M0: s.count.next = 0
       elif s.cs.count_en_M0:    s.count.next = s.count + 1
@@ -91,7 +93,7 @@ class DotProductDpath( Model ):
     @s.combinational
     def stage_M0_comb():
       # base_addr mux
-      if   s.cs.baddr_sel_M0 == row: base_addr_M = s.scr0_addr_M
+      if   s.cs.baddr_sel_M0 == row: base_addr_M = s.src0_addr_M
       else:                          base_addr_M = s.src1_addr_M
 
       # memory request
