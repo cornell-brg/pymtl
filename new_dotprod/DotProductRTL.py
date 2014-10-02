@@ -12,7 +12,6 @@ class DotProductRTL( Model ):
 
     s.dpath = DotProductDpath( mem_ifc_types, cpu_ifc_types )
     s.ctrl  = DotProductCtrl ( mem_ifc_types, cpu_ifc_types )
-
     s.connect_auto(s.dpath, s.ctrl)
 
   def line_trace( s ):
@@ -54,10 +53,12 @@ size = Bits(2, 0)
 src0 = Bits(2, 1)
 src1 = Bits(2, 2)
 
+# TODO: total hack
+Model.tick_rtl = Model.posedge_clk
+
 #------------------------------------------------------------------------------
 # MatrixVecLaneDpath
 #------------------------------------------------------------------------------
-Model.tick_rtl = Model.posedge_clk
 class DotProductDpath( Model ):
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
     s.cpu_ifc = ChildReqRespBundle ( cpu_ifc_types )
@@ -66,8 +67,8 @@ class DotProductDpath( Model ):
     s.ss      = OutPort( StatusSignals() )
 
     #--- Stage M: Memory Request ------------------------------
-    s.count        = Wire( cpu_ifc_types.req .data.nbits )
-    s.size         = Wire( cpu_ifc_types.req .data.nbits )
+    s.count       = Wire( cpu_ifc_types.req .data.nbits )
+    s.size        = Wire( cpu_ifc_types.req .data.nbits )
     s.src0_addr_M = Wire( mem_ifc_types.req .addr.nbits )
     s.src1_addr_M = Wire( mem_ifc_types.req .addr.nbits )
     s.src0_data_R = Wire( mem_ifc_types.resp.data.nbits )
@@ -77,7 +78,6 @@ class DotProductDpath( Model ):
     def stage_seq_M():
       ctrl_msg = s.cpu_ifc.req_msg .ctrl_msg
       cpu_data = s.cpu_ifc.req_msg .data
-      mem_data = s.mem_ifc.resp_msg.data
 
       if s.cs.update_M:
         if   ctrl_msg == 1: s.size       .next = cpu_data
@@ -87,9 +87,6 @@ class DotProductDpath( Model ):
 
       if   s.cs.count_clear_M: s.count.next = 0
       elif s.cs.count_en_M:    s.count.next = s.count + 1
-
-      if s.cs.src0_en_R: s.src0_data_R.next = mem_data
-      if s.cs.src1_en_R: s.src1_data_R.next = mem_data
 
     @s.combinational
     def stage_comb_M():
@@ -105,6 +102,11 @@ class DotProductDpath( Model ):
       s.ss.last_item_M.value = s.count == (s.size - 1)
 
     #--- Stage R: Memory Response -----------------------------
+    @s.tick_rtl
+    def stage_seq_M():
+      mem_data = s.mem_ifc.resp_msg.data
+      if s.cs.src0_en_R: s.src0_data_R.next = mem_data
+      if s.cs.src1_en_R: s.src1_data_R.next = mem_data
 
     #--- Stage X: Execute Multiply ----------------------------
     s.result_X = Wire( cpu_ifc_types.req.data.nbits )
