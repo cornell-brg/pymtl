@@ -16,7 +16,7 @@ class DotProductRTL( Model ):
     s.connect_auto(s.dpath, s.ctrl)
 
   def line_trace( s ):
-    return "| {} {} {} {}|".format(s.ctrl.state, s.dpath.count, s.dpath.accum_reg_A, s.ctrl.pause)
+    return "| {} {} {} {}|".format(s.ctrl.state, s.dpath.count, s.dpath.accum_A, s.ctrl.pause)
 
   def elaborate_logic( s ):
     pass
@@ -47,6 +47,8 @@ xxx = Bits( 2, 0 )
 row = Bits( 2, 0 )
 vec = Bits( 2, 1 )
 dst = Bits( 2, 2 )
+
+src0 = Bits( 2, 0 )
 
 size = Bits(2, 0)
 src0 = Bits(2, 1)
@@ -83,7 +85,7 @@ class DotProductDpath( Model ):
         elif ctrl_msg == 3: s.src1_addr_M.next = cpu_data
         elif ctrl_msg == 0: s.ss.go      .next = True
 
-      if   s.cs.count_reset_M: s.count.next = 0
+      if   s.cs.count_clear_M: s.count.next = 0
       elif s.cs.count_en_M:    s.count.next = s.count + 1
 
       if s.cs.src0_en_R: s.src0_data_R.next = mem_data
@@ -92,8 +94,8 @@ class DotProductDpath( Model ):
     @s.combinational
     def stage_comb_M():
       # base_addr mux
-      if s.cs.baddr_sel_M == row: base_addr_M = s.src0_addr_M
-      else:                       base_addr_M = s.src1_addr_M
+      if s.cs.baddr_sel_M == src0: base_addr_M = s.src0_addr_M
+      else:                        base_addr_M = s.src1_addr_M
 
       # memory request
       s.mem_ifc.req_msg.type.value = 0
@@ -116,20 +118,20 @@ class DotProductDpath( Model ):
                       s.mul.product : s.result_X } )
 
     #--- Stage A: Accumulate ----------------------------------
-    s.accum_reg_A = Wire( cpu_ifc_types.resp.data.nbits )
-    s.accum_out   = Wire( cpu_ifc_types.resp.data.nbits )
+    s.accum_A   = Wire( cpu_ifc_types.resp.data.nbits )
+    s.accum_out = Wire( cpu_ifc_types.resp.data.nbits )
 
     @s.tick_rtl
     def stage_seq_A():
-      if   s.reset or s.cs.count_reset_A:
-        s.accum_reg_A.next = 0
-      elif s.cs.accum_reg_en_A:
-        s.accum_reg_A.next = s.accum_out
+      if   s.reset or s.cs.accum_clear_A:
+        s.accum_A.next = 0
+      elif s.cs.accum_en_A:
+        s.accum_A.next = s.accum_out
 
     @s.combinational
     def stage_comb_A():
-      s.accum_out.value = s.result_X + s.accum_reg_A
-      s.cpu_ifc.resp_msg.value = s.accum_reg_A
+      s.accum_out.value = s.result_X + s.accum_A
+      s.cpu_ifc.resp_msg.value = s.accum_A
 
   def elaborate_logic( s ):
     pass
@@ -270,8 +272,8 @@ class DotProductCtrl( Model ):
 
       s.cs.baddr_sel_M   .value = s.ctrl_signals_M[0:2]
       s.cs.offset_sel_M  .value = s.ctrl_signals_M[  2]
-      s.cs.count_reset_M .value = s.ctrl_signals_M[ 11]
-      s.cs.count_reset_A .value = s.cs.count_reset_M
+      s.cs.count_clear_M .value = s.ctrl_signals_M[ 11]
+      s.cs.accum_clear_A .value = s.cs.count_clear_M
       s.cs.count_en_M    .value = s.ctrl_signals_M[ 12] and not s.any_stall
       s.cs.update_M      .value = s.ctrl_signals_M[ 13] and s.cpu_ifc.req_val
       s.mem_ifc.req_val.value = req_en and not s.any_stall
@@ -289,7 +291,7 @@ class DotProductCtrl( Model ):
 
       # A Stage
 
-      s.cs.accum_reg_en_A.value = s.ctrl_signals_A[9]
+      s.cs.accum_en_A.value = s.ctrl_signals_A[9]
 
   def elaborate_logic( s ):
     pass
@@ -304,7 +306,7 @@ class CtrlSignals( BitStructDefinition ):
 
     s.baddr_sel_M   = BitField (2)
     s.offset_sel_M  = BitField (1)
-    s.count_reset_M = BitField (1)
+    s.count_clear_M = BitField (1)
     s.count_en_M    = BitField (1)
 
     # R Stage Signals
@@ -318,8 +320,8 @@ class CtrlSignals( BitStructDefinition ):
 
     # A Stage Signals
 
-    s.accum_reg_en_A = BitField (1)
-    s.count_reset_A  = BitField (1)
+    s.accum_en_A    = BitField (1)
+    s.accum_clear_A = BitField (1)
 
 
     #IDLE State Signals
