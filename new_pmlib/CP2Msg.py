@@ -12,8 +12,8 @@ class CP2ReqMsg( BitStructDefinition ):
     s.addr_nbits = addr_nbits
     s.data_nbits = data_nbits
 
-    s.creg = BitField( s.addr_nbits )
-    s.data = BitField( s.data_nbits )
+    s.ctrl_msg = BitField( s.addr_nbits )
+    s.data     = BitField( s.data_nbits )
 
   def mk_msg( s, type_, addr, len_, data):
 
