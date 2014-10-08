@@ -2,11 +2,11 @@
 # MatrixVecLaneBL_test
 #==============================================================================
 
-from new_pymtl        import *
-from new_pmlib        import TestSource, TestMemory, mem_msgs
-from DotProductCL     import DotProductCL as DotProduct
-from new_pmlib        import MemMsg
-from new_pmlib        import CP2Msg
+from new_pymtl            import *
+from new_pmlib            import TestSource, TestMemory, mem_msgs
+from DotProductCLDetailed import DotProductCL as DotProduct
+from new_pmlib            import MemMsg
+from new_pmlib            import CP2Msg
 
 import pytest
 
