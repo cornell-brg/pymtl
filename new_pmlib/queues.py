@@ -140,4 +140,33 @@ class ChildReqRespQueueAdapter( Model ):
     s.resp_q.enq( resp )
 
 
+#-----------------------------------------------------------------------
+# ParentReqRespQueueAdapter
+#-----------------------------------------------------------------------
+class ParentReqRespQueueAdapter( Model ):
+
+  def __init__( s, parent, size=1 ):
+    s.req_q  = OutValRdyQueue( parent.req  )
+    s.resp_q = InValRdyQueue ( parent.resp )
+
+    s.connect(s.req_q.out.msg, parent.req_msg)
+    s.connect(s.req_q.out.val, parent.req_val)
+    s.connect(s.req_q.out.rdy, parent.req_rdy)
+
+    s.connect(s.resp_q.in_.msg, parent.resp_msg)
+    s.connect(s.resp_q.in_.val, parent.resp_val)
+    s.connect(s.resp_q.in_.rdy, parent.resp_rdy)
+
+  def xtick( s ):
+    s.req_q.xtick()
+    s.resp_q.xtick()
+
+  def elaborate_logic( s ):
+    pass
+
+  def push_req( s, resp ):
+    s.req_q.enq( resp )
+
+  def get_resp( s ):
+    return s.resp_q.deq()
 
