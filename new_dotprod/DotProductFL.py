@@ -29,12 +29,12 @@ class DotProductFL( Model ):
       s.cpu.xtick()
       if not s.cpu.req_q.empty() and not s.cpu.resp_q.full():
         req = s.cpu.get_req()
-        if req.creg == 1:
+        if req.ctrl_msg == 1:
           s.src0.set_size( req.data )
           s.src1.set_size( req.data )
-        elif req.creg == 2: s.src0.set_base( req.data )
-        elif req.creg == 3: s.src1.set_base( req.data )
-        elif req.creg == 0:
+        elif req.ctrl_msg == 2: s.src0.set_base( req.data )
+        elif req.ctrl_msg == 3: s.src1.set_base( req.data )
+        elif req.ctrl_msg == 0:
           result = numpy.dot( s.src0, s.src1 )
           s.cpu.push_resp( result )
 
@@ -42,8 +42,8 @@ class DotProductFL( Model ):
   # line_trace
   #-----------------------------------------------------------------------
 
-  def line_trace( s ):
-    return "(" + str(s.cpu.req_q.empty()) + ")"
+  #def line_trace( s ):
+  #  return "(" + str(s.cpu.req_q.empty()) + ")"
 
   def elaborate_logic( s ):
     pass

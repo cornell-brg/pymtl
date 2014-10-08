@@ -46,9 +46,9 @@ class TestHarness( Model ):
         s.lane.mem_ifc.req_msg.data)
 
       s.mem_resp.value = s.mem.resps[0].msg
-      print "RESP", s.mem.resps[0].msg[s.memresp_params.data_slice]
+      #print "RESP", s.mem.resps[0].msg[s.memresp_params.data_slice]
       tup = s.memresp_params.unpck_resp(s.mem_resp)
-      print "REQ ", s.mem.reqs[0].msg[s.memreq_params.addr_slice], s.lane.mem_ifc.req_msg.addr
+      #print "REQ ", s.mem.reqs[0].msg[s.memreq_params.addr_slice], s.lane.mem_ifc.req_msg.addr
       s.lane.mem_ifc.resp_msg.type.value = tup[0]
       s.lane.mem_ifc.resp_msg.len.value = tup[1]
       s.lane.mem_ifc.resp_msg.data.value = tup[2]
@@ -64,8 +64,8 @@ class TestHarness( Model ):
   def done( s ):
     return s.lane.cpu_ifc.resp_val
 
-  def line_trace( s ):
-    return "{} -> {}".format( s.lane.line_trace(), s.mem.line_trace() )
+  #def line_trace( s ):
+  #  return "{} -> {}".format( s.lane.line_trace(), s.mem.line_trace() )
 
 #------------------------------------------------------------------------------
 # run_mvmult_test
@@ -99,7 +99,7 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   sim.cycle()
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.data.next = size
-  model.lane.cpu_ifc.req_msg.creg.next = 1
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 1
   #print model.lane.cpu_ifc.req_msg.addr
 
   sim.print_line_trace()
@@ -107,7 +107,7 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   sim.cycle()
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.data.next = m_baseaddr
-  model.lane.cpu_ifc.req_msg.creg.next = 2
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 2
   #print model.lane.cpu_ifc.req_msg.addr
 
   sim.print_line_trace()
@@ -115,13 +115,13 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   sim.cycle()
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.data.next = v_baseaddr
-  model.lane.cpu_ifc.req_msg.creg.next = 3
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 3
 
   sim.cycle()
   sim.cycle()
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.data.next = True
-  model.lane.cpu_ifc.req_msg.creg.next = 0
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 0
   #print model.lane.cpu_ifc.req_msg.addr
 
   while not model.done() and sim.ncycles < 300:
