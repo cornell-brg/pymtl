@@ -160,25 +160,25 @@ class DotProductCL (Model):
 
         if s.cpu_ifc.req_val and s.cpu_ifc.req_rdy:
 
-          creg = s.cpu_ifc.req_msg.creg
+          ctrl_msg = s.cpu_ifc.req_msg.ctrl_msg
           data = s.cpu_ifc.req_msg.data
 
-          if   creg == 1:
+          if   ctrl_msg == 1:
             s.size = data
             s.valid[0] = True
             s.trace_X0 = "ws"
 
-          elif creg == 2:
+          elif ctrl_msg == 2:
             s.src0_addr = data
             s.valid[1] = True
             s.trace_X0 = "w0"
 
-          elif creg == 3:
+          elif ctrl_msg == 3:
             s.src1_addr = data
             s.valid[2] = True
             s.trace_X0 = "w1"
 
-          elif creg == 0:
+          elif ctrl_msg == 0:
             s.state    = s.STATE_L0
             s.counter  = s.size
             s.trace_X0 = "go"

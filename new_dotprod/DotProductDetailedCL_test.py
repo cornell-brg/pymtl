@@ -4,7 +4,7 @@
 
 from new_pymtl            import *
 from new_pmlib            import TestSource, TestMemory, mem_msgs
-from DotProductCLDetailed import DotProductCL as DotProduct
+from DotProductDetailedCL import DotProductCL as DotProduct
 from new_pmlib            import MemMsg
 from new_pmlib            import CP2Msg
 
@@ -95,29 +95,29 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
 
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.data.next = size
-  model.lane.cpu_ifc.req_msg.creg.next = 1
-  print model.lane.cpu_ifc.req_msg.creg
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 1
+  print model.lane.cpu_ifc.req_msg.ctrl_msg
   sim.print_line_trace()
   sim.cycle()
 
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.data.next = m_baseaddr
-  model.lane.cpu_ifc.req_msg.creg.next = 2
-  print model.lane.cpu_ifc.req_msg.creg
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 2
+  print model.lane.cpu_ifc.req_msg.ctrl_msg
   sim.print_line_trace()
   sim.cycle()
 
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.next = v_baseaddr
-  model.lane.cpu_ifc.req_msg.creg.next = 3
-  print model.lane.cpu_ifc.req_msg.creg
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 3
+  print model.lane.cpu_ifc.req_msg.ctrl_msg
   sim.print_line_trace()
   sim.cycle()
 
   model.lane.cpu_ifc.req_val.next = 1
   model.lane.cpu_ifc.req_msg.next = True
-  model.lane.cpu_ifc.req_msg.creg.next = 0
-  print model.lane.cpu_ifc.req_msg.creg
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 0
+  print model.lane.cpu_ifc.req_msg.ctrl_msg
   sim.print_line_trace()
   sim.cycle()
 
