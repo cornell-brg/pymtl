@@ -205,7 +205,7 @@ class ParcProcPipelinedMul( Model ):
     else:
       X_str = "{:^5s}".format(
          isa.inst_to_str[s.ctrl.inst_X.value.uint()] )
-
+    #X_str += " {} {} ".format(s.dpath.op0_mux_D.out, s.dpath.op1_mux_D.out)
     # M stage
 
     if not s.ctrl.pipe_ctrl_M.pipereg_val.value:
@@ -229,6 +229,7 @@ class ParcProcPipelinedMul( Model ):
     else:
       W_str = "{:^5s}".format(
          isa.inst_to_str[s.ctrl.inst_W.value.uint()] )
+    #W_str += " {} {} {} | ".format(s.dpath.wb_mux_W.out, s.dpath.rf.wr_en, s.dpath.rf.wr_addr)
 
     pipeline_str = ( P_str + "|" + F_str + "|" + D_str + "|"
                    + Y_str + " " + X_str + "|" + M_str + "|"

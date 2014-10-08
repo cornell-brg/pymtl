@@ -63,6 +63,7 @@ class DotProductDpath( Model ):
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
     s.cpu_ifc = ChildReqRespBundle ( cpu_ifc_types )
     s.mem_ifc = ParentReqRespBundle( mem_ifc_types )
+
     s.cs      = InPort ( CtrlSignals()   )
     s.ss      = OutPort( StatusSignals() )
 
@@ -84,6 +85,7 @@ class DotProductDpath( Model ):
         elif ctrl_msg == 2: s.src0_addr_M.next = cpu_data
         elif ctrl_msg == 3: s.src1_addr_M.next = cpu_data
         elif ctrl_msg == 0: s.ss.go      .next = True
+      else: s.ss.go.next = False
 
       if   s.cs.count_clear_M: s.count.next = 0
       elif s.cs.count_en_M:    s.count.next = s.count + 1

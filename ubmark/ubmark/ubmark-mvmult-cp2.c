@@ -29,10 +29,9 @@ void mvmult_cp2( int* resultvector, int* matrix, int* vector,
     __asm__ __volatile__ ( "mtc2 %0, $1;" : : "r"(size)    : "memory" );
     __asm__ __volatile__ ( "mtc2 %0, $2;" : : "r"(r_baddr) : "memory" );
     __asm__ __volatile__ ( "mtc2 %0, $3;" : : "r"(v_baddr) : "memory" );
-    __asm__ __volatile__ ( "mtc2 %0, $4;" : : "r"(d_baddr) : "memory" );
     __asm__ __volatile__ ( "mtc2 %0, $0;" : : "r"(go)      : "memory" );
-    __asm__ __volatile__ ( "mfc2 %0, $5;" : : "r"(result)  : "memory" );
-    __asm__ __volatile__ ( "sw $5, 0($4);" : : "r"(result),"r"(d_baddr) : "memory" );
+    __asm__ __volatile__ ( "mfc2 %0, %0;" : : "r"(result)  : "memory" );
+    __asm__ __volatile__ ( "sw %0, 0(%1);" : : "r"(result),"r"(d_baddr) : "memory" );
     #endif
   }
 }

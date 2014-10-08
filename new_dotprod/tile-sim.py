@@ -93,7 +93,7 @@ class SimHarness( Model ):
     mem_delay       = input_params[0]
     sparse_mem_img  = input_params[1]
 
-    cache = True
+    cache = False
 
     # Instantiate models
 

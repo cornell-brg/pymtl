@@ -22,7 +22,7 @@ class TestHarness( Model ):
                 mem_delay, sparse_mem_img, test_verilog ):
 
     data_nbits = memreq_params.data_nbits
-
+    print data_nbits
     s.tile     = ModelType( reset_vector   = 0x00000400,
                             mem_data_nbits = data_nbits )
     s.mem      = TestMemory( memreq_params, memresp_params, 2,
@@ -68,10 +68,10 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
 
   # Instantiate and elaborate the model
 
-  memreq_params  = mem_msgs.MemReqParams( 32, 128 )
-  memresp_params = mem_msgs.MemRespParams( 128 )
-  #memreq_params  = mem_msgs.MemReqParams( 32, 32 )
-  #memresp_params = mem_msgs.MemRespParams( 32 )
+  #memreq_params  = mem_msgs.MemReqParams( 32, 128 )
+  #memresp_params = mem_msgs.MemRespParams( 128 )
+  memreq_params  = mem_msgs.MemReqParams( 32, 32 )
+  memresp_params = mem_msgs.MemRespParams( 32 )
 
   # input_list parameters
 

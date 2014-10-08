@@ -42,8 +42,8 @@ class DotProductFL( Model ):
   # line_trace
   #-----------------------------------------------------------------------
 
-  #def line_trace( s ):
-  #  return "(" + str(s.cpu.req_q.empty()) + ")"
+  def line_trace( s ):
+    return "(" + str(s.cpu_ifc.resp_val) + str(s.cpu_ifc.resp_rdy) + ")"
 
   def elaborate_logic( s ):
     pass

@@ -76,7 +76,7 @@ class ListMemPortAdapter (object):
     s.trace = " "
     s.memreq.req_val.next  = 0
     s.memresp.resp_rdy.next = 0
-    return s.memresp.resp_msg.data[0:nbytes*8]
+    return s.memresp.resp_msg.data[0:nbytes*8].uint()
 
   #-----------------------------------------------------------------------
   # __setitem__
@@ -135,9 +135,6 @@ class ListMemPortAdapter (object):
     for x in range(s.size):
       yield s[x]
 
-
-  def is_rdy( s ):
-    return s.base_set and s.mod.size > 0
   #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------
