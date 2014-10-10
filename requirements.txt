@@ -1,0 +1,3 @@
+cffi
+greenlet
+numpy
