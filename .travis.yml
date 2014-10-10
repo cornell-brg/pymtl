@@ -8,8 +8,8 @@ install: "pip install -r requirements.txt"
 
 # command to run tests
 before_script:
-  mkdir build
-  cd build
+ - mkdir build
+ - cd build
 
 # command to run tests
 script: py.test .. --verbose
