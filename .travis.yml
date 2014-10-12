@@ -9,7 +9,7 @@ before_install: mkdir build
 # install necessary dependencies
 install:
  - "pip install -r requirements.txt"
- - "wget -P build http://brg.csl.cornell.edu/artifacts/maven-gcc build/maven-gcc"
+ - "wget -P build http://brg.csl.cornell.edu/artifacts/maven-gcc"
 
 # command to run tests
 before_script:
