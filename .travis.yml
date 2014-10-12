@@ -4,17 +4,26 @@ python:
 # - "pypy"
 
 # pre-install commands
-before_install: mkdir build
+before_install:
+ - mkdir build
+ - mkdir -p maven/bin
 
 # install necessary dependencies
 install:
  - "pip install -r requirements.txt"
- - "wget -P build http://brg.csl.cornell.edu/artifacts/maven-gcc"
+ - "wget -P maven/bin http://brg.csl.cornell.edu/artifacts/maven-gcc"
+ - "wget -P maven/bin http://brg.csl.cornell.edu/artifacts/maven-objdump"
+ - "wget -P maven/bin http://brg.csl.cornell.edu/artifacts/maven-as"
+ - "chmod 755 maven/bin/maven-gcc"
+ - "chmod 755 maven/bin/maven-objdump"
+ - "chmod 755 maven/bin/maven-as"
+ - "ln -s maven/bin/maven-as maven/bin/as"
 
 # command to run tests
 before_script:
+ - export PATH=$PWD/maven/bin:$PATH
  - cd build
- - chmod 755 maven-gcc
 
 # command to run tests
-script: py.test .. --verbose
+script:
+ - py.test ../new_proc/ParcProc5stStall_test.py -k test_stall_blez_asm --verbose
