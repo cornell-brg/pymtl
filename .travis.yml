@@ -1,39 +1,52 @@
+#------------------------------------------------------------------------
+# VM setup
+#------------------------------------------------------------------------
+
 language: python
 python:
  - "2.7"
 # - "pypy"
 
-# pre-install commands
+#------------------------------------------------------------------------
+# before dependency installation
+#------------------------------------------------------------------------
 before_install:
  - mkdir build
- - mkdir -p build/bin
- - mkdir -p build/lib/gcc
- - mkdir -p build/libexec/gcc
 
-# install necessary dependencies
+#------------------------------------------------------------------------
+# install dependencies
+#------------------------------------------------------------------------
 install:
- - "pip install -r requirements.txt"
- - "wget -P build/bin http://brg.csl.cornell.edu/artifacts/maven-gcc"
- - "wget -P build/bin http://brg.csl.cornell.edu/artifacts/maven-objdump"
- - "wget -P build/bin http://brg.csl.cornell.edu/artifacts/maven-as"
- - "wget -P build/bin http://brg.csl.cornell.edu/artifacts/maven-ld"
- - "wget -P build/bin http://brg.csl.cornell.edu/artifacts/libgcc.a"
- - "chmod 755 build/bin/maven-gcc"
- - "chmod 755 build/bin/maven-objdump"
- - "chmod 755 build/bin/maven-as"
- - "chmod 755 build/bin/maven-ld"
- - "mv build/bin/maven-as build/libexec/gcc/as"
- - "mv build/bin/maven-ld build/libexec/gcc/ld"
- - "mv build/bin/libgcc.a build/lib/gcc"
 
-# command to run tests
+ # Install Python requirements
+
+ - pip install -r requirements.txt
+ - ARTIFACTS=http://brg.csl.cornell.edu/artifacts
+
+ # Install PARC cross-compiler
+
+ - wget $ARTIFACTS/maven-xcc.tar.bz2
+ - tar xvfj maven-xcc.tar.bz2
+ - export PATH=$PWD/maven-sys-xcc-0.0-209-g75c3473/bin:$PATH
+
+#------------------------------------------------------------------------
+# before test runner
+#------------------------------------------------------------------------
 before_script:
- - cd build
- - export PATH=$PWD/bin:$PATH
- - maven-gcc -print-search-dirs
- - ls /home/travis/build/dmlockhart/pymtl/build/bin/../libexec/gcc
- - ls /home/travis/build/dmlockhart/pymtl/build/bin/../lib/gcc
 
-# command to run tests
+ # Build assembly tests
+
+ - mkdir -p tests/build
+ - cd tests/build
+ - ../configure --host=maven; cat config.log
+ - make
+
+ # Return to build directory
+
+ - cd ../../build
+
+#------------------------------------------------------------------------
+# test runner
+#------------------------------------------------------------------------
 script:
- - py.test .. --verbose
+ - py.test ../new_proc --verbose

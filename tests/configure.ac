@@ -60,7 +60,7 @@ TMOD_INIT
 TMOD_PROG_INSTALL
 
 # Check for an isa simulator.
-TMOD_PROG_RUN
+#TMOD_PROG_RUN
 
 #-------------------------------------------------------------------------
 # TMOD includes
