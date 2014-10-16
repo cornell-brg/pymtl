@@ -43,9 +43,9 @@ Install Python package prerequisites using pip::
 
 Checkout the repo::
 
-  % mkdir -p ~/vc/git-brg
-  % cd ~/vc/git-brg
-  % https://github.com/dmlockhart/pymtl.git
+  % mkdir -p ~/vc/github-brg
+  % cd ~/vc/github-brg
+  % git clone git@github.com:cornell-brg/pymtl.git
   % cd pymtl
 
 Create a build directory and run the tests::
@@ -65,7 +65,7 @@ Model Development
 The first thing you should do anytime you plan on working with PyMTL is change
 to the repository build directory and activate the virtualenv::
 
-  % cd ~/vc/git-brg/pymtl
+  % cd ~/vc/github-brg/pymtl
   % source ~/venvs/2.7/bin/activate
 
 The top-level repo directory should have the following layout:
