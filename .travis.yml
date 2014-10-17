@@ -49,4 +49,4 @@ before_script:
 # test runner
 #------------------------------------------------------------------------
 script:
- - py.test ../new_proc --verbose
+ - py.test ../new_proc --verbose -n 4
