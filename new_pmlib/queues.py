@@ -50,6 +50,9 @@ class InValRdyQueue( Model ):
   def is_empty( s ):
     return len( s.data ) == 0
 
+  def empty( s ):
+    return s.is_empty()
+
   def deq( s ):
     pass
 
@@ -85,8 +88,11 @@ class OutValRdyQueue( Model ):
   def is_full( s ):
     return len( s.data ) == s.data.maxlen
 
+  def full( s ):
+    return s.is_full()
+
   def enq( s ):
-    pass
+     s.data.append( item )
 
   def _simple_enq( s, item ):
     assert not s.is_full()
@@ -105,4 +111,62 @@ class OutValRdyQueue( Model ):
     if len( s.data ) != 0:
       s.out.msg.next = s.data[0]
     s.out.val.next = len( s.data ) != 0
+
+class ChildReqRespQueueAdapter( Model ):
+
+  def __init__( s, child, size=1 ):
+    s.req_q  = InValRdyQueue ( child.req  )
+    s.resp_q = OutValRdyQueue( child.resp )
+
+    s.connect(s.req_q.in_.msg, child.req_msg)
+    s.connect(s.req_q.in_.val, child.req_val)
+    s.connect(s.req_q.in_.rdy, child.req_rdy)
+
+    s.connect(s.resp_q.out.msg, child.resp_msg)
+    s.connect(s.resp_q.out.val, child.resp_val)
+    s.connect(s.resp_q.out.rdy, child.resp_rdy)
+
+  def xtick( s ):
+    s.req_q.xtick()
+    s.resp_q.xtick()
+
+  def elaborate_logic( s ):
+    pass
+
+  def get_req( s ):
+    return s.req_q.deq()
+
+  def push_resp( s, resp ):
+    s.resp_q.enq( resp )
+
+
+#-----------------------------------------------------------------------
+# ParentReqRespQueueAdapter
+#-----------------------------------------------------------------------
+class ParentReqRespQueueAdapter( Model ):
+
+  def __init__( s, parent, size=1 ):
+    s.req_q  = OutValRdyQueue( parent.req  )
+    s.resp_q = InValRdyQueue ( parent.resp )
+
+    s.connect(s.req_q.out.msg, parent.req_msg)
+    s.connect(s.req_q.out.val, parent.req_val)
+    s.connect(s.req_q.out.rdy, parent.req_rdy)
+
+    s.connect(s.resp_q.in_.msg, parent.resp_msg)
+    s.connect(s.resp_q.in_.val, parent.resp_val)
+    s.connect(s.resp_q.in_.rdy, parent.resp_rdy)
+
+  def xtick( s ):
+    s.req_q.xtick()
+    s.resp_q.xtick()
+
+  def elaborate_logic( s ):
+    pass
+
+  def push_req( s, resp ):
+    s.req_q.enq( resp )
+
+  def get_resp( s ):
+    return s.resp_q.deq()
 

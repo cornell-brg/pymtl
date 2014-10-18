@@ -10,3 +10,5 @@
 
 from ParcProc5stStall   import ParcProc5stStall
 from ParcProc5stBypass  import ParcProc5stBypass
+
+from muldiv.IntMulPipelined import IntMulPipelined

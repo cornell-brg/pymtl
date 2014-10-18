@@ -11,9 +11,15 @@ import math
 # MemReqMsg
 #-------------------------------------------------------------------------
 # BitStruct designed to create memory request messages.
+
+class MemMsg( object ):
+    def __init__( s, addr_nbits, data_nbits ):
+        s.req  = MemReqMsg ( addr_nbits, data_nbits)
+        s.resp = MemRespMsg( data_nbits            )
+
 class MemReqMsg( BitStructDefinition ):
 
-  def __init__( s, addr_nbits, data_nbits):
+  def __init__( s, addr_nbits, data_nbits ):
 
     s.type_nbits = 1
     s.addr_nbits = addr_nbits
@@ -52,7 +58,9 @@ class MemRespMsg ( BitStructDefinition ):
     s.len  = BitField( s.len_nbits  )
     s.data = BitField( s.data_nbits )
 
-    #TODO mk_msg
+  def mk_resp(s, type_, len_, data):
+    pass
+
 
   def unpck( s, msg):
 

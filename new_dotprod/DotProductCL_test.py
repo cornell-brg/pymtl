@@ -1,12 +1,14 @@
+#------------------------------------------------------------------------------
 #==============================================================================
 # MatrixVecLaneBL_test
 #==============================================================================
 
-from new_pymtl        import *
-from new_pmlib        import TestSource, TestMemory, mem_msgs
-from DotProductRTL    import DotProductRTL as DotProduct
-from new_pmlib        import MemMsg
-from new_pmlib        import CP2Msg
+from new_pymtl      import *
+from new_pmlib      import TestSource, TestMemory, mem_msgs
+#from DotProductFL   import DotProductFL as DotProduct
+from DotProductCL   import DotProductCL as DotProduct
+from new_pmlib      import MemMsg
+from new_pmlib      import CP2Msg
 
 import pytest
 
@@ -62,6 +64,7 @@ class TestHarness( Model ):
     return s.lane.cpu_ifc.resp_val
 
   def line_trace( s ):
+    #return "{} -> {}".format( s.lane.line_trace(), s.mem.line_trace() )
     return "{} -> {}".format( s.lane.line_trace(), s.mem.line_trace() )
 
 #------------------------------------------------------------------------------
@@ -91,34 +94,40 @@ def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
   size = len(src_vector[1]) / 4
   go = True
 
+  sim.print_line_trace()
   sim.cycle()
-  model.lane.cpu_ifc.req_val.value = 1
-  model.lane.cpu_ifc.req_msg.data = size
-  model.lane.cpu_ifc.req_msg.ctrl_msg.value = 1
-  print model.lane.cpu_ifc.req_msg.ctrl_msg
+  sim.cycle()
+  model.lane.cpu_ifc.req_val.next = 1
+  model.lane.cpu_ifc.req_msg.data.next = size
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 1
+  #print model.lane.cpu_ifc.req_msg.addr
+
+  sim.print_line_trace()
+  sim.cycle()
+  sim.cycle()
+  model.lane.cpu_ifc.req_val.next = 1
+  model.lane.cpu_ifc.req_msg.data.next = m_baseaddr
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 2
+  #print model.lane.cpu_ifc.req_msg.addr
+
+  sim.print_line_trace()
+  sim.cycle()
+  sim.cycle()
+  model.lane.cpu_ifc.req_val.next = 1
+  model.lane.cpu_ifc.req_msg.data.next = v_baseaddr
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 3
 
   sim.cycle()
-  model.lane.cpu_ifc.req_val.value = 1
-  model.lane.cpu_ifc.req_msg.data = m_baseaddr
-  model.lane.cpu_ifc.req_msg.ctrl_msg.value = 2
-  print model.lane.cpu_ifc.req_msg.ctrl_msg
-
   sim.cycle()
-  model.lane.cpu_ifc.req_val.value = 1
-  model.lane.cpu_ifc.req_msg.data = v_baseaddr
-  model.lane.cpu_ifc.req_msg.ctrl_msg.value = 3
-  print model.lane.cpu_ifc.req_msg.ctrl_msg
+  model.lane.cpu_ifc.req_val.next = 1
+  model.lane.cpu_ifc.req_msg.data.next = True
+  model.lane.cpu_ifc.req_msg.ctrl_msg.next = 0
+  #print model.lane.cpu_ifc.req_msg.addr
 
-  sim.cycle()
-  model.lane.cpu_ifc.req_val.value = 1
-  model.lane.cpu_ifc.req_msg.data = True
-  model.lane.cpu_ifc.req_msg.ctrl_msg.value = 0
-  print model.lane.cpu_ifc.req_msg.ctrl_msg
-
-  while not model.done() and sim.ncycles < 100:
+  while not model.done() and sim.ncycles < 80:
     sim.print_line_trace()
     sim.cycle()
-    model.lane.cpu_ifc.req_val.value = 0
+    model.lane.cpu_ifc.req_val.next = 0
   sim.print_line_trace()
   assert model.done()
 

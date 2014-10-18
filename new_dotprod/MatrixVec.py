@@ -39,15 +39,15 @@ class MatrixVec (object):
     s.size = size
     s.valid[0] = True
 
-  def set_src0_addr( s, src0_addr ):
+  def set_src0( s, src0_addr ):
     s.src0_addr = src0_addr
     s.valid[1] = True
 
-  def set_src1_addr( s, src1_addr ):
+  def set_src1( s, src1_addr ):
     s.src1_addr = src1_addr
     s.valid[2] = True
 
-  def valid( s ):
+  def is_valid( s ):
     return s.valid[0] and s.valid[1] and s.valid[2]
 
   #-----------------------------------------------------------------------
@@ -59,7 +59,8 @@ class MatrixVec (object):
     src0 = ListBytesProxy( s.mem, s.src0_addr, s.size )
     src1 = ListBytesProxy( s.mem, s.src1_addr, s.size )
 
-    MatrixVec.mvmult( dest, src0, src1 )
+    result = MatrixVec.mvmult(src0, src1 )
 
     s.valid = [False] * 3
 
+    return result
