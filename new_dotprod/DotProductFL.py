@@ -5,7 +5,6 @@
 from new_pymtl import *
 from new_pmlib import *
 
-from pmlib_extra      import GreenletWrapper,BytesMemPortProxy
 from new_pmlib.queues import ChildReqRespQueueAdapter
 from pmlib_extra      import ListMemPortAdapter
 
