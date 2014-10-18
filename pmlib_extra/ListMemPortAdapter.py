@@ -1,7 +1,7 @@
 #=========================================================================
-# BytesMemPortProxy
+# ListMemPortAdapter
 #=========================================================================
-# These classes provides the Bytes interface, but the implementation
+# These classes provides a list interface, but the implementation
 # essentially turns reads/writes into memory requests sent over a
 # port-based memory interface. We use greenlets to enable us to wait
 # until the response has come back before returning to the function
@@ -9,6 +9,9 @@
 
 from greenlet import greenlet
 
+#-------------------------------------------------------------------------
+# ListMemPortAdapter
+#-------------------------------------------------------------------------
 class ListMemPortAdapter (object):
 
   #-----------------------------------------------------------------------
