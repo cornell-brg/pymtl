@@ -477,3 +477,65 @@ def test_msg_seq_list_logic():
     assert model.out[ i ].len.v == MemMsg.HALF
     assert model.out[ i ].v     == 0x5f0ce0f0f0f0f
 
+#=======================================================================
+# Buggy Struct
+#=======================================================================
+# This bug it intermtittent!  The challenge here is two interconnected
+# models have compatible ports in terms of bitwidth, but different
+# specific message types (one is Bits, the other BitStruct).
+#
+# - TH         input/out are Bits(32)     (bitwidth = 32 )
+# - BasicModel input/out are MyStruct(16) (bitwidth = 32 )
+#
+# Because connected signals are collapsed into a single signal during
+# simulator construction, it must be chosen to be Bits or BitStruct.
+# The simulator uses Python sets, which have non-deterministic orderings
+# so depending on the memory ids of a given run the input/output port
+# may be set to the Bits or BitStruct type.  If it is set to the
+# BitStruct type then the below test will fail.
+#
+import pytest
+@pytest.mark.xfail
+def test_buggy_struct():
+
+  from new_pmlib import InValRdyBundle, OutValRdyBundle
+
+  #---------------------------------------------------------------------
+  # Struct
+  #---------------------------------------------------------------------
+  class MyStruct( BitStructDefinition ):
+    def __init__( s, nbits):
+      s.src  = BitField( nbits)
+      s.dest = BitField( nbits )
+
+  class BasicModel( Model ):
+    def __init__(s):
+      msg_type = MyStruct( 16 )
+      s.input  = InValRdyBundle ( msg_type )
+      s.out    = OutValRdyBundle( msg_type )
+
+    def elaborate_logic(s):
+      @s.combinational
+      def logic():
+        s.out.msg.src.value  = s.input.msg.dest
+        s.out.msg.dest.value = s.input.msg.src
+
+  class TH( Model ):
+    def __init__(s):
+      s.input = InValRdyBundle ( 32 )
+      s.out   = OutValRdyBundle( 32 )
+
+    def elaborate_logic(s):
+      s.toy   = BasicModel()
+      s.connect( s.input, s.toy.input )
+      s.connect( s.out,   s.toy.out   )
+
+  model = TH()
+  model.elaborate()
+  sim = SimulationTool( model )
+
+  sim.reset()
+
+  model.input.msg.value = 0x12345678
+  sim.cycle()
+  assert model.out.msg == 0x56781234
