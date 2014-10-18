@@ -13,8 +13,10 @@ from pisa         import PisaInst
 from pmlib_extra  import GreenletWrapper,BytesMemPortProxy
 from pmlib_extra  import InQueuePortProxy,OutQueuePortProxy
 
-from mvmult_fl    import MatrixVecProxy
-from mvmult_fl    import InMatrixVecBundle,OutMatrixVecBundle
+from mvmult.mvmult_fl import (
+     MatrixVecProxy,
+     InMatrixVecBundle,
+     OutMatrixVecBundle )
 
 class ParcProcFL( Model ):
 

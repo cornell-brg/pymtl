@@ -8,10 +8,10 @@ import struct
 
 from new_pymtl  import *
 from new_pmlib  import *
-from mvmult_fl  import MatrixVecFL
-from mvmult_cl  import MatrixVecCL
-
 from ParcProcFL import ParcProcFL
+
+from mvmult.mvmult_fl  import MatrixVecFL
+from mvmult.mvmult_cl  import MatrixVecCL
 
 from pisa.pisa_inst_test_utils import asm_test
 
