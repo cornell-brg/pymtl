@@ -1,9 +1,16 @@
+#=========================================================================
+# DotProductRTL
+#=========================================================================
+
 from new_pymtl import *
 from new_pmlib import InValRdyBundle, OutValRdyBundle
 from new_pmlib import ParentReqRespBundle, ChildReqRespBundle
 
 nmul_stages = 4
 
+#------------------------------------------------------------------------------
+# DotProductRTL
+#------------------------------------------------------------------------------
 class DotProductRTL( Model ):
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
@@ -19,6 +26,7 @@ class DotProductRTL( Model ):
 
   def elaborate_logic( s ):
     pass
+
 #------------------------------------------------------------------------------
 # Select Constants
 #------------------------------------------------------------------------------
@@ -57,7 +65,7 @@ src1 = Bits(2, 2)
 Model.tick_rtl = Model.posedge_clk
 
 #------------------------------------------------------------------------------
-# MatrixVecLaneDpath
+# DotProductDpath
 #------------------------------------------------------------------------------
 class DotProductDpath( Model ):
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
@@ -139,8 +147,9 @@ class DotProductDpath( Model ):
 
   def elaborate_logic( s ):
     pass
+
 #------------------------------------------------------------------------------
-# DotProductCtrl
+# State Machine Constants
 #------------------------------------------------------------------------------
 
 IDLE        = 0
@@ -149,6 +158,9 @@ SEND_OP_LDB = 2
 SEND_OP_ST  = 3
 DONE        = 4
 
+#------------------------------------------------------------------------------
+# DotProductCtrl
+#------------------------------------------------------------------------------
 class DotProductCtrl( Model ):
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
@@ -301,7 +313,7 @@ class DotProductCtrl( Model ):
     pass
 
 #------------------------------------------------------------------------------
-# CtrlDpathBundle
+# CtrlSignals
 #------------------------------------------------------------------------------
 class CtrlSignals( BitStructDefinition ):
   def __init__( s ):
@@ -331,6 +343,9 @@ class CtrlSignals( BitStructDefinition ):
     #IDLE State Signals
     s.update_M         = BitField (1)
 
+#------------------------------------------------------------------------------
+# StatusSignals
+#------------------------------------------------------------------------------
 class StatusSignals( BitStructDefinition ):
 
   def __init__(s):

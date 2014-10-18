@@ -1,11 +1,10 @@
-#------------------------------------------------------------------------------
 #==============================================================================
-# MatrixVecLaneBL_test
+# DotProductCL_test
 #==============================================================================
+# TODO: clean this up!!!
 
 from new_pymtl      import *
 from new_pmlib      import TestSource, TestMemory, mem_msgs
-#from DotProductFL   import DotProductFL as DotProduct
 from DotProductCL   import DotProductCL as DotProduct
 from new_pmlib      import MemMsg
 from new_pmlib      import CP2Msg

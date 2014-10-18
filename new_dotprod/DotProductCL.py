@@ -1,18 +1,21 @@
 #=========================================================================
-# MatrixVecFL
+# DotProductCL
 #=========================================================================
-
-import greenlet
 
 from new_pymtl import *
 from new_pmlib import *
-from MatrixVec import MatrixVec
-
-import numpy
 
 from pmlib_extra      import GreenletWrapper,BytesMemPortProxy
-from new_pmlib.queues import ChildReqRespQueueAdapter, ParentReqRespQueueAdapter
 from pmlib_extra      import ListMemPortAdapter
+from new_pmlib.queues import ChildReqRespQueueAdapter, \
+                             ParentReqRespQueueAdapter
+
+import greenlet
+import numpy
+
+#-------------------------------------------------------------------------
+# helpers
+#-------------------------------------------------------------------------
 
 def mreq( a ):
   return MemMsg( 32, 32 ).req.mk_msg( 0, a, 0, 0 )
@@ -24,7 +27,9 @@ def gen_addresses( size, a, b ):
     x.append( b+i*4 )
   return list(reversed(x))
 
-
+#-------------------------------------------------------------------------
+# DotProductCL
+#-------------------------------------------------------------------------
 class DotProductCL( Model ):
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):

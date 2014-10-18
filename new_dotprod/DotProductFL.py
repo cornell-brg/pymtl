@@ -1,19 +1,20 @@
 #=========================================================================
-# MatrixVecFL
+# DotProductFL
 #=========================================================================
-
-import greenlet
 
 from new_pymtl import *
 from new_pmlib import *
-from MatrixVec import MatrixVec
 
+from pmlib_extra      import GreenletWrapper,BytesMemPortProxy
+from new_pmlib.queues import ChildReqRespQueueAdapter
+from pmlib_extra      import ListMemPortAdapter
+
+import greenlet
 import numpy
 
-from pmlib_extra import GreenletWrapper,BytesMemPortProxy
-from new_pmlib.queues import ChildReqRespQueueAdapter
-from pmlib_extra import ListMemPortAdapter
-
+#-------------------------------------------------------------------------
+# DotProductFL
+#-------------------------------------------------------------------------
 class DotProductFL( Model ):
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):

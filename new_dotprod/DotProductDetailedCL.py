@@ -1,5 +1,5 @@
 #=========================================================================
-# MatrixVecCL
+# DotProductDetailedCL
 #=========================================================================
 
 import collections
@@ -12,13 +12,13 @@ from new_pmlib import ParentReqRespBundle, ChildReqRespBundle
 from mvmult_fl   import InMatrixVecBundle,OutMatrixVecBundle
 from pmlib_extra import Queue
 
-class DotProductCL (Model):
+#-------------------------------------------------------------------------
+# DotProductDetailed
+#-------------------------------------------------------------------------
+class DotProductCL( Model ):
 
   def elaborate_logic( s ):
     pass
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
 

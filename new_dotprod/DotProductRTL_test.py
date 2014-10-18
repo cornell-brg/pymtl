@@ -1,6 +1,7 @@
 #==============================================================================
-# MatrixVecLaneBL_test
+# DotProductRTL_test
 #==============================================================================
+# TODO: clean this up!!!
 
 from new_pymtl        import *
 from new_pmlib        import TestSource, TestMemory, mem_msgs
