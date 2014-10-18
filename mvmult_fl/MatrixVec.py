@@ -12,13 +12,13 @@ class MatrixVec (object):
   #-----------------------------------------------------------------------
 
   @staticmethod
-  def mvmult(src0, src1 ):
+  def mvmult( dest, src0, src1 ):
 
     result = 0
     for i in xrange(len(src0)):
       result += src0[i] * src1[i]
 
-    return result
+    dest[0] = result
 
   #-----------------------------------------------------------------------
   # Constructor
@@ -28,8 +28,8 @@ class MatrixVec (object):
     s.size      = 0
     s.src0_addr = 0x0000
     s.src0_addr = 0x0000
+    s.dest_addr = 0x0000
     s.mem       = mem
-    s.valid = [False] * 3
 
   #-----------------------------------------------------------------------
   # Configuration
@@ -37,18 +37,15 @@ class MatrixVec (object):
 
   def set_size( s, size ):
     s.size = size
-    s.valid[0] = True
 
   def set_src0_addr( s, src0_addr ):
     s.src0_addr = src0_addr
-    s.valid[1] = True
 
   def set_src1_addr( s, src1_addr ):
     s.src1_addr = src1_addr
-    s.valid[2] = True
 
-  def valid( s ):
-    return s.valid[0] and s.valid[1] and s.valid[2]
+  def set_dest_addr( s, dest_addr ):
+    s.dest_addr = dest_addr
 
   #-----------------------------------------------------------------------
   # go
@@ -58,8 +55,7 @@ class MatrixVec (object):
 
     src0 = ListBytesProxy( s.mem, s.src0_addr, s.size )
     src1 = ListBytesProxy( s.mem, s.src1_addr, s.size )
+    dest = ListBytesProxy( s.mem, s.dest_addr, 1      )
 
     MatrixVec.mvmult( dest, src0, src1 )
-
-    s.valid = [False] * 3
 
