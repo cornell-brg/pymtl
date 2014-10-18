@@ -9,7 +9,7 @@ class MyStruct( BitStructDefinition ):
 
     s.src     = BitField( nbits)
     s.dest    = BitField( nbits )
-    
+
 class BasicModel( Model ):
 
     def __init__(s):

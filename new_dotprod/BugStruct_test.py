@@ -1,5 +1,5 @@
-from new_pymtl        import *
-from new_pymtl  import *
+from new_pymtl import *
+from new_pymtl import *
 from BugStruct import *
 from new_pmlib import InValRdyBundle, OutValRdyBundle
 
@@ -16,6 +16,8 @@ class TH( Model ):
     s.connect(s.out, s.toy.out)
 
 
+import pytest
+@pytest.mark.xfail
 def test():
 
   model = TH()
@@ -26,4 +28,4 @@ def test():
 
   model.input.msg.value = 0x12345678
   sim.cycle()
-  assert model.out.msg == 0x56781234  
+  assert model.out.msg == 0x56781234
