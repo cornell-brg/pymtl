@@ -1,4 +1,5 @@
 cffi
 greenlet
 numpy
+pyparsing
 pytest-xdist
