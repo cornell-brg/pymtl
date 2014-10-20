@@ -68,12 +68,12 @@ def gen_basic_test():
 
 def gen_link_byp_test():
   return [
-    gen_jalr_link_byp_test( 5 ),
-    gen_jalr_link_byp_test( 4 ),
-    gen_jalr_link_byp_test( 3 ),
-    gen_jalr_link_byp_test( 2 ),
-    gen_jalr_link_byp_test( 1 ),
-    gen_jalr_link_byp_test( 0 ),
+    gen_jalr_link_byp_test( 5, reset_test_count=True  ),
+    gen_jalr_link_byp_test( 4, reset_test_count=False ),
+    gen_jalr_link_byp_test( 3, reset_test_count=False ),
+    gen_jalr_link_byp_test( 2, reset_test_count=False ),
+    gen_jalr_link_byp_test( 1, reset_test_count=False ),
+    gen_jalr_link_byp_test( 0, reset_test_count=False ),
   ]
 
 #-------------------------------------------------------------------------
