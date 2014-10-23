@@ -49,6 +49,6 @@ before_script:
 # test runner
 #------------------------------------------------------------------------
 script:
- - py.test .. --verbose
+ - py.test .. --verbose -n 2
 
 # - py.test ../new_proc --verbose -n 4  # Debug
