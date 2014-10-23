@@ -22,7 +22,6 @@ class TestHarness( Model ):
                 mem_delay, sparse_mem_img, test_verilog ):
 
     data_nbits = memreq_params.data_nbits
-    print data_nbits
     s.tile     = ModelType( reset_vector   = 0x00000400,
                             mem_data_nbits = data_nbits )
     s.mem      = TestMemory( memreq_params, memresp_params, 2,
@@ -45,6 +44,9 @@ class TestHarness( Model ):
     s.connect( s.tile.memresp[0], s.mem.resps[0] )
     s.connect( s.tile.memreq [1], s.mem.reqs [1] )
     s.connect( s.tile.memresp[1], s.mem.resps[1] )
+
+  def cleanup( s ):
+    del s.mem.mem.mem[:]
 
   #---------------------------------------------------------------------
   # done
@@ -108,6 +110,8 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
   sim.cycle()
   sim.cycle()
   sim.cycle()
+
+  model.cleanup()
 
 #-----------------------------------------------------------------------
 # run_bypass_proc_test
