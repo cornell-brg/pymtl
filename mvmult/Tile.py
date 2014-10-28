@@ -3,7 +3,7 @@
 from pymtl                     import *
 from pclib                     import mem_msgs
 from pclib                     import InValRdyBundle, OutValRdyBundle
-from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul
+from proc.parc.ParcProcPipelinedMul import ParcProcPipelinedMul
 from MatrixVecCOP                  import MatrixVecCOP
 
 # Cache with single-cycle hit lantency

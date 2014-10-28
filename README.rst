@@ -143,7 +143,7 @@ To compile the PARC processor assembly tests::
 To run the tests::
 
   % cd ../../build
-  % py.test ../new_proc
+  % py.test ../proc/parc
 
 To compile the PARC processor microbenchmarks::
 

@@ -7,7 +7,7 @@ from pclib import TestVectorSimulator
 from DummyCOP  import DummyCOPCL
 from pclib import mem_msgs, TestMemory, TestProcManager
 from pclib import SparseMemoryImage
-from new_proc  import ParcProc5stBypass
+from proc.parc  import ParcProc5stBypass
 
 #-----------------------------------------------------------------------
 # test_DummyCOP_directed
@@ -165,7 +165,7 @@ def run_proc_test( dump_vcd, test_verilog, vcd_file, input_list ):
 #-----------------------------------------------------------------------
 # test_dummy_addiu_no_hazards
 #-----------------------------------------------------------------------
-from new_proc.parcv1_addiu import addiu_no_hazards
+from proc.parc.parcv1_addiu import addiu_no_hazards
 @requires_xcc
 def test_dummy_addiu_no_hazards( dump_vcd, test_verilog ):
   run_proc_test( dump_vcd, test_verilog, "bypass_addiu_no_hazards.vcd",

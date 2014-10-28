@@ -1,13 +1,15 @@
 #=======================================================================
 
-from pymtl                       import *
-from pclib                       import mem_msgs
-from pclib                       import InValRdyBundle, OutValRdyBundle
-from pclib                       import MemMsg
-from pclib                       import CP2Msg
-from new_dpproc.ParcProcPipelinedMul import ParcProcPipelinedMul
-from DotProductRTL                   import DotProductRTL
-from DotProductFL                    import DotProductFL
+from pymtl          import *
+from pclib          import mem_msgs
+from pclib          import InValRdyBundle, OutValRdyBundle
+from pclib          import MemMsg
+from pclib          import CP2Msg
+from DotProductRTL  import DotProductRTL
+from DotProductFL   import DotProductFL
+from proc.parc_accel.ParcProcPipelinedMul import (
+    ParcProcPipelinedMul
+)
 
 # Cache with single-cycle hit lantency
 from mem.simple_cache.DirectMappedWriteBackCache import (

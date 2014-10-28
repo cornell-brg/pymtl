@@ -8,7 +8,7 @@ from pclib import mem_msgs
 from pclib import TestMemory
 from pclib import TestProcManager
 from pclib import SparseMemoryImage
-from Tile      import Tile
+from Tile  import Tile
 
 #-----------------------------------------------------------------------
 # TestHarness
@@ -346,7 +346,7 @@ def test_mul_scoreboard_clear_bug( dump_vcd, test_verilog ):
 # 0. bypass logic direct test
 #---------------------------------------------------------------------------
 
-from new_proc.bypass_direct_test import bypass_from_X
+from proc.parc.bypass_direct_test import bypass_from_X
 
 @requires_xcc
 def test_bypass_direct_from_X( dump_vcd, test_verilog ):
@@ -357,12 +357,12 @@ def test_bypass_direct_from_X( dump_vcd, test_verilog ):
 # 1. parcv1-addiu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_addiu import addiu_no_hazards
-from new_proc.parcv1_addiu import addiu_hazard_W
-from new_proc.parcv1_addiu import addiu_hazard_M
-from new_proc.parcv1_addiu import addiu_hazard_X
-from new_proc.parcv1_addiu import addiu_vmh_delay0
-from new_proc.parcv1_addiu import addiu_vmh_delay5
+from proc.parc.parcv1_addiu import addiu_no_hazards
+from proc.parc.parcv1_addiu import addiu_hazard_W
+from proc.parc.parcv1_addiu import addiu_hazard_M
+from proc.parc.parcv1_addiu import addiu_hazard_X
+from proc.parc.parcv1_addiu import addiu_vmh_delay0
+from proc.parc.parcv1_addiu import addiu_vmh_delay5
 
 @requires_xcc
 def test_bypass_addiu_no_hazards( dump_vcd, test_verilog ):
@@ -398,12 +398,12 @@ def test_bypass_addiu_vmh_delay5( dump_vcd, test_verilog ):
 # 2. parcv1-ori tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_ori import ori_no_hazards
-from new_proc.parcv1_ori import ori_hazard_W
-from new_proc.parcv1_ori import ori_hazard_M
-from new_proc.parcv1_ori import ori_hazard_X
-from new_proc.parcv1_ori import ori_vmh_delay0
-from new_proc.parcv1_ori import ori_vmh_delay5
+from proc.parc.parcv1_ori import ori_no_hazards
+from proc.parc.parcv1_ori import ori_hazard_W
+from proc.parc.parcv1_ori import ori_hazard_M
+from proc.parc.parcv1_ori import ori_hazard_X
+from proc.parc.parcv1_ori import ori_vmh_delay0
+from proc.parc.parcv1_ori import ori_vmh_delay5
 
 @requires_xcc
 def test_bypass_ori_no_hazards( dump_vcd, test_verilog ):
@@ -439,12 +439,12 @@ def test_bypass_ori_vmh_delay5( dump_vcd, test_verilog ):
 # 3. parcv1-lui tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_lui import lui_no_hazards
-from new_proc.parcv1_lui import lui_hazard_W
-from new_proc.parcv1_lui import lui_hazard_M
-from new_proc.parcv1_lui import lui_hazard_X
-from new_proc.parcv1_lui import lui_vmh_delay0
-from new_proc.parcv1_lui import lui_vmh_delay5
+from proc.parc.parcv1_lui import lui_no_hazards
+from proc.parc.parcv1_lui import lui_hazard_W
+from proc.parc.parcv1_lui import lui_hazard_M
+from proc.parc.parcv1_lui import lui_hazard_X
+from proc.parc.parcv1_lui import lui_vmh_delay0
+from proc.parc.parcv1_lui import lui_vmh_delay5
 
 @requires_xcc
 def test_bypass_lui_no_hazards( dump_vcd, test_verilog ):
@@ -480,12 +480,12 @@ def test_bypass_lui_vmh_delay5( dump_vcd, test_verilog ):
 # 4. parcv1-addu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_addu import addu_no_hazards
-from new_proc.parcv1_addu import addu_hazard_W
-from new_proc.parcv1_addu import addu_hazard_M
-from new_proc.parcv1_addu import addu_hazard_X
-from new_proc.parcv1_addu import addu_vmh_delay0
-from new_proc.parcv1_addu import addu_vmh_delay5
+from proc.parc.parcv1_addu import addu_no_hazards
+from proc.parc.parcv1_addu import addu_hazard_W
+from proc.parc.parcv1_addu import addu_hazard_M
+from proc.parc.parcv1_addu import addu_hazard_X
+from proc.parc.parcv1_addu import addu_vmh_delay0
+from proc.parc.parcv1_addu import addu_vmh_delay5
 
 @requires_xcc
 def test_bypass_addu_no_hazards( dump_vcd, test_verilog ):
@@ -521,12 +521,12 @@ def test_bypass_addu_vmh_delay5( dump_vcd, test_verilog ):
 # 5. parcv1-lw tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_lw import lw_no_hazards
-from new_proc.parcv1_lw import lw_hazard_W
-from new_proc.parcv1_lw import lw_hazard_M
-from new_proc.parcv1_lw import lw_hazard_X
-from new_proc.parcv1_lw import lw_vmh_delay0
-from new_proc.parcv1_lw import lw_vmh_delay5
+from proc.parc.parcv1_lw import lw_no_hazards
+from proc.parc.parcv1_lw import lw_hazard_W
+from proc.parc.parcv1_lw import lw_hazard_M
+from proc.parc.parcv1_lw import lw_hazard_X
+from proc.parc.parcv1_lw import lw_vmh_delay0
+from proc.parc.parcv1_lw import lw_vmh_delay5
 
 @requires_xcc
 def test_bypass_lw_no_hazards( dump_vcd, test_verilog ):
@@ -562,12 +562,12 @@ def test_bypass_lw_vmh_delay5( dump_vcd, test_verilog ):
 # 6. parcv1-sw tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_sw import sw_no_hazards
-from new_proc.parcv1_sw import sw_hazard_W
-from new_proc.parcv1_sw import sw_hazard_M
-from new_proc.parcv1_sw import sw_hazard_X
-from new_proc.parcv1_sw import sw_vmh_delay0
-from new_proc.parcv1_sw import sw_vmh_delay5
+from proc.parc.parcv1_sw import sw_no_hazards
+from proc.parc.parcv1_sw import sw_hazard_W
+from proc.parc.parcv1_sw import sw_hazard_M
+from proc.parc.parcv1_sw import sw_hazard_X
+from proc.parc.parcv1_sw import sw_vmh_delay0
+from proc.parc.parcv1_sw import sw_vmh_delay5
 
 @requires_xcc
 def test_bypass_sw_no_hazards( dump_vcd, test_verilog ):
@@ -603,9 +603,9 @@ def test_bypass_sw_vmh_delay5( dump_vcd, test_verilog ):
 # 7. parcv1-jal tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_jal import jal_asm
-from new_proc.parcv1_jal import jal_vmh_delay0
-from new_proc.parcv1_jal import jal_vmh_delay5
+from proc.parc.parcv1_jal import jal_asm
+from proc.parc.parcv1_jal import jal_vmh_delay0
+from proc.parc.parcv1_jal import jal_vmh_delay5
 
 @requires_xcc
 def test_bypass_jal_asm( dump_vcd, test_verilog ):
@@ -626,9 +626,9 @@ def test_bypass_jal_vmh_delay5( dump_vcd, test_verilog ):
 # 8. parcv1-jr tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_jr import jr_asm
-from new_proc.parcv1_jr import jr_vmh_delay0
-from new_proc.parcv1_jr import jr_vmh_delay5
+from proc.parc.parcv1_jr import jr_asm
+from proc.parc.parcv1_jr import jr_vmh_delay0
+from proc.parc.parcv1_jr import jr_vmh_delay5
 
 @requires_xcc
 def test_bypass_jr_asm( dump_vcd, test_verilog ):
@@ -649,9 +649,9 @@ def test_bypass_jr_vmh_delay5( dump_vcd, test_verilog ):
 # 9. parcv1-bne tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv1_bne import bne_asm
-from new_proc.parcv1_bne import bne_vmh_delay0
-from new_proc.parcv1_bne import bne_vmh_delay5
+from proc.parc.parcv1_bne import bne_asm
+from proc.parc.parcv1_bne import bne_vmh_delay0
+from proc.parc.parcv1_bne import bne_vmh_delay5
 
 @requires_xcc
 def test_bypass_bne_asm( dump_vcd, test_verilog ):
@@ -672,12 +672,12 @@ def test_bypass_bne_vmh_delay5( dump_vcd, test_verilog ):
 # 10. parcv2-andi tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_andi import andi_no_hazards
-from new_proc.parcv2_andi import andi_hazard_W
-from new_proc.parcv2_andi import andi_hazard_M
-from new_proc.parcv2_andi import andi_hazard_X
-from new_proc.parcv2_andi import andi_vmh_delay0
-from new_proc.parcv2_andi import andi_vmh_delay5
+from proc.parc.parcv2_andi import andi_no_hazards
+from proc.parc.parcv2_andi import andi_hazard_W
+from proc.parc.parcv2_andi import andi_hazard_M
+from proc.parc.parcv2_andi import andi_hazard_X
+from proc.parc.parcv2_andi import andi_vmh_delay0
+from proc.parc.parcv2_andi import andi_vmh_delay5
 
 @requires_xcc
 def test_bypass_andi_no_hazards( dump_vcd, test_verilog ):
@@ -713,12 +713,12 @@ def test_bypass_andi_vmh_delay5( dump_vcd, test_verilog ):
 # 11. parcv2-xori tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_xori import xori_no_hazards
-from new_proc.parcv2_xori import xori_hazard_W
-from new_proc.parcv2_xori import xori_hazard_M
-from new_proc.parcv2_xori import xori_hazard_X
-from new_proc.parcv2_xori import xori_vmh_delay0
-from new_proc.parcv2_xori import xori_vmh_delay5
+from proc.parc.parcv2_xori import xori_no_hazards
+from proc.parc.parcv2_xori import xori_hazard_W
+from proc.parc.parcv2_xori import xori_hazard_M
+from proc.parc.parcv2_xori import xori_hazard_X
+from proc.parc.parcv2_xori import xori_vmh_delay0
+from proc.parc.parcv2_xori import xori_vmh_delay5
 
 @requires_xcc
 def test_bypass_xori_no_hazards( dump_vcd, test_verilog ):
@@ -754,12 +754,12 @@ def test_bypass_xori_vmh_delay5( dump_vcd, test_verilog ):
 # 12. parcv2-slti tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_slti import slti_no_hazards
-from new_proc.parcv2_slti import slti_hazard_W
-from new_proc.parcv2_slti import slti_hazard_M
-from new_proc.parcv2_slti import slti_hazard_X
-from new_proc.parcv2_slti import slti_vmh_delay0
-from new_proc.parcv2_slti import slti_vmh_delay5
+from proc.parc.parcv2_slti import slti_no_hazards
+from proc.parc.parcv2_slti import slti_hazard_W
+from proc.parc.parcv2_slti import slti_hazard_M
+from proc.parc.parcv2_slti import slti_hazard_X
+from proc.parc.parcv2_slti import slti_vmh_delay0
+from proc.parc.parcv2_slti import slti_vmh_delay5
 
 @requires_xcc
 def test_bypass_slti_no_hazards( dump_vcd, test_verilog ):
@@ -795,12 +795,12 @@ def test_bypass_slti_vmh_delay5( dump_vcd, test_verilog ):
 # 13. parcv2-sltiu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_sltiu import sltiu_no_hazards
-from new_proc.parcv2_sltiu import sltiu_hazard_W
-from new_proc.parcv2_sltiu import sltiu_hazard_M
-from new_proc.parcv2_sltiu import sltiu_hazard_X
-from new_proc.parcv2_sltiu import sltiu_vmh_delay0
-from new_proc.parcv2_sltiu import sltiu_vmh_delay5
+from proc.parc.parcv2_sltiu import sltiu_no_hazards
+from proc.parc.parcv2_sltiu import sltiu_hazard_W
+from proc.parc.parcv2_sltiu import sltiu_hazard_M
+from proc.parc.parcv2_sltiu import sltiu_hazard_X
+from proc.parc.parcv2_sltiu import sltiu_vmh_delay0
+from proc.parc.parcv2_sltiu import sltiu_vmh_delay5
 
 @requires_xcc
 def test_bypass_sltiu_no_hazards( dump_vcd, test_verilog ):
@@ -836,12 +836,12 @@ def test_bypass_sltiu_vmh_delay5( dump_vcd, test_verilog ):
 # 14. parcv2-sll tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_sll import sll_no_hazards
-from new_proc.parcv2_sll import sll_hazard_W
-from new_proc.parcv2_sll import sll_hazard_M
-from new_proc.parcv2_sll import sll_hazard_X
-from new_proc.parcv2_sll import sll_vmh_delay0
-from new_proc.parcv2_sll import sll_vmh_delay5
+from proc.parc.parcv2_sll import sll_no_hazards
+from proc.parc.parcv2_sll import sll_hazard_W
+from proc.parc.parcv2_sll import sll_hazard_M
+from proc.parc.parcv2_sll import sll_hazard_X
+from proc.parc.parcv2_sll import sll_vmh_delay0
+from proc.parc.parcv2_sll import sll_vmh_delay5
 
 @requires_xcc
 def test_bypass_sll_no_hazards( dump_vcd, test_verilog ):
@@ -877,12 +877,12 @@ def test_bypass_sll_vmh_delay5( dump_vcd, test_verilog ):
 # 15. parcv2-srl tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_srl import srl_no_hazards
-from new_proc.parcv2_srl import srl_hazard_W
-from new_proc.parcv2_srl import srl_hazard_M
-from new_proc.parcv2_srl import srl_hazard_X
-from new_proc.parcv2_srl import srl_vmh_delay0
-from new_proc.parcv2_srl import srl_vmh_delay5
+from proc.parc.parcv2_srl import srl_no_hazards
+from proc.parc.parcv2_srl import srl_hazard_W
+from proc.parc.parcv2_srl import srl_hazard_M
+from proc.parc.parcv2_srl import srl_hazard_X
+from proc.parc.parcv2_srl import srl_vmh_delay0
+from proc.parc.parcv2_srl import srl_vmh_delay5
 
 @requires_xcc
 def test_bypass_srl_no_hazards( dump_vcd, test_verilog ):
@@ -918,12 +918,12 @@ def test_bypass_srl_vmh_delay5( dump_vcd, test_verilog ):
 # 16. parcv2-sra tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_sra import sra_no_hazards
-from new_proc.parcv2_sra import sra_hazard_W
-from new_proc.parcv2_sra import sra_hazard_M
-from new_proc.parcv2_sra import sra_hazard_X
-from new_proc.parcv2_sra import sra_vmh_delay0
-from new_proc.parcv2_sra import sra_vmh_delay5
+from proc.parc.parcv2_sra import sra_no_hazards
+from proc.parc.parcv2_sra import sra_hazard_W
+from proc.parc.parcv2_sra import sra_hazard_M
+from proc.parc.parcv2_sra import sra_hazard_X
+from proc.parc.parcv2_sra import sra_vmh_delay0
+from proc.parc.parcv2_sra import sra_vmh_delay5
 
 @requires_xcc
 def test_bypass_sra_no_hazards( dump_vcd, test_verilog ):
@@ -959,12 +959,12 @@ def test_bypass_sra_vmh_delay5( dump_vcd, test_verilog ):
 # 17. parcv2-sllv tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_sllv import sllv_no_hazards
-from new_proc.parcv2_sllv import sllv_hazard_W
-from new_proc.parcv2_sllv import sllv_hazard_M
-from new_proc.parcv2_sllv import sllv_hazard_X
-from new_proc.parcv2_sllv import sllv_vmh_delay0
-from new_proc.parcv2_sllv import sllv_vmh_delay5
+from proc.parc.parcv2_sllv import sllv_no_hazards
+from proc.parc.parcv2_sllv import sllv_hazard_W
+from proc.parc.parcv2_sllv import sllv_hazard_M
+from proc.parc.parcv2_sllv import sllv_hazard_X
+from proc.parc.parcv2_sllv import sllv_vmh_delay0
+from proc.parc.parcv2_sllv import sllv_vmh_delay5
 
 @requires_xcc
 def test_bypass_sllv_no_hazards( dump_vcd, test_verilog ):
@@ -1000,12 +1000,12 @@ def test_bypass_sllv_vmh_delay5( dump_vcd, test_verilog ):
 # 18. parcv2-srlv tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_srlv import srlv_no_hazards
-from new_proc.parcv2_srlv import srlv_hazard_W
-from new_proc.parcv2_srlv import srlv_hazard_M
-from new_proc.parcv2_srlv import srlv_hazard_X
-from new_proc.parcv2_srlv import srlv_vmh_delay0
-from new_proc.parcv2_srlv import srlv_vmh_delay5
+from proc.parc.parcv2_srlv import srlv_no_hazards
+from proc.parc.parcv2_srlv import srlv_hazard_W
+from proc.parc.parcv2_srlv import srlv_hazard_M
+from proc.parc.parcv2_srlv import srlv_hazard_X
+from proc.parc.parcv2_srlv import srlv_vmh_delay0
+from proc.parc.parcv2_srlv import srlv_vmh_delay5
 
 @requires_xcc
 def test_bypass_srlv_no_hazards( dump_vcd, test_verilog ):
@@ -1041,12 +1041,12 @@ def test_bypass_srlv_vmh_delay5( dump_vcd, test_verilog ):
 # 19. parcv2-srav tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_srav import srav_no_hazards
-from new_proc.parcv2_srav import srav_hazard_W
-from new_proc.parcv2_srav import srav_hazard_M
-from new_proc.parcv2_srav import srav_hazard_X
-from new_proc.parcv2_srav import srav_vmh_delay0
-from new_proc.parcv2_srav import srav_vmh_delay5
+from proc.parc.parcv2_srav import srav_no_hazards
+from proc.parc.parcv2_srav import srav_hazard_W
+from proc.parc.parcv2_srav import srav_hazard_M
+from proc.parc.parcv2_srav import srav_hazard_X
+from proc.parc.parcv2_srav import srav_vmh_delay0
+from proc.parc.parcv2_srav import srav_vmh_delay5
 
 @requires_xcc
 def test_bypass_srav_no_hazards( dump_vcd, test_verilog ):
@@ -1082,12 +1082,12 @@ def test_bypass_srav_vmh_delay5( dump_vcd, test_verilog ):
 # 20. parcv2-subu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_subu import subu_no_hazards
-from new_proc.parcv2_subu import subu_hazard_W
-from new_proc.parcv2_subu import subu_hazard_M
-from new_proc.parcv2_subu import subu_hazard_X
-from new_proc.parcv2_subu import subu_vmh_delay0
-from new_proc.parcv2_subu import subu_vmh_delay5
+from proc.parc.parcv2_subu import subu_no_hazards
+from proc.parc.parcv2_subu import subu_hazard_W
+from proc.parc.parcv2_subu import subu_hazard_M
+from proc.parc.parcv2_subu import subu_hazard_X
+from proc.parc.parcv2_subu import subu_vmh_delay0
+from proc.parc.parcv2_subu import subu_vmh_delay5
 
 @requires_xcc
 def test_bypass_subu_no_hazards( dump_vcd, test_verilog ):
@@ -1123,12 +1123,12 @@ def test_bypass_subu_vmh_delay5( dump_vcd, test_verilog ):
 # 21. parcv2-and tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_and import and_no_hazards
-from new_proc.parcv2_and import and_hazard_W
-from new_proc.parcv2_and import and_hazard_M
-from new_proc.parcv2_and import and_hazard_X
-from new_proc.parcv2_and import and_vmh_delay0
-from new_proc.parcv2_and import and_vmh_delay5
+from proc.parc.parcv2_and import and_no_hazards
+from proc.parc.parcv2_and import and_hazard_W
+from proc.parc.parcv2_and import and_hazard_M
+from proc.parc.parcv2_and import and_hazard_X
+from proc.parc.parcv2_and import and_vmh_delay0
+from proc.parc.parcv2_and import and_vmh_delay5
 
 @requires_xcc
 def test_bypass_and_no_hazards( dump_vcd, test_verilog ):
@@ -1164,12 +1164,12 @@ def test_bypass_and_vmh_delay5( dump_vcd, test_verilog ):
 # 22. parcv2-or tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_or import or_no_hazards
-from new_proc.parcv2_or import or_hazard_W
-from new_proc.parcv2_or import or_hazard_M
-from new_proc.parcv2_or import or_hazard_X
-from new_proc.parcv2_or import or_vmh_delay0
-from new_proc.parcv2_or import or_vmh_delay5
+from proc.parc.parcv2_or import or_no_hazards
+from proc.parc.parcv2_or import or_hazard_W
+from proc.parc.parcv2_or import or_hazard_M
+from proc.parc.parcv2_or import or_hazard_X
+from proc.parc.parcv2_or import or_vmh_delay0
+from proc.parc.parcv2_or import or_vmh_delay5
 
 @requires_xcc
 def test_bypass_or_no_hazards( dump_vcd, test_verilog ):
@@ -1205,12 +1205,12 @@ def test_bypass_or_vmh_delay5( dump_vcd, test_verilog ):
 # 23. parcv2-xor tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_xor import xor_no_hazards
-from new_proc.parcv2_xor import xor_hazard_W
-from new_proc.parcv2_xor import xor_hazard_M
-from new_proc.parcv2_xor import xor_hazard_X
-from new_proc.parcv2_xor import xor_vmh_delay0
-from new_proc.parcv2_xor import xor_vmh_delay5
+from proc.parc.parcv2_xor import xor_no_hazards
+from proc.parc.parcv2_xor import xor_hazard_W
+from proc.parc.parcv2_xor import xor_hazard_M
+from proc.parc.parcv2_xor import xor_hazard_X
+from proc.parc.parcv2_xor import xor_vmh_delay0
+from proc.parc.parcv2_xor import xor_vmh_delay5
 
 @requires_xcc
 def test_bypass_xor_no_hazards( dump_vcd, test_verilog ):
@@ -1246,12 +1246,12 @@ def test_bypass_xor_vmh_delay5( dump_vcd, test_verilog ):
 # 24. parcv2-nor tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_nor import nor_no_hazards
-from new_proc.parcv2_nor import nor_hazard_W
-from new_proc.parcv2_nor import nor_hazard_M
-from new_proc.parcv2_nor import nor_hazard_X
-from new_proc.parcv2_nor import nor_vmh_delay0
-from new_proc.parcv2_nor import nor_vmh_delay5
+from proc.parc.parcv2_nor import nor_no_hazards
+from proc.parc.parcv2_nor import nor_hazard_W
+from proc.parc.parcv2_nor import nor_hazard_M
+from proc.parc.parcv2_nor import nor_hazard_X
+from proc.parc.parcv2_nor import nor_vmh_delay0
+from proc.parc.parcv2_nor import nor_vmh_delay5
 
 @requires_xcc
 def test_bypass_nor_no_hazards( dump_vcd, test_verilog ):
@@ -1287,12 +1287,12 @@ def test_bypass_nor_vmh_delay5( dump_vcd, test_verilog ):
 # 25. parcv2-slt tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_slt import slt_no_hazards
-from new_proc.parcv2_slt import slt_hazard_W
-from new_proc.parcv2_slt import slt_hazard_M
-from new_proc.parcv2_slt import slt_hazard_X
-from new_proc.parcv2_slt import slt_vmh_delay0
-from new_proc.parcv2_slt import slt_vmh_delay5
+from proc.parc.parcv2_slt import slt_no_hazards
+from proc.parc.parcv2_slt import slt_hazard_W
+from proc.parc.parcv2_slt import slt_hazard_M
+from proc.parc.parcv2_slt import slt_hazard_X
+from proc.parc.parcv2_slt import slt_vmh_delay0
+from proc.parc.parcv2_slt import slt_vmh_delay5
 
 @requires_xcc
 def test_bypass_slt_no_hazards( dump_vcd, test_verilog ):
@@ -1328,12 +1328,12 @@ def test_bypass_slt_vmh_delay5( dump_vcd, test_verilog ):
 # 26. parcv2-sltu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_sltu import sltu_no_hazards
-from new_proc.parcv2_sltu import sltu_hazard_W
-from new_proc.parcv2_sltu import sltu_hazard_M
-from new_proc.parcv2_sltu import sltu_hazard_X
-from new_proc.parcv2_sltu import sltu_vmh_delay0
-from new_proc.parcv2_sltu import sltu_vmh_delay5
+from proc.parc.parcv2_sltu import sltu_no_hazards
+from proc.parc.parcv2_sltu import sltu_hazard_W
+from proc.parc.parcv2_sltu import sltu_hazard_M
+from proc.parc.parcv2_sltu import sltu_hazard_X
+from proc.parc.parcv2_sltu import sltu_vmh_delay0
+from proc.parc.parcv2_sltu import sltu_vmh_delay5
 
 @requires_xcc
 def test_bypass_sltu_no_hazards( dump_vcd, test_verilog ):
@@ -1369,12 +1369,12 @@ def test_bypass_sltu_vmh_delay5( dump_vcd, test_verilog ):
 # 27. parcv2-mul tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_mul import mul_no_hazards
-from new_proc.parcv2_mul import mul_hazard_W
-from new_proc.parcv2_mul import mul_hazard_M
-from new_proc.parcv2_mul import mul_hazard_X
-from new_proc.parcv2_mul import mul_vmh_delay0
-from new_proc.parcv2_mul import mul_vmh_delay5
+from proc.parc.parcv2_mul import mul_no_hazards
+from proc.parc.parcv2_mul import mul_hazard_W
+from proc.parc.parcv2_mul import mul_hazard_M
+from proc.parc.parcv2_mul import mul_hazard_X
+from proc.parc.parcv2_mul import mul_vmh_delay0
+from proc.parc.parcv2_mul import mul_vmh_delay5
 
 @requires_xcc
 def test_bypass_mul_no_hazards( dump_vcd, test_verilog ):
@@ -1410,12 +1410,12 @@ def test_bypass_mul_vmh_delay5( dump_vcd, test_verilog ):
 # 28. parcv2-div tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_div import div_no_hazards
-from new_proc.parcv2_div import div_hazard_W
-from new_proc.parcv2_div import div_hazard_M
-from new_proc.parcv2_div import div_hazard_X
-from new_proc.parcv2_div import div_vmh_delay0
-from new_proc.parcv2_div import div_vmh_delay5
+from proc.parc.parcv2_div import div_no_hazards
+from proc.parc.parcv2_div import div_hazard_W
+from proc.parc.parcv2_div import div_hazard_M
+from proc.parc.parcv2_div import div_hazard_X
+from proc.parc.parcv2_div import div_vmh_delay0
+from proc.parc.parcv2_div import div_vmh_delay5
 
 @requires_xcc
 def test_bypass_div_no_hazards( dump_vcd, test_verilog ):
@@ -1451,12 +1451,12 @@ def test_bypass_div_vmh_delay5( dump_vcd, test_verilog ):
 # 29. parcv2-divu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_divu import divu_no_hazards
-from new_proc.parcv2_divu import divu_hazard_W
-from new_proc.parcv2_divu import divu_hazard_M
-from new_proc.parcv2_divu import divu_hazard_X
-from new_proc.parcv2_divu import divu_vmh_delay0
-from new_proc.parcv2_divu import divu_vmh_delay5
+from proc.parc.parcv2_divu import divu_no_hazards
+from proc.parc.parcv2_divu import divu_hazard_W
+from proc.parc.parcv2_divu import divu_hazard_M
+from proc.parc.parcv2_divu import divu_hazard_X
+from proc.parc.parcv2_divu import divu_vmh_delay0
+from proc.parc.parcv2_divu import divu_vmh_delay5
 
 @requires_xcc
 def test_bypass_divu_no_hazards( dump_vcd, test_verilog ):
@@ -1492,12 +1492,12 @@ def test_bypass_divu_vmh_delay5( dump_vcd, test_verilog ):
 # 30. parcv2-rem tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_rem import rem_no_hazards
-from new_proc.parcv2_rem import rem_hazard_W
-from new_proc.parcv2_rem import rem_hazard_M
-from new_proc.parcv2_rem import rem_hazard_X
-from new_proc.parcv2_rem import rem_vmh_delay0
-from new_proc.parcv2_rem import rem_vmh_delay5
+from proc.parc.parcv2_rem import rem_no_hazards
+from proc.parc.parcv2_rem import rem_hazard_W
+from proc.parc.parcv2_rem import rem_hazard_M
+from proc.parc.parcv2_rem import rem_hazard_X
+from proc.parc.parcv2_rem import rem_vmh_delay0
+from proc.parc.parcv2_rem import rem_vmh_delay5
 
 @requires_xcc
 def test_bypass_rem_no_hazards( dump_vcd, test_verilog ):
@@ -1533,12 +1533,12 @@ def test_bypass_rem_vmh_delay5( dump_vcd, test_verilog ):
 # 31. parcv2-remu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_remu import remu_no_hazards
-from new_proc.parcv2_remu import remu_hazard_W
-from new_proc.parcv2_remu import remu_hazard_M
-from new_proc.parcv2_remu import remu_hazard_X
-from new_proc.parcv2_remu import remu_vmh_delay0
-from new_proc.parcv2_remu import remu_vmh_delay5
+from proc.parc.parcv2_remu import remu_no_hazards
+from proc.parc.parcv2_remu import remu_hazard_W
+from proc.parc.parcv2_remu import remu_hazard_M
+from proc.parc.parcv2_remu import remu_hazard_X
+from proc.parc.parcv2_remu import remu_vmh_delay0
+from proc.parc.parcv2_remu import remu_vmh_delay5
 
 @requires_xcc
 def test_bypass_remu_no_hazards( dump_vcd, test_verilog ):
@@ -1574,12 +1574,12 @@ def test_bypass_remu_vmh_delay5( dump_vcd, test_verilog ):
 # 32. parcv2-lb tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_lb import lb_no_hazards
-from new_proc.parcv2_lb import lb_hazard_W
-from new_proc.parcv2_lb import lb_hazard_M
-from new_proc.parcv2_lb import lb_hazard_X
-from new_proc.parcv2_lb import lb_vmh_delay0
-from new_proc.parcv2_lb import lb_vmh_delay5
+from proc.parc.parcv2_lb import lb_no_hazards
+from proc.parc.parcv2_lb import lb_hazard_W
+from proc.parc.parcv2_lb import lb_hazard_M
+from proc.parc.parcv2_lb import lb_hazard_X
+from proc.parc.parcv2_lb import lb_vmh_delay0
+from proc.parc.parcv2_lb import lb_vmh_delay5
 
 @requires_xcc
 def test_bypass_lb_no_hazards( dump_vcd, test_verilog ):
@@ -1615,12 +1615,12 @@ def test_bypass_lb_vmh_delay5( dump_vcd, test_verilog ):
 # 33. parcv2-lbu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_lbu import lbu_no_hazards
-from new_proc.parcv2_lbu import lbu_hazard_W
-from new_proc.parcv2_lbu import lbu_hazard_M
-from new_proc.parcv2_lbu import lbu_hazard_X
-from new_proc.parcv2_lbu import lbu_vmh_delay0
-from new_proc.parcv2_lbu import lbu_vmh_delay5
+from proc.parc.parcv2_lbu import lbu_no_hazards
+from proc.parc.parcv2_lbu import lbu_hazard_W
+from proc.parc.parcv2_lbu import lbu_hazard_M
+from proc.parc.parcv2_lbu import lbu_hazard_X
+from proc.parc.parcv2_lbu import lbu_vmh_delay0
+from proc.parc.parcv2_lbu import lbu_vmh_delay5
 
 @requires_xcc
 def test_bypass_lbu_no_hazards( dump_vcd, test_verilog ):
@@ -1656,12 +1656,12 @@ def test_bypass_lbu_vmh_delay5( dump_vcd, test_verilog ):
 # 34. parcv2-lh tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_lh import lh_no_hazards
-from new_proc.parcv2_lh import lh_hazard_W
-from new_proc.parcv2_lh import lh_hazard_M
-from new_proc.parcv2_lh import lh_hazard_X
-from new_proc.parcv2_lh import lh_vmh_delay0
-from new_proc.parcv2_lh import lh_vmh_delay5
+from proc.parc.parcv2_lh import lh_no_hazards
+from proc.parc.parcv2_lh import lh_hazard_W
+from proc.parc.parcv2_lh import lh_hazard_M
+from proc.parc.parcv2_lh import lh_hazard_X
+from proc.parc.parcv2_lh import lh_vmh_delay0
+from proc.parc.parcv2_lh import lh_vmh_delay5
 
 @requires_xcc
 def test_bypass_lh_no_hazards( dump_vcd, test_verilog ):
@@ -1697,12 +1697,12 @@ def test_bypass_lh_vmh_delay5( dump_vcd, test_verilog ):
 # 35. parcv2-lhu tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_lhu import lhu_no_hazards
-from new_proc.parcv2_lhu import lhu_hazard_W
-from new_proc.parcv2_lhu import lhu_hazard_M
-from new_proc.parcv2_lhu import lhu_hazard_X
-from new_proc.parcv2_lhu import lhu_vmh_delay0
-from new_proc.parcv2_lhu import lhu_vmh_delay5
+from proc.parc.parcv2_lhu import lhu_no_hazards
+from proc.parc.parcv2_lhu import lhu_hazard_W
+from proc.parc.parcv2_lhu import lhu_hazard_M
+from proc.parc.parcv2_lhu import lhu_hazard_X
+from proc.parc.parcv2_lhu import lhu_vmh_delay0
+from proc.parc.parcv2_lhu import lhu_vmh_delay5
 
 @requires_xcc
 def test_bypass_lhu_no_hazards( dump_vcd, test_verilog ):
@@ -1738,12 +1738,12 @@ def test_bypass_lhu_vmh_delay5( dump_vcd, test_verilog ):
 # 36. parcv2-sb tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_sb import sb_no_hazards
-from new_proc.parcv2_sb import sb_hazard_W
-from new_proc.parcv2_sb import sb_hazard_M
-from new_proc.parcv2_sb import sb_hazard_X
-from new_proc.parcv2_sb import sb_vmh_delay0
-from new_proc.parcv2_sb import sb_vmh_delay5
+from proc.parc.parcv2_sb import sb_no_hazards
+from proc.parc.parcv2_sb import sb_hazard_W
+from proc.parc.parcv2_sb import sb_hazard_M
+from proc.parc.parcv2_sb import sb_hazard_X
+from proc.parc.parcv2_sb import sb_vmh_delay0
+from proc.parc.parcv2_sb import sb_vmh_delay5
 
 @requires_xcc
 def test_bypass_sb_no_hazards( dump_vcd, test_verilog ):
@@ -1779,12 +1779,12 @@ def test_bypass_sb_vmh_delay5( dump_vcd, test_verilog ):
 # 37. parcv2-sh tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_sh import sh_no_hazards
-from new_proc.parcv2_sh import sh_hazard_W
-from new_proc.parcv2_sh import sh_hazard_M
-from new_proc.parcv2_sh import sh_hazard_X
-from new_proc.parcv2_sh import sh_vmh_delay0
-from new_proc.parcv2_sh import sh_vmh_delay5
+from proc.parc.parcv2_sh import sh_no_hazards
+from proc.parc.parcv2_sh import sh_hazard_W
+from proc.parc.parcv2_sh import sh_hazard_M
+from proc.parc.parcv2_sh import sh_hazard_X
+from proc.parc.parcv2_sh import sh_vmh_delay0
+from proc.parc.parcv2_sh import sh_vmh_delay5
 
 @requires_xcc
 def test_bypass_sh_no_hazards( dump_vcd, test_verilog ):
@@ -1820,9 +1820,9 @@ def test_bypass_sh_vmh_delay5( dump_vcd, test_verilog ):
 # 38. parcv2-j tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_j import j_asm
-from new_proc.parcv2_j import j_vmh_delay0
-from new_proc.parcv2_j import j_vmh_delay5
+from proc.parc.parcv2_j import j_asm
+from proc.parc.parcv2_j import j_vmh_delay0
+from proc.parc.parcv2_j import j_vmh_delay5
 
 @requires_xcc
 def test_bypass_j_asm( dump_vcd, test_verilog ):
@@ -1845,9 +1845,9 @@ def test_bypass_j_vmh_delay5( dump_vcd, test_verilog ):
 # 39. parcv2-jalr tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_jalr import jalr_asm
-from new_proc.parcv2_jalr import jalr_vmh_delay0
-from new_proc.parcv2_jalr import jalr_vmh_delay5
+from proc.parc.parcv2_jalr import jalr_asm
+from proc.parc.parcv2_jalr import jalr_vmh_delay0
+from proc.parc.parcv2_jalr import jalr_vmh_delay5
 
 @requires_xcc
 def test_bypass_jalr_asm( dump_vcd, test_verilog ):
@@ -1868,9 +1868,9 @@ def test_bypass_jalr_vmh_delay5( dump_vcd, test_verilog ):
 # 40. parcv2-beq tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_beq import beq_asm
-from new_proc.parcv2_beq import beq_vmh_delay0
-from new_proc.parcv2_beq import beq_vmh_delay5
+from proc.parc.parcv2_beq import beq_asm
+from proc.parc.parcv2_beq import beq_vmh_delay0
+from proc.parc.parcv2_beq import beq_vmh_delay5
 
 @requires_xcc
 def test_bypass_beq_asm( dump_vcd, test_verilog ):
@@ -1891,9 +1891,9 @@ def test_bypass_beq_vmh_delay5( dump_vcd, test_verilog ):
 # 41. parcv2-blez tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_blez import blez_asm
-from new_proc.parcv2_blez import blez_vmh_delay0
-from new_proc.parcv2_blez import blez_vmh_delay5
+from proc.parc.parcv2_blez import blez_asm
+from proc.parc.parcv2_blez import blez_vmh_delay0
+from proc.parc.parcv2_blez import blez_vmh_delay5
 
 @requires_xcc
 def test_bypass_blez_asm( dump_vcd, test_verilog ):
@@ -1914,9 +1914,9 @@ def test_bypass_blez_vmh_delay5( dump_vcd, test_verilog ):
 # 42. parcv2-bgtz tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_bgtz import bgtz_asm
-from new_proc.parcv2_bgtz import bgtz_vmh_delay0
-from new_proc.parcv2_bgtz import bgtz_vmh_delay5
+from proc.parc.parcv2_bgtz import bgtz_asm
+from proc.parc.parcv2_bgtz import bgtz_vmh_delay0
+from proc.parc.parcv2_bgtz import bgtz_vmh_delay5
 
 @requires_xcc
 def test_bypass_bgtz_asm( dump_vcd, test_verilog ):
@@ -1937,9 +1937,9 @@ def test_bypass_bgtz_vmh_delay5( dump_vcd, test_verilog ):
 # 43. parcv2-bltz tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_bltz import bltz_asm
-from new_proc.parcv2_bltz import bltz_vmh_delay0
-from new_proc.parcv2_bltz import bltz_vmh_delay5
+from proc.parc.parcv2_bltz import bltz_asm
+from proc.parc.parcv2_bltz import bltz_vmh_delay0
+from proc.parc.parcv2_bltz import bltz_vmh_delay5
 
 @requires_xcc
 def test_bypass_bltz_asm( dump_vcd, test_verilog ):
@@ -1960,9 +1960,9 @@ def test_bypass_bltz_vmh_delay5( dump_vcd, test_verilog ):
 # 44. parcv2-bgez tests
 #---------------------------------------------------------------------------
 
-from new_proc.parcv2_bgez import bgez_asm
-from new_proc.parcv2_bgez import bgez_vmh_delay0
-from new_proc.parcv2_bgez import bgez_vmh_delay5
+from proc.parc.parcv2_bgez import bgez_asm
+from proc.parc.parcv2_bgez import bgez_vmh_delay0
+from proc.parc.parcv2_bgez import bgez_vmh_delay5
 
 @requires_xcc
 def test_bypass_bgez_asm( dump_vcd, test_verilog ):

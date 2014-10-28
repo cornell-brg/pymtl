@@ -3,14 +3,12 @@
 from pymtl                     import *
 from pclib                     import mem_msgs
 from pclib                     import InValRdyBundle, OutValRdyBundle
-from new_proc.ParcProc5stBypass    import ParcProc5stBypass
-from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul
+from proc.parc.ParcProc5stBypass    import ParcProc5stBypass
+from proc.parc.ParcProcPipelinedMul import ParcProcPipelinedMul
 from MatrixVecCOP                  import MatrixVecCOP
 
-from mem.simple_cache.DirectMappedWriteBackCache import (
-  DirectMappedWriteBackCache,
-  CL_Cache
-)
+from mem.simple_cache.DirectMappedWriteBackCache  import DirectMappedWriteBackCache
+from mem.simple_cache.CycleApproximateSimpleCache import CL_Cache
 
 Processor = ParcProcPipelinedMul
 
