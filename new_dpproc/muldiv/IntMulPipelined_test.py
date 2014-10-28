@@ -2,7 +2,7 @@
 # IntMulPipelined_test.py
 #=======================================================================
 
-from new_pymtl              import *
+from pymtl              import *
 from IntMulPipelined        import IntMulPipelined as IntMulIterVarLat
 
 from new_imul.IntMulBL_test import run_imul_test

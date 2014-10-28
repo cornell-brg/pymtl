@@ -2,7 +2,7 @@
 # Crossbar.py
 #=======================================================================
 
-from new_pymtl import *
+from pymtl import *
 
 class Crossbar( Model ):
 

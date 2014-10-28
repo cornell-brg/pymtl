@@ -2,7 +2,7 @@
 # DirectedMappedWriteBackCacheTagArray Unit Test
 #=========================================================================
 
-from   new_pymtl import *
+from   pymtl import *
 import new_pmlib
 
 

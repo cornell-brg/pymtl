@@ -6,7 +6,7 @@
 # cycles it might take to execute the hardware. It is a more abstract
 # modeling technique.
 
-from new_pymtl import *
+from pymtl import *
 
 class SorterBL( Model ):
 

@@ -5,7 +5,7 @@
 # with posedge_clk concurrent blocks and uses combinational concurrent
 # blocks to model how data transfers between state elements.
 
-from new_pymtl import *
+from pymtl import *
 
 class SorterRTL( Model ):
 

@@ -2,7 +2,7 @@
 # SorterBL Test Suite
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 import random
 
 from SorterBL import SorterBL

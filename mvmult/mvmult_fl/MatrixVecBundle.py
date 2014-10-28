@@ -3,7 +3,7 @@
 #=========================================================================
 # Hack! Need to_cpu port to be port bundle to make my proxy stuff work.
 
-from new_pymtl import *
+from pymtl import *
 
 class MatrixVecBundle( PortBundle ):
   def __init__( self ):

@@ -34,7 +34,7 @@ import sys
 import re
 import random
 
-from   new_pymtl import *
+from   pymtl import *
 
 from new_pmlib import SparseMemoryImage
 from new_pmlib import TestMemory

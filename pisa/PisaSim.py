@@ -9,7 +9,7 @@
 import collections
 import struct
 
-from new_pymtl     import Bits
+from pymtl     import Bits
 from pmlib_extra   import Bytes
 from PisaInst      import PisaInst
 from PisaSemantics import PisaSemantics

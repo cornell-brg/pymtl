@@ -2,7 +2,7 @@
 # DotProductRTL
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import InValRdyBundle, OutValRdyBundle
 from new_pmlib import ParentReqRespBundle, ChildReqRespBundle
 

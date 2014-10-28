@@ -34,7 +34,7 @@ import sys
 import re
 
 from random             import randint, seed
-from new_pymtl          import *
+from pymtl          import *
 from new_pmlib          import NetMsg
 from MeshNetworkCL      import MeshNetworkCL
 

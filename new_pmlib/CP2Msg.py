@@ -1,4 +1,4 @@
-from new_pymtl import *
+from pymtl import *
 
 class CP2Msg( object ):
     def __init__( s, addr_nbits, data_nbits ):

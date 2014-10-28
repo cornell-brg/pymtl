@@ -2,7 +2,7 @@
 # DummyCOP.py
 #==============================================================================
 
-from new_pymtl   import *
+from pymtl   import *
 from new_pmlib   import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 STATE_CFG  = 0

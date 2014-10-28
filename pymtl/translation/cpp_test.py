@@ -2,7 +2,7 @@
 # cpp_test.py
 #=========================================================================
 
-from new_pymtl   import *
+from pymtl       import *
 from cpp         import CLogicTransl, compiler
 from cpp_helpers import gen_cppsim
 from subprocess  import check_output, STDOUT, CalledProcessError

@@ -3,7 +3,7 @@
 #=========================================================================
 # ParcProc5stBypass assembly tests driver
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import mem_msgs
 from new_pmlib import TestMemory
 from new_pmlib import TestProcManager

@@ -2,7 +2,7 @@
 # TestProcManager_test.py
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
 import new_pmlib
 import mem_msgs

@@ -3,7 +3,7 @@
 #=======================================================================
 # Collection of Miscellaneous Processor Logic Units
 
-from new_pymtl import *
+from pymtl import *
 
 #=======================================================================
 # BranchTarget

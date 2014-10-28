@@ -2,7 +2,7 @@
 # ListBytesProxy_test
 #=========================================================================
 
-from new_pymtl.Bits import Bits
+from pymtl.Bits import Bits
 from Bytes          import Bytes
 from ListBytesProxy import ListBytesProxy
 

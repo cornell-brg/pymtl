@@ -1,5 +1,5 @@
-from new_pymtl import *
-from cffi      import FFI
+from pymtl import *
+from cffi  import FFI
 
 class {model_name}( Model ):
 

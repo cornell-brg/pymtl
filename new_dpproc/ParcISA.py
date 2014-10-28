@@ -1,4 +1,4 @@
-from new_pymtl import *
+from pymtl import *
 
 #-------------------------------------------------------------------------
 # Parc Instruction Fields

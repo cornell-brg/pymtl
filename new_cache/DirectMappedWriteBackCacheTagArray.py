@@ -8,7 +8,7 @@
 # invalidate which operate on the valid bit and clean / dirty methods which
 # operate on the dirty bit.
 
-from   new_pymtl import *
+from   pymtl import *
 import new_pmlib
 
 import math

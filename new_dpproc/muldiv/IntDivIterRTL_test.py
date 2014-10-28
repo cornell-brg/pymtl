@@ -2,7 +2,7 @@
 # IntDivIterRTL_test.py
 #=======================================================================
 
-from new_pymtl     import *
+from pymtl     import *
 from new_pmlib     import TestSource, TestSink
 from muldiv_msg    import BitStructIndex
 from IntDivBL_test import run_idivrem_test

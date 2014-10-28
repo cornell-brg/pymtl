@@ -4,7 +4,7 @@
 
 import math
 
-from new_pymtl import *
+from pymtl     import *
 from Bits      import Bits
 from BitStruct import BitStructDefinition, BitField
 

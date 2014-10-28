@@ -3,7 +3,7 @@
 #=======================================================================
 # Unit Tests for SRAM collections
 
-from   new_pymtl import *
+from   pymtl import *
 import new_pmlib
 
 from   SRAMs import SRAMBitsComb_rst_1rw

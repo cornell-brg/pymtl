@@ -2,9 +2,9 @@
 # verilator_sim_test.py
 #=======================================================================
 
-from new_pymtl      import SimulationTool
+from pymtl          import SimulationTool
 from verilator_sim  import get_verilated
-from new_pymtl      import requires_verilator
+from pymtl          import requires_verilator
 from new_pmlib.regs import Reg
 
 #-----------------------------------------------------------------------

@@ -4,7 +4,7 @@
 # This module contains helper classes for working with memory request and
 # response messages.
 
-from new_pymtl import *
+from pymtl import *
 import math
 
 #=========================================================================

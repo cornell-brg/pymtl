@@ -3,7 +3,7 @@
 #=========================================================================
 # Custom Test Sink for the Caches with 32-bit data responses
 
-from   new_pymtl import *
+from   pymtl import *
 from   new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
 import new_pmlib
 

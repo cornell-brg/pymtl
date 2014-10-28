@@ -10,7 +10,7 @@
 # We use a finite-state machine to handle the split-phase memory
 # request/response interface.
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import *
 
 # FSM states

@@ -6,7 +6,7 @@ import pytest
 import pisa
 import struct
 
-from new_pymtl  import *
+from pymtl  import *
 from new_pmlib  import *
 from ParcProcFL import ParcProcFL
 

@@ -2,7 +2,7 @@
 # StrSearchFunc.py
 #=========================================================================
 
-from new_pymtl          import *
+from pymtl          import *
 
 StrSignalValue = CreateWrappedClass( str )
 # TODO: necessary because RandomDelay module initializes output with an int

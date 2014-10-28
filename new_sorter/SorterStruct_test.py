@@ -2,7 +2,7 @@
 # SorterStruct Unit Tests
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 
 from SorterStruct import SorterStruct
 

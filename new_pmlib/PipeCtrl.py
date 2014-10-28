@@ -25,7 +25,7 @@
 # pipereg_val : Combinational valid bit value of the current stage
 # pipe_go     : Go signal to perform the current pipeline stage transaction
 
-from new_pymtl import *
+from pymtl import *
 
 import new_pmlib
 

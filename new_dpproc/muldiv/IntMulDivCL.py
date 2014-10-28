@@ -2,7 +2,7 @@
 # IntMulDivCL.py
 #=======================================================================
 
-from new_pymtl    import *
+from pymtl    import *
 from new_pmlib    import InValRdyBundle, OutValRdyBundle
 from IntDivIterCL import IntDivIterCL
 from new_imul     import IntMulIterVarLat

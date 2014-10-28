@@ -11,7 +11,7 @@
 # port-based wrapper based on greenlets to enable interfacing with a
 # split-phase memory request/response interface.
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import *
 
 from GreenletWrapper  import GreenletWrapper

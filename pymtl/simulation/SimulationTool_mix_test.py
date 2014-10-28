@@ -3,7 +3,7 @@
 #=========================================================================
 # Mixed (combinational and sequential) logic tests for the SimulationTool.
 
-from new_pymtl import *
+from pymtl import *
 
 from SimulationTool_comb_test   import PassThrough
 from SimulationTool_seq_test    import Register

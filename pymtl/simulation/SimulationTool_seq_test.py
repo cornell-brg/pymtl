@@ -3,7 +3,7 @@
 #=========================================================================
 # Sequential logic tests for the SimulationTool class.
 
-from new_pymtl import *
+from pymtl import *
 
 #-------------------------------------------------------------------------
 # Setup Sim
@@ -307,7 +307,7 @@ def test_MultipleWrites():
 #-------------------------------------------------------------------------
 # BuiltinFuncs
 #-------------------------------------------------------------------------
-from new_pymtl import zext, sext
+from pymtl import zext, sext
 class BuiltinFuncs( Model ):
   def __init__( s ):
     s.in_  = InPort ( 4 )

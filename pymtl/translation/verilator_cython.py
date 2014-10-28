@@ -112,7 +112,7 @@ def create_cython( in_ports, out_ports, model_name,
   # Generate the Cython source code
   f = open( filename_pyx, 'w' )
 
-  pyx = ("from new_pymtl import *\n\n"
+  pyx = ("from pymtl import *\n\n"
          "cdef extern from 'verilated_vcd_c.h':\n"
          "  cdef cppclass VerilatedVcdC:\n"
          "    void open( char* )\n"
@@ -271,7 +271,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
   # Create module imports and the declaration for the PyMTL wrapper.
   w = ("from {0} import {1}\n"
        "from {0} import XTraceEverOn\n"
-       "from new_pymtl import *\n\n"
+       "from pymtl import *\n\n"
        "class {2}(Model):\n\n"
        "  def __init__(self):\n\n"
        "    self.{1} = {1}()\n"

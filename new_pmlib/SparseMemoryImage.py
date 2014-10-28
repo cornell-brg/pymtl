@@ -7,7 +7,7 @@
 import subprocess
 import tempfile
 
-from new_pymtl import *
+from pymtl import *
 
 #-------------------------------------------------------------------------------
 # Global Variables

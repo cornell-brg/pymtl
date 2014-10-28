@@ -3,7 +3,7 @@
 #=========================================================================
 # Defines a PortBundle for the ValRdy interface.
 
-from new_pymtl import *
+from pymtl import *
 from valrdy    import valrdy_to_str
 
 #-------------------------------------------------------------------------

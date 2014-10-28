@@ -2,7 +2,7 @@
 # Mux_test.py
 #=========================================================================
 
-from new_pymtl           import *
+from pymtl           import *
 from Mux                 import Mux
 from new_pmlib import TestVectorSimulator
 

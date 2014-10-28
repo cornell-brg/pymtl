@@ -3,7 +3,7 @@
 #=========================================================================
 # This class implements TestProcManager.
 
-from new_pymtl import *
+from pymtl import *
 
 class TestProcManager (Model):
 

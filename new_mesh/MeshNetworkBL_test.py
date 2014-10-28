@@ -2,7 +2,7 @@
 # Mesh Unit Test
 #=========================================================================
 
-from new_pymtl     import *
+from pymtl     import *
 from new_pmlib     import TestSource, TestNetSink, NetMsg
 from MeshNetworkBL import MeshNetworkBL
 

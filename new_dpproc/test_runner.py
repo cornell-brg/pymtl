@@ -2,7 +2,7 @@
 # test_runner.py
 #=======================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import SparseMemoryImage
 from new_pmlib import TestMemory
 from new_pmlib import mem_msgs

@@ -5,7 +5,7 @@
 # port based interface.
 
 from greenlet    import greenlet
-from new_pymtl   import Bits
+from pymtl   import Bits
 from pmlib_extra import OutQueuePortProxy
 
 class MatrixVecProxy (object):

@@ -2,7 +2,7 @@
 # TestSrcSinkSim_test.py
 #=========================================================================
 
-from new_pymtl      import *
+from pymtl      import *
 from ValRdyBundle   import InValRdyBundle, OutValRdyBundle
 from TestSrcSinkSim import TestSrcSinkSim
 

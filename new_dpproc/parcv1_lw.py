@@ -2,7 +2,7 @@
 # parcv1 lw tests
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 
 from new_pmlib.SparseMemoryImage import SparseMemoryImage
 

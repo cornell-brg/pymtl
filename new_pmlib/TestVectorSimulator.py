@@ -13,7 +13,7 @@
 # inputs/outputs corresponding to a specific cycle in sequence.
 #
 
-from new_pymtl import *
+from pymtl import *
 
 class TestVectorSimulator( object ):
 

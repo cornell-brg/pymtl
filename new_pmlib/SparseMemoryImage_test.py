@@ -3,7 +3,7 @@
 #=========================================================================
 
 from SparseMemoryImage import SparseMemoryImage
-from new_pymtl         import requires_xcc
+from pymtl         import requires_xcc
 
 # Test start assembly fragment
 

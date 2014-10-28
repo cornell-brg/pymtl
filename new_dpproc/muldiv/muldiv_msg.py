@@ -2,7 +2,7 @@
 # object to index bitfields in a Bits object
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 import new_pmlib
 
 

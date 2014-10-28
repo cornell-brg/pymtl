@@ -2,7 +2,7 @@
 # TestSimpleNetSink_test.py
 #=========================================================================
 
-from new_pymtl        import *
+from pymtl        import *
 from ValRdyBundle     import InValRdyBundle, OutValRdyBundle
 from TestSimpleSource import TestSimpleSource
 from TestNetSink      import TestSimpleNetSink

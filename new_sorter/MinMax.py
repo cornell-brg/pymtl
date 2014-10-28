@@ -2,7 +2,7 @@
 # MinMax
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 
 class MinMax( Model ):
 

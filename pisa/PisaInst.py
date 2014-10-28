@@ -9,7 +9,7 @@
 
 import pisa_encoding
 
-from new_pymtl import Bits
+from pymtl import Bits
 
 class PisaInst (object):
 

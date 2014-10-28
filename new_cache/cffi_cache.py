@@ -35,7 +35,7 @@ from collections import deque
 #from new_pmlib   import NetMsg
 #from NetObject   import NetObject
 
-from new_pymtl import get_cpp
+from pymtl import get_cpp
 from cffi      import FFI
 
 #-------------------------------------------------------------------------

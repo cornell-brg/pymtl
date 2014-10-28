@@ -24,7 +24,7 @@
 #
 # TestSink merely holds the expected value based on the increments
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import InValRdyBundle, OutValRdyBundle
 from new_pmlib import TestSource, TestSink, regs, arith
 from PipeCtrl  import PipeCtrl

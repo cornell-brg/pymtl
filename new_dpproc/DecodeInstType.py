@@ -3,7 +3,7 @@
 #=======================================================================
 # Parc Instruction Type Decoder
 
-from new_pymtl import *
+from pymtl import *
 
 import ParcISA as isa
 

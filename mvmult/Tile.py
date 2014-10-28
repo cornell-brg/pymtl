@@ -1,6 +1,6 @@
 #=======================================================================
 
-from new_pymtl                     import *
+from pymtl                     import *
 from new_pmlib                     import mem_msgs
 from new_pmlib                     import InValRdyBundle, OutValRdyBundle
 from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul

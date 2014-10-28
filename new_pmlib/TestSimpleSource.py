@@ -5,7 +5,7 @@
 # predefined list.
 #
 
-from new_pymtl    import *
+from pymtl    import *
 from ValRdyBundle import OutValRdyBundle
 
 class TestSimpleSource( Model ):

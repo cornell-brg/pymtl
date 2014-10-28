@@ -67,7 +67,7 @@ def verilate_model( filename, model_name ):
 # Generate a C wrapper file for Verilated C++.
 def create_c_wrapper( model, c_wrapper_file ):
 
-  template_filename = '../new_pymtl/translation/verilator_wrapper.templ.c'
+  template_filename = '../pymtl/translation/verilator_wrapper.templ.c'
   ports = model.get_ports()
 
   # Utility function for creating port declarations
@@ -216,7 +216,7 @@ def create_shared_lib( model_name, c_wrapper_file, lib_file ):
 #-----------------------------------------------------------------------
 def create_verilator_py_wrapper( model, wrapper_filename, lib_file, cdefs ):
 
-  template_filename = '../new_pymtl/translation/verilator_wrapper.templ.py'
+  template_filename = '../pymtl/translation/verilator_wrapper.templ.py'
 
   port_defs  = []
   set_inputs = []

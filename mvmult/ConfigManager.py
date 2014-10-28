@@ -2,7 +2,7 @@
 # ConfigManager
 #==============================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import InValRdyBundle, Decoder
 
 STATE_IDLE = 0

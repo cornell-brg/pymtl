@@ -2,9 +2,9 @@
 # cpp_helpers.py
 #=======================================================================
 
-from new_pymtl import *
-from ..Model   import PortList
-from cffi      import FFI
+from pymtl   import *
+from ..Model import PortList
+from cffi    import FFI
 
 # Create position independent code
 #cc_src = "g++ -O3 -fPIC -c -o {in}.cc {in}.h {out.o}"
@@ -155,7 +155,7 @@ def gen_pywrapper( top_inports, top_outports ):
 #-----------------------------------------------------------------------
 def create_cpp_py_wrapper( model, cdef, lib_file, wrapper_filename ):
 
-  template_filename = '../new_pymtl/translation/cpp_wrapper.templ.py'
+  template_filename = '../pymtl/translation/cpp_wrapper.templ.py'
 
   # translate pymtl      to cpp, cdef
   # compile   cpp        to so

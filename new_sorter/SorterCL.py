@@ -7,7 +7,7 @@
 # posedge_clk concurrent block. In this model, we use the built-in Python
 # function for sorting and then just delay the output for one more cycle.
 
-from new_pymtl import *
+from pymtl import *
 
 class SorterCL( Model ):
 

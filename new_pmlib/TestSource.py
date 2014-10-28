@@ -5,7 +5,7 @@
 # predefined list. Includes support for random delays.
 #
 
-from new_pymtl        import *
+from pymtl        import *
 from ValRdyBundle     import OutValRdyBundle
 from TestSimpleSource import TestSimpleSource
 from TestRandomDelay  import TestRandomDelay

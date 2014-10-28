@@ -2,7 +2,7 @@
 # IntMulDivCL_test.py
 #=======================================================================
 
-from new_pymtl              import *
+from pymtl              import *
 from new_pmlib              import TestSource, TestSink
 from new_imul.IntMulBL_test import createMulDivMessage
 from new_imul.IntMulBL_test import B

@@ -4,7 +4,7 @@
 #
 # PyMTL Functional Model of strsearch.
 
-from new_pymtl        import *
+from pymtl        import *
 from StrSearchOO_test import strings, docs, reference
 
 #-------------------------------------------------------------------------

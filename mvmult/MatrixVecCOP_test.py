@@ -2,7 +2,7 @@
 # MatrixVecMultLaneBL_test
 #==============================================================================
 
-from new_pymtl    import *
+from pymtl    import *
 from new_pmlib    import TestSource, TestMemory, mem_msgs
 from MatrixVecCOP import MatrixVecCOP
 

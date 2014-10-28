@@ -5,7 +5,7 @@
 # implementation essentially turns accesses to getitem/setitem into a
 # Bytes object. Assumes that the elements are all 4B
 
-from new_pymtl import Bits
+from pymtl import Bits
 
 class ListBytesProxy:
 

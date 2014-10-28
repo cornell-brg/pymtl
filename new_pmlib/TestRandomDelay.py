@@ -5,7 +5,7 @@
 # interface and an output val/rdy interface.
 #
 
-from new_pymtl    import *
+from pymtl    import *
 from ValRdyBundle import InValRdyBundle, OutValRdyBundle
 
 import random

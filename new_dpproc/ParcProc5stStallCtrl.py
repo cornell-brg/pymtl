@@ -3,7 +3,7 @@
 #=======================================================================
 # parc processor 5 stage stalling pipeline control unit
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import Mux
 
 from new_pmlib.PipeCtrl         import PipeCtrl

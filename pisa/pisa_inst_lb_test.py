@@ -6,8 +6,8 @@ import pytest
 import random
 import pisa_encoding
 
-from new_pymtl import Bits
-from new_pymtl import helpers
+from pymtl import Bits
+from pymtl import helpers
 from PisaSim   import PisaSim
 
 from pisa_inst_test_utils import *

@@ -3,7 +3,7 @@
 #=========================================================================
 # This file contains a collection of various queue model implementations
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import *
 
 #=========================================================================
@@ -761,17 +761,13 @@ class SingleElementSkidQueueCtrl( Model ):
 
       #Dequeue only if the sink is ready and the deq is valid
       s.do_deq.value    = s.deq_rdy and s.deq_val
-      
-      #Queue can take a new element if the queue is empty or if 
+
+      #Queue can take a new element if the queue is empty or if
       #queue is dequeuing
       s.enq_rdy.value   = ~s.full | s.do_deq;
-      
       s.do_enq.value    = s.enq_rdy and s.enq_val
-      
       s.wen.value       = s.do_enq
-      
       s.do_bypass.value = s.do_deq and s.do_enq
-      
       s.bypass_mux_sel.value = s.do_bypass
 
     @s.posedge_clk
@@ -786,14 +782,15 @@ class SingleElementSkidQueueCtrl( Model ):
       #do_bypass = ~s.full and do_deq and do_enq
 
       # full bit calculation: the full bit is cleared when a dequeue
-      # transaction occurs and a new enque is not happening or when 
-      # an element is bypassed; 
+      # transaction occurs and a new enque is not happening or when
+      # an element is bypassed;
       # the full bit is set when the queue storage is
       # empty and a enqueue transaction occurs or when the queue is full
       # and both a enqueue and dequeue are occuring
-      
+
 
       if   s.reset:                      s.full.next = 0
       elif s.do_deq and not s.do_enq:    s.full.next = 0
-      elif s.do_enq:                     s.full.next = 1                    
+      elif s.do_enq:                     s.full.next = 1
       else:                              s.full.next = s.full
+

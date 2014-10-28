@@ -4,7 +4,7 @@
 
 import greenlet
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import *
 
 from pisa         import PisaSemantics

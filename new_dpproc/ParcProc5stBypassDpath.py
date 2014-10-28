@@ -3,7 +3,7 @@
 #=========================================================================
 # parc processor 5 stage bypassing pipeline control unit
 
-from new_pymtl           import *
+from pymtl           import *
 from muldiv.muldiv_msg   import BitStructIndex as md_msg
 from muldiv.IntMulDivRTL import IntMulDivRTL
 from new_pmlib           import RegisterFile

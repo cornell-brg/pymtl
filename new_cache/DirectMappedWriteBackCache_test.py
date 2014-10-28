@@ -2,7 +2,7 @@
 # DirectedMappedWriteBackCache Unit Test
 #=========================================================================
 
-from   new_pymtl import *
+from   pymtl import *
 import new_pmlib
 
 import new_pmlib.mem_msgs   as     mem_msgs

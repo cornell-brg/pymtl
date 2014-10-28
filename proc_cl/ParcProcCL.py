@@ -5,10 +5,10 @@
 import collections
 import copy
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import *
 
-from new_pymtl   import helpers
+from pymtl   import helpers
 from pisa        import PisaInst
 from pmlib_extra import Queue
 

@@ -2,7 +2,7 @@
 # DotProductDetailedCL_test
 #=========================================================================
 
-from new_pymtl            import *
+from pymtl            import *
 from new_pmlib            import TestSource, TestMemory, mem_msgs
 from DotProductDetailedCL import DotProductCL as DotProduct
 from new_pmlib            import MemMsg

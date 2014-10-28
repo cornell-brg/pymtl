@@ -2,7 +2,7 @@
 # MeshNetworkCL
 #=========================================================================
 
-from new_pymtl    import *
+from pymtl    import *
 from new_pmlib    import InValRdyBundle, OutValRdyBundle, NetMsg
 from MeshRouterCL import MeshRouterCL
 from math         import sqrt

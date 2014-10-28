@@ -3,7 +3,7 @@
 #=========================================================================
 # Unit tests for the ValRdy PortBundle.
 
-from new_pymtl    import *
+from pymtl    import *
 from ValRdyBundle import InValRdyBundle, OutValRdyBundle
 from new_pmlib    import TestVectorSimulator
 

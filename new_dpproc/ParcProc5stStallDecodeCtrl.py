@@ -2,7 +2,7 @@
 # Lab 2 - ParcProc5stStallDecodeCtrl
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 
 from ParcISA        import *
 from DecodeInstType import DecodeInstType

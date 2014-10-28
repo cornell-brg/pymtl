@@ -2,7 +2,7 @@
 # mem_msgs_test.py
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import TestVectorSimulator
 
 import mem_msgs

@@ -2,7 +2,7 @@
 # SorterCL Test Suite
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 import random
 
 from SorterCL import SorterCL

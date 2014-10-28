@@ -70,7 +70,7 @@ to the repository build directory and activate the virtualenv::
 
 The top-level repo directory should have the following layout:
 
-  - new_pymtl:  PyMTL Core Model Library and Tools
+  - pymtl:      PyMTL Core Model Library and Tools
   - new_pmlib:  Utility Components for Testing and Design
   - new_gcd:    Greatest Common Divisor Models
   - new_imul:   Iterative Multiplier Models

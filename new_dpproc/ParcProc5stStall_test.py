@@ -4,7 +4,7 @@
 # ParcProc5stStall assembly tests driver
 
 from test_runner import run_stall_proc_test
-from new_pymtl   import requires_xcc, requires_vmh
+from pymtl   import requires_xcc, requires_vmh
 
 #---------------------------------------------------------------------------
 # 1. parcv1-addiu tests

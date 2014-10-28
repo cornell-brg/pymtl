@@ -2,7 +2,7 @@
 # LaneManager_test.py
 #==============================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import TestVectorSimulator
 
 from LaneManager import LaneManager

@@ -2,7 +2,7 @@
 # Register with different implementations
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 
 #-------------------------------------------------------------------------
 # Register

@@ -1,4 +1,4 @@
-#!/usr/bin/env pypy
+#!/usr/bin/env python
 #=========================================================================
 # new-proc-sim [options]
 #=========================================================================
@@ -36,7 +36,7 @@ import sys
 import re
 import random
 
-from   new_pymtl import *
+from   pymtl import *
 import new_pmlib
 
 from new_pmlib.SparseMemoryImage import SparseMemoryImage

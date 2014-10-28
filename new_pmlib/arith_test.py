@@ -2,7 +2,7 @@
 # arith_test.py
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 from arith     import *
 from new_pmlib import TestVectorSimulator
 

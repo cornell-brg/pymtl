@@ -6,7 +6,7 @@
 # Author : Christopher Batten
 # Date   : May 22, 2014
 
-from new_pymtl import Bits,concat,helpers
+from pymtl import Bits,concat,helpers
 from PisaInst  import PisaInst
 
 #-------------------------------------------------------------------------

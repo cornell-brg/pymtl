@@ -2,7 +2,7 @@
 # StrSearchFunc.py
 #=========================================================================
 
-from new_pymtl     import *
+from pymtl     import *
 from new_pmlib     import InValRdyBundle, OutValRdyBundle
 from StrSearchFunc import StrSignalValue
 from collections   import deque

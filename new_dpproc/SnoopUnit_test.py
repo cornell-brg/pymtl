@@ -2,7 +2,7 @@
 # SnoopUnit_test
 #=======================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import TestVectorSimulator
 from SnoopUnit import SnoopUnit
 

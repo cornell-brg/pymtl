@@ -6,7 +6,7 @@
 # division operator and cast it to an integer to get the right behavior.
 
 #from __future__ import division
-from new_pymtl  import *
+from pymtl  import *
 
 from new_pmlib  import InValRdyBundle, OutValRdyBundle
 from muldiv_msg import BitStructIndex

@@ -3,7 +3,7 @@
 #=========================================================================
 # Structural composition tests for the SimulationTool class.
 
-from new_pymtl import *
+from pymtl import *
 
 from SimulationTool_comb_test import verify_bit_blast, set_ports
 

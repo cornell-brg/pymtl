@@ -7,7 +7,7 @@
 # Author : Christopher Batten
 # Date   : May 26, 2014
 
-from new_pymtl import Bits
+from pymtl import Bits
 import struct
 import binascii
 

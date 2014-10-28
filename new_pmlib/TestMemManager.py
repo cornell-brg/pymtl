@@ -3,7 +3,7 @@
 #=========================================================================
 # This class implements TestMemManager.
 
-from new_pymtl import *
+from pymtl import *
 
 class TestMemManager (Model):
 

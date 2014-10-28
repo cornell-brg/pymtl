@@ -2,7 +2,7 @@
 # SnoopUnit.py
 #=======================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import InValRdyBundle, OutValRdyBundle, regs
 
 # State Constants

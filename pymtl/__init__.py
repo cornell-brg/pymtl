@@ -42,7 +42,7 @@ requires_verilator = mark.skipif( not( has('verilator') ),
                                   reason='requires verilator' )
 
 #-----------------------------------------------------------------------
-# new_pymtl namespace
+# pymtl namespace
 #-----------------------------------------------------------------------
 
 __all__ = [ # Model Construction

@@ -5,7 +5,7 @@
 # based on the number of memory request/response ports and includes random
 # delays for responses.
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
 import new_pmlib
 import mem_msgs

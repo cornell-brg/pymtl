@@ -2,7 +2,7 @@
 # DirectMapped_test.py for CL
 #=======================================================================
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import TestSource, TestSink
 
 from CycleApproximateSimpleCache import CL_Cache

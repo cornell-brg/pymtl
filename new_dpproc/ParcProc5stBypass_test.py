@@ -4,7 +4,7 @@
 # ParcProc5stBypass assembly tests driver
 
 from test_runner import run_bypass_proc_test
-from new_pymtl   import requires_xcc, requires_vmh
+from pymtl   import requires_xcc, requires_vmh
 
 #---------------------------------------------------------------------------
 # 0. bypass logic direct test

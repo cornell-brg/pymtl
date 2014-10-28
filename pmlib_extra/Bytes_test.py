@@ -2,7 +2,7 @@
 # Bytes_test.py
 #=========================================================================
 
-from new_pymtl import Bits
+from pymtl import Bits
 from Bytes import Bytes
 
 import pytest

@@ -4,7 +4,7 @@
 
 import collections
 
-from new_pymtl import *
+from pymtl import *
 from new_pmlib import *
 
 from ..mvmult_fl import InMatrixVecBundle,OutMatrixVecBundle

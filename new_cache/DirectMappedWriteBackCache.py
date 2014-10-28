@@ -5,7 +5,7 @@
 # writes for the Tag and Data Arrays. Control unit implements a mixed Moore
 # and Mealy style FSM.
 
-from   new_pymtl import *
+from   pymtl import *
 from   new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
 import new_pmlib
 from   new_pmlib.queues_rtl   import SingleElementBypassQueue

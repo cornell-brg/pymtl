@@ -2,7 +2,7 @@
 # TestSimpleSink_test.py
 #=========================================================================
 
-from new_pymtl import *
+from pymtl import *
 
 from TestSimpleSource import TestSimpleSource
 from TestSimpleSink   import TestSimpleSink

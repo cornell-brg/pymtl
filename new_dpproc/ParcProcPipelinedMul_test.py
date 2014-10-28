@@ -3,7 +3,7 @@
 #=========================================================================
 # ParcProc5stBypass assembly tests driver
 
-from new_pymtl            import requires_xcc, requires_vmh
+from pymtl            import requires_xcc, requires_vmh
 from test_runner          import run_proc_test
 from ParcProcPipelinedMul import ParcProcPipelinedMul
 

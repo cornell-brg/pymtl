@@ -3,7 +3,7 @@
 #=======================================================================
 # Collection of various SRAM models.
 
-from   new_pymtl import *
+from   pymtl import *
 import new_pmlib
 
 #-----------------------------------------------------------------------

@@ -2,7 +2,7 @@
 # MeshNetworkBL.py
 #=========================================================================
 
-from new_pymtl   import *
+from pymtl   import *
 from new_pmlib   import InValRdyBundle, OutValRdyBundle, NetMsg
 from collections import deque
 from math        import sqrt

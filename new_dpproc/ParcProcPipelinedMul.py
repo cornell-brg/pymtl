@@ -3,7 +3,7 @@
 #=========================================================================
 # parc processor 5 stage bypassing pipeline
 
-from   new_pymtl import *
+from   pymtl import *
 from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
 import new_pmlib
 
