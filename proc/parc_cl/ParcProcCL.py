@@ -8,11 +8,11 @@ import copy
 from pymtl import *
 from pclib import *
 
-from pymtl   import helpers
-from pisa        import PisaInst
-from pmlib_extra import Queue
+from pymtl    import helpers
+from pisa     import PisaInst
+from pclib.fl import Queue
 
-from mvmult.mvmult_fl import InMatrixVecBundle,OutMatrixVecBundle
+from accel.mvmult.mvmult_fl import InMatrixVecBundle,OutMatrixVecBundle
 
 #-------------------------------------------------------------------------
 # Syntax Helpers

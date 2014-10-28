@@ -9,12 +9,12 @@
 import collections
 import struct
 
-from pymtl     import Bits
-from pmlib_extra   import Bytes
+from pymtl         import Bits
+from pclib.fl      import Bytes
 from PisaInst      import PisaInst
 from PisaSemantics import PisaSemantics
 
-from mvmult.mvmult_fl import MatrixVec
+from accel.mvmult.mvmult_fl import MatrixVec
 
 class PisaSim (object):
 

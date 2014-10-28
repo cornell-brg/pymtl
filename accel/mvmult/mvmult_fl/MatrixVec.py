@@ -3,7 +3,7 @@
 #=========================================================================
 # Functional implementation of our matrix-vector multiplication unit.
 
-from pmlib_extra import ListBytesProxy
+from pclib.fl import ListBytesProxy
 
 class MatrixVec (object):
 

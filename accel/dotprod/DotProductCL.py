@@ -5,7 +5,7 @@
 from pymtl import *
 from pclib import *
 
-from pmlib_extra      import ListMemPortAdapter
+from pclib.fl     import ListMemPortAdapter
 from pclib.queues import ChildReqRespQueueAdapter, \
                              ParentReqRespQueueAdapter
 

@@ -4,9 +4,9 @@
 # Same interface as MatrixVec except that it proxies the commands to a
 # port based interface.
 
-from greenlet    import greenlet
-from pymtl   import Bits
-from pmlib_extra import OutQueuePortProxy
+from greenlet import greenlet
+from pymtl    import Bits
+from pclib.fl import OutQueuePortProxy
 
 class MatrixVecProxy (object):
 

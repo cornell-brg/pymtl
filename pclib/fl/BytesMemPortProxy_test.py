@@ -7,7 +7,7 @@ import pytest
 from pymtl import *
 from pclib import *
 
-from pmlib_extra       import Bytes
+from Bytes             import Bytes
 from BytesMemPortProxy import BytesMemPortProxy
 
 #-------------------------------------------------------------------------

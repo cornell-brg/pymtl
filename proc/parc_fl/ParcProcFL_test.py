@@ -10,8 +10,8 @@ from pymtl  import *
 from pclib  import *
 from ParcProcFL import ParcProcFL
 
-from mvmult.mvmult_fl  import MatrixVecFL
-from mvmult.mvmult_cl  import MatrixVecCL
+from accel.mvmult.mvmult_fl  import MatrixVecFL
+from accel.mvmult.mvmult_cl  import MatrixVecCL
 
 from pisa.pisa_inst_test_utils import asm_test
 

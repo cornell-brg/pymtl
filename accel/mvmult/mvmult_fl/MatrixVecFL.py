@@ -7,7 +7,7 @@ import greenlet
 from pymtl import *
 from pclib import *
 
-from pmlib_extra import GreenletWrapper, BytesMemPortProxy
+from pclib.fl import GreenletWrapper, BytesMemPortProxy
 
 from MatrixVec       import MatrixVec
 from MatrixVecBundle import InMatrixVecBundle,OutMatrixVecBundle

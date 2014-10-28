@@ -7,16 +7,19 @@ import greenlet
 from pymtl import *
 from pclib import *
 
-from pisa         import PisaSemantics
-from pisa         import PisaInst
+from pisa  import PisaSemantics
+from pisa  import PisaInst
 
-from pmlib_extra  import GreenletWrapper,BytesMemPortProxy
-from pmlib_extra  import InQueuePortProxy,OutQueuePortProxy
+from pclib.fl import (
+    GreenletWrapper,  BytesMemPortProxy,
+    InQueuePortProxy, OutQueuePortProxy
+)
 
-from mvmult.mvmult_fl import (
+from accel.mvmult.mvmult_fl import (
      MatrixVecProxy,
      InMatrixVecBundle,
-     OutMatrixVecBundle )
+     OutMatrixVecBundle
+)
 
 class ParcProcFL( Model ):
 

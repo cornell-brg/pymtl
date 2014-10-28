@@ -6,7 +6,7 @@ from pymtl import *
 from pclib import *
 
 from pclib.queues import ChildReqRespQueueAdapter
-from pmlib_extra      import ListMemPortAdapter
+from pclib.fl     import ListMemPortAdapter
 
 import greenlet
 import numpy
