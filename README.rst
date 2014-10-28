@@ -84,7 +84,7 @@ The top-level repo directory should have the following layout:
 To run the tests for a specific model, you can provide py.test with a path. The
 verbose flag will explicitly list test names so you can see what fails::
 
-  % py.test ../new_imul --verbose
+  % py.test ../lab/imul --verbose
 
 You should notice all the tests that run are passing, but there are two errors.
 These errors are because there are no implementations for IntMulIterFixedLat
