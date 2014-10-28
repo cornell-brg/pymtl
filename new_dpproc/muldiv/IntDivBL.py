@@ -10,8 +10,8 @@
 
 from   pymtl      import *
 
-from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-import new_pmlib
+from pclib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
+import pclib
 from   muldiv_msg import BitStructIndex
 
 class IntDivBL (Model):
@@ -112,11 +112,11 @@ class IntDivBL (Model):
   def line_trace( s ):
 
     in_str = \
-      new_pmlib.valrdy.valrdy_to_str( s.in_.msg.value,
+      pclib.valrdy.valrdy_to_str( s.in_.msg.value,
         s.in_.val.value, s.in_.rdy.value )
 
     out_str = \
-      new_pmlib.valrdy.valrdy_to_str( s.out.msg.value,
+      pclib.valrdy.valrdy_to_str( s.out.msg.value,
         s.out.val.value, s.out.rdy.value )
 
     return "{} ({} {}) {}" \

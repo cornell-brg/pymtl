@@ -4,7 +4,7 @@
 
 from pymtl import *
 from arith     import *
-from new_pmlib import TestVectorSimulator
+from pclib import TestVectorSimulator
 
 #-------------------------------------------------------------------------
 # Adder unit test

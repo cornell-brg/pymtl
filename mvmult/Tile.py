@@ -1,8 +1,8 @@
 #=======================================================================
 
 from pymtl                     import *
-from new_pmlib                     import mem_msgs
-from new_pmlib                     import InValRdyBundle, OutValRdyBundle
+from pclib                     import mem_msgs
+from pclib                     import InValRdyBundle, OutValRdyBundle
 from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul
 from MatrixVecCOP                  import MatrixVecCOP
 

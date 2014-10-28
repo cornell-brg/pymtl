@@ -4,7 +4,7 @@
 # This file contains a collection of various queue model implementations
 
 from pymtl import *
-from new_pmlib import *
+from pclib import *
 
 #=========================================================================
 # Single-Element Normal Queue

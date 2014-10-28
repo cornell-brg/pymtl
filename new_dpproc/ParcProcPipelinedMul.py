@@ -4,8 +4,8 @@
 # parc processor 5 stage bypassing pipeline
 
 from   pymtl import *
-from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-import new_pmlib
+from pclib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
+import pclib
 
 import ParcISA as isa
 
@@ -26,8 +26,8 @@ class ParcProcPipelinedMul( Model ):
     # Interface Ports
     #---------------------------------------------------------------------
 
-    mreq  = new_pmlib.mem_msgs.MemReqParams ( 32, 32 )
-    mresp = new_pmlib.mem_msgs.MemRespParams( 32 )
+    mreq  = pclib.mem_msgs.MemReqParams ( 32, 32 )
+    mresp = pclib.mem_msgs.MemRespParams( 32 )
 
     # TestProcManager Interface
 

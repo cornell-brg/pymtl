@@ -1,5 +1,5 @@
 from pymtl  import *
-from new_pmlib  import InValRdyBundle, OutValRdyBundle
+from pclib  import InValRdyBundle, OutValRdyBundle
 
 
 class SimpleCache( Model ):

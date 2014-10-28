@@ -6,7 +6,7 @@ import collections
 import copy
 
 from pymtl import *
-from new_pmlib import *
+from pclib import *
 
 from pymtl   import helpers
 from pisa        import PisaInst

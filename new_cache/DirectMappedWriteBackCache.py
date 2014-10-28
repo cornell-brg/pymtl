@@ -6,10 +6,10 @@
 # and Mealy style FSM.
 
 from   pymtl import *
-from   new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-import new_pmlib
-from   new_pmlib.queues_rtl   import SingleElementBypassQueue
-from   new_pmlib.queues_rtl   import SingleElementSkidQueue
+from   pclib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
+import pclib
+from   pclib.queues_rtl   import SingleElementBypassQueue
+from   pclib.queues_rtl   import SingleElementSkidQueue
 import math
 from   SRAMs import SRAMBitsComb_rst_1rw
 from   SRAMs import SRAMBitsSync_rst_1rw
@@ -124,7 +124,7 @@ class DirectMappedWriteBackCacheCtrl (Model):
     s.ST_EVICT_REQ   = 7
     s.ST_EVICT_WAIT  = 8
 
-    s.state = new_pmlib.regs.RegRst( s.ST_NBITS,
+    s.state = pclib.regs.RegRst( s.ST_NBITS,
                                     reset_value = s.ST_IDLE )
 
     s.match = Wire(1)
@@ -420,11 +420,11 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     s.addr_nbits = addr_nbits
     s.data_nbits = data_nbits
-    s.creq  = new_pmlib.mem_msgs.MemReqParams ( s.addr_nbits, s.data_nbits )
-    s.cresp = new_pmlib.mem_msgs.MemRespParams( s.data_nbits )
+    s.creq  = pclib.mem_msgs.MemReqParams ( s.addr_nbits, s.data_nbits )
+    s.cresp = pclib.mem_msgs.MemRespParams( s.data_nbits )
 
-    s.mreq  = new_pmlib.mem_msgs.MemReqParams ( s.addr_nbits, line_nbits )
-    s.mresp = new_pmlib.mem_msgs.MemRespParams( line_nbits )
+    s.mreq  = pclib.mem_msgs.MemReqParams ( s.addr_nbits, line_nbits )
+    s.mresp = pclib.mem_msgs.MemRespParams( line_nbits )
 
     # number of bytes in data "word"
 
@@ -561,7 +561,7 @@ class DirectMappedWriteBackCacheDpath (Model):
     })
 
     #hold register
-    s.cachereq_hold_reg = m = new_pmlib.regs.RegEn( s.creq.nbits )
+    s.cachereq_hold_reg = m = pclib.regs.RegEn( s.creq.nbits )
     s.connect_dict({
       m.en  : s.cachereq_en
     })
@@ -573,7 +573,7 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     # cachereq_addr_mux
 
-    s.cachereq_addr_mux = m = new_pmlib.Mux( s.addr_nbits, 2 )
+    s.cachereq_addr_mux = m = pclib.Mux( s.addr_nbits, 2 )
     s.connect_dict({
       #m.in_[SEARCH] : s.cachereq_msg[ s.creq.addr_slice ],
       #m.in_[ACCESS] : s.cachereq_addr_reg.out,
@@ -591,7 +591,7 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     # tag compare
 
-    s.tag_cmp = m = new_pmlib.arith.EqComparator( s.tag_nbits )
+    s.tag_cmp = m = pclib.arith.EqComparator( s.tag_nbits )
     s.connect_dict({
       #m.in0 : s.cachereq_addr_reg.out[ s.creq_tag ],
       m.in1 : s.tag_array.rdata,
@@ -600,7 +600,7 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     # wdata_shifter
 
-    s.wdata_shifter = m = new_pmlib.arith.LeftLogicalShifter( s.creq.data_nbits, 5 )
+    s.wdata_shifter = m = pclib.arith.LeftLogicalShifter( s.creq.data_nbits, 5 )
     s.connect_dict({
       m.in_   : s.cachereq_data,
       m.shamt : s.wr_shamt
@@ -613,7 +613,7 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     # wdata_mux
 
-    s.wdata_mux = m = new_pmlib.Mux( 128, 2 )
+    s.wdata_mux = m = pclib.Mux( 128, 2 )
     s.connect_dict({
       m.in_[0] : s.replicate.out,
       m.in_[1] : s.memresp_msg[ s.mresp.data_slice ],
@@ -648,7 +648,7 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     # memreq_addr_mux
 
-    s.memreq_addr_mux = m = new_pmlib.Mux( s.addr_nbits, 2 )
+    s.memreq_addr_mux = m = pclib.Mux( s.addr_nbits, 2 )
     s.connect_dict({
       m.in_[0] : s.refill_addr_gen.addr,
       m.in_[1] : s.evict_addr_gen.addr,
@@ -664,7 +664,7 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     # data array output response mux
 
-    s.outresp_mux = m = new_pmlib.Mux( s.data_nbits, 4 )
+    s.outresp_mux = m = pclib.Mux( s.data_nbits, 4 )
     s.connect_dict({
       #m.in_[0] : s.data_array.rdata[0:32  ],
       #m.in_[1] : s.data_array.rdata[32:64 ],
@@ -675,7 +675,7 @@ class DirectMappedWriteBackCacheDpath (Model):
 
     # out data shifter
 
-    s.out_data_shifter = m = new_pmlib.arith.RightLogicalShifter( s.creq.data_nbits, 5 )
+    s.out_data_shifter = m = pclib.arith.RightLogicalShifter( s.creq.data_nbits, 5 )
     s.connect_dict({
       m.in_   : s.outresp_mux.out,
       m.shamt : s.rd_shamt
@@ -750,11 +750,11 @@ class DirectMappedWriteBackCache (Model):
 
     # cache/memory request/response message parameters
 
-    s.creq  = new_pmlib.mem_msgs.MemReqParams ( addr_nbits, data_nbits )
-    s.cresp = new_pmlib.mem_msgs.MemRespParams( data_nbits )
+    s.creq  = pclib.mem_msgs.MemReqParams ( addr_nbits, data_nbits )
+    s.cresp = pclib.mem_msgs.MemRespParams( data_nbits )
 
-    s.mreq  = new_pmlib.mem_msgs.MemReqParams ( addr_nbits, line_nbits )
-    s.mresp = new_pmlib.mem_msgs.MemRespParams( line_nbits )
+    s.mreq  = pclib.mem_msgs.MemReqParams ( addr_nbits, line_nbits )
+    s.mresp = pclib.mem_msgs.MemRespParams( line_nbits )
 
     # number of bytes in data "word"
 
@@ -855,16 +855,16 @@ class DirectMappedWriteBackCache (Model):
 
     # Line Tracing
 
-    s.cachereq_trace  = new_pmlib.mem_msgs.MemReqFromBits( s.creq  )
+    s.cachereq_trace  = pclib.mem_msgs.MemReqFromBits( s.creq  )
     s.connect( s.cachereq_trace.bits, s.cachereq.msg )
 
-    s.cacheresp_trace = new_pmlib.mem_msgs.MemRespFromBits ( s.cresp )
+    s.cacheresp_trace = pclib.mem_msgs.MemRespFromBits ( s.cresp )
     s.connect( s.cacheresp_trace.bits, s.dpath.cacheresp_msg )
 
-    s.memreq_trace    = new_pmlib.mem_msgs.MemReqFromBits( s.mreq  )
+    s.memreq_trace    = pclib.mem_msgs.MemReqFromBits( s.mreq  )
     s.connect( s.memreq_trace.bits, s.memreq.msg )
 
-    s.memresp_trace   = new_pmlib.mem_msgs.MemRespFromBits ( s.mresp )
+    s.memresp_trace   = pclib.mem_msgs.MemRespFromBits ( s.mresp )
     s.connect( s.memresp_trace.bits, s.memresp.msg )
 
   #-----------------------------------------------------------------------
@@ -880,19 +880,19 @@ class DirectMappedWriteBackCache (Model):
     # names you use in your design
 
     cachereq_str = \
-      new_pmlib.valrdy.valrdy_to_str( s.cachereq_trace.line_trace(),
+      pclib.valrdy.valrdy_to_str( s.cachereq_trace.line_trace(),
         s.cachereq.val, s.cachereq.rdy )
 
     cacheresp_str = \
-      new_pmlib.valrdy.valrdy_to_str( s.cacheresp_trace.line_trace(),
+      pclib.valrdy.valrdy_to_str( s.cacheresp_trace.line_trace(),
         s.cacheresp.val, s.cacheresp.rdy )
 
     memreq_str = \
-      new_pmlib.valrdy.valrdy_to_str( s.memreq_trace.line_trace(),
+      pclib.valrdy.valrdy_to_str( s.memreq_trace.line_trace(),
         s.memreq.val, s.memreq.rdy )
 
     memresp_str = \
-      new_pmlib.valrdy.valrdy_to_str( s.memresp_trace.line_trace(),
+      pclib.valrdy.valrdy_to_str( s.memresp_trace.line_trace(),
         s.memresp.val, s.memresp.rdy )
 
     state_str = "? "

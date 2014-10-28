@@ -3,7 +3,7 @@
 #=========================================================================
 
 from pymtl  import *
-from new_pmlib  import TestSource, TestSink
+from pclib  import TestSource, TestSink
 from muldiv_msg import BitStructIndex, createMulDivMessage
 from IntDivBL   import IntDivBL
 

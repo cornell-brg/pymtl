@@ -351,7 +351,7 @@ def test_ModuleListPortList():
 #-----------------------------------------------------------------------
 # PortBundles
 #-----------------------------------------------------------------------
-from new_pmlib        import InValRdyBundle, OutValRdyBundle
+from pclib        import InValRdyBundle, OutValRdyBundle
 class TestValRdy0( Model ):
   def __init__( s ):
     s.in_ = InValRdyBundle (16)
@@ -473,7 +473,7 @@ def test_TestValRdy4():
 #-----------------------------------------------------------------------
 # Queues
 #-----------------------------------------------------------------------
-from new_pmlib.queues import Queue
+from pclib.queues import Queue
 from copy import copy
 
 class TestQueue( Model ):
@@ -902,7 +902,7 @@ def test_Router():
 #-----------------------------------------------------------------------
 # ValRdyQueues
 #-----------------------------------------------------------------------
-#from new_pmlib.queues import InValRdyQueue, OutValRdyQueue
+#from pclib.queues import InValRdyQueue, OutValRdyQueue
 #
 #class IVQueue( Model ):
 #  def __init__( s ):

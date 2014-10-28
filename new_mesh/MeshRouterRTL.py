@@ -3,10 +3,10 @@
 #=======================================================================
 
 from pymtl            import *
-from new_pmlib            import InValRdyBundle, OutValRdyBundle, NetMsg
-from new_pmlib            import Crossbar
-from new_pmlib.arbiters   import RoundRobinArbiterEn
-from new_pmlib.queues_rtl import NormalQueue
+from pclib            import InValRdyBundle, OutValRdyBundle, NetMsg
+from pclib            import Crossbar
+from pclib.arbiters   import RoundRobinArbiterEn
+from pclib.queues_rtl import NormalQueue
 from math                 import sqrt
 
 #=======================================================================

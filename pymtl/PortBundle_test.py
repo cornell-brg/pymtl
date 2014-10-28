@@ -6,7 +6,7 @@ from Model      import *
 from simulation import SimulationTool
 from PortBundle import PortBundle, create_PortBundles
 
-import new_pmlib
+import pclib
 
 #---------------------------------------------------------------------
 # Example PortBundle
@@ -206,7 +206,7 @@ def test_portbundle_queue_sim( dump_vcd ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   #if dump_vcd:
   #  sim.dump_vcd( "PortBundle_test.vcd" )
   sim.run_test()
@@ -318,7 +318,7 @@ def test_portbundle_param_queue_sim( dump_vcd ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   #if dump_vcd:
   #  sim.dump_vcd( "PortBundle_test.vcd" )
   sim.run_test()
@@ -461,7 +461,7 @@ def test_portbundle_bitstruct_param_queue_sim( dump_vcd ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   #if dump_vcd:
   #  sim.dump_vcd( "PortBundle_test.vcd" )
   sim.run_test()

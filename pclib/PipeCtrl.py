@@ -27,7 +27,7 @@
 
 from pymtl import *
 
-import new_pmlib
+import pclib
 
 class PipeCtrl (Model):
 
@@ -62,7 +62,7 @@ class PipeCtrl (Model):
 
     # current pipeline stage valid bit register
 
-    s.val_reg = new_pmlib.regs.RegEnRst( 1, reset_value = 0 )
+    s.val_reg = pclib.regs.RegEnRst( 1, reset_value = 0 )
 
     s.connect( s.val_reg.in_, s.pvalid )
 

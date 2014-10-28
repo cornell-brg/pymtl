@@ -37,11 +37,11 @@ import re
 import random
 
 from   pymtl import *
-import new_pmlib
+import pclib
 
-from new_pmlib.SparseMemoryImage import SparseMemoryImage
-from new_pmlib.TestMemory        import TestMemory
-from new_pmlib.TestProcManager   import TestProcManager
+from pclib.SparseMemoryImage import SparseMemoryImage
+from pclib.TestMemory        import TestMemory
+from pclib.TestProcManager   import TestProcManager
 from ParcProc5stStall        import ParcProc5stStall
 from ParcProc5stBypass       import ParcProc5stBypass
 
@@ -100,8 +100,8 @@ class SimHarness( Model ):
 
     # Instantiate models
 
-    memreq_params  = new_pmlib.mem_msgs.MemReqParams( 32, 32 )
-    memresp_params = new_pmlib.mem_msgs.MemRespParams( 32 )
+    memreq_params  = pclib.mem_msgs.MemReqParams( 32, 32 )
+    memresp_params = pclib.mem_msgs.MemRespParams( 32 )
 
     s.proc     = ModelType( reset_vector =0x00000400 )
 

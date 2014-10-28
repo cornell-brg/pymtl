@@ -3,7 +3,7 @@
 #=========================================================================
 
 from pymtl import *
-import new_pmlib
+import pclib
 
 
 class BitStructIndex:

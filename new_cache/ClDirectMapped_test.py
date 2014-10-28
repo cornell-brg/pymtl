@@ -3,13 +3,13 @@
 #=======================================================================
 
 from pymtl import *
-from new_pmlib import TestSource, TestSink
+from pclib import TestSource, TestSink
 
 from CycleApproximateSimpleCache import CL_Cache
 from TestCacheResp32Sink         import TestCacheResp32Sink
-from new_pmlib.TestMemory        import TestMemory
+from pclib.TestMemory        import TestMemory
 
-import new_pmlib.mem_msgs as mem_msgs
+import pclib.mem_msgs as mem_msgs
 
 #-----------------------------------------------------------------------
 # TestHarness

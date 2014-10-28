@@ -4,7 +4,7 @@
 
 from pymtl           import *
 from Mux                 import Mux
-from new_pmlib import TestVectorSimulator
+from pclib import TestVectorSimulator
 
 #-------------------------------------------------------------------------
 # Test Harness

@@ -6,7 +6,7 @@ import pytest
 import collections
 
 from pymtl import *
-from new_pmlib import *
+from pclib import *
 
 from QueuePortProxy  import InQueuePortProxy,OutQueuePortProxy
 

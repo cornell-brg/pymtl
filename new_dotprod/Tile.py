@@ -1,10 +1,10 @@
 #=======================================================================
 
 from pymtl                       import *
-from new_pmlib                       import mem_msgs
-from new_pmlib                       import InValRdyBundle, OutValRdyBundle
-from new_pmlib                       import MemMsg
-from new_pmlib                       import CP2Msg
+from pclib                       import mem_msgs
+from pclib                       import InValRdyBundle, OutValRdyBundle
+from pclib                       import MemMsg
+from pclib                       import CP2Msg
 from new_dpproc.ParcProcPipelinedMul import ParcProcPipelinedMul
 from DotProductRTL                   import DotProductRTL
 from DotProductFL                    import DotProductFL

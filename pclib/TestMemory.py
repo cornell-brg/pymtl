@@ -6,13 +6,13 @@
 # delays for responses.
 
 from pymtl import *
-from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-import new_pmlib
+from pclib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
+import pclib
 import mem_msgs
 
 from TestSimpleMemory import TestSimpleMemory
-# the random delay is part of the new_pmlib, but not simple memory so far
-from new_pmlib.TestRandomDelay  import TestRandomDelay
+# the random delay is part of the pclib, but not simple memory so far
+from pclib.TestRandomDelay  import TestRandomDelay
 
 class TestMemory (Model):
 
@@ -115,13 +115,13 @@ class TestMemory (Model):
 
     for i in xrange( s.nports ):
       memreq_str  = \
-        new_pmlib.valrdy.valrdy_to_str(
+        pclib.valrdy.valrdy_to_str(
           #  str(s.mem.reqs[i].msg.value.uint()) + s.mem.memreq[i].line_trace(),
           s.mem.memreq[i].line_trace(),
           s.reqs[i].val, s.reqs[i].rdy )
 
       memresp_str = \
-        new_pmlib.valrdy.valrdy_to_str(
+        pclib.valrdy.valrdy_to_str(
           #str(s.resps[i].msg.value) + s.mem.memresp[i].line_trace(),
           s.resps[i].msg,
           s.resps[i].val, s.resps[i].rdy )

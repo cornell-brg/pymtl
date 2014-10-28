@@ -4,9 +4,9 @@
 # parc processor 5 stage stalling pipeline control unit
 
 from pymtl import *
-from new_pmlib import Mux
+from pclib import Mux
 
-from new_pmlib.PipeCtrl         import PipeCtrl
+from pclib.PipeCtrl         import PipeCtrl
 from ParcProc5stStallDecodeCtrl import ParcProc5stStallDecodeCtrl
 
 import ParcISA as isa

@@ -4,7 +4,7 @@
 # Collection of various SRAM models.
 
 from   pymtl import *
-import new_pmlib
+import pclib
 
 #-----------------------------------------------------------------------
 # SRAMBitsComb_rst_1rw
@@ -176,13 +176,13 @@ class SRAMBitsSync_rst_1rw( Model ):
 
     # input register wen, addr, wdata
 
-    s.wen_reg   = new_pmlib.regs.Reg( 1 )
+    s.wen_reg   = pclib.regs.Reg( 1 )
     s.connect( s.wen_reg.in_,   s.wen   )
 
-    s.addr_reg  = new_pmlib.regs.Reg( s.addr_nbits )
+    s.addr_reg  = pclib.regs.Reg( s.addr_nbits )
     s.connect( s.addr_reg.in_,  s.addr  )
 
-    s.wdata_reg = new_pmlib.regs.Reg( s.data_nbits )
+    s.wdata_reg = pclib.regs.Reg( s.data_nbits )
     s.connect( s.wdata_reg.in_, s.wdata )
 
     # instantiate a s.combinational SRAM
@@ -235,16 +235,16 @@ class SRAMBytesSync_rst_1rw( Model ):
 
     # input register wen, wben, addr, wdata
 
-    s.wen_reg   = new_pmlib.regs.Reg( 1 )
+    s.wen_reg   = pclib.regs.Reg( 1 )
     s.connect( s.wen_reg.in_,   s.wen   )
 
-    s.wben_reg  = new_pmlib.regs.Reg( s.num_nbytes )
+    s.wben_reg  = pclib.regs.Reg( s.num_nbytes )
     s.connect( s.wben_reg.in_,  s.wben  )
 
-    s.addr_reg  = new_pmlib.regs.Reg( s.addr_nbits )
+    s.addr_reg  = pclib.regs.Reg( s.addr_nbits )
     s.connect( s.addr_reg.in_,  s.addr  )
 
-    s.wdata_reg = new_pmlib.regs.Reg( s.data_nbits )
+    s.wdata_reg = pclib.regs.Reg( s.data_nbits )
     s.connect( s.wdata_reg.in_, s.wdata )
 
     # instantiate a s.combinational SRAM

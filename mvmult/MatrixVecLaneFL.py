@@ -3,7 +3,7 @@
 #==============================================================================
 
 from pymtl import *
-from new_pmlib import InValRdyBundle, OutValRdyBundle
+from pclib import InValRdyBundle, OutValRdyBundle
 
 LD_REQ_MATRIX = 0
 LD_RSP_MATRIX = 1

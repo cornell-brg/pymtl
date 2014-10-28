@@ -5,7 +5,7 @@
 import greenlet
 
 from pymtl import *
-from new_pmlib import *
+from pclib import *
 
 from pisa         import PisaSemantics
 from pisa         import PisaInst

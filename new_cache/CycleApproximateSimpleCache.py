@@ -3,12 +3,12 @@
 #=======================================================================
 
 from pymtl          import *
-from new_pmlib          import InValRdyBundle, OutValRdyBundle
-from new_pmlib          import mem_msgs
+from pclib          import InValRdyBundle, OutValRdyBundle
+from pclib          import mem_msgs
 
-from new_pmlib.mem_msgs import MemReqParams, MemRespParams
-from new_pmlib.mem_msgs import MemReqFromBits, MemRespFromBits
-from new_pmlib.mem_msgs import MemReqToBits, MemRespToBits
+from pclib.mem_msgs import MemReqParams, MemRespParams
+from pclib.mem_msgs import MemReqFromBits, MemRespFromBits
+from pclib.mem_msgs import MemReqToBits, MemRespToBits
 
 from math               import log
 from math               import ceil

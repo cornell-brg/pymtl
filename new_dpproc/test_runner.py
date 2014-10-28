@@ -3,11 +3,11 @@
 #=======================================================================
 
 from pymtl import *
-from new_pmlib import SparseMemoryImage
-from new_pmlib import TestMemory
-from new_pmlib import mem_msgs
+from pclib import SparseMemoryImage
+from pclib import TestMemory
+from pclib import mem_msgs
 
-from new_pmlib.TestProcManager import TestProcManager
+from pclib.TestProcManager import TestProcManager
 from ParcProc5stStall          import ParcProc5stStall
 from ParcProc5stBypass         import ParcProc5stBypass
 

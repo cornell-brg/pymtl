@@ -11,7 +11,7 @@
 # request/response interface.
 
 from pymtl import *
-from new_pmlib import *
+from pclib import *
 
 # FSM states
 

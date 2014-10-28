@@ -35,7 +35,7 @@ import re
 import time
 
 from pymtl import *
-from new_pmlib import *
+from pclib import *
 from pisa      import *
 
 from proc_fl    import ParcProcFL

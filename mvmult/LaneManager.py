@@ -3,7 +3,7 @@
 #==============================================================================
 
 from pymtl import *
-from new_pmlib import InValRdyBundle
+from pclib import InValRdyBundle
 
 STATE_CFG  = 0
 STATE_CALC = 1

@@ -3,7 +3,7 @@
 #==============================================================================
 
 from pymtl import *
-from new_pmlib import InValRdyBundle, Decoder
+from pclib import InValRdyBundle, Decoder
 
 STATE_IDLE = 0
 STATE_CFG  = 1

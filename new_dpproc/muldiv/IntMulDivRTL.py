@@ -3,13 +3,13 @@
 #=======================================================================
 
 from pymtl       import *
-from new_pmlib       import InValRdyBundle, OutValRdyBundle
+from pclib       import InValRdyBundle, OutValRdyBundle
 from IntDivIterRTL   import IntDivIterRTL
 from new_imul        import IntMulIterVarLat
 from IntMulPipelined import IntMulPipelined
 from muldiv_msg      import BitStructIndex
 
-import new_pmlib
+import pclib
 
 #-----------------------------------------------------------------------
 # IntMulDivRTL

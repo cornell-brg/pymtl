@@ -5,7 +5,7 @@
 
 from pymtl    import *
 from ValRdyBundle import InValRdyBundle, OutValRdyBundle
-from new_pmlib    import TestVectorSimulator
+from pclib    import TestVectorSimulator
 
 import pytest
 

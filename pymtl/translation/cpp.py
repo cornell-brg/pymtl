@@ -212,7 +212,7 @@ def declare_signals( nets, ast_next, o ):
 #-----------------------------------------------------------------------
 # get_type
 #-----------------------------------------------------------------------
-from new_pmlib.queues import Queue
+from pclib.queues import Queue
 def get_type( signal, o=None ):
   if   isinstance( signal, bool ):
     return 'bool'

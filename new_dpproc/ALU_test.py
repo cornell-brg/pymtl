@@ -3,7 +3,7 @@
 #=========================================================================
 
 from pymtl import *
-import new_pmlib
+import pclib
 
 import ALU
 #from ALU import ALU
@@ -87,7 +87,7 @@ def test_alu( dump_vcd, test_verilog ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "plab2-test_alu_add.vcd" )
   sim.run_test()

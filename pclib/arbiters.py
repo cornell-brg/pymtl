@@ -6,7 +6,7 @@
 # Based on the vc-Arbiters implementation
 
 from pymtl import *
-from new_pmlib import Mux
+from pclib import Mux
 from regs      import RegEnRst
 
 #------------------------------------------------------------------------------

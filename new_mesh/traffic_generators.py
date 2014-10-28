@@ -2,7 +2,7 @@
 # Mesh Unit Test
 #=========================================================================
 
-from new_pmlib  import NetMsg
+from pclib  import NetMsg
 from math       import sqrt
 
 import random

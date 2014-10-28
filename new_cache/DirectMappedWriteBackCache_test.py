@@ -3,11 +3,11 @@
 #=========================================================================
 
 from   pymtl import *
-import new_pmlib
+import pclib
 
-import new_pmlib.mem_msgs   as     mem_msgs
-import new_pmlib.valrdy     as     valrdy
-from   new_pmlib.TestMemory import TestMemory
+import pclib.mem_msgs   as     mem_msgs
+import pclib.valrdy     as     valrdy
+from   pclib.TestMemory import TestMemory
 
 from TestCacheResp32Sink        import TestCacheResp32Sink
 from DirectMappedWriteBackCache import DirectMappedWriteBackCache
@@ -29,7 +29,7 @@ class TestHarness (Model):
 
     # Instantiate models
 
-    s.src   = new_pmlib.TestSource( creq_params.nbits, src_msgs,  src_delay )
+    s.src   = pclib.TestSource( creq_params.nbits, src_msgs,  src_delay )
     s.cache = DirectMappedWriteBackCache( mem_nbytes, addr_nbits,
                                              data_nbits, line_nbits )
     s.mem   = TestMemory( mreq_params, mresp_params, 1, mem_delay )

@@ -3,7 +3,7 @@
 #=======================================================================
 
 from pymtl     import *
-from new_pmlib     import TestSource, TestSink
+from pclib     import TestSource, TestSink
 from muldiv_msg    import BitStructIndex
 from IntDivBL_test import run_idivrem_test
 from IntDivIterRTL import IntDivIterRTL

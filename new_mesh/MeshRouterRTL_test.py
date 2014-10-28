@@ -3,7 +3,7 @@
 #=======================================================================
 
 from pymtl     import *
-from new_pmlib     import TestSource, TestNetSink, NetMsg
+from pclib     import TestSource, TestNetSink, NetMsg
 from MeshRouterRTL import MeshRouterRTL
 
 #-----------------------------------------------------------------------

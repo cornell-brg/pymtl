@@ -3,7 +3,7 @@
 #==============================================================================
 
 from pymtl   import *
-from new_pmlib   import InValRdyBundle, OutValRdyBundle, mem_msgs
+from pclib   import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 from LaneManager      import LaneManager
 from MatrixVecLaneFL  import MatrixVecLaneFL

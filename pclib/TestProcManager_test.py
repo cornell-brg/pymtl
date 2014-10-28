@@ -3,8 +3,8 @@
 #=========================================================================
 
 from pymtl import *
-from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-import new_pmlib
+from pclib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
+import pclib
 import mem_msgs
 
 from SparseMemoryImage import SparseMemoryImage
@@ -33,10 +33,10 @@ class DummyProc (Model):
 
     # Instantiate models
 
-    s.mem_src  = new_pmlib.TestSource( memreq_params.nbits, mem_src_msgs,
+    s.mem_src  = pclib.TestSource( memreq_params.nbits, mem_src_msgs,
                                       src_delay )
 
-    s.mem_sink = new_pmlib.TestSink( memresp_params.nbits, mem_sink_msgs,
+    s.mem_sink = pclib.TestSink( memresp_params.nbits, mem_sink_msgs,
                                     sink_delay )
 
   def elaborate_logic( s ):

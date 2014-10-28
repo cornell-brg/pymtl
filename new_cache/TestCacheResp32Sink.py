@@ -4,11 +4,11 @@
 # Custom Test Sink for the Caches with 32-bit data responses
 
 from   pymtl import *
-from   new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-import new_pmlib
+from   pclib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
+import pclib
 
-import new_pmlib.valrdy          as     valrdy
-from   new_pmlib.TestRandomDelay import TestRandomDelay
+import pclib.valrdy          as     valrdy
+from   pclib.TestRandomDelay import TestRandomDelay
 
 
 class TestCacheResp32Sink (Model):

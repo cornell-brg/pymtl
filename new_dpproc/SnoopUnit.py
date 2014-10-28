@@ -3,7 +3,7 @@
 #=======================================================================
 
 from pymtl import *
-from new_pmlib import InValRdyBundle, OutValRdyBundle, regs
+from pclib import InValRdyBundle, OutValRdyBundle, regs
 
 # State Constants
 

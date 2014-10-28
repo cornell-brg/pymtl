@@ -4,7 +4,7 @@
 
 from pymtl import *
 
-from new_pmlib.SparseMemoryImage import SparseMemoryImage
+from pclib.SparseMemoryImage import SparseMemoryImage
 
 #---------------------------------------------------------------------------
 # String based Assembly Tests

@@ -5,8 +5,8 @@
 # based on the number of memory request/response ports.
 
 from pymtl import *
-from new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-import new_pmlib
+from pclib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
+import pclib
 import mem_msgs
 
 class TestSimpleMemory (Model):
@@ -199,11 +199,11 @@ class TestSimpleMemory (Model):
 
     for i in xrange( s.nports ):
       memreq_str  = \
-        new_pmlib.valrdy.valrdy_to_str( s.memreq[i].line_trace(),
+        pclib.valrdy.valrdy_to_str( s.memreq[i].line_trace(),
           s.reqs[i].val, s.reqs[i].rdy )
 
       memresp_str = \
-        new_pmlib.valrdy.valrdy_to_str( s.memresp[i].line_trace(),
+        pclib.valrdy.valrdy_to_str( s.memresp[i].line_trace(),
           s.resps[i].val, s.resps[i].rdy )
 
       memtrace_str += "|{} () {}" \

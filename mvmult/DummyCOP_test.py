@@ -3,10 +3,10 @@
 #=======================================================================
 
 from pymtl import *
-from new_pmlib import TestVectorSimulator
+from pclib import TestVectorSimulator
 from DummyCOP  import DummyCOPCL
-from new_pmlib import mem_msgs, TestMemory, TestProcManager
-from new_pmlib import SparseMemoryImage
+from pclib import mem_msgs, TestMemory, TestProcManager
+from pclib import SparseMemoryImage
 from new_proc  import ParcProc5stBypass
 
 #-----------------------------------------------------------------------

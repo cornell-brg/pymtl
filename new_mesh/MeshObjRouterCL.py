@@ -3,8 +3,8 @@
 #=========================================================================
 
 from pymtl        import *
-from new_pmlib        import InValRdyBundle, OutValRdyBundle #, NetMsg
-from new_pmlib.queues import InValRdyQueue,  OutValRdyQueue
+from pclib        import InValRdyBundle, OutValRdyBundle #, NetMsg
+from pclib.queues import InValRdyQueue,  OutValRdyQueue
 from collections      import deque
 from math             import sqrt
 

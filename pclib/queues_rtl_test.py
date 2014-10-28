@@ -4,7 +4,7 @@
 # This file contains unit tests for the queue collection models
 
 from pymtl import *
-from new_pmlib import TestVectorSimulator, TestSource, TestSink
+from pclib import TestVectorSimulator, TestSource, TestSink
 
 from queues_rtl import SingleElementNormalQueue
 from queues_rtl import SingleElementBypassQueue

@@ -9,7 +9,7 @@
 # operate on the dirty bit.
 
 from   pymtl import *
-import new_pmlib
+import pclib
 
 import math
 
@@ -332,19 +332,19 @@ class DirectMappedWriteBackCacheTagArrayDpath (Model):
 
     # valid rdata register
 
-    s.valid_rdata_reg = new_pmlib.regs.RegRst( 1, reset_value = 0 )
+    s.valid_rdata_reg = pclib.regs.RegRst( 1, reset_value = 0 )
 
     s.connect( s.valid_rdata_reg.in_, s.valid_bits.rdata )
 
     # dirty rdata register
 
-    s.dirty_rdata_reg = new_pmlib.regs.RegRst( 1, reset_value = 0 )
+    s.dirty_rdata_reg = pclib.regs.RegRst( 1, reset_value = 0 )
 
     s.connect( s.dirty_rdata_reg.in_, s.dirty_bits.rdata )
 
     # search tag register
 
-    s.search_tag_reg = new_pmlib.regs.Reg( tag_nbits )
+    s.search_tag_reg = pclib.regs.Reg( tag_nbits )
 
     s.connect( s.search_tag_reg.in_, s.search_tag )
 

@@ -3,8 +3,8 @@
 #=========================================================================
 
 from pymtl import *
-from new_pmlib import InValRdyBundle, OutValRdyBundle
-from new_pmlib import Mux, regs, arith
+from pclib import InValRdyBundle, OutValRdyBundle
+from pclib import Mux, regs, arith
 
 # Constants
 

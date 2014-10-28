@@ -3,7 +3,7 @@
 #=========================================================================
 
 from pymtl       import *
-from new_pmlib       import InValRdyBundle, OutValRdyBundle #, NetMsg
+from pclib       import InValRdyBundle, OutValRdyBundle #, NetMsg
 from MeshObjRouterCL import MeshRouterCL, NetObject
 from collections     import deque
 from math            import sqrt

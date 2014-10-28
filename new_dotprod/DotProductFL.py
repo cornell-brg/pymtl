@@ -3,9 +3,9 @@
 #=========================================================================
 
 from pymtl import *
-from new_pmlib import *
+from pclib import *
 
-from new_pmlib.queues import ChildReqRespQueueAdapter
+from pclib.queues import ChildReqRespQueueAdapter
 from pmlib_extra      import ListMemPortAdapter
 
 import greenlet

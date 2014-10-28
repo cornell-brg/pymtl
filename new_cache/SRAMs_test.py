@@ -4,7 +4,7 @@
 # Unit Tests for SRAM collections
 
 from   pymtl import *
-import new_pmlib
+import pclib
 
 from   SRAMs import SRAMBitsComb_rst_1rw
 from   SRAMs import SRAMBytesComb_rst_1rw
@@ -58,7 +58,7 @@ def test_SRAMBitsComb_rst_1rw( dump_vcd, test_verilog ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "SRAMBitsComb_rst_1rw.vcd" )
   sim.run_test()
@@ -111,7 +111,7 @@ def test_SRAMBytesComb_rst_1rw( dump_vcd, test_verilog ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "SRAMBytesComb_rst_1rw.vcd" )
   sim.run_test()
@@ -172,7 +172,7 @@ def test_SRAMBitsSync_rst_1rw( dump_vcd, test_verilog ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "SRAMBitsSync_rst_1rw.vcd" )
   sim.run_test()
@@ -234,7 +234,7 @@ def test_SRAMBytesSync_rst_1rw( dump_vcd, test_verilog ):
 
   # Run the test
 
-  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
     sim.dump_vcd( "SRAMBytesSync_rst_1rw.vcd" )
   sim.run_test()

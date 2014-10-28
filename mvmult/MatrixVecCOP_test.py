@@ -3,7 +3,7 @@
 #==============================================================================
 
 from pymtl    import *
-from new_pmlib    import TestSource, TestMemory, mem_msgs
+from pclib    import TestSource, TestMemory, mem_msgs
 from MatrixVecCOP import MatrixVecCOP
 
 import pytest

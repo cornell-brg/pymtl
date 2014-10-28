@@ -1,12 +1,13 @@
 #=========================================================================
-# TestMemory_test.py
+# TestSimpleMemory_test.py
 #=========================================================================
 
 from pymtl import *
-import new_pmlib
+import pclib
 import mem_msgs
+import pytest
 
-from TestMemory import TestMemory
+from TestSimpleMemory import TestSimpleMemory
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -15,25 +16,21 @@ from TestMemory import TestMemory
 class TestHarness (Model):
 
   def __init__( s, memreq_params, memresp_params, nports,
-                src_msgs, sink_msgs, src_delay, sink_delay, mem_delay ):
+                src_msgs, sink_msgs, src_delay, sink_delay ):
 
     s.nports = nports
 
     # Instantiate models
 
-    s.src  = [ new_pmlib.TestSource ( memreq_params.nbits, \
-                        src_msgs[x],  src_delay  ) for  \
-                                x in xrange( nports ) ]
+    s.src  = [ pclib.TestSource ( 67, src_msgs[x],  src_delay  ) for
+                  x in xrange( nports ) ]
 
-    s.mem  = TestMemory ( memreq_params, memresp_params,
-                  nports, mem_delay )
+    s.mem  = TestSimpleMemory ( memreq_params, memresp_params, nports )
 
-    s.sink = [ new_pmlib.TestSink   ( memresp_params.nbits, \
-                        sink_msgs[x], sink_delay ) for
-                                x in xrange( nports ) ]
+    s.sink = [ pclib.TestSink   ( 35, sink_msgs[x], sink_delay ) for
+                  x in xrange( nports ) ]
 
   def elaborate_logic( s ):
-    # connect
 
     for i in xrange( s.nports ):
       s.connect( s.src[i].out, s.mem.reqs[i]  )
@@ -44,19 +41,18 @@ class TestHarness (Model):
 
     done_flag = 1
     for i in xrange( s.nports ):
-      done_flag &= s.src[i].done.value.uint() and \
-                          s.sink[i].done.value.uint()
+      done_flag &= s.src[i].done and s.sink[i].done
     return done_flag
 
-  def line_trace( s ):
+  def line_trace(s ):
     return s.mem.line_trace()
 
 #-------------------------------------------------------------------------
 # Run test
 #-------------------------------------------------------------------------
 
-def run_mem_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
-                  mem_delay, nports, test_msgs ):
+def run_mem_test( dump_vcd, vcd_file_name, src_delay, sink_delay, nports,
+                  test_msgs ):
 
   # Create parameters
 
@@ -71,7 +67,7 @@ def run_mem_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
   # Instantiate and elaborate the model
 
   model = TestHarness( memreq_params, memresp_params, nports, src_msgs,
-                       sink_msgs, src_delay, sink_delay, mem_delay )
+                       sink_msgs, src_delay, sink_delay )
   model.elaborate()
 
   # Create a simulator using the simulation tool
@@ -241,6 +237,10 @@ def dual_port_mem_test_msgs():
   mk_req_resp( 1,   req_wr( 0x00014000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
   mk_req_resp( 0,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
   mk_req_resp( 1,   req_rd( 0x00014000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
+  mk_req_resp( 0,   req_wr( 0x00004000, 0, 0xcafebabe ), resp_wr( 0, 0x00000000 ) )
+  mk_req_resp( 1,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xcafebabe ) )
+  mk_req_resp( 1,   req_wr( 0x00004000, 0, 0x12341234 ), resp_wr( 0, 0x00000000 ) )
+  mk_req_resp( 1,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0x12341234 ) )
 
   return [ src_msgs, sink_msgs ]
 
@@ -366,73 +366,79 @@ def quad_port_mem_test_msgs():
   return [ src_msgs, sink_msgs ]
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 0 x 0, Ports = 1
+# TestSimpleMemoryNPorts unit test with delay = 0 x 0, Ports = 1
 #-------------------------------------------------------------------------
 
 def test_single_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay0x0_1.vcd",
-                0, 0, 3, 1, single_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay0x0_1.vcd",
+                0, 0, 1, single_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 5 x 10, Ports = 1
+# TestSimpleMemoryNPorts unit test with delay = 5 x 10, Ports = 1
 #-------------------------------------------------------------------------
 
 def test_single_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay5x10_1.vcd",
-                5, 10, 8, 1, single_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay5x10_1.vcd",
+                5, 10, 1, single_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 10 x 5, Ports = 1
+# TestSimpleMemoryNPorts unit test with delay = 10 x 5, Ports = 1
 #-------------------------------------------------------------------------
 
 def test_single_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay10x5_1.vcd",
-                10, 5, 2, 1, single_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay10x5_1.vcd",
+                10, 5, 1, single_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 0 x 0, Ports = 2
+# TestSimpleMemoryNPorts unit test with delay = 0 x 0, Ports = 2
 #-------------------------------------------------------------------------
 
 def test_dual_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay0x0_2.vcd",
-                0, 0, 4, 2, dual_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay0x0_2.vcd",
+                0, 0, 2, dual_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 5 x 10, Ports = 2
+# TestSimpleMemoryNPorts unit test with delay = 5 x 10, Ports = 2
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail(
+    reason="No backpressure results in two port streams misaligning!"
+)
 def test_dual_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay5x10_2.vcd",
-                5, 10, 3, 2, dual_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay5x10_2.vcd",
+                5, 10, 2, dual_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 10 x 5, Ports = 2
+# TestSimpleMemoryNPorts unit test with delay = 10 x 5, Ports = 2
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail(
+    reason="No backpressure results in two port streams misaligning!"
+)
 def test_dual_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay10x5_2.vcd",
-                10, 5, 3, 2, dual_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay10x5_2.vcd",
+                10, 5, 2, dual_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 0 x 0, Ports = 4
+# TestSimpleMemoryNPorts unit test with delay = 0 x 0, Ports = 4
 #-------------------------------------------------------------------------
 
 def test_quad_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay0x0_4.vcd",
-                0, 0, 7, 4, quad_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay0x0_4.vcd",
+                0, 0, 4, quad_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 5 x 10, Ports = 4
+# TestSimpleMemoryNPorts unit test with delay = 5 x 10, Ports = 4
 #-------------------------------------------------------------------------
 
 def test_quad_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay5x10_4.vcd",
-                5, 10, 4, 4, quad_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay5x10_4.vcd",
+                5, 10, 4, quad_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 10 x 5, Ports = 4
+# TestSimpleMemoryNPorts unit test with delay = 10 x 5, Ports = 4
 #-------------------------------------------------------------------------
 
 def test_quad_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay10x5_4.vcd",
-                10, 5, 6, 4, quad_port_mem_test_msgs() )
+  run_mem_test( dump_vcd, "TestSimpleMemoryNPorts_test_delay10x5_4.vcd",
+                10, 5, 4, quad_port_mem_test_msgs() )

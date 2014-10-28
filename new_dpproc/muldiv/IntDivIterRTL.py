@@ -8,7 +8,7 @@
 #from __future__ import division
 from pymtl  import *
 
-from new_pmlib  import InValRdyBundle, OutValRdyBundle
+from pclib  import InValRdyBundle, OutValRdyBundle
 from muldiv_msg import BitStructIndex
 
 #-----------------------------------------------------------------------

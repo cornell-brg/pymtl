@@ -6,13 +6,13 @@
 from pymtl           import *
 from muldiv.muldiv_msg   import BitStructIndex as md_msg
 from muldiv.IntMulDivRTL import IntMulDivRTL
-from new_pmlib           import RegisterFile
+from pclib           import RegisterFile
 from ALU                 import ALU
 from SnoopUnit           import SnoopUnit
 from misc_units          import BranchTarget
 from misc_units          import JumpTarget
 
-import new_pmlib
+import pclib
 import ParcISA as isa
 
 #-------------------------------------------------------------------------
@@ -81,8 +81,8 @@ class ParcProc5stBypassDpath( Model ):
   def __init__( s, reset_vector ):
 
     s.reset_vector = reset_vector
-    s.mreq  = new_pmlib.mem_msgs.MemReqParams( 32, 32 )
-    s.mresp = new_pmlib.mem_msgs.MemRespParams( 32 )
+    s.mreq  = pclib.mem_msgs.MemReqParams( 32, 32 )
+    s.mresp = pclib.mem_msgs.MemRespParams( 32 )
 
     #---------------------------------------------------------------------
     # Interface Ports
@@ -176,7 +176,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # pc_mux_P
 
-    s.pc_mux_P = new_pmlib.Mux( 32, 4 )
+    s.pc_mux_P = pclib.Mux( 32, 4 )
 
     s.connect( s.pc_mux_P.in_[PC_PC4], s.pc_plus_4_F      )
     s.connect( s.pc_mux_P.in_[PC_BR],  s.pc_br_tgt_X      )
@@ -186,7 +186,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # pc_reg_P
 
-    s.pc_reg_P = new_pmlib.regs.RegEnRst( 32,
+    s.pc_reg_P = pclib.regs.RegEnRst( 32,
                                          reset_value = s.reset_vector )
 
     s.connect( s.pc_reg_P.en,  s.pc_reg_wen_P )
@@ -194,7 +194,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # pc_bypass_mux_P
 
-    s.pc_bypass_mux_P = new_pmlib.Mux( 32, 2 )
+    s.pc_bypass_mux_P = pclib.Mux( 32, 2 )
 
     s.connect( s.pc_bypass_mux_P.in_[0], s.pc_reg_P.out        )
     s.connect( s.pc_bypass_mux_P.in_[1], s.pc_mux_P.out        )
@@ -209,14 +209,14 @@ class ParcProc5stBypassDpath( Model ):
 
     # pc_reg_F
 
-    s.pc_reg_F = new_pmlib.regs.RegEn( 32 )
+    s.pc_reg_F = pclib.regs.RegEn( 32 )
 
     s.connect( s.pc_reg_F.in_, s.pc_bypass_mux_P.out )
     s.connect( s.pc_reg_F.en,  s.pipe_en_F           )
 
     # pc_incr_F
 
-    s.pc_incr_F = new_pmlib.arith.Incrementer( 32, 4 )
+    s.pc_incr_F = pclib.arith.Incrementer( 32, 4 )
 
     s.connect( s.pc_incr_F.in_, s.pc_reg_F.out  )
     s.connect( s.pc_incr_F.out, s.pc_plus_4_F   )
@@ -244,14 +244,14 @@ class ParcProc5stBypassDpath( Model ):
 
     # pc_plus_4_D
 
-    s.pc_plus4_D = new_pmlib.regs.RegEn( 32 )
+    s.pc_plus4_D = pclib.regs.RegEn( 32 )
 
     s.connect( s.pc_plus4_D.in_, s.pc_incr_F.out )
     s.connect( s.pc_plus4_D.en,  s.pipe_en_D     )
 
     # ir_reg_D
 
-    s.ir_reg_D = new_pmlib.regs.RegEn( 32 )
+    s.ir_reg_D = pclib.regs.RegEn( 32 )
 
     s.connect( s.ir_reg_D.in_,  s.snoop_unit_F.out.msg )
     s.connect( s.ir_reg_D.en,   s.pipe_en_D           )
@@ -266,25 +266,25 @@ class ParcProc5stBypassDpath( Model ):
 
     # zext
 
-    s.zext_D = new_pmlib.arith.ZeroExtender( in_nbits = 16, out_nbits = 32 )
+    s.zext_D = pclib.arith.ZeroExtender( in_nbits = 16, out_nbits = 32 )
 
     s.connect( s.zext_D.in_, s.ir_reg_D.out[ isa.IMM ] )
 
     # sext
 
-    s.sext_D = new_pmlib.arith.SignExtender( in_nbits = 16, out_nbits = 32 )
+    s.sext_D = pclib.arith.SignExtender( in_nbits = 16, out_nbits = 32 )
 
     s.connect( s.sext_D.in_, s.ir_reg_D.out[ isa.IMM ] )
 
     # zext shamt
 
-    s.shamt_D = new_pmlib.arith.ZeroExtender( in_nbits = 5, out_nbits = 32 )
+    s.shamt_D = pclib.arith.ZeroExtender( in_nbits = 5, out_nbits = 32 )
 
     s.connect( s.shamt_D.in_, s.ir_reg_D.out[ isa.SHAMT ] )
 
     # op0_byp_mux
 
-    s.op0_byp_mux_D = new_pmlib.Mux( 32, 4 )
+    s.op0_byp_mux_D = pclib.Mux( 32, 4 )
 
     s.connect( s.op0_byp_mux_D.in_[RD0_BYP_RF], s.rf.rd_data[0]     )
     s.connect( s.op0_byp_mux_D.in_[RD0_BYP_X ], s.op_byp_X          )
@@ -294,7 +294,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # op0_mux
 
-    s.op0_mux_D = new_pmlib.Mux( 32, 4 )
+    s.op0_mux_D = pclib.Mux( 32, 4 )
 
     s.connect( s.op0_mux_D.in_[RD0_16],  CONSTANT_16            )
     s.connect( s.op0_mux_D.in_[RD0_RF],  s.op0_byp_mux_D.out )
@@ -304,7 +304,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # op1_byp_mux
 
-    s.op1_byp_mux_D = new_pmlib.Mux( 32, 4 )
+    s.op1_byp_mux_D = pclib.Mux( 32, 4 )
 
     s.connect( s.op1_byp_mux_D.in_[RD1_BYP_RF], s.rf.rd_data[1]     )
     s.connect( s.op1_byp_mux_D.in_[RD1_BYP_X ], s.op_byp_X          )
@@ -314,7 +314,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # op1_mux
 
-    s.op1_mux_D = new_pmlib.Mux( 32, 4 )
+    s.op1_mux_D = pclib.Mux( 32, 4 )
 
     s.connect( s.op1_mux_D.in_[RD1_SEXT], s.sext_D.out        )
     s.connect( s.op1_mux_D.in_[RD1_ZEXT], s.zext_D.out        )
@@ -356,7 +356,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # br_tgt_X
 
-    s.br_tgt_reg_X = new_pmlib.regs.RegEn( 32 )
+    s.br_tgt_reg_X = pclib.regs.RegEn( 32 )
 
     s.connect( s.br_tgt_reg_X.in_, s.br_tgt_D.out )
     s.connect( s.br_tgt_reg_X.en,  s.pipe_en_X    )
@@ -364,21 +364,21 @@ class ParcProc5stBypassDpath( Model ):
 
     # wdata_X
 
-    s.wdata_reg_X   = new_pmlib.regs.RegEn( 32 )
+    s.wdata_reg_X   = pclib.regs.RegEn( 32 )
 
     s.connect( s.wdata_reg_X.in_, s.op1_byp_mux_D.out )
     s.connect( s.wdata_reg_X.en,  s.pipe_en_X         )
 
     # op0_reg_X
 
-    s.op0_reg_X = new_pmlib.regs.RegEn( 32 )
+    s.op0_reg_X = pclib.regs.RegEn( 32 )
 
     s.connect( s.op0_reg_X.in_, s.op0_mux_D.out )
     s.connect( s.op0_reg_X.en,  s.pipe_en_X     )
 
     # op1_reg_X
 
-    s.op1_reg_X = new_pmlib.regs.RegEn( 32 )
+    s.op1_reg_X = pclib.regs.RegEn( 32 )
 
     s.connect( s.op1_reg_X.in_, s.op1_mux_D.out )
     s.connect( s.op1_reg_X.en,  s.pipe_en_X     )
@@ -403,14 +403,14 @@ class ParcProc5stBypassDpath( Model ):
 
     # br_cond_eq
 
-    s.zero_res_cmp_X = new_pmlib.arith.ZeroComparator( 32 )
+    s.zero_res_cmp_X = pclib.arith.ZeroComparator( 32 )
 
     s.connect( s.zero_res_cmp_X.in_, s.alu_X.out    )
     s.connect( s.zero_res_cmp_X.out, s.br_cond_eq_X )
 
     # br_cond_zero
 
-    s.zero_cmp_X = new_pmlib.arith.ZeroComparator( 32 )
+    s.zero_cmp_X = pclib.arith.ZeroComparator( 32 )
 
     s.connect( s.zero_cmp_X.in_, s.op0_reg_X.out  )
     s.connect( s.zero_cmp_X.out, s.br_cond_zero_X )
@@ -428,7 +428,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # ex_mux_X
 
-    s.ex_mux_X = new_pmlib.Mux( 32, 2 )
+    s.ex_mux_X = pclib.Mux( 32, 2 )
 
     s.connect( s.ex_mux_X.in_[0], s.alu_X.out         )
     s.connect( s.ex_mux_X.in_[1], s.muldiv_X.out.msg  )
@@ -446,7 +446,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # alu_out_reg_M
 
-    s.alu_out_reg_M = new_pmlib.regs.RegEn( 32 )
+    s.alu_out_reg_M = pclib.regs.RegEn( 32 )
 
     s.connect( s.alu_out_reg_M.in_, s.ex_mux_X.out   )
     s.connect( s.alu_out_reg_M.en,  s.pipe_en_M      )
@@ -459,31 +459,31 @@ class ParcProc5stBypassDpath( Model ):
 
     # byte extraction
 
-    s.dmemresp_byte_M = new_pmlib.arith.SignExtender( in_nbits=8, out_nbits=32 )
+    s.dmemresp_byte_M = pclib.arith.SignExtender( in_nbits=8, out_nbits=32 )
 
     s.connect( s.dmemresp_byte_M.in_, s.dmemresp_data_M[0:8] )
 
     # ubyte extraction
 
-    s.dmemresp_ubyte_M = new_pmlib.arith.ZeroExtender( in_nbits=8, out_nbits=32 )
+    s.dmemresp_ubyte_M = pclib.arith.ZeroExtender( in_nbits=8, out_nbits=32 )
 
     s.connect( s.dmemresp_ubyte_M.in_, s.dmemresp_data_M[0:8] )
 
     # hword extraction
 
-    s.dmemresp_hword_M = new_pmlib.arith.SignExtender( in_nbits=16, out_nbits=32 )
+    s.dmemresp_hword_M = pclib.arith.SignExtender( in_nbits=16, out_nbits=32 )
 
     s.connect( s.dmemresp_hword_M.in_, s.dmemresp_data_M[0:16] )
 
     # uhword extraction
 
-    s.dmemresp_uhword_M = new_pmlib.arith.ZeroExtender( in_nbits=16, out_nbits=32 )
+    s.dmemresp_uhword_M = pclib.arith.ZeroExtender( in_nbits=16, out_nbits=32 )
 
     s.connect( s.dmemresp_uhword_M.in_, s.dmemresp_data_M[0:16] )
 
     # dmemresp_mux_M
 
-    s.dmemresp_mux_M = new_pmlib.Mux( 32, 8 )
+    s.dmemresp_mux_M = pclib.Mux( 32, 8 )
 
     s.connect( s.dmemresp_mux_M.in_[WORD],   s.dmemresp_data_M        )
     s.connect( s.dmemresp_mux_M.in_[BYTE],   s.dmemresp_byte_M.out    )
@@ -494,7 +494,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # wb_mux_M
 
-    s.wb_mux_M = new_pmlib.Mux( 32, 2 )
+    s.wb_mux_M = pclib.Mux( 32, 2 )
 
     s.connect( s.wb_mux_M.in_[WR_ALU], s.alu_out_reg_M.out  )
     s.connect( s.wb_mux_M.in_[WR_MEM], s.dmemresp_mux_M.out )
@@ -507,7 +507,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # res_reg_w
 
-    s.res_reg_W = new_pmlib.regs.RegEn( 32 )
+    s.res_reg_W = pclib.regs.RegEn( 32 )
 
     s.connect( s.res_reg_W.in_, s.wb_mux_M.out  )
     s.connect( s.res_reg_W.en,  s.pipe_en_W     )
@@ -520,7 +520,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # cp0_status_reg_W
 
-    s.cp0_status_reg_W = new_pmlib.regs.RegEn( 32 )
+    s.cp0_status_reg_W = pclib.regs.RegEn( 32 )
 
     s.connect( s.cp0_status_reg_W.in_, s.res_reg_W.out    )
     s.connect( s.cp0_status_reg_W.en,  s.cp0_status_wen_W )
@@ -528,7 +528,7 @@ class ParcProc5stBypassDpath( Model ):
 
     # cp0_stats_reg_W
 
-    s.cp0_stats_reg_W = new_pmlib.regs.RegEn( 32 )
+    s.cp0_stats_reg_W = pclib.regs.RegEn( 32 )
 
     s.connect( s.cp0_stats_reg_W.in_,    s.res_reg_W.out   )
     s.connect( s.cp0_stats_reg_W.en,     s.cp0_stats_wen_W )

@@ -36,10 +36,10 @@ import random
 
 from   pymtl import *
 
-from new_pmlib import SparseMemoryImage
-from new_pmlib import TestMemory
-from new_pmlib import TestProcManager
-from new_pmlib import mem_msgs
+from pclib import SparseMemoryImage
+from pclib import TestMemory
+from pclib import TestProcManager
+from pclib import mem_msgs
 from Tile      import Tile
 
 #-------------------------------------------------------------------------

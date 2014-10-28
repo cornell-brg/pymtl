@@ -3,7 +3,7 @@
 #=======================================================================
 
 from pymtl import *
-from new_pmlib import TestVectorSimulator
+from pclib import TestVectorSimulator
 from Crossbar  import Crossbar
 
 #-----------------------------------------------------------------------

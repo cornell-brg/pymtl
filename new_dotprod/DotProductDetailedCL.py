@@ -5,8 +5,8 @@
 import collections
 
 from pymtl   import *
-from new_pmlib   import *
-from new_pmlib   import ParentReqRespBundle, ChildReqRespBundle
+from pclib   import *
+from pclib   import ParentReqRespBundle, ChildReqRespBundle
 from pmlib_extra import Queue
 
 #-------------------------------------------------------------------------

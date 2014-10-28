@@ -3,7 +3,7 @@
 #=========================================================================
 
 from   pymtl import *
-import new_pmlib
+import pclib
 
 
 import pytest
@@ -125,7 +125,7 @@ import pytest
 #
 #  # Run the test
 #
-#  sim = new_pmlib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+#  sim = pclib.TestVectorSimulator( model, test_vectors, tv_in, tv_out )
 #  if dump_vcd:
 #    sim.dump_vcd( "DirectMappedWriteBackCacheTagArray_test.vcd" )
 #  sim.run_test()

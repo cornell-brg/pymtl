@@ -3,10 +3,10 @@
 #=========================================================================
 
 from pymtl            import *
-from new_pmlib            import TestSource, TestMemory, mem_msgs
+from pclib            import TestSource, TestMemory, mem_msgs
 from DotProductDetailedCL import DotProductCL as DotProduct
-from new_pmlib            import MemMsg
-from new_pmlib            import CP2Msg
+from pclib            import MemMsg
+from pclib            import CP2Msg
 
 import pytest
 

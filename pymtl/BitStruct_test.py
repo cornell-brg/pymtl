@@ -498,7 +498,7 @@ import pytest
 @pytest.mark.xfail
 def test_buggy_struct():
 
-  from new_pmlib import InValRdyBundle, OutValRdyBundle
+  from pclib import InValRdyBundle, OutValRdyBundle
 
   #---------------------------------------------------------------------
   # Struct

@@ -32,7 +32,7 @@ import copy
 
 from collections import deque
 # TODO: currently only passing dest int, not a NetObject message!
-#from new_pmlib   import NetMsg
+#from pclib   import NetMsg
 #from NetObject   import NetObject
 
 from pymtl import get_cpp

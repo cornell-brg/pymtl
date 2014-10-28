@@ -7,7 +7,7 @@ import pisa
 import struct
 
 from pymtl  import *
-from new_pmlib  import *
+from pclib  import *
 from ParcProcCL import ParcProcCL
 
 from mvmult.mvmult_fl  import MatrixVecFL

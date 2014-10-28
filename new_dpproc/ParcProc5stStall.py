@@ -4,14 +4,14 @@
 # parc processor 5 stage stalling pipeline
 
 from   pymtl import *
-from   new_pmlib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
-import new_pmlib
+from   pclib.ValRdyBundle import InValRdyBundle, OutValRdyBundle
+import pclib
 
 import ParcISA as isa
 
 from ParcProc5stStallCtrl  import ParcProc5stStallCtrl
 from ParcProc5stStallDpath import ParcProc5stStallDpath
-import new_pmlib.mem_msgs as mem_msgs
+import pclib.mem_msgs as mem_msgs
 #import plab2_proc_v1.mem_msgs as mem_msgs
 
 #-------------------------------------------------------------------------
