@@ -72,11 +72,11 @@ The top-level repo directory should have the following layout:
 
   - pymtl:      PyMTL Core Model Library and Tools
   - pclib:      PyMTL Component Library
-  - new_gcd:    Greatest Common Divisor Models
-  - new_imul:   Iterative Multiplier Models
-  - new_mesh:   Mesh Network Models
-  - new_mem:    Direct Mapped Cache Models
-  - new_proc:   PARC Processor Models
+  - examples:   Simple Example PyMTL Models
+  - proc:       Processor Models
+  - mem:        Memory and Cache Models
+  - net:        On-Chip Network Models
+  - labs:       Course Labs
   - tests:      PARC ISA Assembly Tests
   - ubmark:     PARC ISA Microbenchmarks
   - scripts:    Various scripts

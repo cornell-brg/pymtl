@@ -7,8 +7,10 @@ from new_proc.ParcProc5stBypass    import ParcProc5stBypass
 from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul
 from MatrixVecCOP                  import MatrixVecCOP
 
-from new_cache.DirectMappedWriteBackCache import DirectMappedWriteBackCache
-from new_cache                     import CL_Cache
+from mem.simple_cache.DirectMappedWriteBackCache import (
+  DirectMappedWriteBackCache,
+  CL_Cache
+)
 
 Processor = ParcProcPipelinedMul
 

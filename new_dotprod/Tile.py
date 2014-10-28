@@ -10,9 +10,11 @@ from DotProductRTL                   import DotProductRTL
 from DotProductFL                    import DotProductFL
 
 # Cache with single-cycle hit lantency
-from new_cache.DirectMappedWriteBackCache import DirectMappedWriteBackCache
+from mem.simple_cache.DirectMappedWriteBackCache import (
+    DirectMappedWriteBackCache
+)
 
-Processor = ParcProcPipelinedMul
+Processor  = ParcProcPipelinedMul
 DotProduct = DotProductFL
 
 #-----------------------------------------------------------------------

@@ -7,7 +7,9 @@ from new_proc.ParcProcPipelinedMul import ParcProcPipelinedMul
 from MatrixVecCOP                  import MatrixVecCOP
 
 # Cache with single-cycle hit lantency
-from new_cache.DirectMappedWriteBackCache import DirectMappedWriteBackCache
+from mem.simple_cache.DirectMappedWriteBackCache import (
+    DirectMappedWriteBackCache
+)
 
 Processor = ParcProcPipelinedMul
 
