@@ -7,7 +7,7 @@ import re
 import sys
 import collections
 
-from ..signals import InPort, OutPort, Constant
+from ...model.signals import InPort, OutPort, Constant
 
 #-----------------------------------------------------------------------
 # header

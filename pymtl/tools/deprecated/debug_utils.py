@@ -3,7 +3,7 @@
 #=======================================================================
 # Collection of utility functions used for debugging models.
 
-import Model as model
+import ...model.Model as model
 import sys
 import ast, _ast
 

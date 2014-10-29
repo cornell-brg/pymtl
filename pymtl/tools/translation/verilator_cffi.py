@@ -6,9 +6,9 @@ import os
 
 import verilog_structural
 
-from subprocess   import check_output, STDOUT, CalledProcessError
-from ..signals    import InPort, OutPort
-from ..PortBundle import PortBundle
+from subprocess         import check_output, STDOUT, CalledProcessError
+from ...model.signals    import InPort, OutPort
+from ...model.PortBundle import PortBundle
 
 #-----------------------------------------------------------------------
 # verilog_to_pymtl

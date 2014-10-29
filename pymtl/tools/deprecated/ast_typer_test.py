@@ -2,9 +2,9 @@
 # ast_tranformer_test.py
 #=========================================================================
 
-from ast_typer     import TypeAST
-from ..ast_helpers import get_method_ast, print_simple_ast, print_ast
-from ..Bits        import Bits
+from ast_typer         import TypeAST
+from ..ast_helpers     import get_method_ast, print_simple_ast, print_ast
+from ...datatypes.Bits import Bits
 
 class M( object ):
   def __init__( self, *args ):

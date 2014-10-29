@@ -6,12 +6,12 @@ import ast, _ast
 import re
 import warnings
 
-from ..ast_helpers  import get_closure_dict, print_simple_ast
-from ..signals      import Wire, Signal, InPort, OutPort
-from ..Bits         import Bits
-from ..Model        import Model
-from ..PortBundle   import PortBundle
-from ..signal_lists import PortList, WireList
+from ..ast_helpers        import get_closure_dict, print_simple_ast
+from ...model.signals      import Wire, Signal, InPort, OutPort
+from ...model.Model        import Model
+from ...model.PortBundle   import PortBundle
+from ...model.signal_lists import PortList, WireList
+from ...datatypes.Bits     import Bits
 
 #-------------------------------------------------------------------------
 # AnnotateWithObjects

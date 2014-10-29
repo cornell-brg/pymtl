@@ -3,8 +3,8 @@
 #=======================================================================
 # Classes used to construct the structural connection graph of a Model.
 
-from helpers import get_nbits
-from signals import InPort, Constant
+from ..datatypes.helpers import get_nbits
+from signals             import InPort, Constant
 
 #-----------------------------------------------------------------------
 # ConnectError

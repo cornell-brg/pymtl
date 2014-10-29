@@ -4,9 +4,9 @@
 
 import warnings
 
-from ast_visitor   import DetectLoadsAndStores
-from ..ast_helpers import get_method_ast
-from ..SignalValue import SignalValue
+from ast_visitor              import DetectLoadsAndStores
+from ..ast_helpers            import get_method_ast
+from ...datatypes.SignalValue import SignalValue
 
 #-----------------------------------------------------------------------
 # collect_signals

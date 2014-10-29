@@ -4,7 +4,7 @@
 
 from ..simulation import SimulationTool_seq_test  as sequential
 from ..simulation import SimulationTool_comb_test as combinational
-from ..           import requires_iverilog
+from pymtl        import requires_iverilog
 from verilog      import check_compile as setup_sim
 
 import pytest

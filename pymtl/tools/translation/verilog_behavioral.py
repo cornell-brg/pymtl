@@ -8,8 +8,8 @@ import inspect
 import StringIO
 import textwrap
 
-from ..ast_helpers import get_method_ast, print_simple_ast
-from ..signals     import InPort, OutPort
+from ..ast_helpers   import get_method_ast, print_simple_ast
+from ...model.signals import InPort, OutPort
 
 # TODO: HACKY
 from verilog_structural import signal_to_str

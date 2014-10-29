@@ -2,9 +2,9 @@
 # cpp_helpers.py
 #=======================================================================
 
-from pymtl   import *
-from ..Model import PortList
-from cffi    import FFI
+from pymtl                import *
+from ...model.signal_lists import PortList
+from cffi                 import FFI
 
 # Create position independent code
 #cc_src = "g++ -O3 -fPIC -c -o {in}.cc {in}.h {out.o}"

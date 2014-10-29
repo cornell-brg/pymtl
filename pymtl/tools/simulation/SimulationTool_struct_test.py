@@ -625,7 +625,7 @@ def test_ConstantModule():
   assert model.out == 0b11011000
   sim.cycle()
 
-from ..PortBundle_test import InValRdyBundle, OutValRdyBundle
+from ...model.PortBundle_test import InValRdyBundle, OutValRdyBundle
 #from BitStruct_test  import MemMsg
 
 #-------------------------------------------------------------------------

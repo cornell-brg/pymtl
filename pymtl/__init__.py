@@ -2,22 +2,29 @@
 # model components
 #-----------------------------------------------------------------------
 
-from Model          import Model
-from signals        import Wire, InPort, OutPort
-from PortBundle     import PortBundle, create_PortBundles
-from Bits           import Bits
-from BitStruct      import BitStruct, BitStructDefinition, BitField
-from helpers        import get_nbits, get_sel_nbits, zext, sext, concat
-from helpers        import reduce_and, reduce_or, reduce_xor
-from SignalValue    import CreateWrappedClass
+from model.Model      import Model
+from model.signals    import Wire, InPort, OutPort
+from model.PortBundle import PortBundle, create_PortBundles
+
+#-----------------------------------------------------------------------
+# data types
+#-----------------------------------------------------------------------
+
+from datatypes.Bits        import Bits
+from datatypes.BitStruct   import BitStruct, BitStructDefinition, BitField
+from datatypes.helpers     import (
+    get_nbits, get_sel_nbits, zext, sext, concat,
+    reduce_and, reduce_or, reduce_xor
+)
+from datatypes.SignalValue import CreateWrappedClass
 
 #-----------------------------------------------------------------------
 # tools
 #-----------------------------------------------------------------------
 
-from simulation.SimulationTool import SimulationTool
-from translation.verilator_sim import get_verilated
-from translation.cpp_sim       import get_cpp
+from tools.simulation.SimulationTool import SimulationTool
+from tools.translation.verilator_sim import get_verilated
+from tools.translation.cpp_sim       import get_cpp
 
 #-----------------------------------------------------------------------
 # py.test decorators

@@ -3,10 +3,10 @@
 #=======================================================================
 # Tests verifying the valid construction and elaboration of models.
 
-from Model          import Model
-from signals        import InPort, OutPort, Wire
-from ConnectionEdge import ConnectionEdge, ConnectError
-from Bits           import Bits
+from Model            import Model
+from signals          import InPort, OutPort, Wire
+from ConnectionEdge   import ConnectionEdge, ConnectError
+from ..datatypes.Bits import Bits
 
 import pytest
 

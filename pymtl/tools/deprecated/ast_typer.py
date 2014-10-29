@@ -7,8 +7,8 @@
 import ast, _ast
 import re
 
-from ..Bits    import Bits
-from ..signals import InPort, OutPort
+from ...datatypes.Bits import Bits
+from ...model.signals  import InPort, OutPort
 
 #-------------------------------------------------------------------------
 # TypeAST

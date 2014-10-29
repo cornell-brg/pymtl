@@ -3,7 +3,7 @@
 #=======================================================================
 
 from ..simulation import SimulationTool_struct_test as structural
-from ..           import requires_iverilog
+from pymtl        import requires_iverilog
 from verilog      import check_compile as setup_sim
 
 #-----------------------------------------------------------------------

@@ -4,8 +4,8 @@
 # Collection of classes for defining interfaces and connectivity in
 # hardware models.
 
-from metaclasses import MetaListConstructor
-from Bits        import Bits
+from metaclasses      import MetaListConstructor
+from ..datatypes.Bits import Bits
 
 #-----------------------------------------------------------------------
 # Signal

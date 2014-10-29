@@ -3,8 +3,8 @@
 #=======================================================================
 
 from Model      import *
-from simulation import SimulationTool
 from PortBundle import PortBundle, create_PortBundles
+from pymtl      import SimulationTool
 
 import pclib
 
@@ -357,7 +357,7 @@ def test_portbundle_param_queue_sim( dump_vcd ):
 # Example Module using List of PortBundle with BitStructs
 #-----------------------------------------------------------------------
 
-from BitStruct_test import MemMsg
+from ..datatypes.BitStruct_test import MemMsg
 class ParameterizablePortBundleBitStructQueue( Model ):
 
   def __init__( s, nbits, nports ):
