@@ -6,8 +6,9 @@
 # Author : Christopher Batten
 # Date   : May 22, 2014
 
-from pymtl import Bits,concat,helpers
-from PisaInst  import PisaInst
+from pymtl            import Bits,concat
+from pymtl.datatypes  import helpers
+from PisaInst         import PisaInst
 
 #-------------------------------------------------------------------------
 # Syntax Helpers
