@@ -8,9 +8,9 @@ import copy
 from pymtl import *
 from pclib import *
 
-from pymtl    import helpers
-from pisa     import PisaInst
-from pclib.fl import Queue
+from pymtl.datatypes import helpers
+from pisa            import PisaInst
+from pclib.fl        import Queue
 
 from accel.mvmult.mvmult_fl import InMatrixVecBundle,OutMatrixVecBundle
 
