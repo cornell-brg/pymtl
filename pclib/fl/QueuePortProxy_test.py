@@ -5,10 +5,11 @@
 import pytest
 import collections
 
-from pymtl import *
-from pclib import *
+from pymtl        import *
+from pclib.test   import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
 
-from QueuePortProxy  import InQueuePortProxy,OutQueuePortProxy
+from QueuePortProxy import InQueuePortProxy, OutQueuePortProxy
 
 #-------------------------------------------------------------------------
 # Function Implementation

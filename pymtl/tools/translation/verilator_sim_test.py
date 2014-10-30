@@ -5,7 +5,7 @@
 from pymtl          import SimulationTool
 from verilator_sim  import get_verilated
 from pymtl          import requires_verilator
-from pclib.regs import Reg
+from pclib.rtl      import Reg
 
 #-----------------------------------------------------------------------
 # Test Config

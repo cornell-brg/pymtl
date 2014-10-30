@@ -351,7 +351,7 @@ def test_ModuleListPortList():
 #-----------------------------------------------------------------------
 # PortBundles
 #-----------------------------------------------------------------------
-from pclib        import InValRdyBundle, OutValRdyBundle
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
 class TestValRdy0( Model ):
   def __init__( s ):
     s.in_ = InValRdyBundle (16)
@@ -473,8 +473,8 @@ def test_TestValRdy4():
 #-----------------------------------------------------------------------
 # Queues
 #-----------------------------------------------------------------------
-from pclib.queues import Queue
-from copy import copy
+from pclib.cl import Queue
+from copy     import copy
 
 class TestQueue( Model ):
   def __init__( s ):

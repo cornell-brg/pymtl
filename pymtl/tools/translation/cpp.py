@@ -212,8 +212,8 @@ def declare_signals( nets, ast_next, o ):
 #-----------------------------------------------------------------------
 # get_type
 #-----------------------------------------------------------------------
-from pclib.queues import Queue
 def get_type( signal, o=None ):
+  import pclib.cl.queues
   if   isinstance( signal, bool ):
     return 'bool'
   elif isinstance( signal, int ):
@@ -230,7 +230,7 @@ def get_type( signal, o=None ):
   elif signal == None:
     return 'void *'
   # TODO: super hacky handling of generics
-  elif isinstance( signal, Queue ):
+  elif isinstance( signal, pclib.cl.queues.Queue ):
     return 'std::queue<'+ get_type( signal._kind )+ '>'
   else:
     raise Exception( "UNTRANSLATABLE TYPE!")

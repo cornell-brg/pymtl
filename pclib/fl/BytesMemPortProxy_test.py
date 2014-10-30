@@ -4,8 +4,9 @@
 
 import pytest
 
-from pymtl import *
-from pclib import *
+from pymtl        import *
+from pclib.ifaces import *
+from pclib.test   import *
 
 from Bytes             import Bytes
 from BytesMemPortProxy import BytesMemPortProxy
