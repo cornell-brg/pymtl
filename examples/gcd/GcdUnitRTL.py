@@ -2,9 +2,9 @@
 # GcdUnitRTL
 #=========================================================================
 
-from pymtl import *
-from pclib import InValRdyBundle, OutValRdyBundle
-from pclib import Mux, regs, arith
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.rtl    import Mux, RegEn, RegRst, arith
 
 # Constants
 
@@ -71,7 +71,7 @@ class GcdUnitDpath( Model ):
 
     # A register
 
-    s.a_reg = m = regs.RegEn(32)
+    s.a_reg = m = RegEn(32)
     s.connect_dict({
       m.en    : s.a_reg_en,
       m.in_   : s.a_mux.out,
@@ -88,7 +88,7 @@ class GcdUnitDpath( Model ):
 
     # B register
 
-    s.b_reg = m = regs.RegEn(32)
+    s.b_reg = m = RegEn(32)
     s.connect_dict({
       m.en    : s.b_reg_en,
       m.in_   : s.b_mux.out,
@@ -161,7 +161,7 @@ class GcdUnitCtrl( Model ):
     s.STATE_CALC = 1
     s.STATE_DONE = 2
 
-    s.state = regs.RegRst( 2, reset_value = s.STATE_IDLE )
+    s.state = RegRst( 2, reset_value = s.STATE_IDLE )
 
   #-----------------------------------------------------------------------
   # Connectivity and Logic

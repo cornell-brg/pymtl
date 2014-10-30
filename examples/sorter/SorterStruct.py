@@ -2,8 +2,8 @@
 # SorterRTLStruct
 #=========================================================================
 
-from pymtl  import *
-import pclib
+from pymtl     import *
+from pclib.rtl import Reg
 
 from MinMax import MinMax
 
@@ -20,7 +20,7 @@ class SorterStruct( Model ):
     # Stage A->B pipeline registers
     #---------------------------------------------------------------------
 
-    s.reg_AB = [ pclib.regs.Reg(16) for x in range(4) ]
+    s.reg_AB = [ Reg(16) for x in range(4) ]
     s.connect( s.reg_AB[0].in_, s.in_[0] )
     s.connect( s.reg_AB[1].in_, s.in_[1] )
     s.connect( s.reg_AB[2].in_, s.in_[2] )
@@ -46,7 +46,7 @@ class SorterStruct( Model ):
     # Stage B->C pipeline registers
     #---------------------------------------------------------------------
 
-    s.reg_BC = [ pclib.regs.Reg(16) for x in range(4) ]
+    s.reg_BC = [ Reg(16) for x in range(4) ]
     s.connect( s.reg_BC[0].in_, s.cmp_B0.min )
     s.connect( s.reg_BC[1].in_, s.cmp_B0.max )
     s.connect( s.reg_BC[2].in_, s.cmp_B1.min )

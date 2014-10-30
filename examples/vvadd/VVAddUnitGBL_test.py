@@ -2,9 +2,9 @@
 # VVAddGBL_test.py
 #=========================================================================
 
-from pymtl import *
-from pclib import *
-
+from pymtl        import *
+from pclib.ifaces import mem_msgs
+from pclib.test   import TestMemory
 from VVAddUnitGBL import *
 
 #-------------------------------------------------------------------------

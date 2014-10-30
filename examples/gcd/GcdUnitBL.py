@@ -2,8 +2,8 @@
 # GcdUnit behavorial-level model
 #=========================================================================
 
-from pymtl import *
-from pclib import InValRdyBundle, OutValRdyBundle
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
 
 import fractions
 

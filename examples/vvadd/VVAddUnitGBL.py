@@ -11,8 +11,8 @@
 # port-based wrapper based on greenlets to enable interfacing with a
 # split-phase memory request/response interface.
 
-from pymtl import *
-from pclib import *
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
 
 from GreenletWrapper  import GreenletWrapper
 from ListMemPortProxy import ListMemPortProxy

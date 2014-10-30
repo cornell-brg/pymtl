@@ -2,9 +2,9 @@
 # GcdUnitBL Test Suite
 #=========================================================================
 
-from pymtl import *
-from pclib import TestSource, TestSink
-from GcdUnitBL import GcdUnitBL
+from pymtl      import *
+from pclib.test import TestSource, TestSink
+from GcdUnitBL  import GcdUnitBL
 
 #-------------------------------------------------------------------------
 # TestHarness

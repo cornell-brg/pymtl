@@ -10,8 +10,8 @@
 # We use a finite-state machine to handle the split-phase memory
 # request/response interface.
 
-from pymtl import *
-from pclib import *
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
 
 # FSM states
 
