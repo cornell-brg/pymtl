@@ -2,11 +2,13 @@
 # MeshNetworkCL
 #=========================================================================
 
-from pymtl       import *
-from pclib       import InValRdyBundle, OutValRdyBundle #, NetMsg
+from math        import sqrt
+from collections import deque
+
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+
 from MeshObjRouterCL import MeshRouterCL, NetObject
-from collections     import deque
-from math            import sqrt
 
 #=========================================================================
 # MeshNetworkCL.py

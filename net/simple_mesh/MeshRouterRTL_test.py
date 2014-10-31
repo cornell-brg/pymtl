@@ -2,8 +2,10 @@
 # MeshRouterRTL_test
 #=======================================================================
 
-from pymtl     import *
-from pclib     import TestSource, TestNetSink, NetMsg
+from pymtl        import *
+from pclib.test   import TestSource, TestNetSink
+from pclib.ifaces import NetMsg
+
 from MeshRouterRTL import MeshRouterRTL
 
 #-----------------------------------------------------------------------

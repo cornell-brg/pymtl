@@ -2,10 +2,10 @@
 # Mesh Unit Test
 #=========================================================================
 
-from pclib  import NetMsg
-from math       import sqrt
-
 import random
+
+from math         import sqrt
+from pclib.ifaces import NetMsg
 
 #-------------------------------------------------------------------------
 # mk_msg

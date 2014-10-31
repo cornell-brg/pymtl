@@ -2,15 +2,18 @@
 # Mesh Unit Test
 #=========================================================================
 
-from pymtl      import *
-from pclib      import TestSource, TestNetSink, NetMsg
+import random
+
+from pymtl        import *
+from pclib.ifaces import NetMsg
+from pclib.test   import TestSource, TestNetSink
+
 from MeshNetworkRTL import MeshNetworkRTL
 
 import traffic_generators
-from   traffic_generators import *
+from traffic_generators import *
 
 # Fix the random seed so results are reproducible
-import random
 random.seed(0xdeadbeef)
 
 #-------------------------------------------------------------------------

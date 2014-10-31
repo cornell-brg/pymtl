@@ -2,12 +2,11 @@
 # MeshRouterRTL.py
 #=======================================================================
 
-from pymtl            import *
-from pclib            import InValRdyBundle, OutValRdyBundle, NetMsg
-from pclib            import Crossbar
-from pclib.arbiters   import RoundRobinArbiterEn
-from pclib.queues_rtl import NormalQueue
-from math                 import sqrt
+from math import sqrt
+
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle, NetMsg
+from pclib.rtl    import Crossbar, RoundRobinArbiterEn, NormalQueue
 
 #=======================================================================
 # MeshRouterRTL

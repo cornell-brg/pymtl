@@ -2,10 +2,11 @@
 # MeshNetworkBL.py
 #=========================================================================
 
-from pymtl   import *
-from pclib   import InValRdyBundle, OutValRdyBundle, NetMsg
-from collections import deque
 from math        import sqrt
+from collections import deque
+
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle, NetMsg
 
 #=========================================================================
 # MeshNetworkBL

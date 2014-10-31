@@ -2,10 +2,12 @@
 # MeshNetworkRTL
 #=========================================================================
 
-from pymtl     import *
-from pclib     import InValRdyBundle, OutValRdyBundle, NetMsg
+from math import sqrt
+
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle, NetMsg
+
 from MeshRouterRTL import MeshRouterRTL
-from math          import sqrt
 
 #=========================================================================
 # MeshNetworkRTL
