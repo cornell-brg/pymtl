@@ -2,9 +2,9 @@
 # DotProductRTL
 #=========================================================================
 
-from pymtl import *
-from pclib import InValRdyBundle, OutValRdyBundle
-from pclib import ParentReqRespBundle, ChildReqRespBundle
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifaces import ParentReqRespBundle, ChildReqRespBundle
 
 nmul_stages = 4
 

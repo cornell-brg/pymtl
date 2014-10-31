@@ -3,13 +3,13 @@
 #==============================================================================
 # TODO: clean this up!!!
 
-from pymtl      import *
-from pclib      import TestSource, TestMemory, mem_msgs
-from DotProductCL   import DotProductCL as DotProduct
-from pclib      import MemMsg
-from pclib      import CP2Msg
-
 import pytest
+
+from pymtl        import *
+from pclib.test   import TestSource, TestMemory
+from pclib.ifaces import mem_msgs, MemMsg, CP2Msg
+
+from DotProductCL import DotProductCL as DotProduct
 
 #------------------------------------------------------------------------------
 # TestHarness

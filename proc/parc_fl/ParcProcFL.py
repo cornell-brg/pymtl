@@ -4,16 +4,16 @@
 
 import greenlet
 
-from pymtl import *
-from pclib import *
-
-from pisa  import PisaSemantics
-from pisa  import PisaInst
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 from pclib.fl import (
     GreenletWrapper,  BytesMemPortProxy,
     InQueuePortProxy, OutQueuePortProxy
 )
+
+from pisa import PisaSemantics
+from pisa import PisaInst
 
 from accel.mvmult.mvmult_fl import (
      MatrixVecProxy,

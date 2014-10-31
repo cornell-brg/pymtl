@@ -4,10 +4,9 @@
 
 import collections
 
-from pymtl    import *
-from pclib    import *
-from pclib    import ParentReqRespBundle, ChildReqRespBundle
-from pclib.fl import Queue
+from pymtl        import *
+from pclib.fl     import Queue
+from pclib.ifaces import ChildReqRespBundle, ParentReqRespBundle
 
 #-------------------------------------------------------------------------
 # DotProductDetailed

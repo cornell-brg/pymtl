@@ -2,15 +2,13 @@
 # DotProductCL
 #=========================================================================
 
-from pymtl import *
-from pclib import *
-
-from pclib.fl     import ListMemPortAdapter
-from pclib.queues import ChildReqRespQueueAdapter, \
-                             ParentReqRespQueueAdapter
-
 import greenlet
 import numpy
+
+from pymtl        import *
+from pclib.fl     import ListMemPortAdapter
+from pclib.cl     import ChildReqRespQueueAdapter, ParentReqRespQueueAdapter
+from pclib.ifaces import ChildReqRespBundle, ParentReqRespBundle, MemMsg
 
 #-------------------------------------------------------------------------
 # helpers

@@ -2,13 +2,13 @@
 # DotProductDetailedCL_test
 #=========================================================================
 
-from pymtl            import *
-from pclib            import TestSource, TestMemory, mem_msgs
-from DotProductDetailedCL import DotProductCL as DotProduct
-from pclib            import MemMsg
-from pclib            import CP2Msg
-
 import pytest
+
+from pymtl        import *
+from pclib.test   import TestSource, TestMemory
+from pclib.ifaces import mem_msgs, MemMsg, CP2Msg
+
+from DotProductDetailedCL import DotProductCL as DotProduct
 
 #------------------------------------------------------------------------------
 # TestHarness

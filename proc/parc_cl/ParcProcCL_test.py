@@ -6,9 +6,10 @@ import pytest
 import pisa
 import struct
 
-from pymtl  import *
-from pclib  import *
-from ParcProcCL import ParcProcCL
+from pymtl        import *
+from pclib.test   import TestSource, TestSink, TestMemory
+from pclib.ifaces import mem_msgs
+from ParcProcCL   import ParcProcCL
 
 from accel.mvmult.mvmult_fl  import MatrixVecFL
 from accel.mvmult.mvmult_cl  import MatrixVecCL

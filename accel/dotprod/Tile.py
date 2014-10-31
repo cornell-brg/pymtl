@@ -1,17 +1,21 @@
 #=======================================================================
 
 from pymtl          import *
-from pclib          import mem_msgs
-from pclib          import InValRdyBundle, OutValRdyBundle
-from pclib          import MemMsg
-from pclib          import CP2Msg
+from pclib.ifaces   import (
+  InValRdyBundle, OutValRdyBundle,
+  mem_msgs, MemMsg, CP2Msg,
+)
+
+# Accelerator
 from DotProductRTL  import DotProductRTL
 from DotProductFL   import DotProductFL
+
+# Processor
 from proc.parc_accel.ParcProcPipelinedMul import (
     ParcProcPipelinedMul
 )
 
-# Cache with single-cycle hit lantency
+# Memory: cache with single-cycle hit lantency
 from mem.simple_cache.DirectMappedWriteBackCache import (
     DirectMappedWriteBackCache
 )
