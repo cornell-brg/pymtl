@@ -2,8 +2,8 @@
 # LaneManager.py
 #==============================================================================
 
-from pymtl import *
-from pclib import InValRdyBundle
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle
 
 STATE_CFG  = 0
 STATE_CALC = 1

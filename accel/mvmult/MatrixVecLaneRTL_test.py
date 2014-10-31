@@ -2,12 +2,14 @@
 # MatrixVecLaneBL_test
 #==============================================================================
 
+import pytest
+
 from pymtl        import *
-from pclib        import TestSource, TestMemory, mem_msgs
+from pclib.ifaces import mem_msgs
+from pclib.test   import TestSource, TestMemory
+
 from MatrixVecLaneRTL import MatrixVecLaneRTL
 from LaneManager      import LaneManager
-
-import pytest
 
 #------------------------------------------------------------------------------
 # TestHarness

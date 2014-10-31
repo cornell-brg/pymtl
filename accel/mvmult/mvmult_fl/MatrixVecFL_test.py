@@ -4,8 +4,9 @@
 
 import pytest
 
-from pymtl import *
-from pclib import *
+from pymtl        import *
+from pclib.ifaces import mem_msgs
+from pclib.test   import TestSource, TestSink, TestMemory
 
 from MatrixVecFL import MatrixVecFL
 

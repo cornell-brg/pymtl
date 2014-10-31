@@ -3,12 +3,11 @@
 #=========================================================================
 # ParcProc5stBypass assembly tests driver
 
-from pymtl import *
-from pclib import mem_msgs
-from pclib import TestMemory
-from pclib import TestProcManager
-from pclib import SparseMemoryImage
-from Tile      import Tile
+from pymtl        import *
+from pclib.ifaces import mem_msgs
+from pclib.test   import TestMemory, TestProcManager, SparseMemoryImage
+
+from Tile import Tile
 
 #-----------------------------------------------------------------------
 # TestHarness

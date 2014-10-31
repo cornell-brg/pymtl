@@ -2,8 +2,8 @@
 # MatrixVecLaneFL
 #==============================================================================
 
-from pymtl import *
-from pclib import InValRdyBundle, OutValRdyBundle
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
 
 LD_REQ_MATRIX = 0
 LD_RSP_MATRIX = 1

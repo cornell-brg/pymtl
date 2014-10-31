@@ -2,8 +2,8 @@
 # ConfigManger_test.py
 #==============================================================================
 
-from pymtl import *
-from pclib import TestVectorSimulator
+from pymtl      import *
+from pclib.test import TestVectorSimulator
 
 from ConfigManager import ConfigManager
 

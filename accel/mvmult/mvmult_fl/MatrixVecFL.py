@@ -4,10 +4,9 @@
 
 import greenlet
 
-from pymtl import *
-from pclib import *
-
-from pclib.fl import GreenletWrapper, BytesMemPortProxy
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
+from pclib.fl     import GreenletWrapper, BytesMemPortProxy
 
 from MatrixVec       import MatrixVec
 from MatrixVecBundle import InMatrixVecBundle,OutMatrixVecBundle

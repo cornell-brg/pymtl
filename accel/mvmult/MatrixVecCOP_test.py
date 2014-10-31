@@ -2,11 +2,12 @@
 # MatrixVecMultLaneBL_test
 #==============================================================================
 
-from pymtl    import *
-from pclib    import TestSource, TestMemory, mem_msgs
-from MatrixVecCOP import MatrixVecCOP
-
 import pytest
+
+from pymtl        import *
+from pclib.test   import TestSource, TestMemory
+from pclib.ifaces import mem_msgs
+from MatrixVecCOP import MatrixVecCOP
 
 #------------------------------------------------------------------------------
 # SourceHarness

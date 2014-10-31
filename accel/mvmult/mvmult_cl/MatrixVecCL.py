@@ -4,11 +4,10 @@
 
 import collections
 
-from pymtl import *
-from pclib import *
-
-from ..mvmult_fl import InMatrixVecBundle,OutMatrixVecBundle
-from pclib.fl    import Queue
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
+from pclib.fl     import Queue
+from ..mvmult_fl  import InMatrixVecBundle, OutMatrixVecBundle
 
 class MatrixVecCL (Model):
 

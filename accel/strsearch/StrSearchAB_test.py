@@ -4,8 +4,9 @@
 #
 # PyMTL Functional Model of strsearch.
 
-from pymtl        import *
-from pclib        import TestSource, TestSink
+from pymtl      import *
+from pclib.test import TestSource, TestSink
+
 from StrSearchOO_test import strings, docs, reference
 from StrSearchAB      import StrSignalValue, StrSearchMath, StrSearchAlg
 

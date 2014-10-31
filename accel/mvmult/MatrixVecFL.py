@@ -2,8 +2,8 @@
 # MatrixVecFL.py
 #==============================================================================
 
-from pymtl   import *
-from pclib   import InValRdyBundle, OutValRdyBundle, mem_msgs
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 from LaneManager      import LaneManager
 from MatrixVecLaneFL  import MatrixVecLaneFL

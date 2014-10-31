@@ -2,12 +2,15 @@
 # DummyCOP_test.py
 #=======================================================================
 
-from pymtl import *
-from pclib import TestVectorSimulator
+from pymtl        import *
+from pclib.ifaces import mem_msgs
+from pclib.test   import (
+    TestVectorSimulator, TestMemory,
+    TestProcManager, SparseMemoryImage
+)
+
 from DummyCOP  import DummyCOPCL
-from pclib import mem_msgs, TestMemory, TestProcManager
-from pclib import SparseMemoryImage
-from proc.parc  import ParcProc5stBypass
+from proc.parc import ParcProc5stBypass
 
 #-----------------------------------------------------------------------
 # test_DummyCOP_directed

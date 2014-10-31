@@ -2,10 +2,12 @@
 # StrSearchFunc.py
 #=========================================================================
 
-from pymtl     import *
-from pclib     import InValRdyBundle, OutValRdyBundle
+from collections import deque
+
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+
 from StrSearchFunc import StrSignalValue
-from collections   import deque
 
 #-------------------------------------------------------------------------
 # StrSearchMath

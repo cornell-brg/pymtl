@@ -1,10 +1,10 @@
 #=======================================================================
 
-from pymtl                     import *
-from pclib                     import mem_msgs
-from pclib                     import InValRdyBundle, OutValRdyBundle
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
+
 from proc.parc.ParcProcPipelinedMul import ParcProcPipelinedMul
-from MatrixVecCOP                  import MatrixVecCOP
+from MatrixVecCOP                   import MatrixVecCOP
 
 # Cache with single-cycle hit lantency
 from mem.simple_cache.DirectMappedWriteBackCache import (

@@ -2,8 +2,9 @@
 # ConfigManager
 #==============================================================================
 
-from pymtl import *
-from pclib import InValRdyBundle, Decoder
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle
+from pclib.rtl    import Decoder
 
 STATE_IDLE = 0
 STATE_CFG  = 1
