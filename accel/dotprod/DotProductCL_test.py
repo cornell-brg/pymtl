@@ -16,7 +16,7 @@ from DotProductCL import DotProductCL as DotProduct
 #------------------------------------------------------------------------------
 class TestHarness( Model ):
 
-  def __init__( s, lane_id, nmul_stages, mem_delay, test_verilog ):
+  def __init__( s, lane_id, nmul_stages, mem_delay ):
 
 
     s.memreq_params  = mem_msgs.MemReqParams( 32, 32 )
@@ -27,9 +27,6 @@ class TestHarness( Model ):
     cpu_ifc = CP2Msg   ( 5, 32 )
 
     s.lane = DotProduct(mem_ifc, cpu_ifc )
-
-    if test_verilog:
-      s.lane = get_verilated( s.lane )
 
 
   def elaborate_logic( s ):
@@ -160,10 +157,10 @@ def mem_array_32bit( base_addr, data ):
 @pytest.mark.parametrize(
   ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
-def test_dotproduct( dump_vcd, test_verilog, mem_delay, nmul_stages ):
+def test_dotproduct( dump_vcd, mem_delay, nmul_stages ):
   lane = 0
   run_mvmult_test( dump_vcd, "DP.vcd",
-                   TestHarness( lane, nmul_stages, mem_delay, test_verilog ),
+                   TestHarness( lane, nmul_stages, mem_delay ),
                    lane,
                    # NOTE: C++ has dummy data between rows when you have array**!
                    mem_array_32bit(  0, [ 5, 1 ,3 ]),
@@ -174,10 +171,10 @@ def test_dotproduct( dump_vcd, test_verilog, mem_delay, nmul_stages ):
 @pytest.mark.parametrize(
   ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
-def test_2dotprod( dump_vcd, test_verilog, mem_delay, nmul_stages ):
+def test_2dotprod( dump_vcd, mem_delay, nmul_stages ):
   lane = 0
   run_mvmult_test( dump_vcd, "DP.vcd",
-                   TestHarness( lane, nmul_stages, mem_delay, test_verilog ),
+                   TestHarness( lane, nmul_stages, mem_delay ),
                    lane,
                    # NOTE: C++ has dummy data between rows when you have array**!
                    mem_array_32bit(  0, [ 5, 1 ,3, 9, 10 ]),
