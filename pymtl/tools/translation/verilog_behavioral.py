@@ -13,6 +13,7 @@ from ...model.signals import InPort, OutPort
 
 # TODO: HACKY
 from verilog_structural import signal_to_str
+from exceptions         import VerilogTranslationError
 
 import visitors
 
@@ -37,31 +38,32 @@ def translate_logic_blocks( model ):
 
   for func in blocks:
 
-    # Type Check the AST
-    tree, src  = get_method_ast( func )
-    new_tree   = ast_pipeline( tree, model, func )
-    r,i,p,a    = visitors.GetRegsIntsParamsTempsArrays().get( new_tree )
-
-    regs      |= r
-    ints      |= i
-    params    |= p
-    arrays    |= a
-
-    # Store the PyMTL source inline with the behavioral code
-    block_code = ("  // PYMTL SOURCE:\n"
-                  "  // {}\n\n").format( "\n  // ".join( src.splitlines()))
-
-    # Print the Verilog translation
     try:
+
+      # Type Check the AST
+      tree, src  = get_method_ast( func )
+      new_tree   = ast_pipeline( tree, model, func )
+      r,i,p,a    = visitors.GetRegsIntsParamsTempsArrays().get( new_tree )
+
+      regs      |= r
+      ints      |= i
+      params    |= p
+      arrays    |= a
+
+      # Store the PyMTL source inline with the behavioral code
+      block_code = ("  // PYMTL SOURCE:\n"
+                    "  // {}\n\n").format( "\n  // ".join( src.splitlines()))
+
+      # Print the Verilog translation
       visitor     = TranslateBehavioralVerilog()
       block_code += visitor.visit( new_tree )
 
-    # If we run into a TranslationError, provide some more debug
+    # If we run into a VerilogTranslationError, provide some more debug
     # information for the user, then re-raise the exception
-    except TranslationError as e:
+    except VerilogTranslationError as e:
       class_name = model.class_name
       func_name  = func.func_name
-      msg  = 'Problem translating {} in model {}:\n  {}' \
+      msg  = 'Problem translating {}() in model {}:\n  {}' \
              .format( func_name, class_name, e.message )
       e.args = (msg,)
       raise
@@ -150,7 +152,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Unsupported annotation
     else:
-      raise TranslationError(
+      raise VerilogTranslationError(
         'No valid decorator provided: {}'.format( node.decorator_list )
       )
 
@@ -168,7 +170,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   # visit_Expr
   #-----------------------------------------------------------------------
   def visit_Expr(self, node):
-    raise TranslationError("TODO: visit_Expr not implemented")
+    raise VerilogTranslationError("TODO: visit_Expr not implemented")
     return '{}{};\n'.format( self.indent, self.visit(node.value) )
 
   #-----------------------------------------------------------------------
@@ -460,9 +462,3 @@ opmap = {
     ast.And      : '&&',
     ast.Or       : '||',
 }
-
-#-----------------------------------------------------------------------
-# TranslationError
-#-----------------------------------------------------------------------
-class TranslationError( Exception ):
-  pass

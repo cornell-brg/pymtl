@@ -12,6 +12,7 @@ from ...model.Model        import Model
 from ...model.PortBundle   import PortBundle
 from ...model.signal_lists import PortList, WireList
 from ...datatypes.Bits     import Bits
+from exceptions            import VerilogTranslationError
 
 #-------------------------------------------------------------------------
 # AnnotateWithObjects
@@ -356,9 +357,13 @@ class SimplifyDecorator( ast.NodeTransformer ):
   def visit_FunctionDef( self, node ):
     #self.generic_visit( node ) # visit children, uneeded?
 
-    # TODO: currently only support one decorator
     # TODO: currently assume decorator is of the form 'self.dec_name'
-    assert len( node.decorator_list )
+    if len( node.decorator_list ) != 1:
+      raise VerilogTranslationError(
+        "Expecting exactly one decorator, instead got: {}"
+        .format( node.decorator_list )
+      )
+
     dec = node.decorator_list[0].attr
 
     # create a new FunctionDef node that deletes the decorators
