@@ -302,7 +302,7 @@ class FlattenListAttrs( ast.NodeTransformer ):
         node._object = PortList([ getattr( x, self.attr ) for x in node._object ])
         node._object.name = name
       else:
-        raise Exception()
+        return node
 
     # Visit the slice
     stash = self.attr
