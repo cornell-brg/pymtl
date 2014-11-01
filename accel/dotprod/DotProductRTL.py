@@ -105,7 +105,7 @@ class DotProductDpath( Model ):
       else:                        base_addr_M = s.src1_addr_M
 
       # memory request
-      s.mem_ifc.req_msg.type.value = 0
+      s.mem_ifc.req_msg.type_.value = 0
       s.mem_ifc.req_msg.addr.value = base_addr_M + (s.count<<2)
 
       # last item status signal

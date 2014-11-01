@@ -40,14 +40,14 @@ class TestHarness( Model ):
     def connect_structs():
       s.mem_req.value = s.lane.mem_ifc.req_msg
       s.mem.reqs[0].msg.value = s.memreq_params.mk_req(
-        s.lane.mem_ifc.req_msg.type,
+        s.lane.mem_ifc.req_msg.type_,
         s.lane.mem_ifc.req_msg.addr,
         s.lane.mem_ifc.req_msg.len,
         s.lane.mem_ifc.req_msg.data)
 
       s.mem_resp.value = s.mem.resps[0].msg
       tup = s.memresp_params.unpck_resp(s.mem_resp)
-      s.lane.mem_ifc.resp_msg.type.value = tup[0]
+      s.lane.mem_ifc.resp_msg.type_.value = tup[0]
       s.lane.mem_ifc.resp_msg.len.value = tup[1]
       s.lane.mem_ifc.resp_msg.data.value = tup[2]
 
