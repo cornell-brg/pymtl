@@ -105,6 +105,16 @@ class MetaBitStruct( type ):
 
     # Return an instance of the new BitStruct class
     bitstruct_inst = bitstruct_class( nbits )
+
+    # TODO: hack for verilog translation!
+    bitstruct_inst._instantiate = '{module}.{class_name}{args}'.format(
+        module     = def_inst.__class__.__module__,
+        class_name = def_inst.__class__.__name__,
+        args       = args,
+    )
+    bitstruct_inst._import = def_inst.__class__.__module__
+    assert not kwargs
+
     return bitstruct_inst
 
 #=======================================================================

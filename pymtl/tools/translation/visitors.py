@@ -6,8 +6,8 @@ import ast, _ast
 import re
 import warnings
 
-from ..ast_helpers        import get_closure_dict, print_simple_ast
-from ...model.signals      import Wire, Signal, InPort, OutPort
+from ..ast_helpers         import get_closure_dict, print_simple_ast
+from ...model.signals      import Wire, Signal, InPort, OutPort, _SignalSlice
 from ...model.Model        import Model
 from ...model.PortBundle   import PortBundle
 from ...model.signal_lists import PortList, WireList
@@ -423,6 +423,25 @@ class ConstantToSlice( ast.NodeTransformer ):
       new_node = ast.Slice( ast.Num( node._object.start ),
                             ast.Num( node._object.stop ),
                             None )
+      return ast.copy_location( new_node, node )
+    return node
+
+#-------------------------------------------------------------------------
+# BitStructToSlice
+#-------------------------------------------------------------------------
+class BitStructToSlice( ast.NodeTransformer ):
+
+  def visit_Attribute( self, node ):
+    self.generic_visit( node )
+    if isinstance( node._object, _SignalSlice ):
+      assert not node._object.slice.step
+      new_node = ast.Subscript( node.value,
+                   ast.Slice( ast.Num( node._object.slice.start ),
+                              ast.Num( node._object.slice.stop ),
+                              None ),
+                   None,
+                 )
+      new_node._object = node._object
       return ast.copy_location( new_node, node )
     return node
 

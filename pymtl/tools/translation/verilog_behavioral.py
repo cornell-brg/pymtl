@@ -96,6 +96,7 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.ConstantToSlice    (             ).visit( tree )
   tree = visitors.InferTemporaryTypes( model       ).visit( tree )
   tree = visitors.PortListNameHack   ( model       ).visit( tree )
+  tree = visitors.BitStructToSlice   (             ).visit( tree )
 
   #print_simple_ast( tree ) # DEBUG
 
