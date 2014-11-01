@@ -29,6 +29,12 @@ class TestHarness( Model ):
     s.lane = DotProduct(mem_ifc, cpu_ifc )
 
     if test_verilog:
+      pytest.xfail(
+      """Verilog translation currently fails because:
+         - True/False keywords to not translate
+         - Type inference from BitStructs currently fail
+      """)
+
       s.lane = get_verilated( s.lane )
 
 
