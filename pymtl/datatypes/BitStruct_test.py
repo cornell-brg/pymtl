@@ -31,7 +31,7 @@ class MemMsg( BitStructDefinition ):
     len_nbits = int( math.ceil( math.log( data_nbits/8, 2 ) ) )
 
     # Declare the MemoryMsg fields
-    s.type = BitField( 1          )
+    s.type_ = BitField( 1          )
     s.addr = BitField( addr_nbits )
     s.len  = BitField( len_nbits  )
     s.data = BitField( data_nbits )
@@ -56,21 +56,21 @@ def test_bitstruct_fields():
   assert x.v == 0x5f0cd0f0f0f0f
 
   # Test field nbits attributes
-  assert x.type.nbits == 1
+  assert x.type_.nbits == 1
   assert x.addr.nbits == 16
   assert x.len.nbits  == 2
   assert x.data.nbits == 32
   assert x.nbits      == 1 + 16 + 2 + 32
 
   # Test field slices attributes
-  assert x.type.slice == slice( 50, 51 )
+  assert x.type_.slice == slice( 50, 51 )
   assert x.addr.slice == slice( 34, 50 )
   assert x.len.slice  == slice( 32, 34 )
   assert x.data.slice == slice(  0, 32 )
   assert x.slice      == slice( None )
 
   # Test access to vs
-  assert x.type.v == 1
+  assert x.type_.v == 1
   assert x.addr.v == 0x7c33
   assert x.len.v  == 1
   assert x.data.v == 0x0f0f0f0f
@@ -84,10 +84,10 @@ def test_bitstruct_fields():
   assert MemMsg.WORD  == 0
 
   # Test assignment
-  x.type.v = MemMsg.READ
-  assert x.type.v == 0
-  x.type.v = MemMsg.WRITE
-  assert x.type.v == 1
+  x.type_.v = MemMsg.READ
+  assert x.type_.v == 0
+  x.type_.v = MemMsg.WRITE
+  assert x.type_.v == 1
 
   x.len.v = MemMsg.HALF
   assert x.len.v == 2
@@ -164,24 +164,26 @@ class CombLogicMsgModel( Model ):
     @s.combinational
     def logic():
 
-      s.out.type.v = s.in_.type
+      s.out.type_.v = s.in_.type_
       s.out.len.v  = s.in_.len
       s.out.addr.v = s.in_.addr
       s.out.data.v = s.in_.data
 
-def test_msg_comb_logic():
+def test_msg_comb_logic( test_verilog ):
 
   model = CombLogicMsgModel()
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
-  sim   = SimulationTool(model)
+  sim = SimulationTool( model )
 
   assert model.in_.nbits      == 1 + 2 + 16 + 32
-  assert model.in_.type.nbits == 1
+  assert model.in_.type_.nbits == 1
   assert model.in_.len.nbits  == 2
   assert model.in_.addr.nbits == 16
   assert model.in_.data.nbits == 32
 
-  assert model.out.type.slice == slice( 50, 51 )
+  assert model.out.type_.slice == slice( 50, 51 )
   assert model.out.addr.slice == slice( 34, 50 )
   assert model.out.len.slice  == slice( 32, 34 )
   assert model.out.data.slice == slice(  0, 32 )
@@ -199,7 +201,7 @@ def test_msg_comb_logic():
   model.in_.v = 0x5f0cd0f0f0f0f
   sim.eval_combinational()
 
-  assert model.out.type.v == 1
+  assert model.out.type_.v == 1
   assert model.out.len.v  == 1
   assert model.out.addr.v == 0x7c33
   assert model.out.data.v == 0x0f0f0f0f
@@ -224,26 +226,28 @@ class SeqLogicMsgModel( Model ):
     @s.posedge_clk
     def logic():
 
-      s.out.type.next = s.in_.type
+      s.out.type_.next = s.in_.type_
       s.out.len.next  = s.in_.len
       s.out.addr.next = s.in_.addr
       s.out.data.next = s.in_.data
 
 
-def test_msg_seq_logic():
+def test_msg_seq_logic( test_verilog ):
 
   model = SeqLogicMsgModel()
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   sim = SimulationTool(model)
 
   assert model.in_.nbits      == 1 + 2 + 16 + 32
-  assert model.in_.type.nbits == 1
+  assert model.in_.type_.nbits == 1
   assert model.in_.len.nbits  == 2
   assert model.in_.addr.nbits == 16
   assert model.in_.data.nbits == 32
 
-  assert model.out.type.slice == slice( 50, 51 )
+  assert model.out.type_.slice == slice( 50, 51 )
   assert model.out.addr.slice == slice( 34, 50 )
   assert model.out.len.slice  == slice( 32, 34 )
   assert model.out.data.slice == slice(  0, 32 )
@@ -284,44 +288,46 @@ class PortMsgModel( Model ):
 
   def elaborate_logic( s ):
 
-    s.type = Wire( s.msg.type.nbits )
+    s.type_ = Wire( s.msg.type_.nbits )
     s.len  = Wire( s.msg.len.nbits  )
     s.addr = Wire( s.msg.addr.nbits )
     s.data = Wire( s.msg.data.nbits )
 
-    s.connect( s.in_.type, s.type )
+    s.connect( s.in_.type_, s.type_ )
     s.connect( s.in_.len,  s.len  )
     s.connect( s.in_.addr, s.addr )
     s.connect( s.in_.data, s.data )
 
-    s.connect( s.out.type, s.type )
+    s.connect( s.out.type_, s.type_ )
     s.connect( s.out.len,  s.len  )
     s.connect( s.out.addr, s.addr )
     s.connect( s.out.data, s.data )
 
-def test_msg_ports():
+def test_msg_ports( test_verilog ):
 
   model = PortMsgModel()
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Test port slices attributes (InPort, OutPort, Wire) before Sim init
 
   assert model.in_.slice      == slice( None )
-  assert model.in_.type.slice == slice( 50, 51 )
+  assert model.in_.type_.slice == slice( 50, 51 )
   assert model.in_.addr.slice == slice( 34, 50 )
   assert model.in_.len.slice  == slice( 32, 34 )
   assert model.in_.data.slice == slice(  0, 32 )
 
   assert model.out.slice      == slice( None )
-  assert model.out.type.slice == slice( 50, 51 )
+  assert model.out.type_.slice == slice( 50, 51 )
   assert model.out.addr.slice == slice( 34, 50 )
   assert model.out.len.slice  == slice( 32, 34 )
   assert model.out.data.slice == slice(  0, 32 )
 
-  assert model.type.slice     == slice( None )
-  assert model.addr.slice     == slice( None )
-  assert model.len.slice      == slice( None )
-  assert model.data.slice     == slice( None )
+  #assert model.type_.slice     == slice( None )
+  #assert model.addr.slice     == slice( None )
+  #assert model.len.slice      == slice( None )
+  #assert model.data.slice     == slice( None )
 
   # Create simulator
 
@@ -330,59 +336,63 @@ def test_msg_ports():
   # Test nbits attributes (InPort, OutPort, Wire)
 
   assert model.in_.nbits      == 1 + 2 + 16 + 32
-  assert model.in_.type.nbits == 1
+  assert model.in_.type_.nbits == 1
   assert model.in_.addr.nbits == 16
   assert model.in_.len.nbits  == 2
   assert model.in_.data.nbits == 32
 
   assert model.out.nbits      == 1 + 2 + 16 + 32
-  assert model.out.type.nbits == 1
+  assert model.out.type_.nbits == 1
   assert model.out.addr.nbits == 16
   assert model.out.len.nbits  == 2
   assert model.out.data.nbits == 32
 
-  assert model.type.nbits     == 1
-  assert model.addr.nbits     == 16
-  assert model.len.nbits      == 2
-  assert model.data.nbits     == 32
+  #assert model.type_.nbits     == 1
+  #assert model.addr.nbits     == 16
+  #assert model.len.nbits      == 2
+  #assert model.data.nbits     == 32
 
   # Test field slices attributes (InPort, OutPort, Wire)
 
   assert model.in_.slice      == slice( None )
-  assert model.in_.type.slice == slice( 50, 51 )
+  assert model.in_.type_.slice == slice( 50, 51 )
   assert model.in_.addr.slice == slice( 34, 50 )
   assert model.in_.len.slice  == slice( 32, 34 )
   assert model.in_.data.slice == slice(  0, 32 )
 
   assert model.out.slice      == slice( None )
-  assert model.out.type.slice == slice( 50, 51 )
+  assert model.out.type_.slice == slice( 50, 51 )
   assert model.out.addr.slice == slice( 34, 50 )
   assert model.out.len.slice  == slice( 32, 34 )
   assert model.out.data.slice == slice(  0, 32 )
 
-  assert model.type.slice     == slice( None )
-  assert model.addr.slice     == slice( None )
-  assert model.len.slice      == slice( None )
-  assert model.data.slice     == slice( None )
+  # NOTE: cannot poke in if Verilog!
+  if not test_verilog:
+    assert model.type_.slice     == slice( None )
+    assert model.addr.slice     == slice( None )
+    assert model.len.slice      == slice( None )
+    assert model.data.slice     == slice( None )
 
   # Test initial values (InPort, OutPort, Wire)
 
   assert model.in_      == 0
-  assert model.in_.type == 0
+  assert model.in_.type_ == 0
   assert model.in_.addr == 0
   assert model.in_.len  == 0
   assert model.in_.data == 0
 
   assert model.out      == 0
-  assert model.out.type == 0
+  assert model.out.type_ == 0
   assert model.out.addr == 0
   assert model.out.len  == 0
   assert model.out.data == 0
 
-  assert model.type     == 0
-  assert model.addr     == 0
-  assert model.len      == 0
-  assert model.data     == 0
+  # NOTE: cannot poke in if Verilog!
+  if not test_verilog:
+    assert model.type_     == 0
+    assert model.addr     == 0
+    assert model.len      == 0
+    assert model.data     == 0
 
   # Test whole assignment
 
@@ -392,18 +402,20 @@ def test_msg_ports():
   sim.eval_combinational()
 
   assert model.in_      == 0x5f0cd0f0f0f0f
-  assert model.in_.type == 1
+  assert model.in_.type_ == 1
   assert model.in_.len  == 1
   assert model.in_.addr == 0x7c33
   assert model.in_.data == 0x0f0f0f0f
 
-  assert model.type     == 1
-  assert model.addr     == 0x7c33
-  assert model.len      == 1
-  assert model.data     == 0x0f0f0f0f
+  # NOTE: cannot poke in if Verilog!
+  if not test_verilog:
+    assert model.type_     == 1
+    assert model.addr     == 0x7c33
+    assert model.len      == 1
+    assert model.data     == 0x0f0f0f0f
 
   assert model.out      == 0x5f0cd0f0f0f0f
-  assert model.out.type == 1
+  assert model.out.type_ == 1
   assert model.out.len  == 1
   assert model.out.addr == 0x7c33
   assert model.out.data == 0x0f0f0f0f
@@ -411,13 +423,19 @@ def test_msg_ports():
   # Test field assignment
 
   model.in_.len.v        = MemMsg.HALF
+
+  sim.eval_combinational()
+
   assert model.out.len  == MemMsg.HALF
   assert model.out      == 0x5f0ce0f0f0f0f
 
-  model.in_.type.v       = MemMsg.WRITE
+  model.in_.type_.v       = MemMsg.WRITE
   model.in_.addr.v       = 0
   model.in_.len.v        = MemMsg.WORD
   model.in_.data.v       = 0x88888888
+
+  sim.eval_combinational()
+
   assert model.out      == 0x4000088888888
 
 #-----------------------------------------------------------------------
@@ -435,14 +453,16 @@ class SeqLogicMsgListModel( Model ):
     def logic():
 
       for i in range( 4 ):
-        s.out[ i ].type.next = s.in_[ i ].type
+        s.out[ i ].type_.next = s.in_[ i ].type_
         s.out[ i ].len.next  = s.in_[ i ].len
         s.out[ i ].addr.next = s.in_[ i ].addr
         s.out[ i ].data.next = s.in_[ i ].data
 
-def test_msg_seq_list_logic():
+def test_msg_seq_list_logic( test_verilog ):
 
   model = SeqLogicMsgListModel()
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   sim = SimulationTool(model)
