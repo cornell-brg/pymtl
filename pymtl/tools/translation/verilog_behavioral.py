@@ -142,7 +142,8 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
       sensitivity = '*'
 
     # Posedge Clock
-    elif 'posedge_clk' in node.decorator_list:
+    elif ('posedge_clk' in node.decorator_list or
+          'tick_rtl'    in node.decorator_list):
       self.assign = '<='
       sensitivity = 'posedge clk'
 

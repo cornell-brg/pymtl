@@ -76,7 +76,7 @@ class Model( object ):
   def tick( self, func ):
     try:
       self._tick_blocks.append( func )
-    except: 
+    except:
       self._tick_blocks = [func]
     func._model = self
     return func
@@ -98,6 +98,12 @@ class Model( object ):
       self._posedge_clk_blocks = [func]
     func._model = self
     return func
+
+  def tick_rtl( self, func ):
+    return self.tick( func )
+
+  def tick_cl( self, func ):
+    return self.tick( func )
 
   def tick_fl( self, func ):
     return self.pausable_tick(func)
