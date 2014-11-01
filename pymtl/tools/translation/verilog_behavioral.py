@@ -52,8 +52,19 @@ def translate_logic_blocks( model ):
                   "  // {}\n\n").format( "\n  // ".join( src.splitlines()))
 
     # Print the Verilog translation
-    visitor     = TranslateBehavioralVerilog()
-    block_code += visitor.visit( new_tree )
+    try:
+      visitor     = TranslateBehavioralVerilog()
+      block_code += visitor.visit( new_tree )
+
+    # If we run into a TranslationError, provide some more debug
+    # information for the user, then re-raise the exception
+    except TranslationError as e:
+      class_name = model.class_name
+      func_name  = func.func_name
+      msg  = 'Problem translating {} in model {}:\n  {}' \
+             .format( func_name, class_name, e.message )
+      e.args = (msg,)
+      raise
 
     code += block_code + '\n'
 
@@ -137,7 +148,9 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Unsupported annotation
     else:
-      raise Exception("Untranslatable block!")
+      raise TranslationError(
+        'No valid decorator provided: {}'.format( node.decorator_list )
+      )
 
     # Visit the body of the function
     body = self.fmt_body( node.body )
@@ -153,7 +166,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   # visit_Expr
   #-----------------------------------------------------------------------
   def visit_Expr(self, node):
-    raise Exception("TODO: visit_Expr not implemented")
+    raise TranslationError("TODO: visit_Expr not implemented")
     return '{}{};\n'.format( self.indent, self.visit(node.value) )
 
   #-----------------------------------------------------------------------
@@ -405,7 +418,9 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
       value = self.visit( node.args[1] ) if len(node.args) == 2 else '0'
       return "{nbits}'d{value}".format( nbits=nbits, value=value )
 
-    raise Exception( "Function is not translatable: {}".format( func_name ) )
+    raise TranslationError(
+      "Function is not translatable: {}".format( func_name )
+    )
 
   #-----------------------------------------------------------------------
   # visit_Raise
@@ -444,3 +459,8 @@ opmap = {
     ast.Or       : '||',
 }
 
+#-----------------------------------------------------------------------
+# TranslationError
+#-----------------------------------------------------------------------
+class TranslationError( Exception ):
+  pass
