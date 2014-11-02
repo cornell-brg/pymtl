@@ -60,7 +60,7 @@ def translate_logic_blocks( model ):
 
     # If we run into a VerilogTranslationError, provide some more debug
     # information for the user, then re-raise the exception
-    except VerilogTranslationError as e:
+    except Exception as e:
       class_name = model.class_name
       func_name  = func.func_name
       msg  = 'Problem translating {}() in model {}:\n  {}' \
