@@ -387,7 +387,7 @@ class ParameterizablePortBundleBitStructQueue( Model ):
 
         # Data Register
         if s.wen[i]:
-          s.deq[i].msg.type.next = s.enq[i].msg.type
+          s.deq[i].msg.type_.next = s.enq[i].msg.type_
           s.deq[i].msg.len .next = s.enq[i].msg.len
           s.deq[i].msg.addr.next = s.enq[i].msg.addr
           s.deq[i].msg.data.next = s.enq[i].msg.data
