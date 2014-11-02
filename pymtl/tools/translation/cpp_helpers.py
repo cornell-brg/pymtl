@@ -225,7 +225,7 @@ def recurse_port_hierarchy( p, list_ ):
   elif isinstance( p, InPort ):
     if isinstance( p.msg_type, BitStruct ):
       msg = p.msg_type
-      list_.append( "import {}".format( msg._import ) )
+      list_.append( "from {} import {}".format( msg._module, msg._classname ) )
       list_.append( "s.{} = InPort( {} )".format( p.name, msg._instantiate ) )
     else:
       list_.append( "s.{} = InPort( {} )".format( p.name, p.nbits ) )
@@ -234,7 +234,7 @@ def recurse_port_hierarchy( p, list_ ):
   elif isinstance( p, OutPort ):
     if isinstance( p.msg_type, BitStruct ):
       msg = p.msg_type
-      list_.append( "import {}".format( msg._import ) )
+      list_.append( "from {} import {}".format( msg._module, msg._classname ) )
       list_.append( "s.{} = OutPort( {} )".format( p.name, msg._instantiate ) )
     else:
       list_.append( "s.{} = OutPort( {} )".format( p.name, p.nbits ) )

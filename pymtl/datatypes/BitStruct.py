@@ -107,12 +107,12 @@ class MetaBitStruct( type ):
     bitstruct_inst = bitstruct_class( nbits )
 
     # TODO: hack for verilog translation!
-    bitstruct_inst._instantiate = '{module}.{class_name}{args}'.format(
-        module     = def_inst.__class__.__module__,
+    bitstruct_inst._module    = def_inst.__class__.__module__
+    bitstruct_inst._classname = def_inst.__class__.__name__
+    bitstruct_inst._instantiate = '{class_name}{args}'.format(
         class_name = def_inst.__class__.__name__,
         args       = args,
     )
-    bitstruct_inst._import = def_inst.__class__.__module__
     assert not kwargs
 
     return bitstruct_inst
