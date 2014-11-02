@@ -21,7 +21,6 @@ from mem.simple_cache.DirectMappedWriteBackCache import (
 )
 
 Processor  = ParcProcPipelinedMul
-DotProduct = DotProductFL
 
 #-----------------------------------------------------------------------
 # Tile
@@ -32,7 +31,7 @@ class Tile( Model ):
   # __init__
   #---------------------------------------------------------------------
   def __init__( s, reset_vector = 0, mem_data_nbits = 32,
-                   cache_nbytes = 16384 ):
+                   cache_nbytes = 16384, xcel_type = 'fl' ):
 
     s.req_msg = mem_msgs.MemReqParams ( 32, mem_data_nbits )
     s.rsp_msg = mem_msgs.MemRespParams( mem_data_nbits )
@@ -50,8 +49,11 @@ class Tile( Model ):
 
     # Memory Interface
 
-    s.memreq  = OutValRdyBundle[2]( s.req_msg.nbits  )
+    s.memreq  = OutValRdyBundle[2]( s.req_msg.nbits )
     s.memresp = InValRdyBundle [2]( s.rsp_msg.nbits )
+
+    s.DotProduct = { 'fl'  : DotProductFL,
+                     'rtl' : DotProductRTL, }[ xcel_type ]
 
   def elaborate_logic( s ):
 
@@ -63,7 +65,7 @@ class Tile( Model ):
     mem_ifc = MemMsg   ( 32, 32)
     cpu_ifc = CP2Msg   ( 5, 32 )
 
-    s.cp2      = DotProduct(mem_ifc, cpu_ifc )
+    s.cp2 = s.DotProduct( mem_ifc, cpu_ifc )
 
     s.connect( s.go,           s.proc.go        )
     s.connect( s.status,       s.proc.status    )
@@ -78,14 +80,14 @@ class Tile( Model ):
     s.from_cp2_val = Wire( 1  )
     s.from_cp2_rdy = Wire( 1  )
 
-    s.connect( s.proc.to_cp2.msg, s.to_cp2_msg   )
-    s.connect( s.proc.to_cp2.val, s.to_cp2_val   )
-    s.connect( s.proc.to_cp2.rdy, s.to_cp2_rdy   )
+    s.connect( s.proc.to_cp2.msg, s.to_cp2_msg )
+    s.connect( s.proc.to_cp2.val, s.to_cp2_val )
+    s.connect( s.proc.to_cp2.rdy, s.to_cp2_rdy )
 
 
-    s.connect( s.from_cp2_msg, s.proc.from_cp2.msg  )
-    s.connect( s.from_cp2_val, s.proc.from_cp2.val  )
-    s.connect( s.from_cp2_rdy, s.proc.from_cp2.rdy  )
+    s.connect( s.from_cp2_msg, s.proc.from_cp2.msg )
+    s.connect( s.from_cp2_val, s.proc.from_cp2.val )
+    s.connect( s.from_cp2_rdy, s.proc.from_cp2.rdy )
 
     if s.mem_data_nbits == 32: s.disable_caches()
     else:                      s.enable_caches ()
@@ -126,16 +128,16 @@ class Tile( Model ):
 
       s.cp2.mem_ifc.resp_msg.value = s.memresp[1].msg
       s.cp2.mem_ifc.resp_val.value = s.memresp[1].val
-      s.cp2.mem_ifc.req_rdy.value = s.memreq [1].rdy
+      s.cp2.mem_ifc.req_rdy .value = s.memreq [1].rdy
 
 
 
     # Connect accel and proc data resp msg/val and req rdy to memory
 
-    s.connect( s.memresp[1].msg, s.proc.dmemresp    .msg )
-    s.connect( s.memresp[1].val, s.proc.dmemresp    .val )
-    s.connect( s.memreq [1].rdy, s.proc.dmemreq     .rdy )
-    
+    s.connect( s.memresp[1].msg, s.proc.dmemresp.msg )
+    s.connect( s.memresp[1].val, s.proc.dmemresp.val )
+    s.connect( s.memreq [1].rdy, s.proc.dmemreq .rdy )
+
 
   #---------------------------------------------------------------------
   # enable_caches()
