@@ -7,6 +7,10 @@ python:
  - "2.7"
 # - "pypy"
 
+env:
+ - TEST_SUITE="-n 2"
+ - TEST_SUITE="--test-verilog"
+
 #------------------------------------------------------------------------
 # before dependency installation
 #------------------------------------------------------------------------
@@ -21,13 +25,23 @@ install:
  # Install Python requirements
 
  - pip install -r requirements.txt
- - ARTIFACTS=http://brg.csl.cornell.edu/artifacts
 
  # Install PARC cross-compiler
 
+ - ARTIFACTS=http://brg.csl.cornell.edu/artifacts
  - wget $ARTIFACTS/maven-xcc.tar.bz2
  - tar xvfj maven-xcc.tar.bz2
  - export PATH=$PWD/maven-sys-xcc-0.0-209-g75c3473/bin:$PATH
+
+ # Install verilator
+
+ - wget http://www.veripool.org/ftp/verilator-3.864.tgz
+ - tar xvzf verilator*.t*gz
+ - cd verilator*
+ - export VERILATOR_ROOT=$PWD
+ - ./configure
+ - make
+ - cd ..
 
 #------------------------------------------------------------------------
 # before test runner
@@ -49,6 +63,6 @@ before_script:
 # test runner
 #------------------------------------------------------------------------
 script:
- - py.test .. --verbose -n 2
+ - py.test .. --verbose $TEST_SUITE
 
 # - py.test ../new_proc --verbose -n 4  # Debug
