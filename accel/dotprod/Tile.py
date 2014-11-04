@@ -12,7 +12,7 @@ from DotProductFL   import DotProductFL
 
 # Processor
 from proc.parc_accel.ParcProcPipelinedMul import (
-    ParcProcPipelinedMul
+    ParcProcPipelinedMulCP2
 )
 
 # Memory: cache with single-cycle hit lantency
@@ -20,7 +20,7 @@ from mem.simple_cache.DirectMappedWriteBackCache import (
     DirectMappedWriteBackCache
 )
 
-Processor  = ParcProcPipelinedMul
+Processor  = ParcProcPipelinedMulCP2
 
 #-----------------------------------------------------------------------
 # Tile
