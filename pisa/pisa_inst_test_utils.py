@@ -590,17 +590,23 @@ gen_jal_link_byp_addr = 0x400
 
 gen_jal_link_byp_id = 0
 
-def gen_jal_link_byp_test( num_nops ):
+def gen_jal_link_byp_test( num_nops, reset_test_count=False ):
+
+  # HACK: so gross. Below fixes failing tests. Should never use global state!
+
+  global gen_jal_link_byp_addr
+  global gen_jal_link_byp_id
+  if reset_test_count:
+    gen_jal_link_byp_addr = 0x400
+    gen_jal_link_byp_id   = 0
 
   # Figure out what the expected link address is
 
-  global gen_jal_link_byp_addr
   link_addr = gen_jal_link_byp_addr + 0x00000008
   gen_jal_link_byp_addr += ( 4*(6 + num_nops) )
 
   # Create unique labels
 
-  global gen_jal_link_byp_id
   id_a = "label_{}".format( gen_jal_link_byp_id + 1 )
   gen_jal_link_byp_id += 1
 
@@ -686,17 +692,23 @@ gen_jalr_link_byp_addr = 0x400
 
 gen_jalr_link_byp_id = 0
 
-def gen_jalr_link_byp_test( num_nops ):
+def gen_jalr_link_byp_test( num_nops, reset_test_count=False ):
+
+  # HACK: so gross. Below fixes failing tests. Should never use global state!
+
+  global gen_jalr_link_byp_addr
+  global gen_jalr_link_byp_id
+  if reset_test_count:
+    gen_jalr_link_byp_addr = 0x400
+    gen_jalr_link_byp_id   = 0
 
   # Figure out what the expected link address is
 
-  global gen_jalr_link_byp_addr
   link_addr = gen_jalr_link_byp_addr + 4*12
   gen_jalr_link_byp_addr += ( 4*(16 + num_nops) )
 
   # Create unique labels
 
-  global gen_jalr_link_byp_id
   id_a = "label_{}".format( gen_jalr_link_byp_id + 1 )
   gen_jalr_link_byp_id += 1
 

@@ -43,9 +43,9 @@ Install Python package prerequisites using pip::
 
 Checkout the repo::
 
-  % mkdir -p ~/vc/git-brg
-  % cd ~/vc/git-brg
-  % https://github.com/dmlockhart/pymtl.git
+  % mkdir -p ~/vc/github-brg
+  % cd ~/vc/github-brg
+  % git clone git@github.com:cornell-brg/pymtl.git
   % cd pymtl
 
 Create a build directory and run the tests::
@@ -65,18 +65,18 @@ Model Development
 The first thing you should do anytime you plan on working with PyMTL is change
 to the repository build directory and activate the virtualenv::
 
-  % cd ~/vc/git-brg/pymtl
+  % cd ~/vc/github-brg/pymtl
   % source ~/venvs/2.7/bin/activate
 
 The top-level repo directory should have the following layout:
 
-  - new_pymtl:  PyMTL Core Model Library and Tools
-  - new_pmlib:  Utility Components for Testing and Design
-  - new_gcd:    Greatest Common Divisor Models
-  - new_imul:   Iterative Multiplier Models
-  - new_mesh:   Mesh Network Models
-  - new_mem:    Direct Mapped Cache Models
-  - new_proc:   PARC Processor Models
+  - pymtl:      PyMTL Core Model Library and Tools
+  - pclib:      PyMTL Component Library
+  - examples:   Simple Example PyMTL Models
+  - proc:       Processor Models
+  - mem:        Memory and Cache Models
+  - net:        On-Chip Network Models
+  - labs:       Course Labs
   - tests:      PARC ISA Assembly Tests
   - ubmark:     PARC ISA Microbenchmarks
   - scripts:    Various scripts
@@ -84,7 +84,7 @@ The top-level repo directory should have the following layout:
 To run the tests for a specific model, you can provide py.test with a path. The
 verbose flag will explicitly list test names so you can see what fails::
 
-  % py.test ../new_imul --verbose
+  % py.test ../lab/imul --verbose
 
 You should notice all the tests that run are passing, but there are two errors.
 These errors are because there are no implementations for IntMulIterFixedLat
@@ -143,7 +143,7 @@ To compile the PARC processor assembly tests::
 To run the tests::
 
   % cd ../../build
-  % py.test ../new_proc
+  % py.test ../proc/parc
 
 To compile the PARC processor microbenchmarks::
 

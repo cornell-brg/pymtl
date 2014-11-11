@@ -6,9 +6,8 @@ import pytest
 import random
 import pisa_encoding
 
-from new_pymtl import Bits
-from new_pymtl import helpers
-from PisaSim   import PisaSim
+from pymtl   import Bits, sext
+from PisaSim import PisaSim
 
 from pisa_inst_test_utils import *
 
@@ -184,7 +183,7 @@ def gen_random_test():
 
     base   = Bits( 32, 0x2000 + (2*b) )
     offset = Bits( 16, (2*(a - b)) )
-    result = helpers.sext( Bits( 16, data[a] ), 32 )
+    result = sext( Bits( 16, data[a] ), 32 )
 
     asm_code.append( gen_ld_value_test( "lh", offset.int(), base.uint(), result.uint() ) )
 

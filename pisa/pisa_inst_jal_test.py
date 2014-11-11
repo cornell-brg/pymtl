@@ -6,7 +6,7 @@ import pytest
 import random
 import pisa_encoding
 
-from new_pymtl import Bits
+from pymtl import Bits
 from PisaSim   import PisaSim
 
 from pisa_inst_test_utils import *
@@ -56,12 +56,12 @@ def gen_basic_test():
 
 def gen_link_byp_test():
   return [
-    gen_jal_link_byp_test( 5 ),
-    gen_jal_link_byp_test( 4 ),
-    gen_jal_link_byp_test( 3 ),
-    gen_jal_link_byp_test( 2 ),
-    gen_jal_link_byp_test( 1 ),
-    gen_jal_link_byp_test( 0 ),
+    gen_jal_link_byp_test( 5, reset_test_count=True  ),
+    gen_jal_link_byp_test( 4, reset_test_count=False ),
+    gen_jal_link_byp_test( 3, reset_test_count=False ),
+    gen_jal_link_byp_test( 2, reset_test_count=False ),
+    gen_jal_link_byp_test( 1, reset_test_count=False ),
+    gen_jal_link_byp_test( 0, reset_test_count=False ),
   ]
 
 #-------------------------------------------------------------------------

@@ -6,9 +6,8 @@ import pytest
 import random
 import pisa_encoding
 
-from new_pymtl import Bits
-from new_pymtl.helpers import sext,zext
-from PisaSim   import PisaSim
+from pymtl   import Bits, sext,zext
+from PisaSim import PisaSim
 
 from pisa_inst_test_utils import *
 

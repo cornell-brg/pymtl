@@ -14,7 +14,7 @@
 
 import struct
 
-from new_pymtl         import Bits
+from pymtl         import Bits
 
 from IsaImpl           import IsaImpl
 from SparseMemoryImage import SparseMemoryImage
