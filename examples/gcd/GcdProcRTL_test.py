@@ -1,12 +1,11 @@
 #==============================================================================
-# GcdFL_test
+# GcdRTL_test
 #==============================================================================
-# TODO: clean this up!!!
 
-from new_pymtl        import *
-from new_pmlib        import TestSource, TestMemory, mem_msgs
-from GcdProcFL        import GcdProcFL as Gcd
-from new_pmlib        import CP2Msg
+from pymtl        import *
+from pclib.test   import TestSource, TestMemory
+from GcdProcRTL   import GcdProcRTL as Gcd
+from pclib.ifaces import CP2Msg, mem_msgs
 
 import pytest
 
@@ -17,7 +16,7 @@ class TestHarness( Model ):
 
   def __init__( s, lane_id, test_verilog ):
 
-    cpu_ifc = CP2Msg.CP2Msg( 5, 32 )
+    cpu_ifc = CP2Msg( 5, 32 )
     s.lane = Gcd( cpu_ifc )
 
     if test_verilog:
@@ -86,7 +85,7 @@ def run_gcd_test( dump_vcd, vcd_file_name, model, lane_id,
 # test_gcd
 #------------------------------------------------------------------------------
 #
-def test_gcd_fl1( dump_vcd, test_verilog ):
+def test_gcd_rtl1( dump_vcd, test_verilog ):
   lane = 0
   run_gcd_test( dump_vcd, "Gcd.vcd",
                    TestHarness( lane, test_verilog ),
@@ -96,7 +95,7 @@ def test_gcd_fl1( dump_vcd, test_verilog ):
                    4,
                  )
 
-def test_gcd_fl2( dump_vcd, test_verilog ):
+def test_gcd_rtl2( dump_vcd, test_verilog ):
   lane = 0
   run_gcd_test( dump_vcd, "Gcd.vcd",
                    TestHarness( lane, test_verilog ),

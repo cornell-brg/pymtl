@@ -2,9 +2,10 @@
 # GcdUnit functional-level model
 #=========================================================================
 
-from new_pymtl import *
-from new_pmlib import InValRdyBundle, OutValRdyBundle
-from new_pmlib.queues import Queue, InValRdyQueue, OutValRdyQueue
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.fl     import Queue
+from pclib.cl     import InValRdyQueue, OutValRdyQueue
 
 import fractions
 
@@ -26,14 +27,14 @@ class GcdProcFL( Model ):
 
   def elaborate_logic( s ):
     
-    s.connect(s.cpu_req_q.in_, s.cpu_ifc_req)
-    s.connect(s.cpu_resp_q.out, s.cpu_ifc_resp)
+    s.connect( s.cpu_req_q.in_ , s.cpu_ifc_req  )
+    s.connect( s.cpu_resp_q.out, s.cpu_ifc_resp )
     
     s.src0 = 0
     s.src1 = 0
     s.result = 0
 
-    @s.tick
+    @s.tick_fl
     def logic():
 
       s.cpu_req_q.xtick()

@@ -2,15 +2,14 @@
 # GcdProcRTL
 #=========================================================================
 
-from new_pymtl import *
-from new_pmlib import *
-from new_pmlib import InValRdyBundle, OutValRdyBundle
-from new_pmlib import Mux, regs, arith
+from pymtl        import *
+from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.rtl    import Mux, regs, arith
 
 # Constants
 
-y   = Bits(1, 1)
-n   = Bits(1, 0)
+y = Bits(1, 1)
+n = Bits(1, 0)
 
 a_mux_sel_in  = Bits(2, 0)
 a_mux_sel_sub = Bits(2, 1)
@@ -280,6 +279,8 @@ class GcdProcRTL( Model ):
     # Connectivity and Logic
     #---------------------------------------------------------------------
     
+    # connect input/output ports with datapath and control logic
+
     s.dpath = GcdProcDpath( cpu_ifc_types )
     s.ctrl  = GcdProcCtrl( cpu_ifc_types )
 
@@ -287,21 +288,6 @@ class GcdProcRTL( Model ):
     s.connect( s.cpu_ifc_resp, s.dpath.cpu_ifc_resp )
     s.connect( s.cpu_ifc_req , s.ctrl.cpu_ifc_req   )
     s.connect( s.cpu_ifc_resp, s.ctrl.cpu_ifc_resp  )
-
-    # connect input interface to dpath/ctrl
-
-    #s.connect( s.cpu_ifc_req.msg.data, s.dpath.in_msg_a )
-    #s.connect( s.cpu_ifc_req.msg.data, s.dpath.in_msg_b )
-    #s.connect( s.cpu_ifc_req.msg, s.ctrl.in_msg )
-
-    #s.connect( s.cpu_ifc_req.val,  s.ctrl.in_val  )
-    #s.connect( s.cpu_ifc_resp.rdy, s.ctrl.out_rdy )
-
-    # connect dpath/ctrl to output interface
-
-    #s.connect( s.dpath.out_msg, s.cpu_ifc_resp.msg )
-    #s.connect( s.ctrl.out_val,  s.cpu_ifc_resp.val )
-    #s.connect( s.ctrl.in_rdy,   s.cpu_ifc_req.rdy  )
 
     # connect status/control signals
 
