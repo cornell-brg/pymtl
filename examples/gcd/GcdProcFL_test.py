@@ -14,14 +14,10 @@ import pytest
 #------------------------------------------------------------------------------
 class TestHarness( Model ):
 
-  def __init__( s, lane_id, test_verilog ):
+  def __init__( s, lane_id ):
 
     cpu_ifc = CP2Msg( 5, 32 )
     s.lane = Gcd( cpu_ifc )
-
-    if test_verilog:
-      s.lane = get_verilated( s.lane )
-
 
   def elaborate_logic( s ):
     pass
@@ -85,20 +81,20 @@ def run_gcd_test( dump_vcd, vcd_file_name, model, lane_id,
 # test_gcd
 #------------------------------------------------------------------------------
 #
-def test_gcd_fl1( dump_vcd, test_verilog ):
+def test_gcd_fl1( dump_vcd ):
   lane = 0
   run_gcd_test( dump_vcd, "Gcd.vcd",
-                   TestHarness( lane, test_verilog ),
+                   TestHarness( lane ),
                    lane,
                    16,
                    12,
                    4,
                  )
 
-def test_gcd_fl2( dump_vcd, test_verilog ):
+def test_gcd_fl2( dump_vcd ):
   lane = 0
   run_gcd_test( dump_vcd, "Gcd.vcd",
-                   TestHarness( lane, test_verilog ),
+                   TestHarness( lane ),
                    lane,
                    72,
                    71,
