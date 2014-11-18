@@ -95,6 +95,10 @@ def insert_signal_values( sim, nets ):
   def create_comb_update_cb( sim, svalue ):
     def notify_sim_comb_update():
       sim.add_event( svalue )
+      if sim.vcd:
+        for port in svalue._DEBUG_signal_names:
+          if svalue.nbits == 1: print >> sim.o, "%d%s"   % (svalue.uint(),    port._code)
+          else:                 print >> sim.o, "b%s %s" % (svalue.bin_str(), port._code)
     return notify_sim_comb_update
 
   #-------------------------------------------------------------------
@@ -121,7 +125,7 @@ def insert_signal_values( sim, nets ):
     svalue       = temp.msg_type()
     svalue._next = temp.msg_type()
 
-    #svalue._DEBUG_signal_names = group
+    svalue._DEBUG_signal_names = group
 
     # Add a callback to the SignalValue to notify SimulationTool every
     # time a sequential update occurs (.next is written).
@@ -132,7 +136,13 @@ def insert_signal_values( sim, nets ):
     # every time a combinational update occurs (.value is written).
     # We just store the callback for now, only add it later if we detect
     # that a combinational block is sensitive to us
-    svalue._ucb                  = create_comb_update_cb( sim, svalue )
+    svalue._ucb                   = create_comb_update_cb( sim, svalue )
+
+    # TODO: Temporary Hack.
+    # Previously only added notify_sim_comb update in scenario where
+    # combinational concurrent blocks were sensitive to this signal.  Now
+    # we add it no matter what so that VCD tracing works.
+    svalue.notify_sim_comb_update = svalue._ucb
 
     # Modify model attributes currently referencing Signal objects to
     # reference SignalValue objects instead.

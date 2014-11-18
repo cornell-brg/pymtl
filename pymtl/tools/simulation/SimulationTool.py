@@ -39,6 +39,8 @@ class SimulationTool( object ):
     self.model                = model
     self.ncycles              = 0
 
+    self.vcd                  = False
+
     self._event_queue         = EventQueue()
     self._sequential_blocks   = []
     self._register_queue      = []
@@ -89,9 +91,13 @@ class SimulationTool( object ):
   # Sets the reset signal high and cycles the simulator.
   def reset( self ):
     self.model.reset.v = 1
+    if self.vcd:
+      print >> self.o, "1%s" % ( self.model.reset._code )
     self.cycle()
     self.cycle()
     self.model.reset.v = 0
+    if self.vcd:
+      print >> self.o, "0%s" % ( self.model.reset._code )
 
   #---------------------------------------------------------------------
   # print_line_trace
@@ -122,12 +128,14 @@ class SimulationTool( object ):
     self.eval_combinational()
 
     # TODO: Hacky auto clock generation
-    #if self.vcd:
-    #  print >> self.o, "#%s" % (10 * self.num_cycles)
+    if self.vcd:
+      print >> self.o, "#%s" % (10 * self.ncycles)
+      print >> self.o, "0%s" % ( self.model.clk._code )
     self.model.clk.value = 0
 
-    #if self.vcd:
-    #  print >> self.o, "#%s" % ((10 * self.num_cycles) + 5)
+    if self.vcd:
+      print >> self.o, "#%s" % ((10 * self.ncycles) + 5)
+      print >> self.o, "1%s" % ( self.model.clk._code )
     self.model.clk.value = 1
 
     # Distinguish between events caused by input vectors changing (above)
@@ -229,6 +237,10 @@ class SimulationTool( object ):
       self.metrics.incr_add_callbk()
       if func != self._current_func:
         self._event_queue.enq( func.cb, func.id )
+
+  def dump_vcd( self, filename=None ):
+    from vcd import VCDUtil
+    VCDUtil( self, filename )
 
 #-----------------------------------------------------------------------
 # EventQueue
