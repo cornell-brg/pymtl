@@ -2,8 +2,8 @@
 PyMTL Installation
 ===============================================================================
 
-.. image:: https://magnum.travis-ci.com/dmlockhart/pymtl.svg?token=jmi7kf1Uw55Qs4NmDdN1&branch=master
-  :target: https://magnum.travis-ci.com/dmlockhart/pymtl
+.. image:: https://magnum.travis-ci.com/cornell-brg/pymtl.svg?token=jmi7kf1Uw55Qs4NmDdN1&branch=master
+  :target: https://magnum.travis-ci.com/cornell-brg/pymtl
 
 -------------------------------------------------------------------------------
 Prerequisites
