@@ -40,8 +40,8 @@ def write_vcd_header( o ):
 #-----------------------------------------------------------------------
 def write_vcd_signal_defs( o, model ):
 
-  vcd_symbol  = _gen_vcd_symbol()
-  all_signals = set()
+  vcd_symbol = _gen_vcd_symbol()
+  all_nets   = set()
 
   # Inner utility function to perform recursive descent of the model.
   def recurse_models( model, level ):
@@ -58,13 +58,14 @@ def write_vcd_signal_defs( o, model ):
       net = i._signalvalue
       if not hasattr( net, '_vcd_symbol' ):
         net._vcd_symbol = vcd_symbol.next()
+        net._vcd_is_clk = i.name == 'clk'
       symbol = net._vcd_symbol
 
       print >> o, "$var {type} {nbits} {symbol} {name} $end".format(
           type='reg', nbits=i.nbits, symbol=symbol, name=i.name,
       )
 
-      all_signals.add( net )
+      all_nets.add( net )
 
     # Recursively visit all submodels.
     for submodel in model.get_submodules():
@@ -79,11 +80,48 @@ def write_vcd_signal_defs( o, model ):
   # definition section of the vcd and print the initial values of all
   # nets in the design.
   print >> o, "$enddefinitions $end\n"
-  for net in all_signals:
+  for net in all_nets:
     print >> o, "b{value} {symbol}".format(
         value=net.bin_str(), symbol=net._vcd_symbol,
     )
 
+  return all_nets
+
+#-----------------------------------------------------------------------
+# insert_vcd_callbacks
+#-----------------------------------------------------------------------
+# Add callbacks which write the vcd file for each net in the design.
+def insert_vcd_callbacks( sim, nets ):
+
+  # A utility function which creates callbacks that write a nets current
+  # value to the vcd file. The returned callback function is a closure
+  # which is executed by the simulator whenever the net's value changes.
+  def create_vcd_callback( sim, net ):
+
+    # TODO: use from __future__ import print for above
+    #cb = lambda: print( 'b%s %s' % (net.bin_str(), net._vcd_symbol),
+    #                    file=sim.vcd )
+
+    # Each signal writes its binary value and unique identifier to the
+    # specified vcd file
+    if not net._vcd_is_clk:
+      cb = lambda: sim.vcd.write('b%s %s\n' % (net.bin_str(), net._vcd_symbol))
+
+    # The clock signal additionally must update the vcd time stamp
+    else:
+      cb = lambda: sim.vcd.write('#%s\nb%s %s\n' %
+            (10*sim.ncycles+5*net.uint(), net.bin_str(), net._vcd_symbol))
+
+    # Return the callback
+    return cb
+
+  # For each net in the simulator, create a callback and register it with
+  # the net to be fired whenever the value changes. We repurpose the
+  # existing callback facilities designed for slices (these execute
+  # immediately), rather than the default callback mechanism (these are
+  # put on the event queue to execute later).
+  for net in nets:
+    net.register_slice( create_vcd_callback( sim, net ) )
 
 #-----------------------------------------------------------------------
 # _gen_vcd_symbol
@@ -131,12 +169,12 @@ class VCDUtil():
     else:
       outfile = outfile
 
-    # Write the simulator
+    # Write out vcd header, signal definitions, and initial state
 
-    write_vcd_header     ( outfile )
-    write_vcd_signal_defs( outfile, simulator.model )
+    write_vcd_header( outfile )
+    nets = write_vcd_signal_defs( outfile, simulator.model )
 
     # Enable vcd mode on the simulator, set simulator output file name
 
-    simulator.vcd = True
-    simulator.o   = outfile
+    simulator.vcd = outfile
+    insert_vcd_callbacks( simulator, nets )

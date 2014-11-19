@@ -39,8 +39,6 @@ class SimulationTool( object ):
     self.model                = model
     self.ncycles              = 0
 
-    self.vcd                  = False
-
     self._event_queue         = EventQueue()
     self._sequential_blocks   = []
     self._register_queue      = []
@@ -124,12 +122,7 @@ class SimulationTool( object ):
     self.eval_combinational()
 
     # TODO: Hacky auto clock generation
-    if self.vcd:
-      print >> self.o, "#%s" % (10 * self.ncycles)
     self.model.clk.value = 0
-
-    if self.vcd:
-      print >> self.o, "#%s" % ((10 * self.ncycles) + 5)
     self.model.clk.value = 1
 
     # Distinguish between events caused by input vectors changing (above)
