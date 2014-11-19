@@ -97,8 +97,7 @@ def insert_signal_values( sim, nets ):
       sim.add_event( svalue )
       if sim.vcd:
         for port in svalue._DEBUG_signal_names:
-          if svalue.nbits == 1: print >> sim.o, "%d%s"   % (svalue.uint(),    port._code)
-          else:                 print >> sim.o, "b%s %s" % (svalue.bin_str(), port._code)
+          print >> sim.o, "b%s %s" % (svalue.bin_str(), port._code)
     return notify_sim_comb_update
 
   #-------------------------------------------------------------------

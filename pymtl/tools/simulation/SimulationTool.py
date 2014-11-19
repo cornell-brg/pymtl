@@ -91,13 +91,9 @@ class SimulationTool( object ):
   # Sets the reset signal high and cycles the simulator.
   def reset( self ):
     self.model.reset.v = 1
-    if self.vcd:
-      print >> self.o, "1%s" % ( self.model.reset._code )
     self.cycle()
     self.cycle()
     self.model.reset.v = 0
-    if self.vcd:
-      print >> self.o, "0%s" % ( self.model.reset._code )
 
   #---------------------------------------------------------------------
   # print_line_trace
@@ -130,12 +126,10 @@ class SimulationTool( object ):
     # TODO: Hacky auto clock generation
     if self.vcd:
       print >> self.o, "#%s" % (10 * self.ncycles)
-      print >> self.o, "0%s" % ( self.model.clk._code )
     self.model.clk.value = 0
 
     if self.vcd:
       print >> self.o, "#%s" % ((10 * self.ncycles) + 5)
-      print >> self.o, "1%s" % ( self.model.clk._code )
     self.model.clk.value = 1
 
     # Distinguish between events caused by input vectors changing (above)

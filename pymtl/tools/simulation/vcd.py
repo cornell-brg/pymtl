@@ -1,19 +1,24 @@
 #=======================================================================
 # vcd.py
 #=======================================================================
-
-#=======================================================================
-# Begin Code Borrowed from MyHDL 0.7
-#=======================================================================
+# VCD generation support for SimulationTool. VCD file format standard
+# can be found here:
+#
+# - http://support.ema-eda.com/search/eslfiles/default/main/sl_legacy_releaseinfo/staging/sl3/release_info/psd142/vlogref/chap20.html#1031979
+# - http://staff.ustc.edu.cn/~songch/download/IEEE.1364-2005.pdf
 
 import time
+import sys
 
-def _writeVcdHeader( f ):
+#-----------------------------------------------------------------------
+# write_vcd_header
+#-----------------------------------------------------------------------
+def write_vcd_header( o ):
 
   def dedent( lines, trim=4 ):
-    return ''.join( [x[trim:]+'\n' for x in lines.split('\n')] )
+    return ''.join( [x[trim:]+'\n' for x in lines.split('\n')] ).lstrip()
 
-  print >> f, dedent("""
+  print >> o, dedent("""
     $date
         {time}
     $end
@@ -25,130 +30,92 @@ def _writeVcdHeader( f ):
     $end"""
   ).format( time=time.asctime() )
 
-def _genNameCode():
-    n = 0
-    while 1:
-        yield _namecode(n)
-        n += 1
+#-----------------------------------------------------------------------
+# write_vcd_signal_defs
+#-----------------------------------------------------------------------
+def write_vcd_signal_defs( o, model ):
 
-_codechars = ""
-for i in range(33, 127):
-    _codechars += chr(i)
-_mod = len(_codechars)
+  vcd_symbol  = _gen_vcd_symbol()
+  all_signals = []
 
-def _namecode(n):
+  def recurse_models( model, level ):
+
+    print >> o, "$scope module %s $end" % model.name
+
+    for i in model.get_ports() + model.get_wires():
+      symbol  = vcd_symbol.next()
+      i._code = symbol
+      print >> o, "$var {type} {nbits} {symbol} {name} $end".format(
+          type='reg', nbits=i.nbits, symbol=symbol, name=i.name,
+      )
+      all_signals.append( i )
+
+    for submodel in model.get_submodules():
+      recurse_models( submodel, level+1 )
+
+    print >> o, "$upscope $end"
+
+  recurse_models( model, 0 )
+  print >> o, "$enddefinitions $end\n"
+
+  for i in all_signals:
+    print >> o, "b{value} {symbol}".format(
+        value=i._signalvalue.bin_str(), symbol=i._code,
+    )
+
+
+#-----------------------------------------------------------------------
+# _gen_vcd_symbol
+#-----------------------------------------------------------------------
+# Utility generator to create new symbols for each VCD signal.
+# Code inspired by MyHDL 0.7.
+def _gen_vcd_symbol():
+
+  # Generate a string containing all valid vcd symbol characters
+  _codechars = ''.join([chr(i) for i in range(33, 127)])
+  _mod       = len(_codechars)
+
+  # Function to map an integer n to a new vcd symbol
+  def next_vcd_symbol(n):
     q, r = divmod(n, _mod)
     code = _codechars[r]
     while q > 0:
-        q, r = divmod(q, _mod)
-        code = _codechars[r] + code
+      q, r = divmod(q, _mod)
+      code = _codechars[r] + code
     return code
 
-
-def _writeVcdSigs(f, hierarchy):
-    curlevel = 0
-    namegen = _genNameCode()
-    siglist = []
-    for inst in hierarchy:
-        level    = inst.level
-        name     = inst.name
-        sigdict  = inst.sigdict
-        memdict  = inst.memdict
-        delta    = curlevel - level
-        curlevel = level
-        assert(delta >= -1)
-        if delta >= 0:
-            for i in range(delta + 1):
-                print >> f, "$upscope $end"
-        print >> f, "$scope module %s $end" % name
-        for n, s in sigdict.items():
-            # TODO: add _val field?
-            if s._val == None:
-                raise ValueError("%s of module %s has no initial value" % (n, name))
-            if not s._tracing:
-                s._tracing = 1
-                s._code = namegen.next()
-                if curlevel == 0 and n in ['clk','reset']:
-                  s._signalvalue._code = s._code
-                siglist.append(s)
-            # TODO: edited this
-            #w = s._nrbits
-            w = s.nbits
-            if w:
-                if w == 1:
-                    print >> f, "$var reg 1 %s %s $end" % (s._code, n)
-                else:
-                    print >> f, "$var reg %s %s %s $end" % (w, s._code, n)
-            else:
-                print >> f, "$var real 1 %s %s $end" % (s._code, n)
-    for i in range(curlevel):
-        print >> f, "$upscope $end"
-    print >> f
-    print >> f, "$enddefinitions $end"
-    print >> f, "$dumpvars"
-    for s in siglist:
-        # TODO: edited this
-        #s._printVcd() # initial value
-        # DEBUG
-        #print >> f, "s%s %s %s" % (hex(s._val), s._code, s.name)
-        # TODO: do real initialization
-        if s.nbits == 1:
-          print >> f, "%d%s" % (s._signalvalue.uint(), s._code)
-        else:
-          print >> f, "b%s %s" % (s._signalvalue.bin_str(), s._code)
-    print >> f, "$end"
-
-#=======================================================================
-# Begin Code Borrowed from MyHDL 0.7
-#=======================================================================
-
-import sys
-
-class _MyHDLNode():
-  """A hacky container for use in the MyHDL VCD dump methods."""
-  pass
+  # Generator logic
+  n = 0
+  while 1:
+    yield next_vcd_symbol(n)
+    n += 1
 
 
+#-----------------------------------------------------------------------
+# VCDUtil
+#-----------------------------------------------------------------------
+# Hidden class used by the simulator tool for generating VCD output.
+# This class takes a SimulationTool instance and augments it to generate
+# VCD output.
 class VCDUtil():
 
-  """Hidden class used by the simulator tool for generating VCD output.
-  This class takes a SimulationTool instance and augments it to generate
-  VCD output.
-  """
   def __init__(self, simulator, outfile=None):
-    self.simulator = simulator
-    self.hierarchy = []
+
+    # Select the output for VCD
+
     if not outfile:
-      self.o = sys.stdout
+      outfile = sys.stdout
     elif isinstance(outfile, str):
-      self.o = open( outfile, 'w' )
+      outfile = open( outfile, 'w' )
     else:
-      self.o = outfile
+      outfile = outfile
+
+    # Write the simulator
+
+    write_vcd_header     ( outfile )
+    write_vcd_signal_defs( outfile, simulator.model )
+
+    # Enable vcd mode on the simulator, set simulator output file name
+
     simulator.vcd = True
-    simulator.o   = self.o
-
-    self.recurse_models( simulator.model, 0 )
-
-    _writeVcdHeader( self.o )
-    _writeVcdSigs( self.o, self.hierarchy )
-
-  # Hacky attempt at generating a hierarchy in the form MyHDL code expects
-  def recurse_models(self, model, level):
-    t         = _MyHDLNode()
-    t.name    = model.name
-    t.level   = level
-    t.sigdict = {}
-    t.memdict = {}
-    # get signals
-    signals = model.get_ports() + model.get_wires()
-    for signal in signals:
-      signal._val            = signal._signalvalue.value.uint()  # TODO: temporary
-      signal._tracing        = None                              # TODO: temporary
-      t.sigdict[signal.name] = signal
-    # add to hierarchy
-    self.hierarchy.append( t )
-
-    # recurse
-    for submodel in model._submodules:
-      self.recurse_models( submodel, level+1 )
-
+    simulator.o   = outfile
