@@ -96,8 +96,7 @@ def insert_signal_values( sim, nets ):
     def notify_sim_comb_update():
       sim.add_event( svalue )
       if sim.vcd:
-        for port in svalue._DEBUG_signal_names:
-          print >> sim.o, "b%s %s" % (svalue.bin_str(), port._code)
+        print >> sim.o, "b%s %s" % (svalue.bin_str(), svalue._vcd_symbol)
     return notify_sim_comb_update
 
   #-------------------------------------------------------------------
@@ -124,7 +123,7 @@ def insert_signal_values( sim, nets ):
     svalue       = temp.msg_type()
     svalue._next = temp.msg_type()
 
-    svalue._DEBUG_signal_names = group
+    #svalue._DEBUG_signal_names = group
 
     # Add a callback to the SignalValue to notify SimulationTool every
     # time a sequential update occurs (.next is written).
