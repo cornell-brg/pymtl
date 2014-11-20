@@ -158,7 +158,7 @@ def mem_array_32bit( base_addr, data ):
 )
 def test_dotproduct( dump_vcd, mem_delay, nmul_stages ):
   lane = 0
-  run_mvmult_test( dump_vcd, "DP.vcd",
+  run_mvmult_test( dump_vcd, get_vcd_filename(),
                    TestHarness( lane, nmul_stages, mem_delay ),
                    lane,
                    # NOTE: C++ has dummy data between rows when you have array**!
@@ -172,7 +172,7 @@ def test_dotproduct( dump_vcd, mem_delay, nmul_stages ):
 )
 def test_2dotprod( dump_vcd, mem_delay, nmul_stages ):
   lane = 0
-  run_mvmult_test( dump_vcd, "DP.vcd",
+  run_mvmult_test( dump_vcd, get_vcd_filename(),
                    TestHarness( lane, nmul_stages, mem_delay ),
                    lane,
                    # NOTE: C++ has dummy data between rows when you have array**!

@@ -115,7 +115,7 @@ def mem_array_32bit( base_addr, data ):
   ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
 def test_managed_1lane( dump_vcd, mem_delay, nmul_stages ):
-  run_lane_managed_test( dump_vcd, "MatrixVecCOP_1lane.vcd",
+  run_lane_managed_test( dump_vcd, get_vcd_filename(),
                   SourceHarness( 1, nmul_stages, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr
@@ -136,7 +136,7 @@ def test_managed_1lane( dump_vcd, mem_delay, nmul_stages ):
   ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
 def test_managed_3lane( dump_vcd,  mem_delay, nmul_stages ):
-  run_lane_managed_test( dump_vcd, "MatrixVecCOP_3lane.vcd",
+  run_lane_managed_test( dump_vcd, get_vcd_filename(),
                   SourceHarness( 3, nmul_stages, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr

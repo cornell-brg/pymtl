@@ -1077,6 +1077,6 @@ def config_test( func ):
   [ config_test( t ) for t in tests ]
 )
 def test_tile( dump_vcd, test_verilog, xcel_type, name, asm_test ):
-  vcd_file_name = '{}.vcd'.format( name ),
+  vcd_file_name = get_vcd_filename()
   run_proc_test( xcel_type, test_verilog, dump_vcd, vcd_file_name, asm_test() )
 

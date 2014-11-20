@@ -62,7 +62,7 @@ def test_DummyCOP_directed( dump_vcd ):
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "LaneManagerOneLane.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()
@@ -171,7 +171,7 @@ def run_proc_test( dump_vcd, test_verilog, vcd_file, input_list ):
 from proc.parc.parcv1_addiu import addiu_no_hazards
 @requires_xcc
 def test_dummy_addiu_no_hazards( dump_vcd, test_verilog ):
-  run_proc_test( dump_vcd, test_verilog, "bypass_addiu_no_hazards.vcd",
+  run_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
                  addiu_no_hazards()+[0] )
 
 #-----------------------------------------------------------------------
@@ -210,6 +210,6 @@ def mtc2_no_hazards():
 #-----------------------------------------------------------------------
 @requires_xcc
 def test_dummy_mtc2_no_hazards( dump_vcd, test_verilog ):
-  run_proc_test( dump_vcd, test_verilog, "mtc2_no_hazards.vcd",
+  run_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
                  mtc2_no_hazards() )
 

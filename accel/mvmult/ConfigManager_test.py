@@ -69,7 +69,7 @@ def test_ConfigManager( dump_vcd, test_verilog ):
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "decoder.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()
