@@ -1,3 +1,4 @@
+import pytest
 
 def pytest_addoption(parser):
   parser.addoption( "--dump-vcd", action="store_true",
@@ -30,9 +31,7 @@ def pytest_cmdline_preparse(config, args):
   import sys
   sys.dont_write_bytecode = True
 
-import pytest
 def pytest_runtest_setup(item):
   test_verilog = item.config.option.test_verilog
   if test_verilog and 'test_verilog' not in item.funcargnames:
     pytest.skip("ignoring non-Verilog tests")
-
