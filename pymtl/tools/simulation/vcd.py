@@ -10,7 +10,6 @@
 # TODO:
 #
 # - distinguish reg signals from wire signals (maybe)
-# - remove vcd logic from simultion tool, encapsulate in vcd
 
 import time
 import sys
@@ -34,6 +33,13 @@ def write_vcd_header( o ):
         1ns
     $end"""
   ).format( time=time.asctime() )
+
+#-----------------------------------------------------------------------
+# mangle_name
+#-----------------------------------------------------------------------
+# Mangle signal names so that lists of signals/models show up correctly.
+def mangle_name( name ):
+  return name.replace('[','(').replace(']',')')
 
 #-----------------------------------------------------------------------
 # write_vcd_signal_defs
@@ -62,7 +68,7 @@ def write_vcd_signal_defs( o, model ):
       symbol = net._vcd_symbol
 
       print >> o, "$var {type} {nbits} {symbol} {name} $end".format(
-          type='reg', nbits=i.nbits, symbol=symbol, name=i.name,
+          type='reg', nbits=i.nbits, symbol=symbol, name=mangle_name(i.name),
       )
 
       all_nets.add( net )
