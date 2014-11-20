@@ -15,7 +15,7 @@ from GcdUnitBL_test import run_gcd_test
 #-------------------------------------------------------------------------
 
 def test_delay0x0( dump_vcd, test_verilog ):
-  run_gcd_test( dump_vcd, "pex-gcd-GcdUnitRTL_test_delay0x0.vcd",
+  run_gcd_test( dump_vcd, get_vcd_filename(),
                 test_verilog, GcdUnitRTL, 0, 0 )
 
 #-------------------------------------------------------------------------
@@ -23,7 +23,7 @@ def test_delay0x0( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_delay10x5( dump_vcd, test_verilog ):
-  run_gcd_test( dump_vcd, "pex-gcd-GcdUnitRTL_test_delay10x5.vcd",
+  run_gcd_test( dump_vcd, get_vcd_filename(),
                 test_verilog, GcdUnitRTL, 10, 5 )
 
 #-------------------------------------------------------------------------
@@ -31,6 +31,6 @@ def test_delay10x5( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_delay5x10( dump_vcd, test_verilog ):
-  run_gcd_test( dump_vcd, "pex-gcd-GcdUnitRTL_test_delay5x10.vcd",
+  run_gcd_test( dump_vcd, get_vcd_filename(),
                 test_verilog, GcdUnitRTL, 5, 10 )
 

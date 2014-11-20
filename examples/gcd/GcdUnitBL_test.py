@@ -97,7 +97,7 @@ def run_gcd_test( dump_vcd, vcd_file_name, test_verilog,
 #-------------------------------------------------------------------------
 
 def test_delay0x0( dump_vcd ):
-  run_gcd_test( dump_vcd, "pex-gcd-GcdUnitBL_test_delay0x0.vcd",
+  run_gcd_test( dump_vcd, get_vcd_filename(),
                 False, GcdUnitBL, 0, 0 )
 
 #-------------------------------------------------------------------------
@@ -105,7 +105,7 @@ def test_delay0x0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_delay10x5( dump_vcd ):
-  run_gcd_test( dump_vcd, "pex-gcd-GcdUnitBL_test_delay10x5.vcd",
+  run_gcd_test( dump_vcd, get_vcd_filename(),
                 False, GcdUnitBL, 10, 5 )
 
 #-------------------------------------------------------------------------
@@ -113,6 +113,6 @@ def test_delay10x5( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_delay5x10( dump_vcd ):
-  run_gcd_test( dump_vcd, "pex-gcd-GcdUnitBL_test_delay5x10.vcd",
+  run_gcd_test( dump_vcd, get_vcd_filename(),
                 False, GcdUnitBL, 5, 10 )
 

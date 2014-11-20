@@ -17,7 +17,7 @@ from SorterCL_test import run_sorter_test
 from SorterCL_test import test_vectors_basics
 
 def test_basics( dump_vcd ):
-  run_sorter_test( dump_vcd, "pex-sorter-SorterRTL_test_basics.vcd",
+  run_sorter_test( dump_vcd, get_vcd_filename(),
                    SorterRTL, test_vectors_basics )
 
 #-------------------------------------------------------------------------
@@ -27,7 +27,7 @@ def test_basics( dump_vcd ):
 from SorterCL_test import test_vectors_duplicates
 
 def test_duplicates( dump_vcd ):
-  run_sorter_test( dump_vcd, "pex-sorter-SorterRTL_test_duplicates.vcd",
+  run_sorter_test( dump_vcd, get_vcd_filename(),
                    SorterRTL, test_vectors_duplicates )
 
 #-------------------------------------------------------------------------
@@ -37,6 +37,6 @@ def test_duplicates( dump_vcd ):
 from SorterCL_test import test_vectors_random
 
 def test_random( dump_vcd ):
-  run_sorter_test( dump_vcd, "pex-sorter-SorterRTL_test_random.vcd",
+  run_sorter_test( dump_vcd, get_vcd_filename(),
                    SorterRTL, test_vectors_random )
 

@@ -46,6 +46,6 @@ def test_basics( dump_vcd ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "pex-sorter-MinMax_test_basics.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

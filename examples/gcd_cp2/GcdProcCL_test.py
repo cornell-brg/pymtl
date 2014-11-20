@@ -83,7 +83,7 @@ def run_gcd_test( dump_vcd, vcd_file_name, model, lane_id,
 #
 def test_gcd_cl1( dump_vcd ):
   lane = 0
-  run_gcd_test( dump_vcd, "Gcd.vcd",
+  run_gcd_test( dump_vcd, get_vcd_filename(),
                    TestHarness( lane ),
                    lane,
                    16,
@@ -93,7 +93,7 @@ def test_gcd_cl1( dump_vcd ):
 
 def test_gcd_cl2( dump_vcd ):
   lane = 0
-  run_gcd_test( dump_vcd, "Gcd.vcd",
+  run_gcd_test( dump_vcd, get_vcd_filename(),
                    TestHarness( lane ),
                    lane,
                    72,

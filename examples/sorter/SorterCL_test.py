@@ -28,7 +28,7 @@ test_vectors_basics = [
 ]
 
 def test_basics( dump_vcd ):
-  run_sorter_test( dump_vcd, "pex-sorter-SorterCL_test_basics.vcd",
+  run_sorter_test( dump_vcd, get_vcd_filename(),
                    SorterCL, test_vectors_basics )
 
 #-------------------------------------------------------------------------
@@ -45,7 +45,7 @@ test_vectors_duplicates = [
 ]
 
 def test_duplicates( dump_vcd ):
-  run_sorter_test( dump_vcd, "pex-sorter-SorterCL_test_duplicates.vcd",
+  run_sorter_test( dump_vcd, get_vcd_filename(),
                    SorterCL, test_vectors_duplicates )
 
 #-------------------------------------------------------------------------
@@ -81,6 +81,6 @@ for i in xrange(90):
   prev0_test_vector_random = out_list[:]
 
 def test_random( dump_vcd ):
-  run_sorter_test( dump_vcd, "pex-sorter-SorterCL_test_random.vcd",
+  run_sorter_test( dump_vcd, get_vcd_filename(),
                    SorterCL, test_vectors_random )
 
