@@ -10,6 +10,7 @@ python:
 env:
  - TEST_SUITE="-n 2"
  - TEST_SUITE="--test-verilog"
+ - TEST_SUITE="-n 2 --dump-vcd"
 
 #------------------------------------------------------------------------
 # before dependency installation
