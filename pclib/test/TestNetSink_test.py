@@ -169,7 +169,7 @@ def run_test( dump_vcd, vcd_filename, src_delay, sink_delay, src_msgs,
 #-------------------------------------------------------------------------
 
 def test_inorder_0x0( dump_vcd ):
-  run_test( dump_vcd, "pmlib-TestNetSink_inorder_delay0x0.vcd",
+  run_test( dump_vcd, get_vcd_filename(),
             0, 0, inorder_msgs(), inorder_msgs() )
 
 #-------------------------------------------------------------------------
@@ -177,7 +177,7 @@ def test_inorder_0x0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_inorder_5x0( dump_vcd ):
-  run_test( dump_vcd, "pmlib-TestNetSink_inorder_delay5x0.vcd",
+  run_test( dump_vcd, get_vcd_filename(),
             5, 0, inorder_msgs(), inorder_msgs() )
 
 #-------------------------------------------------------------------------
@@ -185,7 +185,7 @@ def test_inorder_5x0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_inorder_0x5( dump_vcd ):
-  run_test( dump_vcd, "pmlib-TestNetSink_inorder_delay0x5.vcd",
+  run_test( dump_vcd, get_vcd_filename(),
             0, 5, inorder_msgs(), inorder_msgs() )
 
 #-------------------------------------------------------------------------
@@ -193,7 +193,7 @@ def test_inorder_0x5( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_inorder_10x5( dump_vcd ):
-  run_test( dump_vcd, "pmlib-TestNetSink_inorder_delay10x5.vcd",
+  run_test( dump_vcd, get_vcd_filename(),
             10, 5, inorder_msgs(), inorder_msgs() )
 
 #-------------------------------------------------------------------------
@@ -202,7 +202,7 @@ def test_inorder_10x5( dump_vcd ):
 
 def test_outoforder_0x0( dump_vcd ):
   test_msgs = outoforder_msgs()
-  run_test( dump_vcd, "pmlib-TestNetSink_outoforder_delay0x0.vcd",
+  run_test( dump_vcd, get_vcd_filename(),
             0, 0, test_msgs[0], test_msgs[1] )
 
 #-------------------------------------------------------------------------
@@ -211,7 +211,7 @@ def test_outoforder_0x0( dump_vcd ):
 
 def test_outoforder_5x0( dump_vcd ):
   test_msgs = outoforder_msgs()
-  run_test( dump_vcd, "pmlib-TestNetSink_outoforder_delay5x0.vcd",
+  run_test( dump_vcd, get_vcd_filename(),
             5, 0, test_msgs[0], test_msgs[1] )
 
 #-------------------------------------------------------------------------
@@ -220,7 +220,7 @@ def test_outoforder_5x0( dump_vcd ):
 
 def test_outoforder_0x5( dump_vcd ):
   test_msgs = outoforder_msgs()
-  run_test( dump_vcd, "pmlib-TestNetSink_outoforder_delay0x5.vcd",
+  run_test( dump_vcd, get_vcd_filename(),
             0, 5, test_msgs[0], test_msgs[1] )
 
 #-------------------------------------------------------------------------
@@ -229,5 +229,5 @@ def test_outoforder_0x5( dump_vcd ):
 
 def test_outoforder_10x5( dump_vcd ):
   test_msgs = outoforder_msgs()
-  run_test( dump_vcd, "pmlib-TestNetSink_outoforder_delay10x5.vcd",
+  run_test( dump_vcd, get_vcd_filename(),
             10, 5, test_msgs[0], test_msgs[1] )

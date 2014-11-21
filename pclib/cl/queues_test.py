@@ -96,11 +96,12 @@ class InValRdyQueueHarness( Model ):
     (2, 0, 3, 5), (2, 1, 3, 5),
   ]
 )
-def test_InValRdyQueue( qsize, pipeq, src_delay, sink_delay ):
+def test_InValRdyQueue( dump_vcd, qsize, pipeq, src_delay, sink_delay ):
   msgs  = range( 5 )
   model = InValRdyQueueHarness( Bits( 8 ), qsize, pipeq )
-  sim   = TestSrcSinkSim( model, msgs, msgs, 
-                                   src_delay, sink_delay )
+  sim   = TestSrcSinkSim( model, msgs, msgs, src_delay, sink_delay )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -152,11 +153,12 @@ class OutValRdyQueueHarness( Model ):
     (2, 0, 3, 5), (2, 1, 3, 5),
   ]
 )
-def test_OutValRdyQueue( qsize, bypassq, src_delay, sink_delay ):
+def test_OutValRdyQueue( dump_vcd, qsize, bypassq, src_delay, sink_delay ):
   msgs  = range( 5 )
   model = OutValRdyQueueHarness( Bits( 8 ), qsize, bypassq )
-  sim   = TestSrcSinkSim( model, msgs, msgs, 
-                                   src_delay, sink_delay )
+  sim   = TestSrcSinkSim( model, msgs, msgs, src_delay, sink_delay )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -206,10 +208,12 @@ class InOutValRdyQueueHarness( Model ):
     (2, 0, 0, 3, 5), (2, 0, 1, 3, 5), (2, 1, 0, 3, 5), (2, 1, 1, 3, 5),
   ]
 )
-def test_InOutValRdyQueues( qsize, pipeq, bypassq, src_delay, sink_delay ):
+def test_InOutValRdyQueues( dump_vcd, qsize, pipeq, bypassq,
+                            src_delay, sink_delay ):
   msgs  = range( 10 )
   model = InOutValRdyQueueHarness( Bits( 8 ), qsize, pipeq, bypassq )
-  sim   = TestSrcSinkSim( model, msgs, msgs, 
-                                   src_delay, sink_delay )
+  sim   = TestSrcSinkSim( model, msgs, msgs, src_delay, sink_delay )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

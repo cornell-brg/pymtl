@@ -82,8 +82,8 @@ def run_valrdy_test( dump_vcd, test_verilog, test_vectors, model ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
 
-  #if dump_vcd:
-  #  sim.dump_vcd( "valrdy_test.vcd" )
+  if dump_vcd:
+    sim.dump_vcd( dump_vcd )
 
   sim.run_test()
 
@@ -115,6 +115,8 @@ def test_ValRdyQueue16( dump_vcd, test_verilog ):
   ]
 
   model = ValRdyQueue( 16 )
+  if dump_vcd:
+    dump_vcd = get_vcd_filename()
   run_valrdy_test( dump_vcd, test_verilog, test_vectors, model )
 
 #-------------------------------------------------------------------------
@@ -157,5 +159,7 @@ def gen_long_vector( nbits ):
 def test_ValRdyQueue32( dump_vcd, test_verilog, nbits ):
   test_vectors = gen_long_vector( nbits )
   model = ValRdyQueue( nbits )
+  if dump_vcd:
+    dump_vcd = get_vcd_filename()
   run_valrdy_test( dump_vcd, test_verilog, test_vectors, model )
 

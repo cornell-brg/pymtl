@@ -49,7 +49,7 @@ def test_reg( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-regs-test_reg.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -97,7 +97,7 @@ def test_reg_en( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-regs-test_reg_en.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -123,8 +123,7 @@ def run_test_reg_rst( dump_vcd, model, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-regs-test_reg_rst_rv" +
-                  hex(reset_value) + ".vcd" )
+    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 @pytest.mark.parametrize( "reset", [
@@ -137,7 +136,7 @@ def test_reg_rst( dump_vcd, test_verilog, reset):
   if test_verilog:
     model = get_verilated( model )
 
-  run_test_reg_rst( dump_vcd, model, [
+  run_test_reg_rst( get_vcd_filename() if dump_vcd else False, model, [
     # in      out
     [ 0x0a0a,  reset ],
     [ 0x0b0b, 0x0a0a ],
@@ -174,8 +173,7 @@ def run_test_reg_en_rst( dump_vcd, model, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-regs-test_reg_en_rst_rv" +
-                  hex(reset_value) + ".vcd" )
+    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 @pytest.mark.parametrize( "reset", [
@@ -188,7 +186,7 @@ def test_reg_en_rst( dump_vcd, test_verilog, reset ):
   if test_verilog:
     model = get_verilated( model )
 
-  run_test_reg_en_rst( dump_vcd, model, [
+  run_test_reg_en_rst( get_vcd_filename() if dump_vcd else False, model, [
     # in      en out
     [ 0x0a0a, 0,  reset ],
     [ 0x0b0b, 1,  reset ],

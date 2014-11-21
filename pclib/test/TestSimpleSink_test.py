@@ -65,7 +65,7 @@ def test_basics( dump_vcd ):
 
   sim = SimulationTool( model )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-TestSimpleSink_test_basics.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulation
 

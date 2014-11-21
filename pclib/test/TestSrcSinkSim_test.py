@@ -61,11 +61,11 @@ def test_TestSrcSinkSim( dump_vcd, src_delay, sink_delay ):
   model = ValRdyBuffer( 8 )
 
   # Create the simulator
-  sim = TestSrcSinkSim( model, src_msgs,  sink_msgs, 
+  sim = TestSrcSinkSim( model, src_msgs,  sink_msgs,
                                src_delay, sink_delay )
   # Dump a vcd if enabled
   if dump_vcd:
-    sim.dump_vcd( "pmlib-TestSrcSinkSim_test.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
 
   # Run the test
   sim.run_test()

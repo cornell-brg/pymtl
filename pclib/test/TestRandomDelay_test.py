@@ -69,7 +69,7 @@ def run_test_random_delay( dump_vcd, delay ):
 
   sim = SimulationTool( model )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-TestRandomDelay_test_delay" + str(delay) + ".vcd" )
+    sim.dump_vcd( dump_vcd )
 
   # Run the simulation
 
@@ -92,26 +92,26 @@ def run_test_random_delay( dump_vcd, delay ):
 #-------------------------------------------------------------------------
 
 def test_delay0( dump_vcd ):
-  run_test_random_delay( dump_vcd, 0 )
+  run_test_random_delay( get_vcd_filename() if dump_vcd else None, 0 )
 
 #-------------------------------------------------------------------------
 # TestRandomDelay unit test with delay = 1
 #-------------------------------------------------------------------------
 
 def test_delay1( dump_vcd ):
-  run_test_random_delay( dump_vcd, 1 )
+  run_test_random_delay( get_vcd_filename() if dump_vcd else None, 1 )
 
 #-------------------------------------------------------------------------
 # TestRandomDelay unit test with delay = 5
 #-------------------------------------------------------------------------
 
 def test_delay5( dump_vcd ):
-  run_test_random_delay( dump_vcd, 5 )
+  run_test_random_delay( get_vcd_filename() if dump_vcd else None, 5 )
 
 #-------------------------------------------------------------------------
 # TestRandomDelay unit test with delay = 20
 #-------------------------------------------------------------------------
 
 def test_delay20( dump_vcd ):
-  run_test_random_delay( dump_vcd, 20 )
+  run_test_random_delay( get_vcd_filename() if dump_vcd else None, 20 )
 

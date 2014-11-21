@@ -55,7 +55,7 @@ def test_regfile_1R1W( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "plab2-test_regfile_1R1W.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -101,7 +101,7 @@ def test_regfile_2R1W( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "plab2-test_regfile_2R1W.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -153,5 +153,5 @@ def test_regfile_1R1W_const_zero( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "plab2-test_regfile_1R1W_const_zero.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()

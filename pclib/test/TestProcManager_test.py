@@ -235,7 +235,7 @@ def single_port_mem_test_msgs():
 #-------------------------------------------------------------------------
 
 def test_proc_manager_delay0x0_0( dump_vcd ):
-  run_proc_mgr_test( dump_vcd, "TestProcManager_test_delay0x0_0.vcd", 0, 0, 0,
+  run_proc_mgr_test( dump_vcd, get_vcd_filename(), 0, 0, 0,
                      single_port_mem_test_msgs(), create_sparse_mem_img() )
 
 #-------------------------------------------------------------------------
@@ -243,7 +243,7 @@ def test_proc_manager_delay0x0_0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_proc_manager_delay0x0_5( dump_vcd ):
-  run_proc_mgr_test( dump_vcd, "TestProcManager_test_delay0x0_5.vcd", 0, 0, 5,
+  run_proc_mgr_test( dump_vcd, get_vcd_filename(), 0, 0, 5,
                      single_port_mem_test_msgs(), create_sparse_mem_img() )
 
 #-------------------------------------------------------------------------
@@ -251,7 +251,7 @@ def test_proc_manager_delay0x0_5( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_proc_manager_delay5x10_2( dump_vcd ):
-  run_proc_mgr_test( dump_vcd, "TestProcManager_test_delay5x10_2.vcd", 5, 10, 2,
+  run_proc_mgr_test( dump_vcd, get_vcd_filename(), 5, 10, 2,
                      single_port_mem_test_msgs(), create_sparse_mem_img() )
 
 #-------------------------------------------------------------------------
@@ -259,5 +259,5 @@ def test_proc_manager_delay5x10_2( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_proc_manager_delay10x5_6( dump_vcd ):
-  run_proc_mgr_test( dump_vcd, "TestProcManager_test_delay10x5_6.vcd", 10, 5, 6,
+  run_proc_mgr_test( dump_vcd, get_vcd_filename(), 10, 5, 6,
                      single_port_mem_test_msgs(), create_sparse_mem_img() )

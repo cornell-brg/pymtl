@@ -63,7 +63,7 @@ def run_test_random_delay( dump_vcd, delay ):
 
   sim = SimulationTool( model )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-TestSource_test_delay" + str(delay) + ".vcd" )
+    sim.dump_vcd( dump_vcd )
 
   # Run the simulation
 
@@ -87,28 +87,28 @@ def run_test_random_delay( dump_vcd, delay ):
 #-------------------------------------------------------------------------
 
 def test_delay0( dump_vcd ):
-  run_test_random_delay( dump_vcd, 0 )
+  run_test_random_delay( get_vcd_filename() if dump_vcd else False, 0 )
 
 #-------------------------------------------------------------------------
 # TestSource unit test with delay = 1
 #-------------------------------------------------------------------------
 
 def test_delay1( dump_vcd ):
-  run_test_random_delay( dump_vcd, 1 )
+  run_test_random_delay( get_vcd_filename() if dump_vcd else False, 1 )
 
 #-------------------------------------------------------------------------
 # TestSource unit test with delay = 5
 #-------------------------------------------------------------------------
 
 def test_delay5( dump_vcd ):
-  run_test_random_delay( dump_vcd, 5 )
+  run_test_random_delay( get_vcd_filename() if dump_vcd else False, 5 )
 
 #-------------------------------------------------------------------------
 # TestSource unit test with delay = 20
 #-------------------------------------------------------------------------
 
 def test_delay20( dump_vcd ):
-  run_test_random_delay( dump_vcd, 20 )
+  run_test_random_delay( get_vcd_filename() if dump_vcd else False, 20 )
 
 #-------------------------------------------------------------------------
 # TestHarnessExtraDelay (connect source to sink through extra delay)
@@ -171,8 +171,7 @@ def run_test_random_xdelay( dump_vcd, delay ):
 
   sim = SimulationTool( model )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-TestSource_test" + \
-                  "_xdelay" + str(delay) + ".vcd" )
+    sim.dump_vcd( dump_vcd )
 
   # Run the simulation
 
@@ -196,26 +195,26 @@ def run_test_random_xdelay( dump_vcd, delay ):
 #-------------------------------------------------------------------------
 
 def test_xdelay0( dump_vcd ):
-  run_test_random_xdelay( dump_vcd, 0 )
+  run_test_random_xdelay( get_vcd_filename() if dump_vcd else False, 0 )
 
 #-------------------------------------------------------------------------
 # TestSource unit test with delay = 1 and extra delay of 5
 #-------------------------------------------------------------------------
 
 def test_delay1( dump_vcd ):
-  run_test_random_xdelay( dump_vcd, 1 )
+  run_test_random_xdelay( get_vcd_filename() if dump_vcd else False, 1 )
 
 #-------------------------------------------------------------------------
 # TestSource unit test with delay = 5 and extra delay of 5
 #-------------------------------------------------------------------------
 
 def test_xdelay5( dump_vcd ):
-  run_test_random_xdelay( dump_vcd, 5 )
+  run_test_random_xdelay( get_vcd_filename() if dump_vcd else False, 5 )
 
 #-------------------------------------------------------------------------
 # TestSource unit test with delay = 20 and extra delay of 5
 #-------------------------------------------------------------------------
 
 def test_xdelay20( dump_vcd ):
-  run_test_random_xdelay( dump_vcd, 20 )
+  run_test_random_xdelay( get_vcd_filename() if dump_vcd else False, 20 )
 

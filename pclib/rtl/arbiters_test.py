@@ -30,7 +30,7 @@ def run_test( dump_vcd, model, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "test_rr_arb" + model.nreqs + ".vcd" )
+    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ def test_rr_arb_4( dump_vcd, test_verilog ):
   if test_verilog:
     model = get_verilated( model )
 
-  run_test( dump_vcd, model, [
+  run_test( get_vcd_filename() if dump_vcd else False, model, [
 
     # reqs     grants
     [ 0b0000,  0b0000 ],
@@ -95,7 +95,7 @@ def run_en_test( dump_vcd, model, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "test_rr_arb_en" + model.nreqs + ".vcd" )
+    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ def test_rr_arb_en_4( dump_vcd, test_verilog ):
   if test_verilog:
     model = get_verilated( model )
 
-  run_en_test( dump_vcd, model, [
+  run_en_test( get_vcd_filename() if dump_vcd else False, model, [
 
     # reqs     grants
     [ 0, 0b0000,  0b0000 ],

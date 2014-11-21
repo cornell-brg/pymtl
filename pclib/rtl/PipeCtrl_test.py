@@ -686,22 +686,22 @@ sink_simple_msgs = [
   ]
 
 def test_simple_pipe_delay_0x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_simple_pipe_delay_0x0.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_simple_msgs, sink_simple_msgs,
                       IncrPipe, 0, 0, test_verilog )
 
 def test_simple_pipe_delay_5x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_simple_pipe_delay_5x0.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_simple_msgs, sink_simple_msgs,
                       IncrPipe, 5, 0, test_verilog )
 
 def test_simple_pipe_delay_0x5( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_simple_pipe_delay_0x5.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_simple_msgs, sink_simple_msgs,
                       IncrPipe, 0, 5, test_verilog )
 
 def test_simple_pipe_delay_4x9( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_simple_pipe_delay_4x9.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_simple_msgs, sink_simple_msgs,
                       IncrPipe, 4, 9, test_verilog )
 
@@ -735,22 +735,22 @@ sink_stall_msgs = [
   ]
 
 def test_stall_pipe_delay_0x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_stall_pipe_delay_0x0.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_stall_msgs, sink_stall_msgs,
                       IncrPipe, 0, 0, test_verilog )
 
 def test_stall_pipe_delay_5x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_stall_pipe_delay_5x0.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_stall_msgs, sink_stall_msgs,
                       IncrPipe, 5, 0, test_verilog )
 
 def test_stall_pipe_delay_0x5( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_stall_pipe_delay_0x5.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_stall_msgs, sink_stall_msgs,
                       IncrPipe, 0, 5, test_verilog )
 
 def test_stall_pipe_delay_4x9( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_stall_pipe_delay_4x9.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_stall_msgs, sink_stall_msgs,
                       IncrPipe, 4, 9, test_verilog )
 
@@ -784,6 +784,6 @@ sink_squash_msgs = [
   ]
 
 def test_squash_pipe_delay_0x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, "test_squash_pipe_delay_0x0.vcd",
+  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
                       src_squash_msgs, sink_squash_msgs,
                       IncrPipe, 0, 0, test_verilog )

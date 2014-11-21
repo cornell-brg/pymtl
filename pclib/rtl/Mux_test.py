@@ -35,7 +35,7 @@ def run_test_mux( dump_vcd, test_verilog,
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-muxes-test_mux" + str(num_inputs) + ".vcd" )
+    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -43,7 +43,8 @@ def run_test_mux( dump_vcd, test_verilog,
 #-------------------------------------------------------------------------
 
 def test_mux2( dump_vcd, test_verilog ):
-  run_test_mux( dump_vcd, test_verilog, Mux, 2, [
+  run_test_mux( get_vcd_filename() if dump_vcd else False,
+                test_verilog, Mux, 2, [
     [ 0x0a0a, 0x0b0b, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0, 0x0a0a ],
     [ 0x0c0c, 0x0d0d, 1, 0x0d0d ],
@@ -55,7 +56,8 @@ def test_mux2( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mux3( dump_vcd, test_verilog ):
-  run_test_mux( dump_vcd, test_verilog, Mux, 3, [
+  run_test_mux( get_vcd_filename() if dump_vcd else False,
+                test_verilog, Mux, 3, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0, 0x0a0a ],
@@ -69,7 +71,8 @@ def test_mux3( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mux4( dump_vcd, test_verilog ):
-  run_test_mux( dump_vcd, test_verilog, Mux, 4, [
+  run_test_mux( get_vcd_filename() if dump_vcd else False,
+                test_verilog, Mux, 4, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 3, 0x0d0d ],
@@ -81,7 +84,8 @@ def test_mux4( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mux5( dump_vcd, test_verilog ):
-  run_test_mux( dump_vcd, test_verilog, Mux, 5, [
+  run_test_mux( get_vcd_filename() if dump_vcd else False,
+                test_verilog, Mux, 5, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 3, 0x0d0d ],
@@ -94,7 +98,8 @@ def test_mux5( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mux6( dump_vcd, test_verilog ):
-  run_test_mux( dump_vcd, test_verilog, Mux, 6, [
+  run_test_mux( get_vcd_filename() if dump_vcd else False,
+                test_verilog, Mux, 6, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 3, 0x0d0d ],
@@ -108,7 +113,8 @@ def test_mux6( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mux7( dump_vcd, test_verilog ):
-  run_test_mux( dump_vcd, test_verilog, Mux, 7, [
+  run_test_mux( get_vcd_filename() if dump_vcd else False,
+                test_verilog, Mux, 7, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 3, 0x0d0d ],
@@ -123,7 +129,8 @@ def test_mux7( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mux8( dump_vcd, test_verilog ):
-  run_test_mux( dump_vcd, test_verilog, Mux, 8, [
+  run_test_mux( get_vcd_filename() if dump_vcd else False,
+                test_verilog, Mux, 8, [
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 0x0202, 1, 0x0b0b ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 0x0202, 2, 0x0c0c ],
     [ 0x0a0a, 0x0b0b, 0x0c0c, 0x0d0d, 0x0e0e, 0x0f0f, 0x0101, 0x0202, 3, 0x0d0d ],

@@ -71,7 +71,7 @@ def test_single_element_normal_queue_tv( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "SingleElementNormalQueue_tv.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -126,7 +126,7 @@ def test_single_element_bypass_queue_tv( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "SingleElementBypassQueue_tv.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -182,7 +182,7 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "SingleElementPipelinedQueue_tv.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #=========================================================================
@@ -271,25 +271,25 @@ def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
 def test_single_element_norm_delay0x0( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementNormalQueue_src_sink_0x0.vcd",
+                get_vcd_filename(),
                 SingleElementNormalQueue, 0, 0, 16 )
 
 def test_single_element_norm_delay0x5( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementNormalQueue_src_sink_0x5.vcd",
+                get_vcd_filename(),
                 SingleElementNormalQueue, 0, 5, 16 )
 
 def test_single_element_norm_delay5x0( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementNormalQueue_src_sink_5x0.vcd",
+                get_vcd_filename(),
                 SingleElementNormalQueue, 5, 0, 16 )
 
 def test_single_element_norm_delay10x5( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementNormalQueue_src_sink_10x5.vcd",
+                get_vcd_filename(),
                 SingleElementNormalQueue, 10, 5, 16 )
 
 #-------------------------------------------------------------------------
@@ -341,25 +341,25 @@ def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
 def test_single_element_byp_delay0x0( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementBypassQueue_src_sink_0x0.vcd",
+                get_vcd_filename(),
                 SingleElementBypassQueue, 0, 0, 16 )
 
 def test_single_element_byp_delay0x5( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementBypassQueue_src_sink_0x5.vcd",
+                get_vcd_filename(),
                 SingleElementBypassQueue, 0, 5, 16 )
 
 def test_single_element_byp_delay5x0( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementBypassQueue_src_sink_5x0.vcd",
+                get_vcd_filename(),
                 SingleElementBypassQueue, 5, 0, 16 )
 
 def test_single_element_byp_delay10x5( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementBypassQueue_src_sink_10x5.vcd",
+                get_vcd_filename(),
                 SingleElementBypassQueue, 10, 5, 16 )
 
 #-------------------------------------------------------------------------
@@ -411,25 +411,25 @@ def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
 def test_single_element_pipe_delay0x0( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementPipelinedQueue_src_sink_0x0.vcd",
+                get_vcd_filename(),
                 SingleElementPipelinedQueue, 0, 0, 16 )
 
 def test_single_element_pipe_delay0x5( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementPipelinedQueue_src_sink_0x5.vcd",
+                get_vcd_filename(),
                 SingleElementPipelinedQueue, 0, 5, 16 )
 
 def test_single_element_pipe_delay5x0( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementPipelinedQueue_src_sink_5x0.vcd",
+                get_vcd_filename(),
                 SingleElementPipelinedQueue, 5, 0, 16 )
 
 def test_single_element_pipe_delay10x5( dump_vcd, test_verilog ):
   run_single_element_queue_test(
                 dump_vcd, test_verilog,
-                "SingleElementPipelinedQueue_src_sink_10x5.vcd",
+                get_vcd_filename(),
                 SingleElementPipelinedQueue, 10, 5, 16 )
 
 #=========================================================================
@@ -470,7 +470,7 @@ def run_test_queue( dump_vcd, test_verilog, ModelType, num_entries,
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "test_queue" + str(num_entries) + ".vcd" )
+    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -478,7 +478,8 @@ def run_test_queue( dump_vcd, test_verilog, ModelType, num_entries,
 #-------------------------------------------------------------------------
 
 def test_queue_2( dump_vcd, test_verilog ):
-  run_test_queue( dump_vcd, test_verilog, NormalQueue, 2, [
+  run_test_queue( get_vcd_filename() if dump_vcd else False,
+                  test_verilog, NormalQueue, 2, [
     # Enqueue one element and then dequeue it
     # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
     [ 1,      1,      0x0001,  0,      1,      '?'    ],
@@ -505,7 +506,8 @@ def test_queue_2( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_queue_3( dump_vcd, test_verilog ):
-  run_test_queue( dump_vcd, test_verilog, NormalQueue, 3, [
+  run_test_queue( get_vcd_filename() if dump_vcd else False,
+                  test_verilog, NormalQueue, 3, [
     # Enqueue one element and then dequeue it
     # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
     [ 1,      1,      0x0001,  0,      1,      '?'    ],
@@ -573,6 +575,6 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "SingleElementPipelinedQueue_tv.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

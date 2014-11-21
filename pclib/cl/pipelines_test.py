@@ -101,10 +101,11 @@ class ValRdyPipelineHarness( Model ):
       (5, 0, 0, 3, 5), (5, 0, 1, 3, 5), (5, 1, 0, 3, 5), (5, 1, 1, 3, 5),
     ]
 )
-def test_ValRdyPipeline( stages, pipeq, bypassq, src_delay, sink_delay ):
+def test_ValRdyPipeline( dump_vcd, stages, pipeq, bypassq, src_delay, sink_delay ):
   msgs  = range( 20 )
   model = ValRdyPipelineHarness( Bits( 8 ), stages, pipeq, bypassq )
-  sim   = TestSrcSinkSim( model, msgs, msgs, 
-                                 src_delay, sink_delay )
+  sim   = TestSrcSinkSim( model, msgs, msgs, src_delay, sink_delay )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

@@ -49,34 +49,6 @@ def mk_msg( src, dest, seqnum, payload ):
   msg.payload = payload
   return msg
 
-
-  # Instantiate and elaborate the model
-
-  msg_type = NetMsg( 4, 16, 32 )
-  model = TestHarness( msg_type, src_msgs, sink_msgs )
-  model.elaborate()
-
-  # Create a simulator using the simulation tool
-
-  sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( "pmlib-TestSimpleNetSink_test_outoforder.vcd" )
-
-  # Run the simulation
-
-  print ""
-
-  sim.reset()
-  while not model.done():
-    sim.print_line_trace()
-    sim.cycle()
-
-  # Add a couple extra ticks so that the VCD dump is nicer
-
-  sim.cycle()
-  sim.cycle()
-  sim.cycle()
-
 #-------------------------------------------------------------------------
 # TestSimpleNetSink test runner
 #-------------------------------------------------------------------------
@@ -133,8 +105,7 @@ def test_inorder_msgs( dump_vcd ):
       mk_msg( 0,   3,  3,     0x00000033 ),
   ]
 
-  run_test( dump_vcd, "pmlib-TestSimpleNetSink_test_inorder.vcd",
-            src_msgs, sink_msgs )
+  run_test( dump_vcd, get_vcd_filename(), src_msgs, sink_msgs )
 
 #-------------------------------------------------------------------------
 # TestSimpleNetSink unit test - Out of Order Messages
@@ -185,8 +156,7 @@ def test_outoforder_msgs( dump_vcd ):
       mk_msg( 0,   3,  3,     0x00000033 ),
   ]
 
-  run_test( dump_vcd, "pmlib-TestSimpleNetSink_test_outoforder.vcd",
-            src_msgs, sink_msgs )
+  run_test( dump_vcd, get_vcd_filename(), src_msgs, sink_msgs )
 
 #-------------------------------------------------------------------------
 # TestSimpleNetSink unit test - Redundant Messages
@@ -210,6 +180,5 @@ def test_redundant_msgs( dump_vcd ):
   ]
 
   with pytest.raises( AssertionError ):
-    run_test( dump_vcd, "pmlib-TestSimpleNetSink_test_redundant.vcd",
-              src_msgs, sink_msgs )
+    run_test( dump_vcd, get_vcd_filename(), src_msgs, sink_msgs )
 

@@ -133,7 +133,7 @@ class TestHarness (Model):
   ( 10, 5  ),
   (  5, 10 ),
 ])
-def test( src_delay, sink_delay ):
+def test( dump_vcd, src_delay, sink_delay ):
 
   # Test messages
 
@@ -149,6 +149,8 @@ def test( src_delay, sink_delay ):
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename()  )
 
   # Run the simulation
 

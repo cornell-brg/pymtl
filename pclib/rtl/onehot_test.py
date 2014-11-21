@@ -43,7 +43,7 @@ def test_Mux( dump_vcd, test_verilog ):
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "onehot_Mux.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()
@@ -85,7 +85,7 @@ def test_Demux( dump_vcd, test_verilog ):
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "onehot_Demux.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()

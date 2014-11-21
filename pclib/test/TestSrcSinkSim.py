@@ -11,7 +11,7 @@ from TestSink   import TestSink
 #-------------------------------------------------------------------------
 # This class simplifies creating unit tests which use the ValRdy latency
 # insensitive interface. A user provides the model under test, a list
-# of source messages to be fed into the simulation, and a list of 
+# of source messages to be fed into the simulation, and a list of
 # exptected output messages. The simulator will handle driving the
 # simulation to completion.
 #
@@ -26,7 +26,7 @@ class TestSrcSinkSim( object ):
     self.model = TestSrcSinkHarness( model_inst, src_msgs,  sink_msgs,
                                                  src_delay, sink_delay )
     self.vcd_file_name = None
- 
+
   #-----------------------------------------------------------------------
   # dump_vcd
   #-----------------------------------------------------------------------

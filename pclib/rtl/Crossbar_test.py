@@ -34,7 +34,7 @@ def run_test_crossbar( dump_vcd, model, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "test_crossbar" + str(num_inputs) + ".vcd" )
+    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #-----------------------------------------------------------------------
@@ -44,7 +44,7 @@ def test_crossbar3( dump_vcd, test_verilog ):
   model = Crossbar( 3, 16 )
   if test_verilog:
     model = get_verilated( model )
-  run_test_crossbar( dump_vcd, model, [
+  run_test_crossbar( get_vcd_filename() if dump_vcd else False, model, [
     [ 0xdead, 0xbeef, 0xcafe, 0, 1, 2, 0xdead, 0xbeef, 0xcafe ],
     [ 0xdead, 0xbeef, 0xcafe, 0, 2, 1, 0xdead, 0xcafe, 0xbeef ],
     [ 0xdead, 0xbeef, 0xcafe, 1, 2, 0, 0xbeef, 0xcafe, 0xdead ],

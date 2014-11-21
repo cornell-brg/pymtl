@@ -94,7 +94,7 @@ def test_memreq_from_bits( dump_vcd ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-mem_msgs-test_memreq_from_bits.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -176,6 +176,6 @@ def test_memresp_from_bits( dump_vcd ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   if dump_vcd:
-    sim.dump_vcd( "pmlib-mem_msgs-test_memresp_from_bits.vcd" )
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

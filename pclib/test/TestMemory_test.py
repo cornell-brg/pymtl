@@ -366,7 +366,7 @@ def quad_port_mem_test_msgs():
 #-------------------------------------------------------------------------
 
 def test_single_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay0x0_1.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 0, 0, 3, 1, single_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
@@ -374,7 +374,7 @@ def test_single_port_delay0x0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_single_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay5x10_1.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 5, 10, 8, 1, single_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
@@ -382,7 +382,7 @@ def test_single_port_delay10x5( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_single_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay10x5_1.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 10, 5, 2, 1, single_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
@@ -390,7 +390,7 @@ def test_single_port_delay5x10( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_dual_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay0x0_2.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 0, 0, 4, 2, dual_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
@@ -398,7 +398,7 @@ def test_dual_port_delay0x0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_dual_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay5x10_2.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 5, 10, 3, 2, dual_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
@@ -406,7 +406,7 @@ def test_dual_port_delay10x5( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_dual_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay10x5_2.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 10, 5, 3, 2, dual_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
@@ -414,7 +414,7 @@ def test_dual_port_delay5x10( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_quad_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay0x0_4.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 0, 0, 7, 4, quad_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
@@ -422,7 +422,7 @@ def test_quad_port_delay0x0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_quad_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay5x10_4.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 5, 10, 4, 4, quad_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
@@ -430,5 +430,5 @@ def test_quad_port_delay10x5( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_quad_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, "TestMemoryNPorts_test_delay10x5_4.vcd",
+  run_mem_test( dump_vcd, get_vcd_filename(),
                 10, 5, 6, 4, quad_port_mem_test_msgs() )

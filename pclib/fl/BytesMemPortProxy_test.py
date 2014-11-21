@@ -149,7 +149,7 @@ class TestHarness (Model):
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( "mem_delay", [ 0, 2, 5, 10 ] )
-def test( mem_delay ):
+def test( dump_vcd, mem_delay ):
 
   # Instantiate and elaborate the model
 
@@ -164,6 +164,8 @@ def test( mem_delay ):
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename()  )
 
   # Run the simulation
 
