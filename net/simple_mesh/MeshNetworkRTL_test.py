@@ -130,22 +130,22 @@ nentries = 4
 #-------------------------------------------------------------------------
 
 def test_mesh_terminal_delay0x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_terminal_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 terminal_msgs(), nrouters, nmessages, payload_nbits,
                 nentries, test_verilog )
 
 def test_mesh_terminal_delay5x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_terminal_delay5x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 terminal_msgs(), nrouters, nmessages, payload_nbits,
                 nentries, test_verilog )
 
 def test_mesh_terminal_delay0x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_terminal_delay0x5.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 terminal_msgs(), nrouters, nmessages, payload_nbits,
                 nentries, test_verilog )
 
 def test_mesh_terminal_delay8x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_terminal_delay8x5.vcd", 8, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
                 terminal_msgs(), nrouters, nmessages, payload_nbits,
                 nentries, test_verilog )
 
@@ -154,22 +154,22 @@ def test_mesh_terminal_delay8x5( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mesh_nearest_neighbor_east_delay0x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_nearest_neighbor_east_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 nearest_neighbor_east_msgs(8), nrouters,
                 nmessages, payload_nbits, nentries, test_verilog )
 
 def test_mesh_nearest_neighbor_east_delay5x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_nearest_neighbor_east_delay5x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 nearest_neighbor_east_msgs(8), nrouters,
                 nmessages, payload_nbits, nentries, test_verilog )
 
 def test_mesh_nearest_neighbor_east_delay0x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_nearest_neighbor_east_delay0x5.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 nearest_neighbor_east_msgs(8), nrouters,
                 nmessages, payload_nbits, nentries, test_verilog )
 
 def test_mesh_nearest_neighbor_east_delay8x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_nearest_neighbor_east_delay8x5.vcd", 8, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
                 nearest_neighbor_east_msgs(8), nrouters,
                 nmessages, payload_nbits, nentries, test_verilog )
 
@@ -178,22 +178,22 @@ def test_mesh_nearest_neighbor_east_delay8x5( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mesh_nearest_neighbor_west_delay0x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_nearest_neighbor_west_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 nearest_neighbor_west_msgs(8), nrouters,
                 nmessages, payload_nbits, nentries, test_verilog )
 
 def test_mesh_nearest_neighbor_west_delay5x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_nearest_neighbor_west_delay5x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 nearest_neighbor_west_msgs(8), nrouters,
                 nmessages, payload_nbits, nentries, test_verilog )
 
 def test_mesh_nearest_neighbor_west_delay0x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_nearest_neighbor_west_delay0x5.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 nearest_neighbor_west_msgs(8), nrouters,
                 nmessages, payload_nbits, nentries, test_verilog )
 
 def test_mesh_nearest_neighbor_west_delay8x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_nearest_neighbor_west_delay8x5.vcd", 8, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
                 nearest_neighbor_west_msgs(8), nrouters,
                 nmessages, payload_nbits, nentries, test_verilog )
 
@@ -202,22 +202,22 @@ def test_mesh_nearest_neighbor_west_delay8x5( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mesh_hotspot_delay0x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_hotspot_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 hotspot_msgs(3), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_hotspot_delay5x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_hotspot_delay5x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 hotspot_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_hotspot_delay0x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_hotspot_delay0x5.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 hotspot_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_hotspot_delay8x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_hotspot_delay8x5.vcd", 8, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
                 hotspot_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
@@ -226,22 +226,22 @@ def test_mesh_hotspot_delay8x5( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mesh_partition_delay0x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_partition_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 partition_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_partition_delay5x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_partition_delay5x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 partition_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_partition_delay0x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_partition_delay0x5.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 partition_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_partition_delay8x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_partition_delay8x5.vcd", 8, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
                 partition_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
@@ -250,22 +250,22 @@ def test_mesh_partition_delay8x5( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mesh_uniform_random_delay0x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_uniform_random_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 uniform_random_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_uniform_random_delay0x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_uniform_random_delay0x5.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 uniform_random_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_uniform_random_delay5x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_uniform_random_delay5x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 uniform_random_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_uniform_random_delay8x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_uniform_random_delay8x5.vcd", 8, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
                 uniform_random_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
@@ -274,22 +274,22 @@ def test_mesh_uniform_random_delay8x5( dump_vcd, test_verilog ):
 #-------------------------------------------------------------------------
 
 def test_mesh_tornado_delay0x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_tornado_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 tornado_msgs(24), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_tornado_delay5x0( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_tornado_delay5x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 tornado_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_tornado_delay0x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_tornado_delay0x5.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 tornado_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 
 def test_mesh_tornado_delay8x5( dump_vcd, test_verilog ):
-  run_net_test( dump_vcd, "Mesh_tornado_delay8x5.vcd", 8, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
                 tornado_msgs(8), nrouters, nmessages,
                 payload_nbits, nentries, test_verilog )
 

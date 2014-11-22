@@ -180,7 +180,7 @@ def basic_msgs():
 #-------------------------------------------------------------------------
 
 def test_router_basic_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterBasic_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 #-------------------------------------------------------------------------
@@ -188,7 +188,7 @@ def test_router_basic_delay0x0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_router_basic_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterBasic_delay5x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 #-------------------------------------------------------------------------
@@ -196,7 +196,7 @@ def test_router_basic_delay5x0( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_router_basic_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterBasic_delay0x5.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 #-------------------------------------------------------------------------
@@ -204,7 +204,7 @@ def test_router_basic_delay0x5( dump_vcd ):
 #-------------------------------------------------------------------------
 
 def test_router_basic_delay3x8( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterBasic_delay3x8.vcd", 3, 8,
+  run_net_test( dump_vcd, get_vcd_filename(), 3, 8,
                 basic_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 #-------------------------------------------------------------------------
@@ -254,19 +254,19 @@ def hotspot_msgs():
 #-------------------------------------------------------------------------
 
 def test_router_hotspot_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 0, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
                 hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 def test_router_hotspot_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 5, 0,
+  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
                 hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 def test_router_hotspot_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 0, 5,
+  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
                 hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 def test_router_hotspot_delay3x8( dump_vcd ):
-  run_net_test( dump_vcd, "TRouterHotspot_delay0x0.vcd", 3, 8,
+  run_net_test( dump_vcd, get_vcd_filename(), 3, 8,
                 hotspot_msgs(), 5, nrouters, nmessages, payload_nbits, 4 )
 
 # TODO: arbitration test, need specific order
