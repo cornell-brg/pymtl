@@ -206,8 +206,8 @@ def test_portbundle_queue_sim( dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  #if dump_vcd:
-  #  sim.dump_vcd( "PortBundle_test.vcd" )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-----------------------------------------------------------------------
@@ -318,8 +318,8 @@ def test_portbundle_param_queue_sim( dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  #if dump_vcd:
-  #  sim.dump_vcd( "PortBundle_test.vcd" )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-----------------------------------------------------------------------
@@ -461,6 +461,6 @@ def test_portbundle_bitstruct_param_queue_sim( dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  #if dump_vcd:
-  #  sim.dump_vcd( "PortBundle_test.vcd" )
+  if dump_vcd:
+    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
