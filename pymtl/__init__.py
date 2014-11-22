@@ -58,13 +58,11 @@ def get_vcd_filename():
   object (a.k.a. the test name shown at the commandline) to generate a
   good name for VCD output files."""
   import inspect, os
-  _, filen,_,_,_,_ = inspect.getouterframes( inspect.currentframe() )[1]
-  frame, x,_,_,_,_ = inspect.getouterframes( inspect.currentframe() )[2]
-  test_id          = frame.f_locals['pyfuncitem'].nodeid
-  dir_, file_      = os.path.split( filen )
-  test_ext         = '_test.py'
-  assert file_.endswith( test_ext )
-  return '{}_{}.vcd'.format( file_[:-len(test_ext)], test_id.split(':')[-1] )
+  pframe, _,_,_,_,_ = inspect.getouterframes( inspect.currentframe() )[1]
+  gframe, x,_,_,_,_ = inspect.getouterframes( inspect.currentframe() )[2]
+  test_id           = gframe.f_locals['pyfuncitem'].nodeid
+  test_module       = inspect.getmodule( pframe ).__name__
+  return '{}.{}.vcd'.format( test_module, test_id.split(':')[-1] )
 
 #-----------------------------------------------------------------------
 # pymtl namespace
