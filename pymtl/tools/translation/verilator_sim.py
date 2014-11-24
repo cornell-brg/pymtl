@@ -13,7 +13,7 @@ import filecmp
 #-----------------------------------------------------------------------
 # get_verilated
 #-----------------------------------------------------------------------
-def get_verilated( model_inst ):
+def get_verilated( model_inst, dump_vcd=False ):
 
   model_inst.elaborate()
 
@@ -44,7 +44,7 @@ def get_verilated( model_inst ):
   if not cached:
     print "NOT CACHED", verilog_file
     verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file )
+                      lib_file, py_wrapper_file, dump_vcd )
 
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )

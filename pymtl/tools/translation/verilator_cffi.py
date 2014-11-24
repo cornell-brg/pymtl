@@ -15,12 +15,12 @@ from ...model.PortBundle import PortBundle
 #-----------------------------------------------------------------------
 # Create a PyMTL compatible interface for Verilog HDL.
 def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file ):
+                      lib_file, py_wrapper_file, dump_vcd ):
 
   model_name = model.class_name
 
-  # Verilate the model
-  verilate_model( verilog_file, model_name )  # TODO: clean this up
+  # Verilate the model  # TODO: clean this up
+  verilate_model( verilog_file, model_name, dump_vcd )
 
   # Add names to ports of module
   for port in model.get_ports():
@@ -28,14 +28,12 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
     port.verilator_name = verilator_mangle( port.verilog_name )
 
   # Create C++ Wrapper
-  cdefs = create_c_wrapper( model, c_wrapper_file )
+  cdefs = create_c_wrapper( model, c_wrapper_file, dump_vcd )
 
   # Create Shared C Library
-  create_shared_lib( model_name, c_wrapper_file, lib_file )
+  create_shared_lib( model_name, c_wrapper_file, lib_file, dump_vcd )
 
   # Create PyMTL wrapper for CFFI interface to Verilated model
-  #pymtl_wrapper_from_ports( in_ports, out_ports, model_name,
-  print "HEREEEE"
   create_verilator_py_wrapper( model, py_wrapper_file, lib_file, cdefs )
 
 #-----------------------------------------------------------------------
@@ -43,11 +41,12 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
 #-----------------------------------------------------------------------
 # Convert Verilog HDL into a C++ simulator using Verilator.
 # http://www.veripool.org/wiki/verilator
-def verilate_model( filename, model_name ):
+def verilate_model( filename, model_name, dump_vcd ):
 
-  # TODO: add '-trace' to options if --dump-vcd flag is set
   verilator_flags = '-Wno-lint -Wno-UNOPTFLAT ' \
                     '--unroll-count 1000000 --unroll-stmts 1000000'
+  if dump_vcd:
+    verilator_flags += ' --trace'
 
   # NOTE: remove the obj_dir because issues with staleness...
   cmd = 'rm -r obj_dir_{model_name}; '        \
@@ -66,7 +65,7 @@ def verilate_model( filename, model_name ):
 # create_c_wrapper
 #-----------------------------------------------------------------------
 # Generate a C wrapper file for Verilated C++.
-def create_c_wrapper( model, c_wrapper_file ):
+def create_c_wrapper( model, c_wrapper_file, dump_vcd ):
 
   template_filename = '../pymtl/tools/translation/verilator_wrapper.templ.c'
   ports = model.get_ports()
@@ -98,12 +97,14 @@ def create_c_wrapper( model, c_wrapper_file ):
 
   # Create port declaration, initialization, and extern statements
   pfx         = 'extern '
+  indent_zero = '\n'
+  indent_two  = '\n  '
   indent_four = '\n    '
   indent_six  = '\n      '
 
-  port_externs = indent_six .join( [ pfx+port_to_decl( x ) for x in ports ] )
-  port_decls   = indent_four.join( [     port_to_decl( x ) for x in ports ] )
-  port_inits   = indent_six .join( [     port_to_init( x ) for x in ports ] )
+  port_externs = indent_two .join( [ pfx+port_to_decl( x ) for x in ports ] )
+  port_decls   = indent_zero.join( [     port_to_decl( x ) for x in ports ] )
+  port_inits   = indent_two .join( [     port_to_init( x ) for x in ports ] )
 
   # Generate the source code using the template
   with open( template_filename , 'r' ) as template, \
@@ -114,11 +115,12 @@ def create_c_wrapper( model, c_wrapper_file ):
                           port_externs = port_externs,
                           port_decls   = port_decls,
                           port_inits   = port_inits,
+                          dump_vcd     = '1' if dump_vcd else '0',
                         )
 
     output.write( c_src )
 
-  return port_decls
+  return port_decls.replace( indent_zero, indent_six )
 
 #-----------------------------------------------------------------------
 # create_shared_lib
@@ -165,7 +167,7 @@ def create_c_wrapper( model, c_wrapper_file ):
 #
 # http://www.veripool.org/projects/verilator/wiki/Manual-verilator
 #
-def create_shared_lib( model_name, c_wrapper_file, lib_file ):
+def create_shared_lib( model_name, c_wrapper_file, lib_file, dump_vcd ):
 
   # Compiler template string
   compile_cmd  = 'g++ {flags} -I {verilator} -o {libname} {cpp_sources}'
@@ -177,12 +179,14 @@ def create_shared_lib( model_name, c_wrapper_file, lib_file ):
                    'obj_dir_{model_name}/V{model_name}.cpp',
                    'obj_dir_{model_name}/V{model_name}__Syms.cpp',
                    '{verilator}/verilated.cpp',
-                   # TODO: add trace sources if --dump-vcd flag is set
-                   #'obj_dir_{model_name}/V{model_name}__Trace.cpp',
-                   #'obj_dir_{model_name}/V{model_name}__Trace__Slow.cpp',
-                   #'{verilator}/verilated_vcd_c.cpp',
                    '{c_wrapper}'
-                 ])
+                 ]
+                 # Add the following sources only if dump_vcd
+                 + ( [] if not dump_vcd else [
+                   '{verilator}/verilated_vcd_c.cpp',
+                   'obj_dir_{model_name}/V{model_name}__Trace.cpp',
+                   'obj_dir_{model_name}/V{model_name}__Trace__Slow.cpp',
+                 ]))
 
   # Substitute flags in compiler string, then any remaining flags
   compile_cmd = compile_cmd.format( **vars() )
