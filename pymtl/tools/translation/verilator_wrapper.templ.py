@@ -50,11 +50,19 @@ class {model_name}( Model ):
       s._model.eval()
 
       # set outputs
+      # FIXME: currently write all outputs, not just combinational outs
       {set_comb}
 
     @s.posedge_clk
     def tick():
 
+      s._model.clk[0] = 0
+      s._model.eval()
+      s._model.clk[0] = 1
+      s._model.eval()
+      s._model.clk[0] = 0
+
       # double buffer register outputs
+      # FIXME: currently write all outputs, not just registered outs
       {set_next}
 

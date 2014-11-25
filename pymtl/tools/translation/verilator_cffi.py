@@ -233,6 +233,7 @@ def create_verilator_py_wrapper( model, wrapper_filename, lib_file, cdefs ):
     recurse_port_hierarchy( x, port_defs )
 
   for port in model.get_inports():
+    if port.name == 'clk': continue
     input_ = set_input_stmt( port )
     set_inputs.extend( input_ )
 
