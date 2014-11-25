@@ -43,7 +43,7 @@ class TestHarness (Model):
                  for x in xrange( 5 ) ]
 
     if s.test_verilog:
-      s.router = test_verilog, get_verilated( s.router )
+      s.router = get_verilated( s.router, s.test_verilog )
 
     # connect
 
