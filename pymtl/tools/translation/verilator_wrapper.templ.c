@@ -58,7 +58,7 @@ void create_model() {{
   Verilated::traceEverOn( true );
   tfp = new VerilatedVcdC();
   model->trace( tfp, 99 );
-  tfp->open( "{model_name}.vcd" );
+  tfp->open( "{vcd_prefix}.{model_name}.vcd" );
   trace_time = 0;
   prev_clk   = 0;
 #endif
@@ -103,6 +103,7 @@ void eval() {{
 
   // dump current signal values
   tfp->dump( trace_time );
+  tfp->flush();
 #endif
 
   model->eval();

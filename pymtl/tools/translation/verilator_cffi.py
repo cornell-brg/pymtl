@@ -115,6 +115,7 @@ def create_c_wrapper( model, c_wrapper_file, dump_vcd ):
                           port_externs = port_externs,
                           port_decls   = port_decls,
                           port_inits   = port_inits,
+                          vcd_prefix   = dump_vcd[:-4],
                           dump_vcd     = '1' if dump_vcd else '0',
                         )
 
