@@ -122,7 +122,6 @@ class SimulationTool( object ):
     self.eval_combinational()
 
     # Clock generation needed by VCD tracing
-    self.model.clk.value = 0
     self.model.clk.value = 1
 
     # Distinguish between events caused by input vectors changing (above)
@@ -143,6 +142,7 @@ class SimulationTool( object ):
 
     # Increment the simulator cycle count
     self.ncycles += 1
+    self.model.clk.value = 0
 
     # Tell the metrics module to prepare for the next cycle
     self.metrics.incr_metrics_cycle()

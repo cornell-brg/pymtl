@@ -61,6 +61,7 @@ class {model_name}( Model ):
       s._model.clk[0] = 1
       s._model.eval()
       s._model.clk[0] = 0
+      s._model.eval()
 
       # double buffer register outputs
       # FIXME: currently write all outputs, not just registered outs

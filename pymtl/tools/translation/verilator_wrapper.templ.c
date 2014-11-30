@@ -96,7 +96,11 @@ void destroy_model() {{
 //
 void eval() {{
 
+  // evaluate one time step
+  model->eval();
+
 #if DUMP_VCD
+
   // update simulation time only on clock toggle
   if (prev_clk != *clk) {{ trace_time += 5; }}
   prev_clk = *clk;
@@ -106,5 +110,4 @@ void eval() {{
   tfp->flush();
 #endif
 
-  model->eval();
 }}
