@@ -13,7 +13,7 @@ import filecmp
 #-----------------------------------------------------------------------
 # get_verilated
 #-----------------------------------------------------------------------
-def get_verilated( model_inst, dump_vcd=False ):
+def get_verilated( model_inst, dump_vcd='' ):
 
   model_inst.elaborate()
 
