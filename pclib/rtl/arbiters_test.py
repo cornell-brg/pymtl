@@ -12,7 +12,7 @@ from arbiters   import RoundRobinArbiterEn
 # run_test
 #------------------------------------------------------------------------------
 # Test driver for RoundRobinArbiter
-def run_test( dump_vcd, model, test_vectors ):
+def run_test( model, test_vectors ):
 
   # Instantiate and elaborate the model
 
@@ -29,8 +29,6 @@ def run_test( dump_vcd, model, test_vectors ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #------------------------------------------------------------------------------
@@ -39,10 +37,12 @@ def run_test( dump_vcd, model, test_vectors ):
 # RoundRobinArbiter with four requesters
 def test_rr_arb_4( dump_vcd, test_verilog ):
   model = RoundRobinArbiter( 4 )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
 
-  run_test( get_vcd_filename() if dump_vcd else False, model, [
+  run_test( model, [
 
     # reqs     grants
     [ 0b0000,  0b0000 ],
@@ -76,7 +76,7 @@ def test_rr_arb_4( dump_vcd, test_verilog ):
 # run_en_test
 #------------------------------------------------------------------------------
 # Test driver for RoundRobinArbiterEn
-def run_en_test( dump_vcd, model, test_vectors ):
+def run_en_test( model, test_vectors ):
 
   # Instantiate and elaborate the model
 
@@ -94,8 +94,6 @@ def run_en_test( dump_vcd, model, test_vectors ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #------------------------------------------------------------------------------
@@ -105,10 +103,12 @@ def run_en_test( dump_vcd, model, test_vectors ):
 def test_rr_arb_en_4( dump_vcd, test_verilog ):
 
   model = RoundRobinArbiterEn( 4 )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
 
-  run_en_test( get_vcd_filename() if dump_vcd else False, model, [
+  run_en_test( model, [
 
     # reqs     grants
     [ 0, 0b0000,  0b0000 ],

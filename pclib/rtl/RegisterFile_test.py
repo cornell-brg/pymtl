@@ -35,6 +35,8 @@ def test_regfile_1R1W( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = RegisterFile( nbits=16, nregs=8, rd_ports=1 )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -54,8 +56,6 @@ def test_regfile_1R1W( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -80,6 +80,8 @@ def test_regfile_2R1W( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = RegisterFile( nbits=16, nregs=8, rd_ports=2 )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -100,8 +102,6 @@ def test_regfile_2R1W( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -133,6 +133,8 @@ def test_regfile_1R1W_const_zero( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = RegisterFile( nbits=16, nregs=8, rd_ports=1, const_zero=True )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -152,6 +154,4 @@ def test_regfile_1R1W_const_zero( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()

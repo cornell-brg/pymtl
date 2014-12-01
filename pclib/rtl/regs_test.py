@@ -15,6 +15,8 @@ from regs       import *
 def test_reg( dump_vcd, test_verilog ):
 
   model = Reg(16)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
 
@@ -48,8 +50,6 @@ def test_reg( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -59,6 +59,8 @@ def test_reg( dump_vcd, test_verilog ):
 def test_reg_en( dump_vcd, test_verilog ):
 
   model = RegEn(16)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
 
@@ -96,15 +98,13 @@ def test_reg_en( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
 # Register with reset signal unit tests
 #-------------------------------------------------------------------------
 
-def run_test_reg_rst( dump_vcd, model, test_vectors ):
+def run_test_reg_rst( model, test_vectors ):
 
   # Instantiate and elaborate the model
 
@@ -122,8 +122,6 @@ def run_test_reg_rst( dump_vcd, model, test_vectors ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 @pytest.mark.parametrize( "reset", [
@@ -133,10 +131,12 @@ def run_test_reg_rst( dump_vcd, model, test_vectors ):
 ])
 def test_reg_rst( dump_vcd, test_verilog, reset):
   model = RegRst( 16, reset )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
 
-  run_test_reg_rst( get_vcd_filename() if dump_vcd else False, model, [
+  run_test_reg_rst( model, [
     # in      out
     [ 0x0a0a,  reset ],
     [ 0x0b0b, 0x0a0a ],
@@ -153,7 +153,7 @@ def test_reg_rst( dump_vcd, test_verilog, reset):
 # Register with reset signal unit tests
 #-------------------------------------------------------------------------
 
-def run_test_reg_en_rst( dump_vcd, model, test_vectors ):
+def run_test_reg_en_rst( model, test_vectors ):
 
   # Instantiate and elaborate the model
 
@@ -172,8 +172,6 @@ def run_test_reg_en_rst( dump_vcd, model, test_vectors ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 @pytest.mark.parametrize( "reset", [
@@ -183,10 +181,12 @@ def run_test_reg_en_rst( dump_vcd, model, test_vectors ):
 ])
 def test_reg_en_rst( dump_vcd, test_verilog, reset ):
   model = RegEnRst( 16, reset )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
 
-  run_test_reg_en_rst( get_vcd_filename() if dump_vcd else False, model, [
+  run_test_reg_en_rst( model, [
     # in      en out
     [ 0x0a0a, 0,  reset ],
     [ 0x0b0b, 1,  reset ],

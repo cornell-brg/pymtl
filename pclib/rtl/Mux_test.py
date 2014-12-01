@@ -16,6 +16,8 @@ def run_test_mux( dump_vcd, test_verilog,
   # Instantiate and elaborate the model
 
   model = ModelType(16, num_inputs)
+  if dump_vcd:
+    model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -34,8 +36,6 @@ def run_test_mux( dump_vcd, test_verilog,
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #-------------------------------------------------------------------------

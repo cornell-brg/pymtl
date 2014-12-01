@@ -28,15 +28,7 @@ class TestVectorSimulator( object ):
     self.set_inputs_func     = set_inputs_func
     self.verify_outputs_func = verify_outputs_func
     self.test_vectors        = test_vectors
-    self.vcd_file_name       = None
     self.wait_cycles         = wait_cycles
-
-  #-----------------------------------------------------------------------
-  # Dump VCD
-  #-----------------------------------------------------------------------
-
-  def dump_vcd( self, vcd_file_name ):
-    self.vcd_file_name = vcd_file_name
 
   #-----------------------------------------------------------------------
   # Run test
@@ -47,11 +39,6 @@ class TestVectorSimulator( object ):
     # Create a simulator using the simulation tool
 
     sim = SimulationTool( self.model )
-
-    # Dump vcd
-
-    if self.vcd_file_name != None:
-      sim.dump_vcd( self.vcd_file_name )
 
     # Iterate setting the inputs and verifying the outputs each cycle
 

@@ -27,6 +27,8 @@ def test_Mux( dump_vcd, test_verilog ):
   # Select and elaborate the model under test
 
   model = Mux( nports, data_nbits )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -42,8 +44,6 @@ def test_Mux( dump_vcd, test_verilog ):
 
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()
@@ -69,6 +69,8 @@ def test_Demux( dump_vcd, test_verilog ):
   # Select and elaborate the model under test
 
   model = Demux( nports, data_nbits )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -84,8 +86,6 @@ def test_Demux( dump_vcd, test_verilog ):
 
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()

@@ -587,7 +587,7 @@ class IncrPipe (Model):
 class TestHarness (Model):
 
   def __init__( s, ModelType, src_msgs, sink_msgs,
-                src_delay, sink_delay, test_verilog ):
+                src_delay, sink_delay, test_verilog, dump_vcd ):
 
     # Instantiate models
 
@@ -595,6 +595,7 @@ class TestHarness (Model):
     s.incr_pipe  = ModelType  ( 8 )
     s.sink       = TestSink   ( 8, sink_msgs, sink_delay )
 
+    s.incr_pipe.vcd_file = dump_vcd
     if test_verilog:
       s.incr_pipe = get_verilated( s.incr_pipe )
 
@@ -621,14 +622,16 @@ def run_incr_pipe_test( dump_vcd, vcd_file_name, src_msgs, sink_msgs,
   # Instantiate and elaborate the model
 
   model = TestHarness( ModelType, src_msgs, sink_msgs,
-                       src_delay, sink_delay, test_verilog )
+                       src_delay, sink_delay, test_verilog,
+                       vcd_file_name if dump_vcd else ''
+                     )
+  if dump_vcd:
+    model.vcd_file = vcd_file_name
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 

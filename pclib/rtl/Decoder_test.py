@@ -21,6 +21,8 @@ def run_decoder_test( dump_vcd, test_verilog, model, test_vectors ):
 
   # Select and elaborate the model under test
 
+  if dump_vcd:
+    model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -28,9 +30,6 @@ def run_decoder_test( dump_vcd, test_verilog, model, test_vectors ):
   # Create the simulator and configure it
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
 
   # Run the simulator
 

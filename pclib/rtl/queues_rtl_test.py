@@ -48,6 +48,8 @@ def test_single_element_normal_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementNormalQueue( 16 )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -70,8 +72,6 @@ def test_single_element_normal_queue_tv( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -103,6 +103,8 @@ def test_single_element_bypass_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementBypassQueue( 16 )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -125,8 +127,6 @@ def test_single_element_bypass_queue_tv( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -159,6 +159,8 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementPipelinedQueue( 16 )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -181,8 +183,6 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #=========================================================================
@@ -196,7 +196,7 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
 class TestHarness( Model ):
 
   def __init__( s, ModelType, src_msgs, sink_msgs,
-                src_delay, sink_delay, nbits, test_verilog ):
+                src_delay, sink_delay, nbits, test_verilog, vcd_file_name ):
 
     # Instantiate models
 
@@ -205,6 +205,7 @@ class TestHarness( Model ):
     s.sink   = TestSink   ( nbits, sink_msgs, sink_delay )
 
     if test_verilog:
+      s.queue.vcd_file = vcd_file_name
       s.queue = get_verilated( s.queue )
 
   def elaborate_logic( s ):
@@ -244,14 +245,13 @@ def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
   # Instantiate and elaborate the model
 
   model = TestHarness( ModelType, q_msgs, q_msgs,
-                       src_delay, sink_delay, nbits, test_verilog )
+                       src_delay, sink_delay, nbits, test_verilog,
+                       vcd_file_name)
   model.elaborate()
 
   # Run the test
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 
@@ -314,14 +314,13 @@ def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
   # Instantiate and elaborate the model
 
   model = TestHarness( ModelType, q_msgs, q_msgs,
-                       src_delay, sink_delay, nbits, test_verilog )
+                       src_delay, sink_delay, nbits, test_verilog,
+                       vcd_file_name )
   model.elaborate()
 
   # Run the test
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 
@@ -384,14 +383,13 @@ def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
   # Instantiate and elaborate the model
 
   model = TestHarness( ModelType, q_msgs, q_msgs,
-                       src_delay, sink_delay, nbits, test_verilog )
+                       src_delay, sink_delay, nbits, test_verilog,
+                       vcd_file_name )
   model.elaborate()
 
   # Run the test
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 
@@ -447,6 +445,8 @@ def run_test_queue( dump_vcd, test_verilog, ModelType, num_entries,
   # Instantiate and elaborate the model
 
   model = ModelType( num_entries, 16 )
+  if dump_vcd:
+    model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -469,8 +469,6 @@ def run_test_queue( dump_vcd, test_verilog, ModelType, num_entries,
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -552,6 +550,8 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementSkidQueue( 16 )
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -574,7 +574,5 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

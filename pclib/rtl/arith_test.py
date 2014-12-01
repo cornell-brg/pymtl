@@ -33,6 +33,8 @@ def test_adder( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = Adder(16)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -53,8 +55,6 @@ def test_adder( test_verilog, dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -83,6 +83,8 @@ def test_subtractor( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = Subtractor(16)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -100,8 +102,6 @@ def test_subtractor( test_verilog, dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -113,6 +113,8 @@ def run_test_incrementer( test_verilog, dump_vcd, increment_amount, test_vectors
   # Instantiate and elaborate the model
 
   model = Incrementer( 16, increment_amount )
+  if dump_vcd:
+    model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -129,8 +131,6 @@ def run_test_incrementer( test_verilog, dump_vcd, increment_amount, test_vectors
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 def test_incrementer_ia1( test_verilog, dump_vcd ):
@@ -181,6 +181,8 @@ def run_test_zero_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   # Instantiate and elaborate the model
 
   model = ZeroExtender( in_nbits, out_nbits )
+  if dump_vcd:
+    model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -197,8 +199,6 @@ def run_test_zero_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 def test_zero_extender_i1o4( test_verilog, dump_vcd ):
@@ -238,6 +238,8 @@ def run_test_sign_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   # Instantiate and elaborate the model
 
   model = SignExtender( in_nbits, out_nbits )
+  if dump_vcd:
+    model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -254,8 +256,6 @@ def run_test_sign_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 def test_sign_extender_i1o4( test_verilog, dump_vcd ):
@@ -314,6 +314,8 @@ def test_ZeroComparator( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = ZeroComparator(16)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -330,8 +332,6 @@ def test_ZeroComparator( test_verilog, dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -359,6 +359,8 @@ def test_EqComparator( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = EqComparator(16)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -376,8 +378,6 @@ def test_EqComparator( test_verilog, dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -408,6 +408,8 @@ def test_LtComparator( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = LtComparator(16)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -425,8 +427,6 @@ def test_LtComparator( test_verilog, dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -457,6 +457,8 @@ def test_GtComparator( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = GtComparator(16)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -474,8 +476,6 @@ def test_GtComparator( test_verilog, dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -487,6 +487,8 @@ def run_test_sign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   # Instantiate and elaborate the model
 
   model = SignUnit( nbits )
+  if dump_vcd:
+    model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -503,8 +505,6 @@ def run_test_sign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 def test_sign_unit_n4( test_verilog, dump_vcd ):
@@ -546,6 +546,8 @@ def run_test_unsign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   # Instantiate and elaborate the model
 
   model = UnsignUnit( nbits )
+  if dump_vcd:
+    model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -562,8 +564,6 @@ def run_test_unsign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
   sim.run_test()
 
 def test_unsign_unit_n4( test_verilog, dump_vcd ):
@@ -622,6 +622,8 @@ def test_LeftLogicalShifter( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = LeftLogicalShifter(6,3)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -639,8 +641,6 @@ def test_LeftLogicalShifter( test_verilog, dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -668,6 +668,8 @@ def test_RightLogicalShifter( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = RightLogicalShifter(6,3)
+  if dump_vcd:
+    model.vcd_file = get_vcd_filename()
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -685,7 +687,5 @@ def test_RightLogicalShifter( test_verilog, dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
