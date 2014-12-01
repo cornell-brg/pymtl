@@ -12,7 +12,12 @@ def pytest_addoption(parser):
 
 def pytest_funcarg__dump_vcd(request):
   """Dump VCD for each test."""
-  return request.config.option.dump_vcd
+  if request.config.option.dump_vcd:
+    test_module = request.module.__name__
+    test_name   = request.node.name
+    return '{}.{}.vcd'.format( test_module, test_name )
+  else:
+    return ''
 
 def pytest_funcarg__dump_asm(request):
   """Dump Assembly File for each test."""
