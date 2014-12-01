@@ -13,7 +13,7 @@ import filecmp
 #-----------------------------------------------------------------------
 # get_verilated
 #-----------------------------------------------------------------------
-def get_verilated( model_inst, dump_vcd='' ):
+def get_verilated( model_inst ):
 
   model_inst.elaborate()
 
@@ -25,6 +25,11 @@ def get_verilated( model_inst, dump_vcd='' ):
   c_wrapper_file  = model_name + '_v.cpp'
   py_wrapper_file = model_name + '_v.py'
   lib_file        = 'lib{}_v.so'.format( model_name )
+
+  try:
+    vcd_file      = model_inst.vcd_file
+  except AttributeError:
+    vcd_file      = ''
 
   # Write the output to a temporary file
   with open( temp_file, 'w+' ) as fd:
@@ -44,7 +49,7 @@ def get_verilated( model_inst, dump_vcd='' ):
   if not cached:
     print "NOT CACHED", verilog_file
     verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file, dump_vcd )
+                      lib_file, py_wrapper_file, vcd_file )
 
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )
@@ -53,6 +58,7 @@ def get_verilated( model_inst, dump_vcd='' ):
 
   # Get the model class from the module, instantiate and elaborate it
   model_class = imported_module.__dict__[ model_name ]
-  model_inst = model_class()
+  model_inst  = model_class()
+  model_inst.vcd_file = vcd_file
 
   return model_inst

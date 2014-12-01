@@ -83,6 +83,12 @@ class SimulationTool( object ):
     self._nets              = nets
     self._sequential_blocks = sequential_blocks
 
+    # Setup vcd dumping if it's configured
+
+    if hasattr( model, 'vcd_file' ) and model.vcd_file:
+      from vcd import VCDUtil
+      VCDUtil( self, model.vcd_file )
+
   #---------------------------------------------------------------------
   # reset
   #---------------------------------------------------------------------
@@ -224,10 +230,6 @@ class SimulationTool( object ):
       self.metrics.incr_add_callbk()
       if func != self._current_func:
         self._event_queue.enq( func.cb, func.id )
-
-  def dump_vcd( self, filename=None ):
-    from vcd import VCDUtil
-    VCDUtil( self, filename )
 
 #-----------------------------------------------------------------------
 # EventQueue
