@@ -66,7 +66,7 @@ class TestHarness( Model ):
 # run_proc_test
 #-----------------------------------------------------------------------
 # function to drive the unit tests
-def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
+def run_proc_test( ModelType, test_verilog, dump_vcd, input_list ):
 
   # Instantiate and elaborate the model
 
@@ -85,13 +85,12 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
 
   model = TestHarness( ModelType, memreq_params, memresp_params,
                        mem_delay, sparse_mem_img, test_verilog )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file )
 
   # Run the simulation
 
@@ -116,9 +115,8 @@ def run_proc_test( ModelType, test_verilog, dump_vcd, vcd_file, input_list ):
 #-----------------------------------------------------------------------
 # run_bypass_proc_test
 #-----------------------------------------------------------------------
-def run_bypass_proc_test( dump_vcd, test_verilog, vcd_file_name, input_list ):
-  run_proc_test( Tile, test_verilog,
-                 dump_vcd, vcd_file_name, input_list )
+def run_bypass_proc_test( dump_vcd, test_verilog, input_list ):
+  run_proc_test( Tile, test_verilog, dump_vcd, input_list )
 
 #---------------------------------------------------------------------------
 # X. mtc2 tests - matrix vector multiplier specific
@@ -178,12 +176,10 @@ def mtc2_1x1():
 
 @requires_xcc
 def test_mtc2_1x1_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                        [0]+mtc2_1x1() )
+  run_bypass_proc_test( dump_vcd, test_verilog, [0]+mtc2_1x1() )
 @requires_xcc
 def test_mtc2_1x1_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                        [5]+mtc2_1x1() )
+  run_bypass_proc_test( dump_vcd, test_verilog, [5]+mtc2_1x1() )
 
 def mtc2_3x3():
 
@@ -247,12 +243,10 @@ def mtc2_3x3():
 
 @requires_xcc
 def test_mtc2_3x3_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                        [0]+mtc2_3x3() )
+  run_bypass_proc_test( dump_vcd, test_verilog, [0]+mtc2_3x3() )
 @requires_xcc
 def test_mtc2_3x3_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                        [5]+mtc2_3x3() )
+  run_bypass_proc_test( dump_vcd, test_verilog, [5]+mtc2_3x3() )
 
 
 def j_after_ld_stall():
@@ -288,8 +282,7 @@ def j_after_ld_stall():
 
 @requires_xcc
 def test_j_after_ld_stall( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                        [0]+j_after_ld_stall() )
+  run_bypass_proc_test( dump_vcd, test_verilog, [0]+j_after_ld_stall() )
 
 def mul_scoreboard_clear_bug():
 
@@ -339,8 +332,7 @@ def mul_scoreboard_clear_bug():
 
 @requires_xcc
 def test_mul_scoreboard_clear_bug( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                        [0]+mul_scoreboard_clear_bug() )
+  run_bypass_proc_test( dump_vcd, test_verilog, [0]+mul_scoreboard_clear_bug() )
 
 #---------------------------------------------------------------------------
 # 0. bypass logic direct test
@@ -350,8 +342,7 @@ from proc.parc.bypass_direct_test import bypass_from_X
 
 @requires_xcc
 def test_bypass_direct_from_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bypass_from_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bypass_from_X() )
 
 #---------------------------------------------------------------------------
 # 1. parcv1-addiu tests
@@ -366,33 +357,27 @@ from proc.parc.parcv1_addiu import addiu_vmh_delay5
 
 @requires_xcc
 def test_bypass_addiu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addiu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addiu_no_hazards() )
 
 @requires_xcc
 def test_bypass_addiu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addiu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addiu_hazard_W() )
 
 @requires_xcc
 def test_bypass_addiu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addiu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addiu_hazard_M() )
 
 @requires_xcc
 def test_bypass_addiu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addiu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addiu_hazard_X() )
 
 @requires_vmh
 def test_bypass_addiu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addiu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addiu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_addiu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addiu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addiu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 2. parcv1-ori tests
@@ -407,33 +392,27 @@ from proc.parc.parcv1_ori import ori_vmh_delay5
 
 @requires_xcc
 def test_bypass_ori_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       ori_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, ori_no_hazards() )
 
 @requires_xcc
 def test_bypass_ori_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       ori_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, ori_hazard_W() )
 
 @requires_xcc
 def test_bypass_ori_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       ori_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, ori_hazard_M() )
 
 @requires_xcc
 def test_bypass_ori_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       ori_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, ori_hazard_X() )
 
 @requires_vmh
 def test_bypass_ori_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       ori_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, ori_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_ori_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       ori_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, ori_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 3. parcv1-lui tests
@@ -448,33 +427,27 @@ from proc.parc.parcv1_lui import lui_vmh_delay5
 
 @requires_xcc
 def test_bypass_lui_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lui_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lui_no_hazards() )
 
 @requires_xcc
 def test_bypass_lui_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lui_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lui_hazard_W() )
 
 @requires_xcc
 def test_bypass_lui_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lui_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lui_hazard_M() )
 
 @requires_xcc
 def test_bypass_lui_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lui_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lui_hazard_X() )
 
 @requires_vmh
 def test_bypass_lui_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lui_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lui_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_lui_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lui_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lui_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 4. parcv1-addu tests
@@ -489,33 +462,27 @@ from proc.parc.parcv1_addu import addu_vmh_delay5
 
 @requires_xcc
 def test_bypass_addu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addu_no_hazards() )
 
 @requires_xcc
 def test_bypass_addu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addu_hazard_W() )
 
 @requires_xcc
 def test_bypass_addu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addu_hazard_M() )
 
 @requires_xcc
 def test_bypass_addu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addu_hazard_X() )
 
 @requires_vmh
 def test_bypass_addu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_addu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       addu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, addu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 5. parcv1-lw tests
@@ -530,33 +497,27 @@ from proc.parc.parcv1_lw import lw_vmh_delay5
 
 @requires_xcc
 def test_bypass_lw_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lw_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lw_no_hazards() )
 
 @requires_xcc
 def test_bypass_lw_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lw_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lw_hazard_W() )
 
 @requires_xcc
 def test_bypass_lw_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lw_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lw_hazard_M() )
 
 @requires_xcc
 def test_bypass_lw_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lw_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lw_hazard_X() )
 
 @requires_vmh
 def test_bypass_lw_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lw_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lw_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_lw_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lw_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lw_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 6. parcv1-sw tests
@@ -571,33 +532,27 @@ from proc.parc.parcv1_sw import sw_vmh_delay5
 
 @requires_xcc
 def test_bypass_sw_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sw_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sw_no_hazards() )
 
 @requires_xcc
 def test_bypass_sw_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sw_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sw_hazard_W() )
 
 @requires_xcc
 def test_bypass_sw_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sw_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sw_hazard_M() )
 
 @requires_xcc
 def test_bypass_sw_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sw_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sw_hazard_X() )
 
 @requires_vmh
 def test_bypass_sw_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sw_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sw_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_sw_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sw_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sw_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 7. parcv1-jal tests
@@ -609,18 +564,15 @@ from proc.parc.parcv1_jal import jal_vmh_delay5
 
 @requires_xcc
 def test_bypass_jal_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jal_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jal_asm() )
 
 @requires_vmh
 def test_bypass_jal_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jal_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jal_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_jal_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jal_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jal_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 8. parcv1-jr tests
@@ -632,18 +584,15 @@ from proc.parc.parcv1_jr import jr_vmh_delay5
 
 @requires_xcc
 def test_bypass_jr_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jr_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jr_asm() )
 
 @requires_vmh
 def test_bypass_jr_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jr_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jr_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_jr_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jr_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jr_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 9. parcv1-bne tests
@@ -655,18 +604,15 @@ from proc.parc.parcv1_bne import bne_vmh_delay5
 
 @requires_xcc
 def test_bypass_bne_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bne_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bne_asm() )
 
 @requires_vmh
 def test_bypass_bne_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bne_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bne_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_bne_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bne_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bne_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 10. parcv2-andi tests
@@ -681,33 +627,27 @@ from proc.parc.parcv2_andi import andi_vmh_delay5
 
 @requires_xcc
 def test_bypass_andi_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       andi_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, andi_no_hazards() )
 
 @requires_xcc
 def test_bypass_andi_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       andi_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, andi_hazard_W() )
 
 @requires_xcc
 def test_bypass_andi_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       andi_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, andi_hazard_M() )
 
 @requires_xcc
 def test_bypass_andi_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       andi_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, andi_hazard_X() )
 
 @requires_vmh
 def test_bypass_andi_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       andi_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, andi_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_andi_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       andi_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, andi_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 11. parcv2-xori tests
@@ -722,33 +662,27 @@ from proc.parc.parcv2_xori import xori_vmh_delay5
 
 @requires_xcc
 def test_bypass_xori_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xori_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xori_no_hazards() )
 
 @requires_xcc
 def test_bypass_xori_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xori_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xori_hazard_W() )
 
 @requires_xcc
 def test_bypass_xori_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xori_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xori_hazard_M() )
 
 @requires_xcc
 def test_bypass_xori_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xori_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xori_hazard_X() )
 
 @requires_vmh
 def test_bypass_xori_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xori_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xori_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_xori_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xori_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xori_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 12. parcv2-slti tests
@@ -763,33 +697,27 @@ from proc.parc.parcv2_slti import slti_vmh_delay5
 
 @requires_xcc
 def test_bypass_slti_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slti_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slti_no_hazards() )
 
 @requires_xcc
 def test_bypass_slti_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slti_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slti_hazard_W() )
 
 @requires_xcc
 def test_bypass_slti_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slti_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slti_hazard_M() )
 
 @requires_xcc
 def test_bypass_slti_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slti_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slti_hazard_X() )
 
 @requires_vmh
 def test_bypass_slti_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slti_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slti_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_slti_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slti_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slti_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 13. parcv2-sltiu tests
@@ -804,33 +732,27 @@ from proc.parc.parcv2_sltiu import sltiu_vmh_delay5
 
 @requires_xcc
 def test_bypass_sltiu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltiu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltiu_no_hazards() )
 
 @requires_xcc
 def test_bypass_sltiu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltiu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltiu_hazard_W() )
 
 @requires_xcc
 def test_bypass_sltiu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltiu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltiu_hazard_M() )
 
 @requires_xcc
 def test_bypass_sltiu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltiu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltiu_hazard_X() )
 
 @requires_vmh
 def test_bypass_sltiu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltiu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltiu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_sltiu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltiu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltiu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 14. parcv2-sll tests
@@ -845,33 +767,27 @@ from proc.parc.parcv2_sll import sll_vmh_delay5
 
 @requires_xcc
 def test_bypass_sll_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sll_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sll_no_hazards() )
 
 @requires_xcc
 def test_bypass_sll_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sll_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sll_hazard_W() )
 
 @requires_xcc
 def test_bypass_sll_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sll_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sll_hazard_M() )
 
 @requires_xcc
 def test_bypass_sll_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sll_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sll_hazard_X() )
 
 @requires_vmh
 def test_bypass_sll_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sll_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sll_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_sll_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sll_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sll_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 15. parcv2-srl tests
@@ -886,33 +802,27 @@ from proc.parc.parcv2_srl import srl_vmh_delay5
 
 @requires_xcc
 def test_bypass_srl_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srl_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srl_no_hazards() )
 
 @requires_xcc
 def test_bypass_srl_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srl_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srl_hazard_W() )
 
 @requires_xcc
 def test_bypass_srl_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srl_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srl_hazard_M() )
 
 @requires_xcc
 def test_bypass_srl_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srl_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srl_hazard_X() )
 
 @requires_vmh
 def test_bypass_srl_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srl_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srl_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_srl_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srl_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srl_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 16. parcv2-sra tests
@@ -927,33 +837,27 @@ from proc.parc.parcv2_sra import sra_vmh_delay5
 
 @requires_xcc
 def test_bypass_sra_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sra_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sra_no_hazards() )
 
 @requires_xcc
 def test_bypass_sra_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sra_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sra_hazard_W() )
 
 @requires_xcc
 def test_bypass_sra_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sra_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sra_hazard_M() )
 
 @requires_xcc
 def test_bypass_sra_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sra_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sra_hazard_X() )
 
 @requires_vmh
 def test_bypass_sra_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sra_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sra_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_sra_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sra_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sra_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 17. parcv2-sllv tests
@@ -968,33 +872,27 @@ from proc.parc.parcv2_sllv import sllv_vmh_delay5
 
 @requires_xcc
 def test_bypass_sllv_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sllv_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sllv_no_hazards() )
 
 @requires_xcc
 def test_bypass_sllv_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sllv_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sllv_hazard_W() )
 
 @requires_xcc
 def test_bypass_sllv_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sllv_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sllv_hazard_M() )
 
 @requires_xcc
 def test_bypass_sllv_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sllv_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sllv_hazard_X() )
 
 @requires_vmh
 def test_bypass_sllv_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sllv_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sllv_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_sllv_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sllv_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sllv_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 18. parcv2-srlv tests
@@ -1009,33 +907,27 @@ from proc.parc.parcv2_srlv import srlv_vmh_delay5
 
 @requires_xcc
 def test_bypass_srlv_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srlv_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srlv_no_hazards() )
 
 @requires_xcc
 def test_bypass_srlv_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srlv_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srlv_hazard_W() )
 
 @requires_xcc
 def test_bypass_srlv_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srlv_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srlv_hazard_M() )
 
 @requires_xcc
 def test_bypass_srlv_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srlv_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srlv_hazard_X() )
 
 @requires_vmh
 def test_bypass_srlv_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srlv_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srlv_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_srlv_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srlv_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srlv_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 19. parcv2-srav tests
@@ -1050,33 +942,27 @@ from proc.parc.parcv2_srav import srav_vmh_delay5
 
 @requires_xcc
 def test_bypass_srav_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srav_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srav_no_hazards() )
 
 @requires_xcc
 def test_bypass_srav_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srav_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srav_hazard_W() )
 
 @requires_xcc
 def test_bypass_srav_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srav_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srav_hazard_M() )
 
 @requires_xcc
 def test_bypass_srav_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srav_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srav_hazard_X() )
 
 @requires_vmh
 def test_bypass_srav_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srav_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srav_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_srav_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       srav_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, srav_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 20. parcv2-subu tests
@@ -1091,33 +977,27 @@ from proc.parc.parcv2_subu import subu_vmh_delay5
 
 @requires_xcc
 def test_bypass_subu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       subu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, subu_no_hazards() )
 
 @requires_xcc
 def test_bypass_subu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       subu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, subu_hazard_W() )
 
 @requires_xcc
 def test_bypass_subu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       subu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, subu_hazard_M() )
 
 @requires_xcc
 def test_bypass_subu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       subu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, subu_hazard_X() )
 
 @requires_vmh
 def test_bypass_subu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       subu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, subu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_subu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       subu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, subu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 21. parcv2-and tests
@@ -1132,33 +1012,27 @@ from proc.parc.parcv2_and import and_vmh_delay5
 
 @requires_xcc
 def test_bypass_and_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       and_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, and_no_hazards() )
 
 @requires_xcc
 def test_bypass_and_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       and_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, and_hazard_W() )
 
 @requires_xcc
 def test_bypass_and_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       and_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, and_hazard_M() )
 
 @requires_xcc
 def test_bypass_and_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       and_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, and_hazard_X() )
 
 @requires_vmh
 def test_bypass_and_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       and_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, and_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_and_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       and_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, and_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 22. parcv2-or tests
@@ -1173,33 +1047,27 @@ from proc.parc.parcv2_or import or_vmh_delay5
 
 @requires_xcc
 def test_bypass_or_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       or_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, or_no_hazards() )
 
 @requires_xcc
 def test_bypass_or_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       or_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, or_hazard_W() )
 
 @requires_xcc
 def test_bypass_or_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       or_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, or_hazard_M() )
 
 @requires_xcc
 def test_bypass_or_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       or_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, or_hazard_X() )
 
 @requires_vmh
 def test_bypass_or_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       or_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, or_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_or_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       or_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, or_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 23. parcv2-xor tests
@@ -1214,33 +1082,27 @@ from proc.parc.parcv2_xor import xor_vmh_delay5
 
 @requires_xcc
 def test_bypass_xor_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xor_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xor_no_hazards() )
 
 @requires_xcc
 def test_bypass_xor_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xor_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xor_hazard_W() )
 
 @requires_xcc
 def test_bypass_xor_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xor_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xor_hazard_M() )
 
 @requires_xcc
 def test_bypass_xor_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xor_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xor_hazard_X() )
 
 @requires_vmh
 def test_bypass_xor_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xor_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xor_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_xor_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       xor_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, xor_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 24. parcv2-nor tests
@@ -1255,33 +1117,27 @@ from proc.parc.parcv2_nor import nor_vmh_delay5
 
 @requires_xcc
 def test_bypass_nor_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       nor_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, nor_no_hazards() )
 
 @requires_xcc
 def test_bypass_nor_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       nor_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, nor_hazard_W() )
 
 @requires_xcc
 def test_bypass_nor_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       nor_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, nor_hazard_M() )
 
 @requires_xcc
 def test_bypass_nor_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       nor_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, nor_hazard_X() )
 
 @requires_vmh
 def test_bypass_nor_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       nor_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, nor_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_nor_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       nor_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, nor_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 25. parcv2-slt tests
@@ -1296,33 +1152,27 @@ from proc.parc.parcv2_slt import slt_vmh_delay5
 
 @requires_xcc
 def test_bypass_slt_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slt_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slt_no_hazards() )
 
 @requires_xcc
 def test_bypass_slt_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slt_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slt_hazard_W() )
 
 @requires_xcc
 def test_bypass_slt_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slt_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slt_hazard_M() )
 
 @requires_xcc
 def test_bypass_slt_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slt_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slt_hazard_X() )
 
 @requires_vmh
 def test_bypass_slt_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slt_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slt_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_slt_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       slt_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, slt_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 26. parcv2-sltu tests
@@ -1337,33 +1187,27 @@ from proc.parc.parcv2_sltu import sltu_vmh_delay5
 
 @requires_xcc
 def test_bypass_sltu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltu_no_hazards() )
 
 @requires_xcc
 def test_bypass_sltu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltu_hazard_W() )
 
 @requires_xcc
 def test_bypass_sltu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltu_hazard_M() )
 
 @requires_xcc
 def test_bypass_sltu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltu_hazard_X() )
 
 @requires_vmh
 def test_bypass_sltu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_sltu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sltu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sltu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 27. parcv2-mul tests
@@ -1378,33 +1222,27 @@ from proc.parc.parcv2_mul import mul_vmh_delay5
 
 @requires_xcc
 def test_bypass_mul_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       mul_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, mul_no_hazards() )
 
 @requires_xcc
 def test_bypass_mul_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       mul_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, mul_hazard_W() )
 
 @requires_xcc
 def test_bypass_mul_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       mul_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, mul_hazard_M() )
 
 @requires_xcc
 def test_bypass_mul_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       mul_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, mul_hazard_X() )
 
 @requires_vmh
 def test_bypass_mul_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       mul_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, mul_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_mul_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       mul_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, mul_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 28. parcv2-div tests
@@ -1419,33 +1257,27 @@ from proc.parc.parcv2_div import div_vmh_delay5
 
 @requires_xcc
 def test_bypass_div_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       div_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, div_no_hazards() )
 
 @requires_xcc
 def test_bypass_div_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       div_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, div_hazard_W() )
 
 @requires_xcc
 def test_bypass_div_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       div_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, div_hazard_M() )
 
 @requires_xcc
 def test_bypass_div_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       div_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, div_hazard_X() )
 
 @requires_vmh
 def test_bypass_div_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       div_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, div_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_div_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       div_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, div_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 29. parcv2-divu tests
@@ -1460,33 +1292,27 @@ from proc.parc.parcv2_divu import divu_vmh_delay5
 
 @requires_xcc
 def test_bypass_divu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       divu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, divu_no_hazards() )
 
 @requires_xcc
 def test_bypass_divu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       divu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, divu_hazard_W() )
 
 @requires_xcc
 def test_bypass_divu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       divu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, divu_hazard_M() )
 
 @requires_xcc
 def test_bypass_divu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       divu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, divu_hazard_X() )
 
 @requires_vmh
 def test_bypass_divu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       divu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, divu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_divu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       divu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, divu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 30. parcv2-rem tests
@@ -1501,33 +1327,27 @@ from proc.parc.parcv2_rem import rem_vmh_delay5
 
 @requires_xcc
 def test_bypass_rem_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       rem_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, rem_no_hazards() )
 
 @requires_xcc
 def test_bypass_rem_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       rem_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, rem_hazard_W() )
 
 @requires_xcc
 def test_bypass_rem_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       rem_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, rem_hazard_M() )
 
 @requires_xcc
 def test_bypass_rem_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       rem_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, rem_hazard_X() )
 
 @requires_vmh
 def test_bypass_rem_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       rem_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, rem_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_rem_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       rem_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, rem_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 31. parcv2-remu tests
@@ -1542,33 +1362,27 @@ from proc.parc.parcv2_remu import remu_vmh_delay5
 
 @requires_xcc
 def test_bypass_remu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       remu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, remu_no_hazards() )
 
 @requires_xcc
 def test_bypass_remu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       remu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, remu_hazard_W() )
 
 @requires_xcc
 def test_bypass_remu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       remu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, remu_hazard_M() )
 
 @requires_xcc
 def test_bypass_remu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       remu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, remu_hazard_X() )
 
 @requires_vmh
 def test_bypass_remu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       remu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, remu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_remu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       remu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, remu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 32. parcv2-lb tests
@@ -1583,33 +1397,27 @@ from proc.parc.parcv2_lb import lb_vmh_delay5
 
 @requires_xcc
 def test_bypass_lb_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lb_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lb_no_hazards() )
 
 @requires_xcc
 def test_bypass_lb_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lb_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lb_hazard_W() )
 
 @requires_xcc
 def test_bypass_lb_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lb_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lb_hazard_M() )
 
 @requires_xcc
 def test_bypass_lb_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lb_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lb_hazard_X() )
 
 @requires_vmh
 def test_bypass_lb_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lb_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lb_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_lb_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lb_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lb_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 33. parcv2-lbu tests
@@ -1624,33 +1432,27 @@ from proc.parc.parcv2_lbu import lbu_vmh_delay5
 
 @requires_xcc
 def test_bypass_lbu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lbu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lbu_no_hazards() )
 
 @requires_xcc
 def test_bypass_lbu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lbu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lbu_hazard_W() )
 
 @requires_xcc
 def test_bypass_lbu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lbu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lbu_hazard_M() )
 
 @requires_xcc
 def test_bypass_lbu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lbu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lbu_hazard_X() )
 
 @requires_vmh
 def test_bypass_lbu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lbu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lbu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_lbu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lbu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lbu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 34. parcv2-lh tests
@@ -1665,33 +1467,27 @@ from proc.parc.parcv2_lh import lh_vmh_delay5
 
 @requires_xcc
 def test_bypass_lh_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lh_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lh_no_hazards() )
 
 @requires_xcc
 def test_bypass_lh_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lh_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lh_hazard_W() )
 
 @requires_xcc
 def test_bypass_lh_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lh_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lh_hazard_M() )
 
 @requires_xcc
 def test_bypass_lh_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lh_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lh_hazard_X() )
 
 @requires_vmh
 def test_bypass_lh_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lh_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lh_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_lh_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lh_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lh_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 35. parcv2-lhu tests
@@ -1706,33 +1502,27 @@ from proc.parc.parcv2_lhu import lhu_vmh_delay5
 
 @requires_xcc
 def test_bypass_lhu_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lhu_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lhu_no_hazards() )
 
 @requires_xcc
 def test_bypass_lhu_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lhu_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lhu_hazard_W() )
 
 @requires_xcc
 def test_bypass_lhu_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lhu_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lhu_hazard_M() )
 
 @requires_xcc
 def test_bypass_lhu_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lhu_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lhu_hazard_X() )
 
 @requires_vmh
 def test_bypass_lhu_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lhu_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lhu_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_lhu_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       lhu_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, lhu_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 36. parcv2-sb tests
@@ -1747,33 +1537,27 @@ from proc.parc.parcv2_sb import sb_vmh_delay5
 
 @requires_xcc
 def test_bypass_sb_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sb_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sb_no_hazards() )
 
 @requires_xcc
 def test_bypass_sb_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sb_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sb_hazard_W() )
 
 @requires_xcc
 def test_bypass_sb_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sb_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sb_hazard_M() )
 
 @requires_xcc
 def test_bypass_sb_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sb_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sb_hazard_X() )
 
 @requires_vmh
 def test_bypass_sb_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sb_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sb_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_sb_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sb_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sb_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 37. parcv2-sh tests
@@ -1788,33 +1572,27 @@ from proc.parc.parcv2_sh import sh_vmh_delay5
 
 @requires_xcc
 def test_bypass_sh_no_hazards( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sh_no_hazards() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sh_no_hazards() )
 
 @requires_xcc
 def test_bypass_sh_hazard_W( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sh_hazard_W() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sh_hazard_W() )
 
 @requires_xcc
 def test_bypass_sh_hazard_M( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sh_hazard_M() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sh_hazard_M() )
 
 @requires_xcc
 def test_bypass_sh_hazard_X( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sh_hazard_X() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sh_hazard_X() )
 
 @requires_vmh
 def test_bypass_sh_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sh_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sh_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_sh_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       sh_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, sh_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 38. parcv2-j tests
@@ -1826,20 +1604,17 @@ from proc.parc.parcv2_j import j_vmh_delay5
 
 @requires_xcc
 def test_bypass_j_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       j_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, j_asm() )
 
 @requires_vmh
 @requires_xcc
 def test_bypass_j_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       j_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, j_vmh_delay0() )
 
 @requires_vmh
 @requires_xcc
 def test_bypass_j_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       j_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, j_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 39. parcv2-jalr tests
@@ -1851,18 +1626,15 @@ from proc.parc.parcv2_jalr import jalr_vmh_delay5
 
 @requires_xcc
 def test_bypass_jalr_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jalr_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jalr_asm() )
 
 @requires_vmh
 def test_bypass_jalr_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jalr_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jalr_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_jalr_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       jalr_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, jalr_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 40. parcv2-beq tests
@@ -1874,18 +1646,15 @@ from proc.parc.parcv2_beq import beq_vmh_delay5
 
 @requires_xcc
 def test_bypass_beq_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       beq_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, beq_asm() )
 
 @requires_vmh
 def test_bypass_beq_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       beq_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, beq_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_beq_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       beq_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, beq_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 41. parcv2-blez tests
@@ -1897,18 +1666,15 @@ from proc.parc.parcv2_blez import blez_vmh_delay5
 
 @requires_xcc
 def test_bypass_blez_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       blez_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, blez_asm() )
 
 @requires_vmh
 def test_bypass_blez_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       blez_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, blez_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_blez_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       blez_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, blez_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 42. parcv2-bgtz tests
@@ -1920,18 +1686,15 @@ from proc.parc.parcv2_bgtz import bgtz_vmh_delay5
 
 @requires_xcc
 def test_bypass_bgtz_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bgtz_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bgtz_asm() )
 
 @requires_vmh
 def test_bypass_bgtz_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bgtz_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bgtz_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_bgtz_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bgtz_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bgtz_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 43. parcv2-bltz tests
@@ -1943,18 +1706,15 @@ from proc.parc.parcv2_bltz import bltz_vmh_delay5
 
 @requires_xcc
 def test_bypass_bltz_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bltz_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bltz_asm() )
 
 @requires_vmh
 def test_bypass_bltz_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bltz_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bltz_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_bltz_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bltz_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bltz_vmh_delay5() )
 
 #---------------------------------------------------------------------------
 # 44. parcv2-bgez tests
@@ -1966,16 +1726,13 @@ from proc.parc.parcv2_bgez import bgez_vmh_delay5
 
 @requires_xcc
 def test_bypass_bgez_asm( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bgez_asm() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bgez_asm() )
 
 @requires_vmh
 def test_bypass_bgez_vmh_delay0( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bgez_vmh_delay0() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bgez_vmh_delay0() )
 
 @requires_vmh
 def test_bypass_bgez_vmh_delay5( dump_vcd, test_verilog ):
-  run_bypass_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                       bgez_vmh_delay5() )
+  run_bypass_proc_test( dump_vcd, test_verilog, bgez_vmh_delay5() )
 

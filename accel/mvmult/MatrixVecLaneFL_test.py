@@ -37,14 +37,13 @@ class TestHarness( Model ):
 #------------------------------------------------------------------------------
 # run_mvmult_test
 #------------------------------------------------------------------------------
-def run_mvmult_test( dump_vcd, test_verilog, vcd_file_name, model, lane_id,
+def run_mvmult_test( dump_vcd, test_verilog, model, lane_id,
                      src_matrix, src_vector, dest_vector ):
 
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Load the memory
 
@@ -105,7 +104,7 @@ def mem_array_32bit( base_addr, data ):
 )
 def test_mvmult_lane0_row0( dump_vcd, mem_delay ):
   lane = 0
-  run_mvmult_test( dump_vcd, False, get_vcd_filename(),
+  run_mvmult_test( dump_vcd, False,
                    TestHarness( lane, mem_delay ), lane,
                    mem_array_32bit(  0, [ 5, 1 ,3, 99, 1, 1 ,1, 99, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
@@ -117,7 +116,7 @@ def test_mvmult_lane0_row0( dump_vcd, mem_delay ):
 )
 def test_mvmult_lane0_row2( dump_vcd, mem_delay ):
   lane = 0
-  run_mvmult_test( dump_vcd, False, get_vcd_filename(),
+  run_mvmult_test( dump_vcd, False,
                    TestHarness( lane, mem_delay ), lane,
                    mem_array_32bit(  0, [ 1, 2, 1] ),
                    mem_array_32bit( 12, [ 1, 2, 3] ),
@@ -129,7 +128,7 @@ def test_mvmult_lane0_row2( dump_vcd, mem_delay ):
 )
 def test_mvmult_lane2_row0( dump_vcd, mem_delay ):
   lane = 2
-  run_mvmult_test( dump_vcd, False, get_vcd_filename(),
+  run_mvmult_test( dump_vcd, False,
                    TestHarness( lane, mem_delay ), lane,
                    mem_array_32bit(  0, [ 5, 1 ,3, 99, 1, 1 ,1, 99, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
@@ -141,7 +140,7 @@ def test_mvmult_lane2_row0( dump_vcd, mem_delay ):
 )
 def test_mvmult_lane1_row0( dump_vcd, mem_delay ):
   lane = 1
-  run_mvmult_test( dump_vcd, False, get_vcd_filename(),
+  run_mvmult_test( dump_vcd, False,
                    TestHarness( lane, mem_delay ), lane,
                    mem_array_32bit(  0, [ 5, 1 ,3, 99, 1, 1 ,1, 99, 1, 2 ,1] ),
                    mem_array_32bit( 80, [ 1, 2, 3 ]),
@@ -192,14 +191,13 @@ class LaneManagerHarness( Model ):
 #------------------------------------------------------------------------------
 # run_lane_managed_test
 #------------------------------------------------------------------------------
-def run_lane_managed_test( dump_vcd, test_verilog, vcd_file_name, model,
+def run_lane_managed_test( dump_vcd, test_verilog, model,
                            src_matrix, src_vector, dest_vector ):
 
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Load the memory
 
@@ -238,7 +236,7 @@ def config_msg( addr, value ):
   ('mem_delay'), [0,5]
 )
 def test_managed_1lane( dump_vcd, mem_delay ):
-  run_lane_managed_test( dump_vcd, False, get_vcd_filename(),
+  run_lane_managed_test( dump_vcd, False,
                   LaneManagerHarness( 1, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr
@@ -256,7 +254,7 @@ def test_managed_1lane( dump_vcd, mem_delay ):
   ('mem_delay'), [0,5]
 )
 def test_managed_3lane( dump_vcd, mem_delay ):
-  run_lane_managed_test( dump_vcd, False, get_vcd_filename(),
+  run_lane_managed_test( dump_vcd, False,
                   LaneManagerHarness( 3, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr

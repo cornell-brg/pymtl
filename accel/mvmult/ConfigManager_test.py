@@ -38,6 +38,7 @@ def test_ConfigManager( dump_vcd, test_verilog ):
   # Select and elaborate the model under test
 
   model = ConfigManager( addr_nbits, data_nbits, dec_sel_sz, dec_out_sz )
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -68,8 +69,6 @@ def test_ConfigManager( dump_vcd, test_verilog ):
 
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()

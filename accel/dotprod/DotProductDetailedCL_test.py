@@ -1,6 +1,7 @@
 #=========================================================================
 # DotProductDetailedCL_test
 #=========================================================================
+# TODO: clean this up!!!
 
 import pytest
 
@@ -64,16 +65,15 @@ class TestHarness( Model ):
     return "{} -> {}".format( s.lane.line_trace(), s.mem.line_trace() )
 
 #------------------------------------------------------------------------------
-# run_mvmult_test
+# run_dot_test
 #------------------------------------------------------------------------------
-def run_mvmult_test( dump_vcd, vcd_file_name, model, lane_id,
-                     src_matrix, src_vector, exp_value):
+def run_dot_test( dump_vcd, model, lane_id,
+                  src_matrix, src_vector, exp_value):
 
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Load the memory
 
@@ -147,7 +147,7 @@ def mem_array_32bit( base_addr, data ):
          ]
 
 #------------------------------------------------------------------------------
-# test_mvmult
+# test_dot
 #------------------------------------------------------------------------------
 #  5 1 3   1    16
 #  1 1 1 . 2  =  6
@@ -158,25 +158,21 @@ def mem_array_32bit( base_addr, data ):
 )
 def test_dotproduct( dump_vcd, mem_delay, nmul_stages ):
   lane = 0
-  run_mvmult_test( dump_vcd, get_vcd_filename(),
-                   TestHarness( lane, nmul_stages, mem_delay ),
-                   lane,
-                   # NOTE: C++ has dummy data between rows when you have array**!
-                   mem_array_32bit(  0, [ 5, 1 ,3 ]),
-                   mem_array_32bit( 80, [ 1, 2, 3 ]),
-                   16,
-                 )
+  run_dot_test( dump_vcd, TestHarness( lane, nmul_stages, mem_delay ), lane,
+                # NOTE: C++ has dummy data between rows when you have array**!
+                mem_array_32bit(  0, [ 5, 1 ,3 ]),
+                mem_array_32bit( 80, [ 1, 2, 3 ]),
+                16,
+              )
 
 @pytest.mark.parametrize(
   ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
 def test_2dotprod( dump_vcd, mem_delay, nmul_stages ):
   lane = 0
-  run_mvmult_test( dump_vcd, get_vcd_filename(),
-                   TestHarness( lane, nmul_stages, mem_delay ),
-                   lane,
-                   # NOTE: C++ has dummy data between rows when you have array**!
-                   mem_array_32bit(  0, [ 5, 1 ,3, 9, 10 ]),
-                   mem_array_32bit( 80, [ 1, 2, 3, 9, 0 ]),
-                   16+81,
-                 )
+  run_dot_test( dump_vcd, TestHarness( lane, nmul_stages, mem_delay ), lane,
+                # NOTE: C++ has dummy data between rows when you have array**!
+                mem_array_32bit(  0, [ 5, 1 ,3, 9, 10 ]),
+                mem_array_32bit( 80, [ 1, 2, 3, 9, 0 ]),
+                16+81,
+              )

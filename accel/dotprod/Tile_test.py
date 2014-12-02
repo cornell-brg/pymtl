@@ -30,16 +30,19 @@ class TestHarness( Model ):
                              mem_delay, mem_nbytes=2**24  )
     s.proc_mgr = TestProcManager( s.mem, sparse_mem_img )
 
-    if test_verilog:
+    s.test_verilog = test_verilog
+
+  def elaborate_logic( s ):
+
+    if s.test_verilog:
       pytest.xfail(
       """Verilog translation currently fails for DotProduct because:
          - True/False keywords to not translate
          - Type inference from BitStructs currently fail
       """)
 
+      s.tile.vcd_file = s.vcd_file
       s.tile = get_verilated( s.tile )
-
-  def elaborate_logic( s ):
 
     # Connect Manager Signals
 
@@ -74,7 +77,7 @@ class TestHarness( Model ):
 # run_proc_test
 #-----------------------------------------------------------------------
 # function to drive the unit tests
-def run_proc_test( xcel_type, test_verilog, dump_vcd, vcd_file, input_list ):
+def run_proc_test( xcel_type, test_verilog, dump_vcd, input_list ):
 
   # Instantiate and elaborate the model
 
@@ -93,13 +96,12 @@ def run_proc_test( xcel_type, test_verilog, dump_vcd, vcd_file, input_list ):
 
   model = TestHarness( xcel_type, memreq_params, memresp_params,
                        mem_delay, sparse_mem_img, test_verilog )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file )
 
   # Run the simulation
 
@@ -1077,6 +1079,5 @@ def config_test( func ):
   [ config_test( t ) for t in tests ]
 )
 def test_tile( dump_vcd, test_verilog, xcel_type, name, asm_test ):
-  vcd_file_name = get_vcd_filename()
-  run_proc_test( xcel_type, test_verilog, dump_vcd, vcd_file_name, asm_test() )
+  run_proc_test( xcel_type, test_verilog, dump_vcd, asm_test() )
 

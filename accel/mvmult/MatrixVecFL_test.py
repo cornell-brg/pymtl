@@ -51,14 +51,13 @@ class SourceHarness( Model ):
 #------------------------------------------------------------------------------
 # run_lane_managed_test
 #------------------------------------------------------------------------------
-def run_lane_managed_test( dump_vcd, vcd_file_name, model,
+def run_lane_managed_test( dump_vcd, model,
                            src_matrix, src_vector, dest_vector ):
 
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Load the memory
 
@@ -115,7 +114,7 @@ def mem_array_32bit( base_addr, data ):
   ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
 def test_managed_1lane( dump_vcd, mem_delay, nmul_stages ):
-  run_lane_managed_test( dump_vcd, get_vcd_filename(),
+  run_lane_managed_test( dump_vcd,
                   SourceHarness( 1, nmul_stages, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr
@@ -136,7 +135,7 @@ def test_managed_1lane( dump_vcd, mem_delay, nmul_stages ):
   ('mem_delay','nmul_stages'), [(0,1),(0,4),(5,1),(5,4)]
 )
 def test_managed_3lane( dump_vcd,  mem_delay, nmul_stages ):
-  run_lane_managed_test( dump_vcd, get_vcd_filename(),
+  run_lane_managed_test( dump_vcd,
                   SourceHarness( 3, nmul_stages, mem_delay, 0,
                      [ config_msg( 1,   3), # size
                        config_msg( 2,   0), # r_addr

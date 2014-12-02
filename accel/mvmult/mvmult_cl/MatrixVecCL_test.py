@@ -65,7 +65,7 @@ class TestHarness (Model):
   (  5,  5 ),
   ( 10, 10 ),
 ])
-def test( src_delay, mem_delay ):
+def test( dump_vcd, src_delay, mem_delay ):
 
   # Test messages
 
@@ -92,6 +92,7 @@ def test( src_delay, mem_delay ):
   # Instantiate and elaborate the model
 
   model = TestHarness( 2, src_msgs, src_delay, mem_delay )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Write test data into the test memory

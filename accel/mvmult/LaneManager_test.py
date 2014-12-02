@@ -15,6 +15,7 @@ def test_LaneManager_OneLane( dump_vcd, test_verilog ):
   # Select and elaborate the model under test
 
   model = LaneManager( 1 )
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -63,8 +64,6 @@ def test_LaneManager_OneLane( dump_vcd, test_verilog ):
 
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()
@@ -77,6 +76,7 @@ def test_LaneManager_TwoLanes( dump_vcd, test_verilog ):
   # Select and elaborate the model under test
 
   model = LaneManager( 2 )
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -128,8 +128,6 @@ def test_LaneManager_TwoLanes( dump_vcd, test_verilog ):
 
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()

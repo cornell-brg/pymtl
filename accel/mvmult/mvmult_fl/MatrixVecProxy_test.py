@@ -103,11 +103,12 @@ class TestHarness (Model):
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( "mem_delay", [ 0, 5, 10 ] )
-def test( mem_delay ):
+def test( dump_vcd, mem_delay ):
 
   # Instantiate and elaborate the model
 
   model = TestHarness( 2, mem_delay )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Write test data into the test memory

@@ -33,14 +33,15 @@ import argparse
 import sys
 import re
 import random
+import os
 
 from   pymtl import *
 
-from pclib import SparseMemoryImage
-from pclib import TestMemory
-from pclib import TestProcManager
-from pclib import mem_msgs
-from Tile      import Tile
+from pclib.test   import SparseMemoryImage
+from pclib.test   import TestMemory
+from pclib.test   import TestProcManager
+from pclib.ifaces import mem_msgs
+from Tile         import Tile
 
 #-------------------------------------------------------------------------
 # Command line processing
@@ -69,7 +70,7 @@ def parse_cmdline():
     choices=["vvadd","bsearch","cmult","mfilter","mvmult","mvmult-cp2"] )
 
   p.add_argument( "--dump-vcd", nargs='?',
-                  default=False, const="dump.vcd" )
+                  default=False, const=os.path.basename( __file__ ) )
 
   p.add_argument( "--stats",    nargs='?', default=False, const="-" )
 

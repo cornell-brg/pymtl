@@ -20,6 +20,7 @@ def test_DummyCOP_directed( dump_vcd ):
   # Select and elaborate the model under test
 
   model = DummyCOPCL()
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   data_nbits = 32
@@ -61,8 +62,6 @@ def test_DummyCOP_directed( dump_vcd ):
 
   # Create the simulator and configure it
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulator
   sim.run_test()
@@ -120,7 +119,7 @@ class TestHarness( Model ):
 # run_proc_test
 #-----------------------------------------------------------------------
 # function to drive the unit tests
-def run_proc_test( dump_vcd, test_verilog, vcd_file, input_list ):
+def run_proc_test( dump_vcd, test_verilog, input_list ):
 
   # Instantiate and elaborate the model
 
@@ -138,13 +137,12 @@ def run_proc_test( dump_vcd, test_verilog, vcd_file, input_list ):
 
   model = TestHarness( None, memreq_params, memresp_params,
                        mem_delay, sparse_mem_img, test_verilog )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file )
 
   # Run the simulation
 
@@ -171,8 +169,7 @@ def run_proc_test( dump_vcd, test_verilog, vcd_file, input_list ):
 from proc.parc.parcv1_addiu import addiu_no_hazards
 @requires_xcc
 def test_dummy_addiu_no_hazards( dump_vcd, test_verilog ):
-  run_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                 addiu_no_hazards()+[0] )
+  run_proc_test( dump_vcd, test_verilog, addiu_no_hazards()+[0] )
 
 #-----------------------------------------------------------------------
 # mtc2 assembly
@@ -210,6 +207,5 @@ def mtc2_no_hazards():
 #-----------------------------------------------------------------------
 @requires_xcc
 def test_dummy_mtc2_no_hazards( dump_vcd, test_verilog ):
-  run_proc_test( dump_vcd, test_verilog, get_vcd_filename(),
-                 mtc2_no_hazards() )
+  run_proc_test( dump_vcd, test_verilog, mtc2_no_hazards() )
 
