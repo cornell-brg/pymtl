@@ -10,7 +10,6 @@ from TestSimpleSink   import TestSimpleSink
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
-
 class TestHarness( Model ):
 
   def __init__( s, nbits, msgs ):
@@ -38,9 +37,8 @@ class TestHarness( Model ):
     return s.src.line_trace() + " | " + s.sink.line_trace()
 
 #-------------------------------------------------------------------------
-# TestSimpleSink unit test
+# test_basics
 #-------------------------------------------------------------------------
-
 def test_basics( dump_vcd ):
 
   # Test messages
@@ -59,13 +57,12 @@ def test_basics( dump_vcd ):
   # Instantiate and elaborate the model
 
   model = TestHarness( 16, test_msgs )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
 
   # Run the simulation
 

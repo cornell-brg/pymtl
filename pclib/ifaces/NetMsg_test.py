@@ -3,9 +3,12 @@
 #=========================================================================
 # Test suite for the network message type.
 
-from pymtl import *
-from NetMsg    import NetMsg
+from pymtl  import *
+from NetMsg import NetMsg
 
+#-------------------------------------------------------------------------
+# test_netmsg_fields
+#-------------------------------------------------------------------------
 def test_netmsg_fields():
 
   # Create msg
@@ -24,6 +27,9 @@ def test_netmsg_fields():
   assert msg.seqnum  == 255
   assert msg.payload == 0xaabbccdd
 
+#-------------------------------------------------------------------------
+# test_mk_msg
+#-------------------------------------------------------------------------
 def test_mk_msg():
 
   # Create msg

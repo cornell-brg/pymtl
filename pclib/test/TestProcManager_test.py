@@ -2,6 +2,8 @@
 # TestProcManager_test.py
 #=========================================================================
 
+import pytest
+
 from pymtl        import *
 from pclib.ifaces import InValRdyBundle, OutValRdyBundle
 from pclib.test   import SparseMemoryImage, TestMemory, TestProcManager
@@ -10,15 +12,15 @@ from pclib.test   import TestSource, TestSink
 import pclib.ifaces.mem_msgs as mem_msgs
 
 #-------------------------------------------------------------------------
-# Dummy Processor which contains Test Src/Sink Models
+# DummyProc
 #-------------------------------------------------------------------------
-
-class DummyProc (Model):
+class DummyProc( Model ):
+  """Dummy Processor which contains Test Src/Sink Models"""
 
   def __init__( s, mem_src_msgs, mem_sink_msgs, src_delay, sink_delay,
                 memreq_params, memresp_params ):
 
-    s.proc_go      = InPort( 1 )
+    s.proc_go      = InPort (  1 )
     s.proc_status  = OutPort( 32 )
 
     # Memory Request Port
@@ -47,9 +49,8 @@ class DummyProc (Model):
     return s.mem_src.line_trace() + " () " + s.mem_sink.line_trace()
 
 #-------------------------------------------------------------------------
-# Test harnsess
+# TestHarness
 #-------------------------------------------------------------------------
-
 class TestHarness (Model):
 
   def __init__( s, memreq_params, memresp_params, mem_src_msgs,
@@ -102,7 +103,7 @@ class TestHarness (Model):
 # run_proc_mgr_test
 #-------------------------------------------------------------------------
 
-def run_proc_mgr_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
+def run_proc_mgr_test( dump_vcd, src_delay, sink_delay,
                        mem_delay, test_msgs, sparse_mem_img ):
 
   # Create parameters
@@ -119,13 +120,12 @@ def run_proc_mgr_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
                        mem_src_msgs, mem_sink_msgs,
                        src_delay, sink_delay, mem_delay,
                        sparse_mem_img )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 
@@ -233,31 +233,12 @@ def single_port_mem_test_msgs():
 #-------------------------------------------------------------------------
 # TestProcManager unit test with delay = 0 x 0, mem_delay = 0
 #-------------------------------------------------------------------------
-
-def test_proc_manager_delay0x0_0( dump_vcd ):
-  run_proc_mgr_test( dump_vcd, get_vcd_filename(), 0, 0, 0,
-                     single_port_mem_test_msgs(), create_sparse_mem_img() )
-
-#-------------------------------------------------------------------------
-# TestProcManager unit test with delay = 0 x 0, mem_delay = 5
-#-------------------------------------------------------------------------
-
-def test_proc_manager_delay0x0_5( dump_vcd ):
-  run_proc_mgr_test( dump_vcd, get_vcd_filename(), 0, 0, 5,
-                     single_port_mem_test_msgs(), create_sparse_mem_img() )
-
-#-------------------------------------------------------------------------
-# TestProcManager unit test with delay = 5 x 10, mem_delay = 2
-#-------------------------------------------------------------------------
-
-def test_proc_manager_delay5x10_2( dump_vcd ):
-  run_proc_mgr_test( dump_vcd, get_vcd_filename(), 5, 10, 2,
-                     single_port_mem_test_msgs(), create_sparse_mem_img() )
-
-#-------------------------------------------------------------------------
-# TestProcManager unit test with delay = 10 x 5, mem_delay = 6
-#-------------------------------------------------------------------------
-
-def test_proc_manager_delay10x5_6( dump_vcd ):
-  run_proc_mgr_test( dump_vcd, get_vcd_filename(), 10, 5, 6,
+@pytest.mark.parametrize('src_delay,sink_delay,mem_delay', [
+  ( 0,  0, 0),
+  ( 0,  0, 5),
+  ( 5, 10, 2),
+  (10,  5, 6),
+])
+def test_proc_manager_delay0x0_0( dump_vcd, src_delay, sink_delay, mem_delay ):
+  run_proc_mgr_test( dump_vcd, src_delay, sink_delay, mem_delay,
                      single_port_mem_test_msgs(), create_sparse_mem_img() )

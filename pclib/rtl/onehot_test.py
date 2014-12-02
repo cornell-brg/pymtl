@@ -27,8 +27,7 @@ def test_Mux( dump_vcd, test_verilog ):
   # Select and elaborate the model under test
 
   model = Mux( nports, data_nbits )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -69,8 +68,7 @@ def test_Demux( dump_vcd, test_verilog ):
   # Select and elaborate the model under test
 
   model = Demux( nports, data_nbits )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()

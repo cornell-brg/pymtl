@@ -99,9 +99,8 @@ class InValRdyQueueHarness( Model ):
 def test_InValRdyQueue( dump_vcd, qsize, pipeq, src_delay, sink_delay ):
   msgs  = range( 5 )
   model = InValRdyQueueHarness( Bits( 8 ), qsize, pipeq )
+  model.vcd_file = dump_vcd
   sim   = TestSrcSinkSim( model, msgs, msgs, src_delay, sink_delay )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -156,9 +155,8 @@ class OutValRdyQueueHarness( Model ):
 def test_OutValRdyQueue( dump_vcd, qsize, bypassq, src_delay, sink_delay ):
   msgs  = range( 5 )
   model = OutValRdyQueueHarness( Bits( 8 ), qsize, bypassq )
+  model.vcd_file = dump_vcd
   sim   = TestSrcSinkSim( model, msgs, msgs, src_delay, sink_delay )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
@@ -212,8 +210,7 @@ def test_InOutValRdyQueues( dump_vcd, qsize, pipeq, bypassq,
                             src_delay, sink_delay ):
   msgs  = range( 10 )
   model = InOutValRdyQueueHarness( Bits( 8 ), qsize, pipeq, bypassq )
+  model.vcd_file = dump_vcd
   sim   = TestSrcSinkSim( model, msgs, msgs, src_delay, sink_delay )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

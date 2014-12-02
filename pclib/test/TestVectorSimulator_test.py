@@ -43,6 +43,7 @@ def test_basics( dump_vcd ):
   # Instantiate and elaborate the model
 
   model = Incrementer()
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -57,7 +58,5 @@ def test_basics( dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

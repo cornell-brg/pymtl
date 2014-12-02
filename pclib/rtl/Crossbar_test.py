@@ -40,8 +40,7 @@ def run_test_crossbar( model, test_vectors ):
 #-----------------------------------------------------------------------
 def test_crossbar3( dump_vcd, test_verilog ):
   model = Crossbar( 3, 16 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   run_test_crossbar( model, [

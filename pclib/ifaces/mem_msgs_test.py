@@ -10,7 +10,6 @@ import mem_msgs
 #-------------------------------------------------------------------------
 # test_memreq_slices
 #-------------------------------------------------------------------------
-
 def test_memreq_slices():
 
   # Create parameters
@@ -46,7 +45,6 @@ def test_memreq_slices():
 #-------------------------------------------------------------------------
 # test_memreq_from_bits
 #-------------------------------------------------------------------------
-
 def test_memreq_from_bits( dump_vcd ):
 
   # Create parameters
@@ -77,6 +75,7 @@ def test_memreq_from_bits( dump_vcd ):
   # Instantiate and elaborate the model
 
   model = mem_msgs.MemReqFromBits( memreq_params )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -93,14 +92,11 @@ def test_memreq_from_bits( dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 
 #-------------------------------------------------------------------------
 # test_memresp_slices
 #-------------------------------------------------------------------------
-
 def test_memresp_slices():
 
   # Create parameters
@@ -132,7 +128,6 @@ def test_memresp_slices():
 #-------------------------------------------------------------------------
 # test_memresp_from_bits
 #-------------------------------------------------------------------------
-
 def test_memresp_from_bits( dump_vcd ):
 
   # Create parameters
@@ -160,6 +155,7 @@ def test_memresp_from_bits( dump_vcd ):
   # Instantiate and elaborate the model
 
   model = mem_msgs.MemRespFromBits( memresp_params )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -175,7 +171,5 @@ def test_memresp_from_bits( dump_vcd ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

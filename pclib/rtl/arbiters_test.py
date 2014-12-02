@@ -37,8 +37,7 @@ def run_test( model, test_vectors ):
 # RoundRobinArbiter with four requesters
 def test_rr_arb_4( dump_vcd, test_verilog ):
   model = RoundRobinArbiter( 4 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
 
@@ -103,8 +102,7 @@ def run_en_test( model, test_vectors ):
 def test_rr_arb_en_4( dump_vcd, test_verilog ):
 
   model = RoundRobinArbiterEn( 4 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
 

@@ -16,10 +16,11 @@ from pipelines    import Pipeline
 @pytest.mark.parametrize(
   ('stages'), [1, 3, 12]
 )
-def test_Pipeline( stages ):
+def test_Pipeline( dump_vcd, stages ):
 
   # Create the pipeline
   pipeline = Pipeline( stages )
+  pipeline.vcd_file = dump_vcd
 
   # Fill up the pipeline
   i = -1
@@ -104,8 +105,7 @@ class ValRdyPipelineHarness( Model ):
 def test_ValRdyPipeline( dump_vcd, stages, pipeq, bypassq, src_delay, sink_delay ):
   msgs  = range( 20 )
   model = ValRdyPipelineHarness( Bits( 8 ), stages, pipeq, bypassq )
+  model.vcd_file = dump_vcd
   sim   = TestSrcSinkSim( model, msgs, msgs, src_delay, sink_delay )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
   sim.run_test()
 

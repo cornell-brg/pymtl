@@ -41,8 +41,7 @@ def test_queue_copy():
 #-------------------------------------------------------------------------
 # An example model that simply copies n messages from an input val/rdy
 # interface to an output val/rdy interface.
-
-class QueueCopy (Model):
+class QueueCopy( Model ):
 
   #-----------------------------------------------------------------------
   # Constructor
@@ -127,7 +126,6 @@ class TestHarness (Model):
 #-------------------------------------------------------------------------
 # test
 #-------------------------------------------------------------------------
-
 @pytest.mark.parametrize( "src_delay,sink_delay", [
   (  0, 0  ),
   ( 10, 5  ),
@@ -144,13 +142,12 @@ def test( dump_vcd, src_delay, sink_delay ):
   # Instantiate and elaborate the model
 
   model = TestHarness( src_msgs, sink_msgs, src_delay, sink_delay )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename()  )
 
   # Run the simulation
 

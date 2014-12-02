@@ -13,8 +13,7 @@ from TestSimpleMemory import TestSimpleMemory
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
-
-class TestHarness (Model):
+class TestHarness( Model ):
 
   def __init__( s, memreq_params, memresp_params, nports,
                 src_msgs, sink_msgs, src_delay, sink_delay ):
@@ -49,11 +48,9 @@ class TestHarness (Model):
     return s.mem.line_trace()
 
 #-------------------------------------------------------------------------
-# Run test
+# run_mem_test
 #-------------------------------------------------------------------------
-
-def run_mem_test( dump_vcd, vcd_file_name, src_delay, sink_delay, nports,
-                  test_msgs ):
+def run_mem_test( dump_vcd, src_delay, sink_delay, nports, test_msgs ):
 
   # Create parameters
 
@@ -69,13 +66,12 @@ def run_mem_test( dump_vcd, vcd_file_name, src_delay, sink_delay, nports,
 
   model = TestHarness( memreq_params, memresp_params, nports, src_msgs,
                        sink_msgs, src_delay, sink_delay )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 
@@ -367,79 +363,39 @@ def quad_port_mem_test_msgs():
   return [ src_msgs, sink_msgs ]
 
 #-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 0 x 0, Ports = 1
+# test_single_port
 #-------------------------------------------------------------------------
-
-def test_single_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                0, 0, 1, single_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 5 x 10, Ports = 1
-#-------------------------------------------------------------------------
-
-def test_single_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                5, 10, 1, single_port_mem_test_msgs() )
+@pytest.mark.parametrize('src_delay,sink_delay,nports,test_msgs',[
+  (  0,  0, 1, single_port_mem_test_msgs() ),
+  (  5, 10, 1, single_port_mem_test_msgs() ),
+  ( 10,  5, 1, single_port_mem_test_msgs() ),
+])
+def test_single_port( dump_vcd, src_delay, sink_delay, nports, test_msgs ):
+  run_mem_test( dump_vcd, src_delay, sink_delay, nports, test_msgs )
 
 #-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 10 x 5, Ports = 1
+# test_dual_port
 #-------------------------------------------------------------------------
-
-def test_single_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                10, 5, 1, single_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 0 x 0, Ports = 2
-#-------------------------------------------------------------------------
-
-def test_dual_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                0, 0, 2, dual_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 5 x 10, Ports = 2
-#-------------------------------------------------------------------------
-
-@pytest.mark.xfail(
-    reason="No backpressure results in two port streams misaligning!"
-)
-def test_dual_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                5, 10, 2, dual_port_mem_test_msgs() )
+@pytest.mark.parametrize('src_delay,sink_delay,nports,test_msgs',[
+  ( 0,  0, 2, dual_port_mem_test_msgs() ),
+pytest.mark.xfail(
+  ( 5, 10, 2, dual_port_mem_test_msgs() ),
+    reason="No backpressure results in two port streams misaligning!"),
+pytest.mark.xfail(
+  (10,  5, 2, dual_port_mem_test_msgs() ),
+    reason="No backpressure results in two port streams misaligning!"),
+])
+def test_dual_port( dump_vcd, src_delay, sink_delay, nports, test_msgs ):
+  run_mem_test( dump_vcd, src_delay, sink_delay, nports, test_msgs )
 
 #-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 10 x 5, Ports = 2
+# test_quad_port
 #-------------------------------------------------------------------------
+@pytest.mark.parametrize('src_delay,sink_delay,nports,test_msgs',[
+  (  0,  0, 4, quad_port_mem_test_msgs() ),
+  (  5, 10, 4, quad_port_mem_test_msgs() ),
+  ( 10,  5, 4, quad_port_mem_test_msgs() ),
+])
+def test_quad_port( dump_vcd, src_delay, sink_delay, nports, test_msgs ):
+  run_mem_test( dump_vcd, src_delay, sink_delay, nports, test_msgs )
 
-@pytest.mark.xfail(
-    reason="No backpressure results in two port streams misaligning!"
-)
-def test_dual_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                10, 5, 2, dual_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 0 x 0, Ports = 4
-#-------------------------------------------------------------------------
-
-def test_quad_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                0, 0, 4, quad_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 5 x 10, Ports = 4
-#-------------------------------------------------------------------------
-
-def test_quad_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                5, 10, 4, quad_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestSimpleMemoryNPorts unit test with delay = 10 x 5, Ports = 4
-#-------------------------------------------------------------------------
-
-def test_quad_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                10, 5, 4, quad_port_mem_test_msgs() )

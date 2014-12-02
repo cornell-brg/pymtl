@@ -2,6 +2,8 @@
 # TestMemory_test.py
 #=========================================================================
 
+import pytest
+
 import pclib.ifaces.mem_msgs as mem_msgs
 
 from pymtl      import *
@@ -10,8 +12,7 @@ from pclib.test import TestSource, TestSink, TestMemory
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
-
-class TestHarness (Model):
+class TestHarness( Model ):
 
   def __init__( s, memreq_params, memresp_params, nports,
                 src_msgs, sink_msgs, src_delay, sink_delay, mem_delay ):
@@ -48,10 +49,9 @@ class TestHarness (Model):
     return s.mem.line_trace()
 
 #-------------------------------------------------------------------------
-# Run test
+# run_mem_test
 #-------------------------------------------------------------------------
-
-def run_mem_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
+def run_mem_test( dump_vcd, src_delay, sink_delay,
                   mem_delay, nports, test_msgs ):
 
   # Create parameters
@@ -68,13 +68,12 @@ def run_mem_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
 
   model = TestHarness( memreq_params, memresp_params, nports, src_msgs,
                        sink_msgs, src_delay, sink_delay, mem_delay )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 
@@ -94,7 +93,6 @@ def run_mem_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
 #-------------------------------------------------------------------------
 # single port memory test messages
 #-------------------------------------------------------------------------
-
 def single_port_mem_test_msgs():
 
   # number of memory ports
@@ -158,7 +156,6 @@ def single_port_mem_test_msgs():
 #-------------------------------------------------------------------------
 # dual port memory test messages
 #-------------------------------------------------------------------------
-
 def dual_port_mem_test_msgs():
 
   # number of memory ports
@@ -243,7 +240,6 @@ def dual_port_mem_test_msgs():
 #-------------------------------------------------------------------------
 # quad port memory test messages
 #-------------------------------------------------------------------------
-
 def quad_port_mem_test_msgs():
 
   # number of memory ports
@@ -362,73 +358,38 @@ def quad_port_mem_test_msgs():
   return [ src_msgs, sink_msgs ]
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 0 x 0, Ports = 1
+# test_single_port
 #-------------------------------------------------------------------------
-
-def test_single_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                0, 0, 3, 1, single_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 5 x 10, Ports = 1
-#-------------------------------------------------------------------------
-
-def test_single_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                5, 10, 8, 1, single_port_mem_test_msgs() )
+@pytest.mark.parametrize('src_delay,sink_delay,mem_delay,nports',[
+  ( 0,  0,  3,  1),
+  ( 5, 10,  8,  1),
+  (10,  5,  2,  1),
+])
+def test_single_port( dump_vcd, src_delay, sink_delay, mem_delay, nports ):
+  run_mem_test( dump_vcd, src_delay, sink_delay, mem_delay, nports,
+                single_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 10 x 5, Ports = 1
+# test_dual_port
 #-------------------------------------------------------------------------
-
-def test_single_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                10, 5, 2, 1, single_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 0 x 0, Ports = 2
-#-------------------------------------------------------------------------
-
-def test_dual_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                0, 0, 4, 2, dual_port_mem_test_msgs() )
+@pytest.mark.parametrize('src_delay,sink_delay,mem_delay,nports',[
+  ( 0,  0,  4,  2),
+  ( 5, 10,  3,  2),
+  (10,  5,  3,  2),
+])
+def test_dual_port( dump_vcd, src_delay, sink_delay, mem_delay, nports ):
+  run_mem_test( dump_vcd, src_delay, sink_delay, mem_delay, nports,
+                dual_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 5 x 10, Ports = 2
+# test_quad_port
 #-------------------------------------------------------------------------
+@pytest.mark.parametrize('src_delay,sink_delay,mem_delay,nports',[
+  ( 0,  0,  7,  4),
+  ( 5, 10,  4,  4),
+  (10,  5,  6,  4),
+])
+def test_quad_port( dump_vcd, src_delay, sink_delay, mem_delay, nports ):
+  run_mem_test( dump_vcd, src_delay, sink_delay, mem_delay, nports,
+                quad_port_mem_test_msgs() )
 
-def test_dual_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                5, 10, 3, 2, dual_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 10 x 5, Ports = 2
-#-------------------------------------------------------------------------
-
-def test_dual_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                10, 5, 3, 2, dual_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 0 x 0, Ports = 4
-#-------------------------------------------------------------------------
-
-def test_quad_port_delay0x0( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                0, 0, 7, 4, quad_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 5 x 10, Ports = 4
-#-------------------------------------------------------------------------
-
-def test_quad_port_delay10x5( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                5, 10, 4, 4, quad_port_mem_test_msgs() )
-
-#-------------------------------------------------------------------------
-# TestMemoryNPorts unit test with delay = 10 x 5, Ports = 4
-#-------------------------------------------------------------------------
-
-def test_quad_port_delay5x10( dump_vcd ):
-  run_mem_test( dump_vcd, get_vcd_filename(),
-                10, 5, 6, 4, quad_port_mem_test_msgs() )

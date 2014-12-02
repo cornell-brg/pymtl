@@ -43,15 +43,12 @@ class ValRdyBuffer( Model ):
 #-------------------------------------------------------------------------
 # Test with various source and sink delays.
 #
-@pytest.mark.parametrize(
-    ('src_delay', 'sink_delay'),
-    [
-      (0, 0),
-      (3, 0),
-      (0, 3),
-      (3, 5),
-    ]
-)
+@pytest.mark.parametrize( ('src_delay', 'sink_delay'), [
+  (0, 0),
+  (3, 0),
+  (0, 3),
+  (3, 5),
+])
 def test_TestSrcSinkSim( dump_vcd, src_delay, sink_delay ):
 
   # Create some messages
@@ -60,12 +57,12 @@ def test_TestSrcSinkSim( dump_vcd, src_delay, sink_delay ):
   # Instantiate the model
   model = ValRdyBuffer( 8 )
 
+  # Dump a vcd if enabled
+  model.vcd_file = dump_vcd
+
   # Create the simulator
   sim = TestSrcSinkSim( model, src_msgs,  sink_msgs,
                                src_delay, sink_delay )
-  # Dump a vcd if enabled
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename() )
 
   # Run the test
   sim.run_test()

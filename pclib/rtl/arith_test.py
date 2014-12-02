@@ -33,8 +33,7 @@ def test_adder( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = Adder(16)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -83,8 +82,7 @@ def test_subtractor( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = Subtractor(16)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -113,8 +111,7 @@ def run_test_incrementer( test_verilog, dump_vcd, increment_amount, test_vectors
   # Instantiate and elaborate the model
 
   model = Incrementer( 16, increment_amount )
-  if dump_vcd:
-    model.vcd_file = dump_vcd
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -134,8 +131,7 @@ def run_test_incrementer( test_verilog, dump_vcd, increment_amount, test_vectors
   sim.run_test()
 
 def test_incrementer_ia1( test_verilog, dump_vcd ):
-  run_test_incrementer( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 1, [
+  run_test_incrementer( test_verilog, dump_vcd, 1, [
     # in      out
     [ 0x0000, 0x0001 ],
     [ 0x0001, 0x0002 ],
@@ -147,8 +143,7 @@ def test_incrementer_ia1( test_verilog, dump_vcd ):
   ])
 
 def test_incrementer_ia123( test_verilog, dump_vcd ):
-  run_test_incrementer( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 123, [
+  run_test_incrementer( test_verilog, dump_vcd, 123, [
     # in      out
     [ 0x0000, 0x007b ],
     [ 0x0001, 0x007c ],
@@ -160,8 +155,7 @@ def test_incrementer_ia123( test_verilog, dump_vcd ):
   ])
 
 def test_incrementer_ia1024( test_verilog, dump_vcd ):
-  run_test_incrementer( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 1024, [
+  run_test_incrementer( test_verilog, dump_vcd, 1024, [
     # in      out
     [ 0x0000, 0x0400 ],
     [ 0x0001, 0x0401 ],
@@ -181,8 +175,7 @@ def run_test_zero_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   # Instantiate and elaborate the model
 
   model = ZeroExtender( in_nbits, out_nbits )
-  if dump_vcd:
-    model.vcd_file = dump_vcd
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -202,16 +195,14 @@ def run_test_zero_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   sim.run_test()
 
 def test_zero_extender_i1o4( test_verilog, dump_vcd ):
-  run_test_zero_extender( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 1, 4, [
+  run_test_zero_extender( test_verilog, dump_vcd, 1, 4, [
     # in   out
     [ 0x0, 0x0 ],
     [ 0x1, 0x1 ],
   ])
 
 def test_zero_extender_i2o4( test_verilog, dump_vcd ):
-  run_test_zero_extender( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 2, 4, [
+  run_test_zero_extender( test_verilog, dump_vcd, 2, 4, [
     # in   out
     [ 0x0, 0x0 ],
     [ 0x1, 0x1 ],
@@ -220,8 +211,7 @@ def test_zero_extender_i2o4( test_verilog, dump_vcd ):
   ])
 
 def test_zero_extender_i4o16( test_verilog, dump_vcd ):
-  run_test_zero_extender( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 4, 16, [
+  run_test_zero_extender( test_verilog, dump_vcd, 4, 16, [
     # in   out
     [ 0x0, 0x0000 ],
     [ 0x1, 0x0001 ],
@@ -238,8 +228,7 @@ def run_test_sign_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   # Instantiate and elaborate the model
 
   model = SignExtender( in_nbits, out_nbits )
-  if dump_vcd:
-    model.vcd_file = dump_vcd
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -259,16 +248,14 @@ def run_test_sign_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   sim.run_test()
 
 def test_sign_extender_i1o4( test_verilog, dump_vcd ):
-  run_test_sign_extender( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 1, 4, [
+  run_test_sign_extender( test_verilog, dump_vcd, 1, 4, [
     # in   out
     [ 0x0, 0x0 ],
     [ 0x1, 0xf ],
   ])
 
 def test_sign_extender_i2o4( test_verilog, dump_vcd ):
-  run_test_sign_extender( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 2, 4, [
+  run_test_sign_extender( test_verilog, dump_vcd, 2, 4, [
     # in   out
     [ 0x0, 0x0 ],
     [ 0x1, 0x1 ],
@@ -277,8 +264,7 @@ def test_sign_extender_i2o4( test_verilog, dump_vcd ):
   ])
 
 def test_sign_extender_i4o16( test_verilog, dump_vcd ):
-  run_test_sign_extender( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 4, 16, [
+  run_test_sign_extender( test_verilog, dump_vcd, 4, 16, [
     # in   out
     [ 0x0, 0x0000 ],
     [ 0x1, 0x0001 ],
@@ -314,8 +300,7 @@ def test_ZeroComparator( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = ZeroComparator(16)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -359,8 +344,7 @@ def test_EqComparator( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = EqComparator(16)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -408,8 +392,7 @@ def test_LtComparator( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = LtComparator(16)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -457,8 +440,7 @@ def test_GtComparator( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = GtComparator(16)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -487,8 +469,7 @@ def run_test_sign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   # Instantiate and elaborate the model
 
   model = SignUnit( nbits )
-  if dump_vcd:
-    model.vcd_file = dump_vcd
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -508,8 +489,7 @@ def run_test_sign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   sim.run_test()
 
 def test_sign_unit_n4( test_verilog, dump_vcd ):
-  run_test_sign_unit( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 4, [
+  run_test_sign_unit( test_verilog, dump_vcd, 4, [
     # in      out
     [ 0b0000, 0b0000 ],
     [ 0b0001, 0b1111 ],
@@ -523,8 +503,7 @@ def test_sign_unit_n4( test_verilog, dump_vcd ):
   ])
 
 def test_sign_unit_n7( test_verilog, dump_vcd ):
-  run_test_sign_unit( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 7, [
+  run_test_sign_unit( test_verilog, dump_vcd, 7, [
     # in         out
     [ 0b0000000, 0b0000000 ],
     [ 0b0000001, 0b1111111 ],
@@ -546,8 +525,7 @@ def run_test_unsign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   # Instantiate and elaborate the model
 
   model = UnsignUnit( nbits )
-  if dump_vcd:
-    model.vcd_file = dump_vcd
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -567,8 +545,7 @@ def run_test_unsign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   sim.run_test()
 
 def test_unsign_unit_n4( test_verilog, dump_vcd ):
-  run_test_unsign_unit( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 4, [
+  run_test_unsign_unit( test_verilog, dump_vcd, 4, [
     # in      out
     [ 0b0000, 0b0000,],
     [ 0b0001, 0b0001,],
@@ -582,8 +559,7 @@ def test_unsign_unit_n4( test_verilog, dump_vcd ):
   ])
 
 def test_unsign_unit_n7( test_verilog, dump_vcd ):
-  run_test_unsign_unit( test_verilog,
-    get_vcd_filename() if dump_vcd else False, 7, [
+  run_test_unsign_unit( test_verilog, dump_vcd, 7, [
     # in     out
     [ 0b0000000, 0b0000000 ],
     [ 0b0000001, 0b0000001 ],
@@ -622,8 +598,7 @@ def test_LeftLogicalShifter( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = LeftLogicalShifter(6,3)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -668,8 +643,7 @@ def test_RightLogicalShifter( test_verilog, dump_vcd ):
   # Instantiate and elaborate the model
 
   model = RightLogicalShifter(6,3)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()

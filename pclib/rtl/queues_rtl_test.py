@@ -3,6 +3,8 @@
 #=========================================================================
 # This file contains unit tests for the queue collection models
 
+import pytest
+
 from pymtl      import *
 from pclib.test import TestVectorSimulator, TestSource, TestSink
 
@@ -17,11 +19,14 @@ from queues_rtl import NormalQueue
 #=========================================================================
 
 #-------------------------------------------------------------------------
-# Single-Element Normal Queue Test Vector Tests
+# test_1entry_normal_queue_tv
 #-------------------------------------------------------------------------
-# Directed performance tests for single element queue. We use the
-# TestVectorSimulator to do some white box testing.
-def test_single_element_normal_queue_tv( dump_vcd, test_verilog ):
+def test_1entry_normal_queue_tv( dump_vcd, test_verilog ):
+  """Single-Element Normal Queue Test Vector Tests
+
+  Directed performance tests for single element queue. We use the
+  TestVectorSimulator to do some white box testing.
+  """
 
   test_vectors = [
 
@@ -48,8 +53,7 @@ def test_single_element_normal_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementNormalQueue( 16 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -75,11 +79,14 @@ def test_single_element_normal_queue_tv( dump_vcd, test_verilog ):
   sim.run_test()
 
 #-------------------------------------------------------------------------
-# Single-Element Bypass Queue Test Vector Tests
+# test_1entry_bypass_queue_tv
 #-------------------------------------------------------------------------
-# Directed performance tests for single element queue. We use the
-# TestVectorSimulator to do some white box testing.
-def test_single_element_bypass_queue_tv( dump_vcd, test_verilog ):
+def test_1entry_bypass_queue_tv( dump_vcd, test_verilog ):
+  """Single-Element Bypass Queue Test Vector Tests
+
+  Directed performance tests for single element queue. We use the
+  TestVectorSimulator to do some white box testing.
+  """
 
   test_vectors = [
 
@@ -103,8 +110,7 @@ def test_single_element_bypass_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementBypassQueue( 16 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -130,11 +136,14 @@ def test_single_element_bypass_queue_tv( dump_vcd, test_verilog ):
   sim.run_test()
 
 #-------------------------------------------------------------------------
-# Single-Element Pipelined Queue Test Vector Tests
+# test_1entry_pipe_queue_tv
 #-------------------------------------------------------------------------
-# Directed performance tests for single element piped queue. We use the
-# TestVectorSimulator to do some white box testing.
-def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
+def test_1entry_pipe_queue_tv( dump_vcd, test_verilog ):
+  """Single-Element Pipelined Queue Test Vector Tests.
+
+  Directed performance tests for single element piped queue. We use the
+  TestVectorSimulator to do some white box testing.
+  """
 
   test_vectors = [
 
@@ -159,8 +168,7 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementPipelinedQueue( 16 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -190,13 +198,13 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
 #=========================================================================
 
 #-------------------------------------------------------------------------
-# Source Sink Test Harness
+# TestHarness
 #-------------------------------------------------------------------------
-
 class TestHarness( Model ):
+  """Source Sink Test Harness."""
 
   def __init__( s, ModelType, src_msgs, sink_msgs,
-                src_delay, sink_delay, nbits, test_verilog, vcd_file_name ):
+                src_delay, sink_delay, nbits, test_verilog, dump_vcd ):
 
     # Instantiate models
 
@@ -204,8 +212,10 @@ class TestHarness( Model ):
     s.queue  = ModelType  ( nbits )
     s.sink   = TestSink   ( nbits, sink_msgs, sink_delay )
 
+    s.      vcd_file = dump_vcd
+    s.queue.vcd_file = dump_vcd
+
     if test_verilog:
-      s.queue.vcd_file = vcd_file_name
       s.queue = get_verilated( s.queue )
 
   def elaborate_logic( s ):
@@ -224,12 +234,11 @@ class TestHarness( Model ):
                                   s.sink.line_trace() )
 
 #-------------------------------------------------------------------------
-# Single-Element Normal Queue Test Source Sink
+# run_1entry_queue_test
 #-------------------------------------------------------------------------
-# Tests for single element queue using test source and sink.
-
-def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
-                  ModelType, src_delay, sink_delay, nbits ):
+def run_1entry_queue_test( dump_vcd, test_verilog, ModelType,
+                                   src_delay, sink_delay, nbits ):
+  """Tests for single element queue using test source and sink."""
 
   q_msgs = [
       0x0001,
@@ -245,8 +254,7 @@ def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
   # Instantiate and elaborate the model
 
   model = TestHarness( ModelType, q_msgs, q_msgs,
-                       src_delay, sink_delay, nbits, test_verilog,
-                       vcd_file_name)
+                       src_delay, sink_delay, nbits, test_verilog, dump_vcd )
   model.elaborate()
 
   # Run the test
@@ -268,185 +276,51 @@ def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
   sim.cycle()
   sim.cycle()
 
-def test_single_element_norm_delay0x0( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementNormalQueue, 0, 0, 16 )
+@pytest.mark.parametrize( "src_delay,sink_delay,nbits", [
+  (  0, 0, 16 ),
+  (  0, 5, 16 ),
+  (  5, 0, 16 ),
+  ( 10, 5, 16 ),
+])
+def test_1entry_normal( dump_vcd, test_verilog, src_delay, sink_delay, nbits ):
+  run_1entry_queue_test( dump_vcd, test_verilog,
+                SingleElementNormalQueue, src_delay, sink_delay, nbits )
 
-def test_single_element_norm_delay0x5( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementNormalQueue, 0, 5, 16 )
+@pytest.mark.parametrize( "src_delay,sink_delay,nbits", [
+  (  0, 0, 16 ),
+  (  0, 5, 16 ),
+  (  5, 0, 16 ),
+  ( 10, 5, 16 ),
+])
+def test_1entry_bypass( dump_vcd, test_verilog, src_delay, sink_delay, nbits ):
+  run_1entry_queue_test( dump_vcd, test_verilog,
+                SingleElementBypassQueue, src_delay, sink_delay, nbits )
 
-def test_single_element_norm_delay5x0( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementNormalQueue, 5, 0, 16 )
-
-def test_single_element_norm_delay10x5( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementNormalQueue, 10, 5, 16 )
-
-#-------------------------------------------------------------------------
-# Single-Element Bypass Queue Test Source Sink
-#-------------------------------------------------------------------------
-# Tests for single element queue using test source and sink.
-
-def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
-                  ModelType, src_delay, sink_delay, nbits ):
-
-  q_msgs = [
-      0x0001,
-      0x0002,
-      0x0003,
-      0x0004,
-      0x0005,
-      0x0006,
-      0x0007,
-      0x0008
-  ]
-
-  # Instantiate and elaborate the model
-
-  model = TestHarness( ModelType, q_msgs, q_msgs,
-                       src_delay, sink_delay, nbits, test_verilog,
-                       vcd_file_name )
-  model.elaborate()
-
-  # Run the test
-
-  sim = SimulationTool( model )
-
-  # Run the simulation
-
-  print ""
-
-  sim.reset()
-  while not model.done():
-    sim.print_line_trace()
-    sim.cycle()
-
-  # Add a couple extra ticks so that the VCD dump is nicer
-
-  sim.cycle()
-  sim.cycle()
-  sim.cycle()
-
-def test_single_element_byp_delay0x0( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementBypassQueue, 0, 0, 16 )
-
-def test_single_element_byp_delay0x5( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementBypassQueue, 0, 5, 16 )
-
-def test_single_element_byp_delay5x0( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementBypassQueue, 5, 0, 16 )
-
-def test_single_element_byp_delay10x5( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementBypassQueue, 10, 5, 16 )
-
-#-------------------------------------------------------------------------
-# Single-Element Pipelined Queue Test Source Sink
-#-------------------------------------------------------------------------
-# Tests for single element queue using test source and sink.
-
-def run_single_element_queue_test( dump_vcd, test_verilog, vcd_file_name,
-                                   ModelType, src_delay, sink_delay, nbits ):
-
-  q_msgs = [
-      0x0001,
-      0x0002,
-      0x0003,
-      0x0004,
-      0x0005,
-      0x0006,
-      0x0007,
-      0x0008
-  ]
-
-  # Instantiate and elaborate the model
-
-  model = TestHarness( ModelType, q_msgs, q_msgs,
-                       src_delay, sink_delay, nbits, test_verilog,
-                       vcd_file_name )
-  model.elaborate()
-
-  # Run the test
-
-  sim = SimulationTool( model )
-
-  # Run the simulation
-
-  print ""
-
-  sim.reset()
-  while not model.done():
-    sim.print_line_trace()
-    sim.cycle()
-
-  # Add a couple extra ticks so that the VCD dump is nicer
-
-  sim.cycle()
-  sim.cycle()
-  sim.cycle()
-
-def test_single_element_pipe_delay0x0( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementPipelinedQueue, 0, 0, 16 )
-
-def test_single_element_pipe_delay0x5( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementPipelinedQueue, 0, 5, 16 )
-
-def test_single_element_pipe_delay5x0( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementPipelinedQueue, 5, 0, 16 )
-
-def test_single_element_pipe_delay10x5( dump_vcd, test_verilog ):
-  run_single_element_queue_test(
-                dump_vcd, test_verilog,
-                get_vcd_filename(),
-                SingleElementPipelinedQueue, 10, 5, 16 )
+@pytest.mark.parametrize( "src_delay,sink_delay,nbits", [
+  (  0, 0, 16 ),
+  (  0, 5, 16 ),
+  (  5, 0, 16 ),
+  ( 10, 5, 16 ),
+])
+def test_1entry_pipe( dump_vcd, test_verilog, src_delay, sink_delay, nbits ):
+  run_1entry_queue_test( dump_vcd, test_verilog,
+                SingleElementPipelinedQueue, src_delay, sink_delay, nbits )
 
 #=========================================================================
 # Test Vector Tests - Multi-Entry
 #=========================================================================
 
 #-------------------------------------------------------------------------
-# Normal Queue
+# run_test_queue
 #-------------------------------------------------------------------------
-# Tests for Multiple Entry Normal Queues
-
 def run_test_queue( dump_vcd, test_verilog, ModelType, num_entries,
                     test_vectors ):
+  """Tests for Multiple Entry Queues."""
 
   # Instantiate and elaborate the model
 
   model = ModelType( num_entries, 16 )
-  if dump_vcd:
-    model.vcd_file = dump_vcd
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -472,12 +346,11 @@ def run_test_queue( dump_vcd, test_verilog, ModelType, num_entries,
   sim.run_test()
 
 #-------------------------------------------------------------------------
-# Two Element Queue
+# test_2entry_normal
 #-------------------------------------------------------------------------
-
-def test_queue_2( dump_vcd, test_verilog ):
-  run_test_queue( get_vcd_filename() if dump_vcd else False,
-                  test_verilog, NormalQueue, 2, [
+def test_2entry_normal( dump_vcd, test_verilog ):
+  """Two Element Normal Queue."""
+  run_test_queue( dump_vcd, test_verilog, NormalQueue, 2, [
     # Enqueue one element and then dequeue it
     # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
     [ 1,      1,      0x0001,  0,      1,      '?'    ],
@@ -500,12 +373,11 @@ def test_queue_2( dump_vcd, test_verilog ):
   ])
 
 #-------------------------------------------------------------------------
-# Three Element Queue
+# test_3entry_normal
 #-------------------------------------------------------------------------
-
-def test_queue_3( dump_vcd, test_verilog ):
-  run_test_queue( get_vcd_filename() if dump_vcd else False,
-                  test_verilog, NormalQueue, 3, [
+def test_3entry_normal( dump_vcd, test_verilog ):
+  """Three Element Queue."""
+  run_test_queue( dump_vcd, test_verilog, NormalQueue, 3, [
     # Enqueue one element and then dequeue it
     # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
     [ 1,      1,      0x0001,  0,      1,      '?'    ],
@@ -528,10 +400,15 @@ def test_queue_3( dump_vcd, test_verilog ):
     [ 0,      1,      0x0000,  0,      1,      '?'    ],
   ])
 
+#=========================================================================
+# Skid Queue tests
+#=========================================================================
+
 #-------------------------------------------------------------------------
-# Single Element Skid Queue
+# test_1entry_skid
 #-------------------------------------------------------------------------
-def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
+def test_1entry_skid( dump_vcd, test_verilog ):
+  """Single Element Skid Queue."""
 
   test_vectors = [
 
@@ -550,8 +427,7 @@ def test_single_element_pipe_queue_tv( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = SingleElementSkidQueue( 16 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()

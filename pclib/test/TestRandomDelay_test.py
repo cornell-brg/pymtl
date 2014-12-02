@@ -2,6 +2,8 @@
 # TestRandomDelay_test.py
 #=========================================================================
 
+import pytest
+
 from pymtl      import *
 from pclib.test import TestRandomDelay
 
@@ -11,7 +13,6 @@ from TestSimpleSink   import TestSimpleSink
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
-
 class TestHarness( Model ):
 
   def __init__( s, nbits, msgs, delay ):
@@ -42,10 +43,15 @@ class TestHarness( Model ):
            s.sink.line_trace()
 
 #-------------------------------------------------------------------------
-# Run test
+# test_delay
 #-------------------------------------------------------------------------
-
-def run_test_random_delay( dump_vcd, delay ):
+@pytest.mark.parametrize('random_delay', [
+   0,
+   1,
+   5,
+  20,
+])
+def test_delay( dump_vcd, random_delay ):
 
   # Test messages
 
@@ -62,14 +68,13 @@ def run_test_random_delay( dump_vcd, delay ):
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( 16, test_msgs, delay )
+  model = TestHarness( 16, test_msgs, random_delay )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( dump_vcd )
 
   # Run the simulation
 
@@ -86,32 +91,3 @@ def run_test_random_delay( dump_vcd, delay ):
   sim.cycle()
   sim.cycle()
   sim.cycle()
-
-#-------------------------------------------------------------------------
-# TestRandomDelay unit test with delay = 0
-#-------------------------------------------------------------------------
-
-def test_delay0( dump_vcd ):
-  run_test_random_delay( get_vcd_filename() if dump_vcd else None, 0 )
-
-#-------------------------------------------------------------------------
-# TestRandomDelay unit test with delay = 1
-#-------------------------------------------------------------------------
-
-def test_delay1( dump_vcd ):
-  run_test_random_delay( get_vcd_filename() if dump_vcd else None, 1 )
-
-#-------------------------------------------------------------------------
-# TestRandomDelay unit test with delay = 5
-#-------------------------------------------------------------------------
-
-def test_delay5( dump_vcd ):
-  run_test_random_delay( get_vcd_filename() if dump_vcd else None, 5 )
-
-#-------------------------------------------------------------------------
-# TestRandomDelay unit test with delay = 20
-#-------------------------------------------------------------------------
-
-def test_delay20( dump_vcd ):
-  run_test_random_delay( get_vcd_filename() if dump_vcd else None, 20 )
-

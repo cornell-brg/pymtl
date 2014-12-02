@@ -2,6 +2,8 @@
 # TestNetSink_test.py
 #=========================================================================
 
+import pytest
+
 from pymtl        import *
 from pclib.test   import TestSource, TestNetSink
 from pclib.ifaces import InValRdyBundle, OutValRdyBundle, NetMsg
@@ -76,7 +78,7 @@ def inorder_msgs():
       mk_msg( 0,   3,  3,     0x00000033 ),
   ]
 
-  return test_msgs
+  return test_msgs[:], test_msgs[:]
 
 #-------------------------------------------------------------------------
 # TestSimpleNetSink unit test - Out of Order Messages
@@ -133,21 +135,19 @@ def outoforder_msgs():
 #-------------------------------------------------------------------------
 # TestSimpleNetSink test runner
 #-------------------------------------------------------------------------
-def run_test( dump_vcd, vcd_filename, src_delay, sink_delay, src_msgs,
-              sink_msgs ):
+def run_test( dump_vcd, src_delay, sink_delay, src_msgs, sink_msgs ):
 
   # Instantiate and elaborate the model
 
   msg_type = NetMsg( 4, 16, 32 )
   model = TestHarness( msg_type, src_msgs, sink_msgs,
                        src_delay, sink_delay )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_filename )
 
   # Run the simulation
 
@@ -164,70 +164,33 @@ def run_test( dump_vcd, vcd_filename, src_delay, sink_delay, src_msgs,
   sim.cycle()
   sim.cycle()
 
-#-------------------------------------------------------------------------
-# TestNetSink Inorder unit test - src_delay = 0, sink_delay = 0
-#-------------------------------------------------------------------------
 
-def test_inorder_0x0( dump_vcd ):
-  run_test( dump_vcd, get_vcd_filename(),
-            0, 0, inorder_msgs(), inorder_msgs() )
+ooo_msgs = outoforder_msgs()
 
 #-------------------------------------------------------------------------
-# TestNetSink Inorder unit test - src_delay = 5, sink_delay = 0
+# test_inorder
 #-------------------------------------------------------------------------
-
-def test_inorder_5x0( dump_vcd ):
-  run_test( dump_vcd, get_vcd_filename(),
-            5, 0, inorder_msgs(), inorder_msgs() )
-
-#-------------------------------------------------------------------------
-# TestNetSink Inorder unit test - src_delay = 0, sink_delay = 5
-#-------------------------------------------------------------------------
-
-def test_inorder_0x5( dump_vcd ):
-  run_test( dump_vcd, get_vcd_filename(),
-            0, 5, inorder_msgs(), inorder_msgs() )
+@pytest.mark.parametrize('src_delay,sink_delay',[
+  ( 0, 0),
+  ( 5, 0),
+  ( 0, 5),
+  (10, 5),
+])
+def test_inorder( dump_vcd, src_delay, sink_delay ):
+  src_msgs, sink_msgs = inorder_msgs()
+  run_test( dump_vcd, src_delay, sink_delay, src_msgs, sink_msgs )
 
 #-------------------------------------------------------------------------
-# TestNetSink Inorder unit test - src_delay = 10, sink_delay = 5
+# test_outoforder
 #-------------------------------------------------------------------------
+@pytest.mark.parametrize('src_delay,sink_delay',[
+  ( 0, 0),
+  ( 5, 0),
+  ( 0, 5),
+  (10, 5),
+])
+def test_outoforder( dump_vcd, src_delay, sink_delay ):
+  src_msgs, sink_msgs = outoforder_msgs()
+  run_test( dump_vcd, src_delay, sink_delay, src_msgs, sink_msgs )
 
-def test_inorder_10x5( dump_vcd ):
-  run_test( dump_vcd, get_vcd_filename(),
-            10, 5, inorder_msgs(), inorder_msgs() )
 
-#-------------------------------------------------------------------------
-# TestNetSink Out of Order unit test - src_delay = 0, sink_delay = 0
-#-------------------------------------------------------------------------
-
-def test_outoforder_0x0( dump_vcd ):
-  test_msgs = outoforder_msgs()
-  run_test( dump_vcd, get_vcd_filename(),
-            0, 0, test_msgs[0], test_msgs[1] )
-
-#-------------------------------------------------------------------------
-# TestNetSink Out of Order unit test - src_delay = 5, sink_delay = 0
-#-------------------------------------------------------------------------
-
-def test_outoforder_5x0( dump_vcd ):
-  test_msgs = outoforder_msgs()
-  run_test( dump_vcd, get_vcd_filename(),
-            5, 0, test_msgs[0], test_msgs[1] )
-
-#-------------------------------------------------------------------------
-# TestNetSink Out of Order unit test - src_delay = 0, sink_delay = 5
-#-------------------------------------------------------------------------
-
-def test_outoforder_0x5( dump_vcd ):
-  test_msgs = outoforder_msgs()
-  run_test( dump_vcd, get_vcd_filename(),
-            0, 5, test_msgs[0], test_msgs[1] )
-
-#-------------------------------------------------------------------------
-# TestNetSink Out of Order unit test - src_delay = 10, sink_delay = 5
-#-------------------------------------------------------------------------
-
-def test_outoforder_10x5( dump_vcd ):
-  test_msgs = outoforder_msgs()
-  run_test( dump_vcd, get_vcd_filename(),
-            10, 5, test_msgs[0], test_msgs[1] )

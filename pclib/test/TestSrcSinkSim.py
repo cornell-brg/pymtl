@@ -2,20 +2,20 @@
 # TestSrcSinkSim.py
 #=========================================================================
 
-from pymtl  import *
+from pymtl      import *
 from TestSource import TestSource
 from TestSink   import TestSink
 
 #-------------------------------------------------------------------------
 # TestSrcSinkSim
 #-------------------------------------------------------------------------
-# This class simplifies creating unit tests which use the ValRdy latency
-# insensitive interface. A user provides the model under test, a list
-# of source messages to be fed into the simulation, and a list of
-# exptected output messages. The simulator will handle driving the
-# simulation to completion.
-#
 class TestSrcSinkSim( object ):
+  """This class simplifies creating unit tests which use the ValRdy
+  latency insensitive interface. A user provides the model under test, a
+  list of source messages to be fed into the simulation, and a list of
+  exptected output messages. The simulator will handle driving the
+  simulation to completion.
+  """
 
   #-----------------------------------------------------------------------
   # __init__
@@ -25,14 +25,7 @@ class TestSrcSinkSim( object ):
 
     self.model = TestSrcSinkHarness( model_inst, src_msgs,  sink_msgs,
                                                  src_delay, sink_delay )
-    self.vcd_file_name = None
-
-  #-----------------------------------------------------------------------
-  # dump_vcd
-  #-----------------------------------------------------------------------
-  def dump_vcd( self, vcd_file_name ):
-
-    self.vcd_file_name = vcd_file_name
+    self.model.vcd_file = model_inst.vcd_file
 
   #-----------------------------------------------------------------------
   # run_test
@@ -43,11 +36,6 @@ class TestSrcSinkSim( object ):
 
     self.model.elaborate()
     sim = SimulationTool( self.model )
-
-    # Dump vcd
-
-    if self.vcd_file_name != None:
-      sim.dump_vcd( self.vcd_file_name )
 
     # Run the simulation
 
@@ -63,13 +51,13 @@ class TestSrcSinkSim( object ):
     sim.cycle()
     sim.cycle()
     sim.cycle()
-    
+
 #-------------------------------------------------------------------------
 # TestSourceSinkHarness
 #-------------------------------------------------------------------------
-# TestHarness with a TestSource, TestSink, and the module under test.
-#
 class TestSrcSinkHarness( Model ):
+  """TestHarness with a TestSource, TestSink, and the module under test.
+  """
 
   #-----------------------------------------------------------------------
   # __init__

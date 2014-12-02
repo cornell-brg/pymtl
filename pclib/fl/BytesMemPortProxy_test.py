@@ -116,8 +116,7 @@ class MemCopy (Model):
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
-
-class TestHarness (Model):
+class TestHarness( Model ):
 
   def __init__( s, mem_delay, src_ptr, dest_ptr, nbytes ):
 
@@ -145,15 +144,20 @@ class TestHarness (Model):
     return s.mcopy.line_trace() + " " + s.mem.line_trace()
 
 #-------------------------------------------------------------------------
-# Test
+# test
 #-------------------------------------------------------------------------
-
-@pytest.mark.parametrize( "mem_delay", [ 0, 2, 5, 10 ] )
+@pytest.mark.parametrize( "mem_delay", [
+   0,
+   2,
+   5,
+  10,
+])
 def test( dump_vcd, mem_delay ):
 
   # Instantiate and elaborate the model
 
   model = TestHarness( mem_delay, 0x0004, 0x000c, 4 )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Write test data into the test memory
@@ -164,8 +168,6 @@ def test( dump_vcd, mem_delay ):
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( get_vcd_filename()  )
 
   # Run the simulation
 

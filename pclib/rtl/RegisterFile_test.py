@@ -35,8 +35,7 @@ def test_regfile_1R1W( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = RegisterFile( nbits=16, nregs=8, rd_ports=1 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -80,8 +79,7 @@ def test_regfile_2R1W( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = RegisterFile( nbits=16, nregs=8, rd_ports=2 )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -133,8 +131,7 @@ def test_regfile_1R1W_const_zero( dump_vcd, test_verilog ):
   # Instantiate and elaborate the model
 
   model = RegisterFile( nbits=16, nregs=8, rd_ports=1, const_zero=True )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()

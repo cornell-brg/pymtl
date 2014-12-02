@@ -24,6 +24,8 @@
 #
 # TestSink merely holds the expected value based on the increments
 
+import pytest
+
 from pymtl        import *
 from pclib.ifaces import InValRdyBundle, OutValRdyBundle
 from pclib.test   import TestSource, TestSink
@@ -52,10 +54,10 @@ CW_STALL_CYCLES   = slice(  3, 6  )
 CW_STALL_STAGE    = slice(  6, 9  )
 
 #-------------------------------------------------------------------------
-# 5-stage Incrementer Pipeline Datapath
+# IncrPipeDpath
 #-------------------------------------------------------------------------
-
-class IncrPipeDpath (Model):
+class IncrPipeDpath( Model ):
+  """5-stage Incrementer Pipeline Datapath."""
 
   def __init__( s, nbits ):
 
@@ -154,10 +156,10 @@ class IncrPipeDpath (Model):
     s.connect( s.e_incr.out, s.out_msg   )
 
 #-------------------------------------------------------------------------
-# 5-stage Incrementer Pipeline Control
+# IncrPipeCtrl
 #-------------------------------------------------------------------------
-
 class IncrPipeCtrl (Model):
+  """5-stage Incrementer Pipeline Control."""
 
   def __init__( s ):
 
@@ -464,10 +466,10 @@ class IncrPipeCtrl (Model):
         s.out_val.value = 0
 
 #-------------------------------------------------------------------------
-# 5-stage Incrementer Pipeline
+# IncrPipe
 #-------------------------------------------------------------------------
-
-class IncrPipe (Model):
+class IncrPipe( Model ):
+  """5-stage Incrementer Pipeline toplevel."""
 
   def __init__( s, nbits ):
 
@@ -581,10 +583,9 @@ class IncrPipe (Model):
     return out_str
 
 #-------------------------------------------------------------------------
-# Test Harness
+# TestHarness
 #-------------------------------------------------------------------------
-
-class TestHarness (Model):
+class TestHarness( Model ):
 
   def __init__( s, ModelType, src_msgs, sink_msgs,
                 src_delay, sink_delay, test_verilog, dump_vcd ):
@@ -595,7 +596,9 @@ class TestHarness (Model):
     s.incr_pipe  = ModelType  ( 8 )
     s.sink       = TestSink   ( 8, sink_msgs, sink_delay )
 
+    s.vcd_file           = dump_vcd
     s.incr_pipe.vcd_file = dump_vcd
+
     if test_verilog:
       s.incr_pipe = get_verilated( s.incr_pipe )
 
@@ -613,20 +616,16 @@ class TestHarness (Model):
            + " > " + s.sink.line_trace()
 
 #-------------------------------------------------------------------------
-# Run test
+# run_incr_pipe_test
 #-------------------------------------------------------------------------
-
-def run_incr_pipe_test( dump_vcd, vcd_file_name, src_msgs, sink_msgs,
+def run_incr_pipe_test( dump_vcd, src_msgs, sink_msgs,
                         ModelType, src_delay, sink_delay, test_verilog ):
 
   # Instantiate and elaborate the model
 
   model = TestHarness( ModelType, src_msgs, sink_msgs,
-                       src_delay, sink_delay, test_verilog,
-                       vcd_file_name if dump_vcd else ''
+                       src_delay, sink_delay, test_verilog, dump_vcd
                      )
-  if dump_vcd:
-    model.vcd_file = vcd_file_name
   model.elaborate()
 
   # Create a simulator using the simulation tool
@@ -688,25 +687,15 @@ sink_simple_msgs = [
     8,
   ]
 
-def test_simple_pipe_delay_0x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_simple_msgs, sink_simple_msgs,
-                      IncrPipe, 0, 0, test_verilog )
-
-def test_simple_pipe_delay_5x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_simple_msgs, sink_simple_msgs,
-                      IncrPipe, 5, 0, test_verilog )
-
-def test_simple_pipe_delay_0x5( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_simple_msgs, sink_simple_msgs,
-                      IncrPipe, 0, 5, test_verilog )
-
-def test_simple_pipe_delay_4x9( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_simple_msgs, sink_simple_msgs,
-                      IncrPipe, 4, 9, test_verilog )
+@pytest.mark.parametrize( "src_delay,sink_delay", [
+  ( 0, 0),
+  ( 5, 0),
+  ( 0, 5),
+  ( 4, 9),
+])
+def test_simple_pipe( dump_vcd, test_verilog, src_delay, sink_delay ):
+  run_incr_pipe_test( dump_vcd, src_simple_msgs, sink_simple_msgs,
+                      IncrPipe, src_delay, sink_delay, test_verilog )
 
 #-------------------------------------------------------------------------
 # Stall Pipeline Test - no squashes
@@ -737,25 +726,15 @@ sink_stall_msgs = [
     8,
   ]
 
-def test_stall_pipe_delay_0x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_stall_msgs, sink_stall_msgs,
-                      IncrPipe, 0, 0, test_verilog )
-
-def test_stall_pipe_delay_5x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_stall_msgs, sink_stall_msgs,
-                      IncrPipe, 5, 0, test_verilog )
-
-def test_stall_pipe_delay_0x5( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_stall_msgs, sink_stall_msgs,
-                      IncrPipe, 0, 5, test_verilog )
-
-def test_stall_pipe_delay_4x9( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_stall_msgs, sink_stall_msgs,
-                      IncrPipe, 4, 9, test_verilog )
+@pytest.mark.parametrize( "src_delay,sink_delay", [
+  ( 0, 0),
+  ( 5, 0),
+  ( 0, 5),
+  ( 4, 9),
+])
+def test_stall_pipe( dump_vcd, test_verilog, src_delay, sink_delay ):
+  run_incr_pipe_test( dump_vcd, src_stall_msgs, sink_stall_msgs,
+                      IncrPipe, src_delay, sink_delay, test_verilog )
 
 #-------------------------------------------------------------------------
 # Squash Pipeline Test - no stalls
@@ -786,7 +765,6 @@ sink_squash_msgs = [
     #8, squashed
   ]
 
-def test_squash_pipe_delay_0x0( dump_vcd, test_verilog ):
-  run_incr_pipe_test( dump_vcd, get_vcd_filename(),
-                      src_squash_msgs, sink_squash_msgs,
+def test_squash_pipe( dump_vcd, test_verilog ):
+  run_incr_pipe_test( dump_vcd, src_squash_msgs, sink_squash_msgs,
                       IncrPipe, 0, 0, test_verilog )

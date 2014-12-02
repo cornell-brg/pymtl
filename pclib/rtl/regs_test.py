@@ -9,16 +9,9 @@ from pclib.test import TestVectorSimulator
 from regs       import *
 
 #-------------------------------------------------------------------------
-# Register unit tests
+# test_Reg
 #-------------------------------------------------------------------------
-
-def test_reg( dump_vcd, test_verilog ):
-
-  model = Reg(16)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
-  if test_verilog:
-    model = get_verilated( model )
+def test_Reg( dump_vcd, test_verilog ):
 
   # Test vectors
 
@@ -36,6 +29,10 @@ def test_reg( dump_vcd, test_verilog ):
 
   # Instantiate and elaborate the model
 
+  model = Reg(16)
+  model.vcd_file = dump_vcd
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -53,16 +50,9 @@ def test_reg( dump_vcd, test_verilog ):
   sim.run_test()
 
 #-------------------------------------------------------------------------
-# Register with enable signal unit tests
+# test_Reg
 #-------------------------------------------------------------------------
-
-def test_reg_en( dump_vcd, test_verilog ):
-
-  model = RegEn(16)
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
-  if test_verilog:
-    model = get_verilated( model )
+def test_RegEn( dump_vcd, test_verilog ):
 
   # Test vectors
 
@@ -83,6 +73,10 @@ def test_reg_en( dump_vcd, test_verilog ):
 
   # Instantiate and elaborate the model
 
+  model = RegEn(16)
+  model.vcd_file = dump_vcd
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -101,13 +95,34 @@ def test_reg_en( dump_vcd, test_verilog ):
   sim.run_test()
 
 #-------------------------------------------------------------------------
-# Register with reset signal unit tests
+# test_RegRst
 #-------------------------------------------------------------------------
+@pytest.mark.parametrize( "reset", [
+    (0x0000),
+    (0xbeef),
+    (0xabcd),
+])
+def test_RegRst( dump_vcd, test_verilog, reset):
 
-def run_test_reg_rst( model, test_vectors ):
+  test_vectors = [
+    # in      out
+    [ 0x0a0a,  reset ],
+    [ 0x0b0b, 0x0a0a ],
+    [ 0x0c0c, 0x0b0b ],
+    [ 0x0d0d, 0x0c0c ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0d0d, 0x0d0d ],
+    [ 0x0e0e, 0x0d0d ],
+    [ 0x0e0e, 0x0e0e ],
+  ]
 
   # Instantiate and elaborate the model
 
+  model = RegRst( 16, reset )
+  model.vcd_file = dump_vcd
+  print model.vcd_file
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -124,39 +139,37 @@ def run_test_reg_rst( model, test_vectors ):
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   sim.run_test()
 
+#-------------------------------------------------------------------------
+# test_RegEnRst
+#-------------------------------------------------------------------------
 @pytest.mark.parametrize( "reset", [
     (0x0000),
     (0xbeef),
     (0xabcd),
 ])
-def test_reg_rst( dump_vcd, test_verilog, reset):
-  model = RegRst( 16, reset )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
-  if test_verilog:
-    model = get_verilated( model )
+def test_RegEnRst( dump_vcd, test_verilog, reset ):
 
-  run_test_reg_rst( model, [
-    # in      out
-    [ 0x0a0a,  reset ],
-    [ 0x0b0b, 0x0a0a ],
-    [ 0x0c0c, 0x0b0b ],
-    [ 0x0d0d, 0x0c0c ],
-    [ 0x0d0d, 0x0d0d ],
-    [ 0x0d0d, 0x0d0d ],
-    [ 0x0e0e, 0x0d0d ],
-    [ 0x0e0e, 0x0e0e ],
-  ])
-
-
-#-------------------------------------------------------------------------
-# Register with reset signal unit tests
-#-------------------------------------------------------------------------
-
-def run_test_reg_en_rst( model, test_vectors ):
+  test_vectors = [
+    # in      en out
+    [ 0x0a0a, 0,  reset ],
+    [ 0x0b0b, 1,  reset ],
+    [ 0x0c0c, 0, 0x0b0b ],
+    [ 0x0d0d, 1, 0x0b0b ],
+    [ 0x0d0d, 0, 0x0d0d ],
+    [ 0x0d0d, 1, 0x0d0d ],
+    [ 0x0e0e, 1, 0x0d0d ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0f0f, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+    [ 0x0e0e, 0, 0x0e0e ],
+  ]
 
   # Instantiate and elaborate the model
 
+  model = RegEnRst( 16, reset )
+  model.vcd_file = dump_vcd
+  if test_verilog:
+    model = get_verilated( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -173,32 +186,3 @@ def run_test_reg_en_rst( model, test_vectors ):
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   sim.run_test()
-
-@pytest.mark.parametrize( "reset", [
-    (0x0000),
-    (0xbeef),
-    (0xabcd),
-])
-def test_reg_en_rst( dump_vcd, test_verilog, reset ):
-  model = RegEnRst( 16, reset )
-  if dump_vcd:
-    model.vcd_file = get_vcd_filename()
-  if test_verilog:
-    model = get_verilated( model )
-
-  run_test_reg_en_rst( model, [
-    # in      en out
-    [ 0x0a0a, 0,  reset ],
-    [ 0x0b0b, 1,  reset ],
-    [ 0x0c0c, 0, 0x0b0b ],
-    [ 0x0d0d, 1, 0x0b0b ],
-    [ 0x0d0d, 0, 0x0d0d ],
-    [ 0x0d0d, 1, 0x0d0d ],
-    [ 0x0e0e, 1, 0x0d0d ],
-    [ 0x0e0e, 0, 0x0e0e ],
-    [ 0x0f0f, 0, 0x0e0e ],
-    [ 0x0e0e, 0, 0x0e0e ],
-    [ 0x0e0e, 0, 0x0e0e ],
-  ])
-
-

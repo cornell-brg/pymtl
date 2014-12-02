@@ -21,8 +21,7 @@ def run_decoder_test( dump_vcd, test_verilog, model, test_vectors ):
 
   # Select and elaborate the model under test
 
-  if dump_vcd:
-    model.vcd_file = dump_vcd
+  model.vcd_file = dump_vcd
   if test_verilog:
     model = get_verilated( model )
   model.elaborate()
@@ -39,8 +38,7 @@ def run_decoder_test( dump_vcd, test_verilog, model, test_vectors ):
 # test_decoder_2_4
 #------------------------------------------------------------------------------
 def test_decoder_2_4( dump_vcd, test_verilog ):
-  run_decoder_test( get_vcd_filename() if dump_vcd else False,
-                    test_verilog, Decoder(2, 4), [
+  run_decoder_test( dump_vcd, test_verilog, Decoder(2, 4), [
     [ 0, 0b0001 ],
     [ 1, 0b0010 ],
     [ 2, 0b0100 ],
@@ -57,8 +55,7 @@ def test_decoder_2_4( dump_vcd, test_verilog ):
 # test_decoder_2_3
 #------------------------------------------------------------------------------
 def test_decoder_2_3( dump_vcd, test_verilog ):
-  run_decoder_test( get_vcd_filename() if dump_vcd else False,
-                    test_verilog, Decoder(2, 3), [
+  run_decoder_test( dump_vcd, test_verilog, Decoder(2, 3), [
     [ 0, 0b001 ],
     [ 1, 0b010 ],
     [ 2, 0b100 ],
