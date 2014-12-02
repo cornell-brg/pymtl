@@ -21,8 +21,9 @@ from SimulationTool_wire_test   import *
 # dump of the simulation.
 def vcd_setup_sim( model ):
   model.elaborate()
+  model.vcd_file = \
+    'pymtl.tools.simulation.vcd_test.{}.vcd'.format( model.class_name )
   sim = SimulationTool( model )
-  sim.dump_vcd( 'pymtl.tools.simulation.vcd_test.{}.vcd'.format( model.class_name ) )
   return sim
 
 #-----------------------------------------------------------------------
