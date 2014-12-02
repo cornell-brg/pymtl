@@ -49,22 +49,6 @@ requires_verilator = mark.skipif( not( has('verilator') ),
                                   reason='requires verilator' )
 
 #-----------------------------------------------------------------------
-# py.test helper functions
-#-----------------------------------------------------------------------
-
-def get_vcd_filename():
-  """Use introspection to access the py.test object responsible for
-  running the current test function. Use the **nodeid** of the test
-  object (a.k.a. the test name shown at the commandline) to generate a
-  good name for VCD output files."""
-  import inspect, os
-  pframe, _,_,_,_,_ = inspect.getouterframes( inspect.currentframe() )[1]
-  gframe, x,_,_,_,_ = inspect.getouterframes( inspect.currentframe() )[2]
-  test_id           = gframe.f_locals['pyfuncitem'].nodeid
-  test_module       = inspect.getmodule( pframe ).__name__
-  return '{}.{}.vcd'.format( test_module, test_id.split(':')[-1] )
-
-#-----------------------------------------------------------------------
 # pymtl namespace
 #-----------------------------------------------------------------------
 
@@ -102,6 +86,5 @@ __all__ = [ # Model Construction
             'requires_vmh',
             'requires_iverilog',
             'requires_verilator',
-            'get_vcd_filename',
           ]
 
