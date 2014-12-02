@@ -85,7 +85,7 @@ class SimulationTool( object ):
 
     # Setup vcd dumping if it's configured
 
-    if model.vcd_file:
+    if hasattr( model, 'vcd_file' ) and model.vcd_file:
       from vcd import VCDUtil
       VCDUtil( self, model.vcd_file )
 
