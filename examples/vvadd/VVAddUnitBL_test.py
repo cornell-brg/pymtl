@@ -38,7 +38,7 @@ class TestHarness (Model):
 # Test
 #-------------------------------------------------------------------------
 
-def test_basic():
+def test_basic( dump_vcd ):
 
   # Create parameters
 
@@ -49,6 +49,7 @@ def test_basic():
 
   model = TestHarness( memreq_params, memresp_params,
                        0x0200, 0x0000, 0x0100, 6 )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Write test data into the test memory

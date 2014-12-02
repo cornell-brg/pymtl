@@ -2,6 +2,8 @@
 # GcdUnitBL Test Suite
 #=========================================================================
 
+import pytest
+
 from pymtl      import *
 from pclib.test import TestSource, TestSink
 from GcdUnitBL  import GcdUnitBL
@@ -9,7 +11,6 @@ from GcdUnitBL  import GcdUnitBL
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
-
 class TestHarness( Model ):
 
   def __init__( s, gcd_model, src_msgs, sink_msgs,
@@ -45,8 +46,7 @@ class TestHarness( Model ):
 def concat( a, b ):
   return ( a << 32 | b )
 
-def run_gcd_test( dump_vcd, vcd_file_name, test_verilog,
-                  ModelType, src_delay, sink_delay ):
+def run_gcd_test( dump_vcd, test_verilog, ModelType, src_delay, sink_delay ):
 
   # Test messages
 
@@ -69,13 +69,12 @@ def run_gcd_test( dump_vcd, vcd_file_name, test_verilog,
 
   model = TestHarness( model_under_test, src_msgs, sink_msgs,
                        src_delay, sink_delay )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 
@@ -93,26 +92,12 @@ def run_gcd_test( dump_vcd, vcd_file_name, test_verilog,
   sim.cycle()
 
 #-------------------------------------------------------------------------
-# GcdUnitBL unit test with delay = 0 x 0
+# test_gcd
 #-------------------------------------------------------------------------
-
-def test_delay0x0( dump_vcd ):
-  run_gcd_test( dump_vcd, get_vcd_filename(),
-                False, GcdUnitBL, 0, 0 )
-
-#-------------------------------------------------------------------------
-# GcdUnitBL unit test with delay = 10 x 5
-#-------------------------------------------------------------------------
-
-def test_delay10x5( dump_vcd ):
-  run_gcd_test( dump_vcd, get_vcd_filename(),
-                False, GcdUnitBL, 10, 5 )
-
-#-------------------------------------------------------------------------
-# GcdUnitBL unit test with delay = 5 x 10
-#-------------------------------------------------------------------------
-
-def test_delay5x10( dump_vcd ):
-  run_gcd_test( dump_vcd, get_vcd_filename(),
-                False, GcdUnitBL, 5, 10 )
-
+@pytest.mark.parametrize( 'src_delay, sink_delay', [
+  (  0,  0),
+  ( 10,  5),
+  (  5, 10),
+])
+def test( dump_vcd, src_delay, sink_delay ):
+  run_gcd_test( dump_vcd, False, GcdUnitBL, src_delay, sink_delay )

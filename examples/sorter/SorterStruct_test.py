@@ -17,8 +17,7 @@ from SorterCL_test import run_sorter_test
 from SorterCL_test import test_vectors_basics
 
 def test_basics( dump_vcd ):
-  run_sorter_test( dump_vcd, get_vcd_filename(),
-                   SorterStruct, test_vectors_basics )
+  run_sorter_test( dump_vcd, SorterStruct, test_vectors_basics )
 
 #-------------------------------------------------------------------------
 # Test duplicates
@@ -27,8 +26,7 @@ def test_basics( dump_vcd ):
 from SorterCL_test import test_vectors_duplicates
 
 def test_duplicates( dump_vcd ):
-  run_sorter_test( dump_vcd, get_vcd_filename(),
-                   SorterStruct, test_vectors_duplicates )
+  run_sorter_test( dump_vcd, SorterStruct, test_vectors_duplicates )
 
 #-------------------------------------------------------------------------
 # Test random
@@ -37,6 +35,5 @@ def test_duplicates( dump_vcd ):
 from SorterCL_test import test_vectors_random
 
 def test_random( dump_vcd ):
-  run_sorter_test( dump_vcd, get_vcd_filename(),
-                   SorterStruct, test_vectors_random )
+  run_sorter_test( dump_vcd, SorterStruct, test_vectors_random )
 

@@ -35,14 +35,11 @@ class TestHarness( Model ):
 #------------------------------------------------------------------------------
 # run_gcd_test
 #------------------------------------------------------------------------------
-def run_gcd_test( dump_vcd, vcd_file_name, model, lane_id,
-                     src_a, src_b, exp_value):
+def run_gcd_test( dump_vcd, model, lane_id, src_a, src_b, exp_value):
 
+  model.vcd_file = dump_vcd
   model.elaborate()
   sim = SimulationTool( model )
-  
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   sim.reset()
 
@@ -87,20 +84,20 @@ def run_gcd_test( dump_vcd, vcd_file_name, model, lane_id,
 #
 def test_gcd_rtl1( dump_vcd, test_verilog ):
   lane = 0
-  run_gcd_test( dump_vcd, get_vcd_filename(),
-                   TestHarness( lane, test_verilog ),
-                   lane,
-                   16,
-                   12,
-                   4,
-                 )
+  run_gcd_test( dump_vcd,
+                TestHarness( lane, test_verilog ),
+                lane,
+                16,
+                12,
+                4,
+              )
 
 def test_gcd_rtl2( dump_vcd, test_verilog ):
   lane = 0
-  run_gcd_test( dump_vcd, get_vcd_filename(),
-                   TestHarness( lane, test_verilog ),
-                   lane,
-                   72,
-                   71,
-                   1,
-                 )
+  run_gcd_test( dump_vcd,
+                TestHarness( lane, test_verilog ),
+                lane,
+                72,
+                71,
+                1,
+              )
