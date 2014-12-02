@@ -1,17 +1,28 @@
 #=========================================================================
-# Mesh Unit Test
+# MeshNetworkBL_test
 #=========================================================================
 
+import pytest
 import random
 
 from pymtl        import *
 from pclib.ifaces import NetMsg
 from pclib.test   import TestSource, TestNetSink
 
-from MeshNetworkBL import MeshNetworkBL
+from traffic_generators import *
+from MeshNetworkBL      import MeshNetworkBL
+
+#-------------------------------------------------------------------------
+# network args
+#-------------------------------------------------------------------------
 
 import traffic_generators
-from traffic_generators import *
+
+nrouters      = traffic_generators.nrouters      =  16
+nmessages     = traffic_generators.nmessages     = 128
+payload_nbits = traffic_generators.payload_nbits =  32
+
+nentries = 4
 
 # Fix the random seed so results are reproducible
 random.seed(0xdeadbeef)
@@ -24,8 +35,8 @@ class TestHarness( Model ):
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay,
-                nrouters, nmessages, payload_nbits, nentries ):
+  def __init__( s, ModelType, src_msgs, sink_msgs, src_delay, sink_delay,
+                nrouters, nmessages, payload_nbits, nentries, test_verilog ):
 
     s.src_msgs      = src_msgs
     s.sink_msgs     = sink_msgs
@@ -35,6 +46,8 @@ class TestHarness( Model ):
     s.nmessages     = nmessages
     s.payload_nbits = payload_nbits
     s.nentries      = nentries
+    s.ModelType     = ModelType
+    s.test_verilog  = test_verilog
 
   #-----------------------------------------------------------------------
   # elaborate_logic
@@ -45,14 +58,23 @@ class TestHarness( Model ):
 
     msg_type = NetMsg( s.nrouters, s.nmessages, s.payload_nbits )
 
-    s.src  = [ TestSource ( msg_type, s.src_msgs[x],  s.src_delay  ) for x in xrange( s.nrouters ) ]
-    s.mesh = MeshNetworkBL( s.nrouters, s.nmessages, s.payload_nbits, s.nentries )
-    s.sink = [ TestNetSink( msg_type, s.sink_msgs[x], s.sink_delay ) for x in xrange( s.nrouters ) ]
+    s.src  = [ TestSource ( msg_type, s.src_msgs[x],  s.src_delay  )
+               for x in xrange( s.nrouters ) ]
+    s.mesh = s.ModelType( s.nrouters, s.nmessages,
+                          s.payload_nbits, s.nentries )
+    s.sink = [ TestNetSink( msg_type, s.sink_msgs[x], s.sink_delay )
+               for x in xrange( s.nrouters ) ]
+
+    # enable verilog testing (only for RTL models)
+
+    if s.test_verilog:
+      s.mesh.vcd_file = s.vcd_file
+      s.mesh = get_verilated( s.mesh )
 
     # connect signals
 
     for i in xrange( s.nrouters ):
-      s.connect( s.mesh.in_[i], s.src[i].out  )
+      s.connect( s.mesh.in_[i], s.src[i] .out )
       s.connect( s.mesh.out[i], s.sink[i].in_ )
 
   #-----------------------------------------------------------------------
@@ -74,9 +96,9 @@ class TestHarness( Model ):
 # run_net_test
 #-------------------------------------------------------------------------
 # RunTest Utility Function
-def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
-                  test_msgs, nrouters, nmessages, payload_nbits,
-                  nentries ):
+def run_net_test( dump_vcd, ModelType, src_delay, sink_delay, test_msgs,
+                  nrouters, nmessages, payload_nbits, nentries,
+                  test_verilog=False ):
 
   # src/sink msgs
 
@@ -85,22 +107,22 @@ def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( src_msgs, sink_msgs, src_delay, sink_delay,
-                       nrouters, nmessages, payload_nbits, nentries )
+  model = TestHarness( ModelType, src_msgs, sink_msgs, src_delay, sink_delay,
+                       nrouters, nmessages, payload_nbits, nentries,
+                       test_verilog )
+  model.vcd_file = dump_vcd
   model.elaborate()
 
   # Create a simulator using the simulation tool
 
   sim = SimulationTool( model )
-  if dump_vcd:
-    sim.dump_vcd( vcd_file_name )
 
   # Run the simulation
 
   print ""
 
   sim.reset()
-  while not model.done():
+  while not model.done() and sim.ncycles < 1000:
     sim.print_line_trace()
     sim.cycle()
 
@@ -110,182 +132,51 @@ def run_net_test( dump_vcd, vcd_file_name, src_delay, sink_delay,
   sim.cycle()
   sim.cycle()
 
-#-------------------------------------------------------------------------
-# network args
-#-------------------------------------------------------------------------
+  # Check for success
 
-nrouters      = traffic_generators.nrouters      =  16
-nmessages     = traffic_generators.nmessages     = 128
-payload_nbits = traffic_generators.payload_nbits =  32
-
-nentries = 4
+  if not model.done():
+    raise AssertionError( "Simulation did not complete!" )
 
 #-------------------------------------------------------------------------
-# terminal tests
+# test_mesh
 #-------------------------------------------------------------------------
-
-def test_mesh_terminal_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
-                terminal_msgs(), nrouters, nmessages, payload_nbits,
-                nentries )
-
-def test_mesh_terminal_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
-                terminal_msgs(), nrouters, nmessages, payload_nbits,
-                nentries )
-
-def test_mesh_terminal_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
-                terminal_msgs(), nrouters, nmessages, payload_nbits,
-                nentries )
-
-def test_mesh_terminal_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
-                terminal_msgs(), nrouters, nmessages, payload_nbits,
-                nentries )
-
-#-------------------------------------------------------------------------
-# nearest neighbor east tests
-#-------------------------------------------------------------------------
-
-def test_mesh_nearest_neighbor_east_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
-                nearest_neighbor_east_msgs(8), nrouters,
-                nmessages, payload_nbits, nentries )
-
-def test_mesh_nearest_neighbor_east_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
-                nearest_neighbor_east_msgs(8), nrouters,
-                nmessages, payload_nbits, nentries )
-
-def test_mesh_nearest_neighbor_east_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
-                nearest_neighbor_east_msgs(8), nrouters,
-                nmessages, payload_nbits, nentries )
-
-def test_mesh_nearest_neighbor_east_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
-                nearest_neighbor_east_msgs(8), nrouters,
-                nmessages, payload_nbits, nentries )
-
-#-------------------------------------------------------------------------
-# nearest neighbor west tests
-#-------------------------------------------------------------------------
-
-def test_mesh_nearest_neighbor_west_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
-                nearest_neighbor_west_msgs(8), nrouters,
-                nmessages, payload_nbits, nentries )
-
-
-def test_mesh_nearest_neighbor_west_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
-                nearest_neighbor_west_msgs(8), nrouters,
-                nmessages, payload_nbits, nentries )
-
-def test_mesh_nearest_neighbor_west_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
-                nearest_neighbor_west_msgs(8), nrouters,
-                nmessages, payload_nbits, nentries )
-
-def test_mesh_nearest_neighbor_west_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
-                nearest_neighbor_west_msgs(8), nrouters,
-                nmessages, payload_nbits, nentries )
-
-#-------------------------------------------------------------------------
-# hotspot tests
-#-------------------------------------------------------------------------
-
-def test_mesh_hotspot_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
-                hotspot_msgs(3), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_hotspot_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
-                hotspot_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_hotspot_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
-                hotspot_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_hotspot_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
-                hotspot_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-#-------------------------------------------------------------------------
-# partition tests
-#-------------------------------------------------------------------------
-
-def test_mesh_partition_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
-                partition_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_partition_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
-                partition_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_partition_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
-                partition_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_partition_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
-                partition_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-#-------------------------------------------------------------------------
-# uniform random tests
-#-------------------------------------------------------------------------
-
-def test_mesh_uniform_random_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
-                uniform_random_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_uniform_random_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
-                uniform_random_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_uniform_random_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
-                uniform_random_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_uniform_random_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
-                uniform_random_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-#-------------------------------------------------------------------------
-# tornado tests
-#-------------------------------------------------------------------------
-
-def test_mesh_tornado_delay0x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 0,
-                tornado_msgs(24), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_tornado_delay5x0( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 5, 0,
-                tornado_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_tornado_delay0x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 0, 5,
-                tornado_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
-def test_mesh_tornado_delay8x5( dump_vcd ):
-  run_net_test( dump_vcd, get_vcd_filename(), 8, 5,
-                tornado_msgs(8), nrouters, nmessages,
-                payload_nbits, nentries )
-
+@pytest.mark.parametrize( 'src_delay,sink_delay,test_msgs', [
+  # terminal tests
+  (0, 0, terminal_msgs()),
+  (5, 0, terminal_msgs()),
+  (0, 5, terminal_msgs()),
+  (8, 5, terminal_msgs()),
+  # nearest neighbor east tests
+  (0, 0, nearest_neighbor_east_msgs(8)),
+  (5, 0, nearest_neighbor_east_msgs(8)),
+  (0, 5, nearest_neighbor_east_msgs(8)),
+  (8, 5, nearest_neighbor_east_msgs(8)),
+  # nearest neighbor east tests
+  (0, 0, nearest_neighbor_west_msgs(8)),
+  (5, 0, nearest_neighbor_west_msgs(8)),
+  (0, 5, nearest_neighbor_west_msgs(8)),
+  (8, 5, nearest_neighbor_west_msgs(8)),
+  # hotspot tests
+  (0, 0, hotspot_msgs(8)),
+  (5, 0, hotspot_msgs(8)),
+  (0, 5, hotspot_msgs(8)),
+  (8, 5, hotspot_msgs(8)),
+  # partition tests
+  (0, 0, partition_msgs(8)),
+  (5, 0, partition_msgs(8)),
+  (0, 5, partition_msgs(8)),
+  (8, 5, partition_msgs(8)),
+  # uniform random tests
+  (0, 0, uniform_random_msgs(8)),
+  (5, 0, uniform_random_msgs(8)),
+  (0, 5, uniform_random_msgs(8)),
+  (8, 5, uniform_random_msgs(8)),
+  # tornado tests
+  (0, 0, tornado_msgs(8)),
+  (5, 0, tornado_msgs(8)),
+  (0, 5, tornado_msgs(8)),
+  (8, 5, tornado_msgs(8)),
+])
+def test_mesh( dump_vcd, src_delay, sink_delay, test_msgs ):
+  run_net_test( dump_vcd, MeshNetworkBL, src_delay, sink_delay, test_msgs,
+                nrouters, nmessages, payload_nbits, nentries )
