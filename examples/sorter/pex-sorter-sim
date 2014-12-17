@@ -6,8 +6,8 @@
 #  -h --help           Display this message
 #  -v --verbose        Verbose mode
 #
-#  --impl              Choose model implementation (default bl)
-#                       bl     : behavioral-level model
+#  --impl              Choose model implementation (default fl)
+#                       fl     : functional-level model
 #                       cl     : cycle-level model
 #                       rtl    : register-transfer-level model
 #                       struct : structural model
@@ -28,7 +28,7 @@ import re
 
 from pymtl import *
 
-from SorterBL     import SorterBL
+from SorterFL     import SorterFL
 from SorterCL     import SorterCL
 from SorterRTL    import SorterRTL
 from SorterStruct import SorterStruct
@@ -81,7 +81,7 @@ def main():
   # Determine which model to use in the simulator
 
   model_impl_dict = {
-    'bl'     : SorterBL,
+    'fl'     : SorterFL,
     'cl'     : SorterCL,
     'rtl'    : SorterRTL,
     'struct' : SorterStruct,

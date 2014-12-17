@@ -1,14 +1,12 @@
 #=========================================================================
 # Sorter Behavioral-Level Model
 #=========================================================================
-# A behavioral-levle model has accurately models the function of the
-# target hardware but does not necessarily attempt to model the number of
-# cycles it might take to execute the hardware. It is a more abstract
-# modeling technique.
+# A functional-level model the functional behavior of the target hardware
+# but not the timing.
 
 from pymtl import *
 
-class SorterBL( Model ):
+class SorterFL( Model ):
 
   def __init__( s ):
     s.in_ = [ InPort  ( 16 ) for x in range(4) ]

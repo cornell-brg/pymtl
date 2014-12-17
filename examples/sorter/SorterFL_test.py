@@ -1,11 +1,11 @@
 #=========================================================================
-# SorterBL Test Suite
+# SorterFL Test Suite
 #=========================================================================
 
 from pymtl import *
 import random
 
-from SorterBL import SorterBL
+from SorterFL import SorterFL
 
 # Fix the random seed so results are reproducible
 random.seed(0xdeadbeef)
@@ -85,7 +85,7 @@ test_vectors_basics = [
 ]
 
 def test_basics( dump_vcd ):
-  run_sorter_test( dump_vcd, SorterBL, test_vectors_basics )
+  run_sorter_test( dump_vcd, SorterFL, test_vectors_basics )
 
 #-------------------------------------------------------------------------
 # Test duplicates
@@ -100,7 +100,7 @@ test_vectors_duplicates = [
 ]
 
 def test_duplicates( dump_vcd ):
-  run_sorter_test( dump_vcd, SorterBL, test_vectors_duplicates )
+  run_sorter_test( dump_vcd, SorterFL, test_vectors_duplicates )
 
 #-------------------------------------------------------------------------
 # Test random
@@ -133,5 +133,5 @@ for i in xrange(90):
   prev_test_vector_random = out_list[:]
 
 def test_random( dump_vcd ):
-  run_sorter_test( dump_vcd, SorterBL, test_vectors_random )
+  run_sorter_test( dump_vcd, SorterFL, test_vectors_random )
 

@@ -9,7 +9,7 @@ from SorterCL import SorterCL
 
 # We can use the same test harness from the behavioral-level model
 
-from SorterBL_test import run_sorter_test
+from SorterFL_test import run_sorter_test
 
 # Fix the random seed so results are reproducible
 random.seed(0xdeadbeef)
