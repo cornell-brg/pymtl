@@ -3,7 +3,7 @@
 #==============================================================================
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 STATE_CFG  = 0
 STATE_CALC = 1

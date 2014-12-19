@@ -3,7 +3,7 @@
 #==============================================================================
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle
+from pclib.ifcs import InValRdyBundle
 
 STATE_CFG  = 0
 STATE_CALC = 1

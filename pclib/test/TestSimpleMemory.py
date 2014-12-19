@@ -5,10 +5,10 @@
 # based on the number of memory request/response ports.
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
-import pclib.ifaces.valrdy   as valrdy
-import pclib.ifaces.mem_msgs as mem_msgs
+import pclib.ifcs.valrdy   as valrdy
+import pclib.ifcs.mem_msgs as mem_msgs
 
 class TestSimpleMemory (Model):
 

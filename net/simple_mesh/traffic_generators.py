@@ -5,7 +5,7 @@
 import random
 
 from math         import sqrt
-from pclib.ifaces import NetMsg
+from pclib.ifcs import NetMsg
 
 #-------------------------------------------------------------------------
 # mk_msg

@@ -3,8 +3,8 @@
 #=========================================================================
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
-from pclib.ifaces import ParentReqRespBundle, ChildReqRespBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import ParentReqRespBundle, ChildReqRespBundle
 
 nmul_stages = 4
 

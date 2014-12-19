@@ -6,7 +6,7 @@ import pytest
 
 from pymtl        import *
 from pclib.test   import TestSource, TestNetSink
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle, NetMsg
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle, NetMsg
 
 #-------------------------------------------------------------------------
 # TestHarness

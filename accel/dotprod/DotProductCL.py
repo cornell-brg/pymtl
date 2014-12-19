@@ -8,7 +8,7 @@ import numpy
 from pymtl        import *
 from pclib.fl     import ListMemPortAdapter
 from pclib.cl     import ChildReqRespQueueAdapter, ParentReqRespQueueAdapter
-from pclib.ifaces import ChildReqRespBundle, ParentReqRespBundle, MemMsg
+from pclib.ifcs import ChildReqRespBundle, ParentReqRespBundle, MemMsg
 
 #-------------------------------------------------------------------------
 # helpers

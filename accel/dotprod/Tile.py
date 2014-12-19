@@ -1,7 +1,7 @@
 #=======================================================================
 
 from pymtl          import *
-from pclib.ifaces   import (
+from pclib.ifcs   import (
   InValRdyBundle, OutValRdyBundle,
   mem_msgs, MemMsg, CP2Msg,
 )

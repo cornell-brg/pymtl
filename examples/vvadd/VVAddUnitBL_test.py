@@ -3,7 +3,7 @@
 #=========================================================================
 
 from pymtl        import *
-from pclib.ifaces import mem_msgs
+from pclib.ifcs import mem_msgs
 from pclib.test   import TestMemory
 from VVAddUnitBL  import *
 

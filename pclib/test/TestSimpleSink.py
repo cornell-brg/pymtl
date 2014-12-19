@@ -6,7 +6,7 @@
 #
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle
+from pclib.ifcs import InValRdyBundle
 
 class TestSimpleSink( Model ):
 

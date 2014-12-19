@@ -5,11 +5,11 @@
 import pytest
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 from pclib.test   import SparseMemoryImage, TestMemory, TestProcManager
 from pclib.test   import TestSource, TestSink
 
-import pclib.ifaces.mem_msgs as mem_msgs
+import pclib.ifcs.mem_msgs as mem_msgs
 
 #-------------------------------------------------------------------------
 # DummyProc

@@ -6,13 +6,13 @@
 # delays for responses.
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 from pclib.test   import TestRandomDelay
 
 from TestSimpleMemory import TestSimpleMemory
 
-import pclib.ifaces.valrdy   as valrdy
-import pclib.ifaces.mem_msgs as mem_msgs
+import pclib.ifcs.valrdy   as valrdy
+import pclib.ifcs.mem_msgs as mem_msgs
 
 class TestMemory( Model ):
 

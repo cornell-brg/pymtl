@@ -4,7 +4,7 @@
 # Collection of queues for cycle-level modeling.
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 from collections  import deque
 
 #-----------------------------------------------------------------------

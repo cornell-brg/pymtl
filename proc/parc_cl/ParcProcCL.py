@@ -6,7 +6,7 @@ import collections
 import copy
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 from pymtl.datatypes import helpers
 from pisa            import PisaInst

@@ -5,7 +5,7 @@
 import pytest
 
 from pymtl        import *
-from pclib.ifaces import *
+from pclib.ifcs import *
 from pclib.test   import *
 
 from Bytes             import Bytes

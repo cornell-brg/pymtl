@@ -6,7 +6,7 @@
 #
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
 import random
 

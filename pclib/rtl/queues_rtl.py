@@ -4,7 +4,7 @@
 # This file contains a collection of various queue model implementations
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 from pclib.rtl    import RegEn, Mux, RegisterFile
 
 #=========================================================================

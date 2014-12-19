@@ -6,7 +6,7 @@
 #
 
 from pymtl        import *
-from pclib.ifaces import OutValRdyBundle
+from pclib.ifcs import OutValRdyBundle
 
 class TestSimpleSource( Model ):
 

@@ -40,7 +40,7 @@ from   pymtl import *
 from pclib.test   import SparseMemoryImage
 from pclib.test   import TestMemory
 from pclib.test   import TestProcManager
-from pclib.ifaces import mem_msgs
+from pclib.ifcs import mem_msgs
 from Tile         import Tile
 
 #-------------------------------------------------------------------------

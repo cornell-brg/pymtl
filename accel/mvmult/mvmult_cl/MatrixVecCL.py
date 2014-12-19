@@ -5,7 +5,7 @@
 import collections
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle, mem_msgs
 from pclib.fl     import Queue
 from ..mvmult_fl  import InMatrixVecBundle, OutMatrixVecBundle
 

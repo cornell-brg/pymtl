@@ -6,7 +6,7 @@ import pytest
 import random
 
 from pymtl        import *
-from pclib.ifaces import NetMsg
+from pclib.ifcs import NetMsg
 from pclib.test   import TestSource, TestNetSink
 
 from traffic_generators import *

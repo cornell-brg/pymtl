@@ -7,7 +7,7 @@ import pytest
 
 from pymtl        import *
 from pclib.test   import TestSource, TestMemory
-from pclib.ifaces import mem_msgs, MemMsg, CP2Msg
+from pclib.ifcs import mem_msgs, MemMsg, CP2Msg
 
 from DotProductCL import DotProductCL as DotProduct
 

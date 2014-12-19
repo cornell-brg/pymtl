@@ -3,7 +3,7 @@
 #=========================================================================
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 from pclib.rtl    import Mux, RegEn, RegRst, arith
 
 # Constants

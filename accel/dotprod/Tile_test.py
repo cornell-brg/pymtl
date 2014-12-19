@@ -7,7 +7,7 @@ import pytest
 
 from pymtl        import *
 from pclib.test   import TestMemory, TestProcManager, SparseMemoryImage
-from pclib.ifaces import mem_msgs
+from pclib.ifcs import mem_msgs
 
 from Tile import Tile
 

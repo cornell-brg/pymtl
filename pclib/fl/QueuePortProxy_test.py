@@ -7,7 +7,7 @@ import collections
 
 from pymtl        import *
 from pclib.test   import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
 from QueuePortProxy import InQueuePortProxy, OutQueuePortProxy
 

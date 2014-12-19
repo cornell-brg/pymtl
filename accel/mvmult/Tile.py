@@ -1,7 +1,7 @@
 #=======================================================================
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle, mem_msgs
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 from proc.parc.ParcProcPipelinedMul import ParcProcPipelinedMul
 from MatrixVecCOP                   import MatrixVecCOP

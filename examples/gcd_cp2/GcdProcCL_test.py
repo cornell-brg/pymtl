@@ -5,7 +5,7 @@
 from pymtl        import *
 from pclib.test   import TestSource, TestMemory
 from GcdProcCL    import GcdProcCL as Gcd
-from pclib.ifaces import CP2Msg, mem_msgs
+from pclib.ifcs import CP2Msg, mem_msgs
 
 import pytest
 

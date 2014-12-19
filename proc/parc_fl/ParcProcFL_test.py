@@ -8,7 +8,7 @@ import struct
 
 from pymtl        import *
 from pclib.test   import TestSource, TestSink, TestMemory
-from pclib.ifaces import mem_msgs
+from pclib.ifcs import mem_msgs
 from ParcProcFL   import ParcProcFL
 
 from accel.mvmult.mvmult_fl import MatrixVecFL

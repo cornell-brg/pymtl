@@ -6,7 +6,7 @@ from math        import sqrt
 from collections import deque
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle, NetMsg
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle, NetMsg
 from pclib.cl     import InValRdyQueue,  OutValRdyQueue
 
 #=========================================================================

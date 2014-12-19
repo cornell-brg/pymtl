@@ -6,7 +6,7 @@ import collections
 
 from pymtl        import *
 from pclib.fl     import Queue
-from pclib.ifaces import ChildReqRespBundle, ParentReqRespBundle
+from pclib.ifcs import ChildReqRespBundle, ParentReqRespBundle
 
 #-------------------------------------------------------------------------
 # DotProductDetailed

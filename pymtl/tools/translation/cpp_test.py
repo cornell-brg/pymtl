@@ -351,7 +351,7 @@ def test_ModuleListPortList():
 #-----------------------------------------------------------------------
 # PortBundles
 #-----------------------------------------------------------------------
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 class TestValRdy0( Model ):
   def __init__( s ):
     s.in_ = InValRdyBundle (16)

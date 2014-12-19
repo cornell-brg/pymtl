@@ -4,7 +4,7 @@
 
 from pymtl        import *
 from pclib.test   import TestRandomDelay
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
 from TestSimpleNetSink import TestSimpleNetSink
 

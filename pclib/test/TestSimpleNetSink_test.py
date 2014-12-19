@@ -5,7 +5,7 @@
 import pytest
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle, NetMsg
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle, NetMsg
 
 from TestSimpleSource  import TestSimpleSource
 from TestSimpleNetSink import TestSimpleNetSink

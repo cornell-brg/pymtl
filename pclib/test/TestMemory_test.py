@@ -4,7 +4,7 @@
 
 import pytest
 
-import pclib.ifaces.mem_msgs as mem_msgs
+import pclib.ifcs.mem_msgs as mem_msgs
 
 from pymtl      import *
 from pclib.test import TestSource, TestSink, TestMemory

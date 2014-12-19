@@ -3,7 +3,7 @@
 #==============================================================================
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle
+from pclib.ifcs import InValRdyBundle
 from pclib.rtl    import Decoder
 
 STATE_IDLE = 0

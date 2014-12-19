@@ -5,7 +5,7 @@
 import pytest
 
 from pymtl        import *
-from pclib.ifaces import mem_msgs
+from pclib.ifcs import mem_msgs
 from pclib.test   import TestSource, TestMemory
 
 from MatrixVecLaneFL import MatrixVecLaneFL

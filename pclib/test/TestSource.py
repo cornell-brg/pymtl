@@ -4,7 +4,7 @@
 
 from pymtl        import *
 from pclib.test   import TestRandomDelay
-from pclib.ifaces import OutValRdyBundle
+from pclib.ifcs import OutValRdyBundle
 
 from TestSimpleSource import TestSimpleSource
 

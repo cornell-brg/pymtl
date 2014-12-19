@@ -3,7 +3,7 @@
 #=========================================================================
 
 from pymtl        import *
-from pclib.ifaces import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 from pclib.fl     import Queue
 from pclib.cl     import InValRdyQueue, OutValRdyQueue
 
