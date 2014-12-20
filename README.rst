@@ -1,9 +1,24 @@
 ===============================================================================
-PyMTL Installation
+About PyMTL
 ===============================================================================
 
-.. image:: https://magnum.travis-ci.com/cornell-brg/pymtl.svg?token=jmi7kf1Uw55Qs4NmDdN1&branch=master
-  :target: https://magnum.travis-ci.com/cornell-brg/pymtl
+.. image:: https://travis-ci.org/cornell-brg/pymtl.svg
+  :target: https://travis-ci.org/cornell-brg/pymtl
+
+PyMTL is an open-source, Python-based framework for multi-level hardware
+modeling. It was recently introduced to the world at MICRO-47 in December,
+2014.
+
+Please note that PyMTL is currently **beta** software that is under active
+development and documentation is currently quite sparse. Please stay tuned
+as we will be adding much more documentation and a tutorial over the next
+several weeks.
+
+Thank you for your interest!
+
+===============================================================================
+Installation
+===============================================================================
 
 -------------------------------------------------------------------------------
 Prerequisites
