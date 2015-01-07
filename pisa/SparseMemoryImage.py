@@ -9,6 +9,8 @@
 # Author : Christopher Batten
 # Date   : May 20, 2014
 
+from __future__ import print_function
+
 import binascii
 
 class SparseMemoryImage (object):
@@ -67,10 +69,10 @@ class SparseMemoryImage (object):
 
   def print_section_table( self ):
     idx = 0
-    print "Idx Name           Addr     Size"
+    print( "Idx Name           Addr     Size" )
     for section in self.sections:
-      print "{:>3} {:<14} {:0>8x} {}" \
-        .format( idx, section.name, section.addr, len(section.data) )
+      print( "{:>3} {:<14} {:0>8x} {}" \
+        .format( idx, section.name, section.addr, len(section.data) ) )
       idx += 1
 
   #-----------------------------------------------------------------------
@@ -97,5 +99,5 @@ class SparseMemoryImage (object):
 
   def print_symbol_table( self ):
     for key,value in self.symbols.iteritems():
-      print " {:0>8x} {}".format( value, key )
+      print( " {:0>8x} {}".format( value, key ) )
 

@@ -2,6 +2,8 @@
 # GcdUnitBL Test Suite
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 
 from pymtl      import *
@@ -78,7 +80,7 @@ def run_gcd_test( dump_vcd, test_verilog, ModelType, src_delay, sink_delay ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

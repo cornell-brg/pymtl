@@ -2,10 +2,12 @@
 # VVAddBL_test.py
 #=========================================================================
 
-from pymtl        import *
-from pclib.ifcs import mem_msgs
-from pclib.test   import TestMemory
-from VVAddUnitBL  import *
+from __future__ import print_function
+
+from pymtl       import *
+from pclib.ifcs  import mem_msgs
+from pclib.test  import TestMemory
+from VVAddUnitBL import *
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -65,7 +67,7 @@ def test_basic( dump_vcd ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

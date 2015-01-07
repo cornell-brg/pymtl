@@ -2,6 +2,8 @@
 # GcdProcRTL
 #=========================================================================
 
+from __future__ import print_function
+
 from pymtl        import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 from pclib.rtl    import Mux, regs, arith

@@ -2,12 +2,14 @@
 # MeshRouterCL.py
 #=========================================================================
 
+from __future__ import print_function
+
 from math        import sqrt
 from collections import deque
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.cl     import InValRdyQueue,  OutValRdyQueue
+from pclib.cl   import InValRdyQueue,  OutValRdyQueue
 
 #--------------------------------------------------------------------------
 # NetObject
@@ -127,16 +129,16 @@ class MeshRouterCL( Model ):
   def arbitrate( s, output ):
     first = s.priorities[ output ]
     order = range( 5 )[first:] + range( 5 )[:first]
-    #print "arbitrating for r:", s.id_, "out:", output, order,
+    #print("arbitrating for r:", s.id_, "out:", output, order,)
     for i in order:
       request_q = s.input_buffers[ i ]
       if not request_q.is_empty():
         if s.route_compute( request_q.peek().dest ) == output:
-          #print "*** i", i, "wins!   dest", s.route_compute( request_q[ 0 ].dest ),
+          #print("*** i", i, "wins!   dest", s.route_compute(request_q[0].dest),)
           s.priorities[ output ] = ( i + 1 ) % 5
           s.winners.append( request_q )
           return request_q.peek()
-    #print "NO WINNER"
+    #print("NO WINNER")
 
 
   #-----------------------------------------------------------------------

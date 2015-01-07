@@ -29,16 +29,20 @@
 # Author : Shreesha Srinath
 # Date   : November 16, 2012
 
+from __future__ import print_function
+
 import argparse
 import sys
 import re
 
-from random             import randint, seed
-from pymtl          import *
-from pclib          import NetMsg
-from MeshNetworkCL      import MeshNetworkCL
+from random      import randint, seed
+from collections import deque
 
-from collections        import deque
+from pymtl import *
+from pclib import NetMsg
+
+from MeshNetworkCL import MeshNetworkCL
+
 
 # Fix the random seed so results are reproducible
 seed(0xdeadbeef)
@@ -193,7 +197,7 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
         # collect data for measurement packets
 
         if ( timestamp != INVALID_TIMESTAMP ):
-          total_latency    += ( sim.ncycles - timestamp.uint() )
+          total_latency    += ( sim.ncycles - timestamp )
           packets_received += 1
           average_latency = total_latency / float( packets_received )
 
@@ -216,7 +220,8 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
 
     sim.cycle()
     #if sim.ncycles % 100 == 1:
-    #  print "{:4}: gen {:5} recv {:5}".format( sim.ncycles, packets_generated, all_packets_received )
+    #  print( "{:4}: gen {:5} recv {:5}"
+    #         .format(sim.ncycles, packets_generated, all_packets_received) )
 
     # print line trace if enables
 
@@ -290,10 +295,10 @@ def main():
 
     if opts.stats:
       #if results[1] < NUM_MEASURE_PACKETS:
-      #  print >> os, "Injection Rate {} saturates the network".format( i )
+      #  print("Injection Rate {} saturates the network".format( i ), file=os )
       #  break
       #else:
-      print >> os, "{:>2d} {}".format( i, results[0] )
-      print "Total cycles", results[2]
+      print( "{:>2d} {}".format( i, results[0] ), file=os )
+      print( "Total cycles", results[2] )
 
 main()

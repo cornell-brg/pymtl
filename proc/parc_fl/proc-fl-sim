@@ -25,6 +25,8 @@
 # Date   : May 25, 2014
 #
 
+from __future__ import print_function
+
 import argparse
 import sys
 import re
@@ -238,19 +240,19 @@ def main():
 
   # Display the result value from the simulator
 
-  print ""
-  print " Simulator return value =", model.proc.status
+  print()
+  print( " Simulator return value =", model.proc.status )
 
   # Display statistics
 
-  print ""
-  print " num_total_inst          =", model.proc.num_total_inst
-  print " num_total_cycles        =", sim.ncycles
-  print " sim_time                =", sim_time
-  print " cycles_per_sec          =", sim.ncycles / sim_time
-  print " num_inst                =", model.proc.num_inst
+  print()
+  print( " num_total_inst          =", model.proc.num_total_inst )
+  print( " num_total_cycles        =", sim.ncycles )
+  print( " sim_time                =", sim_time )
+  print( " cycles_per_sec          =", sim.ncycles / sim_time )
+  print( " num_inst                =", model.proc.num_inst )
 
-  print ""
+  print()
 
 main()
 

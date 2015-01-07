@@ -2,9 +2,11 @@
 # ParcProcFL
 #=========================================================================
 
+from __future__ import print_function
+
 import greenlet
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 from pclib.fl import (
@@ -157,7 +159,7 @@ class ParcProcFL( Model ):
         s.trace = "{:0>8x} {:<20}".format( s.pc, s.inst )
 
       except:
-        print "Unexpected error at PC={:0>8x}!".format(s.pc)
+        print( "Unexpected error at PC={:0>8x}!".format(s.pc) )
         raise
 
   #-----------------------------------------------------------------------

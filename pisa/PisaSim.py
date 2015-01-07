@@ -6,6 +6,8 @@
 # Author : Christopher Batten
 # Date   : May 22, 2014
 
+from __future__ import print_function
+
 import collections
 import struct
 
@@ -123,7 +125,7 @@ class PisaSim (object):
       # Keep running as long as there are values in the proc2mngr queue
 
       if self.trace_en:
-        print ""
+        print()
 
       pc = 0
       done = False
@@ -154,11 +156,10 @@ class PisaSim (object):
 
         if self.trace_en:
           if self.test_en:
-            print " {} > {:0>8x} {:<20} > {}" \
-              .format( self.isa.mngr2proc_str, pc, inst, self.isa.proc2mngr_str )
+            print( " {} > {:0>8x} {:<20} > {}".format(
+              self.isa.mngr2proc_str, pc, inst, self.isa.proc2mngr_str ))
           else:
-            print " {:0>8x}  {:<20}" \
-              .format( pc, inst )
+            print( " {:0>8x}  {:<20}".format( pc, inst ) )
 
         # Check the proc2mngr queue
 
@@ -174,6 +175,6 @@ class PisaSim (object):
             done = True
 
     except:
-      print "Unexpected error at PC={:0>8x}!".format(pc)
+      print( "Unexpected error at PC={:0>8x}!".format(pc) )
       raise
 

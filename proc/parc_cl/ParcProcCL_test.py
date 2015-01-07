@@ -2,6 +2,8 @@
 # ParcProcFL_test
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 import pisa
 import struct
@@ -148,7 +150,7 @@ def run_test( gen_test, XcelModel=MatrixVecFL ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

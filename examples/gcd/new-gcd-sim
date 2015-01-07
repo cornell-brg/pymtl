@@ -20,6 +20,8 @@
 # Date   : August 30, 2012
 #
 
+from __future__ import print_function
+
 import argparse
 import sys
 import re
@@ -123,7 +125,7 @@ def main():
 
   # Display the final output from the simulator
 
-  print model.out_msg.value
+  print( model.out_msg )
 
 main()
 

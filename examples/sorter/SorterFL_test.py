@@ -2,9 +2,11 @@
 # SorterFL Test Suite
 #=========================================================================
 
-from pymtl import *
+from __future__ import print_function
+
 import random
 
+from pymtl    import *
 from SorterFL import SorterFL
 
 # Fix the random seed so results are reproducible
@@ -28,7 +30,7 @@ def run_sorter_test( dump_vcd, ModelType, test_vectors ):
 
   # Iterate setting the inputs and verifying the outputs each cycle
 
-  print ""
+  print()
 
   sim.reset()
   for test_vector in test_vectors:

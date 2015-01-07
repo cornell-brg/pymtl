@@ -22,6 +22,8 @@
 # Date   : August 30, 2012
 #
 
+from __future__ import print_function
+
 import argparse
 import sys
 import re
@@ -125,10 +127,10 @@ def main():
 
   # Display the final output from the simulator
 
-  print model.out[0].value, model.out[1].value, \
-        model.out[2].value, model.out[3].value
+  print( model.out[0].value, model.out[1].value,
+         model.out[2].value, model.out[3].value )
 
-  print "num_cycles = {}".format( sim.num_cycles  )
+  print( "num_cycles = {}".format( sim.num_cycles ) )
 
 main()
 

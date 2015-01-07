@@ -2,10 +2,12 @@
 # MeshRouterCL_test
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 
-from pymtl        import *
-from pclib.test   import TestSource, TestNetSink
+from pymtl      import *
+from pclib.test import TestSource, TestNetSink
 from pclib.ifcs import NetMsg
 
 from MeshRouterCL import MeshRouterCL
@@ -92,7 +94,7 @@ def run_router_test( ModelType, src_delay, sink_delay, test_msgs, id_,
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done() and sim.ncycles < 1000:

@@ -5,7 +5,7 @@
 import collections
 import copy
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle, mem_msgs
 
 from pymtl.datatypes import helpers

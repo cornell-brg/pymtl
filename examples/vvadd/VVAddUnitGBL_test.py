@@ -2,8 +2,10 @@
 # VVAddGBL_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 from pymtl        import *
-from pclib.ifcs import mem_msgs
+from pclib.ifcs   import mem_msgs
 from pclib.test   import TestMemory
 from VVAddUnitGBL import *
 
@@ -79,7 +81,7 @@ def test_basic( dump_vcd ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

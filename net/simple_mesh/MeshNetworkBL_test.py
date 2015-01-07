@@ -2,12 +2,14 @@
 # MeshNetworkBL_test
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 import random
 
-from pymtl        import *
+from pymtl      import *
+from pclib.test import TestSource, TestNetSink
 from pclib.ifcs import NetMsg
-from pclib.test   import TestSource, TestNetSink
 
 from traffic_generators import *
 from MeshNetworkBL      import MeshNetworkBL
@@ -119,7 +121,7 @@ def run_net_test( dump_vcd, ModelType, src_delay, sink_delay, test_msgs,
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done() and sim.ncycles < 1000:
