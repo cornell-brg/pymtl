@@ -2,6 +2,8 @@
 # TestProcManager_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 
 from pymtl        import *
@@ -129,7 +131,7 @@ def run_proc_mgr_test( dump_vcd, src_delay, sink_delay,
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

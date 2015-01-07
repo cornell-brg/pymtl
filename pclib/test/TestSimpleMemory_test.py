@@ -2,6 +2,8 @@
 # TestSimpleMemory_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 import pclib.ifcs.mem_msgs as mem_msgs
 
@@ -75,7 +77,7 @@ def run_mem_test( dump_vcd, src_delay, sink_delay, nports, test_msgs ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

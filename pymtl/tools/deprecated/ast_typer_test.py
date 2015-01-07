@@ -23,9 +23,9 @@ def check_ast( model ):
 
   def check_decorator( func ):
     tree, src = get_method_ast( func )
-    print
-    print
-    print src
+    print()
+    print()
+    print( src )
 
     #print_simple_ast( tree )
 

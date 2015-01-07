@@ -2,6 +2,8 @@
 # TestSrcSinkSim.py
 #=========================================================================
 
+from __future__ import print_function
+
 from pymtl      import *
 from TestSource import TestSource
 from TestSink   import TestSink
@@ -39,7 +41,7 @@ class TestSrcSinkSim( object ):
 
     # Run the simulation
 
-    print ""
+    print()
 
     sim.reset()
     while not self.model.done():

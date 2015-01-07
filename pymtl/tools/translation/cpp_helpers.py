@@ -2,6 +2,8 @@
 # cpp_helpers.py
 #=======================================================================
 
+from __future__ import print_function
+
 from pymtl                import *
 from ...model.signal_lists import PortList
 from cffi                 import FFI
@@ -199,7 +201,7 @@ def create_cpp_py_wrapper( model, cdef, lib_file, wrapper_filename ):
     )
 
     output.write( py_src )
-    #print py_src
+    #print( py_src )
 
 #-----------------------------------------------------------------------
 # recurse_port_hierarchy

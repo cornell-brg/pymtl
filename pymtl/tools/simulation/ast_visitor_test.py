@@ -20,13 +20,13 @@ def check_ast( ld, st ):
   def check_decorator( func ):
     tree, src = get_method_ast( func )
 
-    print
+    print()
     #import debug_utils
     #debug_utils.print_ast( tree )
 
     load, store = DetectLoadsAndStores().enter( tree )
-    print "LOADS ", load,  "want:", ld
-    print "STORES", store, "want:", st
+    print( "LOADS ", load,  "want:", ld )
+    print( "STORES", store, "want:", st )
     assert ld == load
     assert st == store
 

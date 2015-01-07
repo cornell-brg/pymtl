@@ -13,6 +13,8 @@
 # inputs/outputs corresponding to a specific cycle in sequence.
 #
 
+from __future__ import print_function
+
 from pymtl import *
 
 class TestVectorSimulator( object ):
@@ -42,7 +44,7 @@ class TestVectorSimulator( object ):
 
     # Iterate setting the inputs and verifying the outputs each cycle
 
-    print ""
+    print()
 
     sim.reset()
     for test_vector in self.test_vectors:

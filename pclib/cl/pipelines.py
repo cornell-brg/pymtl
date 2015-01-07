@@ -3,8 +3,8 @@
 #=======================================================================
 # Collection of pipelines for cycle-level modeling.
 
-from pymtl    import *
-from collections  import deque
+from pymtl       import *
+from collections import deque
 
 #-----------------------------------------------------------------------
 # Pipeline

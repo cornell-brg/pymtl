@@ -4,7 +4,9 @@
 # This model implements a behavioral Test Memory which is parameterized
 # based on the number of memory request/response ports.
 
-from pymtl        import *
+from __future__ import print_function
+
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
 import pclib.ifcs.valrdy   as valrdy

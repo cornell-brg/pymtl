@@ -3,6 +3,8 @@
 # verilator_cython.py
 #=======================================================================
 
+from __future__ import print_function
+
 import fileinput
 import sys
 import re
@@ -63,7 +65,7 @@ def verilate_model( filename, model_name ):
   cmd = 'rm -r obj_dir_{1}; {2}/bin/verilator -cc {0} -top-module {1}' \
         ' --Mdir obj_dir_{1} -trace -Wno-lint -Wno-UNOPTFLAT'   \
         .format( filename, model_name, os.environ['VERILATOR_ROOT'] )
-  print cmd
+  print( cmd )
   os.system( cmd )
 
 #-----------------------------------------------------------------------
@@ -379,7 +381,7 @@ def create_pymtl_wrapper( in_ports, out_ports, model_name, filename_w,
 if __name__ == '__main__':
 
   if len( sys.argv ) < 3:
-    print 'Usage: v2pymtl.py [model name] [verilog file]'
+    print( 'Usage: v2pymtl.py [model name] [verilog file]' )
     sys.exit()
 
   model_name = sys.argv[1]

@@ -2,11 +2,13 @@
 # BytesMemPortProxy_test
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import *
-from pclib.test   import *
+from pclib.test import *
 
 from Bytes             import Bytes
 from BytesMemPortProxy import BytesMemPortProxy
@@ -171,7 +173,7 @@ def test( dump_vcd, mem_delay ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

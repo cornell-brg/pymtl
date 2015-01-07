@@ -3,6 +3,8 @@
 #=======================================================================
 # Tests verifying the valid construction and elaboration of models.
 
+from __future__ import print_function
+
 from Model            import Model
 from signals          import InPort, OutPort, Wire
 from ConnectionEdge   import ConnectionEdge, ConnectError
@@ -41,8 +43,8 @@ def verify_edges( connection_list, ref_list ):
   for x, y in zip( c_list, r_list ):
     assert x.src_node == y.src_node
     assert x.src_slice == y.src_slice
-    print x.src_node.name, y.src_node.name
-    print x.dest_node.name, y.dest_node.name
+    print( x.src_node.name, y.src_node.name )
+    print( x.dest_node.name, y.dest_node.name )
     assert x.dest_node == y.dest_node
     assert x.dest_slice == y.dest_slice
 

@@ -2,6 +2,8 @@
 # ast_tranformer_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 from ast_transformer import *
 from ..ast_helpers   import get_method_ast, print_simple_ast, print_ast
 
@@ -12,9 +14,9 @@ def check_ast( ld, st ):
 
   def check_decorator( func ):
     tree, src = get_method_ast( func )
-    print
-    print
-    print src
+    print()
+    print()
+    print( src )
 
     #print_ast( tree )
     print_simple_ast( tree )

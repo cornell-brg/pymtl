@@ -6,6 +6,8 @@
 # This module contains classes which construct a model simulator for
 # execution in the Python interpreter.
 
+from __future__ import print_function
+
 import pprint
 import collections
 import inspect
@@ -104,7 +106,7 @@ class SimulationTool( object ):
   #---------------------------------------------------------------------
   # Print cycle number and line trace of model.
   def print_line_trace( self ):
-    print "{:>3}:".format( self.ncycles ), self.model.line_trace()
+    print( "{:>3}:".format( self.ncycles ), self.model.line_trace() )
 
   #---------------------------------------------------------------------
   # cycle
@@ -217,10 +219,10 @@ class SimulationTool( object ):
   # so, adds them to the event queue.
   def add_event( self, signal_value ):
     # TODO: debug_event
-    #print "    ADDEVENT: VALUE", signal_value.v,
-    #print signal_value in self._DEBUG_signal_cbs,
-    #print [x.fullname for x in signal_value._DEBUG_signal_names],
-    #print self._DEBUG_signal_cbs[signal_value]
+    #print("    ADDEVENT: VALUE", signal_value.v,  end='')
+    #print(signal_value in self._DEBUG_signal_cbs, end='')
+    #print([x.fullname for x in signal_value._DEBUG_signal_names], end='')
+    #print(self._DEBUG_signal_cbs[signal_value])
 
     self.metrics.incr_add_events()
 

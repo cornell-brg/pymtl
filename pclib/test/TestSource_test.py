@@ -2,6 +2,8 @@
 # TestSource_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 
 from pymtl      import *
@@ -102,7 +104,7 @@ def do_test( dump_vcd, delay, ModelType ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done() and sim.ncycles < 1000:

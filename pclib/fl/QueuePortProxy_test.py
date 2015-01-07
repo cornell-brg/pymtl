@@ -2,11 +2,13 @@
 # QueuePortProxy_test
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 import collections
 
-from pymtl        import *
-from pclib.test   import *
+from pymtl      import *
+from pclib.test import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
 from QueuePortProxy import InQueuePortProxy, OutQueuePortProxy
@@ -151,7 +153,7 @@ def test( dump_vcd, src_delay, sink_delay ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

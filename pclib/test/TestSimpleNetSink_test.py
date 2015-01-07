@@ -2,6 +2,8 @@
 # TestSimpleNetSink_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 
 from pymtl        import *
@@ -67,7 +69,7 @@ def run_test( dump_vcd, src_msgs, sink_msgs ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

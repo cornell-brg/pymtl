@@ -2,6 +2,8 @@
 # cpp_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 from pymtl       import *
 from cpp         import CLogicTransl, compiler
 from cpp_helpers import gen_cppsim
@@ -39,9 +41,9 @@ def translate( model ):
       csim, ffi = gen_cppsim ( clib, cdef )
       sim       = CSimWrapper( csim, ffi )
 
-      #print
-      #print source
-      #print
+      #print()
+      #print( source )
+      #print()
 
       return sim
 
@@ -333,9 +335,10 @@ def test_ModuleListPortList():
     for i, j in enumerate( exp ): assert s.out[i] == j
 
   def debug():
-    print "{:3}:".format(s.ncycles),
-    for i in range(4): print s.out[i],
-    print
+    print( "{:3}:".format(s.ncycles), end='' )
+    for i in range(4):
+      print( s.out[i], end='' )
+    print()
 
   s.reset()
   put([1,2,3,4]); s.cycle(); debug();
@@ -854,10 +857,10 @@ def test_Router():
     s.in__val[i] = 0
 
   def debug():
-    print "{:3}:".format(s.ncycles),
+    print( "{:3}:".format(s.ncycles), end='' )
     for i in range(5):
-      print s.out_msg[i] if s.out_val[i] == 1 else 'x',
-    print
+      print( s.out_msg[i] if s.out_val[i] == 1 else 'x', end='' )
+    print()
 
   def put(exp):
     for i, j in enumerate( exp ):
@@ -869,7 +872,7 @@ def test_Router():
 
   def check(exp):
     for i, j in enumerate( exp ):
-      print 'checking', i,j
+      print( 'checking', i,j )
       if j == 'x':
         assert s.out_val[i] == 0
       else:

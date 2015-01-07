@@ -11,6 +11,8 @@
 #
 # - distinguish reg signals from wire signals (maybe)
 
+from __future__ import print_function
+
 import time
 import sys
 
@@ -22,7 +24,7 @@ def write_vcd_header( o ):
   def dedent( lines, trim=4 ):
     return ''.join( [x[trim:]+'\n' for x in lines.split('\n')] ).lstrip()
 
-  print >> o, dedent("""
+  print( dedent("""
     $date
         {time}
     $end
@@ -32,7 +34,8 @@ def write_vcd_header( o ):
     $timescale
         1ns
     $end"""
-  ).format( time=time.asctime() )
+    ).format( time=time.asctime() ),
+  file=o )
 
 #-----------------------------------------------------------------------
 # mangle_name
@@ -53,7 +56,7 @@ def write_vcd_signal_defs( o, model ):
   def recurse_models( model, level ):
 
     # Create a new scope for this module
-    print >> o, "$scope module {name} $end".format( name=model.name )
+    print( "$scope module {name} $end".format( name=model.name ), file=o )
 
     # Define all signals for this model.
     for i in model.get_ports() + model.get_wires():
@@ -67,9 +70,9 @@ def write_vcd_signal_defs( o, model ):
         net._vcd_is_clk = i.name == 'clk'
       symbol = net._vcd_symbol
 
-      print >> o, "$var {type} {nbits} {symbol} {name} $end".format(
+      print( "$var {type} {nbits} {symbol} {name} $end".format(
           type='reg', nbits=i.nbits, symbol=symbol, name=mangle_name(i.name),
-      )
+      ), file=o )
 
       all_nets.add( net )
 
@@ -77,7 +80,7 @@ def write_vcd_signal_defs( o, model ):
     for submodel in model.get_submodules():
       recurse_models( submodel, level+1 )
 
-    print >> o, "$upscope $end"
+    print( "$upscope $end", file=o )
 
   # Begin recursive descent from the top-level model.
   recurse_models( model, 0 )
@@ -85,11 +88,11 @@ def write_vcd_signal_defs( o, model ):
   # Once all models and their signals have been defined, end the
   # definition section of the vcd and print the initial values of all
   # nets in the design.
-  print >> o, "$enddefinitions $end\n"
+  print( "$enddefinitions $end\n", file=o )
   for net in all_nets:
-    print >> o, "b{value} {symbol}".format(
+    print( "b{value} {symbol}".format(
         value=net.bin_str(), symbol=net._vcd_symbol,
-    )
+    ), file=o )
 
   return all_nets
 
@@ -104,19 +107,17 @@ def insert_vcd_callbacks( sim, nets ):
   # which is executed by the simulator whenever the net's value changes.
   def create_vcd_callback( sim, net ):
 
-    # TODO: use from __future__ import print for above
-    #cb = lambda: print( 'b%s %s' % (net.bin_str(), net._vcd_symbol),
-    #                    file=sim.vcd )
-
     # Each signal writes its binary value and unique identifier to the
     # specified vcd file
     if not net._vcd_is_clk:
-      cb = lambda: sim.vcd.write('b%s %s\n' % (net.bin_str(), net._vcd_symbol))
+      cb = lambda: print( 'b%s %s\n' % (net.bin_str(), net._vcd_symbol),
+                          file=sim.vcd )
 
     # The clock signal additionally must update the vcd time stamp
     else:
-      cb = lambda: sim.vcd.write('#%s\nb%s %s\n' %
-            (10*sim.ncycles+5*net.uint(), net.bin_str(), net._vcd_symbol))
+      cb = lambda: print( '#%s\nb%s %s\n' % (10*sim.ncycles+5*net.uint(),
+                          net.bin_str(), net._vcd_symbol),
+                          file=sim.vcd )
 
     # Return the callback
     return cb

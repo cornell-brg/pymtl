@@ -2,10 +2,10 @@
 # queues_test.py
 #=========================================================================
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.test   import TestSrcSinkSim
-from queues       import Queue, InValRdyQueue, OutValRdyQueue
+from pclib.test import TestSrcSinkSim
+from queues     import Queue, InValRdyQueue, OutValRdyQueue
 
 import pytest
 

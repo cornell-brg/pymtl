@@ -2,6 +2,8 @@
 # BitStruct.py
 #=======================================================================
 
+from __future__ import print_function
+
 from Bits import Bits
 
 #=======================================================================
@@ -13,7 +15,7 @@ class MetaBitStruct( type ):
   # __new__
   #---------------------------------------------------------------------
   #def __new__( meta, classname, supers, classdict ):
-  #  #print "- Meta NEW", classname   # DEBUG
+  #  #print( "- Meta NEW", classname )  # DEBUG
   #  return type.__new__( meta, classname, supers, classdict )
 
   #---------------------------------------------------------------------
@@ -23,7 +25,7 @@ class MetaBitStruct( type ):
   # for later use during __call__.  Class attributes and instance
   # methods don't show up in the classdict during __new__!
   def __init__( meta, classname, supers, classdict ):
-    #print "- Meta INIT", classname   # DEBUG
+    #print( "- Meta INIT", classname )  # DEBUG
 
     # Save the classdict of the BitStructDefinition class (aka. the
     # users # definition for a BitStruct). We'll need this to add the
@@ -50,7 +52,7 @@ class MetaBitStruct( type ):
   #   http://stackoverflow.com/a/1633363
   #
   def __call__( self, *args, **kwargs ):
-    #print "- Meta CALL", args   # DEBUG
+    #print( "- Meta CALL", args )   # DEBUG
 
     # Instantiate the user-created BitStructDefinition class
     def_inst = super( MetaBitStruct, self ).__call__( *args, **kwargs )
@@ -176,7 +178,7 @@ class BitStruct( Bits ):
   #   msg_inst.fieldB = 32
   #
   def __call__( self ):
-    #print "-CALL", type( self )
+    #print( "-CALL", type( self ) )
     return type( self )( self.nbits )
 
   #---------------------------------------------------------------------

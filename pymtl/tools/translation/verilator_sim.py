@@ -2,6 +2,8 @@
 # verilator_sim.py
 #=======================================================================
 
+from __future__ import print_function
+
 #from verilator_cython import verilog_to_pymtl
 from verilator_cffi import verilog_to_pymtl
 
@@ -47,7 +49,7 @@ def get_verilated( model_inst ):
 
   # Verilate the module only if we've updated the verilog source
   if not cached:
-    print "NOT CACHED", verilog_file
+    print( "NOT CACHED", verilog_file )
     verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
                       lib_file, py_wrapper_file, vcd_file )
 

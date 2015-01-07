@@ -65,7 +65,7 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
     elif isinstance( node.ctx, _ast.Store ):
       self.store += [ GetVariableName( self ).visit( node ) ]
     else:
-      print type( node.ctx )
+      print( type( node.ctx ) )
       raise Exception( "Unsupported concurrent block code!" )
 
   def visit_Name( self, node ):
@@ -75,7 +75,7 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
     elif isinstance( node.ctx, _ast.Store ):
       self.store += [ GetVariableName( self ).visit( node ) ]
     else:
-      print type( node.ctx )
+      print( type( node.ctx ) )
       raise Exception( "Unsupported concurrent block code!" )
 
   def visit_Subscript( self, node ):
@@ -85,7 +85,7 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
     elif isinstance( node.ctx, _ast.Store ):
       self.store += [ GetVariableName( self ).visit( node ) ]
     else:
-      print type( node.ctx )
+      print( type( node.ctx ) )
       raise Exception( "Unsupported concurrent block code!" )
 
   # TODO: need this to detect writes to bit slices?
@@ -96,7 +96,7 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
   #  elif isinstance( node.ctx, _ast.Store ):
   #    self.store += [ GetVariableName( self ).visit( node ) ]
   #  else:
-  #    print type( node.ctx )
+  #    print( type( node.ctx ) )
   #    raise Exception( "Unsupported concurrent block code!" )
 
 

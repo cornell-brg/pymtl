@@ -144,14 +144,12 @@ class MemReqFromBits (Model):
     #s.connect( s.bits[ s.memreq_params.data_slice ], s.data  )
     @s.combinational
     def comb_logic():
-      s.type_.value = s.bits[ s.memreq_params.type_slice ].value   
-      s.addr.value  = s.bits[ s.memreq_params.addr_slice ].value   
-      s.len_.value  = s.bits[ s.memreq_params.len_slice  ].value   
-      s.data.value  = s.bits[ s.memreq_params.data_slice ].value   
+      s.type_.value = s.bits[ s.memreq_params.type_slice ].value
+      s.addr.value  = s.bits[ s.memreq_params.addr_slice ].value
+      s.len_.value  = s.bits[ s.memreq_params.len_slice  ].value
+      s.data.value  = s.bits[ s.memreq_params.data_slice ].value
 
   def line_trace( s ):
-    #print"test_bits"
-    #print( s.bits )
     return "{}{}:{}:{}" \
       .format( s.memreq_params.type_to_str[ s.type_.value.uint() ],
                s.len_.value, s.addr.value, s.data.value )

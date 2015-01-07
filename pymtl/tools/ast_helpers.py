@@ -2,6 +2,8 @@
 # ast_helpers.py
 #=======================================================================
 
+from __future__ import print_function
+
 import inspect
 import ast, _ast
 
@@ -38,7 +40,7 @@ def print_ast(node, annotate_fields=True, include_attributes=False, indent='  ')
 
   if not isinstance(node, ast.AST):
     raise TypeError('expected AST, got %r' % node.__class__.__name__)
-  print _format(node)
+  print( _format(node) )
 
 #-----------------------------------------------------------------------
 # print_simple_ast
@@ -81,7 +83,7 @@ def print_simple_ast(node, indent=' '):
 
   if not isinstance(node, ast.AST):
     raise TypeError('expected AST, got %r' % node.__class__.__name__)
-  print _format(node)
+  print( _format(node) )
 
 #-----------------------------------------------------------------------
 # get_method_ast

@@ -2,6 +2,8 @@
 # verilator_cffi.py
 #=======================================================================
 
+from __future__ import print_function
+
 import os
 
 import verilog_structural
@@ -58,7 +60,7 @@ def verilate_model( filename, model_name, vcd_file ):
                  opts       = verilator_flags,
                )
 
-  print cmd
+  print( cmd )
   os.system( cmd )
 
 #-----------------------------------------------------------------------
@@ -265,7 +267,7 @@ def create_verilator_py_wrapper( model, wrapper_filename, lib_file, cdefs ):
     #py_src += 'XTraceEverOn()' # TODO: add for tracing?
 
     output.write( py_src )
-    #print py_src
+    #print( py_src )
 
 #-----------------------------------------------------------------------
 # get_indices
@@ -408,5 +410,5 @@ def pymtl_wrapper_from_ports( in_ports, out_ports, model_name, filename_w,
     #w += 'XTraceEverOn()'
 
     output.write( py_src )
-    #print py_src
+    #print( py_src )
 

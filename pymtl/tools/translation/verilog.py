@@ -2,6 +2,8 @@
 # verilog.py
 #=======================================================================
 
+from __future__ import print_function
+
 import sys
 import collections
 import tempfile
@@ -40,21 +42,21 @@ def translate_module( model, o ):
   # Visit concurrent blocks in design
   logic, symtab = translate_logic_blocks( model )
 
-  print >> o, header             ( model,  symtab ),
-  print >> o, start_mod.format( model.class_name )
+  print( header             ( model,  symtab   ), file=o, end='' )
+  print( start_mod.format   ( model.class_name ), file=o,        )
   # Signal Declarations
-  print >> o, port_declarations  ( model,  symtab ),
-  print >> o, wire_declarations  ( model,  symtab ),
-  print >> o, create_declarations( model, *symtab ),
+  print( port_declarations  ( model,    symtab ), file=o, end='' )
+  print( wire_declarations  ( model,    symtab ), file=o, end='' )
+  print( create_declarations( model,   *symtab ), file=o, end='' )
   # Structural Verilog
-  print >> o, submodel_instances ( model,  symtab ),
-  print >> o, signal_assignments ( model,  symtab )
+  print( submodel_instances ( model,    symtab ), file=o, end='' )
+  print( signal_assignments ( model,    symtab ), file=o,        )
   # Array Declarations
-  print >> o, array_declarations ( model,  symtab ),
+  print( array_declarations ( model,    symtab ), file=o, end='' )
   # Behavioral Verilog
-  print >> o, logic
-  print >> o, end_mod  .format( model.class_name )
-  print >> o
+  print( logic,                                   file=o )
+  print( end_mod  .format   ( model.class_name ), file=o )
+  print( file=o)
 
 #-----------------------------------------------------------------------
 # check_compile
@@ -75,8 +77,8 @@ def check_compile( model ):
       result = check_output( cmd.split() , stderr=STDOUT )
       output.seek(0)
       verilog_src = output.read()
-      print
-      print verilog_src
+      print()
+      print( verilog_src )
 
     except CalledProcessError as e:
 

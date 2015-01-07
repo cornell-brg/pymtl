@@ -2,6 +2,8 @@
 # SimulationMetrics.py
 #=========================================================================
 
+from __future__ import print_function
+
 import pickle
 
 #-------------------------------------------------------------------------
@@ -141,25 +143,25 @@ class SimulationMetrics( object ):
   #-----------------------------------------------------------------------
   # Print metrics to the commandline.
   def print_metrics( self, detailed = True ):
-    print "-"*72
-    print "Simulation Metrics"
-    print "-"*72
-    print
-    print "ncycles:               {:4}".format( self._ncycles                 )
-    print "modules:               {:4}".format( self.num_modules              )
-    print "@tick blocks:          {:4}".format( self.num_tick_blocks          )
-    print "@posedge_clk blocks:   {:4}".format( self.num_posedge_clk_blocks   )
-    print "@combinational blocks: {:4}".format( self.num_combinational_blocks )
-    print "slice blocks:          {:4}".format( self.num_slice_blocks         )
-    print "-"*72
+    print("-"*72)
+    print("Simulation Metrics")
+    print("-"*72)
+    print()
+    print("ncycles:               {:4}".format(self._ncycles                ))
+    print("modules:               {:4}".format(self.num_modules             ))
+    print("@tick blocks:          {:4}".format(self.num_tick_blocks         ))
+    print("@posedge_clk blocks:   {:4}".format(self.num_posedge_clk_blocks  ))
+    print("@combinational blocks: {:4}".format(self.num_combinational_blocks))
+    print("slice blocks:          {:4}".format(self.num_slice_blocks        ))
+    print("-"*72)
     if not detailed:
       return
-    print
-    print "          pre-tick          post-tick         other       "
-    print "cycle     adde  clbk  eval  adde  clbk  eval  slice  redun"
-    print "--------  ----  ----  ----  ----  ----  ----  -----  -----"
+    print()
+    print("          pre-tick          post-tick         other       ")
+    print("cycle     adde  clbk  eval  adde  clbk  eval  slice  redun")
+    print("--------  ----  ----  ----  ----  ----  ----  -----  -----")
     for i in range( self._ncycles ):
-      print "{:8}  {:4}  {:4}  {:4}  {:4}  {:4}  {:4}  {:5}  {:5}".format(
+      print("{:8}  {:4}  {:4}  {:4}  {:4}  {:4}  {:4}  {:5}  {:5}".format(
                    i, self.input_add_events_per_cycle[ i ],
                       self.input_add_callbk_per_cycle[ i ],
                       self.input_comb_evals_per_cycle[ i ],
@@ -168,8 +170,8 @@ class SimulationMetrics( object ):
                       self.clock_comb_evals_per_cycle[ i ],
                       self.slice_comb_evals_per_cycle[ i ],
                       self.redun_comb_evals_per_cycle[ i ],
-                   )
-    print "-"*72
+                   ))
+    print("-"*72)
 
   #-----------------------------------------------------------------------
   # pickle_metrics

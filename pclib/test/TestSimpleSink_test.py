@@ -2,6 +2,8 @@
 # TestSimpleSink_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 from pymtl import *
 
 from TestSimpleSource import TestSimpleSource
@@ -66,7 +68,7 @@ def test_basics( dump_vcd ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done():

@@ -4,6 +4,8 @@
 # This module contains a class for representing ELF binary which would be
 # loaded into a TestMemory object.
 
+from __future__ import print_function
+
 import subprocess
 import tempfile
 
@@ -113,7 +115,7 @@ class SparseMemoryImage:
           hex_str, slash, label = line[1:].split()
           addr = int(hex_str, 16)
           current_list = []
-          #print hex(addr)
+          #print( hex(addr) )
           s.sparse_memory_img.append( [ addr, current_list ] )
 
         # We have an addr label and the line is not blank, get the data
@@ -123,7 +125,7 @@ class SparseMemoryImage:
           value = int(hex_str, 16)
           current_list.append( value )
 
-      #print s.sparse_memory_img
+      #print( s.sparse_memory_img )
 
 
     elif bin_filename is not None:

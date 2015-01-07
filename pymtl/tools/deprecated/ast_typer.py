@@ -4,6 +4,8 @@
 # Create a simplified representation of the Python AST for help with
 # source to source translation.
 
+from __future__ import print_function
+
 import ast, _ast
 import re
 
@@ -145,7 +147,7 @@ class TypeAST( ast.NodeTransformer ):
       #self.current_obj.inst.name = self.current_obj.inst[0].name.split('[')[0]
     # Otherwise, throw an exception
     else:
-      print self.current_obj
+      print( self.current_obj )
       raise Exception("Unknown type being subscripted!")
 
     # Update the current_obj to contain the obj returned by subscript

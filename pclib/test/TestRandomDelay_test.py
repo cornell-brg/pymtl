@@ -2,6 +2,8 @@
 # TestRandomDelay_test.py
 #=========================================================================
 
+from __future__ import print_function
+
 import pytest
 
 from pymtl      import *
@@ -78,7 +80,7 @@ def test_delay( dump_vcd, random_delay ):
 
   # Run the simulation
 
-  print ""
+  print()
 
   sim.reset()
   while not model.done() and sim.ncycles < 1000:

@@ -4,11 +4,11 @@
 
 import pytest
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.test   import TestSrcSinkSim
-from pclib.cl     import InValRdyQueue, OutValRdyQueue
-from pipelines    import Pipeline
+from pclib.test import TestSrcSinkSim
+from pclib.cl   import InValRdyQueue, OutValRdyQueue
+from pipelines  import Pipeline
 
 #-------------------------------------------------------------------------
 # test_Pipeline
