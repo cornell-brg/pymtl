@@ -1,38 +1,40 @@
 ===============================================================================
-About PyMTL
+|PyMTL|
 ===============================================================================
 
-.. image:: https://travis-ci.org/cornell-brg/pymtl.svg
-  :target: https://travis-ci.org/cornell-brg/pymtl
+|status|
 
 PyMTL is an open-source, Python-based framework for multi-level hardware
 modeling. It was recently introduced to the world at MICRO-47 in December,
 2014.
 
-Please note that PyMTL is currently **beta** software that is under active
+Please note that PyMTL is currently **alpha** software that is under active
 development and documentation is currently quite sparse. Please stay tuned
 as we will be adding much more documentation and a tutorial over the next
 several weeks.
 
 Thank you for your interest!
 
-===============================================================================
+.. |PyMTL| image:: docs/pymtl_logo.png
+
+.. |status| image:: https://travis-ci.org/cornell-brg/pymtl.svg?branch=master
+  :target: https://travis-ci.org/cornell-brg/pymtl
+
+-------------------------------------------------------------------------------
 Installation
-===============================================================================
-
 -------------------------------------------------------------------------------
+
 Prerequisites
--------------------------------------------------------------------------------
+-------------
 
- - Python2.7
- - virtualenv
- - iverilog                      (for testing generated Verilog HDL)
- - verilator                     (for testing generated Verilog HDL)
- - PARC cross-compiler toolchain (for testing PARC processor model)
+- Python2.7
+- virtualenv
+- iverilog                      (for testing generated Verilog HDL)
+- verilator                     (for testing generated Verilog HDL)
+- PARC cross-compiler toolchain (for testing PARC processor model)
 
--------------------------------------------------------------------------------
 BRG Server Setup
--------------------------------------------------------------------------------
+----------------
 
 When running/developing PyMTL on the BRG servers, you should first run the
 setup script. See the OSX/Linux section below for all other installation steps.
@@ -41,9 +43,8 @@ setup script. See the OSX/Linux section below for all other installation steps.
 
   % source setup-brg.sh
 
--------------------------------------------------------------------------------
 OSX/Linux Installation
--------------------------------------------------------------------------------
+----------------------
 
 Create a new Python virtualenv and activate it::
 
@@ -85,16 +86,16 @@ to the repository build directory and activate the virtualenv::
 
 The top-level repo directory should have the following layout:
 
-  - pymtl:      PyMTL Core Model Library and Tools
-  - pclib:      PyMTL Component Library
-  - examples:   Simple Example PyMTL Models
-  - proc:       Processor Models
-  - mem:        Memory and Cache Models
-  - net:        On-Chip Network Models
-  - labs:       Course Labs
-  - tests:      PARC ISA Assembly Tests
-  - ubmark:     PARC ISA Microbenchmarks
-  - scripts:    Various scripts
+- pymtl:      PyMTL Core Model Library and Tools
+- pclib:      PyMTL Component Library
+- examples:   Simple Example PyMTL Models
+- proc:       Processor Models
+- mem:        Memory and Cache Models
+- net:        On-Chip Network Models
+- labs:       Course Labs
+- tests:      PARC ISA Assembly Tests
+- ubmark:     PARC ISA Microbenchmarks
+- scripts:    Various scripts
 
 To run the tests for a specific model, you can provide py.test with a path. The
 verbose flag will explicitly list test names so you can see what fails::
