@@ -41,10 +41,11 @@ setup(
     ),
 
     install_requires = [
-      'pytest',
       'cffi',
       'greenlet',
-      'numpy>=1.9.0',
+      'numpy==1.9.0',
+      'pytest',
+      'pytest-xdist',
     ],
 
 )
