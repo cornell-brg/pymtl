@@ -54,27 +54,62 @@ activate it, run::
   % virtualenv --python=python2.7 ~/venvs/pymtl
   % source ~/venvs/pymtl/bin/activate
 
-To use PyMTL as a library to develop your own models, you can simply run::
-
-  pip install git+https://github.com/cornell-brg/pymtl.git
-
-To modify existing PyMTL models or the PyMTL core libraries, you'll want to
-checkout the PyMTL repository and install it in editable mode::
+Checkout the PyMTL repository from GitHub and put it somewhere sane::
 
   % mkdir -p ~/vc/github-brg
   % cd ~/vc/github-brg
   % git clone https://github.com/cornell-brg/pymtl.git
+
+Finally, use pip to install PyMTL in editable mode::
+
   % pip install --editable ./pymtl
 
-Create a build directory and run the tests::
+Testing
+-------
 
-  % mkdir -p pymtl/build
+Before running any tests, we first create a build directory inside the PyMTL
+repo to hold any temporary files generated during simulation::
+
+  % mkdir -p ~/vc/pymtl/build
   % cd pymtl/build
-  % py.test .. --tb=line
 
-When you're done testing/developing, you can disable the virtualenv::
+All Python simulation tests can be easily run using py.test (warning: there are
+a lot of tests!)::
+
+  % py.test .. --verbose --tb=line
+
+The Verilog simulation tests are only executed if the --test-verilog flag is
+provided (Verilator must be installed)::
+
+  % py.test .. --verbose --test-verilog
+
+When you're done testing/developing, you can deactivate the virtualenv::
 
   % deactivate
+
+-------------------------------------------------------------------------------
+Installing Verilator
+-------------------------------------------------------------------------------
+
+The verilog tests require that the verilator toolchain is installed::
+
+  % mkdir -p ~/vc/git-opensource
+  % cd ~/vc/git-opensource
+  % git clone http://git.veripool.org/git/verilator
+  % cd verilator
+
+Build the configure script, configure to build in place, then make the
+verilator binary::
+
+  % autoconf
+  % export VERILATOR_ROOT=`pwd`
+  % ./configure
+  % make
+
+Return to the PyMTL build directory and run the tests::
+
+  % cd ~/vc/github-brg/pymtl/build
+  % py.test .. --verbose --test-verilog
 
 -------------------------------------------------------------------------------
 Model Development
@@ -114,26 +149,3 @@ linetrace of the test_small_pp test::
 
   % py.test ../new_imul --verbose -k test_small_pp -s
 
--------------------------------------------------------------------------------
-Running Verilog Tests
--------------------------------------------------------------------------------
-
-The verilog tests require that the verilator toolchain is installed::
-
-  % mkdir -p ~/vc/git-opensource
-  % cd ~/vc/git-opensource
-  % git clone http://git.veripool.org/git/verilator
-  % cd verilator
-
-Build the configure script, configure to build in place, then make the
-verilator binary::
-
-  % autoconf
-  % export VERILATOR_ROOT=`pwd`
-  % ./configure
-  % make
-
-Return to the PyMTL build directory and run the tests::
-
-  % cd ~/vc/git-brg/parc/build
-  % py.test .. --verbose --test-verilog
