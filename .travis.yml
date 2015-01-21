@@ -25,7 +25,8 @@ install:
 
  # Install Python requirements
 
- - pip install -r requirements.txt
+ - pip install -e .
+ - pip install yolk
  - yolk -l
 
  # Install PARC cross-compiler
