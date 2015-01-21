@@ -21,6 +21,16 @@ Thank you for your interest!
   :target: https://travis-ci.org/cornell-brg/pymtl
 
 -------------------------------------------------------------------------------
+License
+-------------------------------------------------------------------------------
+
+PyMTL is offered under the terms of the Open Source Initiative BSD 3-Clause
+License. More information about this license can be found here:
+
+- http://choosealicense.com/licenses/bsd-3-clause
+- http://opensource.org/licenses/BSD-3-Clause
+
+-------------------------------------------------------------------------------
 Installation
 -------------------------------------------------------------------------------
 
@@ -29,45 +39,37 @@ Prerequisites
 
 - Python2.7
 - virtualenv
+- libffi
 - iverilog                      (for testing generated Verilog HDL)
 - verilator                     (for testing generated Verilog HDL)
 - PARC cross-compiler toolchain (for testing PARC processor model)
 
-BRG Server Setup
-----------------
+Installation
+------------
 
-When running/developing PyMTL on the BRG servers, you should first run the
-setup script. See the OSX/Linux section below for all other installation steps.
-
-::
-
-  % source setup-brg.sh
-
-OSX/Linux Installation
-----------------------
-
-Create a new Python virtualenv and activate it::
+We recommend using virtualenv to install PyMTL. To create a new virtualenv and
+activate it, run::
 
   % mkdir ~/venvs
   % virtualenv --python=python2.7 ~/venvs/pymtl
   % source ~/venvs/pymtl/bin/activate
 
-Install Python package prerequisites using pip::
+To use PyMTL as a library to develop your own models, you can simply run::
 
-  % pip install yolk pytest pytest-xdist cffi greenlets
-  % yolk -l
+  pip install git+https://github.com/cornell-brg/pymtl.git
 
-Checkout the repo::
+To modify existing PyMTL models or the PyMTL core libraries, you'll want to
+checkout the PyMTL repository and install it in editable mode::
 
   % mkdir -p ~/vc/github-brg
   % cd ~/vc/github-brg
-  % git clone git@github.com:cornell-brg/pymtl.git
-  % cd pymtl
+  % git clone https://github.com/cornell-brg/pymtl.git
+  % pip install --editable ./pymtl
 
 Create a build directory and run the tests::
 
-  % mkdir build
-  % cd build
+  % mkdir -p pymtl/build
+  % cd pymtl/build
   % py.test .. --tb=line
 
 When you're done testing/developing, you can disable the virtualenv::
@@ -135,41 +137,3 @@ Return to the PyMTL build directory and run the tests::
 
   % cd ~/vc/git-brg/parc/build
   % py.test .. --verbose --test-verilog
-
--------------------------------------------------------------------------------
-Running Processor Tests
--------------------------------------------------------------------------------
-
-The majority of the processor tests require the use of binaries compiled using
-the PARC cross-compiler toolchain. This toolchain is already installed on the
-BRG servers an can be accessed by sourcing the brg setup script::
-
-  % source setup-brg.sh
-
-To install the cross-compiler toolchain on a personal machine, please see the
-documentation provided by the toolchain.
-
-To compile the PARC processor assembly tests::
-
-  % mkdir -p tests/build
-  % cd tests/build
-  % ../configure --host=maven
-  % make
-
-To run the tests::
-
-  % cd ../../build
-  % py.test ../proc/parc
-
-To compile the PARC processor microbenchmarks::
-
-  % mkdir -p ubmark/build
-  % cd ubmark/build
-  % ../configure --host=maven
-  % make
-
-To run the microbenchmarks::
-
-  % cd ../../build
-  % ??? # TODO
-
