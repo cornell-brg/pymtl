@@ -1,4 +1,4 @@
-yolk
+pytest
 cffi
 greenlet
 numpy==1.9.0
