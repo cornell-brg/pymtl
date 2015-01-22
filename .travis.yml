@@ -23,6 +23,10 @@ before_install:
 #------------------------------------------------------------------------
 install:
 
+ # Install verilator
+
+ - sudo apt-get install verilator
+
  # Install Python requirements
 
  - pip install -e .
@@ -35,16 +39,6 @@ install:
  - wget $ARTIFACTS/maven-xcc.tar.bz2
  - tar xvfj maven-xcc.tar.bz2
  - export PATH=$PWD/maven-sys-xcc-0.0-209-g75c3473/bin:$PATH
-
- # Install verilator
-
- - wget http://www.veripool.org/ftp/verilator-3.864.tgz
- - tar xvzf verilator*.t*gz
- - cd verilator*
- - export VERILATOR_ROOT=$PWD
- - ./configure
- - make
- - cd ..
 
 #------------------------------------------------------------------------
 # before test runner
