@@ -46,12 +46,8 @@ class Model( object ):
   #---------------------------------------------------------------------
   # elaborate_logic (Abstract)
   #---------------------------------------------------------------------
-  # Abstract method, must be implemented by subclasses!
-  # TODO: use abc module to create abstract method?
   def elaborate_logic( self ):
-    raise NotImplementedError( "Model '{}' needs to implement the "
-                               "'elaborate_logic()' method!"
-                               "".format( self.class_name ) )
+    pass
 
   #-----------------------------------------------------------------------
   # line_trace
