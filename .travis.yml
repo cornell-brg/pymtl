@@ -16,6 +16,8 @@ env:
 # before dependency installation
 #------------------------------------------------------------------------
 before_install:
+ - ARTIFACTS=http://brg.csl.cornell.edu/artifacts
+ - echo $PWD
  - mkdir build
 
 #------------------------------------------------------------------------
@@ -25,8 +27,17 @@ install:
 
  # Install verilator
 
- - sudo apt-get install verilator
- - export VERILATOR_ROOT=/usr/share/verilator
+ - wget $ARTIFACTS/verilator-travis.tar.gz
+ - tar xvfz verilator-travis.tar.gz
+ - export VERILATOR_ROOT=$PWD/verilator-3.864
+ - export PATH=$VERILATOR_ROOT/bin:$PATH
+ - verilator --version
+
+ # Install PARC cross-compiler
+
+ - wget $ARTIFACTS/maven-xcc.tar.bz2
+ - tar xvfj maven-xcc.tar.bz2
+ - export PATH=$PWD/maven-sys-xcc-0.0-209-g75c3473/bin:$PATH
 
  # Install Python requirements
 
@@ -34,13 +45,6 @@ install:
  - pip install -r requirements.txt
  - pip install yolk
  - yolk -l
-
- # Install PARC cross-compiler
-
- - ARTIFACTS=http://brg.csl.cornell.edu/artifacts
- - wget $ARTIFACTS/maven-xcc.tar.bz2
- - tar xvfj maven-xcc.tar.bz2
- - export PATH=$PWD/maven-sys-xcc-0.0-209-g75c3473/bin:$PATH
 
 #------------------------------------------------------------------------
 # before test runner
