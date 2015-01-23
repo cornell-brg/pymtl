@@ -121,16 +121,34 @@ class Bits( SignalValue ):
   #---------------------------------------------------------------------
 
   def __repr__(self):
-    return "Bits(w={0},v={1})".format(self.nbits, self._uint)
+    return "Bits( w={0}, v={1} )".format(self.nbits, self.hex())
 
   def __str__(self):
     num_chars = (((self.nbits-1)/4)+1)
     str = "{:x}".format(self._uint).zfill(num_chars)
-    return str[-num_chars:len(str)]
-
-  def bin_str(self):
-    str = "{:b}".format(self._uint).zfill(self.nbits)
     return str
+
+  def __oct__( self ):
+    print "DEPRECATED: Please use .oct()!"
+    return self.oct()
+
+  def __hex__( self ):
+    print "DEPRECATED: Please use .oct()!"
+    return self.hex()
+
+  def bin(self):
+    str = "{:b}".format(self._uint).zfill(self.nbits)
+    return "0b"+str
+
+  def oct( self ):
+    num_chars = (((self.nbits-1)/2)+1)
+    str = "{:o}".format(self._uint).zfill(num_chars)
+    return "0o"+str
+
+  def hex( self ):
+    num_chars = (((self.nbits-1)/4)+1)
+    str = "{:x}".format(self._uint).zfill(num_chars)
+    return "0x"+str
 
   #----------------------------------------------------------------------
   # __getitem__
