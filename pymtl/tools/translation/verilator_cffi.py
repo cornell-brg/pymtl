@@ -52,11 +52,10 @@ def verilate_model( filename, model_name, vcd_file ):
 
   # NOTE: remove the obj_dir because issues with staleness...
   cmd = 'rm -r obj_dir_{model_name}; '        \
-        '{vroot}/bin/verilator -cc {source}'  \
+        'verilator -cc {source}'  \
         '  -top-module {model_name} --Mdir obj_dir_{model_name} {opts}'  \
         .format( source     = filename,
                  model_name = model_name,
-                 vroot      = os.environ['VERILATOR_ROOT'],
                  opts       = verilator_flags,
                )
 

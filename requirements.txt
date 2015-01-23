@@ -1,6 +1,6 @@
 pytest
 cffi
 greenlet
+pytest-xdist
 numpy==1.9.0
 pyparsing
-pytest-xdist

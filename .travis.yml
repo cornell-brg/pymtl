@@ -26,10 +26,12 @@ install:
  # Install verilator
 
  - sudo apt-get install verilator
+ - export VERILATOR_ROOT=/usr/share/verilator
 
  # Install Python requirements
 
  - pip install -e .
+ - pip install -r requirements.txt
  - pip install yolk
  - yolk -l
 
@@ -60,6 +62,6 @@ before_script:
 # test runner
 #------------------------------------------------------------------------
 script:
- - py.test .. --verbose $TEST_SUITE
+ - py.test .. --verbose --maxfail 20 $TEST_SUITE
 
 # - py.test ../new_proc --verbose -n 4  # Debug
