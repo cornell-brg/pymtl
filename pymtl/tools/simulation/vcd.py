@@ -91,7 +91,7 @@ def write_vcd_signal_defs( o, model ):
   print( "$enddefinitions $end\n", file=o )
   for net in all_nets:
     print( "b{value} {symbol}".format(
-        value=net.bin_str(), symbol=net._vcd_symbol,
+        value=net.bin(), symbol=net._vcd_symbol,
     ), file=o )
 
   return all_nets
@@ -110,13 +110,13 @@ def insert_vcd_callbacks( sim, nets ):
     # Each signal writes its binary value and unique identifier to the
     # specified vcd file
     if not net._vcd_is_clk:
-      cb = lambda: print( 'b%s %s\n' % (net.bin_str(), net._vcd_symbol),
+      cb = lambda: print( 'b%s %s\n' % (net.bin(), net._vcd_symbol),
                           file=sim.vcd )
 
     # The clock signal additionally must update the vcd time stamp
     else:
       cb = lambda: print( '#%s\nb%s %s\n' % (10*sim.ncycles+5*net.uint(),
-                          net.bin_str(), net._vcd_symbol),
+                          net.bin(), net._vcd_symbol),
                           file=sim.vcd )
 
     # Return the callback
