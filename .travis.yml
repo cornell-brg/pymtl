@@ -31,6 +31,7 @@ install:
  - tar xvfz verilator-travis.tar.gz
  - export VERILATOR_ROOT=$PWD/verilator-3.864
  - export PATH=$VERILATOR_ROOT/bin:$PATH
+ - export PYMTL_VERILATOR_INCLUDE_DIR=$VERILATOR_ROOT/include
  - verilator --version
 
  # Install PARC cross-compiler
