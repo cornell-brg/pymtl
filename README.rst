@@ -78,9 +78,13 @@ a lot of tests!)::
 
   % py.test .. --verbose --tb=line
 
-The Verilog simulation tests are only executed if the --test-verilog flag is
-provided (Verilator must be installed)::
+The Verilog simulation tests are only executed if the --test-verilog flag
+is provided. For Verilog testing to work, PyMTL requires that Verilator is
+on your PATH and that the PYMTL_VERILATOR_INCLUDE_DIR environment is
+defined::
 
+  % export PATH={path_to_verilator_binary}:$PATH
+  % export PYMTL_VERILATOR_INCLUDE_DIR={path_to_verilator_include_directory}
   % py.test .. --verbose --test-verilog
 
 When you're done testing/developing, you can deactivate the virtualenv::

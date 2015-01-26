@@ -173,29 +173,29 @@ def create_c_wrapper( model, c_wrapper_file, vcd_file ):
 def create_shared_lib( model_name, c_wrapper_file, lib_file, vcd_file ):
 
   # Compiler template string
-  compile_cmd  = 'g++ {flags} -I {verilator} -o {libname} {cpp_sources}'
+  compile_cmd  = 'g++ {flags} -I {include_dir} -o {libname} {cpp_sources}'
 
   flags        = '-O1 -fstrict-aliasing -fPIC -shared'
-  verilator    = '{}/include'.format( os.environ['VERILATOR_ROOT'] )
+  include_dir  = os.environ['PYMTL_VERILATOR_INCLUDE_DIR']
   libname      = lib_file
   cpp_sources  = ' '.join( [
                    'obj_dir_{model_name}/V{model_name}.cpp',
                    'obj_dir_{model_name}/V{model_name}__Syms.cpp',
-                   '{verilator}/verilated.cpp',
+                   '{include_dir}/verilated.cpp',
                    '{c_wrapper}'
                  ]
                  # Add the following sources only if vcd_file
                  + ( [] if not vcd_file else [
-                   '{verilator}/verilated_vcd_c.cpp',
+                   '{include_dir}/verilated_vcd_c.cpp',
                    'obj_dir_{model_name}/V{model_name}__Trace.cpp',
                    'obj_dir_{model_name}/V{model_name}__Trace__Slow.cpp',
                  ]))
 
   # Substitute flags in compiler string, then any remaining flags
   compile_cmd = compile_cmd.format( **vars() )
-  compile_cmd = compile_cmd.format( model_name = model_name,
-                                    c_wrapper  = c_wrapper_file,
-                                    verilator  = verilator )
+  compile_cmd = compile_cmd.format( model_name  = model_name,
+                                    c_wrapper   = c_wrapper_file,
+                                    include_dir = include_dir )
 
   # Perform compilation
   try:

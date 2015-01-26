@@ -62,9 +62,9 @@ def verilog_to_pymtl( model, filename_v ):
 # http://www.veripool.org/wiki/verilator
 def verilate_model( filename, model_name ):
   # Verilate the translated module (warnings suppressed)
-  cmd = 'rm -r obj_dir_{1}; {2}/bin/verilator -cc {0} -top-module {1}' \
+  cmd = 'rm -r obj_dir_{1}; verilator -cc {0} -top-module {1}' \
         ' --Mdir obj_dir_{1} -trace -Wno-lint -Wno-UNOPTFLAT'   \
-        .format( filename, model_name, os.environ['VERILATOR_ROOT'] )
+        .format( filename, model_name )
   print( cmd )
   os.system( cmd )
 
@@ -227,7 +227,7 @@ def create_cython( in_ports, out_ports, model_name,
 # Create a setup.py file to compile the Cython Verilator wrapper.
 def create_setup( filename_pyx, vobj_name, model_name ):
   # Generate setup.py
-  verilator_include = '{}/include'.format( os.environ['VERILATOR_ROOT'] )
+  verilator_include = os.environ['PYMTL_VERILATOR_INCLUDE_DIR']
   dir_  = 'obj_dir_{0}'.format( model_name )
   file_ = '"{0}/{{}}",'.format( dir_ )
   sources = [ file_.format(x) for x in os.listdir(dir_) if '.cpp' in x ]
