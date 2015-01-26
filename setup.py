@@ -40,6 +40,14 @@ setup(
       exclude=['scripts', 'tests', 'ubmark', 'perf_tests']
     ),
 
+    package_data={
+      'pymtl': [
+        'tools/translation/verilator_wrapper.templ.c',
+        'tools/translation/verilator_wrapper.templ.py',
+        'tools/translation/cpp_wrapper.templ.py',
+      ],
+    },
+
     install_requires = [
       'cffi',
       'greenlet',
