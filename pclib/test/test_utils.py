@@ -5,6 +5,7 @@
 
 from   pymtl       import *
 import collections
+import re
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -36,7 +37,10 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
 
   # First row in test vectors contains port names
 
-  port_names = test_vectors[0]
+  if isinstance(test_vectors[0],str):
+    port_names = test_vectors[0].split()
+  else:
+    port_names = test_vectors[0]
 
   # Remaining rows contain the actual test vectors
 
@@ -66,7 +70,15 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
 
     for port_name, in_value in zip( port_names, row ):
       if port_name[-1] != "*":
-        getattr( model, port_name ).value = in_value
+
+        # Special case for lists of ports
+        if '[' in port_name:
+          m = re.match( r'(\w+)\[(\d+)\]', port_name )
+          if not m:
+            raise Exception("Could not parse port name: {}".format(port_name))
+          getattr( model, m.group(1) )[int(m.group(2))].value = in_value
+        else:
+          getattr( model, port_name ).value = in_value
 
     # Evaluate combinational concurrent blocks
 
@@ -80,7 +92,16 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
 
     for port_name, ref_value in zip( port_names, row ):
       if port_name[-1] == "*":
-        out_value = getattr( model, port_name[0:-1] )
+
+        # Special case for lists of ports
+        if '[' in port_name:
+          m = re.match( r'(\w+)\[(\d+)\]', port_name[0:-1] )
+          if not m:
+            raise Exception("Could not parse port name: {}".format(port_name))
+          out_value = getattr( model, m.group(1) )[int(m.group(2))]
+        else:
+          out_value = getattr( model, port_name[0:-1] )
+
         if ( ref_value != '?' ):
           assert out_value == ref_value
 
