@@ -1,4 +1,12 @@
+
 from regs         import Reg, RegEn, RegRst, RegEnRst
+
+from arith        import Adder, Subtractor, Incrementer
+from arith        import ZeroExtender, SignExtender
+from arith        import ZeroComparator, EqComparator, LtComparator, GtComparator
+from arith        import SignUnit, UnsignUnit
+from arith        import LeftLogicalShifter, RightLogicalShifter
+
 from Mux          import Mux
 from Decoder      import Decoder
 from RegisterFile import RegisterFile
@@ -13,6 +21,4 @@ from queues_rtl import (
   SingleElementPipelinedQueue,
   SingleElementSkidQueue,
 )
-
-import arith
 
