@@ -68,6 +68,10 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
       if port_name[-1] != "*":
         getattr( model, port_name ).value = in_value
 
+    # Evaluate combinational concurrent blocks
+
+    sim.eval_combinational()
+
     # Display line trace output
 
     sim.print_line_trace()
