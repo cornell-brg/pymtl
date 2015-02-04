@@ -13,7 +13,12 @@ import re
 
 def mk_test_case_table( raw_test_case_table ):
 
-  test_param_names = raw_test_case_table[0]
+  # First row in test vectors contains port names
+
+  if isinstance(raw_test_case_table[0],str):
+    test_param_names = raw_test_case_table[0].split()
+  else:
+    test_param_names = raw_test_case_table[0]
 
   TestCase = collections.namedtuple("TestCase",test_param_names)
 
