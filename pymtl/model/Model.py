@@ -9,7 +9,7 @@
 # (simulation, translation into HDLs, etc).
 
 from metaclasses    import MetaCollectArgs
-from ConnectionEdge import ConnectionEdge
+from ConnectionEdge import ConnectionEdge, PyMTLConnectError
 from signals        import Signal, InPort, OutPort, Wire, Constant
 from signal_lists   import PortList, WireList
 from PortBundle     import PortBundle
@@ -153,10 +153,16 @@ class Model( object ):
   #---------------------------------------------------------------------
   def connect( self, left_port, right_port ):
 
-    if  isinstance( left_port, PortBundle ):
-      self._connect_bundle( left_port, right_port )
-    else:
-      self._connect_signal( left_port, right_port )
+    try:
+      if  isinstance( left_port, PortBundle ):
+        self._connect_bundle( left_port, right_port )
+      else:
+        self._connect_signal( left_port, right_port )
+    except PyMTLConnectError as e:
+      frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
+      msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
+      msg += '>'.join( lines )
+      raise PyMTLConnectError( msg )
 
     # elif isinstance( left_port, dict ):
     #   self.connect_dict( left_port )
@@ -167,7 +173,13 @@ class Model( object ):
   def connect_dict( self, connections ):
 
    for left_port, right_port in connections.iteritems():
-     self.connect( left_port, right_port )
+     try:
+       self.connect( left_port, right_port )
+     except PyMTLConnectError as e:
+      frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
+      msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
+      msg += '>'.join( lines )
+      raise PyMTLConnectError( msg )
 
   #=====================================================================
   # Tool API

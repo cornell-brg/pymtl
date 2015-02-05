@@ -7,10 +7,10 @@ from ..datatypes.helpers import get_nbits
 from signals             import InPort, Constant
 
 #-----------------------------------------------------------------------
-# ConnectError
+# PyMTLConnectError
 #-----------------------------------------------------------------------
 # Exception raised for invalid connection parameters.
-class ConnectError(Exception):
+class PyMTLConnectError(Exception):
   pass
 
 #-----------------------------------------------------------------------
@@ -27,18 +27,24 @@ class ConnectionEdge(object):
     # Validate inputs, raise exceptions if necessary
     if   isinstance( src, int ):
       if get_nbits( src ) > dest.nbits:
-        raise ConnectError("Constant is too big for target Signal!")
+        raise PyMTLConnectError(
+          "Constant {} is too big for target Signal of width nbits={}"
+          .format( src, dest.nbits ))
       else:
         src = Constant( dest.nbits, src )
 
     elif isinstance( dest, int ):
       if get_nbits( dest ) > src.nbits:
-        raise ConnectError("Constant is too big for target Signal!")
+        raise PyMTLConnectError(
+          "Constant {} is too big for target Signal of width nbits={}"
+          .format( dest, src.nbits ))
       else:
         dest = Constant( src.nbits, dest )
 
     elif src.nbits != dest.nbits:
-      raise ConnectError("Connecting signals with different bitwidths!")
+      raise PyMTLConnectError(
+          "Connecting signals with different bitwidths, nbits={} != nbits={}"
+          .format( src.nbits, dest.nbits ))
 
     # Set the nbits attribute of the connection
     self.nbits = src.nbits

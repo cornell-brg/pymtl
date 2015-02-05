@@ -7,7 +7,7 @@ from __future__ import print_function
 
 from Model            import Model
 from signals          import InPort, OutPort, Wire
-from ConnectionEdge   import ConnectionEdge, ConnectError
+from ConnectionEdge   import ConnectionEdge, PyMTLConnectError
 from ..datatypes.Bits import Bits
 
 import pytest
@@ -331,9 +331,9 @@ class PortConstAssertSize2( Model ):
     s.connect( 32, s.out )
 
 def test_PortConstAssertSize():
-  with pytest.raises( ConnectError ):
+  with pytest.raises( PyMTLConnectError ):
     m = inst_elab_model( PortConstAssertSize1 )
-  with pytest.raises( ConnectError ):
+  with pytest.raises( PyMTLConnectError ):
     m = inst_elab_model( PortConstAssertSize2 )
 
 
