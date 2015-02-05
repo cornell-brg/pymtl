@@ -29,8 +29,8 @@ class Bits( SignalValue ):
 
     # Set the nbits and bitmask (_mask) attributes
     self.nbits = nbits
-    self._max  =  2**nbits - 1
-    self._min  = -2**nbits
+    self._max  = (2**nbits)- 1
+    self._min  = -2**(nbits- 1) if nbits > 1 else 0
     self._mask = ( 1 << self.nbits ) - 1
     self.slice = slice( None )
 

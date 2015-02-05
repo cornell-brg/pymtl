@@ -25,6 +25,21 @@ def test_int():
   assert Bits( 4, -1 ).int() == -1
   assert Bits( 4, -2 ).int() == -2
   assert Bits( 4, -4 ).int() == -4
+  assert Bits( 4, -8 ).int() == -8
+
+def test_int_bounds_checking():
+
+  Bits( 4, 15 )
+  with pytest.raises( AssertionError ): Bits( 4, 16 )
+
+  Bits( 4, -8 )
+  with pytest.raises( AssertionError ): Bits( 4, -9 )
+  with pytest.raises( AssertionError ): Bits( 4, -16 )
+
+  Bits( 1, 0 )
+  Bits( 1, 1 )
+  with pytest.raises( AssertionError ): Bits( 1, -1 )
+  with pytest.raises( AssertionError ): Bits( 1, -2 )
 
 def test_uint():
 
@@ -492,9 +507,10 @@ def test_index_bits():
   x = Bits( 4, 3  )
   assert data[ x ] == 1
 
-  # Note, this converts -10 to unsigned, so 6!
-  y = Bits( 4, -10 )
-  assert data[ y ] == 1
+  # Note, this converts -8 to unsigned, so 8! Out of range!
+  y = Bits( 4, -8 )
+  with pytest.raises( IndexError ):
+    data[ y ]
 
   # Larger bitwidths work as long as the list is big enough
   a = Bits( 8, 4  )
