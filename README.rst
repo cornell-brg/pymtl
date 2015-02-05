@@ -31,6 +31,23 @@ License. More information about this license can be found here:
 - http://opensource.org/licenses/BSD-3-Clause
 
 -------------------------------------------------------------------------------
+Publications
+-------------------------------------------------------------------------------
+
+If you use PyMTL in your research, please cite our paper_! ::
+
+  @article{lockhart-pymtl-micro2014,
+    title     = {PyMTL: A Unified Framework for Vertically Integrated
+                 Computer Architecture Research},
+    author    = {Derek Lockhart and Gary Zibrat and Christopher Batten},
+    journal   = {47th ACM/IEEE Int'l Symp. on Microarchitecture (MICRO-47)},
+    month     = {Dec},
+    year      = {2014},
+  }
+
+.. _paper: http://dx.doi.org/10.1109/MICRO.2014.50
+
+-------------------------------------------------------------------------------
 Installation
 -------------------------------------------------------------------------------
 
