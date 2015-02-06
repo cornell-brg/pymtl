@@ -35,6 +35,40 @@ def mk_test_case_table( raw_test_case_table ):
   }
 
 #-------------------------------------------------------------------------
+# run sim
+#-------------------------------------------------------------------------
+
+def run_sim( model, dump_vcd=None, test_verilog=False ):
+
+  # Setup the model
+
+  model.vcd_file = dump_vcd
+  if test_verilog:
+    model = get_verilated( model )
+  model.elaborate()
+
+  # Create a simulator
+
+  sim = SimulationTool( model )
+
+  # Reset model
+
+  sim.reset()
+  print()
+
+  # Run simulation
+
+  while not model.done():
+    sim.print_line_trace()
+    sim.cycle()
+
+  # Extra ticks to make VCD easier to read
+
+  sim.cycle()
+  sim.cycle()
+  sim.cycle()
+
+#-------------------------------------------------------------------------
 # run_test_vector_sim
 #-------------------------------------------------------------------------
 
