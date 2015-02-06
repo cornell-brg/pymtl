@@ -19,6 +19,7 @@ def header( model, symtab ):
     if 'instance at' in value_str:
       value_str = value_str.split(' at')[0] + '>'
     s += '// {}: {}'.format( name, value_str ) + endl
+  s   += '// dump-vcd: {}'.format( model.vcd_file != '' ) + endl
   s   += net_none + endl
   return s
 
