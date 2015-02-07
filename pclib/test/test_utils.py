@@ -154,5 +154,3 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
   sim.cycle()
   sim.cycle()
 
-
-
