@@ -68,8 +68,8 @@ We recommend using virtualenv to install PyMTL. To create a new virtualenv and
 activate it, run::
 
   % mkdir ~/venvs
-  % virtualenv --python=python2.7 ~/venvs/pymtl
-  % source ~/venvs/pymtl/bin/activate
+  % virtualenv --python=python2.7 ~/venvs/pymtl_env
+  % source ~/venvs/pymtl_env/bin/activate
 
 Checkout the PyMTL repository from GitHub and put it somewhere sane::
 
@@ -87,8 +87,8 @@ Testing
 Before running any tests, we first create a build directory inside the PyMTL
 repo to hold any temporary files generated during simulation::
 
-  % mkdir -p ~/vc/pymtl/build
-  % cd pymtl/build
+  % mkdir -p ~/vc/github-brg/pymtl/build
+  % cd ~/vc/github-brg/pymtl/build
 
 All Python simulation tests can be easily run using py.test (warning: there are
 a lot of tests!)::
@@ -139,8 +139,8 @@ Model Development
 The first thing you should do anytime you plan on working with PyMTL is change
 to the repository build directory and activate the virtualenv::
 
-  % cd ~/vc/github-brg/pymtl
-  % source ~/venvs/2.7/bin/activate
+  % cd ~/vc/github-brg/pymtl/build
+  % source ~/venvs/pymtl_env/bin/activate
 
 The top-level repo directory should have the following layout:
 
