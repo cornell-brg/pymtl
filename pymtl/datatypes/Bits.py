@@ -84,7 +84,7 @@ class Bits( SignalValue ):
   #---------------------------------------------------------------------
   # Return the integer representation of the bits.
   def int( self ):
-    if ( self[ self.nbits - 1] ):
+    if self[ self.nbits - 1]:
       twos_complement = ~self + 1
       return -twos_complement._uint
     else:
@@ -304,9 +304,11 @@ class Bits( SignalValue ):
   def __rmul__( self, other ):
     return self.__mul__( other )
 
-  # TODO: implement these?
-  #def __floordiv__(self, other)
   def __div__(self, other):
+    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint / other._uint, trunc=True )
+    except: return Bits( 2*self.nbits,                    self._uint / other,       trunc=True )
+
+  def __floordiv__(self, other):
     try:    return Bits( 2*max( self.nbits, other.nbits), self._uint / other._uint, trunc=True )
     except: return Bits( 2*self.nbits,                    self._uint / other,       trunc=True )
 
@@ -314,8 +316,9 @@ class Bits( SignalValue ):
     try:    return Bits( 2*max( self.nbits, other.nbits), self._uint % other._uint, trunc=True )
     except: return Bits( 2*self.nbits,                    self._uint % other,       trunc=True )
 
-  #def __divmod__(self, other)
-  #def __pow__(self, other[, modulo])
+  # TODO: implement these?
+  # def __divmod__(self, other)
+  # def __pow__(self, other[, modulo])
 
   #----------------------------------------------------------------------
   # Shift Operators
