@@ -1,5 +1,5 @@
 #=========================================================================
-# queues_rtl_test.py
+# queues_test.py
 #=========================================================================
 # This file contains unit tests for the queue collection models
 
@@ -8,11 +8,11 @@ import pytest
 from pymtl      import *
 from pclib.test import TestVectorSimulator, TestSource, TestSink
 
-from queues_rtl import SingleElementNormalQueue
-from queues_rtl import SingleElementBypassQueue
-from queues_rtl import SingleElementPipelinedQueue
-from queues_rtl import SingleElementSkidQueue
-from queues_rtl import NormalQueue
+from queues import SingleElementNormalQueue
+from queues import SingleElementBypassQueue
+from queues import SingleElementPipelinedQueue
+from queues import SingleElementSkidQueue
+from queues import NormalQueue
 
 #=========================================================================
 # Test Vector Tests - Single-Entry

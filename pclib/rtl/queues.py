@@ -1,5 +1,5 @@
 #=========================================================================
-# queues_rtl.py
+# queues.py
 #=========================================================================
 # This file contains a collection of various queue model implementations
 

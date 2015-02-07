@@ -14,7 +14,7 @@ from Crossbar     import Crossbar
 from PipeCtrl     import PipeCtrl
 from arbiters     import RoundRobinArbiter, RoundRobinArbiterEn
 
-from queues_rtl import (
+from queues import (
   SingleElementNormalQueue,
   SingleElementBypassQueue,
   NormalQueue,
