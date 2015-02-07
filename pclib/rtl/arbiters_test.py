@@ -39,7 +39,7 @@ def test_rr_arb_4( dump_vcd, test_verilog ):
   model = RoundRobinArbiter( 4 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
 
   run_test( model, [
 
@@ -104,7 +104,7 @@ def test_rr_arb_en_4( dump_vcd, test_verilog ):
   model = RoundRobinArbiterEn( 4 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
 
   run_en_test( model, [
 

@@ -23,7 +23,7 @@ from datatypes.SignalValue import CreateWrappedClass
 #-----------------------------------------------------------------------
 
 from tools.simulation.SimulationTool import SimulationTool
-from tools.translation.verilator_sim import get_verilated
+from tools.translation.verilator_sim import TranslationTool
 from tools.translation.cpp_sim       import get_cpp
 
 #-----------------------------------------------------------------------
@@ -68,8 +68,8 @@ __all__ = [ # Model Construction
             'BitField',
             # Tools
             'SimulationTool',
+            'TranslationTool',
             # TEMPORARY
-            'get_verilated',
             'get_cpp',
             'CreateWrappedClass',
             # Helper Functions

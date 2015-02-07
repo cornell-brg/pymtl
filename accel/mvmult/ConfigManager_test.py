@@ -40,7 +40,7 @@ def test_ConfigManager( dump_vcd, test_verilog ):
   model = ConfigManager( addr_nbits, data_nbits, dec_sel_sz, dec_out_sz )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define the test vectors

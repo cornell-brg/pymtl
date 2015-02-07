@@ -32,7 +32,7 @@ def test_Reg( dump_vcd, test_verilog ):
   model = Reg(16)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -76,7 +76,7 @@ def test_RegEn( dump_vcd, test_verilog ):
   model = RegEn(16)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -122,7 +122,7 @@ def test_RegRst( dump_vcd, test_verilog, reset):
   model.vcd_file = dump_vcd
   print model.vcd_file
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -169,7 +169,7 @@ def test_RegEnRst( dump_vcd, test_verilog, reset ):
   model = RegEnRst( 16, reset )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

@@ -34,7 +34,7 @@ class SourceHarness( Model ):
                             nlanes, mem_delay )
 
     if test_verilog:
-      s.cop = get_verilated( s.cop )
+      s.cop = TranslationTool( s.cop )
 
     assert nlanes > 0
     s.nlanes = nlanes

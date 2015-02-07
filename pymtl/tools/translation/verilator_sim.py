@@ -13,9 +13,9 @@ import sys
 import filecmp
 
 #-----------------------------------------------------------------------
-# get_verilated
+# TranslationTool
 #-----------------------------------------------------------------------
-def get_verilated( model_inst ):
+def TranslationTool( model_inst ):
 
   model_inst.elaborate()
 

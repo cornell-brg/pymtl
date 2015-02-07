@@ -44,7 +44,7 @@ def run_sim( model, dump_vcd=None, test_verilog=False ):
 
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Create a simulator

@@ -173,7 +173,7 @@ def test_msg_comb_logic( test_verilog ):
 
   model = CombLogicMsgModel()
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
   sim = SimulationTool( model )
 
@@ -236,7 +236,7 @@ def test_msg_seq_logic( test_verilog ):
 
   model = SeqLogicMsgModel()
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   sim = SimulationTool(model)
@@ -307,7 +307,7 @@ def test_msg_ports( test_verilog ):
 
   model = PortMsgModel()
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Test port slices attributes (InPort, OutPort, Wire) before Sim init
@@ -462,7 +462,7 @@ def test_msg_seq_list_logic( test_verilog ):
 
   model = SeqLogicMsgListModel()
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   sim = SimulationTool(model)

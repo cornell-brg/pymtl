@@ -37,7 +37,7 @@ def test_regfile_1R1W( dump_vcd, test_verilog ):
   model = RegisterFile( nbits=16, nregs=8, rd_ports=1 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -81,7 +81,7 @@ def test_regfile_2R1W( dump_vcd, test_verilog ):
   model = RegisterFile( nbits=16, nregs=8, rd_ports=2 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -133,7 +133,7 @@ def test_regfile_1R1W_const_zero( dump_vcd, test_verilog ):
   model = RegisterFile( nbits=16, nregs=8, rd_ports=1, const_zero=True )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

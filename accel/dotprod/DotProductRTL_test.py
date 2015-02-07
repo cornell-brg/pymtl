@@ -40,7 +40,7 @@ class TestHarness( Model ):
       """)
 
       s.lane.vcd_file = s.vcd_file
-      s.lane = get_verilated( s.lane )
+      s.lane = TranslationTool( s.lane )
 
     s.mem_req =  Wire( s.memreq_params.nbits  )
     s.mem_resp = Wire( s.memresp_params.nbits )

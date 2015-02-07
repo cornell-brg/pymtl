@@ -17,7 +17,7 @@ def run_test_mux( dump_vcd, test_verilog,
   model = ModelType(16, num_inputs)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

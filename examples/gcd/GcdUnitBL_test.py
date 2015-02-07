@@ -67,7 +67,7 @@ def run_gcd_test( dump_vcd, test_verilog, ModelType, src_delay, sink_delay ):
 
   model_under_test = ModelType()
   if test_verilog:
-    model_under_test = get_verilated( model_under_test )
+    model_under_test = TranslationTool( model_under_test )
 
   model = TestHarness( model_under_test, src_msgs, sink_msgs,
                        src_delay, sink_delay )

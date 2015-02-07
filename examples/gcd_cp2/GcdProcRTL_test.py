@@ -20,7 +20,7 @@ class TestHarness( Model ):
     s.lane = Gcd( cpu_ifc )
 
     if test_verilog:
-      s.lane = get_verilated( s.lane )
+      s.lane = TranslationTool( s.lane )
 
 
   def elaborate_logic( s ):

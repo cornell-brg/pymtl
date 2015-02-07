@@ -55,7 +55,7 @@ def test_1entry_normal_queue_tv( dump_vcd, test_verilog ):
   model = SingleElementNormalQueue( 16 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -112,7 +112,7 @@ def test_1entry_bypass_queue_tv( dump_vcd, test_verilog ):
   model = SingleElementBypassQueue( 16 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -170,7 +170,7 @@ def test_1entry_pipe_queue_tv( dump_vcd, test_verilog ):
   model = SingleElementPipelinedQueue( 16 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -216,7 +216,7 @@ class TestHarness( Model ):
     s.queue.vcd_file = dump_vcd
 
     if test_verilog:
-      s.queue = get_verilated( s.queue )
+      s.queue = TranslationTool( s.queue )
 
   def elaborate_logic( s ):
 
@@ -322,7 +322,7 @@ def run_test_queue( dump_vcd, test_verilog, ModelType, num_entries,
   model = ModelType( num_entries, 16 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -429,7 +429,7 @@ def test_1entry_skid( dump_vcd, test_verilog ):
   model = SingleElementSkidQueue( 16 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

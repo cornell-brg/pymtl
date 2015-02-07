@@ -3,7 +3,7 @@
 #=======================================================================
 
 from pymtl          import SimulationTool
-from verilator_sim  import get_verilated
+from verilator_sim  import TranslationTool
 from pymtl          import requires_verilator
 from pclib.rtl      import Reg
 
@@ -20,7 +20,7 @@ pytestmark = requires_verilator
 
 def reg_test( model ):
 
-  vmodel = get_verilated( model )
+  vmodel = TranslationTool( model )
   vmodel.elaborate()
 
   sim = SimulationTool( vmodel )

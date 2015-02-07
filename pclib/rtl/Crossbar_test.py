@@ -42,7 +42,7 @@ def test_crossbar3( dump_vcd, test_verilog ):
   model = Crossbar( 3, 16 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   run_test_crossbar( model, [
     [ 0xdead, 0xbeef, 0xcafe, 0, 1, 2, 0xdead, 0xbeef, 0xcafe ],
     [ 0xdead, 0xbeef, 0xcafe, 0, 2, 1, 0xdead, 0xcafe, 0xbeef ],

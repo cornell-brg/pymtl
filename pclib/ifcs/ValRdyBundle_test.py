@@ -61,7 +61,7 @@ def run_valrdy_test( dump_vcd, test_verilog, test_vectors, model ):
 
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

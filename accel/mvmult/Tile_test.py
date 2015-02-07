@@ -29,7 +29,7 @@ class TestHarness( Model ):
     s.proc_mgr = TestProcManager( s.mem, sparse_mem_img )
 
     if test_verilog:
-      s.tile = get_verilated( s.tile )
+      s.tile = TranslationTool( s.tile )
 
   def elaborate_logic( s ):
 

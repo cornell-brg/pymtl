@@ -29,7 +29,7 @@ def test_Mux( dump_vcd, test_verilog ):
   model = Mux( nports, data_nbits )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define the test vectors
@@ -70,7 +70,7 @@ def test_Demux( dump_vcd, test_verilog ):
   model = Demux( nports, data_nbits )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define the test vectors

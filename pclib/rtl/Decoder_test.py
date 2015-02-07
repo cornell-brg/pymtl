@@ -23,7 +23,7 @@ def run_decoder_test( dump_vcd, test_verilog, model, test_vectors ):
 
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Create the simulator and configure it

@@ -48,7 +48,7 @@ class TestHarness( Model ):
 
     if s.test_verilog:
       s.router.vcd_file = s.vcd_file
-      s.router = get_verilated( s.router )
+      s.router = TranslationTool( s.router )
 
     # connect
 

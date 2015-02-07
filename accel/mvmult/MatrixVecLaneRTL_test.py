@@ -26,7 +26,7 @@ class TestHarness( Model ):
                                memreq_params, memresp_params )
 
     if test_verilog:
-      s.lane = get_verilated( s.lane )
+      s.lane = TranslationTool( s.lane )
 
   def elaborate_logic( s ):
     s.connect( s.lane.req , s.mem.reqs [0]  )
@@ -182,8 +182,8 @@ class LaneManagerHarness( Model ):
     s.mem   = TestMemory( memreq_params, memresp_params, nlanes, mem_delay )
 
     if test_verilog:
-      s.mgr  = get_verilated( s.mgr )
-      s.lane = [ get_verilated(x) for x in s.lane ]
+      s.mgr  = TranslationTool( s.mgr )
+      s.lane = [ TranslationTool(x) for x in s.lane ]
 
     assert nlanes > 0
     s.nlanes = nlanes

@@ -42,7 +42,7 @@ class TestHarness( Model ):
       """)
 
       s.tile.vcd_file = s.vcd_file
-      s.tile = get_verilated( s.tile )
+      s.tile = TranslationTool( s.tile )
 
     # Connect Manager Signals
 

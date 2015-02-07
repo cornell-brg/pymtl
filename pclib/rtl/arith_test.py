@@ -35,7 +35,7 @@ def test_adder( test_verilog, dump_vcd ):
   model = Adder(16)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -84,7 +84,7 @@ def test_subtractor( test_verilog, dump_vcd ):
   model = Subtractor(16)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -113,7 +113,7 @@ def run_test_incrementer( test_verilog, dump_vcd, increment_amount, test_vectors
   model = Incrementer( 16, increment_amount )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -177,7 +177,7 @@ def run_test_zero_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   model = ZeroExtender( in_nbits, out_nbits )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -230,7 +230,7 @@ def run_test_sign_extender( test_verilog, dump_vcd, in_nbits, out_nbits, test_ve
   model = SignExtender( in_nbits, out_nbits )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -302,7 +302,7 @@ def test_ZeroComparator( test_verilog, dump_vcd ):
   model = ZeroComparator(16)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -346,7 +346,7 @@ def test_EqComparator( test_verilog, dump_vcd ):
   model = EqComparator(16)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -394,7 +394,7 @@ def test_LtComparator( test_verilog, dump_vcd ):
   model = LtComparator(16)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -442,7 +442,7 @@ def test_GtComparator( test_verilog, dump_vcd ):
   model = GtComparator(16)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -471,7 +471,7 @@ def run_test_sign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   model = SignUnit( nbits )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -527,7 +527,7 @@ def run_test_unsign_unit( test_verilog, dump_vcd, nbits, test_vectors ):
   model = UnsignUnit( nbits )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -600,7 +600,7 @@ def test_LeftLogicalShifter( test_verilog, dump_vcd ):
   model = LeftLogicalShifter(6,3)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model
@@ -645,7 +645,7 @@ def test_RightLogicalShifter( test_verilog, dump_vcd ):
   model = RightLogicalShifter(6,3)
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   # Define functions mapping the test vector to ports in model

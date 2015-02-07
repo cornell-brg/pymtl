@@ -600,7 +600,7 @@ class TestHarness( Model ):
     s.incr_pipe.vcd_file = dump_vcd
 
     if test_verilog:
-      s.incr_pipe = get_verilated( s.incr_pipe )
+      s.incr_pipe = TranslationTool( s.incr_pipe )
 
   def elaborate_logic( s ):
 

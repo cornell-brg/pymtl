@@ -17,7 +17,7 @@ def test_LaneManager_OneLane( dump_vcd, test_verilog ):
   model = LaneManager( 1 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   data_nbits = 32
@@ -78,7 +78,7 @@ def test_LaneManager_TwoLanes( dump_vcd, test_verilog ):
   model = LaneManager( 2 )
   model.vcd_file = dump_vcd
   if test_verilog:
-    model = get_verilated( model )
+    model = TranslationTool( model )
   model.elaborate()
 
   data_nbits = 32

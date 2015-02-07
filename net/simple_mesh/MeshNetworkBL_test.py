@@ -71,7 +71,7 @@ class TestHarness( Model ):
 
     if s.test_verilog:
       s.mesh.vcd_file = s.vcd_file
-      s.mesh = get_verilated( s.mesh )
+      s.mesh = TranslationTool( s.mesh )
 
     # connect signals
 
