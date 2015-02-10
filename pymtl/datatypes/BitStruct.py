@@ -105,6 +105,8 @@ class MetaBitStruct( type ):
                        )
              )
 
+    bitstruct_class.__str__ = def_inst.__class__.__dict__['__str__']
+
     # Return an instance of the new BitStruct class
     bitstruct_inst = bitstruct_class( nbits )
 
