@@ -12,6 +12,8 @@ from subprocess         import check_output, STDOUT, CalledProcessError
 from verilog_structural import *
 from verilog_behavioral import translate_logic_blocks
 
+from ..integration      import verilog
+
 #-----------------------------------------------------------------------
 # translate
 #-----------------------------------------------------------------------
@@ -20,6 +22,9 @@ def translate( model, o=sys.stdout ):
 
   # List of models to translate
   translation_queue = collections.OrderedDict()
+
+  # FIXME: Additional source to append to end of translation
+  append_queue      = []
 
   # Utility function to recursively collect all submodels in design
   def collect_all_models( m ):
@@ -32,7 +37,13 @@ def translate( model, o=sys.stdout ):
   # Collect all submodels in design and translate them
   collect_all_models( model )
   for k, v in translation_queue.items():
-    translate_module( v, o )
+    if isinstance( v, verilog.VerilogModel ):
+      append_queue += [ verilog.import_module( v, o ) ]
+    else:
+      translate_module( v, o )
+
+  # Append source code for imported modules and dependecies
+  verilog.import_sources( append_queue, o )
 
 #-----------------------------------------------------------------------
 # translate_module
@@ -42,7 +53,7 @@ def translate_module( model, o ):
   # Visit concurrent blocks in design
   logic, symtab = translate_logic_blocks( model )
 
-  print( header             ( model,  symtab   ), file=o, end='' )
+  print( header             ( model,    symtab ), file=o, end='' )
   print( start_mod.format   ( model.class_name ), file=o,        )
   # Signal Declarations
   print( port_declarations  ( model,    symtab ), file=o, end='' )
