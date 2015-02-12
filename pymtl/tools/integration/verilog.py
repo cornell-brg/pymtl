@@ -48,7 +48,7 @@ def import_module( model, o ):
 #-----------------------------------------------------------------------
 def instantiate_verilog( model ):
 
-  params = [ connection.format( k, v ) for k,v in model.params.items() ]
+  params = [ connection.format(k, v) for k,v in sorted(model.params.items()) ]
 
   connections = []
   if model.vclk:
