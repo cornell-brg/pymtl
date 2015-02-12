@@ -25,6 +25,7 @@ from datatypes.SignalValue import CreateWrappedClass
 from tools.simulation.SimulationTool import SimulationTool
 from tools.translation.verilator_sim import TranslationTool
 from tools.translation.cpp_sim       import get_cpp
+from tools.integration.verilog       import VerilogModel
 
 #-----------------------------------------------------------------------
 # py.test decorators
@@ -54,6 +55,7 @@ requires_verilator = mark.skipif( not( has('verilator') ),
 
 __all__ = [ # Model Construction
             'Model',
+            'VerilogModel',
             # Signals
             'InPort',
             'OutPort',
