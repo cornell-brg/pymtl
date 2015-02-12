@@ -32,7 +32,7 @@ def write_vcd_header( o ):
         PyMTL ?.??
     $end
     $timescale
-        1ns
+        10ps
     $end"""
     ).format( time=time.asctime() ),
   file=o )
@@ -115,7 +115,7 @@ def insert_vcd_callbacks( sim, nets ):
 
     # The clock signal additionally must update the vcd time stamp
     else:
-      cb = lambda: print( '#%s\nb%s %s\n' % (10*sim.ncycles+5*net.uint(),
+      cb = lambda: print( '#%s\nb%s %s\n' % (100*sim.ncycles+50*net.uint(),
                           net.bin(), net._vcd_symbol),
                           file=sim.vcd )
 
