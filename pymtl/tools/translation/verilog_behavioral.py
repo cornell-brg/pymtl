@@ -51,8 +51,15 @@ def translate_logic_blocks( model ):
       arrays    |= a
 
       # Store the PyMTL source inline with the behavioral code
-      block_code = ("  // PYMTL SOURCE:\n"
-                    "  // {}\n\n").format( "\n  // ".join( src.splitlines()))
+      endl = '\n'
+      def fmt( x ):
+        if x:  return ' '+x+endl # add extra space before lines w/ content
+        else:  return       endl # ignore blank lines
+
+      pymtl_src  = "  //".join([ fmt(x) for x in src.splitlines() ])
+      block_code =("  // PYMTL SOURCE:"+endl+
+                   "  //"              +endl+
+                   "  //{}"            +endl ).format( pymtl_src )
 
       # Print the Verilog translation
       visitor     = TranslateBehavioralVerilog()
