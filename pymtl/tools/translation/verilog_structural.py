@@ -141,11 +141,15 @@ start_ports = '('
 end_ports   = ');'
 instance    = tab + '{} {}'
 connection  = tab + tab + '.{} ( {} )'
-ioport_decl = tab + '{:6} {:4} [{:4}:0] {}'
-signal_decl = tab + '{:6} [{:4}:0] {}'
+nbits_decl  = '[{:4}:0]'
+onebit_decl = ' '*len(nbits_decl.format(0))
+ioport_decl = tab + '{:6} {:4} {} {}'
+signal_decl = tab + '{:6} {} {}'
 port_delim  = ',' + endl
 wire_delim  = ';' + endl
 assignment  = tab + 'assign {} = {};'
+def declare_bitwidth( nbits ):
+  return nbits_decl.format( nbits ) if nbits else onebit_decl
 
 #-----------------------------------------------------------------------
 # port_decl
@@ -161,7 +165,7 @@ def port_decl( port ):
   nbits = port.nbits - 1
   name  = mangle_name( port.name )
 
-  return ioport_decl.format( direction, type_, nbits, name )
+  return ioport_decl.format( direction, type_, declare_bitwidth(nbits), name )
 
 #-----------------------------------------------------------------------
 # wire_decl
@@ -172,7 +176,7 @@ def wire_decl( port ):
   nbits = port.nbits - 1
   name  = mangle_name( port.name )
 
-  return signal_decl.format( type_, nbits, name )
+  return signal_decl.format( type_, declare_bitwidth(nbits), name )
 
 #-----------------------------------------------------------------------
 # pretty_align
@@ -188,15 +192,19 @@ def pretty_align( assignment_list, char ):
 # utility function
 # TODO: replace
 def wire_to_str( port, slice_=None, parent=None ):
-  return '  wire   [{:4}:0] {}'.format( port.nbits-1,
-                                signal_to_str( port, slice_, parent ) )
+  return '  wire   {} {}'.format(
+    declare_bitwidth(port.nbits-1),
+    signal_to_str( port, slice_, parent )
+  )
 
 #-----------------------------------------------------------------------
 # reg_to_str
 #-----------------------------------------------------------------------
 def reg_to_str( port, slice_=None, parent=None ):
-  return '  reg    [{:4}:0] {}'.format( port.nbits-1,
-                                signal_to_str( port, slice_, parent ) )
+  return '  reg    {} {}'.format(
+    declare_bitwidth(port.nbits-1),
+    signal_to_str( port, slice_, parent )
+  )
 
 #-----------------------------------------------------------------------
 # mangle_name
