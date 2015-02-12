@@ -17,9 +17,19 @@ import time
 import sys
 
 #-----------------------------------------------------------------------
+# get_vcd_timescale
+#-----------------------------------------------------------------------
+DEFAULT_TIMESCALE = '10ps'
+def get_vcd_timescale( model ):
+  try:
+    return model.vcd_timescale
+  except AttributeError:
+    return DEFAULT_TIMESCALE
+
+#-----------------------------------------------------------------------
 # write_vcd_header
 #-----------------------------------------------------------------------
-def write_vcd_header( o ):
+def write_vcd_header( o, model ):
 
   def dedent( lines, trim=4 ):
     return ''.join( [x[trim:]+'\n' for x in lines.split('\n')] ).lstrip()
@@ -32,9 +42,12 @@ def write_vcd_header( o ):
         PyMTL ?.??
     $end
     $timescale
-        10ps
+        {vcd_timescale}
     $end"""
-    ).format( time=time.asctime() ),
+    ).format(
+      time          = time.asctime(),
+      vcd_timescale = get_vcd_timescale( model ),
+    ),
   file=o )
 
 #-----------------------------------------------------------------------
@@ -178,7 +191,7 @@ class VCDUtil():
 
     # Write out vcd header, signal definitions, and initial state
 
-    write_vcd_header( outfile )
+    write_vcd_header( outfile, simulator.model )
     nets = write_vcd_signal_defs( outfile, simulator.model )
 
     # Enable vcd mode on the simulator, set simulator output file name

@@ -7,6 +7,7 @@ from __future__ import print_function
 import os
 
 import verilog_structural
+from ...tools.simulation.vcd import get_vcd_timescale
 
 from subprocess          import check_output, STDOUT, CalledProcessError
 from ...model.signals    import InPort, OutPort
@@ -113,12 +114,13 @@ def create_c_wrapper( model, c_wrapper_file, vcd_file ):
        open( c_wrapper_file,     'w' ) as output:
 
     c_src = template.read()
-    c_src = c_src.format( model_name   = model.class_name,
-                          port_externs = port_externs,
-                          port_decls   = port_decls,
-                          port_inits   = port_inits,
-                          vcd_prefix   = vcd_file[:-4],
-                          dump_vcd     = '1' if vcd_file else '0',
+    c_src = c_src.format( model_name    = model.class_name,
+                          port_externs  = port_externs,
+                          port_decls    = port_decls,
+                          port_inits    = port_inits,
+                          vcd_prefix    = vcd_file[:-4],
+                          vcd_timescale = get_vcd_timescale( model ),
+                          dump_vcd      = '1' if vcd_file else '0',
                         )
 
     output.write( c_src )

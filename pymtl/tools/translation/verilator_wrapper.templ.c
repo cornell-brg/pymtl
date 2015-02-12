@@ -58,6 +58,7 @@ void create_model() {{
   Verilated::traceEverOn( true );
   tfp = new VerilatedVcdC();
   model->trace( tfp, 99 );
+  tfp->spTrace()->set_time_resolution( "{vcd_timescale}" );
   tfp->open( "{vcd_prefix}.{model_name}.vcd" );
   trace_time = 0;
   prev_clk   = 0;
@@ -102,7 +103,7 @@ void eval() {{
 #if DUMP_VCD
 
   // update simulation time only on clock toggle
-  if (prev_clk != *clk) {{ trace_time += 5; }}
+  if (prev_clk != *clk) {{ trace_time += 50; }}
   prev_clk = *clk;
 
   // dump current signal values
