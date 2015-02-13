@@ -153,7 +153,7 @@ class TestHarness( Model ):
 # test_32b_x_4b_mult
 #-------------------------------------------------------------------------
 import pytest
-@pytest.mark.parametrize('i,fix', [(i,i<10) for i in range(20)])
+@pytest.mark.parametrize('i,fix', [(i,i<5) for i in range(10)])
 def test_32b_x_4b_mult(i,fix):
   run_test_vector_sim( TestHarness(fix), [
     ('a   b   result*'),
