@@ -444,7 +444,10 @@ class BitSlice( Bits ):
     # attached to the Bits instance.
     self.notify_sim_comb_update = self._target_bits.notify_sim_comb_update
     self.notify_sim_seq_update  = self._target_bits.notify_sim_seq_update
-    self._slices                = self._target_bits._slices
+
+  @property
+  def _slices( self ):
+    return self._target_bits._slices
 
   #---------------------------------------------------------------------
   # write_value
