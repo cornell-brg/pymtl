@@ -7,9 +7,73 @@
 #
 # Note that this bug is non-deterministic.
 
+import pytest
+
 from pymtl      import *
 from pclib.rtl  import Mux, RightLogicalShifter, LeftLogicalShifter, Adder
 from pclib.test import run_test_vector_sim
+
+#-------------------------------------------------------------------------
+# test_simple
+#-------------------------------------------------------------------------
+@pytest.mark.parametrize('i', [(i) for i in range(5)])
+def test_simple(i):
+
+  #-----------------------------------------------------------------------
+  # Inner
+  #-----------------------------------------------------------------------
+  #
+  # Problematic connection:
+  #
+  #   top.a -> middle.a[0:2] -> middle.a -> middle.a[0] -> inner.a
+  #       0 -> middle.a[2:4] -> ^
+  #
+  # A slice_cb() function is generated for top.a => middle.a[0:2].
+  # This is attached to top.a and is responsible for writing
+  # middle.a[0:2].
+  #
+  # A slice_cb() is also needed for middle.a[0] => inner.a.
+  # For **working** runs, this slice_cb seems to be attached to the slice
+  # middle.a[0:2]. This is odd since I would expect it to be attached to
+  # middle.a and triggered which middle.a[0:2] writes middle.a!
+  #
+  class Inner( Model ):
+    def __init__( s ):
+      s.a   = InPort ( 1 )
+      s.out = OutPort( 1 )
+      @s.combinational
+      def logic( ): s.out.value = s.a
+
+  class Middle( Model ):
+    def __init__( s ):
+      s.a   = InPort ( 4 )
+      s.out = OutPort( 1 )
+      s.inner = Inner()
+      s.connect_dict({
+        s.inner.a   : s.a[0],
+        s.inner.out : s.out,
+      })
+
+  class Top( Model ):
+    def __init__( s ):
+      s.a   = InPort ( 2 )
+      s.out = OutPort( 1 )
+
+      s.middle = Middle()
+
+      s.connect( s.a,   s.middle.a[0:2] )
+      s.connect( 0,     s.middle.a[2:4] )
+      s.connect( s.out, s.middle.out    )
+
+  #-----------------------------------------------------------------------
+  # Inner
+  #-----------------------------------------------------------------------
+  run_test_vector_sim( Top(), [
+    ('a   out*'),
+    [  1,   1 ],
+    [  2,   0 ],
+    [  3,   1 ],
+  ])
 
 #-------------------------------------------------------------------------
 # IntMulNstageStep
@@ -152,7 +216,6 @@ class TestHarness( Model ):
 #-------------------------------------------------------------------------
 # test_32b_x_4b_mult
 #-------------------------------------------------------------------------
-import pytest
 @pytest.mark.parametrize('i,fix', [(i,i<5) for i in range(10)])
 def test_32b_x_4b_mult(i,fix):
   run_test_vector_sim( TestHarness(fix), [
