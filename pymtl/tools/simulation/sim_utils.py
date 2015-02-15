@@ -266,8 +266,9 @@ def _attr_name_to_object( model, name ):
     elif isinstance( x, list        ): return ( x, name, extra )
     else:                              raise NameError
   except NameError:
-    warnings.warn( "Cannot add variable '{}' to sensitivity list."
-                   "".format( name ), Warning )
+    if model._debug:
+      warnings.warn( "Cannot add variable '{}' to sensitivity list."
+                     "".format( name ), Warning )
     return None
 
 
