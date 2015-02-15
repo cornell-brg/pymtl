@@ -17,6 +17,38 @@
 
 import ast, _ast
 
+class PyMTLException( Exception ): pass
+
+#------------------------------------------------------------------------
+# DetectValueNext
+#------------------------------------------------------------------------
+class DetectValueNext( ast.NodeVisitor ):
+
+  def __init__( self, func, attr='next or value' ):
+    self.attr = attr
+    self.func = func
+
+  def visit_Attribute( self, node ):
+    if isinstance( node.ctx, _ast.Store ):
+      if node.attr == self.attr:
+        import inspect
+        src,funclineno = inspect.getsourcelines( self.func )
+        lineno         = funclineno + node.lineno - 1
+        raise PyMTLException(
+          'Cannot write .{attr} in a {kind} block!\n\n'
+          ' {lineno} {srccode}\n'
+          ' File: {filename}\n'
+          ' Function: {funcname}\n'
+          ' Line: {lineno}\n'.format(
+            attr     = self.attr,
+            kind     = {'value':'@tick','next':'@combinational'}[ self.attr ],
+            srccode  = src[node.lineno-1],
+            filename = inspect.getfile( self.func ),
+            funcname = self.func.func_name,
+            lineno   = lineno,
+          )
+        )
+
 #------------------------------------------------------------------------
 # DetectLoadsAndStores
 #------------------------------------------------------------------------

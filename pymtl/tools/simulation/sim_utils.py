@@ -4,7 +4,7 @@
 
 import warnings
 
-from ast_visitor              import DetectLoadsAndStores
+from ast_visitor              import DetectLoadsAndStores, DetectValueNext
 from ..ast_helpers            import get_method_ast
 from ...datatypes.SignalValue import SignalValue
 
@@ -171,6 +171,10 @@ def register_seq_blocks( model ):
   for i in all_models:
     sequential_blocks.extend( i.get_tick_blocks()+i.get_posedge_clk_blocks() )
 
+  for func in sequential_blocks:
+    tree, _ = get_method_ast( func )
+    DetectValueNext( func, 'value' ).visit( tree )
+
   return sequential_blocks
 
 #---------------------------------------------------------------------
@@ -186,6 +190,7 @@ def register_comb_blocks( model, event_queue ):
 
   for func in model.get_combinational_blocks():
     tree, _ = get_method_ast( func )
+    DetectValueNext( func, 'next' ).visit( tree )
     loads, stores = DetectLoadsAndStores().enter( tree )
     for name in loads:
       _add_senses( func, model, name )
