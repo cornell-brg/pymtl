@@ -9,6 +9,10 @@ from pclib.test   import TestMemory, TestProcManager, SparseMemoryImage
 
 from Tile_CL_Cache import Tile_CL_Cache
 
+import pytest
+
+pytestmark = pytest.mark.xfail
+
 #-----------------------------------------------------------------------
 # TestHarness
 #-----------------------------------------------------------------------

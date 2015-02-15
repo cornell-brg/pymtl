@@ -44,9 +44,9 @@ class DummyCOPCL( Model ):
 
       # Output Signals
 
-      s.from_cpu.rdy.value = s.state == STATE_CFG
-      s.to_cpu      .value = s.state == STATE_DONE
-      s.result      .value = s.regs[3]
+      s.from_cpu.rdy.next = s.state == STATE_CFG
+      s.to_cpu      .next = s.state == STATE_DONE
+      s.result      .next = s.regs[3]
 
   def line_trace( s ):
     return '{} ( {}+{}={} ) {}'\

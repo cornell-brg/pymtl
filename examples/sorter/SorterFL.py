@@ -20,7 +20,7 @@ class SorterFL( Model ):
       values = [ x.value for x in s.in_ ]
       values.sort()
       for i, value in enumerate( values ):
-        s.out[i].value = value
+        s.out[i].next = value
 
   #-----------------------------------------------------------------------
   # Line tracing

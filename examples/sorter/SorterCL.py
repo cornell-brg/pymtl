@@ -26,11 +26,11 @@ class SorterCL( Model ):
       # Delay by one cycle and write outputs
 
       for i, value in enumerate( s.buf ):
-        s.out[i].value = value
+        s.out[i].next = value
 
       # Sort behavioral level
 
-      s.buf = [ x.value[:] for x in s.in_ ]
+      s.buf = [ x[:] for x in s.in_ ]
       s.buf.sort()
 
   #-----------------------------------------------------------------------
