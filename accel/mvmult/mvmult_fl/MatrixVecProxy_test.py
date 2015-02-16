@@ -32,7 +32,7 @@ class TestDriver (Model):
 
   def elaborate_logic( s ):
 
-    @s.pausable_tick
+    @s.tick_fl
     def tick():
 
       s.mvmult.set_size( 4 )

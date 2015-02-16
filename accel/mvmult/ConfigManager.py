@@ -57,7 +57,7 @@ class ConfigManager( Model ):
     @s.combinational
     def state_transition():
 
-      s.cfg_addr      = s.proc2asla.msg[s.data_nbits:s.data_nbits+s.addr_nbits]
+      s.cfg_addr.value = s.proc2asla.msg[s.data_nbits:s.data_nbits+s.addr_nbits]
 
       is_asla_cfg_go  = s.proc2asla.val and s.proc2asla.rdy
       is_asla_calc_go = is_asla_cfg_go  and (s.cfg_addr == 0)

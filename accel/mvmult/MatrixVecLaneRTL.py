@@ -317,7 +317,7 @@ class MatrixVecLaneCtrl( Model ):
     def state_to_ctrl():
 
       # TODO: cannot infer temporaries when an inferred temporary on the RHS!
-      s.L = s.c2d.last_item
+      s.L.value = s.c2d.last_item
 
       # TODO: multiple assignments to a temporary results in duplicate decl error!
       # Encode signals sent down the pipeline based on State

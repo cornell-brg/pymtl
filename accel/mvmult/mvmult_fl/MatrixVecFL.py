@@ -48,7 +48,7 @@ class MatrixVecFL (Model):
 
   def elaborate_logic( s ):
 
-    @s.pausable_tick
+    @s.tick_fl
     def logic():
 
       s.from_cpu.rdy.next = 1

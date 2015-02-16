@@ -249,7 +249,7 @@ class DotProductCtrl( Model ):
     def state_to_ctrl():
 
       # TODO: cannot infer temporaries when an inferred temporary on the RHS!
-      s.L = s.ss.last_item_M
+      s.L.value = s.ss.last_item_M
 
       # TODO: multiple assignments to a temporary results in duplicate decl error!
       # Encode signals sent down the pipeline based on State
