@@ -17,7 +17,7 @@
 
 import ast, _ast
 
-class PyMTLException( Exception ): pass
+from pymtl import PyMTLError
 
 #------------------------------------------------------------------------
 # DetectValueNext
@@ -34,7 +34,7 @@ class DetectValueNext( ast.NodeVisitor ):
         import inspect
         src,funclineno = inspect.getsourcelines( self.func )
         lineno         = funclineno + node.lineno - 1
-        raise PyMTLException(
+        raise PyMTLError(
           'Cannot write .{attr} in a {kind} block!\n\n'
           ' {lineno} {srccode}\n'
           ' File: {filename}\n'
