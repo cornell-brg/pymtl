@@ -85,7 +85,7 @@ class QueueCopy( Model ):
     # queue port proxy objects include infinite internal queues so the
     # output queue can never stall.
 
-    @s.pausable_tick
+    @s.tick_fl
     def logic():
       queue_copy( s.nmsgs, s.in_queue, s.out_queue )
 

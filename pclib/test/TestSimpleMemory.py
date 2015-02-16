@@ -61,23 +61,15 @@ class TestSimpleMemory (Model):
   #-----------------------------------------------------------------------
 
   def elaborate_logic( s ):
+
     # Buffers to hold memory request messages
 
-    #s.memreq_type = [ 0 for x in xrange( s.nports ) ]
-    #s.memreq_addr = [ 0 for x in xrange( s.nports ) ]
-    #s.memreq_len  = [ 0 for x in xrange( s.nports ) ]
-    #s.memreq_data = [ 0 for x in xrange( s.nports ) ]
-    s.memreq_type = [ Wire(1) for x in xrange( s.nports ) ]
-    s.memreq_addr = [ Wire(32) for x in xrange( s.nports ) ]
-    s.memreq_len  = [ Wire(2) for x in xrange( s.nports ) ]
-    s.memreq_data = [ Wire(32) for x in xrange( s.nports ) ]
-    #s.memreq_full = [ False for x in xrange( s.nports ) ]
+    s.memreq_type = [ Bits( 1) for x in xrange( s.nports ) ]
+    s.memreq_addr = [ Bits(32) for x in xrange( s.nports ) ]
+    s.memreq_len  = [ Bits( 2) for x in xrange( s.nports ) ]
+    s.memreq_data = [ Bits(32) for x in xrange( s.nports ) ]
+
     s.memreq_full = [ Wire(1) for x in xrange( s.nports ) ]
-
-    # Input Output Transaction Signals
-
-    #s.memreq_go  = [0]*s.nports
-    #s.memresp_go = [0]*s.nports
 
     # Actual memory
     s.mem = bytearray( s.mem_nbytes )
@@ -112,21 +104,20 @@ class TestSimpleMemory (Model):
         # Note that we do this _first_ before we process the request
         # transaction so we can essentially pipeline this control logic.
 
-        #if s.memresp_go[i]:
         if s.memresp_go:
-          #s.memreq_full[i] = False
           s.memreq_full[i].next = 0
 
         # If the request transaction occured, then write the request message
         # into our internal buffer and update the buffer full bit
 
         if s.memreq_go:
-          s.memreq_type[i] = s.memreq[i].type_.value#.uint()
-          s.memreq_addr[i] = s.memreq[i].addr.value#.uint()
-          s.memreq_len[i]  = s.memreq[i].len_.value#.uint()
-          s.memreq_data[i] = s.memreq[i].data.value[:]
-          #s.memreq_full[i] = True
+
           s.memreq_full[i].next = 1
+
+          s.memreq_type[i] = s.memreq[i].type_
+          s.memreq_addr[i] = s.memreq[i].addr
+          s.memreq_len[i]  = s.memreq[i].len_
+          s.memreq_data[i] = s.memreq[i].data[:]
 
           # When len is zero, then we use all of the data
 
@@ -147,8 +138,8 @@ class TestSimpleMemory (Model):
             # Create the response message
 
             s.memresp[i].type_.next = s.memresp_params.type_read
-            s.memresp[i].len_.next  = s.memreq_len[i]
-            s.memresp[i].data.next  = read_data
+            s.memresp[i].len_ .next  = s.memreq_len[i]
+            s.memresp[i].data .next  = read_data
 
           # Handle a write request
 
@@ -163,8 +154,8 @@ class TestSimpleMemory (Model):
             # Create the response message
 
             s.memresp[i].type_.next = s.memresp_params.type_write
-            s.memresp[i].len_.next  = 0
-            s.memresp[i].data.next  = 0
+            s.memresp[i].len_ .next  = 0
+            s.memresp[i].data .next  = 0
 
           # For some reason this is causing an assert in PyMTL?
           #

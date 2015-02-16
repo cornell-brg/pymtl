@@ -96,7 +96,7 @@ class MemCopy (Model):
     # BytesMemPortProxy object will return the data and the underlying
     # mem_copy function will move onto writing the memory.
 
-    @s.pausable_tick
+    @s.tick_fl
     def logic():
       mem_copy( s.mem, s.src_ptr, s.dest_ptr, s.nbytes )
       s.done = True
