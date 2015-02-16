@@ -149,7 +149,10 @@ port_delim  = ',' + endl
 wire_delim  = ';' + endl
 assignment  = tab + 'assign {} = {};'
 def declare_bitwidth( nbits ):
-  return nbits_decl.format( nbits ) if nbits else onebit_decl
+  # TODO: need to figure out a way to detect when single-bit wires are
+  #       array indexed to make this swap!
+  #return nbits_decl.format( nbits ) if nbits else onebit_decl
+  return nbits_decl.format( nbits )
 
 #-----------------------------------------------------------------------
 # port_decl
