@@ -3,7 +3,10 @@
 #=========================================================================
 # Sequential logic tests for the SimulationTool class.
 
+import pytest
+
 from pymtl import *
+from pymtl import PyMTLError
 
 #-------------------------------------------------------------------------
 # Setup Sim
@@ -13,6 +16,36 @@ def setup_sim( model ):
   model.elaborate()
   sim = SimulationTool( model )
   return sim
+
+#-------------------------------------------------------------------------
+# .value in @tick
+#-------------------------------------------------------------------------
+def test_ValueInSequentialBlock():
+  class BuggyClass( Model ):
+    def __init__( s, level ):
+      s.in_, s.out = InPort(1), OutPort(1)
+      if   level == 'FL':
+        @s.tick_fl
+        def logic():
+          s.out.value = s.in_
+      elif level == 'CL':
+        @s.tick_cl
+        def logic():
+          s.out.value = s.in_
+      elif level == 'RTL':
+        @s.tick_rtl
+        def logic():
+          s.out.value = s.in_
+      else:
+        raise Exception('Invalid abstraction level!')
+
+  with pytest.raises( PyMTLError ):
+    sim = setup_sim( BuggyClass('RTL') )
+  with pytest.raises( PyMTLError ):
+    sim = setup_sim( BuggyClass('CL') )
+  pytest.xfail("FL doesn't throw PyMTLError")
+  with pytest.raises( PyMTLError ):
+    sim = setup_sim( BuggyClass('FL') )
 
 #-------------------------------------------------------------------------
 # Register Tester

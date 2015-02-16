@@ -3,9 +3,10 @@
 #=========================================================================
 # Combinational logic tests for the SimulationTool class.
 
-from pymtl import *
-
 import pytest
+
+from pymtl import *
+from pymtl import PyMTLError
 
 #-------------------------------------------------------------------------
 # Setup Sim
@@ -15,6 +16,19 @@ def setup_sim( model ):
   model.elaborate()
   sim = SimulationTool( model )
   return sim
+
+#-------------------------------------------------------------------------
+# .next in @combinational
+#-------------------------------------------------------------------------
+def test_NextInCombinationalBlock():
+  class BuggyClass( Model ):
+    def __init__( s ):
+      s.in_, s.out = InPort(1), OutPort(1)
+      @s.combinational
+      def logic():
+        s.out.next = s.in_
+  with pytest.raises( PyMTLError ):
+    sim = setup_sim( BuggyClass() )
 
 #-------------------------------------------------------------------------
 # PassThrough Tester
