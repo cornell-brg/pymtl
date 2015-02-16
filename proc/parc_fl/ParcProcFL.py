@@ -115,7 +115,7 @@ class ParcProcFL( Model ):
 
   def elaborate_logic( s ):
 
-    @s.pausable_tick
+    @s.tick_fl
     def logic():
 
       # Wait for the go signal
