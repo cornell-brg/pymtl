@@ -7,8 +7,12 @@ import greenlet
 
 from ..ast_helpers            import get_method_ast
 from ...datatypes.SignalValue import SignalValue
-from ast_visitor              import (
-  DetectLoadsAndStores, DetectValueNext, DetectDecorators
+
+from ast_visitor import (
+  DetectLoadsAndStores,
+  DetectDecorators,
+  DetectIncorrectValueNext,
+  DetectMissingValueNext
 )
 
 #-----------------------------------------------------------------------
@@ -178,13 +182,20 @@ def register_seq_blocks( model ):
       tree, src = get_method_ast( func )
 
       # Check there were no mistakes in use of .value/.next
-      DetectValueNext( func, 'value' ).visit( tree )
+      DetectIncorrectValueNext( func, 'value' ).visit( tree )
+      DetectMissingValueNext  ( func, 'next'  ).visit( tree )
 
       # If function is decorated with tick_fl, wrap it with a greenlet
       if 'tick_fl' in DetectDecorators().enter( tree ):
         func = _pausable_tick( func )
 
       sequential_blocks.append( func )
+
+    for func in i.get_combinational_blocks():
+
+      tree, _ = get_method_ast( func )
+      DetectIncorrectValueNext( func, 'next'  ).visit( tree )
+      DetectMissingValueNext  ( func, 'value' ).visit( tree )
 
   return sequential_blocks
 
@@ -201,7 +212,8 @@ def register_comb_blocks( model, event_queue ):
 
   for func in model.get_combinational_blocks():
     tree, _ = get_method_ast( func )
-    DetectValueNext( func, 'next' ).visit( tree )
+    DetectIncorrectValueNext( func, 'next'  ).visit( tree )
+    DetectMissingValueNext  ( func, 'value' ).visit( tree )
     loads, stores = DetectLoadsAndStores().enter( tree )
     for name in loads:
       _add_senses( func, model, name )

@@ -16,13 +16,16 @@
 #   blocks into Verilog syntax.
 
 import ast, _ast
+import inspect
 
-from pymtl import PyMTLError
+from pymtl               import PyMTLError
+from pymtl.model.signals import Signal
+from ..ast_helpers       import get_closure_dict
 
 #------------------------------------------------------------------------
-# DetectValueNext
+# DetectIncorectValueNext
 #------------------------------------------------------------------------
-class DetectValueNext( ast.NodeVisitor ):
+class DetectIncorrectValueNext( ast.NodeVisitor ):
 
   def __init__( self, func, attr='next or value' ):
     self.attr = attr
@@ -31,7 +34,6 @@ class DetectValueNext( ast.NodeVisitor ):
   def visit_Attribute( self, node ):
     if isinstance( node.ctx, _ast.Store ):
       if node.attr == self.attr:
-        import inspect
         src,funclineno = inspect.getsourcelines( self.func )
         lineno         = funclineno + node.lineno - 1
         raise PyMTLError(
@@ -46,6 +48,61 @@ class DetectValueNext( ast.NodeVisitor ):
             filename = inspect.getfile( self.func ),
             funcname = self.func.func_name,
             lineno   = lineno,
+          )
+        )
+
+#------------------------------------------------------------------------
+# DetectMissingValueNext
+#------------------------------------------------------------------------
+class DetectMissingValueNext( ast.NodeVisitor ):
+
+  def __init__( self, func, attr='next or value' ):
+    self.attr   = attr
+    self.func   = func
+    self.dict_  = get_closure_dict( func )
+
+    self.src, self.funclineno = inspect.getsourcelines( self.func )
+
+  def visit_Assign( self, node ):
+
+    # For each assignment AST node, get the corresponding line in the
+    # source code and extract the assignment target (lhs)
+    src_line  = self.src[ node.lineno - 1 ]
+    lhs, _, _ = src_line.partition( '=' )
+    lhs       = lhs.rstrip()
+    print lhs
+
+    # If the lhs does not end with .value or .next, verify this is not a
+    # Signal object (InPort, OutPort, Wire)
+    # FIXME: Second item of tuple is for .n and .v. Get rid of these?
+    if not lhs.endswith( ('.'+self.attr, '.'+self.attr[0]) ):
+
+      # TODO: this is super hacky. Create s and self variables and call
+      # exec on the LHS string to load the object pointed to by the LHS
+      # into a temporary variable.
+      try:
+        print src_line
+        print lhs
+        exec( '_temp = {}'.format(lhs) ) in self.dict_
+        _temp = self.dict_['_temp']
+      except NameError:
+        # we can't really do anything about local temporaries
+        _temp = None
+
+      # If the object stored in LHS is a Signal, raise a PyMTLError
+      if isinstance( _temp, Signal ):
+        raise PyMTLError(
+          'Attempting to write a(n) {kind} without .{attr}!\n\n'
+          ' {lineno} {srccode}\n'
+          ' File: {filename}\n'
+          ' Function: {funcname}\n'
+          ' Line: {lineno}\n'.format(
+            attr     = self.attr,
+            kind     = _temp.__class__.__name__,
+            srccode  = src_line,
+            filename = inspect.getfile( self.func ),
+            funcname = self.func.func_name,
+            lineno   = self.funclineno + node.lineno - 1
           )
         )
 
