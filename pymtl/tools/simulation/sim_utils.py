@@ -3,10 +3,13 @@
 #=======================================================================
 
 import warnings
+import greenlet
 
-from ast_visitor              import DetectLoadsAndStores, DetectValueNext
 from ..ast_helpers            import get_method_ast
 from ...datatypes.SignalValue import SignalValue
+from ast_visitor              import (
+  DetectLoadsAndStores, DetectValueNext, DetectDecorators
+)
 
 #-----------------------------------------------------------------------
 # collect_signals
@@ -169,11 +172,19 @@ def register_seq_blocks( model ):
 
   sequential_blocks = []
   for i in all_models:
-    sequential_blocks.extend( i.get_tick_blocks()+i.get_posedge_clk_blocks() )
+    for func in i.get_tick_blocks() + i.get_posedge_clk_blocks():
 
-  for func in sequential_blocks:
-    tree, _ = get_method_ast( func )
-    DetectValueNext( func, 'value' ).visit( tree )
+      # Grab the AST and src code of each function
+      tree, src = get_method_ast( func )
+
+      # Check there were no mistakes in use of .value/.next
+      DetectValueNext( func, 'value' ).visit( tree )
+
+      # If function is decorated with tick_fl, wrap it with a greenlet
+      if 'tick_fl' in DetectDecorators().enter( tree ):
+        func = _pausable_tick( func )
+
+      sequential_blocks.append( func )
 
   return sequential_blocks
 
@@ -320,6 +331,44 @@ def _create_slice_cb_closure( c ):
     # not vice versa.
     dest_bits.v = src[ src_addr ]
   return slice_cb
+
+
+#---------------------------------------------------------------------
+# _pausable_tick
+#---------------------------------------------------------------------
+# Experimental support for creating tick blocks where we can pause the
+# execution within the tick block. This avoids the need for creating a
+# GreenletWrapper explicitly.
+def _pausable_tick( func ):
+
+  # The inner_wrapper function is the one which we will wrap in a
+  # greenlet. It calls the tick function forever. It pauses after each
+  # call to the tick function, but the tick function itself can also
+  # pause.
+
+  def inner_wrapper():
+    while True:
+
+      # Call the tick function
+
+      func()
+
+      # Yield so we always only do one tick per cycle
+
+      greenlet.greenlet.getcurrent().parent.switch(0)
+
+  # Create a greenlet and save it with the model. Note that we
+  # currently only allow a single pausable_tick per model.
+
+  func._pausable_tick = greenlet.greenlet(inner_wrapper)
+
+  # The outer_wrapper is what will become the new tick function. This
+  # is what gets added to the tick list.
+
+  def outer_wrapper():
+    func._pausable_tick.switch()
+
+  return outer_wrapper
 
 #-----------------------------------------------------------------------
 # register_cffi_updates

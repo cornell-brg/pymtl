@@ -50,6 +50,24 @@ class DetectValueNext( ast.NodeVisitor ):
         )
 
 #------------------------------------------------------------------------
+# DetectDecorators
+#------------------------------------------------------------------------
+class DetectDecorators( ast.NodeVisitor ):
+
+  def __init__( self ):
+    self.decorators = []
+
+  def enter( self, node ):
+    self.visit( node )
+    return self.decorators
+
+  def visit_FunctionDef( self, node ):
+    [ self.visit(x) for x in  node.decorator_list ]
+
+  def visit_Attribute( self, node ):
+    self.decorators.append( node.attr )
+
+#------------------------------------------------------------------------
 # DetectLoadsAndStores
 #------------------------------------------------------------------------
 # AST traversal class which detects loads and stores within a concurrent

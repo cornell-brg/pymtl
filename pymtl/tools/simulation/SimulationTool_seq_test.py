@@ -43,7 +43,6 @@ def test_ValueInSequentialBlock():
     sim = setup_sim( BuggyClass('RTL') )
   with pytest.raises( PyMTLError ):
     sim = setup_sim( BuggyClass('CL') )
-  pytest.xfail("FL doesn't throw PyMTLError")
   with pytest.raises( PyMTLError ):
     sim = setup_sim( BuggyClass('FL') )
 
