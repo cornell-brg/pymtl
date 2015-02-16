@@ -23,8 +23,7 @@ import visitors
 def translate_logic_blocks( model ):
 
   blocks = ( model.get_posedge_clk_blocks()
-           + model.get_combinational_blocks()
-           + model.get_tick_blocks() )
+           + model.get_combinational_blocks() )
 
   code  = ''
 
