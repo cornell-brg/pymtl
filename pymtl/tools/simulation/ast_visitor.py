@@ -66,33 +66,35 @@ class DetectMissingValueNext( ast.NodeVisitor ):
   def visit_Assign( self, node ):
 
 
-    # For each assignment AST node, get the corresponding line in the
-    # source code and extract the assignment target (lhs)
-    src_line  = self.src[ node.lineno - 1 ]
-    lhs, _, _ = src_line.partition( '=' )
-    lhs       = lhs.rstrip()
-    print lhs
-
-    # If the lhs does not end with .value or .next, verify this is not a
-    # Signal object (InPort, OutPort, Wire)
+    # For each assignment AST node, get the targets. If targets do not
+    # end with .value or .next, verify this is not a Signal object
+    # (InPort, OutPort, Wire)
     # FIXME: Second item of tuple is for .n and .v. Get rid of these?
-    if not lhs.endswith( ('.'+self.attr, '.'+self.attr[0]) ):
+    for target in node.targets:
+      if (not isinstance( target, ast.Attribute ) or
+          target.attr not in (self.attr, self.attr[0])):
 
-      # TODO: this is super hacky. Grab the targets from the LHS, give
-      # them Load() instead of Store() contexts, and wrap them in an
-      # ast.Expression node. This allows us to compile the AST as an
-      # expression and execute it with eval(), which will return the
-      # object stored in the target. The second argument to eval() is
-      # closure dictionary we extracted from the function.
-      for target in node.targets:
+        # TODO: this is super hacky. Grab the targets from the LHS, give
+        # them Load() instead of Store() contexts, and wrap them in an
+        # ast.Expression node. This allows us to compile the AST as an
+        # expression and execute it with eval(), which will return the
+        # object stored in the target. The second argument to eval() is
+        # closure dictionary we extracted from the function.
+
+        # DEBUG
+        print inspect.getfile( self.func )
+        print self.funclineno + node.lineno - 1, self.src[ node.lineno - 1 ]
+        # DEBUG
+
         try:
           target.ctx = ast.Load()
           _code      = compile( ast.Expression( target ), '<ast>', 'eval' )
           _temp      = eval( _code, self.dict_ )
-        except NameError:
-          # we can't really do anything about local temporaries missing
-          # from the closure dictionary without performing a real type
-          # inference analysis pass
+        except (NameError, AttributeError) as e:
+          # We can't really do anything about temporaries created inside
+          # the combinational block without performing a real type
+          # inference analysis pass.
+          print 'NOOO', e
           _temp = None
 
         # if the object stored in LHS is a Signal, raise a PyMTLError
@@ -105,7 +107,7 @@ class DetectMissingValueNext( ast.NodeVisitor ):
             ' Line: {lineno}\n'.format(
               attr     = self.attr,
               kind     = _temp.__class__.__name__,
-              srccode  = src_line,
+              srccode  = self.src[ node.lineno - 1 ],
               filename = inspect.getfile( self.func ),
               funcname = self.func.func_name,
               lineno   = self.funclineno + node.lineno - 1
