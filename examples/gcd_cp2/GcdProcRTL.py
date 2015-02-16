@@ -21,7 +21,7 @@ a_mux_sel_x   = Bits(2, 0)
 b_mux_sel_a   = Bits(1, 0)
 b_mux_sel_in  = Bits(1, 1)
 b_mux_sel_x   = Bits(1, 0)
-    
+
 A_MUX_SEL_NBITS = 2
 A_MUX_SEL_IN    = 0
 A_MUX_SEL_SUB   = 1
@@ -49,7 +49,7 @@ class GcdProcDpath( Model ):
 
     size = cpu_ifc_types.req.data
     print( size, type(size) )
-    
+
     s.cs      = InPort ( CtrlSignals()   )
     s.ss      = OutPort( StatusSignals() )
 
@@ -64,10 +64,10 @@ class GcdProcDpath( Model ):
     #-----------------------------------------------------------------------
     print( s.cpu_ifc_req.msg.data.nbits )
     print( s.in_msg_a.nbits )
-    s.connect( s.cpu_ifc_req.msg.data , s.in_msg_a ) 
-    s.connect( s.cpu_ifc_req.msg.data , s.in_msg_b ) 
-    s.connect( s.cpu_ifc_resp.msg.data, s.out_msg  ) 
-   
+    s.connect( s.cpu_ifc_req.msg.data , s.in_msg_a )
+    s.connect( s.cpu_ifc_req.msg.data , s.in_msg_b )
+    s.connect( s.cpu_ifc_resp.msg.data, s.out_msg  )
+
     #---------------------------------------------------------------------
     # Datapath Structural Composition
     #---------------------------------------------------------------------
@@ -142,7 +142,7 @@ class GcdProcDpath( Model ):
     # connect to output port
 
     s.connect( s.sub.out, s.out_msg )
-  
+
   def elaborate_logic( s ):
     pass
 
@@ -155,13 +155,13 @@ class GcdProcCtrl( Model ):
   # Port Interface
   #-----------------------------------------------------------------------
   def __init__( s, cpu_ifc_types ):
-    
+
     s.cpu_ifc_req  = InValRdyBundle  ( cpu_ifc_types.req  )
     s.cpu_ifc_resp = OutValRdyBundle ( cpu_ifc_types.resp  )
-    
+
     s.ss      = InPort( StatusSignals() )
     s.cs      = OutPort ( CtrlSignals() )
-    
+
     # Interface ports
 
     s.in_val    = Wire (1)
@@ -184,12 +184,12 @@ class GcdProcCtrl( Model ):
   # Connectivity and Logic
   #-----------------------------------------------------------------------
   def elaborate_logic( s ):
-    
-    s.connect( s.cpu_ifc_req.msg.ctrl_msg, s.ctrl_msg ) 
-    s.connect( s.cpu_ifc_req.val,  s.in_val  ) 
-    s.connect( s.cpu_ifc_req.rdy,  s.in_rdy  ) 
-    s.connect( s.cpu_ifc_resp.val, s.out_val ) 
-    s.connect( s.cpu_ifc_resp.rdy, s.out_rdy ) 
+
+    s.connect( s.cpu_ifc_req.msg.ctrl_msg, s.ctrl_msg )
+    s.connect( s.cpu_ifc_req.val,  s.in_val  )
+    s.connect( s.cpu_ifc_req.rdy,  s.in_rdy  )
+    s.connect( s.cpu_ifc_resp.val, s.out_val )
+    s.connect( s.cpu_ifc_resp.rdy, s.out_rdy )
 
     #---------------------------------------------------------------------
     # State Transition Logic
@@ -206,7 +206,7 @@ class GcdProcCtrl( Model ):
       if ( curr_state == s.STATE_IDLE ):
         if ( s.in_val and s.in_rdy ):
           next_state = s.STATE_LOAD
-      
+
       # Transistions out of CALC state
       if ( curr_state == s.STATE_LOAD ):
         if ( s.in_val and s.in_rdy ):
@@ -241,15 +241,15 @@ class GcdProcCtrl( Model ):
     def state_to_ctrl():
 
       current_state = s.state.out
-      
-      s.a_reg_en = y if s.ctrl_msg == 1 else n
-      s.b_reg_en = y if s.ctrl_msg == 2 else n
-        
-      s.swap = s.ss.is_a_lt_b
-      s.done = not s.ss.is_a_lt_b and s.ss.is_b_zero
+
+      s.a_reg_en.value = y if s.ctrl_msg == 1 else n
+      s.b_reg_en.value = y if s.ctrl_msg == 2 else n
+
+      s.swap.value = s.ss.is_a_lt_b
+      s.done.value = not s.ss.is_a_lt_b and s.ss.is_b_zero
       if current_state == s.STATE_CALC:
-        s.a_reg_en = y if not s.done else n
-        s.b_reg_en = y if not s.done else n
+        s.a_reg_en.value = y if not s.done else n
+        s.b_reg_en.value = y if not s.done else n
       #                                                         a_mux_sel   a_reg_en     b_mux_sel  b_reg_en
       if   current_state == s.STATE_IDLE:        cs = concat(a_mux_sel_in , s.a_reg_en, b_mux_sel_in, s.b_reg_en)
       elif current_state == s.STATE_LOAD:        cs = concat(a_mux_sel_in , s.a_reg_en, b_mux_sel_in, s.b_reg_en)
@@ -257,17 +257,17 @@ class GcdProcCtrl( Model ):
         if s.swap:                               cs = concat(a_mux_sel_b  , s.a_reg_en, b_mux_sel_a , s.b_reg_en)
         else:                                    cs = concat(a_mux_sel_sub, s.a_reg_en, b_mux_sel_x ,          n)
       elif current_state == s.STATE_DONE:        cs = concat(a_mux_sel_x  ,          n, b_mux_sel_x ,          n)
-      
+
       s.ctrl_signals.value = cs
-      
+
       s.in_rdy.value  = current_state == s.STATE_IDLE or current_state == s.STATE_LOAD
       s.out_val.value = current_state == s.STATE_DONE
-      
+
       s.cs.a_mux_sel.value = s.ctrl_signals[3:5]
       s.cs.a_reg_en .value = s.ctrl_signals[2]
       s.cs.b_mux_sel.value = s.ctrl_signals[1]
       s.cs.b_reg_en .value = s.ctrl_signals[0]
-      
+
 #=========================================================================
 # GCD Unit RTL Model
 #=========================================================================
@@ -280,11 +280,11 @@ class GcdProcRTL( Model ):
 
     s.cpu_ifc_req  = InValRdyBundle ( cpu_ifc_types.req  )
     s.cpu_ifc_resp = OutValRdyBundle( cpu_ifc_types.resp )
-    
+
     #---------------------------------------------------------------------
     # Connectivity and Logic
     #---------------------------------------------------------------------
-    
+
     # connect input/output ports with datapath and control logic
 
     s.dpath = GcdProcDpath( cpu_ifc_types )

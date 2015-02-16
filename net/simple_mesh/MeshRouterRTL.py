@@ -250,8 +250,8 @@ class RouteCompute( Model ):
     def logic():
 
       # TODO: bitwidth inference for % and / don't work
-      s.x_dest = s.dest % s.xnodes
-      s.y_dest = s.dest / s.xnodes
+      s.x_dest.value = s.dest % s.xnodes
+      s.y_dest.value = s.dest / s.xnodes
 
       if   s.x_dest < s.x: s.route.value = s.WEST
       elif s.x_dest > s.x: s.route.value = s.EAST
