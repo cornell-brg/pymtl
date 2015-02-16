@@ -65,6 +65,7 @@ class DetectMissingValueNext( ast.NodeVisitor ):
 
   def visit_Assign( self, node ):
 
+
     # For each assignment AST node, get the corresponding line in the
     # source code and extract the assignment target (lhs)
     src_line  = self.src[ node.lineno - 1 ]
@@ -77,34 +78,39 @@ class DetectMissingValueNext( ast.NodeVisitor ):
     # FIXME: Second item of tuple is for .n and .v. Get rid of these?
     if not lhs.endswith( ('.'+self.attr, '.'+self.attr[0]) ):
 
-      # TODO: this is super hacky. Create s and self variables and call
-      # exec on the LHS string to load the object pointed to by the LHS
-      # into a temporary variable.
-      try:
-        print src_line
-        print lhs
-        exec( '_temp = {}'.format(lhs) ) in self.dict_
-        _temp = self.dict_['_temp']
-      except NameError:
-        # we can't really do anything about local temporaries
-        _temp = None
+      # TODO: this is super hacky. Grab the targets from the LHS, give
+      # them Load() instead of Store() contexts, and wrap them in an
+      # ast.Expression node. This allows us to compile the AST as an
+      # expression and execute it with eval(), which will return the
+      # object stored in the target. The second argument to eval() is
+      # closure dictionary we extracted from the function.
+      for target in node.targets:
+        try:
+          target.ctx = ast.Load()
+          _code      = compile( ast.Expression( target ), '<ast>', 'eval' )
+          _temp      = eval( _code, self.dict_ )
+        except NameError:
+          # we can't really do anything about local temporaries missing
+          # from the closure dictionary without performing a real type
+          # inference analysis pass
+          _temp = None
 
-      # If the object stored in LHS is a Signal, raise a PyMTLError
-      if isinstance( _temp, Signal ):
-        raise PyMTLError(
-          'Attempting to write a(n) {kind} without .{attr}!\n\n'
-          ' {lineno} {srccode}\n'
-          ' File: {filename}\n'
-          ' Function: {funcname}\n'
-          ' Line: {lineno}\n'.format(
-            attr     = self.attr,
-            kind     = _temp.__class__.__name__,
-            srccode  = src_line,
-            filename = inspect.getfile( self.func ),
-            funcname = self.func.func_name,
-            lineno   = self.funclineno + node.lineno - 1
+        # if the object stored in LHS is a Signal, raise a PyMTLError
+        if isinstance( _temp, Signal ):
+          raise PyMTLError(
+            'Attempting to write a(n) {kind} without .{attr}!\n\n'
+            ' {lineno} {srccode}\n'
+            ' File: {filename}\n'
+            ' Function: {funcname}\n'
+            ' Line: {lineno}\n'.format(
+              attr     = self.attr,
+              kind     = _temp.__class__.__name__,
+              srccode  = src_line,
+              filename = inspect.getfile( self.func ),
+              funcname = self.func.func_name,
+              lineno   = self.funclineno + node.lineno - 1
+            )
           )
-        )
 
 #------------------------------------------------------------------------
 # DetectDecorators
