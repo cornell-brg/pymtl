@@ -48,7 +48,7 @@ def print_ast(node, annotate_fields=True, include_attributes=False, indent='  ')
 # Print out Python AST with nice indenting. Borrowed (with modification)
 # from:
 # http://alexleone.blogspot.com/2010/01/python-ast-pretty-printer.html
-def print_simple_ast(node, indent=' '):
+def print_simple_ast(node, indent=' ', show_lineno=False ):
 
   def get_indent( level, pipe=True ):
     if level == 0: return ''
@@ -60,6 +60,10 @@ def print_simple_ast(node, indent=' '):
 
       head_string  = get_indent( level ) + node.__class__.__name__
       head_string += " ({})".format(field) if field else ""
+
+      if show_lineno and hasattr( node, 'lineno' ):
+        head_string += ' [{}]'.format( node.lineno )
+
       body_string  = ""
       for label, value in ast.iter_fields(node):
         if label == "ctx":
@@ -70,6 +74,7 @@ def print_simple_ast(node, indent=' '):
           body_string += get_indent( level+1, pipe=True) + '{} ({})\n'.format( value, label )
         else:
           body_string += _format( value, label, level+1 )
+
 
       return head_string + "\n" + body_string
 
