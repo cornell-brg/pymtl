@@ -45,6 +45,20 @@ def test_MissingValueInCombinationalBlock():
     sim = setup_sim( BuggyClass() )
 
 #-------------------------------------------------------------------------
+# missing .value in @combinational list
+#-------------------------------------------------------------------------
+def test_MissingListValueInCombinationalBlock():
+  class BuggyClass( Model ):
+    def __init__( s ):
+      s.in_, s.out = InPort(1), OutPort[4](1)
+      @s.combinational
+      def logic():
+        for i in range(4):
+          s.out[i] = s.in_
+  with pytest.raises( PyMTLError ):
+    sim = setup_sim( BuggyClass() )
+
+#-------------------------------------------------------------------------
 # PassThrough Tester
 #-------------------------------------------------------------------------
 

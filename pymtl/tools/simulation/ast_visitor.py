@@ -1,19 +1,7 @@
 #=========================================================================
 # ast_visitor.py
 #=========================================================================
-# Collection of python ast visitors.  Eventually want:
-#
-# * Sensitivity List Visitor: detect signals read in @combinational
-#   blocks (SimulationTool)
-#
-# * Variable Name Visitor: converts a small AST branch into it's
-#   Python variable name (SimulationTool & VerilogTranslTool)
-#
-# * Reg Visitor: detect signals written in @combinational and @posedge_clk
-#   blocks to determine which signals are 'reg' type (VerilogTranslTool)
-#
-# * Translation Visitor: translate code in @combinational and @posedge_clk
-#   blocks into Verilog syntax.
+# Collection of python ast visitors.
 
 import ast, _ast
 import inspect
@@ -57,7 +45,7 @@ class DetectIncorrectValueNext( ast.NodeVisitor ):
 class DetectMissingValueNext( ast.NodeVisitor ):
 
   def __init__( self, func, attr='next or value' ):
-    self.attr   = attr
+    self.attr   = [attr, attr[0]]
     self.func   = func
     self.dict_  = get_closure_dict( func )
 
@@ -65,36 +53,37 @@ class DetectMissingValueNext( ast.NodeVisitor ):
 
   def visit_Assign( self, node ):
 
-
     # For each assignment AST node, get the targets. If targets do not
     # end with .value or .next, verify this is not a Signal object
     # (InPort, OutPort, Wire)
     # FIXME: Second item of tuple is for .n and .v. Get rid of these?
-    for target in node.targets:
-      if (not isinstance( target, ast.Attribute ) or
-          target.attr not in (self.attr, self.attr[0])):
+    for lhs in node.targets:
+      if not isinstance( lhs, ast.Attribute ) or lhs.attr not in self.attr:
 
-        # TODO: this is super hacky. Grab the targets from the LHS, give
-        # them Load() instead of Store() contexts, and wrap them in an
-        # ast.Expression node. This allows us to compile the AST as an
-        # expression and execute it with eval(), which will return the
-        # object stored in the target. The second argument to eval() is
-        # closure dictionary we extracted from the function.
+        # TODO: this is super hacky. Grab each left-hand side (LHS)
+        # target, give them Load() instead of Store() contexts, and wrap
+        # them in an ast.Expression node. This allows us to compile the
+        # AST as an expression and execute it with eval(), which will
+        # return the object stored in the lhs target. The second argument
+        # to eval() is closure dictionary we extracted from the function.
 
         # DEBUG
-        print inspect.getfile( self.func )
-        print self.funclineno + node.lineno - 1, self.src[ node.lineno - 1 ]
+        #print inspect.getfile( self.func )
+        #print self.funclineno + node.lineno - 1, self.src[ node.lineno - 1 ]
         # DEBUG
 
+        # In order to handle lists of Signals, we replace all complex
+        # Indexes with the value zero. This will return the first element
+        # in the list.
         try:
-          target.ctx = ast.Load()
-          _code      = compile( ast.Expression( target ), '<ast>', 'eval' )
-          _temp      = eval( _code, self.dict_ )
+          lhs     = ReplaceIndexesWithZero().visit( lhs )
+          lhs.ctx = ast.Load()
+          _code   = compile( ast.Expression( lhs ), '<ast>', 'eval' )
+          _temp   = eval( _code, self.dict_ )
         except (NameError, AttributeError) as e:
           # We can't really do anything about temporaries created inside
           # the combinational block without performing a real type
           # inference analysis pass.
-          print 'NOOO', e
           _temp = None
 
         # if the object stored in LHS is a Signal, raise a PyMTLError
@@ -105,7 +94,7 @@ class DetectMissingValueNext( ast.NodeVisitor ):
             ' File: {filename}\n'
             ' Function: {funcname}\n'
             ' Line: {lineno}\n'.format(
-              attr     = self.attr,
+              attr     = self.attr[0],
               kind     = _temp.__class__.__name__,
               srccode  = self.src[ node.lineno - 1 ],
               filename = inspect.getfile( self.func ),
@@ -113,6 +102,15 @@ class DetectMissingValueNext( ast.NodeVisitor ):
               lineno   = self.funclineno + node.lineno - 1
             )
           )
+
+#------------------------------------------------------------------------
+# ReplaceIndexesWithZero
+#------------------------------------------------------------------------
+class ReplaceIndexesWithZero( ast.NodeTransformer ):
+  def visit_Index( self, node ):
+    return ast.Index(
+      ast.copy_location( ast.Num(0), node.value )
+    )
 
 #------------------------------------------------------------------------
 # DetectDecorators

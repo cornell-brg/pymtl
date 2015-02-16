@@ -80,6 +80,39 @@ def test_MissingNextInSequentialBlock():
     sim = setup_sim( BuggyClass('FL') )
 
 #-------------------------------------------------------------------------
+# missing .next in @tick list
+#-------------------------------------------------------------------------
+def test_MissingListNextInSequentialBlock():
+  class BuggyClass( Model ):
+    def __init__( s, level ):
+      s.in_, s.out = InPort(1), OutPort[4](1)
+      s.temp       = 5
+      if   level == 'FL':
+        @s.tick_fl
+        def logic():
+          for i in range( 4 ):
+            s.out[i]  = s.in_
+      elif level == 'CL':
+        @s.tick_cl
+        def logic():
+          for i in range( 4 ):
+            s.out[i]  = s.in_
+      elif level == 'RTL':
+        @s.tick_rtl
+        def logic():
+          for i in range( 4 ):
+            s.out[i]  = s.in_
+      else:
+        raise Exception('Invalid abstraction level!')
+
+  with pytest.raises( PyMTLError ):
+    sim = setup_sim( BuggyClass('RTL') )
+  with pytest.raises( PyMTLError ):
+    sim = setup_sim( BuggyClass('CL') )
+  with pytest.raises( PyMTLError ):
+    sim = setup_sim( BuggyClass('FL') )
+
+#-------------------------------------------------------------------------
 # Register Tester
 #-------------------------------------------------------------------------
 
