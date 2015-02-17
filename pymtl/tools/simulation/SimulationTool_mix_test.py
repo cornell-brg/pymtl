@@ -13,7 +13,7 @@ from SimulationTool_comb_test import (
 )
 
 from SimulationTool_struct_test import (
-  ComplexBitBlast as StructBitBlast,
+  ComplexBitBlastStruct as StructBitBlast,
 )
 
 from SimulationTool_seq_test import (
@@ -202,6 +202,11 @@ def register_bit_blast_tester( model, setup_sim ):
   sim.cycle()
   if not transl: assert model.reg0.out.v  == 0b1111000011001010
   verify_bit_blast( model.out, 0b1111000011001010 )
+
+# FIXME: Caching does not work properly on the RegisterBitBlast module.
+# This is because a Model is passed in as a parameter, the hash function
+# used to generated identifier for the cache is problem using the model
+# object id(), which changes from run to run.
 
 def test_RegisterCombBitBlast( setup_sim ):
   model = RegisterBitBlast( 16, CombBitBlast )

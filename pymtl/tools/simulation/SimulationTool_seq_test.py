@@ -246,8 +246,6 @@ def test_RegisterWrappedChain( setup_sim ):
   model      = RegisterWrappedChain( 16 )
   model, sim = setup_sim( model )
   transl     = not hasattr( model, 'reg0' )
-  print dir( model )
-  print model.__dict__
   sim.reset()
   model.in_.value = 8
   if not transl: assert model.reg0.out.v ==  0

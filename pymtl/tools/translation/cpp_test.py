@@ -165,7 +165,7 @@ def passthrough_tester( model ):
   assert model.out == 10
 
 def test_PassThrough():
-  passthrough_tester( translate( structural.PassThrough(8) ) )
+  passthrough_tester( translate( structural.PassThroughStruct(8) ) )
 
 def test_PassThroughWrapped():
   passthrough_tester( translate( structural.PassThroughWrapped(8) ) )

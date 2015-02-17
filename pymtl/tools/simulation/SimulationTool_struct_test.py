@@ -37,10 +37,10 @@ def passthrough_tester( setup_sim, model_type ):
   assert model.out == 10
 
 #-----------------------------------------------------------------------
-# PassThrough
+# PassThroughStruct
 #-----------------------------------------------------------------------
 
-class PassThrough( Model ):
+class PassThroughStruct( Model ):
   def __init__( s, nbits ):
     s.in_ = InPort ( nbits )
     s.out = OutPort( nbits )
@@ -48,13 +48,13 @@ class PassThrough( Model ):
     s.connect( s.in_, s.out )
 
 def test_PassThrough( setup_sim ):
-  passthrough_tester( setup_sim, PassThrough )
+  passthrough_tester( setup_sim, PassThroughStruct )
 
 #-----------------------------------------------------------------------
-# PassThroughBits
+# PassThroughBitsStruct
 #-----------------------------------------------------------------------
 
-class PassThroughBits( Model ):
+class PassThroughBitsStruct( Model ):
   def __init__( s, nbits ):
     s.in_ = InPort ( Bits( nbits ) )
     s.out = OutPort( Bits( nbits ) )
@@ -62,7 +62,7 @@ class PassThroughBits( Model ):
     s.connect( s.in_, s.out )
 
 def test_PassThroughBits( setup_sim ):
-  passthrough_tester( setup_sim, PassThroughBits )
+  passthrough_tester( setup_sim, PassThroughBitsStruct )
 
 #-----------------------------------------------------------------------
 # PassThroughList
@@ -152,7 +152,7 @@ class PassThroughWrapped( Model ):
     s.out = OutPort( nbits )
   def elaborate_logic( s ):
     # Submodules
-    s.pt  = PassThrough( s.nbits )
+    s.pt  = PassThroughStruct( s.nbits )
     # s.connections
     s.connect( s.in_, s.pt.in_ )
     s.connect( s.out, s.pt.out )
@@ -171,8 +171,8 @@ class PassThroughWrappedChain( Model ):
     s.out = OutPort( nbits )
   def elaborate_logic( s ):
     # Submodules
-    s.pt0 = PassThrough( s.nbits )
-    s.pt1 = PassThrough( s.nbits )
+    s.pt0 = PassThroughStruct( s.nbits )
+    s.pt1 = PassThroughStruct( s.nbits )
     # s.connections
     s.connect( s.in_,     s.pt0.in_ )
     s.connect( s.pt0.out, s.pt1.in_ )
@@ -283,8 +283,8 @@ class SplitterPT_1( Model ):
     s.out1 = OutPort( nbits )
   def elaborate_logic( s ):
     # Submodules
-    s.pt0  = PassThrough( s.nbits )
-    s.pt1  = PassThrough( s.nbits )
+    s.pt0  = PassThroughStruct( s.nbits )
+    s.pt1  = PassThroughStruct( s.nbits )
     # s.connections
     s.connect( s.in_,  s.pt0.in_ )
     s.connect( s.in_,  s.pt1.in_ )
@@ -302,7 +302,7 @@ class SplitterPT_2( Model ):
     s.out1 = OutPort( nbits )
   def elaborate_logic( s ):
     # Submodules
-    s.pt0  = PassThrough( s.nbits )
+    s.pt0  = PassThroughStruct( s.nbits )
     # s.connections
     s.connect( s.in_,  s.pt0.in_ )
     s.connect( s.out0, s.pt0.out )
@@ -319,7 +319,7 @@ class SplitterPT_3( Model ):
     s.out1 = OutPort( nbits )
   def elaborate_logic( s ):
     # Submodules
-    s.pt0  = PassThrough( s.nbits )
+    s.pt0  = PassThroughStruct( s.nbits )
     # s.connections
     s.connect( s.in_,  s.pt0.in_ )
     s.connect( s.in_,  s.out0    )
@@ -337,8 +337,8 @@ class SplitterPT_4( Model ):
   def elaborate_logic( s ):
     # Submodules
     s.spl  = Splitter   ( s.nbits )
-    s.pt0  = PassThrough( s.nbits )
-    s.pt1  = PassThrough( s.nbits )
+    s.pt0  = PassThroughStruct( s.nbits )
+    s.pt1  = PassThroughStruct( s.nbits )
     # s.connections
     s.connect( s.in_,      s.spl.in_ )
     s.connect( s.spl.out0, s.pt0.in_ )
@@ -358,10 +358,10 @@ class SplitterPT_5( Model ):
   def elaborate_logic( s ):
     # Submodules
     s.spl  = Splitter   ( s.nbits )
-    s.pt0  = PassThrough( s.nbits )
-    s.pt1  = PassThrough( s.nbits )
-    s.pt2  = PassThrough( s.nbits )
-    s.pt3  = PassThrough( s.nbits )
+    s.pt0  = PassThroughStruct( s.nbits )
+    s.pt1  = PassThroughStruct( s.nbits )
+    s.pt2  = PassThroughStruct( s.nbits )
+    s.pt3  = PassThroughStruct( s.nbits )
     # s.connections
     s.connect( s.in_,      s.spl.in_ )
     s.connect( s.spl.out0, s.pt0.in_ )
@@ -380,17 +380,17 @@ def test_SplitterPT_5( setup_sim ):
 
 def setup_bit_blast( setup_sim, nbits, groups=None ):
   if not groups:
-    model      = SimpleBitBlast( nbits )
+    model      = SimpleBitBlastStruct( nbits )
   else:
-    model      = ComplexBitBlast( nbits, groups )
+    model      = ComplexBitBlastStruct( nbits, groups )
   model, sim = setup_sim( model )
   return model, sim
 
 #-----------------------------------------------------------------------
-# SimpleBitBlast
+# SimpleBitBlastStruct
 #-----------------------------------------------------------------------
 
-class SimpleBitBlast( Model ):
+class SimpleBitBlastStruct( Model ):
   def __init__( s, nbits ):
     s.nbits = nbits
     s.in_   = InPort( nbits )
@@ -419,10 +419,10 @@ def test_SimpleBitBlast_16_to_16x1( setup_sim ):
   verify_bit_blast( model.out, 0b1111000011001010 )
 
 #-----------------------------------------------------------------------
-# ComplexBitBlast
+# ComplexBitBlastStruct
 #-----------------------------------------------------------------------
 
-class ComplexBitBlast( Model ):
+class ComplexBitBlastStruct( Model ):
   def __init__( s, nbits, groupings ):
     s.nbits     = nbits
     s.groupings = groupings
@@ -478,17 +478,17 @@ def test_ComplexBitBlast_8_to_1x8( setup_sim ):
 
 def setup_bit_merge( setup_sim, nbits, groups=None ):
   if not groups:
-    model      = SimpleBitMerge( nbits )
+    model      = SimpleBitMergeStruct( nbits )
   else:
-    model      = ComplexBitMerge( nbits, groups )
+    model      = ComplexBitMergeStruct( nbits, groups )
   model, sim = setup_sim( model )
   return model, sim
 
 #-----------------------------------------------------------------------
-# SimpleBitMerge
+# SimpleBitMergeStruct
 #-----------------------------------------------------------------------
 
-class SimpleBitMerge( Model ):
+class SimpleBitMergeStruct( Model ):
   def __init__( s, nbits ):
     s.nbits = nbits
     s.in_   = [ InPort( 1 ) for x in xrange( nbits ) ]
@@ -532,7 +532,7 @@ def test_SimpleBitMerge_16x1_to_16( setup_sim ):
 # ComplexBitMerge
 #-----------------------------------------------------------------------
 
-class ComplexBitMerge( Model ):
+class ComplexBitMergeStruct( Model ):
   def __init__( s, nbits, groupings ):
     s.nbits     = nbits
     s.groupings = groupings
@@ -684,7 +684,7 @@ from ...model.PortBundle_test import InValRdyBundle, OutValRdyBundle
 # ListOfPortBundles
 #-----------------------------------------------------------------------
 # Test added to catch use case of a list of PortBundles.
-class ListOfPortBundles( Model ):
+class ListOfPortBundlesStruct( Model ):
   def __init__( s ):
 
     s.in_ = [ InValRdyBundle ( 8 ) for x in range( 4 ) ]
@@ -696,7 +696,7 @@ class ListOfPortBundles( Model ):
       s.connect( s.in_[ i ], s.out[ i ] )
 
 def test_ListOfPortBundles( setup_sim ):
-  model      = ListOfPortBundles()
+  model      = ListOfPortBundlesStruct()
   model, sim = setup_sim( model )
   sim.reset()
 

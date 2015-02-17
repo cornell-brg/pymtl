@@ -1240,7 +1240,7 @@ def test_NestedLoops( setup_sim ):
 #-----------------------------------------------------------------------
 # ListOfPortBundles
 #-----------------------------------------------------------------------
-class ListOfPortBundles( Model ):
+class ListOfPortBundlesComb( Model ):
   def __init__( s ):
     s.in_ = [ InBundle ( 4 ) for x in range(2) ]
     s.out = [ OutBundle( 4 ) for x in range(2) ]
@@ -1253,7 +1253,7 @@ class ListOfPortBundles( Model ):
         s.out[i].b.value = s.in_[i].a
 
 def test_ListOfPortBundles( setup_sim ):
-  model      = ListOfPortBundles()
+  model      = ListOfPortBundlesComb()
   model, sim = setup_sim( model )
 
   model.in_[0].a.value = 2
