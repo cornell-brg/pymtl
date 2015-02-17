@@ -4,6 +4,8 @@
 # This wrapper makes a Verilator-generated C++ model appear as if it
 # were a normal PyMTL model.
 
+import os
+
 from pymtl import *
 from cffi  import FFI
 
@@ -12,21 +14,29 @@ from cffi  import FFI
 #-----------------------------------------------------------------------
 class {model_name}( Model ):
 
-  def __init__( s ):
+  def __init__( s, vcd_file='' ):
 
     # initialize FFI, define the exposed interface
     ffi = FFI()
     ffi.cdef('''
-      void create_model( void );
+      void create_model( const char * );
       void destroy_model( void );
       void eval( void );
 
       {port_decls}
     ''')
 
+    # set vcd_file attribute, give verilator_vcd_file a slightly
+    # different name so PyMTL .vcd and Verilator .vcd can coexist
+    s.vcd_file          = vcd_file
+    verilator_vcd_file = vcd_file
+    if vcd_file:
+      filen, ext         = os.path.splitext( vcd_file )
+      verilator_vcd_file = '{{}}.verilator{{}}'.format( filen, ext )
+
     # import the shared library containing the model and construct it
     s._model = ffi.dlopen('./{lib_file}')
-    s._model.create_model()
+    s._model.create_model( ffi.new("char[]", verilator_vcd_file) )
 
     # dummy class to emulate PortBundles
     class BundleProxy( PortBundle ):

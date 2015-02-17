@@ -20,7 +20,7 @@
 
 // simulation methods and model interface ports exposed to CFFI
 extern "C" {{
-  extern void create_model( void );
+  extern void create_model( const char * );
   extern void destroy_model( void );
   extern void eval( void );
 
@@ -50,7 +50,7 @@ unsigned char prev_clk;
 // Construct a new verilator simulation, initialize interface signals
 // exposed via CFFI, and setup VCD tracing if enabled.
 //
-void create_model() {{
+void create_model( const char *vcd_filename ) {{
   model = new V{model_name}();
 
 #if DUMP_VCD
@@ -59,7 +59,7 @@ void create_model() {{
   tfp = new VerilatedVcdC();
   model->trace( tfp, 99 );
   tfp->spTrace()->set_time_resolution( "{vcd_timescale}" );
-  tfp->open( "{vcd_prefix}.{model_name}.vcd" );
+  tfp->open( vcd_filename );
   trace_time = 0;
   prev_clk   = 0;
 #endif
