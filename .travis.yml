@@ -8,9 +8,17 @@ python:
 # - "pypy"
 
 env:
- - TEST_SUITE="-n 2"
- - TEST_SUITE="--test-verilog"
- - TEST_SUITE="-n 2 --dump-vcd"
+ - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="-n 2"
+ - TEST_DIRS="../accel ../labs  ../mem     "  CONFIG="-n 2"
+ - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="-n 2"
+
+ - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="--test-verilog"
+ - TEST_DIRS="../accel ../labs  ../mem     "  CONFIG="--test-verilog"
+ - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="--test-verilog"
+
+ - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="-n 2 --dump-vcd"
+ - TEST_DIRS="../accel ../labs  ../mem     "  CONFIG="-n 2 --dump-vcd"
+ - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="-n 2 --dump-vcd"
 
 #------------------------------------------------------------------------
 # before dependency installation
@@ -67,6 +75,4 @@ before_script:
 # test runner
 #------------------------------------------------------------------------
 script:
- - py.test .. --verbose --maxfail 20 $TEST_SUITE
-
-# - py.test ../new_proc --verbose -n 4  # Debug
+ - py.test $TEST_DIRS --verbose --maxfail 20 $CONFIG
