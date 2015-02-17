@@ -1,30 +1,22 @@
-#=========================================================================
+#=======================================================================
 # SimulationTool_struct_test.py
-#=========================================================================
+#=======================================================================
 # Structural composition tests for the SimulationTool class.
+
+import pytest
 
 from pymtl import *
 
 from SimulationTool_comb_test import verify_bit_blast, set_ports
+from SimulationTool_seq_test  import setup_sim, local_setup_sim
 
-import pytest
-
-#-------------------------------------------------------------------------
-# Setup Sim
-#-------------------------------------------------------------------------
-
-def setup_sim( model ):
-  model.elaborate()
-  sim = SimulationTool( model )
-  return sim
-
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PassThrough Tester
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
-def passthrough_tester( model_type ):
-  model = model_type( 16 )
-  sim = setup_sim( model )
+def passthrough_tester( setup_sim, model_type ):
+  model      = model_type( 16 )
+  model, sim = setup_sim( model )
   model.in_.v = 8
   # Note: no need to call cycle, no @combinational block
   assert model.out   == 8
@@ -33,9 +25,9 @@ def passthrough_tester( model_type ):
   model.in_.v = 10
   assert model.out == 10
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PassThrough
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class PassThrough( Model ):
   def __init__( s, nbits ):
@@ -44,12 +36,12 @@ class PassThrough( Model ):
   def elaborate_logic( s ):
     s.connect( s.in_, s.out )
 
-def test_PassThrough():
-  passthrough_tester( PassThrough )
+def test_PassThrough( setup_sim ):
+  passthrough_tester( setup_sim, PassThrough )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PassThroughBits
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class PassThroughBits( Model ):
   def __init__( s, nbits ):
@@ -58,12 +50,12 @@ class PassThroughBits( Model ):
   def elaborate_logic( s ):
     s.connect( s.in_, s.out )
 
-def test_PassThroughBits():
-  passthrough_tester( PassThroughBits )
+def test_PassThroughBits( setup_sim ):
+  passthrough_tester( setup_sim, PassThroughBits )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PassThroughList
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class PassThroughList( Model ):
   def __init__( s, nbits, nports ):
@@ -74,9 +66,9 @@ class PassThroughList( Model ):
     for i in range( s.nports ):
       s.connect( s.in_[i], s.out[i] )
 
-def test_PassThroughList():
-  model = PassThroughList( 16, 4 )
-  sim = setup_sim( model )
+def test_PassThroughList( setup_sim ):
+  model      = PassThroughList( 16, 4 )
+  model, sim = setup_sim( model )
   for i in range( 4 ):
     model.in_[i].v = i
   for i in range( 4 ):
@@ -86,9 +78,9 @@ def test_PassThroughList():
   model.in_[2].v = 10
   assert model.out[2] == 10
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PassThroughListWire
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class PassThroughListWire( Model ):
   def __init__( s, nbits, nports ):
@@ -102,9 +94,9 @@ class PassThroughListWire( Model ):
       s.connect( s.in_[i],  s.wire[i] )
       s.connect( s.wire[i], s.out[i]  )
 
-def test_PassThroughListWire():
-  model = PassThroughListWire( 16, 4 )
-  sim = setup_sim( model )
+def test_PassThroughListWire( setup_sim ):
+  model      = PassThroughListWire( 16, 4 )
+  model, sim = setup_sim( model )
   for i in range( 4 ):
     model.in_[i].v = i
   for i in range( 4 ):
@@ -114,9 +106,9 @@ def test_PassThroughListWire():
   model.in_[2].v = 10
   assert model.out[2] == 10
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PassThroughWrapped
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class PassThroughWrapped( Model ):
   def __init__( s, nbits ):
@@ -130,12 +122,12 @@ class PassThroughWrapped( Model ):
     s.connect( s.in_, s.pt.in_ )
     s.connect( s.out, s.pt.out )
 
-def test_PassThroughWrapped():
-  passthrough_tester( PassThroughWrapped )
+def test_PassThroughWrapped( setup_sim ):
+  passthrough_tester( setup_sim, PassThroughWrapped )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PassThroughWrappedChain
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class PassThroughWrappedChain( Model ):
   def __init__( s, nbits ):
@@ -151,16 +143,16 @@ class PassThroughWrappedChain( Model ):
     s.connect( s.pt0.out, s.pt1.in_ )
     s.connect( s.out,     s.pt1.out )
 
-def test_PassThroughWrappedChain():
-  passthrough_tester( PassThroughWrappedChain )
+def test_PassThroughWrappedChain( setup_sim ):
+  passthrough_tester( setup_sim, PassThroughWrappedChain )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Utility Test Function for Splitter
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
-def splitter_tester( model_type ):
-  model = model_type( 16 )
-  sim = setup_sim( model )
+def splitter_tester( setup_sim, model_type ):
+  model      = model_type( 16 )
+  model, sim = setup_sim( model )
   model.in_.v = 8
   # Note: no need to call cycle, no @combinational block
   assert model.out0   == 8
@@ -172,9 +164,9 @@ def splitter_tester( model_type ):
   assert model.out0 == 10
   assert model.out1 == 10
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Splitter
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class Splitter( Model ):
   def __init__( s, nbits ):
@@ -186,12 +178,12 @@ class Splitter( Model ):
     s.connect( s.in_, s.out0 )
     s.connect( s.in_, s.out1 )
 
-def test_Splitter():
-  splitter_tester( Splitter )
+def test_Splitter( setup_sim ):
+  splitter_tester( setup_sim, Splitter )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SplitterWires
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class SplitterWires( Model ):
   def __init__( s, nbits ):
@@ -208,12 +200,12 @@ class SplitterWires( Model ):
     s.connect( s.wire0, s.out0  )
     s.connect( s.wire1, s.out1  )
 
-def test_SplitterWires():
-  splitter_tester( SplitterWires )
+def test_SplitterWires( setup_sim ):
+  splitter_tester( setup_sim, SplitterWires )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SplitterWrapped
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class SplitterWrapped( Model ):
   def __init__( s, nbits ):
@@ -229,12 +221,12 @@ class SplitterWrapped( Model ):
     s.connect( s.out0, s.spl.out0 )
     s.connect( s.out1, s.spl.out1 )
 
-def test_SplitterWrapped():
-  splitter_tester( SplitterWrapped )
+def test_SplitterWrapped( setup_sim ):
+  splitter_tester( setup_sim, SplitterWrapped )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SplitterPassThrough
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class SplitterPT_1( Model ):
   def __init__( s, nbits ):
@@ -252,8 +244,8 @@ class SplitterPT_1( Model ):
     s.connect( s.out0, s.pt0.out )
     s.connect( s.out1, s.pt1.out )
 
-def test_SplitterPT_1():
-  splitter_tester( SplitterPT_1 )
+def test_SplitterPT_1( setup_sim ):
+  splitter_tester( setup_sim, SplitterPT_1 )
 
 class SplitterPT_2( Model ):
   def __init__( s, nbits ):
@@ -269,8 +261,8 @@ class SplitterPT_2( Model ):
     s.connect( s.out0, s.pt0.out )
     s.connect( s.in_,  s.out1    )
 
-def test_SplitterPT_2():
-  splitter_tester( SplitterPT_2 )
+def test_SplitterPT_2( setup_sim ):
+  splitter_tester( setup_sim, SplitterPT_2 )
 
 class SplitterPT_3( Model ):
   def __init__( s, nbits ):
@@ -286,8 +278,8 @@ class SplitterPT_3( Model ):
     s.connect( s.in_,  s.out0    )
     s.connect( s.out1, s.pt0.out )
 
-def test_SplitterPT_3():
-  splitter_tester( SplitterPT_3 )
+def test_SplitterPT_3( setup_sim ):
+  splitter_tester( setup_sim, SplitterPT_3 )
 
 class SplitterPT_4( Model ):
   def __init__( s, nbits ):
@@ -307,8 +299,8 @@ class SplitterPT_4( Model ):
     s.connect( s.out0,     s.pt0.out )
     s.connect( s.out1,     s.pt1.out )
 
-def test_SplitterPT_4():
-  splitter_tester( SplitterPT_4 )
+def test_SplitterPT_4( setup_sim ):
+  splitter_tester( setup_sim, SplitterPT_4 )
 
 class SplitterPT_5( Model ):
   def __init__( s, nbits ):
@@ -332,24 +324,24 @@ class SplitterPT_5( Model ):
     s.connect( s.out0,     s.pt2.out )
     s.connect( s.out1,     s.pt3.out )
 
-def test_SplitterPT_5():
-  splitter_tester( SplitterPT_5 )
+def test_SplitterPT_5( setup_sim ):
+  splitter_tester( setup_sim, SplitterPT_5 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # BitBlast Utility Functions
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
-def setup_bit_blast( nbits, groups=None ):
+def setup_bit_blast( setup_sim, nbits, groups=None ):
   if not groups:
-    model = SimpleBitBlast( nbits )
+    model      = SimpleBitBlast( nbits )
   else:
-    model = ComplexBitBlast( nbits, groups )
-  sim = setup_sim( model )
+    model      = ComplexBitBlast( nbits, groups )
+  model, sim = setup_sim( model )
   return model, sim
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SimpleBitBlast
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class SimpleBitBlast( Model ):
   def __init__( s, nbits ):
@@ -361,8 +353,8 @@ class SimpleBitBlast( Model ):
     for i in range( s.nbits ):
       s.connect( s.out[i], s.in_[i] )
 
-def test_SimpleBitBlast_8_to_8x1():
-  model, sim = setup_bit_blast( 8 )
+def test_SimpleBitBlast_8_to_8x1( setup_sim ):
+  model, sim = setup_bit_blast( setup_sim, 8 )
   model.in_.v = 0b11110000
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b11110000 )
@@ -370,8 +362,8 @@ def test_SimpleBitBlast_8_to_8x1():
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b01010101 )
 
-def test_SimpleBitBlast_16_to_16x1():
-  model, sim = setup_bit_blast( 16 )
+def test_SimpleBitBlast_16_to_16x1( setup_sim ):
+  model, sim = setup_bit_blast( setup_sim, 16 )
   model.in_.v = 0b11110000
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b11110000 )
@@ -379,9 +371,9 @@ def test_SimpleBitBlast_16_to_16x1():
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b1111000011001010 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # ComplexBitBlast
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class ComplexBitBlast( Model ):
   def __init__( s, nbits, groupings ):
@@ -397,8 +389,8 @@ class ComplexBitBlast( Model ):
       s.connect( s.out[outport_num], s.in_[i:i+s.groupings] )
       outport_num += 1
 
-def test_ComplexBitBlast_8_to_8x1():
-  model, sim = setup_bit_blast( 8, 1 )
+def test_ComplexBitBlast_8_to_8x1( setup_sim ):
+  model, sim = setup_bit_blast( setup_sim, 8, 1 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b11110000 )
@@ -406,8 +398,8 @@ def test_ComplexBitBlast_8_to_8x1():
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b01010101 )
 
-def test_ComplexBitBlast_8_to_4x2():
-  model, sim = setup_bit_blast( 8, 2 )
+def test_ComplexBitBlast_8_to_4x2( setup_sim ):
+  model, sim = setup_bit_blast( setup_sim, 8, 2 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b11110000 )
@@ -415,8 +407,8 @@ def test_ComplexBitBlast_8_to_4x2():
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b01010101 )
 
-def test_ComplexBitBlast_8_to_2x4():
-  model, sim = setup_bit_blast( 8, 4 )
+def test_ComplexBitBlast_8_to_2x4( setup_sim ):
+  model, sim = setup_bit_blast( setup_sim, 8, 4 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b11110000 )
@@ -424,8 +416,8 @@ def test_ComplexBitBlast_8_to_2x4():
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b01010101 )
 
-def test_ComplexBitBlast_8_to_1x8():
-  model, sim = setup_bit_blast( 8, 8 )
+def test_ComplexBitBlast_8_to_1x8( setup_sim ):
+  model, sim = setup_bit_blast( setup_sim, 8, 8 )
   model.in_.value = 0b11110000
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b11110000 )
@@ -433,21 +425,21 @@ def test_ComplexBitBlast_8_to_1x8():
   sim.eval_combinational()
   verify_bit_blast( model.out, 0b01010101 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # BitMerge Utility Functions
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
-def setup_bit_merge( nbits, groups=None ):
+def setup_bit_merge( setup_sim, nbits, groups=None ):
   if not groups:
-    model = SimpleBitMerge( nbits )
+    model      = SimpleBitMerge( nbits )
   else:
-    model = ComplexBitMerge( nbits, groups )
-  sim = setup_sim( model )
+    model      = ComplexBitMerge( nbits, groups )
+  model, sim = setup_sim( model )
   return model, sim
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SimpleBitMerge
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class SimpleBitMerge( Model ):
   def __init__( s, nbits ):
@@ -459,8 +451,8 @@ class SimpleBitMerge( Model ):
     for i in range( s.nbits ):
       s.connect( s.out[i], s.in_[i] )
 
-def test_SimpleBitMerge_8x1_to_8():
-  model, sim = setup_bit_merge( 8 )
+def test_SimpleBitMerge_8x1_to_8( setup_sim ):
+  model, sim = setup_bit_merge( setup_sim, 8 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.value == 0b11110000
@@ -474,8 +466,8 @@ def test_SimpleBitMerge_8x1_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b11010100
 
-def test_SimpleBitMerge_16x1_to_16():
-  model, sim = setup_bit_merge( 16 )
+def test_SimpleBitMerge_16x1_to_16( setup_sim ):
+  model, sim = setup_bit_merge( setup_sim, 16 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.value == 0b11110000
@@ -489,9 +481,9 @@ def test_SimpleBitMerge_16x1_to_16():
   sim.eval_combinational()
   assert model.out.value == 0b0111000011001011
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # ComplexBitMerge
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class ComplexBitMerge( Model ):
   def __init__( s, nbits, groupings ):
@@ -507,8 +499,8 @@ class ComplexBitMerge( Model ):
       s.connect( s.out[i:i+s.groupings], s.in_[inport_num] )
       inport_num += 1
 
-def test_ComplexBitMerge_8x1_to_8():
-  model, sim = setup_bit_merge( 8, 1 )
+def test_ComplexBitMerge_8x1_to_8( setup_sim ):
+  model, sim = setup_bit_merge( setup_sim, 8, 1 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
@@ -516,8 +508,8 @@ def test_ComplexBitMerge_8x1_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-def test_ComplexBitMerge_4x2_to_8():
-  model, sim = setup_bit_merge( 8, 2 )
+def test_ComplexBitMerge_4x2_to_8( setup_sim ):
+  model, sim = setup_bit_merge( setup_sim, 8, 2 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
@@ -525,8 +517,8 @@ def test_ComplexBitMerge_4x2_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-def test_ComplexBitMerge_2x4_to_8():
-  model, sim = setup_bit_merge( 8, 4 )
+def test_ComplexBitMerge_2x4_to_8( setup_sim ):
+  model, sim = setup_bit_merge( setup_sim, 8, 4 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
@@ -534,8 +526,8 @@ def test_ComplexBitMerge_2x4_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-def test_ComplexBitMerge_1x8_to_8():
-  model, sim = setup_bit_merge( 8, 8 )
+def test_ComplexBitMerge_1x8_to_8( setup_sim ):
+  model, sim = setup_bit_merge( setup_sim, 8, 8 )
   set_ports( model.in_, 0b11110000 )
   sim.eval_combinational()
   assert model.out.v == 0b11110000
@@ -543,9 +535,9 @@ def test_ComplexBitMerge_1x8_to_8():
   sim.eval_combinational()
   assert model.out.value == 0b01010101
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # ConstantPort
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class ConstantPort( Model ):
   def __init__( s ):
@@ -553,17 +545,17 @@ class ConstantPort( Model ):
   def elaborate_logic( s ):
     s.connect( s.out, 4 )
 
-def test_ConstantPort():
-    model = ConstantPort()
-    sim = setup_sim( model )
+def test_ConstantPort( setup_sim ):
+    model      = ConstantPort()
+    model, sim = setup_sim( model )
     assert model.out == 4
     # TODO: catch writing to a constant?
     sim.cycle()
     assert model.out == 4
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # ConstantSlice
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class ConstantSlice( Model ):
   def __init__( s ):
@@ -572,18 +564,18 @@ class ConstantSlice( Model ):
     s.connect( s.out[ 0:16], 4 )
     s.connect( s.out[16:32], 8 )
 
-def test_ConstantSlice():
-  model = ConstantSlice()
-  sim = setup_sim( model )
+def test_ConstantSlice( setup_sim ):
+  model      = ConstantSlice()
+  model, sim = setup_sim( model )
   assert model.out.v[ 0:16] == 4
   assert model.out.v[16:32] == 8
   sim.cycle()
   assert model.out.v[ 0:16] == 4
   assert model.out.v[16:32] == 8
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # ConstantModule
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class Shifter( Model ):
   def __init__( s, inout_nbits = 1, shamt_nbits = 1 ):
@@ -609,9 +601,9 @@ class ConstantModule( Model ):
       m.out   : s.out,
     })
 
-def test_ConstantModule():
-  model = ConstantModule()
-  sim = setup_sim( model )
+def test_ConstantModule( setup_sim ):
+  model      = ConstantModule()
+  model, sim = setup_sim( model )
   sim.reset()
   model.in_.v = 0b1111
   sim.eval_combinational()
@@ -628,9 +620,9 @@ def test_ConstantModule():
 from ...model.PortBundle_test import InValRdyBundle, OutValRdyBundle
 #from BitStruct_test  import MemMsg
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # ListOfPortBundles
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Test added to catch use case of a list of PortBundles.
 class ListOfPortBundles( Model ):
   def __init__( s ):
@@ -643,9 +635,9 @@ class ListOfPortBundles( Model ):
     for i in range( 4 ):
       s.connect( s.in_[ i ], s.out[ i ] )
 
-def test_ListOfPortBundles():
-  model = ListOfPortBundles()
-  sim = setup_sim( model )
+def test_ListOfPortBundles( setup_sim ):
+  model      = ListOfPortBundles()
+  model, sim = setup_sim( model )
   sim.reset()
 
   for i in range( 4 ):

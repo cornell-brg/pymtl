@@ -1,27 +1,20 @@
-#=========================================================================
+#=======================================================================
 # SimulationTool_wire_test.py
-#=========================================================================
+#=======================================================================
 # Tests using wires for the SimulationTool class.
-
-from pymtl import *
 
 import pytest
 
-#-------------------------------------------------------------------------
-# Setup Sim
-#-------------------------------------------------------------------------
+from pymtl import *
 
-def setup_sim( model ):
-  model.elaborate()
-  sim = SimulationTool( model )
-  return sim
+from SimulationTool_seq_test  import setup_sim, local_setup_sim
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Pipeline Tester
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
-def pipeline_tester( model, nstages ):
-  sim = setup_sim( model )
+def pipeline_tester( setup_sim, model, nstages ):
+  model, sim = setup_sim( model )
   # fill up the pipeline
   for i in range( 10 ):
     model.in_.v = i
@@ -34,9 +27,9 @@ def pipeline_tester( model, nstages ):
     sim.cycle()
   assert model.out == 9
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # ThreeStageTick
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class ThreeStageTick( Model ):
   def __init__( s, nbits ):
@@ -55,12 +48,12 @@ class ThreeStageTick( Model ):
     def func2():
       s.out.n   = s.wire0
 
-def test_ThreeStageTick():
-  pipeline_tester( ThreeStageTick( 16 ), 3 )
+def test_ThreeStageTick( setup_sim ):
+  pipeline_tester( setup_sim, ThreeStageTick( 16 ), 3 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # ThreeStagePosedge
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class ThreeStagePosedge( Model ):
   def __init__( s, nbits ):
@@ -79,12 +72,12 @@ class ThreeStagePosedge( Model ):
     def func2():
       s.out.n   = s.wire0
 
-def test_ThreeStagePosedge():
-  pipeline_tester( ThreeStagePosedge( 16 ), 3 )
+def test_ThreeStagePosedge( setup_sim ):
+  pipeline_tester( setup_sim, ThreeStagePosedge( 16 ), 3 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # FiveStageTick
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class FiveStageTick( Model ):
   def __init__( s, nbits ):
@@ -116,12 +109,12 @@ class FiveStageTick( Model ):
     def func4():
       s.out.n  = s.wire2
 
-def test_FiveStageTick():
-  pipeline_tester( FiveStageTick( 16 ), 5 )
+def test_FiveStageTick( setup_sim ):
+  pipeline_tester( setup_sim, FiveStageTick( 16 ), 5 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # FiveStagePosedge
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class FiveStagePosedge( Model ):
   def __init__( s, nbits ):
@@ -153,12 +146,12 @@ class FiveStagePosedge( Model ):
     def func4():
       s.out.n  = s.wire2
 
-def test_FiveStagePosedge():
-  pipeline_tester( FiveStagePosedge( 16 ), 5 )
+def test_FiveStagePosedge( setup_sim ):
+  pipeline_tester( setup_sim, FiveStagePosedge( 16 ), 5 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # NStagePosedge
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class NStageTick( Model ):
   def __init__( s, nbits, nstages ):
@@ -181,14 +174,14 @@ class NStageTick( Model ):
     s.connect( s.out, s.wire[-1] )
 
 
-def test_NStageTick():
-  pipeline_tester( NStageTick( 16, 3 ), 3 )
-  pipeline_tester( NStageTick( 16, 5 ), 5 )
-  pipeline_tester( NStageTick( 16, 8 ), 8 )
+def test_NStageTick( setup_sim ):
+  pipeline_tester( setup_sim, NStageTick( 16, 3 ), 3 )
+  pipeline_tester( setup_sim, NStageTick( 16, 5 ), 5 )
+  pipeline_tester( setup_sim, NStageTick( 16, 8 ), 8 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # NStagePosedge
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class NStagePosedge( Model ):
   def __init__( s, nbits, nstages ):
@@ -211,14 +204,14 @@ class NStagePosedge( Model ):
     s.connect( s.out, s.wire[-1] )
 
 
-def test_NStagePosedge():
-  pipeline_tester( NStagePosedge( 16, 3 ), 3 )
-  pipeline_tester( NStagePosedge( 16, 5 ), 5 )
-  pipeline_tester( NStagePosedge( 16, 8 ), 8 )
+def test_NStagePosedge( setup_sim ):
+  pipeline_tester( setup_sim, NStagePosedge( 16, 3 ), 3 )
+  pipeline_tester( setup_sim, NStagePosedge( 16, 5 ), 5 )
+  pipeline_tester( setup_sim, NStagePosedge( 16, 8 ), 8 )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # NStageComb
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO THE
 #       WAY WE DETECT SENSITIVITY LISTS... all wires/ports in an array
 #       are added to the sensitivity list of an @combinational block since
@@ -246,9 +239,9 @@ class NStageComb( Model ):
 
     s.connect( s.out, s.wire[-1] )
 
-def test_NStageComb():
-  model = NStageComb( 16, 3 )
-  sim   = setup_sim( model )
+def test_NStageComb( setup_sim ):
+  model      = NStageComb( 16, 3 )
+  model, sim = setup_sim( model )
   # fill up the pipeline
   for i in range( 10 ):
     model.in_.v = i
@@ -257,12 +250,12 @@ def test_NStageComb():
     #assert False  # Prevent infinite loop!
     sim.cycle()
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # TempReadWrite
-#-------------------------------------------------------------------------
-# TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO THE
-#       WAY WE DETECT SENSITIVITY LISTS... all wires/ports read in an
-#       @combinational block are added to the sensitivity list, if a
+#-----------------------------------------------------------------------
+# TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO
+#       THE WAY WE DETECT SENSITIVITY LISTS... all wires/ports read in
+#       an @combinational block are added to the sensitivity list, if a
 #       signal is written in the block and then read later in the block,
 #       it repeatedly gets added to the event queue.  These 'temporary'
 #       signals should really not be added to the sensitivity list. Fix.
@@ -292,9 +285,9 @@ class WriteThenReadWire( Model ):
     #def comb_logic():
     #  s.out.v  = s.temp
 
-def test_WriteThenReadWire():
-  model = WriteThenReadWire( 16 )
-  sim = setup_sim( model )
+def test_WriteThenReadWire( setup_sim ):
+  model      = WriteThenReadWire( 16 )
+  model, sim = setup_sim( model )
   for i in range( 10 ):
     model.in_.v = i
     #assert False  # Prevent infinite loop!

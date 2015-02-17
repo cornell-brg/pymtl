@@ -1,32 +1,48 @@
-#=========================================================================
+#=======================================================================
 # SimulationTool_mix_test.py
-#=========================================================================
-# Mixed (combinational and sequential) logic tests for the SimulationTool.
-
-from pymtl import *
-
-from SimulationTool_comb_test   import PassThrough
-from SimulationTool_seq_test    import Register
-from SimulationTool_seq_test    import register_tester
-
-from SimulationTool_comb_test   import verify_bit_blast
-from SimulationTool_comb_test   import ComplexBitBlast as CombBitBlast
-from SimulationTool_struct_test import ComplexBitBlast as StructBitBlast
+#=======================================================================
+# Mixed (combinational and sequential) logic tests for SimulationTool.
 
 import pytest
 
-#-------------------------------------------------------------------------
-# Setup Sim
-#-------------------------------------------------------------------------
+from pymtl import *
 
-def setup_sim( model ):
-  model.elaborate()
-  sim = SimulationTool( model )
-  return sim
+from SimulationTool_comb_test import (
+  PassThrough, verify_bit_blast,
+  ComplexBitBlast as CombBitBlast,
+)
 
-#-------------------------------------------------------------------------
+from SimulationTool_struct_test import (
+  ComplexBitBlast as StructBitBlast,
+)
+
+from SimulationTool_seq_test import (
+  Register, register_tester,
+  setup_sim, local_setup_sim,
+)
+
+#-----------------------------------------------------------------------
+# register_tester
+#-----------------------------------------------------------------------
+def register_tester( model_type, setup_sim ):
+  model      = model_type( 16 )
+  model, sim = setup_sim( model )
+  model.in_.v = 8
+  assert model.out == 0
+  sim.cycle()
+  assert model.out == 8
+  model.in_.v = 9
+  assert model.out == 8
+  model.in_.v = 10
+  sim.cycle()
+  assert model.out == 10
+  model.in_.v = 2
+  sim.cycle()
+  assert model.out == 2
+
+#-----------------------------------------------------------------------
 # RegisterPassThrough
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegisterPassThrough( Model ):
   def __init__( s, nbits ):
@@ -42,12 +58,12 @@ class RegisterPassThrough( Model ):
     s.connect( s.reg0.out, s.pt.in_   )
     s.connect( s.pt.out,   s.out      )
 
-def test_RegisterPassThrough():
-  register_tester( RegisterPassThrough )
+def test_RegisterPassThrough( setup_sim ):
+  register_tester( RegisterPassThrough, setup_sim )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # PassThroughRegister
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class PassThroughRegister( Model ):
   def __init__( s, nbits ):
@@ -63,17 +79,17 @@ class PassThroughRegister( Model ):
     s.connect( s.pt.out,   s.reg0.in_ )
     s.connect( s.reg0.out, s.out      )
 
-def test_PassThroughRegister():
-  register_tester( PassThroughRegister )
+def test_PassThroughRegister( setup_sim ):
+  register_tester( PassThroughRegister, setup_sim )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # splitslice_tester
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Test registered slicing followed by combinational logic
 
-def splitslice_tester( model_type ):
-  model = model_type()
-  sim   = setup_sim( model )
+def splitslice_tester( model_type, setup ):
+  model     = model_type()
+  moel, sim = setup( model )
   sim.cycle()
   model.in_.v = 0b1001
   assert model.out0 == 0b00
@@ -86,9 +102,9 @@ def splitslice_tester( model_type ):
   assert model.out0 == 0b11
   assert model.out1 == 0b11
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # RegSlicePassThrough
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegSlicePassThrough( Model ):
   def __init__( s ):
@@ -108,12 +124,12 @@ class RegSlicePassThrough( Model ):
     s.connect( s.pass0.out, s.out0 )
     s.connect( s.pass1.out, s.out1 )
 
-def test_RegSlicePassThrough():
-  splitslice_tester( RegSlicePassThrough )
+def test_RegSlicePassThrough( setup_sim ):
+  splitslice_tester( RegSlicePassThrough, setup_sim )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # RegSlicePassThroughWire
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegSlicePassThroughWire( Model ):
   def __init__( s ):
@@ -140,12 +156,12 @@ class RegSlicePassThroughWire( Model ):
     def wire1_logic():
       s.out1.v = s.wire1
 
-def test_RegSlicePassThroughWire():
-  splitslice_tester( RegSlicePassThroughWire )
+def test_RegSlicePassThroughWire( setup_sim ):
+  splitslice_tester( RegSlicePassThroughWire, setup_sim )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # RegisterBitBlast
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegisterBitBlast( Model ):
   def __init__( s, nbits, subclass ):
@@ -166,8 +182,8 @@ class RegisterBitBlast( Model ):
     for i, x in enumerate( s.out ):
       s.connect( s.split.out[i], x )
 
-def register_bit_blast_tester( model ):
-  sim = setup_sim( model )
+def register_bit_blast_tester( model, setup_sim ):
+  model, sim = setup_sim( model )
   sim.reset()
   model.in_.v = 0b11110000
   verify_bit_blast( model.out, 0b0 )
@@ -186,17 +202,17 @@ def register_bit_blast_tester( model ):
   assert model.reg0.out.v  == 0b1111000011001010
   verify_bit_blast( model.out, 0b1111000011001010 )
 
-def test_RegisterCombBitBlast():
+def test_RegisterCombBitBlast( setup_sim ):
   model = RegisterBitBlast( 16, CombBitBlast )
-  register_bit_blast_tester( model )
+  register_bit_blast_tester( model, setup_sim )
 
-def test_RegisterStructBitBlast():
+def test_RegisterStructBitBlast( setup_sim ):
   model = RegisterBitBlast( 16, StructBitBlast )
-  register_bit_blast_tester( model )
+  register_bit_blast_tester( model, setup_sim )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # WriteThenReadCombSubmod
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # TODO: THIS MODEL CURRENTLY CAUSES AN INFINITE LOOP IN PYTHON DUE TO THE
 #       WAY WE DETECT SENSITIVITY LISTS... if a combinational submodule
 #       is written, its @s.combinational block get's added to the event
@@ -221,18 +237,18 @@ class WriteThenReadCombSubmod( Model ):
       s.submod.in_.v = s.in_
       s.out.v        = s.submod.out
 
-def test_WriteThenReadCombSubmod():
-  model = WriteThenReadCombSubmod( 16 )
-  sim = setup_sim( model )
+def test_WriteThenReadCombSubmod( setup_sim ):
+  model      = WriteThenReadCombSubmod( 16 )
+  model, sim = setup_sim( model )
   for i in range( 10 ):
     model.in_.v = i
     #assert False   # Prevent infinite loop!
     sim.cycle()
     assert model.out == i
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SliceWriteCheck
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Test updates to slices.
 class SliceWriteCheck( Model ):
 
@@ -246,11 +262,10 @@ class SliceWriteCheck( Model ):
     s.connect( s.in_, s.m0.in_ )
     s.connect( s.out, s.m0.out )
 
-def test_SliceWriteCheck():
-  import pytest
+def test_SliceWriteCheck( setup_sim ):
 
   model = SliceWriteCheck( 16 )
-  sim = setup_sim( model )
+  modle, sim = setup_sim( model )
   assert model.out == 0
 
   # Test regular write
@@ -296,9 +311,9 @@ def test_SliceWriteCheck():
   with pytest.raises( AssertionError ):
     assert model.out == 0b10011001
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # OutputToRegInput
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Test updates to slices.
 class OutputToRegInput( Model ):
   def __init__( s, nbits ):
@@ -312,12 +327,12 @@ class OutputToRegInput( Model ):
     s.connect( s.reg.in_, s.other )
     s.connect( s.reg.out, s.out   )
 
-def test_OutputToRegInput():
-  register_tester( OutputToRegInput )
+def test_OutputToRegInput( setup_sim ):
+  register_tester( OutputToRegInput, setup_sim )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # OutputToRegInputSlice
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class OutputToRegInputSlice( Model ):
   def __init__( s, nbits ):
     s.nbits  = nbits
@@ -331,12 +346,12 @@ class OutputToRegInputSlice( Model ):
       s.connect( s.reg.in_[i], s.other[i] )
     s.connect( s.reg.out, s.out   )
 
-def test_OutputToRegInputSlice():
-  register_tester( OutputToRegInputSlice )
+def test_OutputToRegInputSlice( setup_sim ):
+  register_tester( OutputToRegInputSlice, setup_sim )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # OutputToRegInput_Comb
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Test updates to slices.
 class OutputToRegInput_Comb( Model ):
   def __init__( s, nbits ):
@@ -354,12 +369,12 @@ class OutputToRegInput_Comb( Model ):
     s.connect( s.reg.in_, s.other )
     s.connect( s.reg.out, s.out   )
 
-def test_OutputToRegInput_Comb():
-  register_tester( OutputToRegInput_Comb )
+def test_OutputToRegInput_Comb( setup_sim ):
+  register_tester( OutputToRegInput_Comb, setup_sim )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # OutputToRegInputSlice_Comb
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class OutputToRegInputSlice_Comb( Model ):
   def __init__( s, nbits ):
     s.nbits  = nbits
@@ -377,5 +392,5 @@ class OutputToRegInputSlice_Comb( Model ):
       s.connect( s.reg.in_[i], s.other[i] )
     s.connect( s.reg.out, s.out   )
 
-def test_OutputToRegInputSlice_Comb():
-  register_tester( OutputToRegInputSlice_Comb )
+def test_OutputToRegInputSlice_Comb( setup_sim ):
+  register_tester( OutputToRegInputSlice_Comb, setup_sim )

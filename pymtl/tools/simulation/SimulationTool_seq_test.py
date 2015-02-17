@@ -1,6 +1,6 @@
-#=========================================================================
+#=======================================================================
 # SimulationTool_seq_test.py
-#=========================================================================
+#=======================================================================
 # Sequential logic tests for the SimulationTool class.
 
 import pytest
@@ -8,19 +8,37 @@ import pytest
 from pymtl import *
 from pymtl import PyMTLError
 
-#-------------------------------------------------------------------------
-# Setup Sim
-#-------------------------------------------------------------------------
+#=======================================================================
+# Test Config
+#=======================================================================
 
-def setup_sim( model ):
+#-----------------------------------------------------------------------
+# test_fixture
+#-----------------------------------------------------------------------
+# ensures that tests get their setup function from the local module
+@pytest.fixture
+def setup_sim( request ):
+  return request.module.local_setup_sim
+
+#-----------------------------------------------------------------------
+# local_setup_sim
+#-----------------------------------------------------------------------
+# - elaborate the module
+# - create a simulator with the SimulationTool
+#
+def local_setup_sim( model ):
   model.elaborate()
   sim = SimulationTool( model )
-  return sim
+  return model, sim
 
-#-------------------------------------------------------------------------
+#=======================================================================
+# Tests
+#=======================================================================
+
+#-----------------------------------------------------------------------
 # .value in @tick
-#-------------------------------------------------------------------------
-def test_ValueInSequentialBlock():
+#-----------------------------------------------------------------------
+def test_ValueInSequentialBlock( setup_sim ):
   class BuggyClass( Model ):
     def __init__( s, level ):
       s.in_, s.out = InPort(1), OutPort(1)
@@ -40,16 +58,16 @@ def test_ValueInSequentialBlock():
         raise Exception('Invalid abstraction level!')
 
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('RTL') )
+    model, sim = setup_sim( BuggyClass('RTL') )
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('CL') )
+    model, sim = setup_sim( BuggyClass('CL') )
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('FL') )
+    model, sim = setup_sim( BuggyClass('FL') )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # missing .next in @tick
-#-------------------------------------------------------------------------
-def test_MissingNextInSequentialBlock():
+#-----------------------------------------------------------------------
+def test_MissingNextInSequentialBlock( setup_sim ):
   class BuggyClass( Model ):
     def __init__( s, level ):
       s.in_, s.out = InPort(1), OutPort(1)
@@ -73,16 +91,16 @@ def test_MissingNextInSequentialBlock():
         raise Exception('Invalid abstraction level!')
 
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('RTL') )
+    model, sim = setup_sim( BuggyClass('RTL') )
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('CL') )
+    model, sim = setup_sim( BuggyClass('CL') )
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('FL') )
+    model, sim = setup_sim( BuggyClass('FL') )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # missing .next in @tick list
-#-------------------------------------------------------------------------
-def test_MissingListNextInSequentialBlock():
+#-----------------------------------------------------------------------
+def test_MissingListNextInSequentialBlock( setup_sim ):
   class BuggyClass( Model ):
     def __init__( s, level ):
       s.in_, s.out = InPort(1), OutPort[4](1)
@@ -106,19 +124,19 @@ def test_MissingListNextInSequentialBlock():
         raise Exception('Invalid abstraction level!')
 
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('RTL') )
+    model, sim = setup_sim( BuggyClass('RTL') )
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('CL') )
+    model, sim = setup_sim( BuggyClass('CL') )
   with pytest.raises( PyMTLError ):
-    sim = setup_sim( BuggyClass('FL') )
+    model, sim = setup_sim( BuggyClass('FL') )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Register Tester
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
-def register_tester( model_type ):
-  model = model_type( 16 )
-  sim = setup_sim( model )
+def register_tester( setup_sim, model_type ):
+  model      = model_type( 16 )
+  model, sim = setup_sim( model )
   model.in_.v = 8
   assert model.out == 0
   sim.cycle()
@@ -132,9 +150,9 @@ def register_tester( model_type ):
   sim.cycle()
   assert model.out == 2
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # RegisterOld
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegisterOld( Model ):
   def __init__( s, nbits ):
@@ -146,12 +164,12 @@ class RegisterOld( Model ):
     def logic():
       s.out.next = s.in_.value
 
-def test_RegisterOld():
-  register_tester( RegisterOld )
+def test_RegisterOld( setup_sim ):
+  register_tester( setup_sim, RegisterOld )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # RegisterBits
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegisterBits( Model ):
   def __init__( s, nbits ):
@@ -163,12 +181,12 @@ class RegisterBits( Model ):
     def logic():
       s.out.next = s.in_
 
-def test_RegisterBits():
-  register_tester( RegisterBits )
+def test_RegisterBits( setup_sim ):
+  register_tester( setup_sim, RegisterBits )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Register
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class Register( Model ):
   def __init__( s, nbits ):
@@ -180,12 +198,12 @@ class Register( Model ):
     def logic():
       s.out.n = s.in_
 
-def test_Register():
-  register_tester( Register )
+def test_Register( setup_sim ):
+  register_tester( setup_sim, Register )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # RegisterWrapped
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegisterWrapped( Model ):
   def __init__( s, nbits ):
@@ -201,12 +219,12 @@ class RegisterWrapped( Model ):
     s.connect( s.in_, s.reg0.in_ )
     s.connect( s.out, s.reg0.out )
 
-def test_RegisterWrapped():
-  register_tester( RegisterWrapped )
+def test_RegisterWrapped( setup_sim ):
+  register_tester( setup_sim, RegisterWrapped )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # RegisterWrappedChain
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegisterWrappedChain( Model ):
   def __init__( s, nbits ):
@@ -224,9 +242,9 @@ class RegisterWrappedChain( Model ):
     s.connect( s.reg1.out, s.reg2.in_ )
     s.connect( s.reg2.out, s.out      )
 
-def test_RegisterWrappedChain():
-  model = RegisterWrappedChain( 16 )
-  sim = setup_sim( model )
+def test_RegisterWrappedChain( setup_sim ):
+  model      = RegisterWrappedChain( 16 )
+  model, sim = setup_sim( model )
   sim.reset()
   model.in_.value = 8
   assert model.reg0.out.v ==  0
@@ -260,9 +278,9 @@ def test_RegisterWrappedChain():
   assert model.reg2.out.v == 10
   assert model.out.v      == 10
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # RegisterReset
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 class RegisterReset( Model ):
   def __init__( s, nbits ):
@@ -277,9 +295,9 @@ class RegisterReset( Model ):
       else:
         s.out.n = s.in_
 
-def test_RegisterReset():
-  model = RegisterReset( 16 )
-  sim   = setup_sim( model )
+def test_RegisterReset( setup_sim ):
+  model      = RegisterReset( 16 )
+  model, sim = setup_sim( model )
   model.in_.v = 8
   assert model.out.v == 0
   sim.reset()
@@ -294,9 +312,9 @@ def test_RegisterReset():
   sim.reset()
   assert model.out.v == 0
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SliceWriteCheck
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Test updates to slices.
 class SliceWriteCheck( Model ):
 
@@ -308,11 +326,11 @@ class SliceWriteCheck( Model ):
   def elaborate_logic( s ):
     s.connect( s.in_, s.out )
 
-def test_SliceWriteCheck():
+def test_SliceWriteCheck( setup_sim ):
   import pytest
 
-  model = SliceWriteCheck( 16 )
-  sim = setup_sim( model )
+  model      = SliceWriteCheck( 16 )
+  model, sim = setup_sim( model )
   assert model.out == 0
 
   # Test regular write
@@ -343,9 +361,9 @@ def test_SliceWriteCheck():
   with pytest.raises( AssertionError ):
     assert model.out == 0b10011001
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # SliceLogicWriteCheck
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Test storing a Bits slice to a temporary, then writing it
 class SliceTempWriteCheck( Model ):
 
@@ -362,9 +380,9 @@ class SliceTempWriteCheck( Model ):
       x = s.out[8:16]
       x.n          = s.in_[8:16]
 
-def test_SliceTempWriteCheck():
-  model = SliceTempWriteCheck( 16 )
-  sim = setup_sim( model )
+def test_SliceTempWriteCheck( setup_sim ):
+  model      = SliceTempWriteCheck( 16 )
+  model, sim = setup_sim( model )
   assert model.out == 0
 
   model.in_.value = 0x00AA
@@ -375,9 +393,9 @@ def test_SliceTempWriteCheck():
   sim.cycle()
   assert model.out == 0xAA00
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # MultipleWrites
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Test to catch strange simulator behavior
 class MultipleWrites( Model ):
   def __init__( s ):
@@ -389,9 +407,9 @@ class MultipleWrites( Model ):
       s.out.next = 4
       s.out.next = 1
 
-def test_MultipleWrites():
-  model = MultipleWrites()
-  sim = setup_sim( model )
+def test_MultipleWrites( setup_sim ):
+  model      = MultipleWrites()
+  model, sim = setup_sim( model )
 
   assert model.out == 0   # passes
   sim.cycle()
@@ -402,9 +420,9 @@ def test_MultipleWrites():
   sim.cycle()
   assert model.out == 1   # passes
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # BuiltinFuncs
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 from pymtl import zext, sext
 class BuiltinFuncs( Model ):
   def __init__( s ):
@@ -418,9 +436,9 @@ class BuiltinFuncs( Model ):
       s.zout.next = zext( s.in_, 8 )
       s.sout.next = sext( s.in_, 8 )
 
-def test_BuiltinFuncs():
-  model = BuiltinFuncs()
-  sim = setup_sim( model )
+def test_BuiltinFuncs( setup_sim ):
+  model      = BuiltinFuncs()
+  model, sim = setup_sim( model )
 
   model.in_.value = 0x1
   sim.cycle()
@@ -432,9 +450,9 @@ def test_BuiltinFuncs():
   assert model.zout == 0x0F
   assert model.sout == 0xFF
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # GetMSB
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Verify using params as slices works.
 class GetMSB( Model ):
   def __init__( s, nbits ):
@@ -447,9 +465,9 @@ class GetMSB( Model ):
     def logic():
       s.out.next = s.in_[s.msb]
 
-def test_GetMSB():
-  model = GetMSB( 5 )
-  sim = setup_sim( model )
+def test_GetMSB( setup_sim ):
+  model      = GetMSB( 5 )
+  model, sim = setup_sim( model )
 
   model.in_.value = 0b01010; sim.cycle(); assert model.out == 0
   model.in_.value = 0b11010; sim.cycle(); assert model.out == 1
