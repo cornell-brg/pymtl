@@ -87,9 +87,9 @@ def test_PassThroughRegister( setup_sim ):
 #-----------------------------------------------------------------------
 # Test registered slicing followed by combinational logic
 
-def splitslice_tester( model_type, setup ):
-  model     = model_type()
-  moel, sim = setup( model )
+def splitslice_tester( model_type, setup_sim ):
+  model      = model_type()
+  model, sim = setup_sim( model )
   sim.cycle()
   model.in_.v = 0b1001
   assert model.out0 == 0b00
@@ -184,22 +184,23 @@ class RegisterBitBlast( Model ):
 
 def register_bit_blast_tester( model, setup_sim ):
   model, sim = setup_sim( model )
+  transl     = not hasattr( model, 'reg0' )
   sim.reset()
   model.in_.v = 0b11110000
   verify_bit_blast( model.out, 0b0 )
-  assert model.reg0.out.v  == 0b0
+  if not transl: assert model.reg0.out.v  == 0b0
   sim.cycle()
-  assert model.reg0.out.v  == 0b11110000
-  assert model.split.in_.v == 0b11110000
-  verify_bit_blast( model.split.out, 0b11110000 )
+  if not transl: assert model.reg0.out.v  == 0b11110000
+  if not transl: assert model.split.in_.v == 0b11110000
+  if not transl: verify_bit_blast( model.split.out, 0b11110000 )
   verify_bit_blast( model.out,       0b11110000 )
   model.in_.v = 0b1111000011001010
-  assert model.reg0.out.v  == 0b11110000
-  assert model.split.in_.v == 0b11110000
-  verify_bit_blast( model.split.out, 0b11110000 )
+  if not transl: assert model.reg0.out.v  == 0b11110000
+  if not transl: assert model.split.in_.v == 0b11110000
+  if not transl: verify_bit_blast( model.split.out, 0b11110000 )
   verify_bit_blast( model.out,       0b11110000 )
   sim.cycle()
-  assert model.reg0.out.v  == 0b1111000011001010
+  if not transl: assert model.reg0.out.v  == 0b1111000011001010
   verify_bit_blast( model.out, 0b1111000011001010 )
 
 def test_RegisterCombBitBlast( setup_sim ):
@@ -265,7 +266,7 @@ class SliceWriteCheck( Model ):
 def test_SliceWriteCheck( setup_sim ):
 
   model = SliceWriteCheck( 16 )
-  modle, sim = setup_sim( model )
+  model, sim = setup_sim( model )
   assert model.out == 0
 
   # Test regular write
@@ -322,10 +323,10 @@ class OutputToRegInput( Model ):
     s.out    = OutPort ( nbits )
     s.other  = OutPort ( nbits )
   def elaborate_logic( s ):
-    s.reg = Register( s.nbits )
+    s.reg_ = Register( s.nbits )
     s.connect( s.in_, s.other )
-    s.connect( s.reg.in_, s.other )
-    s.connect( s.reg.out, s.out   )
+    s.connect( s.reg_.in_, s.other )
+    s.connect( s.reg_.out, s.out   )
 
 def test_OutputToRegInput( setup_sim ):
   register_tester( OutputToRegInput, setup_sim )
@@ -340,11 +341,11 @@ class OutputToRegInputSlice( Model ):
     s.out    = OutPort ( nbits )
     s.other  = OutPort ( nbits )
   def elaborate_logic( s ):
-    s.reg = Register( s.nbits )
+    s.reg_ = Register( s.nbits )
     s.connect( s.in_, s.other )
     for i in range( s.nbits ):
-      s.connect( s.reg.in_[i], s.other[i] )
-    s.connect( s.reg.out, s.out   )
+      s.connect( s.reg_.in_[i], s.other[i] )
+    s.connect( s.reg_.out, s.out   )
 
 def test_OutputToRegInputSlice( setup_sim ):
   register_tester( OutputToRegInputSlice, setup_sim )
@@ -360,14 +361,14 @@ class OutputToRegInput_Comb( Model ):
     s.out    = OutPort ( nbits )
     s.other  = OutPort ( nbits )
   def elaborate_logic( s ):
-    s.reg = Register( s.nbits )
+    s.reg_ = Register( s.nbits )
 
     @s.combinational
     def comb():
       s.other.value = s.in_
 
-    s.connect( s.reg.in_, s.other )
-    s.connect( s.reg.out, s.out   )
+    s.connect( s.reg_.in_, s.other )
+    s.connect( s.reg_.out, s.out   )
 
 def test_OutputToRegInput_Comb( setup_sim ):
   register_tester( OutputToRegInput_Comb, setup_sim )
@@ -382,15 +383,15 @@ class OutputToRegInputSlice_Comb( Model ):
     s.out    = OutPort ( nbits )
     s.other  = OutPort ( nbits )
   def elaborate_logic( s ):
-    s.reg = Register( s.nbits )
+    s.reg_ = Register( s.nbits )
 
     @s.combinational
     def comb():
       s.other.value = s.in_
 
     for i in range( s.nbits ):
-      s.connect( s.reg.in_[i], s.other[i] )
-    s.connect( s.reg.out, s.out   )
+      s.connect( s.reg_.in_[i], s.other[i] )
+    s.connect( s.reg_.out, s.out   )
 
 def test_OutputToRegInputSlice_Comb( setup_sim ):
   register_tester( OutputToRegInputSlice_Comb, setup_sim )

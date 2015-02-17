@@ -22,37 +22,53 @@ from ..simulation.SimulationTool_mix_test  import *
 
 pytestmark = requires_verilator
 
-# These tests are specifically marked xfail
+# These tests are specifically marked skip
 
 [ pytest.mark.xfail( x ) for x in [
 
-    test_ValueInSequentialBlock,
-    test_MissingNextInSequentialBlock,
-    test_MissingListNextInSequentialBlock,
-    test_RegisterBits,
-    test_RegisterWrappedChain,
-    test_SliceTempWriteCheck,
 
-    test_NextInCombinationalBlock,
-    test_MissingValueInCombinationalBlock,
-    test_MissingListValueInCombinationalBlock,
-    test_SubscriptTemp,
-    test_CombSlicePassThroughStruct,
-    test_IntTemporaries,
-    test_IntSubTemporaries,
-    test_ListOfMixedUseWires,
-    test_RaiseException,
-    test_ListOfSubmodPortBundles,
+  # FIXME: Verilator/PyMTL simulation mismatch! Verilator bug?
+  test_SubscriptTemp,
 
-    test_RegSlicePassThrough,
-    test_RegSlicePassThroughWire,
-    test_RegisterCombBitBlast,
-    test_RegisterStructBitBlast,
-    test_SliceWriteCheck,
-    test_OutputToRegInput,
-    test_OutputToRegInputSlice,
-    test_OutputToRegInput_Comb,
-    test_OutputToRegInputSlice_Comb,
+  # This works fine in Python Simulation, but does not translate into
+  # Verilog correctly because we assume all elements of a list of wires
+  # will have the same assignment structure!
+  test_ListOfMixedUseWires,
+
+  # FIXME: Incorrect Verilog translation:
+  # PYMTL:
+  #   @s.combinational
+  #   def logic1():
+  #     for i in range(2):
+  #       s.submod[i].in_.a.value = s.in_[i].a
+  #       s.submod[i].in_.b.value = s.in_[i].b
+  #
+  # VERILOG:
+  #   always @ (*) begin
+  #     for (i=0; i < 2; i=i+1)
+  #     begin
+  #       in__a = in__a[i];
+  #       in__b = in__b[i];
+  #     end
+  #   end
+  test_ListOfSubmodPortBundles,
+
+  # FIXME: TranslationError: cannot infer temporary from subscript
+  test_SliceTempWriteCheck,
+
+]]
+
+# Exception raises appear as print statements in Verilator
+pytest.mark.skipif( True )( test_RaiseException )
+
+# PyMTLErrors are raised only in the simulator
+[ pytest.mark.skipif( True )( x ) for x in [
+  test_ValueInSequentialBlock,
+  test_MissingNextInSequentialBlock,
+  test_MissingListNextInSequentialBlock,
+  test_NextInCombinationalBlock,
+  test_MissingValueInCombinationalBlock,
+  test_MissingListValueInCombinationalBlock,
 ]]
 
 #-----------------------------------------------------------------------

@@ -245,37 +245,40 @@ class RegisterWrappedChain( Model ):
 def test_RegisterWrappedChain( setup_sim ):
   model      = RegisterWrappedChain( 16 )
   model, sim = setup_sim( model )
+  transl     = not hasattr( model, 'reg0' )
+  print dir( model )
+  print model.__dict__
   sim.reset()
   model.in_.value = 8
-  assert model.reg0.out.v ==  0
-  assert model.reg1.out.v ==  0
-  assert model.reg2.out.v ==  0
+  if not transl: assert model.reg0.out.v ==  0
+  if not transl: assert model.reg1.out.v ==  0
+  if not transl: assert model.reg2.out.v ==  0
   assert model.out.v      ==  0
   sim.cycle()
-  assert model.reg0.out.v ==  8
-  assert model.reg1.out.v ==  0
-  assert model.reg2.out.v ==  0
+  if not transl: assert model.reg0.out.v ==  8
+  if not transl: assert model.reg1.out.v ==  0
+  if not transl: assert model.reg2.out.v ==  0
   assert model.out.v      ==  0
   model.in_.value = 9
-  assert model.reg0.out.v ==  8
-  assert model.reg1.out.v ==  0
-  assert model.reg2.out.v ==  0
+  if not transl: assert model.reg0.out.v ==  8
+  if not transl: assert model.reg1.out.v ==  0
+  if not transl: assert model.reg2.out.v ==  0
   assert model.out.v      ==  0
   model.in_.value = 10
   sim.cycle()
-  assert model.reg0.out.v == 10
-  assert model.reg1.out.v ==  8
-  assert model.reg2.out.v ==  0
+  if not transl: assert model.reg0.out.v == 10
+  if not transl: assert model.reg1.out.v ==  8
+  if not transl: assert model.reg2.out.v ==  0
   assert model.out.v      ==  0
   sim.cycle()
-  assert model.reg0.out.v == 10
-  assert model.reg1.out.v == 10
-  assert model.reg2.out.v ==  8
+  if not transl: assert model.reg0.out.v == 10
+  if not transl: assert model.reg1.out.v == 10
+  if not transl: assert model.reg2.out.v ==  8
   assert model.out.v      ==  8
   sim.cycle()
-  assert model.reg0.out.v == 10
-  assert model.reg1.out.v == 10
-  assert model.reg2.out.v == 10
+  if not transl: assert model.reg0.out.v == 10
+  if not transl: assert model.reg1.out.v == 10
+  if not transl: assert model.reg2.out.v == 10
   assert model.out.v      == 10
 
 #-----------------------------------------------------------------------

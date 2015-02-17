@@ -671,7 +671,7 @@ class CombSlicePassThroughStruct( Model ):
   def __init__( s ):
     s.in_  = InPort  ( 4 )
     s.out0 = OutPort ( 2 )
-    s.out1 = InPort  ( 2 )
+    s.out1 = OutPort ( 2 )
 
   def elaborate_logic( s ):
     s.pass0  = PassThrough( 2 )
@@ -865,12 +865,12 @@ def test_MultipleWrites( setup_sim ):
 # PortBundle
 #-----------------------------------------------------------------------
 # Test to catch strange simulator behavior
-class TestBundle( PortBundle ):
+class TempBundle( PortBundle ):
   def __init__( s, nbits ):
     s.a = InPort( nbits )
     s.b = InPort( nbits )
 
-InBundle, OutBundle = create_PortBundles( TestBundle )
+InBundle, OutBundle = create_PortBundles( TempBundle )
 
 class BundleChild( Model ):
   def __init__( s, nbits ):
@@ -976,37 +976,41 @@ class IntTemporaries( Model ):
 
 def temp_tester( setup_sim, ModelType ):
   model      = ModelType()
+  A, B, C    = model.STATE_A, model.STATE_B, model.STATE_C
   model, sim = setup_sim( model )
 
-  model.state.value = model.STATE_A
+  # TODO: add constant params to Verilog translated harnesses?
+  #model.state.value = model.STATE_A
+
+  model.state.value = A
   model.go   .value = 0
   sim.eval_combinational()
-  assert model.update == model.STATE_A
+  assert model.update == A
 
-  model.state.value = model.STATE_A
+  model.state.value = A
   model.go   .value = 1
   sim.eval_combinational()
-  assert model.update == model.STATE_B
+  assert model.update == B
 
-  model.state.value = model.STATE_B
+  model.state.value = B
   model.go   .value = 1
   sim.eval_combinational()
-  assert model.update == model.STATE_C
+  assert model.update == C
 
-  model.state.value = model.STATE_B
+  model.state.value = B
   model.go   .value = 0
   sim.eval_combinational()
-  assert model.update == model.STATE_C
+  assert model.update == C
 
-  model.state.value = model.STATE_C
+  model.state.value = C
   model.go   .value = 1
   sim.eval_combinational()
-  assert model.update == model.STATE_A
+  assert model.update == A
 
-  model.state.value = model.STATE_C
+  model.state.value = C
   model.go   .value = 0
   sim.eval_combinational()
-  assert model.update == model.STATE_C
+  assert model.update == C
 
 def test_IntTemporaries( setup_sim ):
   temp_tester( setup_sim, IntTemporaries )
