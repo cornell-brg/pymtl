@@ -15,6 +15,7 @@ from SimulationTool_seq_test  import setup_sim, local_setup_sim
 
 def pipeline_tester( setup_sim, model, nstages ):
   model, sim = setup_sim( model )
+
   # fill up the pipeline
   for i in range( 10 ):
     model.in_.v = i
@@ -40,11 +41,11 @@ class ThreeStageTick( Model ):
   def elaborate_logic( s ):
     s.wire0   = Wire( s.nbits )
 
-    @s.tick
+    @s.tick_rtl
     def func1():
       s.wire0.n = s.in_
 
-    @s.tick
+    @s.tick_rtl
     def func2():
       s.out.n   = s.wire0
 
@@ -167,7 +168,7 @@ class NStageTick( Model ):
     s.connect( s.in_, s.wire[0]  )
 
     for i in range( s.nstages - 1 ):
-      @s.tick
+      @s.tick_rtl
       def func( i = i ):  # Need to capture i for this to work
         s.wire[ i + 1 ].n = s.wire[ i ]
 

@@ -18,11 +18,22 @@ def passthrough_tester( setup_sim, model_type ):
   model      = model_type( 16 )
   model, sim = setup_sim( model )
   model.in_.v = 8
-  # Note: no need to call cycle, no @combinational block
+
+  # Note: no need to call cycle, no @combinational block unless it is a
+  # Verilog translation.
+  transl = hasattr( model, '_model' )
+
+  # call eval if this is a Verilog translated model
+  if transl: sim.eval_combinational()
+
   assert model.out   == 8
   assert model.out.v == 8
   model.in_.v = 9
   model.in_.v = 10
+
+  # call eval if this is a Verilog translated model
+  if transl: sim.eval_combinational()
+
   assert model.out == 10
 
 #-----------------------------------------------------------------------
@@ -69,13 +80,25 @@ class PassThroughList( Model ):
 def test_PassThroughList( setup_sim ):
   model      = PassThroughList( 16, 4 )
   model, sim = setup_sim( model )
+
+  # Note: no need to call cycle, no @combinational block unless it is a
+  # Verilog translation.
+  transl = hasattr( model, '_model' )
+
   for i in range( 4 ):
     model.in_[i].v = i
+
+  # call eval if this is a Verilog translated model
+  if transl: sim.eval_combinational()
+
   for i in range( 4 ):
-    # Note: no need to call cycle, no @combinational block
     assert model.out[i] == i
   model.in_[2].v = 9
   model.in_[2].v = 10
+
+  # call eval if this is a Verilog translated model
+  if transl: sim.eval_combinational()
+
   assert model.out[2] == 10
 
 #-----------------------------------------------------------------------
@@ -97,13 +120,25 @@ class PassThroughListWire( Model ):
 def test_PassThroughListWire( setup_sim ):
   model      = PassThroughListWire( 16, 4 )
   model, sim = setup_sim( model )
+
+  # Note: no need to call cycle, no @combinational block unless it is a
+  # Verilog translation.
+  transl = hasattr( model, '_model' )
+
   for i in range( 4 ):
     model.in_[i].v = i
+
+  # call eval if this is a Verilog translated model
+  if transl: sim.eval_combinational()
+
   for i in range( 4 ):
-    # Note: no need to call cycle, no @combinational block
     assert model.out[i] == i
   model.in_[2].v = 9
   model.in_[2].v = 10
+
+  # call eval if this is a Verilog translated model
+  if transl: sim.eval_combinational()
+
   assert model.out[2] == 10
 
 #-----------------------------------------------------------------------
@@ -153,14 +188,26 @@ def test_PassThroughWrappedChain( setup_sim ):
 def splitter_tester( setup_sim, model_type ):
   model      = model_type( 16 )
   model, sim = setup_sim( model )
+
+  # Note: no need to call cycle, no @combinational block unless it is a
+  # Verilog translation.
+  transl = hasattr( model, '_model' )
+
   model.in_.v = 8
-  # Note: no need to call cycle, no @combinational block
+
+  # call eval if this is a Verilog translated model
+  if transl: sim.eval_combinational()
+
   assert model.out0   == 8
   assert model.out0.v == 8
   assert model.out1   == 8
   assert model.out1.v == 8
   model.in_.v = 9
   model.in_.v = 10
+
+  # call eval if this is a Verilog translated model
+  if transl: sim.eval_combinational()
+
   assert model.out0 == 10
   assert model.out1 == 10
 
@@ -548,7 +595,14 @@ class ConstantPort( Model ):
 def test_ConstantPort( setup_sim ):
     model      = ConstantPort()
     model, sim = setup_sim( model )
+
+    # if this is a verilog translation, need to perform a reset/cycle
+    # before this is applied
+    if hasattr( model, '_model' ):
+      sim.eval_combinational()
+
     assert model.out == 4
+
     # TODO: catch writing to a constant?
     sim.cycle()
     assert model.out == 4
@@ -567,6 +621,12 @@ class ConstantSlice( Model ):
 def test_ConstantSlice( setup_sim ):
   model      = ConstantSlice()
   model, sim = setup_sim( model )
+
+  # if this is a verilog translation, need to perform a reset/cycle
+  # before this is applied
+  if hasattr( model, '_model' ):
+    sim.eval_combinational()
+
   assert model.out.v[ 0:16] == 4
   assert model.out.v[16:32] == 8
   sim.cycle()
@@ -644,6 +704,11 @@ def test_ListOfPortBundles( setup_sim ):
     # TODO add assert to prevent this
     #model.in_[ i ].v = i
     model.in_[ i ].msg.v = i
+
+  # if this is a verilog translation, need to perform a reset/cycle
+  # before this is applied
+  if hasattr( model, '_model' ):
+    sim.eval_combinational()
 
   for i in range( 4 ):
     assert model.out[ i ].msg.v == i

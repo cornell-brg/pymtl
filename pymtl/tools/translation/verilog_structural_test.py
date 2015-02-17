@@ -24,27 +24,32 @@ pytestmark = requires_verilator
 # These tests are specifically marked xfail
 
 [ pytest.mark.xfail( x ) for x in [
-     test_PassThrough,
-     test_PassThroughBits,
-     test_PassThroughList,
-     test_PassThroughListWire,
-     test_PassThroughWrapped,
-     test_PassThroughWrappedChain,
-     test_Splitter,
-     test_SplitterWires,
-     test_SplitterWrapped,
-     test_SplitterPT_1,
-     test_SplitterPT_2,
-     test_SplitterPT_3,
-     test_SplitterPT_4,
-     test_SplitterPT_5,
-     test_ConstantPort,
-     test_ConstantSlice,
-     test_ListOfPortBundles,
-     test_ThreeStageTick,
-     test_NStageTick,
-     test_NStagePosedge,
-     test_NStageComb,
+
+  # FIXME: loops with variable capture currently aren't translated
+  # correctly.
+  #
+  # For PyMTL code:
+  #   for i in range( s.nstages - 1 ):
+  #     @s.tick_rtl
+  #     def func( i = i ):  # Need to capture i for this to work
+  #       s.wire[ i + 1 ].n = s.wire[ i ]
+  #
+  # We get the following Verilog code:
+  #
+  #   // logic for func()
+  #   always @ (posedge clk) begin
+  #     wire[(i+1)] <= wire[i];
+  #   end
+  #
+  #   // logic for func()
+  #   always @ (posedge clk) begin
+  #     wire[(i+1)] <= wire[i];
+  #   end
+  #
+  test_NStageTick,
+  test_NStagePosedge,
+  test_NStageComb,
+
 ]]
 
 #-----------------------------------------------------------------------
