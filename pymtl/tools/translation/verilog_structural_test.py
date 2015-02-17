@@ -2,88 +2,59 @@
 # verilog_structural_test.py
 #=======================================================================
 
-from ..simulation import SimulationTool_struct_test as structural
-from pymtl        import requires_iverilog
-from verilog      import check_compile as setup_sim
+import pytest
+
+from verilator_sim import TranslationTool
 
 #-----------------------------------------------------------------------
 # Test Config
 #-----------------------------------------------------------------------
-# Skip all tests in module if iverilog is not installed
 
-pytestmark = requires_iverilog
+# This imports all the SimulationTool tests. Below we will hack the
+# setup_sim() function call in each module to use a special verilog
+# version of the setup.
+
+from ..simulation.SimulationTool_struct_test import *
+from ..simulation.SimulationTool_wire_test   import *
+
+# Skip all tests in module if verilator is not installed
+
+pytestmark = requires_verilator
+
+# These tests are specifically marked xfail
+
+[ pytest.mark.xfail( x ) for x in [
+     test_PassThrough,
+     test_PassThroughBits,
+     test_PassThroughList,
+     test_PassThroughListWire,
+     test_PassThroughWrapped,
+     test_PassThroughWrappedChain,
+     test_Splitter,
+     test_SplitterWires,
+     test_SplitterWrapped,
+     test_SplitterPT_1,
+     test_SplitterPT_2,
+     test_SplitterPT_3,
+     test_SplitterPT_4,
+     test_SplitterPT_5,
+     test_ConstantPort,
+     test_ConstantSlice,
+     test_ListOfPortBundles,
+     test_ThreeStageTick,
+     test_NStageTick,
+     test_NStagePosedge,
+     test_NStageComb,
+]]
 
 #-----------------------------------------------------------------------
-# Tests
+# local_setup_sim
 #-----------------------------------------------------------------------
+# - (?) create a vcd dump of the simulation
+# - elaborate the module
+# - translate to verilog with the Translation Tool
+# - create a simulator with the SimulationTool
 
-def test_PassThrough():
-  setup_sim( structural.PassThrough( 8 ) )
-  setup_sim( structural.PassThrough( 32 ) )
-
-def test_PassThroughBits():
-  setup_sim( structural.PassThroughBits( 8 ) )
-
-def test_PassThroughList():
-  setup_sim( structural.PassThroughList( 8, 4 ) )
-  setup_sim( structural.PassThroughList( 8, 1 ) )
-
-def test_PassThroughListWire():
-  setup_sim( structural.PassThroughListWire( 8, 4 ) )
-  setup_sim( structural.PassThroughListWire( 8, 1 ) )
-
-def test_PassThroughWrapped():
-  setup_sim( structural.PassThroughWrapped( 8 ) )
-
-def test_PassThroughWrappedChain():
-  setup_sim( structural.PassThroughWrappedChain( 8 ) )
-
-def test_Splitter():
-  setup_sim( structural.Splitter( 16 ) )
-
-def test_SplitterWires():
-  setup_sim( structural.SplitterWires( 16 ) )
-
-def test_SplitterWrapped():
-  setup_sim( structural.SplitterWrapped( 16 ) )
-
-def test_SplitterPT_1():
-  setup_sim( structural.SplitterPT_1( 16 ) )
-
-def test_SplitterPT_2():
-  setup_sim( structural.SplitterPT_2( 16 ) )
-
-def test_SplitterPT_3():
-  setup_sim( structural.SplitterPT_3( 16 ) )
-
-def test_SplitterPT_4():
-  setup_sim( structural.SplitterPT_4( 16 ) )
-
-def test_SplitterPT_5():
-  setup_sim( structural.SplitterPT_5( 16 ) )
-
-def test_SimpleBitBlast():
-  setup_sim( structural.SimpleBitBlast( 8 ) )
-
-def test_ComplexBitBlast():
-  setup_sim( structural.ComplexBitBlast( 8, 2 ) )
-
-def test_SimpleBitMerge():
-  setup_sim( structural.SimpleBitMerge( 8 ) )
-
-def test_ComplexBitMerge():
-  setup_sim( structural.ComplexBitMerge( 8, 2 ) )
-
-def test_ConstantPort():
-  setup_sim( structural.ConstantPort() )
-
-def test_ConstantSlice():
-  setup_sim( structural.ConstantSlice() )
-
-def test_ConstantModule():
-  setup_sim( structural.ConstantModule() )
-
-def test_ListOfPortBundles():
-  setup_sim( structural.ListOfPortBundles() )
+from verilog_behavioral_test import local_setup_sim
 
 
