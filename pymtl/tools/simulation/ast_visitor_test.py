@@ -3,8 +3,11 @@
 #=========================================================================
 # Tests for Python AST Visitors.
 
+import pytest
+
 from ast_visitor   import *
-from ..ast_helpers import get_method_ast
+from ..ast_helpers import get_method_ast, print_simple_ast
+from pymtl         import InPort, OutPort, Wire
 
 #-------------------------------------------------------------------------
 # AST Visitor Checker: Function Decorator
@@ -222,3 +225,185 @@ def test_nested_elif():
       elif s.if2:
         s.out.v = s.in1
 
+
+
+#-------------------------------------------------------------------------
+# AST Visitor Checker: Function Decorator
+#-------------------------------------------------------------------------
+def next( func ):
+  tree, src = get_method_ast( func )
+  print_simple_ast( tree )
+  DetectMissingValueNext( func, 'next' ).visit( tree )
+
+def value( func ):
+  tree, src = get_method_ast( func )
+  print_simple_ast( tree )
+  DetectMissingValueNext( func, 'value' ).visit( tree )
+
+class Temp( object ):
+  def __init__( s ):
+    s.i0, s.i1, s.i2  = InPort [3](1)
+    s.o0, s.o1, s.o2  = OutPort[3](1)
+    s.out             = OutPort[3](1)
+
+def test_noerror_next():
+  s = Temp()
+  @next
+  def logic():
+    s.i0.next = 5
+
+def test_error_next():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      s.i0 = 5
+
+def test_noerror_value():
+  s = Temp()
+  @value
+  def logic():
+    s.i0.next = 5
+
+def test_error_value():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      s.i0 = 5
+
+def test_noerror_tuple():
+  s = Temp()
+  @next
+  def logic():
+    s.o0.next,s.o1.next = 5, 6
+  @value
+  def logic():
+    s.o0.value,s.o1.value = 5, 6
+  @next
+  def logic():
+    s.o0.next,s.o1.next,s.o2.next = 5, 6, 7
+  @next
+  def logic():
+    s.o0.value,s.o1.value,s.o2.value = 5, 6, 7
+
+def test_error_tuple():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      s.o0, s.o1.next = 5, 6
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      s.o0, s.o1.value = 5, 6
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      s.o0, s.o1 = 5, 6
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      s.o0.value, s.o1 = 5, 6
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      s.o0.next, s.o1, s.o2.next = 5, 6, 7
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      s.o0.value, s.o1.value, s.o2 = 5, 6, 7
+
+def test_noerror_list():
+  s = Temp()
+  @next
+  def logic():
+    [s.o0.next,s.o1.next] = 5, 6
+  @value
+  def logic():
+    [s.o0.value,s.o1.value] = 5, 6
+
+def test_error_list():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      [s.o0,s.o1.next] = 5, 6
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      [s.o0.value,s.o1] = 5, 6
+
+def test_noerror_tuple_packs():
+  s = Temp()
+  @next
+  def logic():
+    s.o0.next, (s.o1.next, s.o2.next) = 5, (6, 7)
+  @value
+  def logic():
+    (s.o0.value, s.o1.value), s.o2.value = (5, 6), 7
+
+def test_error_tuple_packs():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      s.o0.next, (s.o1.next, s.o2) = 5, (6, 7)
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      (s.o0, s.o1.value), s.o2.value = (5, 6), 7
+
+def test_noerror_list_packs():
+  s = Temp()
+  @next
+  def logic():
+    s.o0.next, [s.o1.next, s.o2.next] = 5, (6, 7)
+  @value
+  def logic():
+    [s.o0.value, s.o1.value], s.o2.value = (5, 6), 7
+
+def test_error_list_packs():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      s.o0.next, [s.o1.next, s.o2] = 5, (6, 7)
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      [s.o0, s.o1.value], s.o2.value = (5, 6), 7
+
+def test_noerror_mixed_packs():
+  s = Temp()
+  @next
+  def logic():
+    [s.o0.next], (s.o1.next, s.o2.next) = [5], (6, 7)
+  @value
+  def logic():
+    [s.o0.value, s.o1.value], (s.o2.value,) = (5, 6), [7]
+  @next
+  def logic():
+    [s.o0.next], ([s.o1.next], s.o2.next) = [5], ([6], 7)
+  @value
+  def logic():
+    [s.o0.value, (s.o1.value)], (s.o2.value,) = (5, 6), [7]
+
+def test_error_mixed_packs():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      [s.o0], (s.o1.next, s.o2.next) = [5], (6, 7)
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      [s.o0.value, s.o1], (s.o2,) = (5, 6), [7]
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      [s.o0.next], ([s.o1], s.o2.next) = [5], ([6], 7)
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      [s.o0.value, (s.o1)], (s.o2.value,) = (5, 6), [7]
