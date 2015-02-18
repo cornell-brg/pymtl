@@ -4,13 +4,13 @@
 
 from __future__ import print_function
 
-#from verilator_cython import verilog_to_pymtl
-from verilator_cffi import verilog_to_pymtl
-
-import verilog
 import os
 import sys
 import filecmp
+import verilog
+
+from os.path        import exists
+from verilator_cffi import verilog_to_pymtl
 
 #-----------------------------------------------------------------------
 # TranslationTool
@@ -39,7 +39,7 @@ def TranslationTool( model_inst ):
 
   # Check if the temporary file matches an existing file (caching)
   cached = False
-  if os.path.exists( verilog_file ):
+  if exists(verilog_file) and exists(py_wrapper_file) and exists(lib_file):
     cached = filecmp.cmp( temp_file, verilog_file )
     if not cached:
       os.system( ' diff %s %s'%( temp_file, verilog_file ))
