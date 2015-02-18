@@ -36,12 +36,20 @@ import math
 class Model( object ):
 
   __metaclass__ = MetaCollectArgs
+  _debug        = False
 
   #=====================================================================
   # Modeling API
   #=====================================================================
 
-  _debug = False
+  #---------------------------------------------------------------------
+  # __new__
+  #---------------------------------------------------------------------
+  def __new__( cls, *args, **kwargs ):
+    inst       = object.__new__( cls, *args, **kwargs )
+    inst.clk   = InPort( 1 )
+    inst.reset = InPort( 1 )
+    return inst
 
   #---------------------------------------------------------------------
   # elaborate_logic (Abstract)
@@ -222,23 +230,13 @@ class Model( object ):
     current_model.parent     = None
     current_model.name       = instance_name
 
-    # Setup default InPorts
-    current_model.clk        = InPort(1)
-    current_model.reset      = InPort(1)
-
-    # Initialize function lists for concurrent blocks
-    try:
-      current_model._tick_blocks[0]
-    except:
-      current_model._tick_blocks          = []
-    try:
-      current_model._posedge_clk_blocks[0]
-    except:
-      current_model._posedge_clk_blocks   = []
-    try:
-      current_model._combinational_blocks[0]
-    except:
-      current_model._combinational_blocks = []
+    # Initialize function lists for concurrent blocks  TODO: cleanme
+    try:    current_model._tick_blocks[0]
+    except: current_model._tick_blocks = []
+    try:    current_model._posedge_clk_blocks[0]
+    except: current_model._posedge_clk_blocks = []
+    try:    current_model._combinational_blocks[0]
+    except: current_model._combinational_blocks = []
 
     # Call user implemented elaborate_logic() function
     current_model.elaborate_logic()
