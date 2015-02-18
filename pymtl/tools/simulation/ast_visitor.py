@@ -61,16 +61,20 @@ class DetectMissingValueNext( ast.NodeVisitor ):
         for x in tgt: flatten_targets( x, lst )
       elif isinstance( tgt, (ast.Tuple,ast.List) ):
         for x in tgt.elts: flatten_targets( x, lst )
-      elif isinstance( tgt, (ast.Attribute,ast.Name) ):
+      elif isinstance( tgt, (ast.Attribute,ast.Name,ast.Subscript) ):
         lst.append( tgt )
       else:
-        raise PyMTLError(
-          'Unsupported assignment type! Please notify the PyMTL developers!\n'
+        from ..ast_helpers import print_simple_ast
+        print_simple_ast( tgt )
+        raise Exception(
+          'Unsupported assignment type ({kind})!\n'
+          'Please notify the PyMTL developers!\n\n'
           ' {lineno} {srccode}\n'
           ' File: {filename}\n'
           ' Function: {funcname}\n'
           ' Line: {lineno}\n'.format(
             attr     = self.attr[0],
+            kind     = tgt.__class__,
             srccode  = self.src[ node.lineno - 1 ],
             filename = inspect.getfile( self.func ),
             funcname = self.func.func_name,
@@ -87,8 +91,6 @@ class DetectMissingValueNext( ast.NodeVisitor ):
     # FIXME: second item of self.attr tuple is for .n and .v. Rm these?
 
     for lhs in targets:
-      from ..ast_helpers import print_simple_ast
-      print_simple_ast( lhs )
       if not isinstance( lhs, ast.Attribute ) or lhs.attr not in self.attr:
 
         # TODO: this is super hacky. Grab each left-hand side (LHS)
@@ -98,18 +100,16 @@ class DetectMissingValueNext( ast.NodeVisitor ):
         # return the object stored in the lhs target. The second argument
         # to eval() is closure dictionary we extracted from the function.
 
-        # DEBUG
-        print inspect.getfile( self.func )
-        print self.funclineno + node.lineno - 1, self.src[ node.lineno - 1 ]
-        # DEBUG
+        ## DEBUG
+        #print inspect.getfile( self.func )
+        #print self.funclineno + node.lineno - 1, self.src[ node.lineno - 1 ]
+        ## DEBUG
 
         # In order to handle lists of Signals, we replace all complex
         # Indexes with the value zero. This will return the first element
         # in the list.
         try:
-          print '>', lhs
           lhs     = ReplaceIndexesWithZero().visit( lhs )
-          print '<', lhs
           lhs.ctx = ast.Load()
           _code   = compile( ast.Expression( lhs ), '<ast>', 'eval' )
           _temp   = eval( _code, self.dict_ )

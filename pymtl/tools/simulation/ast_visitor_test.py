@@ -232,12 +232,12 @@ def test_nested_elif():
 #-------------------------------------------------------------------------
 def next( func ):
   tree, src = get_method_ast( func )
-  print_simple_ast( tree )
+  #print_simple_ast( tree )
   DetectMissingValueNext( func, 'next' ).visit( tree )
 
 def value( func ):
   tree, src = get_method_ast( func )
-  print_simple_ast( tree )
+  #print_simple_ast( tree )
   DetectMissingValueNext( func, 'value' ).visit( tree )
 
 class Temp( object ):
@@ -407,3 +407,43 @@ def test_error_mixed_packs():
     @value
     def logic():
       [s.o0.value, (s.o1)], (s.o2.value,) = (5, 6), [7]
+
+def test_noerror_subscript():
+  s = Temp()
+  @next
+  def logic():
+    s.out[0].next = 5
+  @value
+  def logic():
+    s.out[0].value = 5
+
+def test_error_subscript():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      s.out[0] = 5
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      s.out[0] = 5
+
+def test_noerror_subscript_tuple():
+  s = Temp()
+  @next
+  def logic():
+    s.out[0].next, s.out[1].next = 5,6
+  @value
+  def logic():
+    s.out[0].value, s.out[1].value = 5,6
+
+def test_error_subscript():
+  s = Temp()
+  with pytest.raises( PyMTLError ):
+    @next
+    def logic():
+      s.out[0].next, s.out[1] = 5,6
+  with pytest.raises( PyMTLError ):
+    @value
+    def logic():
+      s.out[0], s.out[1].value = 5,6
