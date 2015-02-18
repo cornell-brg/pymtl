@@ -45,7 +45,7 @@ class DetectIncorrectValueNext( ast.NodeVisitor ):
 class DetectMissingValueNext( ast.NodeVisitor ):
 
   def __init__( self, func, attr='next or value' ):
-    self.attr   = [attr, attr[0]]
+    self.attr   = (attr, attr[0])
     self.func   = func
     self.dict_  = get_closure_dict( func )
 
@@ -53,11 +53,42 @@ class DetectMissingValueNext( ast.NodeVisitor ):
 
   def visit_Assign( self, node ):
 
+    # Because the lhs could contain arbitrary nesting of tuples or lists,
+    # flatten these all out to get the target for each assignment.
+
+    def flatten_targets( tgt, lst ):
+      if   isinstance( tgt, list ):
+        for x in tgt: flatten_targets( x, lst )
+      elif isinstance( tgt, (ast.Tuple,ast.List) ):
+        for x in tgt.elts: flatten_targets( x, lst )
+      elif isinstance( tgt, (ast.Attribute,ast.Name) ):
+        lst.append( tgt )
+      else:
+        raise PyMTLError(
+          'Unsupported assignment type! Please notify the PyMTL developers!\n'
+          ' {lineno} {srccode}\n'
+          ' File: {filename}\n'
+          ' Function: {funcname}\n'
+          ' Line: {lineno}\n'.format(
+            attr     = self.attr[0],
+            srccode  = self.src[ node.lineno - 1 ],
+            filename = inspect.getfile( self.func ),
+            funcname = self.func.func_name,
+            lineno   = self.funclineno + node.lineno - 1
+          )
+        )
+
+    targets = []
+    flatten_targets( node.targets, targets )
+
     # For each assignment AST node, get the targets. If targets do not
     # end with .value or .next, verify this is not a Signal object
     # (InPort, OutPort, Wire)
-    # FIXME: Second item of tuple is for .n and .v. Get rid of these?
-    for lhs in node.targets:
+    # FIXME: second item of self.attr tuple is for .n and .v. Rm these?
+
+    for lhs in targets:
+      from ..ast_helpers import print_simple_ast
+      print_simple_ast( lhs )
       if not isinstance( lhs, ast.Attribute ) or lhs.attr not in self.attr:
 
         # TODO: this is super hacky. Grab each left-hand side (LHS)
@@ -68,15 +99,17 @@ class DetectMissingValueNext( ast.NodeVisitor ):
         # to eval() is closure dictionary we extracted from the function.
 
         # DEBUG
-        #print inspect.getfile( self.func )
-        #print self.funclineno + node.lineno - 1, self.src[ node.lineno - 1 ]
+        print inspect.getfile( self.func )
+        print self.funclineno + node.lineno - 1, self.src[ node.lineno - 1 ]
         # DEBUG
 
         # In order to handle lists of Signals, we replace all complex
         # Indexes with the value zero. This will return the first element
         # in the list.
         try:
+          print '>', lhs
           lhs     = ReplaceIndexesWithZero().visit( lhs )
+          print '<', lhs
           lhs.ctx = ast.Load()
           _code   = compile( ast.Expression( lhs ), '<ast>', 'eval' )
           _temp   = eval( _code, self.dict_ )
