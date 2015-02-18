@@ -528,7 +528,6 @@ class InferTemporaryTypes( ast.NodeTransformer ):
 
         func_name = node.value.func.id
         if func_name in ['sext', 'zext']:
-          print_simple_ast( node.value )
           nbits_arg = node.value.args[1]
           if isinstance( nbits_arg, ast.Num ): nbits = nbits_arg.n
           else:                                nbits = nbits_arg._object
