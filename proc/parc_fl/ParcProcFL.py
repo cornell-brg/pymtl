@@ -87,13 +87,13 @@ class ParcProcFL( Model ):
 
     # Reset
 
-    s.reset()
+    s.reset_proc()
 
   #-----------------------------------------------------------------------
   # reset
   #-----------------------------------------------------------------------
 
-  def reset( s ):
+  def reset_proc( s ):
 
     # Copies of pc and inst
 
