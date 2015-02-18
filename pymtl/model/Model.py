@@ -1,12 +1,13 @@
 #=======================================================================
 # Model.py
 #=======================================================================
-# Base modeling components for constructing hardware description models.
-#
-# This module contains a collection of classes that can be used to
-# construct MTL (pronounced metal) models. Once constructed, a MTL model
-# can be leveraged by a number of tools for various purposes
-# (simulation, translation into HDLs, etc).
+"""Base modeling components for building hardware description models.
+
+This module contains a collection of classes that can be used to construct
+PyMTL (pronounced py-metal) models. Once constructed, a PyMTL model can be
+leveraged by a number of PyMTL tools for various purposes (simulation,
+translation into HDLs, etc).
+"""
 
 from metaclasses    import MetaCollectArgs
 from ConnectionEdge import ConnectionEdge, PyMTLConnectError
@@ -24,16 +25,16 @@ import math
 #=======================================================================
 # Model
 #=======================================================================
-# User visible base class for hardware models.
-#
-# Provides utility classes for elaborating connectivity between
-# components, giving instantiated subcomponents proper names, and
-# building datastructures that can be leveraged by various tools.
-#
-# Any user implemented model that wishes to make use of the various
-# tools should subclass this.
-#
 class Model( object ):
+  """Base class for PyMTL hardware models.
+
+  Provides utility classes for elaborating connectivity between
+  components, giving instantiated subcomponents proper names, and
+  building datastructures that can be leveraged by various tools.
+
+  Any user implemented model that wishes to make use of the various
+  PyMTL tools should subclass this.
+  """
 
   __metaclass__ = MetaCollectArgs
   _debug        = False
@@ -46,76 +47,43 @@ class Model( object ):
   # __new__
   #---------------------------------------------------------------------
   def __new__( cls, *args, **kwargs ):
+    """Pre-constructor adds default 'clk' and 'reset' Signals to PyMTL.
+
+    We use __new__ instead of __init__ for this purpose so that user's
+    do not need to explicitly call the super constructor in their Model
+    definitions: ``super( Model, self ).__init__()`` is too ugly!
+    """
+
     inst       = object.__new__( cls, *args, **kwargs )
     inst.clk   = InPort( 1 )
     inst.reset = InPort( 1 )
     return inst
 
   #---------------------------------------------------------------------
-  # elaborate_logic (Abstract)
-  #---------------------------------------------------------------------
-  def elaborate_logic( self ):
-    pass
-
-  #-----------------------------------------------------------------------
-  # line_trace
-  #-----------------------------------------------------------------------
-  # Having a default line trace makes it easier to just always enable
-  # line tracing in the test harness. -cbatten
-  def line_trace( self ):
-    return ""
-
-  def __call__(self):
-    self._tick_blocks          = []
-    self._posedge_clk_blocks   = []
-    self._model._combinational_blocks = []
-
-    super( MetaCollectArgs, self ).__call__( *args, **kwargs )
-
-  #---------------------------------------------------------------------
-  # Decorators
-  #---------------------------------------------------------------------
-  # TODO: add documentation!
-
-  def tick( self, func ):
-    try:
-      self._tick_blocks.append( func )
-    except:
-      self._tick_blocks = [func]
-    func._model = self
-    return func
-
-  def combinational( self, func ):
-    # DEBUG, make permanent to aid debugging?
-    #func.func_name = self.name + '.' + func.func_name
-    try:
-      self._combinational_blocks.append( func )
-    except:
-      self._combinational_blocks = [func]
-    func._model = self
-    return func
-
-  def posedge_clk( self, func ):
-    try:
-      self._posedge_clk_blocks.append( func )
-    except:
-      self._posedge_clk_blocks = [func]
-    func._model = self
-    return func
-
-  def tick_rtl( self, func ):
-    return self.posedge_clk( func )
-
-  def tick_cl( self, func ):
-    return self.tick( func )
-
-  def tick_fl( self, func ):
-    return self.tick( func )
-
-  #---------------------------------------------------------------------
   # connect
   #---------------------------------------------------------------------
   def connect( self, left_port, right_port ):
+    """Structurally connect a Signal to another Signal or a constant, or
+    two PortBundles with the same interface.
+
+    Ports structurally connected with s.connect are guaranteed to have
+    the same value during simulation:
+
+    >>> s.connect( s.port_a, s.port_b )
+
+    This works for slices as well:
+
+    >>> s.connect( s.port_c[0:4], s.port_d[4:8] )
+
+    A signal connected to a constant will be tied to that value:
+
+    >>> s.connect( s.port_e, 8 )
+
+    Several Signals can be structurally connected with a single
+    statement by encapsulating them in PortBundles:
+
+    >>> s.connect( s.my_bundle_a, s.my_bundle_b )
+    """
 
     try:
       if  isinstance( left_port, PortBundle ):
@@ -135,15 +103,168 @@ class Model( object ):
   # connect_dict
   #-----------------------------------------------------------------------
   def connect_dict( self, connections ):
+    """Structurally connect Signals given a dictionary mapping.
 
-   for left_port, right_port in connections.iteritems():
-     try:
-       self.connect( left_port, right_port )
-     except PyMTLConnectError as e:
-      frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
-      msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
-      msg += '>'.join( lines )
-      raise PyMTLConnectError( msg )
+    This provides a more concise syntax for interconnecting large
+    numbers of Signals by using a dictionary to specify Signal-to-Signal
+    connection mapping.
+
+    >>> s.connect_dict({
+    >>>   s.mod.a : s.a,
+    >>>   s.mod.b : 0b11,
+    >>>   s.mod.c : s.x[4:5],
+    >>> })
+
+    """
+
+    for left_port, right_port in connections.iteritems():
+      try:
+        self.connect( left_port, right_port )
+      except PyMTLConnectError as e:
+       frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
+       msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
+       msg += '>'.join( lines )
+       raise PyMTLConnectError( msg )
+
+  #-----------------------------------------------------------------------
+  # connect_auto
+  #-----------------------------------------------------------------------
+  def connect_auto( self, m1, m2 = None ):
+    """EXPERIMENTAL. Try to connect all InPort and OutPorts with the
+    same name between two models.
+
+    Note that this is not heavily tested or stable, you probably don't
+    want to use this...
+    """
+
+    if not hasattr( self, '_auto_connects' ):
+      self._auto_connects = []
+    self._auto_connects.append((m1,m2))
+
+  #---------------------------------------------------------------------
+  # tick_fl
+  #---------------------------------------------------------------------
+  def tick_fl( self, func ):
+    """Decorator to mark a functional-level sequential function.
+
+    Logic blocks marked with @s.tick_fl fire every clock cycle and may
+    utilize components using the greenlet concurrency library. They are
+    not Verilog translatable.
+
+    >>> @s.tick_fl
+    >>> def my_logic()
+    >>>   s.out.next = s.in_
+    """
+
+    return self.tick( func )
+
+  #---------------------------------------------------------------------
+  # tick_cl
+  #---------------------------------------------------------------------
+  def tick_cl( self, func ):
+    """Decorator to mark a cycle-level sequential logic.
+
+    Logic blocks marked with @s.tick_cl fire every clock cycle. They
+    cannot take advantage of greenlets-enabled library components, nor
+    are they Verilog translatable.
+
+    >>> @s.tick_cl
+    >>> def my_logic()
+    >>>   s.out.next = s.in_
+    """
+
+    return self.tick( func )
+
+  #---------------------------------------------------------------------
+  # tick_rtl
+  #---------------------------------------------------------------------
+  def tick_rtl( self, func ):
+    """Decorator to mark a register-transfer level sequential logic.
+
+    Logic blocks marked with @s.tick_cl fire every clock cycle, and are
+    meant to be Verilog translatable. Note that translation only works
+    if a limited, translatable subset of Python is used.
+
+    >>> @s.tick_rtl
+    >>> def my_logic()
+    >>>   s.out.next = s.in_
+    """
+
+    return self.posedge_clk( func )
+
+  #---------------------------------------------------------------------
+  # combinational
+  #---------------------------------------------------------------------
+  def combinational( self, func ):
+    """Decorator to annotate an RTL combinational function.
+
+    Logic blocks marked with @s.combinational only fire when the value
+    of Signals in their sensitivity list change. This sensitiv
+
+    >>> @s.combinational
+    >>> def my_logic()
+    >>>   s.out.value = s.in_
+    """
+
+    # DEBUG, make permanent to aid debugging?
+    #func.func_name = self.name + '.' + func.func_name
+    try:
+      self._combinational_blocks.append( func )
+    except:
+      self._combinational_blocks = [func]
+    func._model = self
+    return func
+
+  #---------------------------------------------------------------------
+  # posedge_clk
+  #---------------------------------------------------------------------
+  def posedge_clk( self, func ):
+    """Decorator to mark a register-transfer level sequential logic,
+    this is an alias for @tick_rtl).
+    """
+
+    try:
+      self._posedge_clk_blocks.append( func )
+    except:
+      self._posedge_clk_blocks = [func]
+    func._model = self
+    return func
+
+  #---------------------------------------------------------------------
+  # tick
+  #---------------------------------------------------------------------
+  def tick( self, func ):
+    """Decorator to mark a cycle-level sequential logic, this is an
+    alias for @tick_cl.
+    """
+
+    try:
+      self._tick_blocks.append( func )
+    except:
+      self._tick_blocks = [func]
+    func._model = self
+    return func
+
+  #-----------------------------------------------------------------------
+  # line_trace
+  #-----------------------------------------------------------------------
+  def line_trace( self ):
+    """Returns a one-line string concisely describing Model state for
+    the current simulation cycle.
+
+    Model subclasses should implement this method if they would like
+    useful debug output when line-tracing is enabled in the simulator.
+    """
+    return ""
+
+  #---------------------------------------------------------------------
+  # elaborate_logic
+  #---------------------------------------------------------------------
+  def elaborate_logic( self ):
+    """DEPRECATED. An abstract method Model subclasses previously
+    defined to implement elaboration logic.
+    """
+    pass
 
   #=====================================================================
   # Tool API
@@ -152,11 +273,12 @@ class Model( object ):
   #---------------------------------------------------------------------
   # elaborate
   #---------------------------------------------------------------------
-  # Elaborate a MTL model (construct hierarchy, name modules, etc.).
-  #
-  # The elaborate() function must be called on an instantiated toplevel
-  # module before it is passed to any MTL tools!
   def elaborate( self ):
+    """Elaborate a PyMTL model (construct hierarchy, name modules, etc).
+
+    The elaborate() function **must** be called on any instantiated
+    top-level model before it is passed to any PyMTL tools.
+    """
 
     # Initialize data structure to hold all model classes in the design
     self._model_classes = set()
@@ -170,8 +292,9 @@ class Model( object ):
   #-----------------------------------------------------------------------
   # is_elaborated
   #-----------------------------------------------------------------------
-  # Returns 'True' is elaborate() has been called on the Model.
   def is_elaborated( self):
+    """Returns 'True' is elaborate() has been called on this Model."""
+
     return hasattr( self, 'class_name' )
 
   #---------------------------------------------------------------------
@@ -179,33 +302,50 @@ class Model( object ):
   #---------------------------------------------------------------------
 
   def get_inports( self ):
+    """Get a list of all InPorts defined by this model."""
     return self._inports
 
   def get_outports( self ):
+    """Get a list of all OutPorts defined by this model."""
     return self._outports
 
   def get_ports( self, preserve_hierarchy=False ):
+    """Get a list of all InPorts and OutPorts defined by this model.
+
+    By default this list is a flattened list of all InPort and OutPort
+    objects, including those within PortBundles and PortLists. To return
+    a list which preserves this hierarchy, use preserve_hierarchy=True.
+    """
     if not preserve_hierarchy:
       return self._inports + self._outports
     else:
       return self._hports
 
   def get_wires( self ):
+    """Get a list of all Wires defined in this model."""
     return self._wires
 
   def get_submodules( self ):
+    """Get a list of all child Models instaniated in this model."""
     return self._submodules
 
   def get_connections( self ):
+    """Get a list of all structural connections made in this model."""
     return self._connections
 
   def get_tick_blocks( self ):
+    """Get a list of all sequential (@tick_*) blocks defined in this
+    model."""
     return self._tick_blocks
 
   def get_posedge_clk_blocks( self ):
+    """Get a list of all sequential (@tick_rtl) blocks defined in this
+    model."""
     return self._posedge_clk_blocks
 
   def get_combinational_blocks( self ):
+    """Get a list of all combinational (@combinational) blocks defined
+    in this model."""
     return self._combinational_blocks
 
   #=====================================================================
@@ -215,8 +355,9 @@ class Model( object ):
   #---------------------------------------------------------------------
   # _recurse_elaborate
   #---------------------------------------------------------------------
-  # Use reflection to set model attributes and elaborate submodels.
   def _recurse_elaborate( self, current_model, instance_name ):
+    """Use reflection to set model attributes and elaborate
+    submodels."""
 
     if current_model.is_elaborated():
       raise Exception("Model {} has already been elaborated!"
@@ -270,8 +411,8 @@ class Model( object ):
   #---------------------------------------------------------------------
   # _check_type
   #---------------------------------------------------------------------
-  # Specialize elaboration actions based on object type.
   def _check_type( self, current_model, name, obj, nested=False ):
+    """Specialize elaboration actions based on object type."""
 
     if   isinstance( obj, Wire ):
       obj.name              = name
@@ -342,8 +483,8 @@ class Model( object ):
   #---------------------------------------------------------------------
   # _gen_class_name
   #---------------------------------------------------------------------
-  # Generate a unique class name for model instances.
   def _gen_class_name( self, model ):
+    """Generate a unique class name for model instances."""
 
     # Base name is always just the class name
     name = model.__class__.__name__
@@ -364,6 +505,8 @@ class Model( object ):
   #---------------------------------------------------------------------
   # Set the directionality on all connections in the design of a Model.
   def _recurse_connections(self):
+    """Set the directionality on all connections in the model."""
+
     # Set direction of all connections
     for c in self._connections:
       self._set_edge_direction( c )
@@ -375,8 +518,8 @@ class Model( object ):
   #---------------------------------------------------------------------
   # _set_edge_direction
   #---------------------------------------------------------------------
-  # Set the edge direction of a single ConnectionEdge.
   def _set_edge_direction(self, edge):
+    """Set the edge direction of a single ConnectionEdge"""
 
     a = edge.src_node
     b = edge.dest_node
@@ -433,8 +576,9 @@ class Model( object ):
   #---------------------------------------------------------------------
   # _connect_signal
   #---------------------------------------------------------------------
-  # Connect a single pair of Signal objects.
   def _connect_signal( self, left_port, right_port ):
+    """Connect a single pair of Signal objects."""
+
     # Can't connect a port to itself!
     assert left_port != right_port
     # Create the connection
@@ -450,8 +594,8 @@ class Model( object ):
   #-----------------------------------------------------------------------
   # _connect_bundle
   #-----------------------------------------------------------------------
-  # Connect all Signal object pairs in a PortBundle.
   def _connect_bundle( self, left_bundle, right_bundle ):
+    """Connect all Signal object pairs in a PortBundle."""
 
     # Can't connect a port to itself!
     assert left_bundle != right_bundle
@@ -461,42 +605,37 @@ class Model( object ):
     for left, right in ports:
       self._connect_signal( left, right )
 
-  def _port_dict( self, lst ):
-
-    dictionary = {}
-    for port in lst:
-      if not port.name == 'clk' and not port.name == 'reset':
-        dictionary[port.name] = port
-    return dictionary
-
-  def _auto_help( self, p1, p2, p3, m2, m3):
-
-    dict1 = self._port_dict(p1)
-    dict2 = self._port_dict(p2)
-    dict3 = self._port_dict(p3)
-
-    for key in dict1:
-      if key in dict2:
-        self.connect(dict1[key],dict2[key])
-        del dict2[key]
-      if key in dict3:
-        self.connect(dict1[key],dict3[key])
-        del dict3[key]
-
-    for key in dict3:
-      if key in dict2:
-        self.connect(dict2[key], dict3[key])
-
+  #-----------------------------------------------------------------------
+  # _auto_connect
+  #-----------------------------------------------------------------------
   def _auto_connect(self):
-    for m1,m2 in self._auto_connects:
-      ports1 = m1.get_ports()
-      ports2 = m2.get_ports() if m2 is not None else []
-      self._auto_help(self._inports+self._outports, ports1, ports2, m1, m2)
+    """Connect all InPorts and OutPorts in the parent and one or more
+    child modules based on the port name."""
 
-  def connect_auto( self, m1, m2 = None ):
-    if not hasattr( self, '_auto_connects' ):
-      self._auto_connects = []
-    self._auto_connects.append((m1,m2))
+    def port_dict( lst ):
+      dictionary = {}
+      for port in lst:
+        if not port.name == 'clk' and not port.name == 'reset':
+          dictionary[port.name] = port
+      return dictionary
+
+    for m1,m2 in self._auto_connects:
+
+      dict1 = port_dict( self.get_inports()+self.get_outports() )
+      dict2 = port_dict( m1.get_ports() )
+      dict3 = port_dict( m2.get_ports() if m2 is not None else [] )
+
+      for key in dict1:
+        if key in dict2:
+          self.connect(dict1[key],dict2[key])
+          del dict2[key]
+        if key in dict3:
+          self.connect(dict1[key],dict3[key])
+          del dict3[key]
+
+      for key in dict3:
+        if key in dict2:
+          self.connect(dict2[key], dict3[key])
 
 
 
