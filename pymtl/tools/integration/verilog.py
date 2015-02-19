@@ -32,9 +32,12 @@ class VerilogModel( Model ):
   sourcefile   = None
 
   _is_verilog  = True
-  _param_map   = None
-  _port_map    = None
+  _param_dict  = None
+  _port_dict   = None
 
+  #---------------------------------------------------------------------
+  # set_params
+  #---------------------------------------------------------------------
   def set_params( self, param_dict ):
     """Specify values for each parameter in the imported Verilog module.
 
@@ -46,8 +49,12 @@ class VerilogModel( Model ):
     >>>   'param2': 0,
     >>> })
     """
+
     self._param_dict = collections.OrderedDict( sorted(param_dict.items()) )
 
+  #---------------------------------------------------------------------
+  # set_ports
+  #---------------------------------------------------------------------
   def set_ports( self, port_dict ):
     """Specify values for each parameter in the imported Verilog module.
 
@@ -65,6 +72,25 @@ class VerilogModel( Model ):
 
     self._port_dict = collections.OrderedDict( sorted(port_dict.items()) )
 
+  #---------------------------------------------------------------------
+  # _auto_init
+  #---------------------------------------------------------------------
+  def _auto_init( self ):
+    """Infer fields not set by user based on Model attributes."""
+
+    if not self.modulename:
+      self.modulename = self.__class__.__name__
+
+    if not self.sourcefile:
+      self.sourcefile = os.path.join( os.path.dirname(__file__),
+                                      'verilog',
+                                      self.modulename+'.v' )
+
+    if not self._param_dict:
+      self._param_dict = self._args
+
+    if not self._port_dict:
+      self._port_dict = { port.name: port for port in self.get_ports() }
 
 #-----------------------------------------------------------------------
 # import_module
@@ -86,35 +112,6 @@ def import_module( model, o ):
   return model.sourcefile
 
 #-----------------------------------------------------------------------
-# _instantiate_verilog
-#-----------------------------------------------------------------------
-def _instantiate_verilog( model ):
-
-  if not model.modulename:
-    raise Exception(
-      "The .modulename attribute of VerilogModel has not been set!"""
-    )
-
-  params = [ connection.format(k, v) for k,v in model._param_dict.items() ]
-
-  connections = []
-  for verilog_portname, port in model._port_dict.items():
-    connections.append( connection.format( verilog_portname, port.name ) )
-  connections = pretty_align( connections, '(' )
-
-  s  = tab + '// Imported Verilog source from:' + endl
-  s += tab + '// {}'.format( model.sourcefile ) + endl
-  s += endl
-  s += tab + model.modulename + start_param + endl
-  s += port_delim.join( params ) + endl
-  s += tab + end_param + tab + 'verilog_import' + endl
-  s += tab + start_ports + endl
-  s += port_delim.join( connections ) + endl
-  s += tab + end_ports + endl
-
-  return s
-
-#-----------------------------------------------------------------------
 # import_sources
 #-----------------------------------------------------------------------
 def import_sources( source_list, o ):
@@ -130,8 +127,6 @@ def import_sources( source_list, o ):
   # list of source files to import.
 
   for verilog_file in source_list:
-
-    print( verilog_file )
 
     include_path = os.path.dirname( verilog_file )
     with open( verilog_file, 'r' ) as fp:
@@ -156,4 +151,31 @@ def import_sources( source_list, o ):
           src += line
 
     print( src, file=o )
+
+#-----------------------------------------------------------------------
+# _instantiate_verilog
+#-----------------------------------------------------------------------
+def _instantiate_verilog( model ):
+
+  model._auto_init()
+
+  params = [ connection.format(k, v) for k,v in model._param_dict.items() ]
+
+  connections = []
+  for verilog_portname, port in model._port_dict.items():
+    connections.append( connection.format( verilog_portname, port.name ) )
+  connections = pretty_align( connections, '(' )
+
+  s  = tab + '// Imported Verilog source from:' + endl
+  s += tab + '// {}'.format( model.sourcefile ) + endl
+  s += endl
+  s += tab + model.modulename + start_param + endl
+  s += port_delim.join( params ) + endl
+  s += tab + end_param + tab + 'verilog_import' + endl
+  s += tab + start_ports + endl
+  s += port_delim.join( connections ) + endl
+  s += tab + end_ports + endl
+
+  return s
+
 
