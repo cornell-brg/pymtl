@@ -37,23 +37,23 @@ from tools.integration.verilog       import VerilogModel
 # py.test decorators
 #-----------------------------------------------------------------------
 
-from pytest          import mark
-from distutils.spawn import find_executable
-from os.path         import exists
+from pytest          import mark            as _mark
+from distutils.spawn import find_executable as _find_executable
+from os.path         import exists          as _exists
 
-has = lambda x: find_executable( x ) != None
+_has = lambda x: _find_executable( x ) != None
 
-requires_xcc = mark.skipif( not( has('maven-gcc') and has('maven-objdump') ),
-                            reason='requires cross-compiler toolchain' )
+requires_xcc = _mark.skipif( not( _has('maven-gcc') and _has('maven-objdump') ),
+                             reason='requires cross-compiler toolchain' )
 
-requires_vmh = mark.skipif( not exists('../tests/build/vmh'),
-                            reason='requires vmh files' )
+requires_vmh = _mark.skipif( not _exists('../tests/build/vmh'),
+                             reason='requires vmh files' )
 
-requires_iverilog  = mark.skipif( not( has('iverilog') ),
-                                  reason='requires iverilog' )
+requires_iverilog  = _mark.skipif( not( _has('iverilog') ),
+                                   reason='requires iverilog' )
 
-requires_verilator = mark.skipif( not( has('verilator') ),
-                                  reason='requires verilator' )
+requires_verilator = _mark.skipif( not( _has('verilator') ),
+                                   reason='requires verilator' )
 
 #-----------------------------------------------------------------------
 # pymtl namespace
