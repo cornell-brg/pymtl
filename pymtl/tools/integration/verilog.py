@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import re
 import os
+import collections
 
 from pymtl import *
 
@@ -19,13 +20,15 @@ from ..translation.verilog_structural import (
 # VerilogModel
 #-----------------------------------------------------------------------
 class VerilogModel( Model ):
-  _is_verilog = True
-  module      = None
-  filename    = None
-  clk         = None
-  reset       = None
-  params      = None
-  connections = None
+  _is_verilog  = True
+  module       = None
+  filename     = None
+  params       = None
+  connections  = None
+
+  #def _connect_verilog( connection_dict ):
+  #  s._connections = collections.OrderedDict( sorted(connection_dict) )
+
 
 #-----------------------------------------------------------------------
 # import_module
@@ -51,10 +54,6 @@ def instantiate_verilog( model ):
   params = [ connection.format(k, v) for k,v in sorted(model.params.items()) ]
 
   connections = []
-  if model.vclk:
-    connections.append( connection.format( model.vclk, model.clk.name ) )
-  if model.vreset:
-    connections.append( connection.format( model.vreset, model.reset.name ) )
   for port, verilog_portname in model.connections.items():
     connections.append( connection.format( verilog_portname, port.name ) )
   connections = pretty_align( connections, '(' )
@@ -64,7 +63,7 @@ def instantiate_verilog( model ):
   s += endl
   s += tab + model.module + start_param + endl
   s += port_delim.join( params ) + endl
-  s += tab + end_param + tab + 'VERILOG_MODEL' + endl
+  s += tab + end_param + tab + 'verilog_import' + endl
   s += tab + start_ports + endl
   s += port_delim.join( connections ) + endl
   s += tab + end_ports + endl

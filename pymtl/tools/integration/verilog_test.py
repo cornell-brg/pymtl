@@ -24,8 +24,6 @@ def test_Reg( nbits ):
   class vc_Reg( VerilogModel ):
     module   = 'vc_Reg'
     filename = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
-    vclk     = 'clk'
-    vreset   = False
 
     def __init__( s, nbits ):
       s.in_ = InPort ( nbits )
@@ -36,6 +34,7 @@ def test_Reg( nbits ):
       }
 
       s.connections = {
+        s.clk   : 'clk',
         s.in_   : 'd',
         s.out   : 'q',
       }
@@ -59,8 +58,6 @@ def test_ResetReg( nbits, rst ):
   class vc_ResetReg( VerilogModel ):
     module   = 'vc_ResetReg'
     filename = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
-    vclk     = 'clk'
-    vreset   = 'reset'
 
     def __init__( s, nbits, reset_value=0 ):
       s.in_ = InPort ( nbits )
@@ -72,6 +69,8 @@ def test_ResetReg( nbits, rst ):
       }
 
       s.connections = {
+        s.clk   : 'clk',
+        s.reset : 'reset',
         s.in_   : 'd',
         s.out   : 'q',
       }
@@ -96,8 +95,6 @@ def test_EnResetReg( nbits, rst ):
   class vc_EnResetReg( VerilogModel ):
     module   = 'vc_EnResetReg'
     filename = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
-    vclk     = 'clk'
-    vreset   = 'reset'
 
     def __init__( s, nbits, reset_value=0 ):
       s.en  = InPort ( 1 )
@@ -110,6 +107,8 @@ def test_EnResetReg( nbits, rst ):
       }
 
       s.connections = {
+        s.clk   : 'clk',
+        s.reset : 'reset',
         s.en    : 'en',
         s.in_   : 'd',
         s.out   : 'q',
