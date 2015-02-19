@@ -22,22 +22,22 @@ def _sim_setup( model ):
 def test_Reg( nbits ):
 
   class vc_Reg( VerilogModel ):
-    module   = 'vc_Reg'
-    filename = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
+    modulename = 'vc_Reg'
+    sourcefile = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
 
     def __init__( s, nbits ):
       s.in_ = InPort ( nbits )
       s.out = OutPort( nbits )
 
-      s.params = {
+      s.set_params({
         'p_nbits' : nbits,
-      }
+      })
 
-      s.connections = {
-        s.clk   : 'clk',
-        s.in_   : 'd',
-        s.out   : 'q',
-      }
+      s.set_ports({
+        'clk' : s.clk,
+        'd'   : s.in_,
+        'q'   : s.out,
+      })
 
   #---------------------------------------------------------------------
   # test
@@ -56,24 +56,24 @@ def test_Reg( nbits ):
 def test_ResetReg( nbits, rst ):
 
   class vc_ResetReg( VerilogModel ):
-    module   = 'vc_ResetReg'
-    filename = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
+    modulename = 'vc_ResetReg'
+    sourcefile = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
 
     def __init__( s, nbits, reset_value=0 ):
       s.in_ = InPort ( nbits )
       s.out = OutPort( nbits )
 
-      s.params = {
+      s.set_params({
         'p_nbits'       : nbits,
         'p_reset_value' : reset_value,
-      }
+      })
 
-      s.connections = {
-        s.clk   : 'clk',
-        s.reset : 'reset',
-        s.in_   : 'd',
-        s.out   : 'q',
-      }
+      s.set_ports({
+        'clk'   : s.clk,
+        'reset' : s.reset,
+        'd'     : s.in_,
+        'q'     : s.out,
+      })
 
   #---------------------------------------------------------------------
   # test
@@ -93,26 +93,26 @@ def test_ResetReg( nbits, rst ):
 def test_EnResetReg( nbits, rst ):
 
   class vc_EnResetReg( VerilogModel ):
-    module   = 'vc_EnResetReg'
-    filename = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
+    modulename = 'vc_EnResetReg'
+    sourcefile = os.path.join( os.path.dirname(__file__), 'test/vc-regs.v' )
 
     def __init__( s, nbits, reset_value=0 ):
       s.en  = InPort ( 1 )
       s.in_ = InPort ( nbits )
       s.out = OutPort( nbits )
 
-      s.params = {
+      s.set_params({
         'p_nbits'       : nbits,
         'p_reset_value' : reset_value,
-      }
+      })
 
-      s.connections = {
-        s.clk   : 'clk',
-        s.reset : 'reset',
-        s.en    : 'en',
-        s.in_   : 'd',
-        s.out   : 'q',
-      }
+      s.set_ports({
+        'clk'   : s.clk,
+        'reset' : s.reset,
+        'en'    : s.en,
+        'd'     : s.in_,
+        'q'     : s.out,
+      })
 
   #---------------------------------------------------------------------
   # test

@@ -20,48 +20,92 @@ from ..translation.verilog_structural import (
 # VerilogModel
 #-----------------------------------------------------------------------
 class VerilogModel( Model ):
-  _is_verilog  = True
-  module       = None
-  filename     = None
-  params       = None
-  connections  = None
+  """
+  A PyMTL model for importing hand-written Verilog modules.
 
-  #def _connect_verilog( connection_dict ):
-  #  s._connections = collections.OrderedDict( sorted(connection_dict) )
+  Attributes:
+    modulename  Name of the Verilog module to import.
+    sourcefile  Location of the .v file containing the module.
+  """
+
+  modulename   = None
+  sourcefile   = None
+
+  _is_verilog  = True
+  _param_map   = None
+  _port_map    = None
+
+  def set_params( self, param_dict ):
+    """Specify values for each parameter in the imported Verilog module.
+
+    Note that param_dict should be a dictionary that provides a mapping
+    from parameter names (strings) to parameter values, for example:
+
+    >>> s.set_params({
+    >>>   'param1': 5,
+    >>>   'param2': 0,
+    >>> })
+    """
+    self._param_dict = collections.OrderedDict( sorted(param_dict.items()) )
+
+  def set_ports( self, port_dict ):
+    """Specify values for each parameter in the imported Verilog module.
+
+    Note that port_dict should be a dictionary that provides a mapping
+    from port names (strings) to PyMTL InPort or OutPort objects, for
+    examples:
+
+    >>> s.set_ports({
+    >>>   'clk':    s.clk,
+    >>>   'reset':  s.reset,
+    >>>   'input':  s.in_,
+    >>>   'output': s.out,
+    >>> })
+    """
+
+    self._port_dict = collections.OrderedDict( sorted(port_dict.items()) )
 
 
 #-----------------------------------------------------------------------
 # import_module
 #-----------------------------------------------------------------------
 def import_module( model, o ):
+  """Generate Verilog source for a user-defined VerilogModule and return
+  the name of the source file containing the imported component.
+  """
 
   symtab = [()]*4
 
-  print( header             ( model,    symtab ), file=o, end='' )
-  print( start_mod.format   ( model.class_name ), file=o,        )
-  print( port_declarations  ( model,    symtab ), file=o, end='' )
-  print( instantiate_verilog( model            ), file=o         )
-  print( end_mod  .format   ( model.class_name ), file=o )
+  print( header              ( model,    symtab ), file=o, end='' )
+  print( start_mod.format    ( model.class_name ), file=o,        )
+  print( port_declarations   ( model,    symtab ), file=o, end='' )
+  print( _instantiate_verilog( model            ), file=o         )
+  print( end_mod  .format    ( model.class_name ), file=o )
   print( file=o )
 
-  return model.filename
+  return model.sourcefile
 
 #-----------------------------------------------------------------------
-# instantiate_verilog
+# _instantiate_verilog
 #-----------------------------------------------------------------------
-def instantiate_verilog( model ):
+def _instantiate_verilog( model ):
 
-  params = [ connection.format(k, v) for k,v in sorted(model.params.items()) ]
+  if not model.modulename:
+    raise Exception(
+      "The .modulename attribute of VerilogModel has not been set!"""
+    )
+
+  params = [ connection.format(k, v) for k,v in model._param_dict.items() ]
 
   connections = []
-  for port, verilog_portname in model.connections.items():
+  for verilog_portname, port in model._port_dict.items():
     connections.append( connection.format( verilog_portname, port.name ) )
   connections = pretty_align( connections, '(' )
 
   s  = tab + '// Imported Verilog source from:' + endl
-  s += tab + '// {}'.format( model.filename ) + endl
+  s += tab + '// {}'.format( model.sourcefile ) + endl
   s += endl
-  s += tab + model.module + start_param + endl
+  s += tab + model.modulename + start_param + endl
   s += port_delim.join( params ) + endl
   s += tab + end_param + tab + 'verilog_import' + endl
   s += tab + start_ports + endl
@@ -74,6 +118,9 @@ def instantiate_verilog( model ):
 # import_sources
 #-----------------------------------------------------------------------
 def import_sources( source_list, o ):
+  """Import Verilog source from all Verilog files source_list, as well
+  as any source files specified by `include within those files.
+  """
 
   # Regex to extract verilog filenames from `include statements
 
