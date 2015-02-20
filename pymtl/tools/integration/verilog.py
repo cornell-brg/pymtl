@@ -7,6 +7,7 @@ from __future__ import print_function
 import re
 import os
 import collections
+from   ...model.metaclasses        import MetaCollectArgs
 
 from pymtl import *
 
@@ -15,6 +16,48 @@ from ..translation.verilog_structural import (
   title_bar, header, start_mod, port_declarations, end_mod,
   start_param, end_param, start_ports, end_ports, connection,
 )
+
+class SomeMeta( MetaCollectArgs ):
+  def __call__( self, *args, **kwargs ):
+    inst = super( SomeMeta, self ).__call__( *args, **kwargs )
+
+    # TODO: THIS IS SUPER HACKY. FIXME
+    # We import TranslationTool here because of circular imports...
+    from ..translation.verilator_sim import TranslationTool
+
+    # TODO: THIS IS SUPER HACKY. FIXME
+    # After the VerilogModel has been constructed and __init__ has
+    # completed, pass the VerilogModel into the TranslationTool.
+    # We need to do this **before** elaboration, and before the parent who
+    # instantiated us completes their initialization. This is because if
+    # we wait, then we'll have to find all the references to the
+    # original VerilogModel and its ports/other members and swap them!
+    #
+    # A simpler but less user friendly way to do this is to force the user
+    # to **always** wrap instantiations of VerilogModels in the
+    # TranslationTool explicitly, like so:
+    #
+    # >>> my_verilog_model = TranslationTool( MyVerilogModel( p1, p2 ) )
+    #
+
+    new_inst = TranslationTool( inst )
+
+    # TODO: THIS IS SUPER HACKY. FIXME
+    # We hack the TranslationTool model in all kinds of awful ways to make
+    # it look like the original VerilogModel. This ensures the the
+    # translated Verilog code and thh generated Python wrapper looks the
+    # same whether the parent design is just passed into SimulationTool,
+    # or passed into TranslationTool first.
+
+    new_inst.__class__.__name__  = inst.__class__.__name__
+    new_inst.__class__.__bases__ = (VerilogModel,)
+    new_inst._args       = inst._args
+    new_inst.modulename  = inst.modulename
+    new_inst.sourcefile  = inst.sourcefile
+    new_inst._param_dict = inst._param_dict
+    new_inst._port_dict  = inst._port_dict
+
+    return new_inst
 
 #-----------------------------------------------------------------------
 # VerilogModel
@@ -27,11 +70,11 @@ class VerilogModel( Model ):
     modulename  Name of the Verilog module to import.
     sourcefile  Location of the .v file containing the module.
   """
+  __metaclass__ = SomeMeta
 
   modulename   = None
   sourcefile   = None
 
-  _is_verilog  = True
   _param_dict  = None
   _port_dict   = None
 

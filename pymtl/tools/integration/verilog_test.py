@@ -8,9 +8,9 @@ import os
 import random
 import pytest
 
-def _sim_setup( model, dump_vcd=False ):
+def _sim_setup( model, dump_vcd='', all_verilog=True ):
   model.vcd_file = dump_vcd
-  m = TranslationTool( model )
+  m = TranslationTool( model ) if all_verilog else model
   m.elaborate()
   sim = SimulationTool( m )
   sim.reset()
@@ -19,8 +19,10 @@ def _sim_setup( model, dump_vcd=False ):
 #-----------------------------------------------------------------------
 # test_Reg
 #-----------------------------------------------------------------------
-@pytest.mark.parametrize("nbits", (4,128))
-def test_Reg( nbits ):
+@pytest.mark.parametrize( "nbits,all_verilog",
+ [(4,True),(128,False)]
+)
+def test_Reg( nbits, all_verilog ):
 
   class vc_Reg( VerilogModel ):
     modulename = 'vc_Reg'
@@ -45,7 +47,7 @@ def test_Reg( nbits ):
   # test
   #---------------------------------------------------------------------
 
-  m, sim = _sim_setup( vc_Reg(nbits) )
+  m, sim = _sim_setup( vc_Reg(nbits), all_verilog=all_verilog )
   for i in range( 10 ):
     m.in_.value = i
     sim.cycle()
@@ -54,8 +56,10 @@ def test_Reg( nbits ):
 #-----------------------------------------------------------------------
 # test_ResetReg
 #-----------------------------------------------------------------------
-@pytest.mark.parametrize("nbits,rst", [(4,0),(128,8)])
-def test_ResetReg( nbits, rst ):
+@pytest.mark.parametrize( "nbits,rst,all_verilog",
+  [(4,0,True), (4,0,False), (128,8,True), (128,8,False)]
+)
+def test_ResetReg( nbits, rst, all_verilog ):
 
   class vc_ResetReg( VerilogModel ):
     modulename = 'vc_ResetReg'
@@ -92,8 +96,10 @@ def test_ResetReg( nbits, rst ):
 #-----------------------------------------------------------------------
 # test_EnResetReg
 #-----------------------------------------------------------------------
-@pytest.mark.parametrize("nbits,rst", [(4,0),(128,8)])
-def test_EnResetReg( nbits, rst ):
+@pytest.mark.parametrize( "nbits,rst,all_verilog",
+  [(4,0,True), (4,0,False), (128,8,True), (128,8,False)]
+)
+def test_EnResetReg( nbits, rst, all_verilot ):
 
   class vc_EnResetReg( VerilogModel ):
     modulename = 'vc_EnResetReg'
@@ -138,8 +144,10 @@ def test_EnResetReg( nbits, rst ):
 #-----------------------------------------------------------------------
 # test_EnResetReg
 #-----------------------------------------------------------------------
-@pytest.mark.parametrize("nbits,rst", [(4,0),(128,8)])
-def test_EnResetReg( nbits, rst ):
+@pytest.mark.parametrize( "nbits,rst,all_verilog",
+  [(4,0,True), (4,0,False), (128,8,True), (128,8,False)]
+)
+def test_EnResetReg( nbits, rst, all_verilog ):
 
   class vc_EnResetReg( VerilogModel ):
     modulename = 'vc_EnResetReg'
@@ -184,8 +192,10 @@ def test_EnResetReg( nbits, rst ):
 #-----------------------------------------------------------------------
 # test_auto_Reg
 #-----------------------------------------------------------------------
-@pytest.mark.parametrize("nbits", (4,128))
-def test_auto_Reg( nbits ):
+@pytest.mark.parametrize( "nbits,all_verilog",
+ [(4,True),(128,False)]
+)
+def test_auto_Reg( nbits, all_verilog ):
 
   class RegVRTL( VerilogModel ):
     def __init__( s, p_nbits ):
@@ -215,8 +225,10 @@ class EnResetRegVRTL( VerilogModel ):
     s.d   = InPort ( p_nbits )
     s.q   = OutPort( p_nbits )
 
-@pytest.mark.parametrize("nbits,rst", [(4,0),(128,8)])
-def test_auto_EnResetReg( nbits, rst ):
+@pytest.mark.parametrize( "nbits,rst,all_verilog",
+  [(4,0,True), (4,0,False), (128,8,True), (128,8,False)]
+)
+def test_auto_EnResetReg( nbits, rst, all_verilog ):
 
   #---------------------------------------------------------------------
   # test
@@ -238,8 +250,10 @@ def test_auto_EnResetReg( nbits, rst ):
 #-----------------------------------------------------------------------
 # test_wrapped_VerilogModel
 #-----------------------------------------------------------------------
-@pytest.mark.parametrize("nbits,rst", [(4,0),(128,8)])
-def test_wrapped_VerilogModel( nbits, rst ):
+@pytest.mark.parametrize( "nbits,rst,all_verilog",
+  [(4,0,True), (4,0,False), (128,8,True), (128,8,False)]
+)
+def test_wrapped_VerilogModel( nbits, rst, all_verilog ):
 
   class ModelWrapper( Model ):
     def __init__( s, nbits, rst=0 ):
@@ -275,8 +289,10 @@ def test_wrapped_VerilogModel( nbits, rst ):
 #-----------------------------------------------------------------------
 # test_chained_VerilogModel
 #-----------------------------------------------------------------------
-@pytest.mark.parametrize("nbits,rst", [(6,0),(128,8)])
-def test_chained_VerilogModel( dump_vcd, nbits, rst ):
+@pytest.mark.parametrize( "nbits,rst,all_verilog",
+  [(6,0,True), (6,0,False), (128,8,True), (128,8,False)]
+)
+def test_chained_VerilogModel( dump_vcd, nbits, rst, all_verilog ):
 
   class ModelChainer( Model ):
     def __init__( s, nbits, rst=0 ):
