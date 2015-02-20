@@ -36,7 +36,8 @@ def port_declarations( model, symtab ):
   for port in model.get_ports():
     port._is_reg = port in regs
     if port._is_reg: regs.remove( port )
-  port_list = [ port_decl( x ) for x in model.get_ports() ]
+  sorted_ports = sorted( model.get_ports(), key=lambda x: x.name )
+  port_list = [ port_decl( x ) for x in sorted_ports ]
   s  = start_ports + endl
   s += port_delim.join( port_list ) + endl
   s += end_ports + endl
