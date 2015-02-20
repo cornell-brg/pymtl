@@ -171,7 +171,7 @@ def _instantiate_verilog( model ):
   s += endl
   s += tab + model.modulename + start_param + endl
   s += port_delim.join( params ) + endl
-  s += tab + end_param + tab + 'verilog_import' + endl
+  s += tab + end_param + tab + 'verilog_module' + endl
   s += tab + start_ports + endl
   s += port_delim.join( connections ) + endl
   s += tab + end_ports + endl

@@ -8,7 +8,8 @@ import os
 import random
 import pytest
 
-def _sim_setup( model ):
+def _sim_setup( model, dump_vcd=False ):
+  model.vcd_file = dump_vcd
   m = TranslationTool( model )
   m.elaborate()
   sim = SimulationTool( m )
@@ -208,14 +209,14 @@ def test_auto_Reg( nbits ):
 #-----------------------------------------------------------------------
 # test_auto_EnResetReg
 #-----------------------------------------------------------------------
+class EnResetRegVRTL( VerilogModel ):
+  def __init__( s, p_nbits, p_reset_value=0 ):
+    s.en  = InPort ( 1 )
+    s.d   = InPort ( p_nbits )
+    s.q   = OutPort( p_nbits )
+
 @pytest.mark.parametrize("nbits,rst", [(4,0),(128,8)])
 def test_auto_EnResetReg( nbits, rst ):
-
-  class EnResetRegVRTL( VerilogModel ):
-    def __init__( s, p_nbits, p_reset_value=0 ):
-      s.en  = InPort ( 1 )
-      s.d   = InPort ( nbits )
-      s.q   = OutPort( nbits )
 
   #---------------------------------------------------------------------
   # test
@@ -233,4 +234,95 @@ def test_auto_EnResetReg( nbits, rst ):
     m.en .value = en
     sim.cycle()
     assert m.q == last
+
+#-----------------------------------------------------------------------
+# test_wrapped_VerilogModel
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize("nbits,rst", [(4,0),(128,8)])
+def test_wrapped_VerilogModel( nbits, rst ):
+
+  class ModelWrapper( Model ):
+    def __init__( s, nbits, rst=0 ):
+      s.en  = InPort ( 1 )
+      s.d   = InPort ( nbits )
+      s.q   = OutPort( nbits )
+
+      s.mod = EnResetRegVRTL( nbits, rst )
+
+      s.connect_dict({
+        s.en : s.mod.en,
+        s.d  : s.mod.d,
+        s.q  : s.mod.q,
+      })
+
+  #---------------------------------------------------------------------
+  # test
+  #---------------------------------------------------------------------
+
+  m, sim = _sim_setup( ModelWrapper(nbits,rst) )
+  last = rst
+  assert m.q == rst
+
+  for i in range( 10 ):
+    en   = random.randint(0,1)
+    last = i if en else last
+
+    m.d  .value = i
+    m.en .value = en
+    sim.cycle()
+    assert m.q == last
+
+#-----------------------------------------------------------------------
+# test_chained_VerilogModel
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize("nbits,rst", [(6,0),(128,8)])
+def test_chained_VerilogModel( dump_vcd, nbits, rst ):
+
+  class ModelChainer( Model ):
+    def __init__( s, nbits, rst=0 ):
+      s.en  = InPort ( 1 )
+      s.d   = InPort ( nbits )
+      s.q   = OutPort( nbits )
+
+      s.mod = m = EnResetRegVRTL[3]( nbits, rst )
+
+      for x in s.mod:
+        s.connect( s.en, x.en )
+
+      s.connect_dict({
+        s.d    : m[0].d,
+        m[0].q : m[1].d,
+        m[1].q : m[2].d,
+        m[2].q : s.q,
+      })
+
+    def line_trace( s ):
+      return '{d} {q}'.format( **dir(s) )
+
+  #---------------------------------------------------------------------
+  # test
+  #---------------------------------------------------------------------
+
+  m, sim = _sim_setup( ModelChainer(nbits,rst), dump_vcd )
+  last = rst
+  assert m.q == rst
+
+  import collections
+  pipeline = collections.deque( maxlen=3 )
+  pipeline.extend( [rst]*3 )
+
+  # Super hacky line tracing!
+  Model.line_trace = lambda m: '{} {} {}'.format( m.d, m.q, pipeline )
+
+  print()
+  for i in range( 20 ):
+    en  = random.randint(0,1)
+    if en:
+      pipeline.appendleft( i )
+
+    m.d  .value = i
+    m.en .value = en
+    sim.cycle()
+    sim.print_line_trace()
+    assert m.q == pipeline[-1]
 
