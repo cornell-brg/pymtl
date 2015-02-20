@@ -185,7 +185,6 @@ def test_EnResetReg( nbits, rst ):
 #-----------------------------------------------------------------------
 @pytest.mark.parametrize("nbits", (4,128))
 def test_auto_Reg( nbits ):
-  pass
 
   class RegVRTL( VerilogModel ):
     def __init__( s, p_nbits ):
@@ -207,16 +206,12 @@ def test_auto_Reg( nbits ):
     assert m.q == i
 
 #-----------------------------------------------------------------------
-# test_EnResetReg
+# test_auto_EnResetReg
 #-----------------------------------------------------------------------
 @pytest.mark.parametrize("nbits,rst", [(4,0),(128,8)])
-def test_EnResetReg( nbits, rst ):
+def test_auto_EnResetReg( nbits, rst ):
 
   class EnResetRegVRTL( VerilogModel ):
-    modulename = 'vc_EnResetReg'
-    sourcefile = os.path.join( os.path.dirname(__file__),
-                               'verilog', 'vc-regs.v' )
-
     def __init__( s, p_nbits, p_reset_value=0 ):
       s.en  = InPort ( 1 )
       s.d   = InPort ( nbits )

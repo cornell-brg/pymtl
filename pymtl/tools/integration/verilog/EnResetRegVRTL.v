@@ -4,7 +4,7 @@
 
 `include "vc-assert.v"
 
-module EnResetReg
+module EnResetRegVRTL
 #(
   parameter p_nbits       = 1,
   parameter p_reset_value = 0
