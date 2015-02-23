@@ -290,7 +290,7 @@ def test_wrapped_VerilogModel( nbits, rst, all_verilog ):
 # test_chained_VerilogModel
 #-----------------------------------------------------------------------
 @pytest.mark.parametrize( "nbits,rst,all_verilog",
-  [(6,0,True), (6,0,False), (128,8,True), (128,8,False)]
+  [(6,2,True), (6,2,False),]
 )
 @pytest.mark.xfail
 def test_chained_VerilogModel( dump_vcd, nbits, rst, all_verilog ):
@@ -349,9 +349,8 @@ def test_chained_VerilogModel( dump_vcd, nbits, rst, all_verilog ):
 # test_chained_VerilogModel
 #-----------------------------------------------------------------------
 @pytest.mark.parametrize( "nbits,rst,all_verilog",
-  [(6,0,True), (6,0,False), (128,8,True), (128,8,False)]
+  [(6,2,True), (6,2,False),]
 )
-@pytest.mark.xfail
 def test_chained_param_VerilogModel( dump_vcd, nbits, rst, all_verilog ):
 
   class EnResetRegParamVRTL( VerilogModel ):

@@ -38,7 +38,9 @@ def translate( model, o=sys.stdout ):
   collect_all_models( model )
   for k, v in translation_queue.items():
     if isinstance( v, verilog.VerilogModel ):
-      append_queue += [ verilog.import_module( v, o ) ]
+      x = verilog.import_module( v, o )
+      if x not in append_queue:
+        append_queue.append( x )
     else:
       translate_module( v, o )
 
