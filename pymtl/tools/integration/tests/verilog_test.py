@@ -27,7 +27,7 @@ def test_Reg( nbits, all_verilog ):
   class vc_Reg( VerilogModel ):
     modulename = 'vc_Reg'
     sourcefile = os.path.join( os.path.dirname(__file__),
-                               'verilog', 'vc-regs.v' )
+                               'vc-regs.v' )
 
     def __init__( s, nbits ):
       s.in_ = InPort ( nbits )
@@ -64,7 +64,7 @@ def test_ResetReg( nbits, rst, all_verilog ):
   class vc_ResetReg( VerilogModel ):
     modulename = 'vc_ResetReg'
     sourcefile = os.path.join( os.path.dirname(__file__),
-                               'verilog', 'vc-regs.v' )
+                               'vc-regs.v' )
 
     def __init__( s, nbits, reset_value=0 ):
       s.in_ = InPort ( nbits )
@@ -104,7 +104,7 @@ def test_EnResetReg( nbits, rst, all_verilot ):
   class vc_EnResetReg( VerilogModel ):
     modulename = 'vc_EnResetReg'
     sourcefile = os.path.join( os.path.dirname(__file__),
-                               'verilog', 'vc-regs.v' )
+                               'vc-regs.v' )
 
     def __init__( s, nbits, reset_value=0 ):
       s.en  = InPort ( 1 )
@@ -152,7 +152,7 @@ def test_EnResetReg( nbits, rst, all_verilog ):
   class vc_EnResetReg( VerilogModel ):
     modulename = 'vc_EnResetReg'
     sourcefile = os.path.join( os.path.dirname(__file__),
-                               'verilog', 'vc-regs.v' )
+                               'vc-regs.v' )
 
     def __init__( s, nbits, reset_value=0 ):
       s.en  = InPort ( 1 )

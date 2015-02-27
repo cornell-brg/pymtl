@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import re
 import os
+import inspect
 import collections
 from   ...model.metaclasses        import MetaCollectArgs
 
@@ -125,8 +126,8 @@ class VerilogModel( Model ):
       self.modulename = self.__class__.__name__
 
     if not self.sourcefile:
-      self.sourcefile = os.path.join( os.path.dirname(__file__),
-                                      'verilog',
+      file_ = inspect.getfile( self.__class__ )
+      self.sourcefile = os.path.join( os.path.dirname( file_ ),
                                       self.modulename+'.v' )
 
     if not self._param_dict:
