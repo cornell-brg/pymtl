@@ -41,11 +41,19 @@ class MemReqMsg( BitStructDefinition ):
 
     return msg
 
+  def __str__( s ):
+
+    if s.type_ == 0:
+      return "rd:{}:{}".format( s.addr, ' '*(s.data.nbits/4) )
+
+    elif s.type_ == 1:
+      return "wr:{}:{}".format( s.addr, s.data )
 
 #-------------------------------------------------------------------------
 # MemReqMsg
 #-------------------------------------------------------------------------
 # BitStruct designed to create memory response messages.
+
 class MemRespMsg ( BitStructDefinition ):
 
   def __init__( s, data_nbits):
@@ -61,14 +69,16 @@ class MemRespMsg ( BitStructDefinition ):
   def mk_resp(s, type_, len_, data):
     pass
 
-
   def unpck( s, msg):
-
     resp = s()
     resp.value = msg
     return resp
 
+  def __str__( s ):
 
+    if s.type_ == 0:
+      return "rd:{}".format( s.data )
 
-    
-  
+    elif s.type_ == 1:
+      return "wr:{}".format( ' '*(s.data.nbits/4) )
+
