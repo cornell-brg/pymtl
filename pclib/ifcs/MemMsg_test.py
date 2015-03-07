@@ -49,7 +49,7 @@ def test_req_str():
   # Create msg
 
   msg = MemReqMsg(16,40)
-  msg.type_ = 0
+  msg.type_ = MemReqMsg.TYPE_READ
   msg.addr  = 0x1000
   msg.len   = 3
 
@@ -60,7 +60,7 @@ def test_req_str():
   # Create msg
 
   msg = MemReqMsg(16,40)
-  msg.type_ = 1
+  msg.type_ = MemReqMsg.TYPE_WRITE
   msg.addr  = 0x2000
   msg.len   = 4
   msg.data  = 0xdeadbeef
@@ -78,7 +78,7 @@ def test_resp_fields():
   # Create msg
 
   msg = MemRespMsg(40)
-  msg.type_ = 0
+  msg.type_ = MemRespMsg.TYPE_READ
   msg.len   = 3
   msg.data  = 0x0000adbeef
 
@@ -91,7 +91,7 @@ def test_resp_fields():
   # Create msg
 
   msg = MemRespMsg(40)
-  msg.type_ = 1
+  msg.type_ = MemRespMsg.TYPE_WRITE
   msg.len   = 0
   msg.data  = 0
 
@@ -110,7 +110,7 @@ def test_resp_str():
   # Create msg
 
   msg = MemRespMsg(40)
-  msg.type_ = 0
+  msg.type_ = MemRespMsg.TYPE_READ
   msg.len   = 3
   msg.data  = 0x0000adbeef
 
@@ -121,7 +121,7 @@ def test_resp_str():
   # Create msg
 
   msg = MemRespMsg(40)
-  msg.type_ = 1
+  msg.type_ = MemRespMsg.TYPE_WRITE
   msg.len   = 0
   msg.data  = 0
 
