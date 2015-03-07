@@ -21,6 +21,7 @@ class InValRdyQueueAdapter (object):
     return len( s.data ) == 0
 
   def deq( s ):
+    assert not s.empty()
     item = s.data.popleft()
     s.in_.rdy.next = ( len( s.data ) != s.data.maxlen )
     return item
