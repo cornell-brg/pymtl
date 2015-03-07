@@ -19,6 +19,9 @@ class MemMsg( object ):
 
 class MemReqMsg( BitStructDefinition ):
 
+  TYPE_READ  = 0
+  TYPE_WRITE = 1
+
   def __init__( s, addr_nbits, data_nbits ):
 
     s.type_nbits = 1
@@ -43,10 +46,10 @@ class MemReqMsg( BitStructDefinition ):
 
   def __str__( s ):
 
-    if s.type_ == 0:
+    if s.type_ == MemReqMsg.TYPE_READ:
       return "rd:{}:{}".format( s.addr, ' '*(s.data.nbits/4) )
 
-    elif s.type_ == 1:
+    elif s.type_ == MemReqMsg.TYPE_WRITE:
       return "wr:{}:{}".format( s.addr, s.data )
 
 #-------------------------------------------------------------------------
@@ -55,6 +58,9 @@ class MemReqMsg( BitStructDefinition ):
 # BitStruct designed to create memory response messages.
 
 class MemRespMsg ( BitStructDefinition ):
+
+  TYPE_READ  = 0
+  TYPE_WRITE = 1
 
   def __init__( s, data_nbits):
 
@@ -76,9 +82,9 @@ class MemRespMsg ( BitStructDefinition ):
 
   def __str__( s ):
 
-    if s.type_ == 0:
+    if s.type_ == MemRespMsg.TYPE_READ:
       return "rd:{}".format( s.data )
 
-    elif s.type_ == 1:
+    elif s.type_ == MemRespMsg.TYPE_WRITE:
       return "wr:{}".format( ' '*(s.data.nbits/4) )
 

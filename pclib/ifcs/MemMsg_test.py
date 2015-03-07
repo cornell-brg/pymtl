@@ -15,7 +15,7 @@ def test_req_fields():
   # Create msg
 
   msg = MemReqMsg(16,40)
-  msg.type_ = 0
+  msg.type_ = MemReqMsg.TYPE_READ
   msg.addr  = 0x1000
   msg.len   = 3
 
@@ -28,7 +28,7 @@ def test_req_fields():
   # Create msg
 
   msg = MemReqMsg(16,40)
-  msg.type_ = 1
+  msg.type_ = MemReqMsg.TYPE_WRITE
   msg.addr  = 0x2000
   msg.len   = 4
   msg.data  = 0xdeadbeef
