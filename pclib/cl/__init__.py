@@ -10,3 +10,6 @@ from pipelines import Pipeline
 from adapters import InValRdyQueueAdapter
 from adapters import OutValRdyQueueAdapter
 
+from InValRdyRandStallAdapter      import InValRdyRandStallAdapter
+from OutValRdyInelasticPipeAdapter import OutValRdyInelasticPipeAdapter
+
