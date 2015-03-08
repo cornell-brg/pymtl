@@ -8,7 +8,8 @@
 
 build*/
 autom4te.cache/
-*/__pycache__/
+pymtl.egg-info
+*__pycache__
 *.pyc
 *.pyo
 */.DS_Store
