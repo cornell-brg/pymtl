@@ -9,28 +9,29 @@
 
 from greenlet import greenlet
 
+from pclib.ifcs import MemReqMsg, MemRespMsg
+
 #-------------------------------------------------------------------------
 # ListMemPortAdapter
 #-------------------------------------------------------------------------
+
 class ListMemPortAdapter (object):
 
   #-----------------------------------------------------------------------
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( s, parent ):
+  def __init__( s, memreq, memresp ):
 
     # Shorter names
 
-    s.mk_req         = parent.req.mk_msg
-    s.mk_resp        = parent.resp.mk_resp
-    s.rd             = 0
-    s.wr             = 1
+    s.MemReqMsgType  = memreq.msg.msg_type
+    s.MemRespMsgType = memresp.msg.msg_type
 
     # References to the memory request and response ports
 
-    s.memreq         = parent
-    s.memresp        = parent
+    s.memreq  = memreq
+    s.memresp = memresp
 
     s.size = 0
     s.base = 0
@@ -52,34 +53,49 @@ class ListMemPortAdapter (object):
       addr   = int(key)
       nbytes = 4
 
-    len_ = nbytes if nbytes < s.memreq.req.data.nbits/8 else 0
+    len_ = nbytes if nbytes < s.memreq.msg.data.nbits/8 else 0
 
     # Create a memory request to send out memory request port
 
     s.trace = "r"
-    s.memreq.req_msg.next  = s.mk_req( s.rd, s.base + 4 * addr, len_, 0 )
-    s.memreq.req_val.next  = 1
-    s.memresp.resp_rdy.next = 1
 
-    # Yield so we wait at least one cycle for the response
+    memreq_msg = s.MemReqMsgType()
+    memreq_msg.type_ = MemReqMsg.TYPE_READ
+    memreq_msg.addr  = s.base + 4 * addr
+    memreq_msg.len   = len_
+
+    s.memreq.msg.next  = memreq_msg
+    s.memreq.val.next  = 1
+    s.memresp.rdy.next = 1
+
+    # Yield so we wait at least one cycle for the ready/response
 
     greenlet.getcurrent().parent.switch(0)
 
-    s.memreq.req_val.next  = 0
-    s.memresp.resp_rdy.next = 1
+    # If memory request is not ready yet then yeild
+
+    s.memreq.val.next  = 1
+    s.memresp.rdy.next = 1
+
+    while not s.memreq.rdy:
+      s.trace = ";"
+      greenlet.getcurrent().parent.switch(0)
 
     # If memory response has not arrived, then yield
 
-    while not s.memresp.resp_val:
+    s.memreq.val.next  = 0
+    s.memresp.rdy.next = 1
+
+    while not s.memresp.val:
       s.trace = ":"
       greenlet.getcurrent().parent.switch(0)
 
     # When memory response has arrived, return the corresponding data
 
     s.trace = " "
-    s.memreq.req_val.next  = 0
-    s.memresp.resp_rdy.next = 0
-    return s.memresp.resp_msg.data[0:nbytes*8].uint()
+    s.memreq.val.next  = 0
+    s.memresp.rdy.next = 0
+    return s.memresp.msg.data[0:nbytes*8].int()
 
   #-----------------------------------------------------------------------
   # __setitem__
@@ -96,33 +112,49 @@ class ListMemPortAdapter (object):
       addr   = int(key)
       nbytes = 4
 
-    len_ = nbytes if nbytes < s.data_nbytes else 0
+    len_ = nbytes if nbytes < s.memreq.msg.data.nbits/8 else 0
 
     # Create a memory request to send out memory request port
 
     s.trace = "w"
-    s.memreq.req_msg.next  = s.mk_msg( s.wr, s.base + 4 * addr, len_, value )
-    s.memreq.req_val.next  = 1
-    s.memresp.resp_rdy.next = 1
+
+    memreq_msg = s.MemReqMsgType()
+    memreq_msg.type_ = MemReqMsg.TYPE_WRITE
+    memreq_msg.addr  = s.base + 4 * addr
+    memreq_msg.len   = len_
+    memreq_msg.data  = value
+
+    s.memreq.msg.next  = memreq_msg
+    s.memreq.val.next  = 1
+    s.memresp.rdy.next = 1
 
     # Yield so we wait at least one cycle for the response
 
     greenlet.getcurrent().parent.switch(0)
 
-    s.memreq.req_val.next  = 0
-    s.memresp.resp_rdy.next = 1
+    # If memory request is not ready yet then yeild
+
+    s.memreq.val.next  = 1
+    s.memresp.rdy.next = 1
+
+    while not s.memreq.rdy:
+      s.trace = ";"
+      greenlet.getcurrent().parent.switch(0)
 
     # If memory response has not arrived, then yield
 
-    while not s.memresp.resp_val:
+    s.memreq.val.next  = 0
+    s.memresp.rdy.next = 1
+
+    while not s.memresp.val:
       s.trace = ":"
       greenlet.getcurrent().parent.switch(0)
 
     # When memory response has arrived, then we are done
 
     s.trace = " "
-    s.memreq.req_val.next  = 0
-    s.memresp.resp_rdy.next = 0
+    s.memreq.val.next  = 0
+    s.memresp.rdy.next = 0
 
   def set_base( s, addr ):
     s.base = addr

@@ -5,9 +5,8 @@
 import greenlet
 import numpy
 
-from pymtl        import *
-from pclib.fl     import ListMemPortAdapter
-from pclib.cl     import ChildReqRespQueueAdapter, ParentReqRespQueueAdapter
+from pymtl      import *
+from pclib.cl   import ChildReqRespQueueAdapter, ParentReqRespQueueAdapter
 from pclib.ifcs import ChildReqRespBundle, ParentReqRespBundle, MemMsg
 
 #-------------------------------------------------------------------------

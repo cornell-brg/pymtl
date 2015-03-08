@@ -5,14 +5,15 @@
 import greenlet
 import numpy
 
-from pymtl        import *
-from pclib.fl     import ListMemPortAdapter
-from pclib.cl     import ChildReqRespQueueAdapter
+from pymtl      import *
+from pclib.fl   import ListMemPortAdapter
+from pclib.cl   import ChildReqRespQueueAdapter
 from pclib.ifcs import ChildReqRespBundle, ParentReqRespBundle
 
 #-------------------------------------------------------------------------
 # DotProductFL
 #-------------------------------------------------------------------------
+
 class DotProductFL( Model ):
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
@@ -20,8 +21,8 @@ class DotProductFL( Model ):
     s.mem_ifc = ParentReqRespBundle( mem_ifc_types )
 
     s.cpu  = ChildReqRespQueueAdapter( s.cpu_ifc )
-    s.src0 = ListMemPortAdapter      ( s.mem_ifc )
-    s.src1 = ListMemPortAdapter      ( s.mem_ifc )
+    s.src0 = ListMemPortAdapter      ( s.mem_ifc.req, s.mem_ifc.resp )
+    s.src1 = ListMemPortAdapter      ( s.mem_ifc.req, s.mem_ifc.resp )
 
     @s.tick_fl
     def logic():
