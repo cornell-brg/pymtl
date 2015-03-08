@@ -58,9 +58,13 @@ def run_sim( model, dump_vcd=None, test_verilog=False ):
 
   # Run simulation
 
-  while not model.done():
+  while not model.done() and sim.ncycles < 5000:
     sim.print_line_trace()
     sim.cycle()
+
+  # Force a test failure if we timed out
+
+  assert sim.ncycles < 5000
 
   # Extra ticks to make VCD easier to read
 
