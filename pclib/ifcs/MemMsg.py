@@ -69,6 +69,26 @@ class MemReqMsg( BitStructDefinition ):
 
     return msg
 
+  def mk_rd( s, addr, len_ ):
+
+    msg       = s()
+    msg.type_ = MemReqMsg.TYPE_READ
+    msg.addr  = addr
+    msg.len   = len_
+    msg.data  = 0
+
+    return msg
+
+  def mk_wr( s, addr, len_, data ):
+
+    msg       = s()
+    msg.type_ = MemReqMsg.TYPE_WRITE
+    msg.addr  = addr
+    msg.len   = len_
+    msg.data  = data
+
+    return msg
+
   def __str__( s ):
 
     if s.type_ == MemReqMsg.TYPE_READ:
