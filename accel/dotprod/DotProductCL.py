@@ -3,11 +3,22 @@
 #=========================================================================
 
 import greenlet
-import numpy
 
 from pymtl      import *
 from pclib.cl   import ChildReqRespQueueAdapter, ParentReqRespQueueAdapter
 from pclib.ifcs import ChildReqRespBundle, ParentReqRespBundle, MemMsg
+
+#-------------------------------------------------------------------------
+# dot
+#-------------------------------------------------------------------------
+# Simple dot product function. One could also use the dot product
+# function from numpy.
+
+def dot( src0, src1 ):
+  sum = 0
+  for elm0,elm1 in zip( src0, src1 ):
+    sum += elm0 * elm1
+  return sum
 
 #-------------------------------------------------------------------------
 # helpers
@@ -26,6 +37,7 @@ def gen_addresses( size, a, b ):
 #-------------------------------------------------------------------------
 # DotProductCL
 #-------------------------------------------------------------------------
+
 class DotProductCL( Model ):
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
@@ -54,7 +66,7 @@ class DotProductCL( Model ):
           s.data.append( s.mem.get_resp() )
 
         if len( s.data ) == s.size*2:
-          result = numpy.dot( s.data[0::2], s.data[1::2] )
+          result = dot( s.data[0::2], s.data[1::2] )
           s.cpu.push_resp( result )
           s.go = False
 
@@ -78,3 +90,4 @@ class DotProductCL( Model ):
 
   def elaborate_logic( s ):
     pass
+

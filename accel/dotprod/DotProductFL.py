@@ -3,12 +3,23 @@
 #=========================================================================
 
 import greenlet
-import numpy
 
 from pymtl      import *
-from pclib.fl   import ListMemPortAdapter
+from pclib.fl   import ListMemPortAdapterOld
 from pclib.cl   import ChildReqRespQueueAdapter
 from pclib.ifcs import ChildReqRespBundle, ParentReqRespBundle
+
+#-------------------------------------------------------------------------
+# dot
+#-------------------------------------------------------------------------
+# Simple dot product function. One could also use the dot product
+# function from numpy.
+
+def dot( src0, src1 ):
+  sum = 0
+  for elm0,elm1 in zip( src0, src1 ):
+    sum += elm0 * elm1
+  return sum
 
 #-------------------------------------------------------------------------
 # DotProductFL
@@ -17,12 +28,13 @@ from pclib.ifcs import ChildReqRespBundle, ParentReqRespBundle
 class DotProductFL( Model ):
 
   def __init__( s, mem_ifc_types, cpu_ifc_types ):
+
     s.cpu_ifc = ChildReqRespBundle ( cpu_ifc_types )
     s.mem_ifc = ParentReqRespBundle( mem_ifc_types )
 
     s.cpu  = ChildReqRespQueueAdapter( s.cpu_ifc )
-    s.src0 = ListMemPortAdapter      ( s.mem_ifc.req, s.mem_ifc.resp )
-    s.src1 = ListMemPortAdapter      ( s.mem_ifc.req, s.mem_ifc.resp )
+    s.src0 = ListMemPortAdapterOld   ( s.mem_ifc )
+    s.src1 = ListMemPortAdapterOld   ( s.mem_ifc )
 
     @s.tick_fl
     def logic():
@@ -35,7 +47,7 @@ class DotProductFL( Model ):
         elif req.ctrl_msg == 2: s.src0.set_base( req.data )
         elif req.ctrl_msg == 3: s.src1.set_base( req.data )
         elif req.ctrl_msg == 0:
-          result = numpy.dot( s.src0, s.src1 )
+          result = dot( s.src0, s.src1 )
           s.cpu.push_resp( result )
 
   #-----------------------------------------------------------------------
@@ -47,3 +59,4 @@ class DotProductFL( Model ):
 
   def elaborate_logic( s ):
     pass
+
