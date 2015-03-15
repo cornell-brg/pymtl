@@ -294,7 +294,6 @@ def test_WriteThenReadWire( setup_sim ):
 # BitsSensitivityListBugStore
 #-----------------------------------------------------------------------
 # Test to trigger bug where a Bits object is written to.
-@pytest.mark.xfail
 def test_BitsSensitivityListBugStore( setup_sim ):
 
   class Temp( Model ):

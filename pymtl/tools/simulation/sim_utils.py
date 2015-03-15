@@ -212,8 +212,6 @@ def register_comb_blocks( model, event_queue ):
 
   for func in model.get_combinational_blocks():
     tree, _ = get_method_ast( func )
-    DetectIncorrectValueNext( func, 'next'  ).visit( tree )
-    DetectMissingValueNext  ( func, 'value' ).visit( tree )
     loads, stores = DetectLoadsAndStores().enter( tree )
     for name in loads:
       _add_senses( func, model, name )
