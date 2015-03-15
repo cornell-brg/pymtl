@@ -262,22 +262,17 @@ def test_NStageComb( setup_sim ):
 #       signals should really not be added to the sensitivity list. Fix.
 #
 # UPDATE: FIXED!
+def test_WriteThenReadWire( setup_sim ):
 
-class WriteThenReadWire( Model ):
-  def __init__( s, nbits ):
-    s.nbits   = nbits
-    s.in_     = InPort ( nbits )
-    s.out     = OutPort( nbits )
-
-  def elaborate_logic( s ):
-
-    s.temp = Wire( s.nbits )
-
-    @s.combinational
-    def comb_logic():
-      s.temp.v = s.in_
-      s.out.v  = s.temp
-
+  class WriteThenReadWire( Model ):
+    def __init__( s, nbits ):
+      s.in_     = InPort ( nbits )
+      s.out     = OutPort( nbits )
+      s.temp    = Wire   ( nbits )
+      @s.combinational
+      def comb_logic():
+        s.temp.v = s.in_
+        s.out.v  = s.temp
     # Temporary workaround
     #@s.combinational
     #def comb_logic():
@@ -286,7 +281,6 @@ class WriteThenReadWire( Model ):
     #def comb_logic():
     #  s.out.v  = s.temp
 
-def test_WriteThenReadWire( setup_sim ):
   model      = WriteThenReadWire( 16 )
   model, sim = setup_sim( model )
   for i in range( 10 ):
@@ -296,3 +290,25 @@ def test_WriteThenReadWire( setup_sim ):
     assert model.out == i
 
 
+@pytest.mark.xfail
+def test_BitsSensitivityListBug( setup_sim ):
+
+  class Temp( Model ):
+    def __init__( s, nbits ):
+      s.in_  = InPort ( nbits )
+      s.out  = OutPort( nbits )
+      s.a    = Bits   ( nbits )
+      @s.combinational
+      def comb_logic():
+        s.a     = s.in_
+        s.out.v = s.in_
+    def line_trace( s ):
+      return '{} ({}) {}'.format( s.in_, s.a, s.out )
+
+  model      = Temp( 16 )
+  model, sim = setup_sim( model )
+  # fill up the pipeline
+  for i in range( 10 ):
+    model.in_.value  = i
+    sim.cycle()
+    assert model.out == i
