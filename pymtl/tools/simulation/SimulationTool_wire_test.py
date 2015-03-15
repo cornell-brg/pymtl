@@ -290,8 +290,12 @@ def test_WriteThenReadWire( setup_sim ):
     assert model.out == i
 
 
+#-----------------------------------------------------------------------
+# BitsSensitivityListBugStore
+#-----------------------------------------------------------------------
+# Test to trigger bug where a Bits object is written to.
 @pytest.mark.xfail
-def test_BitsSensitivityListBug( setup_sim ):
+def test_BitsSensitivityListBugStore( setup_sim ):
 
   class Temp( Model ):
     def __init__( s, nbits ):
@@ -300,8 +304,8 @@ def test_BitsSensitivityListBug( setup_sim ):
       s.a    = Bits   ( nbits )
       @s.combinational
       def comb_logic():
-        s.a     = s.in_
-        s.out.v = s.in_
+        s.a         = s.in_
+        s.out.value = s.in_
     def line_trace( s ):
       return '{} ({}) {}'.format( s.in_, s.a, s.out )
 
@@ -312,3 +316,32 @@ def test_BitsSensitivityListBug( setup_sim ):
     model.in_.value  = i
     sim.cycle()
     assert model.out == i
+
+#-----------------------------------------------------------------------
+# BitsSensitivityListBugLoad
+#-----------------------------------------------------------------------
+# Test to trigger bug where a Bits object is read from.
+@pytest.mark.xfail
+def test_BitsSensitivityListBugLoad( setup_sim ):
+
+  class Temp( Model ):
+    def __init__( s, nbits ):
+      s.in_  = InPort ( nbits )
+      s.out  = OutPort( nbits )
+      s.out2 = OutPort( nbits )
+      s.b    = Bits   ( nbits, 5 )
+      @s.combinational
+      def comb_logic():
+        s.out .value = s.in_
+        s.out2.value = s.b
+    def line_trace( s ):
+      return '{} ({}) {}'.format( s.in_, s.a, s.out )
+
+  model      = Temp( 16 )
+  model, sim = setup_sim( model )
+  # fill up the pipeline
+  for i in range( 10 ):
+    model.in_.value  = i
+    sim.cycle()
+    assert model.out  == i
+    assert model.out2 == 5
