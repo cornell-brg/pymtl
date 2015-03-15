@@ -38,7 +38,7 @@ def mk_test_case_table( raw_test_case_table ):
 # run sim
 #-------------------------------------------------------------------------
 
-def run_sim( model, dump_vcd=None, test_verilog=False ):
+def run_sim( model, dump_vcd=None, test_verilog=False, max_cycles=5000 ):
 
   # Setup the model
 
@@ -58,13 +58,13 @@ def run_sim( model, dump_vcd=None, test_verilog=False ):
 
   # Run simulation
 
-  while not model.done() and sim.ncycles < 5000:
+  while not model.done() and sim.ncycles < max_cycles:
     sim.print_line_trace()
     sim.cycle()
 
   # Force a test failure if we timed out
 
-  assert sim.ncycles < 5000
+  assert sim.ncycles < max_cycles
 
   # Extra ticks to make VCD easier to read
 
