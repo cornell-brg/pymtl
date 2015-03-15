@@ -296,7 +296,7 @@ def test_WriteThenReadWire( setup_sim ):
 # Test to trigger bug where a Bits object is written to.
 def test_BitsSensitivityListBugStore( setup_sim ):
 
-  class Temp( Model ):
+  class BitsSensitivityListBugStore( Model ):
     def __init__( s, nbits ):
       s.in_  = InPort ( nbits )
       s.out  = OutPort( nbits )
@@ -308,7 +308,7 @@ def test_BitsSensitivityListBugStore( setup_sim ):
     def line_trace( s ):
       return '{} ({}) {}'.format( s.in_, s.a, s.out )
 
-  model      = Temp( 16 )
+  model      = BitsSensitivityListBugStore( 16 )
   model, sim = setup_sim( model )
   # fill up the pipeline
   for i in range( 10 ):
@@ -320,10 +320,9 @@ def test_BitsSensitivityListBugStore( setup_sim ):
 # BitsSensitivityListBugLoad
 #-----------------------------------------------------------------------
 # Test to trigger bug where a Bits object is read from.
-@pytest.mark.xfail
 def test_BitsSensitivityListBugLoad( setup_sim ):
 
-  class Temp( Model ):
+  class BitsSensitivityListBugLoad( Model ):
     def __init__( s, nbits ):
       s.in_  = InPort ( nbits )
       s.out  = OutPort( nbits )
@@ -336,7 +335,7 @@ def test_BitsSensitivityListBugLoad( setup_sim ):
     def line_trace( s ):
       return '{} ({}) {}'.format( s.in_, s.a, s.out )
 
-  model      = Temp( 16 )
+  model      = BitsSensitivityListBugLoad( 16 )
   model, sim = setup_sim( model )
   # fill up the pipeline
   for i in range( 10 ):

@@ -221,6 +221,8 @@ def register_comb_blocks( model, event_queue ):
   # entries for each item in the function's sensitivity list to
   # svalue_callbacks
   # TODO: merge this code with above to reduce mem of data structures?
+  # TODO: sensitivity_list contains duplicate items if a signal is
+  #       accessed via slices or bitstruct accesses, use set instead?
 
   for func_ptr, sensitivity_list in model._newsenses.items():
     func_ptr.id = event_queue.get_id()
@@ -258,9 +260,18 @@ def _add_senses( func, model, name ):
     for i, o in enumerate( obj_list ):
       obj_name = "{}[{}]{}".format( list_name, i, attr )
       _add_senses( func, model, obj_name )
+
   # If this is a signal value, add it to the sensitivity list
   elif isinstance( obj, SignalValue ):
-    model._newsenses[ func ].append( obj._target_bits )
+
+    # Distinguish between attributes storing signals (InPort/OutPort/Wire)
+    # and SignalValues (e.g., Bits), by checking the _ucb attribute.
+    target_bits = obj._target_bits
+    if hasattr( target_bits, '_ucb' ):
+      model._newsenses[ func ].append( target_bits )
+    elif model._debug:
+      warnings.warn( "Cannot add SignalValue '{}' to sensitivity list."
+                     "".format( name ), Warning )
 
 #-----------------------------------------------------------------------
 # _attr_name_to_object
