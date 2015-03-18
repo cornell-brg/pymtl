@@ -58,6 +58,14 @@ class SomeMeta( MetaCollectArgs ):
     new_inst._param_dict = inst._param_dict
     new_inst._port_dict  = inst._port_dict
 
+    # TODO: THIS IS SUPER HACKY. FIXME
+    # This copies the user-defined line_trace method from the
+    # VerilogModel to the generated Python wrapper.
+    try:
+      new_inst.__class__.line_trace = inst.__class__.__dict__['line_trace']
+    except KeyError:
+      pass
+
     return new_inst
 
 #-----------------------------------------------------------------------
