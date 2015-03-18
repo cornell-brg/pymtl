@@ -529,7 +529,7 @@ class Mux( Model ):
   def __init__( s, nbits, nports ):
     s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
     s.out = OutPort( nbits )
-    s.sel = InPort ( get_sel_nbits( nbits ) )
+    s.sel = InPort ( get_sel_nbits( nports ) )
   def elaborate_logic( s ):
     @s.combinational
     def logic():
