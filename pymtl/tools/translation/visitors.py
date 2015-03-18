@@ -652,6 +652,11 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     if   obj in self.arrayelms:     return
     elif isinstance( obj, Signal ): self.store[ obj.fullname ] = obj
     elif isinstance( obj, tuple ):  self.loopvar.add( obj[0] )
+    # FIXME:
+    # - if one field of a bitstruct is assigned in a behavioral block,
+    #   the **entire** bitstruct is assumed to be a reg!
+    elif isinstance( obj, _SignalSlice ):
+      self.store[ obj._signal.fullname ] = obj._signal
 
   def visit_For( self, node ):
     assert isinstance( node.iter,   _ast.Slice )
