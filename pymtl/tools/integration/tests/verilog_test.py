@@ -202,8 +202,8 @@ def test_auto_Reg( nbits, all_verilog ):
       s.d = InPort ( p_nbits )
       s.q = OutPort( p_nbits )
 
-    #def line_trace():
-    #  return '{q} {d}'.format( **dir(s) )
+    def line_trace( s ):
+      return '{q} {d}'.format( **dir(s) )
 
   #---------------------------------------------------------------------
   # test
@@ -408,4 +408,46 @@ def test_chained_param_VerilogModel( dump_vcd, nbits, rst, all_verilog ):
     sim.cycle()
     sim.print_line_trace()
     assert m.q == pipeline[-1]
+
+#-----------------------------------------------------------------------
+# test_lint_warning
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize( "all_verilog", (True,False) )
+def test_lint_warning( dump_vcd, all_verilog ):
+
+  class AdderLintVRTL( VerilogModel ):
+    def __init__( s, nbits ):
+      s.in0  = InPort  ( nbits )
+      s.in1  = InPort  ( nbits )
+      s.cin  = InPort  ( 1     )
+      s.out  = OutPort ( nbits )
+      s.cout = OutPort ( 1     )
+    def line_trace( s ):
+      return '{in0}+{in1}+{cin} = {cout},{out}'.format( **s.__dict__ )
+
+  nbits = 8
+  m, sim = _sim_setup( AdderLintVRTL(nbits), all_verilog, dump_vcd )
+
+  randint = random.randint
+  def do_add( in0, in1, cin ):
+    in0  = Bits( nbits, in0 )
+    in1  = Bits( nbits, in1 )
+    cin  = Bits( 1,     cin )
+
+    m.in0.value, m.in1.value, m.cin.value = in0, in1, cin
+    sim.cycle()
+    #sim.print_line_trace()
+    print '{}+{}+{} = {},{}'.format( in0, in1, cin, m.cout, m.out )
+
+    # Check Results
+    temp = zext(in0,nbits+1) + zext(in1,nbits+1) + cin
+    assert m.out  == temp[0:nbits]
+    assert m.cout == temp[nbits]
+
+  # test random values
+  for i in range( 10 ):
+    do_add( randint(0,2**nbits-1), randint(0,2**nbits-1), randint(0,1) )
+
+  # test max
+  do_add( 2**nbits-1, 2**nbits-1, 1 )
 

@@ -41,12 +41,12 @@ class SomeMeta( MetaCollectArgs ):
     # >>> my_verilog_model = TranslationTool( MyVerilogModel( p1, p2 ) )
     #
 
-    new_inst = TranslationTool( inst )
+    new_inst = TranslationTool( inst, lint=True )
 
     # TODO: THIS IS SUPER HACKY. FIXME
     # We hack the TranslationTool model in all kinds of awful ways to make
     # it look like the original VerilogModel. This ensures the the
-    # translated Verilog code and thh generated Python wrapper looks the
+    # translated Verilog code and the generated Python wrapper looks the
     # same whether the parent design is just passed into SimulationTool,
     # or passed into TranslationTool first.
 
