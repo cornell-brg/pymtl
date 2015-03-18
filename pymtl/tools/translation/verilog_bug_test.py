@@ -2,6 +2,8 @@
 # verilog_bug_test.py
 #=======================================================================
 
+import pytest
+
 from pymtl import *
 
 pytestmark = requires_verilator
@@ -26,48 +28,51 @@ def setup_sim( model ):
 #-----------------------------------------------------------------------
 # test_bitstruct_tick_reg
 #-----------------------------------------------------------------------
-def test_bitstruct_tick_reg():
+@pytest.mark.parametrize(
+  'config', ['Tick','TickFields','Comb','CombFields']
+)
+def test_bitstruct_reg( config ):
 
-  class AssignBitStructTick( Model ):
-
-    def __init__( s ):
+  class AssignBitStruct( Model ):
+    def __init__( s, config=None ):
       s.in_ = InPort ( Point() )
       s.out = OutPort( Point() )
-      @s.tick_rtl
-      def block():
-        s.out.x.next = s.in_.x
-        s.out.y.next = s.in_.y
 
-  model, sim = setup_sim( AssignBitStructTick() )
+      if   config == 'Tick':
+        @s.tick_rtl
+        def block():
+          s.out.next = s.in_
+
+      elif config == 'TickFields':
+        @s.tick_rtl
+        def block():
+          s.out.x.next = s.in_.x
+          s.out.y.next = s.in_.y
+
+      elif config == 'Comb':
+        @s.combinational
+        def block():
+          s.out.value = s.in_
+
+      elif config == 'CombFields':
+        @s.combinational
+        def block():
+          s.out.x.value = s.in_.x
+          s.out.y.value = s.in_.y
+
+      else: raise Exception( 'Invalid config =', config )
+
+  # verify verilator simulation
+
+  model, sim = setup_sim( AssignBitStruct( config ) )
   for i in range( 10 ):
-    model.in_.x.value = i
-    model.in_.y.value = i
+    input_value       = concat( *2*[Bits(4,i)] )
+    model.in_.value   = input_value
     sim.cycle()
-    assert model.out == concat( *2*[Bits(4,i)] )
+    assert model.out == input_value
 
-  with open( model.__class__.__name__+'.v', 'r' ) as fp:
-    assert 'output reg' in fp.read()
-
-#-----------------------------------------------------------------------
-# test_bitstruct_comb_reg
-#-----------------------------------------------------------------------
-def test_bitstruct_comb_reg():
-
-  class AssignBitStructComb( Model ):
-    def __init__( s ):
-      s.in_ = InPort ( Point() )
-      s.out = OutPort( Point() )
-      @s.combinational
-      def block():
-        s.out.x.value = s.in_.x
-        s.out.y.value = s.in_.y
-
-  model, sim = setup_sim( AssignBitStructComb() )
-  for i in range( 10 ):
-    model.in_.x.value = i
-    model.in_.y.value = i
-    sim.eval_combinational()
-    assert model.out == concat( *2*[Bits(4,i)] )
+  # read verilog to verify our output signal is being declared as a reg
+  # (required by Synopsys design compiler)
 
   with open( model.__class__.__name__+'.v', 'r' ) as fp:
     assert 'output reg' in fp.read()
