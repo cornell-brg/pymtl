@@ -51,6 +51,7 @@ def test_Reg( nbits, all_verilog ):
   for i in range( 10 ):
     m.in_.value = i
     sim.cycle()
+    sim.print_line_trace()
     assert m.out == i
 
 #-----------------------------------------------------------------------
@@ -91,6 +92,7 @@ def test_ResetReg( nbits, rst, all_verilog ):
   for i in range( 10 ):
     m.in_.value = i
     sim.cycle()
+    sim.print_line_trace()
     assert m.out == i
 
 #-----------------------------------------------------------------------
@@ -139,6 +141,7 @@ def test_EnResetReg( nbits, rst, all_verilot ):
     m.in_.value = i
     m.en .value = en
     sim.cycle()
+    sim.print_line_trace()
     assert m.out == last
 
 #-----------------------------------------------------------------------
@@ -187,6 +190,7 @@ def test_EnResetReg( nbits, rst, all_verilog ):
     m.in_.value = i
     m.en .value = en
     sim.cycle()
+    sim.print_line_trace()
     assert m.out == last
 
 #-----------------------------------------------------------------------
@@ -203,12 +207,13 @@ def test_auto_Reg( nbits, all_verilog ):
       s.q = OutPort( p_nbits )
 
     def line_trace( s ):
-      return '{q} {d}'.format( **dir(s) )
+      return '{q} {d}'.format( **s.__dict__ )
 
   #---------------------------------------------------------------------
   # test
   #---------------------------------------------------------------------
 
+  print
   m, sim = _sim_setup( RegVRTL(nbits), all_verilog )
   for i in range( 10 ):
     m.d.value = i
@@ -245,6 +250,7 @@ def test_auto_EnResetReg( nbits, rst, all_verilog ):
     m.d  .value = i
     m.en .value = en
     sim.cycle()
+    sim.print_line_trace()
     assert m.q == last
 
 #-----------------------------------------------------------------------
@@ -284,6 +290,7 @@ def test_wrapped_VerilogModel( nbits, rst, all_verilog ):
     m.d  .value = i
     m.en .value = en
     sim.cycle()
+    sim.print_line_trace()
     assert m.q == last
 
 #-----------------------------------------------------------------------
@@ -425,29 +432,34 @@ def test_lint_warning( dump_vcd, all_verilog ):
     def line_trace( s ):
       return '{in0}+{in1}+{cin} = {cout},{out}'.format( **s.__dict__ )
 
+  # Linter warnings should cause Verilation to fail!
+
   nbits = 8
-  m, sim = _sim_setup( AdderLintVRTL(nbits), all_verilog, dump_vcd )
+  with pytest.raises( Exception ):
+    m, sim = _sim_setup( AdderLintVRTL(nbits), all_verilog, dump_vcd )
 
-  randint = random.randint
-  def do_add( in0, in1, cin ):
-    in0  = Bits( nbits, in0 )
-    in1  = Bits( nbits, in1 )
-    cin  = Bits( 1,     cin )
+  # Not necessary, Lint warning
 
-    m.in0.value, m.in1.value, m.cin.value = in0, in1, cin
-    sim.cycle()
-    #sim.print_line_trace()
-    print '{}+{}+{} = {},{}'.format( in0, in1, cin, m.cout, m.out )
+  #randint = random.randint
+  #def do_add( in0, in1, cin ):
+  #  in0  = Bits( nbits, in0 )
+  #  in1  = Bits( nbits, in1 )
+  #  cin  = Bits( 1,     cin )
 
-    # Check Results
-    temp = zext(in0,nbits+1) + zext(in1,nbits+1) + cin
-    assert m.out  == temp[0:nbits]
-    assert m.cout == temp[nbits]
+  #  m.in0.value, m.in1.value, m.cin.value = in0, in1, cin
+  #  sim.cycle()
+  #  sim.print_line_trace()
 
-  # test random values
-  for i in range( 10 ):
-    do_add( randint(0,2**nbits-1), randint(0,2**nbits-1), randint(0,1) )
+  #  # Check Results
+  #  temp = zext(in0,nbits+1) + zext(in1,nbits+1) + cin
+  #  assert m.out  == temp[0:nbits]
+  #  assert m.cout == temp[nbits]
 
-  # test max
-  do_add( 2**nbits-1, 2**nbits-1, 1 )
+  ## test random values
+  #print
+  #for i in range( 10 ):
+  #  do_add( randint(0,2**nbits-1), randint(0,2**nbits-1), randint(0,1) )
+
+  ## test max
+  #do_add( 2**nbits-1, 2**nbits-1, 1 )
 
