@@ -15,11 +15,12 @@ from verilator_cffi import verilog_to_pymtl
 #-----------------------------------------------------------------------
 # TranslationTool
 #-----------------------------------------------------------------------
-def TranslationTool( model_inst, werror=False ):
+def TranslationTool( model_inst, lint=False ):
   """Translates a PyMTL model into Python-wrapped Verilog.
 
   model_inst: an un-elaborated Model instance
-  werror:     make verilator lint warnings become errors (-Wno-fatal)
+  lint:       run verilator linter, warnings are fatal
+              (disables -Wno-lint flag)
   """
 
   model_inst.elaborate()
@@ -56,7 +57,7 @@ def TranslationTool( model_inst, werror=False ):
   if not cached:
     print( "NOT CACHED", verilog_file )
     verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file, vcd_file, werror )
+                      lib_file, py_wrapper_file, vcd_file, lint )
 
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )

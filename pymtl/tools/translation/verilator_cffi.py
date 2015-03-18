@@ -19,12 +19,12 @@ from ...model.PortBundle import PortBundle
 #-----------------------------------------------------------------------
 # Create a PyMTL compatible interface for Verilog HDL.
 def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file, vcd_file, werror ):
+                      lib_file, py_wrapper_file, vcd_file, lint ):
 
   model_name = model.class_name
 
   # Verilate the model  # TODO: clean this up
-  verilate_model( verilog_file, model_name, vcd_file, werror )
+  verilate_model( verilog_file, model_name, vcd_file, lint )
 
   # Add names to ports of module
   for port in model.get_ports():
@@ -45,7 +45,7 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
 #-----------------------------------------------------------------------
 # Convert Verilog HDL into a C++ simulator using Verilator.
 # http://www.veripool.org/wiki/verilator
-def verilate_model( filename, model_name, vcd_file, werror ):
+def verilate_model( filename, model_name, vcd_file, lint ):
 
   # verilator commandline template
 
@@ -57,7 +57,7 @@ def verilate_model( filename, model_name, vcd_file, werror ):
   source  = filename
   obj_dir = 'obj_dir_' + model_name
   flags   = ' '.join([
-              '-Wno-fatal' if not werror else '',
+              '-Wno-lint' if not lint else '',
               '-Wno-UNOPTFLAT',
               '--unroll-count 1000000',
               '--unroll-stmts 1000000',
