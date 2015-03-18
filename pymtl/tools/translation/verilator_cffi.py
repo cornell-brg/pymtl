@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 import os
+import shutil
 
 import verilog_structural
 from ...tools.simulation.vcd import get_vcd_timescale
@@ -46,22 +47,60 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
 # http://www.veripool.org/wiki/verilator
 def verilate_model( filename, model_name, vcd_file ):
 
-  verilator_flags = '-Wno-lint -Wno-UNOPTFLAT ' \
-                    '--unroll-count 1000000 --unroll-stmts 1000000'
-  if vcd_file:
-    verilator_flags += ' --trace'
+  # verilator commandline template
 
-  # NOTE: remove the obj_dir because issues with staleness...
-  cmd = 'rm -r obj_dir_{model_name}; '        \
-        'verilator -cc {source}'  \
-        '  -top-module {model_name} --Mdir obj_dir_{model_name} {opts}'  \
-        .format( source     = filename,
-                 model_name = model_name,
-                 opts       = verilator_flags,
-               )
+  compile_cmd = ( 'verilator -cc {source} -top-module {model_name} '
+                  '--Mdir {obj_dir} {flags}' )
 
-  print( cmd )
-  os.system( cmd )
+  # verilator commandline options
+
+  source  = filename
+  obj_dir = 'obj_dir_' + model_name
+  flags   = ' '.join([
+             #'-Wno-lint',
+             #'-Wno-fatal',
+              '-Wno-UNOPTFLAT',
+              '--unroll-count 1000000',
+              '--unroll-stmts 1000000',
+              '--trace' if vcd_file else '',
+            ])
+
+  # remove the obj_dir because issues with staleness
+
+  if os.path.exists( obj_dir ):
+    shutil.rmtree( obj_dir )
+
+  # create the verilator compile command
+
+  compile_cmd = compile_cmd.format( **vars() )
+
+  # try compilation
+
+  try:
+    print( compile_cmd )
+    result = check_output( compile_cmd, stderr=STDOUT, shell=True )
+    print( result )
+
+  # handle verilator failure
+
+  except CalledProcessError as e:
+    error_msg = """
+      Module did not Verilate!
+
+      Command:
+      {command}
+
+      Error:
+      {error}
+    """
+
+    # Source:
+    # \x1b[31m {source} \x1b[0m
+
+    raise Exception( error_msg.format(
+      command = e.cmd,
+      error   = e.output
+    ))
 
 #-----------------------------------------------------------------------
 # create_c_wrapper
@@ -174,7 +213,8 @@ def create_c_wrapper( model, c_wrapper_file, vcd_file ):
 #
 def create_shared_lib( model_name, c_wrapper_file, lib_file, vcd_file ):
 
-  # Compiler template string
+  # gcc template string
+
   compile_cmd  = 'g++ {flags} -I {include_dir} -o {libname} {cpp_sources}'
 
   flags        = '-O1 -fstrict-aliasing -fPIC -shared'
@@ -193,15 +233,20 @@ def create_shared_lib( model_name, c_wrapper_file, lib_file, vcd_file ):
                    'obj_dir_{model_name}/V{model_name}__Trace__Slow.cpp',
                  ]))
 
-  # Substitute flags in compiler string, then any remaining flags
+  # substitute flags in compiler string, then any remaining flags
+
   compile_cmd = compile_cmd.format( **vars() )
   compile_cmd = compile_cmd.format( model_name  = model_name,
                                     c_wrapper   = c_wrapper_file,
                                     include_dir = include_dir )
 
-  # Perform compilation
+  # try compilation
+
   try:
     result = check_output( compile_cmd.split() , stderr=STDOUT )
+
+  # handle gcc/llvm failure
+
   except CalledProcessError as e:
     error_msg = """
       Module did not compile!
