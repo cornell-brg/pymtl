@@ -38,7 +38,6 @@ class ThreeStageTick( Model ):
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
 
-  def elaborate_logic( s ):
     s.wire0   = Wire( s.nbits )
 
     @s.tick_rtl
@@ -62,7 +61,6 @@ class ThreeStagePosedge( Model ):
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
 
-  def elaborate_logic( s ):
     s.wire0   = Wire( s.nbits )
 
     @s.posedge_clk
@@ -85,8 +83,6 @@ class FiveStageTick( Model ):
     s.nbits   = nbits
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
-
-  def elaborate_logic( s ):
 
     s.wire0   = Wire( s.nbits )
 
@@ -122,8 +118,6 @@ class FiveStagePosedge( Model ):
     s.nbits   = nbits
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
-
-  def elaborate_logic( s ):
 
     s.wire0   = Wire( s.nbits )
 
@@ -161,8 +155,6 @@ class NStageTick( Model ):
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
 
-  def elaborate_logic( s ):
-
     s.wire = [ Wire( s.nbits ) for x in range( s.nstages ) ]
 
     s.connect( s.in_, s.wire[0]  )
@@ -190,8 +182,6 @@ class NStagePosedge( Model ):
     s.nstages = nstages
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
-
-  def elaborate_logic( s ):
 
     s.wire = [ Wire( s.nbits ) for x in range( s.nstages ) ]
 
@@ -226,8 +216,6 @@ class NStageComb( Model ):
     s.nstages = nstages
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
-
-  def elaborate_logic( s ):
 
     s.wire = [ Wire( s.nbits ) for x in range( s.nstages ) ]
 
@@ -343,3 +331,35 @@ def test_BitsSensitivityListBugLoad( setup_sim ):
     sim.cycle()
     assert model.out  == i
     assert model.out2 == 5
+
+#-----------------------------------------------------------------------
+# WireToWire
+#-----------------------------------------------------------------------
+# Tests to trigger bug where there are wire-to-wire connections.
+# NOTE: these only fail in Translated verilog due to incorrect write
+# directions.
+class WireToWire( Model ):
+  def __init__( s, nbits, test=None ):
+    s.in_  = InPort ( nbits )
+    s.out  = OutPort( nbits )
+
+    s.w0   = Wire( nbits )
+    s.w1   = Wire( nbits )
+
+    s.connect( s.in_, s.w0  )
+    #s.connect( s.w0,  s.w1  )
+    s.connect( s.w1,  s.out )
+
+def test_WireToWire1( setup_sim ):
+  model = WireToWire( 8, test=1 )
+  model.connect( model.w0, model.w1 )
+  model, sim = setup_sim( model )
+  for i in range( 10 ):
+    model.in_.value = i; sim.cycle(); assert model.out == i
+
+def test_WireToWire2( setup_sim ):
+  model = WireToWire( 8, test=2 )
+  model.connect( model.w1, model.w0 )
+  model, sim = setup_sim( model )
+  for i in range( 10 ):
+    model.in_.value = i; sim.cycle(); assert model.out == i

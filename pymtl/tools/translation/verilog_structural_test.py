@@ -51,6 +51,10 @@ pytestmark = requires_verilator
   test_NStagePosedge,
   test_NStageComb,
 
+
+  # FIXME: wire-to-wire connections do not try to infer directionality
+  test_WireToWire2,
+
 ]]
 
 #-----------------------------------------------------------------------
