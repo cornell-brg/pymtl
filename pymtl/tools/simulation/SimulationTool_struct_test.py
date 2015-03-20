@@ -4,6 +4,7 @@
 # Structural composition tests for the SimulationTool class.
 
 import pytest
+import pymtl.model.ConnectionEdge
 
 from pymtl import *
 
@@ -684,18 +685,15 @@ from ...model.PortBundle_test import InValRdyBundle, OutValRdyBundle
 # ListOfPortBundles
 #-----------------------------------------------------------------------
 # Test added to catch use case of a list of PortBundles.
-class ListOfPortBundlesStruct( Model ):
-  def __init__( s ):
-
-    s.in_ = [ InValRdyBundle ( 8 ) for x in range( 4 ) ]
-    s.out = [ OutValRdyBundle( 8 ) for x in range( 4 ) ]
-
-  def elaborate_logic( s ):
-
-    for i in range( 4 ):
-      s.connect( s.in_[ i ], s.out[ i ] )
-
 def test_ListOfPortBundles( setup_sim ):
+
+  class ListOfPortBundlesStruct( Model ):
+    def __init__( s ):
+      s.in_ = [ InValRdyBundle ( 8 ) for x in range( 4 ) ]
+      s.out = [ OutValRdyBundle( 8 ) for x in range( 4 ) ]
+      for i in range( 4 ):
+        s.connect( s.in_[ i ], s.out[ i ] )
+
   model      = ListOfPortBundlesStruct()
   model, sim = setup_sim( model )
   sim.reset()
@@ -712,4 +710,41 @@ def test_ListOfPortBundles( setup_sim ):
 
   for i in range( 4 ):
     assert model.out[ i ].msg.v == i
+
+#-----------------------------------------------------------------------
+# ConnectPairs
+#-----------------------------------------------------------------------
+def test_ConnectPairs( setup_sim ):
+  class ConnectPairs( Model ):
+    def __init__( s, config ):
+      s.a = InPort [ 4 ]( 8 )
+      s.b = OutPort[ 4 ]( 8 )
+      if config == 'good':
+        s.connect_pairs(
+          s.a[0], s.b[0],
+          s.a[1], s.b[1],
+          s.a[2], s.b[2],
+          s.a[3], s.b[3],
+        )
+      elif config == 'bad':
+        s.connect_pairs(
+          s.a[0], s.b[0],
+          s.a[1], s.b[1],
+          s.a[2], s.b[2],
+          s.a[3],
+        )
+
+  with pytest.raises( pymtl.model.ConnectionEdge.PyMTLConnectError ):
+    model      = ConnectPairs('bad')
+
+  model      = ConnectPairs('good')
+  model, sim = setup_sim( model )
+  sim.reset()
+  for i in range( 5 ):
+    for j in range( 4 ):  model.a[j].value = i+j
+    sim.cycle()
+    for j in range( 4 ):  model.b[j]      == i+j
+
+
+
 

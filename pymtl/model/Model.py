@@ -100,6 +100,44 @@ class Model( object ):
     #   self.connect_dict( left_port )
 
   #-----------------------------------------------------------------------
+  # connect_pairs
+  #-----------------------------------------------------------------------
+  def connect_pairs( self, *connections ):
+    """Structurally connect pairs of signals.
+
+    This provides a more concise syntax for interconnecting large
+    numbers of Signals by allowing the user to supply a series of signals
+    which are to be connected pairwise.
+
+    >>> s.connect_pairs(
+    >>>   s.mod.a, s.a,
+    >>>   s.mod.b, 0b11,
+    >>>   s.mod.c, s.x[4:5],
+    >>> )
+
+    Alternatively, a list of signals can be created and passed in:
+
+    >>> s.connect_pairs( *signal_list )
+
+    """
+    if len( connections ) & 1:
+      e    = 'An odd number of signals were provided!'
+      frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
+      msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
+      msg += '>'.join( lines )
+      raise PyMTLConnectError( msg )
+
+    citer = iter( connections )
+    for left_port, right_port in zip( citer, citer ):
+      try:
+        self.connect( left_port, right_port )
+      except PyMTLConnectError as e:
+       frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
+       msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
+       msg += '>'.join( lines )
+       raise PyMTLConnectError( msg )
+
+  #-----------------------------------------------------------------------
   # connect_dict
   #-----------------------------------------------------------------------
   def connect_dict( self, connections ):
