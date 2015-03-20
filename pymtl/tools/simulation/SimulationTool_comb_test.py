@@ -946,6 +946,30 @@ def test_GlobalConstants( setup_sim ):
   assert model.out == 7
 
 #-----------------------------------------------------------------------
+# GlobalConstantsBits
+#-----------------------------------------------------------------------
+CONSTANT_C = Bits(8, 4)
+CONSTANT_D = Bits(8, 7)
+def test_GlobalConstantsBits( setup_sim ):
+  class GlobalConstantsBits( Model ):
+    def __init__( s ):
+      s.sel = InPort ( 1 )
+      s.out = OutPort( 8 )
+    def elaborate_logic( s ):
+      @s.combinational
+      def logic():
+        s.out.value = CONSTANT_C if s.sel else CONSTANT_D
+
+  model      = GlobalConstantsBits()
+  model, sim = setup_sim( model )
+  model.sel.value = 1
+  sim.eval_combinational()
+  assert model.out == 4
+  model.sel.value = 0
+  sim.eval_combinational()
+  assert model.out == 7
+
+#-----------------------------------------------------------------------
 # IntTemporaries
 #-----------------------------------------------------------------------
 class IntTemporaries( Model ):
