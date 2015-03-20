@@ -84,6 +84,17 @@ class Model( object ):
 
     >>> s.connect( s.my_bundle_a, s.my_bundle_b )
     """
+    if isinstance( left_port, Wire ) and isinstance( right_port, Wire ):
+      e    = ("Connecting two Wire signals is not supported!\n"
+              "If you are certain this is something you really need to do, "
+              "use connect_wire instead:\n\n "
+              "  # translation will fail if directionality is wrong!!!\n"
+              "  connect_wire( dest = <s.out>, src = <s.in_> )"
+             )
+      frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
+      msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
+      msg += '>'.join( lines )
+      raise PyMTLConnectError( msg )
 
     try:
       if  isinstance( left_port, PortBundle ):
@@ -163,6 +174,26 @@ class Model( object ):
        msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
        msg += '>'.join( lines )
        raise PyMTLConnectError( msg )
+
+  #---------------------------------------------------------------------
+  # connect_wire
+  #---------------------------------------------------------------------
+  def connect_wire( self, dest=None, src=None ):
+    """Structurally connect two Wires where direction must be specified.
+
+    Directly connecting two Wires is not encouraged in PyMTL modeling.
+    Typically, intermediate Wires objects should not be needed for
+    structural connectivity since Ports can be directly connected, and
+    Wires are primarily intended for communicating values between
+    behavioral blocks within a Model.
+
+    If you are certain you want to structurally connect two Wires, you
+    must use connect_wire() to explicitly specify the directionality.
+
+    >>> s.connect_wire( dest = s.port_a, src = s.port_b )
+    """
+
+    self._connect_signal( src, dest )   # expects the src first
 
   #-----------------------------------------------------------------------
   # connect_auto

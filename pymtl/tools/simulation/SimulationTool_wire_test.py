@@ -4,6 +4,7 @@
 # Tests using wires for the SimulationTool class.
 
 import pytest
+import pymtl.model.ConnectionEdge
 
 from pymtl import *
 
@@ -337,7 +338,7 @@ def test_BitsSensitivityListBugLoad( setup_sim ):
 #-----------------------------------------------------------------------
 # Tests to trigger bug where there are wire-to-wire connections.
 # NOTE: these only fail in Translated verilog due to incorrect write
-# directions.
+#       directions.
 class WireToWire( Model ):
   def __init__( s, nbits, test=None ):
     s.in_  = InPort ( nbits )
@@ -347,19 +348,31 @@ class WireToWire( Model ):
     s.w1   = Wire( nbits )
 
     s.connect( s.in_, s.w0  )
-    #s.connect( s.w0,  s.w1  )
+    if test == 'raise_bad':  s.connect( s.w0,  s.w1  )
+    if test == 'raise_good': s.connect( s.w1,  s.w0  )
+    if test == 'bad':        s.connect_wire( dest=s.w0, src=s.w1  )
+    if test == 'good':       s.connect_wire( dest=s.w1, src=s.w0  )
     s.connect( s.w1,  s.out )
 
 def test_WireToWire1( setup_sim ):
-  model = WireToWire( 8, test=1 )
-  model.connect( model.w0, model.w1 )
+
+  with pytest.raises( pymtl.model.ConnectionEdge.PyMTLConnectError ):
+    model = WireToWire( 8, test='raise_good' )
+  model = WireToWire( 8, test='good' )
+
   model, sim = setup_sim( model )
   for i in range( 10 ):
     model.in_.value = i; sim.cycle(); assert model.out == i
 
+@pytest.mark.xfail(
+  reason=("Provided directionality is incorrect. We'd really like this to"
+         " fail at simulation time, but expensive to check.")
+)
 def test_WireToWire2( setup_sim ):
-  model = WireToWire( 8, test=2 )
-  model.connect( model.w1, model.w0 )
+
+  with pytest.raises( pymtl.model.ConnectionEdge.PyMTLConnectError ):
+    model = WireToWire( 8, test='raise_bad' )
+  model = WireToWire( 8, test='bad' )
   model, sim = setup_sim( model )
   for i in range( 10 ):
     model.in_.value = i; sim.cycle(); assert model.out == i
