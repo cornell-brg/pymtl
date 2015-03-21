@@ -29,6 +29,13 @@ class InValRdyQueueAdapter (object):
   def first( s ):
     return s.data[0]
 
+  def clear( s ):
+    s.data.clear()
+    s.in_.rdy.next = 1
+
+  def __len__( s ):
+    return len(s.data)
+
   def xtick( s ):
     if s.in_.rdy and s.in_.val:
       s.data.append( deepcopy(s.in_.msg) )
@@ -53,6 +60,13 @@ class OutValRdyQueueAdapter (object):
     if len( s.data ) != 0:
       s.out.msg.next = s.data[0]
     s.out.val.next = ( len( s.data ) != 0 )
+
+  def clear( s ):
+    s.data.clear()
+    s.out.val.next = 0
+
+  def __len__( s ):
+    return len(s.data)
 
   def xtick( s ):
     if s.out.rdy and s.out.val:
