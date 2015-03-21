@@ -5,13 +5,10 @@
 # interface and an output val/rdy interface.
 #
 
-from pymtl        import *
-from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-
 import random
 
-# Fix the random seed so results are reproducible
-random.seed(0xdeadbeef)
+from pymtl      import *
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
 class TestRandomDelay( Model ):
 
@@ -19,10 +16,17 @@ class TestRandomDelay( Model ):
   # Constructor
   #-----------------------------------------------------------------------
 
-  def __init__( s, nbits = 1, max_random_delay = 0 ):
+  def __init__( s, nbits = 1, max_random_delay = 0, seed=0xb601bc01 ):
 
     s.in_  = InValRdyBundle ( nbits )
     s.out  = OutValRdyBundle( nbits )
+
+    # We keep our own internal random number generator to keep the state
+    # of this generator completely separate from other generators. This
+    # ensure that any delays are reproducable.
+
+    s.rgen = random.Random()
+    s.rgen.seed(seed)
 
     # If the maximum random delay is set to zero, then the inputs are
     # directly connected to the outputs.
@@ -72,7 +76,7 @@ class TestRandomDelay( Model ):
       if in_go:
         s.buf      = s.in_.msg[:]
         s.buf_full = True
-        s.counter  = random.randint( 1, s.max_random_delay )
+        s.counter  = s.rgen.randint( 1, s.max_random_delay )
 
       if s.counter > 0:
         s.counter = s.counter - 1

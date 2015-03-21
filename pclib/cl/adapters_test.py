@@ -71,10 +71,11 @@ class TestHarness (Model):
 # Test src/sink messages
 #-------------------------------------------------------------------------
 
-random.seed(0xdeadbeef)
+rgen = random.Random()
+rgen.seed(0x21a0728b)
 
 basic_msgs  = [ 0, 1, 2, 3, 4 ]
-random_msgs = [ random.randint(0,0xffff) for i in xrange(20) ]
+random_msgs = [ rgen.randint(0,0xffff) for i in xrange(20) ]
 
 #-------------------------------------------------------------------------
 # Test Case Table

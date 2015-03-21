@@ -6,7 +6,6 @@
 # bypass queue.
 
 from copy        import deepcopy
-from random      import random
 from collections import deque
 from pymtl       import *
 

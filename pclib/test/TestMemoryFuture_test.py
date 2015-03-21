@@ -8,8 +8,6 @@ import pytest
 import random
 import struct
 
-random.seed(0xdeadbeef)
-
 from pymtl            import *
 from pclib.test       import mk_test_case_table, run_sim
 from pclib.test       import TestSource, TestSink
@@ -164,7 +162,10 @@ def subword_wr_msgs( base_addr ):
 
 def random_msgs( base_addr ):
 
-  vmem = [ random.randint(0,0xffffffff) for i in xrange(20) ]
+  rgen = random.Random()
+  rgen.seed(0xa4e28cc2)
+
+  vmem = [ rgen.randint(0,0xffffffff) for i in xrange(20) ]
   msgs = []
 
   for i in xrange(20):
@@ -173,9 +174,9 @@ def random_msgs( base_addr ):
     ])
 
   for i in xrange(20):
-    idx = random.randint(0,19)
+    idx = rgen.randint(0,19)
 
-    if random.randint(0,1):
+    if rgen.randint(0,1):
 
       correct_data = vmem[idx]
       msgs.extend([
@@ -184,7 +185,7 @@ def random_msgs( base_addr ):
 
     else:
 
-      new_data = random.randint(0,0xffffffff)
+      new_data = rgen.randint(0,0xffffffff)
       vmem[idx] = new_data
       msgs.extend([
         req( 'wr', base_addr+4*idx, 0, new_data ), resp( 'wr', 0, 0 ),
@@ -242,9 +243,12 @@ def test_2port( test_params, dump_vcd ):
 
 def test_read_write_mem( dump_vcd ):
 
+  rgen = random.Random()
+  rgen.seed(0x05a3e95b)
+
   # Test data we want to write into memory
 
-  data = [ random.randint(-(2**31),2**31-1) for i in xrange(20) ]
+  data = [ rgen.randint(-(2**31),2**31-1) for i in xrange(20) ]
 
   # Convert test data into byte array
 
