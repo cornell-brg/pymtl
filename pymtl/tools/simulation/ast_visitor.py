@@ -118,6 +118,9 @@ class DetectMissingValueNext( ast.NodeVisitor ):
           # the combinational block without performing a real type
           # inference analysis pass.
           _temp = None
+        except IndexError as e:
+          # Empty list, nothing to do.
+          _temp = None
 
         # if the object stored in LHS is a Signal, raise a PyMTLError
         if isinstance( _temp, Signal ):
