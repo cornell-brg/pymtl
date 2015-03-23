@@ -38,8 +38,8 @@ import re
 from random      import randint, seed
 from collections import deque
 
-from pymtl import *
-from pclib import NetMsg
+from pymtl      import *
+from pclib.ifcs import NetMsg
 
 from MeshNetworkCL import MeshNetworkCL
 
@@ -219,9 +219,9 @@ def simulate( ModelType, injection_rate, route_compute, drain_limit,
     # advance simulation
 
     sim.cycle()
-    #if sim.ncycles % 100 == 1:
-    #  print( "{:4}: gen {:5} recv {:5}"
-    #         .format(sim.ncycles, packets_generated, all_packets_received) )
+    if sim.ncycles % 100 == 1:
+      print( "{:4}: gen {:5} recv {:5}"
+             .format(sim.ncycles, packets_generated, all_packets_received) )
 
     # print line trace if enables
 
