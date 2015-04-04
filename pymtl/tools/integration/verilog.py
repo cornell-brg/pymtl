@@ -13,7 +13,7 @@ from   ...model.metaclasses        import MetaCollectArgs
 from pymtl import *
 
 from ..translation.verilog_structural import (
-  tab, endl, port_delim, pretty_align,
+  mangle_name, tab, endl, port_delim, pretty_align,
   title_bar, header, start_mod, port_declarations, end_mod,
   start_param, end_param, start_ports, end_ports, connection,
 )
@@ -215,7 +215,8 @@ def _instantiate_verilog( model ):
 
   connections = []
   for verilog_portname, port in model._port_dict.items():
-    connections.append( connection.format( verilog_portname, port.name ) )
+    pymtl_port = mangle_name( port.name )
+    connections.append( connection.format( verilog_portname, pymtl_port ) )
   connections = pretty_align( connections, '(' )
 
   s  = tab + '// Imported Verilog source from:' + endl
