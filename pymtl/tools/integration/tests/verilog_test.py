@@ -101,55 +101,6 @@ def test_ResetReg( nbits, rst, all_verilog ):
 @pytest.mark.parametrize( "nbits,rst,all_verilog",
   [(4,0,True), (4,0,False), (128,8,True), (128,8,False)]
 )
-def test_EnResetReg( nbits, rst, all_verilot ):
-
-  class vc_EnResetReg( VerilogModel ):
-    modulename = 'vc_EnResetReg'
-    sourcefile = os.path.join( os.path.dirname(__file__),
-                               'vc-regs.v' )
-
-    def __init__( s, nbits, reset_value=0 ):
-      s.en  = InPort ( 1 )
-      s.in_ = InPort ( nbits )
-      s.out = OutPort( nbits )
-
-      s.set_params({
-        'p_nbits'       : nbits,
-        'p_reset_value' : reset_value,
-      })
-
-      s.set_ports({
-        'clk'   : s.clk,
-        'reset' : s.reset,
-        'en'    : s.en,
-        'd'     : s.in_,
-        'q'     : s.out,
-      })
-
-  #---------------------------------------------------------------------
-  # test
-  #---------------------------------------------------------------------
-
-  m, sim = _sim_setup( vc_EnResetReg(nbits,rst), all_verilog )
-  last = rst
-  assert m.out == rst
-
-  for i in range( 10 ):
-    en   = random.randint(0,1)
-    last = i if en else last
-
-    m.in_.value = i
-    m.en .value = en
-    sim.cycle()
-    sim.print_line_trace()
-    assert m.out == last
-
-#-----------------------------------------------------------------------
-# test_EnResetReg
-#-----------------------------------------------------------------------
-@pytest.mark.parametrize( "nbits,rst,all_verilog",
-  [(4,0,True), (4,0,False), (128,8,True), (128,8,False)]
-)
 def test_EnResetReg( nbits, rst, all_verilog ):
 
   class vc_EnResetReg( VerilogModel ):
