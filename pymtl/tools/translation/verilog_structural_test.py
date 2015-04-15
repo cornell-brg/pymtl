@@ -55,6 +55,10 @@ pytestmark = requires_verilator
   # FIXME: wire-to-wire connections do not try to infer directionality
   test_WireToWire2,
 
+  # FIXME: generated verilog wrappers can't import BitStructs defined in
+  #        a nested scope (not global)
+  test_BitStructLocal,
+
 ]]
 
 #-----------------------------------------------------------------------

@@ -6,7 +6,8 @@
 import pytest
 import pymtl.model.ConnectionEdge
 
-from pymtl import *
+from random import randrange
+from pymtl  import *
 
 from SimulationTool_comb_test import verify_bit_blast, set_ports
 from SimulationTool_seq_test  import setup_sim, local_setup_sim
@@ -744,6 +745,61 @@ def test_ConnectPairs( setup_sim ):
     for j in range( 4 ):  model.a[j].value = i+j
     sim.cycle()
     for j in range( 4 ):  model.b[j]      == i+j
+
+#=======================================================================
+# BitStructs
+#=======================================================================
+# Helper classes/methods.
+
+class BitStructGlobal( BitStructDefinition ):
+  def __init__( s, src_nbits, dest_nbits ):
+    s.src  = BitField(  src_nbits )
+    s.dest = BitField( dest_nbits )
+
+class BitStructConnect( Model ):
+  def __init__( s, MsgType ):
+    s.in_ = InPort ( MsgType )
+    s.out = OutPort( MsgType )
+    s.connect( s.in_.src,  s.out.dest )
+    s.connect( s.in_.dest, s.out.src  )
+
+def bitstruct_verifier( model, sim, src, dest ):
+  max_ = 2**src
+  for i in range( 10 ):
+    src, dest = randrange(0,max_), randrange(0,max_)
+    model.in_.src .value = src
+    model.in_.dest.value = dest
+    sim.cycle()
+    print model.in_.src,  model.out.src,  src
+    print model.in_.dest, model.out.dest, dest
+    assert model.out.src  == dest
+    assert model.out.dest == src
+
+#-----------------------------------------------------------------------
+# BitStructGlobal
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('src,dest', [(8,8),(16,16)])
+def test_BitStructGlobal( setup_sim, src, dest ):
+  model      = BitStructConnect( BitStructGlobal( src, dest ) )
+  model, sim = setup_sim( model )
+  bitstruct_verifier( model, sim, src, dest )
+
+#-----------------------------------------------------------------------
+# BitStructLocal
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('src,dest', [(8,8),(16,16)])
+def test_BitStructLocal( setup_sim, src, dest ):
+  class BitStructLocal( BitStructDefinition ):
+    def __init__( s, src_nbits, dest_nbits ):
+      s.src  = BitField(  src_nbits )
+      s.dest = BitField( dest_nbits )
+  model      = BitStructConnect( BitStructLocal( src, dest ) )
+  model, sim = setup_sim( model )
+  bitstruct_verifier( model, sim, src, dest )
+
+
+# alejandro innarutu
+# kevin thompson
 
 
 
