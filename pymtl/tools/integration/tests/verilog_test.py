@@ -205,6 +205,39 @@ def test_auto_EnResetReg( nbits, rst, all_verilog ):
     assert m.q == last
 
 #-----------------------------------------------------------------------
+# test_auto_EnResetReg_BitStruct
+#-----------------------------------------------------------------------
+class verilog_test_BitStruct( BitStructDefinition ):
+  def __init__( s, nbits ):
+    s.src  = BitField( nbits )
+    s.dest = BitField( nbits )
+
+@pytest.mark.parametrize( "nbits,rst,all_verilog",
+  [(4,0,True), (4,0,False), (128,8,True), (128,8,False)]
+)
+def test_auto_EnResetReg_BitStruct( nbits, rst, all_verilog ):
+
+  #---------------------------------------------------------------------
+  # test
+  #---------------------------------------------------------------------
+
+  MsgType= verilog_test_BitStruct( nbits )
+  m, sim = _sim_setup( EnResetRegVRTL(MsgType,rst), all_verilog )
+  last = rst
+  assert m.q == rst
+
+  for i in range( 10 ):
+    en   = random.randint(0,1)
+    last = i if en else last
+
+    m.d  .value = i
+    m.en .value = en
+    sim.cycle()
+    sim.print_line_trace()
+    assert m.q == last
+    assert concat(m.q.src, m.q.dest) == last
+
+#-----------------------------------------------------------------------
 # test_wrapped_VerilogModel
 #-----------------------------------------------------------------------
 @pytest.mark.parametrize( "nbits,rst,all_verilog",
