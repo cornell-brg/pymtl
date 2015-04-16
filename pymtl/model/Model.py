@@ -14,6 +14,7 @@ from ConnectionEdge import ConnectionEdge, PyMTLConnectError
 from signals        import Signal, InPort, OutPort, Wire, Constant
 from signal_lists   import PortList, WireList
 from PortBundle     import PortBundle
+from ..datatypes    import Bits
 
 #from physical      import PhysicalDimensions
 
@@ -557,6 +558,12 @@ class Model( object ):
 
     # Base name is always just the class name
     name = model.__class__.__name__
+
+    # TODO: huge hack, fix this!
+    for key, value in model._args.items():
+      if isinstance( value, Bits.Bits ):
+        print('\nWARNING: assuming Bits parameter wants .nbits, not .value')
+        model._args[ key ] = value.nbits
 
     # Generate a unique name for the Model instance based on its params
     # http://stackoverflow.com/a/5884123
