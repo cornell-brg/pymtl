@@ -5,14 +5,14 @@
 import collections
 import copy
 
-from pymtl      import *
-from pclib.ifcs import InValRdyBundle, OutValRdyBundle, mem_msgs
-
+from pymtl           import *
 from pymtl.datatypes import helpers
+from pclib.ifcs      import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs      import XcelReqMsg, XcelRespMsg
+from pclib.ifcs      import MemMsg, MemReqMsg, MemRespMsg
 from pisa            import PisaInst
 from pclib.fl        import Queue
-
-from accel.mvmult.mvmult_fl import InMatrixVecBundle,OutMatrixVecBundle
+from pclib.cl        import InValRdyQueueAdapter, OutValRdyQueueAdapter
 
 #-------------------------------------------------------------------------
 # Syntax Helpers
@@ -34,6 +34,8 @@ class WB (object):
   REGWR = 1
   LOAD  = 2
   STORE = 3
+  MTX   = 4
+  MFX   = 5
 
   LOAD_LW  = 0
   LOAD_LH  = 1
@@ -86,58 +88,58 @@ class ParcProcCL (Model):
     s.reset_vector = reset_vector
     s.test_en      = test_en
 
-    mreq_p  = mem_msgs.MemReqParams ( 32, 32 )
-    mresp_p = mem_msgs.MemRespParams( 32 )
+    # Proc/Mngr Interface
 
-    # Shorter names
+    s.mngr2proc  = InValRdyBundle( 32 )
+    s.proc2mngr  = OutValRdyBundle( 32 )
 
-    s.mk_req         = mreq_p.mk_req
-    s.mk_resp        = mresp_p.mk_resp
-    s.rd             = mreq_p.type_read
-    s.wr             = mresp_p.type_write
-    s.data_slice     = mresp_p.data_slice
-    s.data_nbytes    = mreq_p.data_nbits/8
+    # Instruction Memory Request/Response Interface
 
-    # TestProcManager Interface (only used when test_en=False)
+    s.imemreq    = OutValRdyBundle ( MemReqMsg(32,32) )
+    s.imemresp   = InValRdyBundle  ( MemRespMsg(32)   )
+
+    # Data Memory Request/Response Interface
+
+    s.dmemreq    = OutValRdyBundle ( MemReqMsg(32,32) )
+    s.dmemresp   = InValRdyBundle  ( MemRespMsg(32)   )
+
+    # Accelerator Interface
+
+    s.xcelreq    = OutValRdyBundle( XcelReqMsg() )
+    s.xcelresp   = InValRdyBundle( XcelRespMsg() )
+
+    # Extra Interface
 
     s.go        = InPort   ( 1  )
     s.status    = OutPort  ( 32 )
     s.stats_en  = OutPort  ( 1  )
     s.num_insts = OutPort  ( 32 )
 
-    # Proc/Mngr Interface
+    # Queue Adapters
 
-    s.mngr2proc  = OutValRdyBundle( 32 )
-    s.proc2mngr  = InValRdyBundle( 32 )
+    s.mngr2proc_q     = InValRdyQueueAdapter  ( s.mngr2proc )
+    s.proc2mngr_q     = OutValRdyQueueAdapter ( s.proc2mngr )
 
-    # Instruction Memory Request/Response Interface
+    s.imemreq_q       = OutValRdyQueueAdapter ( s.imemreq   )
+    s.imemresp_q      = InValRdyQueueAdapter  ( s.imemresp  )
 
-    s.imemreq    = OutValRdyBundle( mreq_p.nbits )
-    s.imemresp   = InValRdyBundle( mresp_p.nbits )
+    s.dmemreq_q       = OutValRdyQueueAdapter ( s.dmemreq   )
+    s.dmemresp_q      = InValRdyQueueAdapter  ( s.dmemresp  )
 
-    # Data Memory Request/Response Interface
+    s.xcelreq_q       = OutValRdyQueueAdapter ( s.xcelreq   )
+    s.xcelresp_q      = InValRdyQueueAdapter  ( s.xcelresp  )
 
-    s.dmemreq    = OutValRdyBundle( mreq_p.nbits )
-    s.dmemresp   = InValRdyBundle( mresp_p.nbits )
+    # Helpers to make memory read/write requests
 
-    # Coprocessor Interface
+    mem_ifc_types = MemMsg(32,32)
+    s.mk_rd = mem_ifc_types.req.mk_rd
+    s.mk_wr = mem_ifc_types.req.mk_wr
 
-    s.to_cp2   = OutValRdyBundle( 5+32 )
-    s.from_cp2 = InMatrixVecBundle()
+    # Pipeline queues
 
-    s.mngr2proc_queue = Queue(2)
-    s.proc2mngr_queue = Queue(1)
-
-    s.imemreq_queue  = Queue(1)
-    s.imemresp_queue = Queue(4)
-    s.dmemreq_queue  = Queue(1)
-    s.dmemresp_queue = Queue(4)
-
-    s.pc_queue_FX   = Queue(4)
-    s.inst_queue_XW = Queue(4)
-    s.wb_queue_XW   = Queue(4)
-
-    s.xcel_queue    = Queue(1)
+    s.pc_queue_FX     = Queue(4)
+    s.inst_queue_XW   = Queue(4)
+    s.wb_queue_XW     = Queue(4)
 
     s.R = ParcProcCL.RegisterFile()
 
@@ -151,7 +153,6 @@ class ParcProcCL (Model):
     s.WB_REGWR = 1
 
     s.ifetch_wait = 0
-    s.xcel_wait   = False
 
     # Reset
 
@@ -187,7 +188,7 @@ class ParcProcCL (Model):
       if entry.dest == reg:
         if entry.type == WB.REGWR:
           src = entry.value
-        elif entry.type == WB.LOAD:
+        elif entry.type in [ WB.LOAD, WB.MFX ]:
           s.stall_X = True
           s.stall_type_X = "b"
 
@@ -202,14 +203,14 @@ class ParcProcCL (Model):
       if entry.dest == reg0:
         if entry.type == WB.REGWR:
           src0 = entry.value
-        elif entry.type == WB.LOAD:
+        elif entry.type in [ WB.LOAD, WB.MFX ]:
           s.stall_X = True
           s.stall_type_X = "b"
 
       if entry.dest == reg1:
         if entry.type == WB.REGWR:
           src1 = entry.value
-        elif entry.type == WB.LOAD:
+        elif entry.type in [ WB.LOAD, WB.MFX ]:
           s.stall_X = True
           s.stall_type_X = "b"
 
@@ -225,13 +226,13 @@ class ParcProcCL (Model):
 
     s.ifetch_wait = \
         len(s.pc_queue_FX) \
-      - len(s.imemresp_queue) \
-      - len(s.imemreq_queue)
+      - len(s.imemresp_q) \
+      - len(s.imemreq_q)
 
     # Clear the front end queues
 
-    s.imemreq_queue.clear()
-    s.imemresp_queue.clear()
+    s.imemreq_q.clear()
+    s.imemresp_q.clear()
     s.pc_queue_FX.clear()
 
     # Update the PC
@@ -246,8 +247,8 @@ class ParcProcCL (Model):
 
     # CP0 register: mngr2proc
     if inst.rd == 1:
-      if not s.mngr2proc_queue.empty():
-        s.wb_queue_XW.enq( WB( inst.rt, s.mngr2proc_queue.deq() ) )
+      if not s.mngr2proc_q.empty():
+        s.wb_queue_XW.enq( WB( inst.rt, s.mngr2proc_q.deq() ) )
       else:
         s.stall_X = True
         s.stall_type_X = "M"
@@ -269,11 +270,11 @@ class ParcProcCL (Model):
 
     # CP0 register: proc2mngr
     elif inst.rd == 2:
-      if not s.proc2mngr_queue.full():
+      if not s.proc2mngr_q.full():
         RT = s.bypass1( inst.rt )
         if not s.stall_X:
           s.wb_queue_XW.enq( WB() )
-          s.proc2mngr_queue.enq( RT )
+          s.proc2mngr_q.enq( RT )
       else:
         s.stall_X = True
         s.stall_type_X = "M"
@@ -472,9 +473,9 @@ class ParcProcCL (Model):
   def execute_lw( s, inst ):
     RS = s.bypass1( inst.rs )
     if not s.stall_X:
-      if not s.dmemreq_queue.full():
+      if not s.dmemreq_q.full():
         addr = RS + sext(inst.imm)
-        s.dmemreq_queue.enq( s.mk_req( s.rd, addr, 0, 0 ) )
+        s.dmemreq_q.enq( s.mk_rd( addr, 0 ) )
         s.wb_queue_XW.enq( WB( inst.rt, type_=WB.LOAD, load_type=WB.LOAD_LW ) )
       else:
         s.stall_X = True
@@ -483,9 +484,9 @@ class ParcProcCL (Model):
   def execute_lh( s, inst ):
     RS = s.bypass1( inst.rs )
     if not s.stall_X:
-      if not s.dmemreq_queue.full():
+      if not s.dmemreq_q.full():
         addr = RS + sext(inst.imm)
-        s.dmemreq_queue.enq( s.mk_req( s.rd, addr, 2, 0 ) )
+        s.dmemreq_q.enq( s.mk_rd( addr, 2 ) )
         s.wb_queue_XW.enq( WB( inst.rt, type_=WB.LOAD, load_type=WB.LOAD_LH ) )
       else:
         s.stall_X = True
@@ -494,9 +495,9 @@ class ParcProcCL (Model):
   def execute_lhu( s, inst ):
     RS = s.bypass1( inst.rs )
     if not s.stall_X:
-      if not s.dmemreq_queue.full():
+      if not s.dmemreq_q.full():
         addr = RS + sext(inst.imm)
-        s.dmemreq_queue.enq( s.mk_req( s.rd, addr, 2, 0 ) )
+        s.dmemreq_q.enq( s.mk_rd( addr, 2 ) )
         s.wb_queue_XW.enq( WB( inst.rt, type_=WB.LOAD, load_type=WB.LOAD_LHU ) )
       else:
         s.stall_X = True
@@ -505,9 +506,9 @@ class ParcProcCL (Model):
   def execute_lb( s, inst ):
     RS = s.bypass1( inst.rs )
     if not s.stall_X:
-      if not s.dmemreq_queue.full():
+      if not s.dmemreq_q.full():
         addr = RS + sext(inst.imm)
-        s.dmemreq_queue.enq( s.mk_req( s.rd, addr, 1, 0 ) )
+        s.dmemreq_q.enq( s.mk_rd( addr, 1 ) )
         s.wb_queue_XW.enq( WB( inst.rt, type_=WB.LOAD, load_type=WB.LOAD_LB ) )
       else:
         s.stall_X = True
@@ -516,9 +517,9 @@ class ParcProcCL (Model):
   def execute_lbu( s, inst ):
     RS = s.bypass1( inst.rs )
     if not s.stall_X:
-      if not s.dmemreq_queue.full():
+      if not s.dmemreq_q.full():
         addr = RS + sext(inst.imm)
-        s.dmemreq_queue.enq( s.mk_req( s.rd, addr, 1, 0 ) )
+        s.dmemreq_q.enq( s.mk_rd( addr, 1 ) )
         s.wb_queue_XW.enq( WB( inst.rt, type_=WB.LOAD, load_type=WB.LOAD_LBU ) )
       else:
         s.stall_X = True
@@ -531,9 +532,9 @@ class ParcProcCL (Model):
   def execute_sw( s, inst ):
     RS,RT = s.bypass2( inst.rs, inst.rt )
     if not s.stall_X:
-      if not s.dmemreq_queue.full():
+      if not s.dmemreq_q.full():
         addr = RS + sext(inst.imm)
-        s.dmemreq_queue.enq( s.mk_req( s.wr, addr, 0, RT ) )
+        s.dmemreq_q.enq( s.mk_wr( addr, 0, RT ) )
         s.wb_queue_XW.enq( WB( type_=WB.STORE ) )
       else:
         s.stall_X = True
@@ -542,9 +543,9 @@ class ParcProcCL (Model):
   def execute_sh( s, inst ):
     RS,RT = s.bypass2( inst.rs, inst.rt )
     if not s.stall_X:
-      if not s.dmemreq_queue.full():
+      if not s.dmemreq_q.full():
         addr = RS + sext(inst.imm)
-        s.dmemreq_queue.enq( s.mk_req( s.wr, addr, 2, RT ) )
+        s.dmemreq_q.enq( s.mk_wr( addr, 2, RT ) )
         s.wb_queue_XW.enq( WB( type_=WB.STORE ) )
       else:
         s.stall_X = True
@@ -553,9 +554,9 @@ class ParcProcCL (Model):
   def execute_sb( s, inst ):
     RS,RT = s.bypass2( inst.rs, inst.rt )
     if not s.stall_X:
-      if not s.dmemreq_queue.full():
+      if not s.dmemreq_q.full():
         addr = RS + sext(inst.imm)
-        s.dmemreq_queue.enq( s.mk_req( s.wr, addr, 1, RT ) )
+        s.dmemreq_q.enq( s.mk_wr( addr, 1, RT ) )
         s.wb_queue_XW.enq( WB( type_=WB.STORE ) )
       else:
         s.stall_X = True
@@ -641,41 +642,26 @@ class ParcProcCL (Model):
         s.update_pc( pc + 4 + ( sext(inst.imm) << 2 ) )
 
   #-----------------------------------------------------------------------
-  # CP2 instructions
+  # Accelerator instructions
   #-----------------------------------------------------------------------
 
-  def execute_mtc2( s, inst ):
-
-    if s.xcel_wait:
-
-      if s.from_cp2.done:
-        s.xcel_wait = False
-        s.stall_X   = False
-        s.trace_X   = "#.".ljust(29)
+  def execute_mtx( s, inst ):
+    RT = s.bypass1( inst.rt )
+    if not s.stall_X:
+      if not s.xcelreq_q.full():
+        s.xcelreq_q.enq( XcelReqMsg().mk_wr( inst.rs, RT ) )
+        s.wb_queue_XW.enq( WB( 0, type_=WB.MTX ) )
       else:
         s.stall_X = True
-        s.trace_X = "#*".ljust(29)
+        s.stall_type_X = "x"
 
-    elif not s.xcel_queue.full():
-
-      RT = s.bypass1( inst.rt )
-      if not s.stall_X:
-
-        msg        = Bits(37)
-        msg[32:37] = inst.rd
-        msg[0:32]  = RT
-
-        s.wb_queue_XW.enq( WB() )
-        s.xcel_queue.enq( msg )
-
-        if inst.rd == 0:
-          s.xcel_wait    = True
-          s.stall_X      = True
-          s.stall_type_X = "*"
-
+  def execute_mfx( s, inst ):
+    if not s.xcelreq_q.full():
+      s.xcelreq_q.enq( XcelReqMsg().mk_rd( inst.rs ) )
+      s.wb_queue_XW.enq( WB( inst.rt, type_=WB.MFX ) )
     else:
       s.stall_X = True
-      s.stall_type_X = "2"
+      s.stall_type_X = "x"
 
   #-----------------------------------------------------------------------
   # exec
@@ -735,7 +721,8 @@ class ParcProcCL (Model):
     'bltz'  : execute_bltz,
     'bgez'  : execute_bgez,
 
-    'mtc2'  : execute_mtc2,
+    'mtx'   : execute_mtx,
+    'mfx'   : execute_mfx,
 
   }
 
@@ -752,34 +739,14 @@ class ParcProcCL (Model):
     @s.tick
     def logic():
 
-      # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      # Outgoing queues
-      # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-      if s.imemreq.val and s.imemreq.rdy:
-        s.imemreq_queue.deq()
-
-      if s.dmemreq.val and s.dmemreq.rdy:
-        s.dmemreq_queue.deq()
-
-      if s.proc2mngr.val and s.proc2mngr.rdy:
-        s.proc2mngr_queue.deq()
-
-      if s.to_cp2.val and s.to_cp2.rdy:
-        s.xcel_queue.deq()
-
-      # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      # Incoming queues
-      # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-      if s.imemresp.val and s.imemresp.rdy:
-        s.imemresp_queue.enq( s.imemresp.msg[0:32] )
-
-      if s.dmemresp.val and s.dmemresp.rdy:
-        s.dmemresp_queue.enq( s.dmemresp.msg[0:32] )
-
-      if s.mngr2proc.val and s.mngr2proc.rdy:
-        s.mngr2proc_queue.enq( s.mngr2proc.msg )
+      s.mngr2proc_q.xtick()
+      s.proc2mngr_q.xtick()
+      s.xcelreq_q.xtick()
+      s.xcelresp_q.xtick()
+      s.imemreq_q.xtick()
+      s.imemresp_q.xtick()
+      s.dmemreq_q.xtick()
+      s.dmemresp_q.xtick()
 
       # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       # W: Writeback Pipeline Stage
@@ -797,22 +764,22 @@ class ParcProcCL (Model):
           s.R[ wb.dest ] = wb.value
 
         elif wb.type == WB.LOAD:
-          if not s.dmemresp_queue.empty():
+          if not s.dmemresp_q.empty():
 
             if wb.load_type == WB.LOAD_LW:
-              s.R[wb.dest] = s.dmemresp_queue.deq()
+              s.R[wb.dest] = s.dmemresp_q.deq()
 
             elif wb.load_type == WB.LOAD_LH:
-              s.R[wb.dest] = sext( s.dmemresp_queue.deq()[0:16] )
+              s.R[wb.dest] = sext( s.dmemresp_q.deq()[0:16] )
 
             elif wb.load_type == WB.LOAD_LHU:
-              s.R[wb.dest] = zext( s.dmemresp_queue.deq()[0:16] )
+              s.R[wb.dest] = zext( s.dmemresp_q.deq()[0:16] )
 
             elif wb.load_type == WB.LOAD_LB:
-              s.R[wb.dest] = sext( s.dmemresp_queue.deq()[0:8] )
+              s.R[wb.dest] = sext( s.dmemresp_q.deq()[0:8] )
 
             elif wb.load_type == WB.LOAD_LBU:
-              s.R[wb.dest] = zext( s.dmemresp_queue.deq()[0:8] )
+              s.R[wb.dest] = zext( s.dmemresp_q.deq()[0:8] )
 
             else:
               raise AssertionError()
@@ -822,11 +789,25 @@ class ParcProcCL (Model):
             s.trace_W = "#m".ljust(5)
 
         elif wb.type == WB.STORE:
-          if not s.dmemresp_queue.empty():
-            s.dmemresp_queue.deq()
+          if not s.dmemresp_q.empty():
+            s.dmemresp_q.deq()
           else:
             s.stall_W = True
             s.trace_W = "#m".ljust(5)
+
+        elif wb.type == WB.MTX:
+          if not s.xcelresp_q.empty():
+            s.xcelresp_q.deq()
+          else:
+            s.stall_W = True
+            s.trace_W = "#x".ljust(5)
+
+        elif wb.type == WB.MFX:
+          if not s.xcelresp_q.empty():
+            s.R[wb.dest] = s.xcelresp_q.deq()
+          else:
+            s.stall_W = True
+            s.trace_W = "#x".ljust(5)
 
         if not s.stall_W:
           s.inst_queue_XW.deq()
@@ -841,25 +822,25 @@ class ParcProcCL (Model):
       if s.ifetch_wait > 0:
 
         s.trace_X = "~w{}".format(s.ifetch_wait).ljust(29)
-        if not s.imemresp_queue.empty():
-          inst = PisaInst(s.imemresp_queue.front())
+        if not s.imemresp_q.empty():
+          inst = PisaInst(s.imemresp_q.first())
           s.ifetch_wait -= 1
           s.trace_X = "~w{}".format(s.ifetch_wait).ljust(29)
-          s.imemresp_queue.deq()
+          s.imemresp_q.deq()
 
       elif     not s.pc_queue_FX.empty() \
-           and not s.imemresp_queue.empty() \
+           and not s.imemresp_q.empty() \
            and not s.inst_queue_XW.full() \
            and not s.wb_queue_XW.full():
 
         s.stall_X = False
-        inst = PisaInst(s.imemresp_queue.front())
+        inst = PisaInst(s.imemresp_q.first())
         s.execute_dispatch[inst.name]( s, inst )
 
         if not s.stall_X:
           if not s.pc_queue_FX.empty():
             s.pc_queue_FX.deq()
-            s.imemresp_queue.deq()
+            s.imemresp_q.deq()
           s.inst_queue_XW.enq( inst )
           s.trace_X = str(inst).ljust(29)
         else:
@@ -871,50 +852,18 @@ class ParcProcCL (Model):
 
       s.trace_F = "  ".ljust(8)
 
-      if s.imemreq_queue.full() and s.pc_queue_FX.full():
+      if s.imemreq_q.full() and s.pc_queue_FX.full():
         s.trace_F = "#X".ljust(8)
-      elif s.imemreq_queue.full():
+      elif s.imemreq_q.full():
         s.trace_F = "#m".ljust(8)
       elif s.pc_queue_FX.full():
         s.trace_F = "#x".ljust(8)
       else:
 
-        s.imemreq_queue.enq( s.mk_req( s.rd, s.PC, 0, 0 ) )
+        s.imemreq_q.enq( s.mk_rd( s.PC, 0 ) )
         s.pc_queue_FX.enq( s.PC )
         s.PC      += 4
         s.trace_F = str(s.PC)
-
-      # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      # Outgoing queues
-      # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-      s.imemreq.val.next = 0
-      if not s.imemreq_queue.empty() and s.go:
-        s.imemreq.val.next = 1
-        s.imemreq.msg.next = s.imemreq_queue.front()
-
-      s.dmemreq.val.next = 0
-      if not s.dmemreq_queue.empty():
-        s.dmemreq.val.next = 1
-        s.dmemreq.msg.next = s.dmemreq_queue.front()
-
-      s.proc2mngr.val.next = 0
-      if not s.proc2mngr_queue.empty():
-        s.proc2mngr.val.next = 1
-        s.proc2mngr.msg.next = s.proc2mngr_queue.front()
-
-      s.to_cp2.val.next = 0
-      if not s.xcel_queue.empty():
-        s.to_cp2.val.next = 1
-        s.to_cp2.msg.next = s.xcel_queue.front()
-
-      # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      # Incoming queues
-      # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-      s.imemresp.rdy.next  = s.imemresp_queue.num_empty_entries()  > 0
-      s.dmemresp.rdy.next  = s.dmemresp_queue.num_empty_entries()  > 0
-      s.mngr2proc.rdy.next = s.mngr2proc_queue.num_empty_entries() > 0
 
   #-----------------------------------------------------------------------
   # line_trace
@@ -922,3 +871,4 @@ class ParcProcCL (Model):
 
   def line_trace( s ):
     return s.trace_F + "|" + s.trace_X + "|" + s.trace_W
+
