@@ -441,15 +441,22 @@ def test_pisa_inst_bgez():
   check_sym( sym, 0x1000, "bgez r1, label_b", 0x0421fc00, "bgez  r01, fc00" )
 
 #-------------------------------------------------------------------------
-# CP2 instructions
+# Accelerator instructions
 #-------------------------------------------------------------------------
 
-def test_pisa_inst_mtc2():
-  check( "mtc2 r1, r0",   0x48810000, "mtc2  r01, r00" )
-  check( "mtc2 r01, r01", 0x48810800, "mtc2  r01, r01" )
-  check( "mtc2 r01,r2",   0x48811000, "mtc2  r01, r02" )
-  check( "mtc2 r11, r3",  0x488b1800, "mtc2  r11, r03" )
-  check( "mtc2 r29, r4",  0x489d2000, "mtc2  r29, r04" )
+def test_pisa_inst_mtxcel():
+  check( "mtx r1, r0",   0x48010000, "mtx   r01, r00, 000" )
+  check( "mtx r01, r01", 0x48210000, "mtx   r01, r01, 000" )
+  check( "mtx r01,r2",   0x48410000, "mtx   r01, r02, 000" )
+  check( "mtx r11, r3",  0x486b0000, "mtx   r11, r03, 000" )
+  check( "mtx r29, r4",  0x489d0000, "mtx   r29, r04, 000" )
+
+def test_pisa_inst_mfxcel():
+  check( "mfx r1, r0",   0x48010800, "mfx   r01, r00, 000" )
+  check( "mfx r01, r01", 0x48210800, "mfx   r01, r01, 000" )
+  check( "mfx r01,r2",   0x48410800, "mfx   r01, r02, 000" )
+  check( "mfx r11, r3",  0x486b0800, "mfx   r11, r03, 000" )
+  check( "mfx r29, r4",  0x489d0800, "mfx   r29, r04, 000" )
 
 #-------------------------------------------------------------------------
 # Test invalid formatting

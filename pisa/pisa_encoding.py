@@ -40,7 +40,7 @@ pisa_encoding_table = \
 
   [ "mfc0  rt, rc0",           0xffe007ff, 0x40000000 ],
   [ "mtc0  rt, rc0",           0xffe007ff, 0x40800000 ],
-  [ "nop",                     0xffffffff, 0x00000000 ],
+  [ "nop",                      0xffffffff, 0x00000000 ],
 
   # Register-register arithmetic, logical, and comparison instructions
 
@@ -113,9 +113,10 @@ pisa_encoding_table = \
   [ "bltz  rs, imm_btarg",     0xfc1f0000, 0x04000000 ],
   [ "bgez  rs, imm_btarg",     0xfc1f0000, 0x04010000 ],
 
-  # CP2 instructions
+  # Accelerator instructions
 
-  [ "mtc2  rt, rc2",           0xffe007ff, 0x48800000 ],
+  [ "mtx   rt, rs, xcel_id",   0xfc00f800, 0x48000000 ],
+  [ "mfx   rt, rs, xcel_id",   0xfc00f800, 0x48000800 ],
 
 ]
 
@@ -134,12 +135,13 @@ pisa_encoding_table = \
 # Define slice for each field
 #-------------------------------------------------------------------------
 
-pisa_field_slice_rs     = slice( 21, 26 )
-pisa_field_slice_rt     = slice( 16, 21 )
-pisa_field_slice_rd     = slice( 11, 16 )
-pisa_field_slice_imm    = slice(  0, 16 )
-pisa_field_slice_shamt  = slice(  6, 11 )
-pisa_field_slice_jtarg  = slice(  0, 26 )
+pisa_field_slice_rs      = slice( 21, 26 )
+pisa_field_slice_rt      = slice( 16, 21 )
+pisa_field_slice_rd      = slice( 11, 16 )
+pisa_field_slice_imm     = slice(  0, 16 )
+pisa_field_slice_shamt   = slice(  6, 11 )
+pisa_field_slice_jtarg   = slice(  0, 26 )
+pisa_field_slice_xcel_id = slice(  0, 11 )
 
 pisa_field_slice_opcode = slice( 26, 32 )
 pisa_field_slice_func   = slice(  0,  6 )
@@ -322,6 +324,18 @@ def disassemble_field_imm_btarg( bits ):
   return "{:0>4x}".format( bits[ pisa_field_slice_imm ].uint() )
 
 #-------------------------------------------------------------------------
+# xcel id assembly/disassembly functions
+#-------------------------------------------------------------------------
+
+def assemble_field_xcel_id( bits, sym, pc, field_str ):
+  xcel_id = int(field_str,0)
+  assert 0 <= xcel_id <= 2**10
+  bits[ pisa_field_slice_xcel_id ] = xcel_id
+
+def disassemble_field_xcel_id( bits ):
+  return "{:0>3x}".format( bits[ pisa_field_slice_xcel_id ].uint() )
+
+#-------------------------------------------------------------------------
 # Field Dictionary
 #-------------------------------------------------------------------------
 # Create a dictionary so we can lookup an assemble field function
@@ -340,6 +354,7 @@ pisa_fields = \
   "shamt"     : [ assemble_field_shamt,     disassemble_field_shamt     ],
   "jtarg"     : [ assemble_field_jtarg,     disassemble_field_jtarg     ],
   "imm_btarg" : [ assemble_field_imm_btarg, disassemble_field_imm_btarg ],
+  "xcel_id"   : [ assemble_field_xcel_id,   disassemble_field_xcel_id   ],
 }
 
 #=========================================================================
@@ -527,63 +542,65 @@ def decode_inst_name( inst ):
   func = pisa_field_slice_func
   rt   = pisa_field_slice_rt
   rs   = pisa_field_slice_rs
+  rd   = pisa_field_slice_rd
 
   inst_name = ""
 
-  if     inst       == 0:        inst_name = "nop"   #  2,
-  elif   inst[op]   == 0b001001: inst_name = "addiu" # 11,
-  elif   inst[op]   == 0b001101: inst_name = "ori"   # 13,
-  elif   inst[op]   == 0b001111: inst_name = "lui"   # 23,
-  elif   inst[op]   == 0b100011: inst_name = "lw"    # 29,
-  elif   inst[op]   == 0b101011: inst_name = "sw"    # 34,
-  elif   inst[op]   == 0b000011: inst_name = "jal"   # 38,
-  elif   inst[op]   == 0b000101: inst_name = "bne"   # 42,
-  elif   inst[op]   == 0b010000:                     #
-    if   inst[rs]   == 0b00100:  inst_name = "mtc0"  #  1,
-    elif inst[rs]   == 0b00000:  inst_name = "mfc0"  #  0,
-  elif   inst[op]   == 0b010010:                     #
-    if   inst[rs]   == 0b00100:  inst_name = "mtc2"  # 47,
-  elif   inst[op]   == 0b000000:                     #
-    if   inst[func] == 0b100001: inst_name = "addu"  #  3,
-    elif inst[func] == 0b001000: inst_name = "jr"    # 39,
-    elif inst[func] == 0b000000: inst_name = "sll"   # 17,
-    elif inst[func] == 0b000010: inst_name = "srl"   # 18,
-    elif inst[func] == 0b000011: inst_name = "sra"   # 19,
-    elif inst[func] == 0b000100: inst_name = "sllv"  # 20,
-    elif inst[func] == 0b000110: inst_name = "srlv"  # 21,
-    elif inst[func] == 0b000111: inst_name = "srav"  # 22,
-    elif inst[func] == 0b100011: inst_name = "subu"  #  4,
-    elif inst[func] == 0b100100: inst_name = "and"   #  5,
-    elif inst[func] == 0b100101: inst_name = "or"    #  6,
-    elif inst[func] == 0b100110: inst_name = "xor"   #  7,
-    elif inst[func] == 0b100111: inst_name = "nor"   #  8,
-    elif inst[func] == 0b101010: inst_name = "slt"   #  9,
-    elif inst[func] == 0b101011: inst_name = "sltu"  # 10,
-    elif inst[func] == 0b001001: inst_name = "jalr"  # 40,
-  elif   inst[op]   == 0b001100: inst_name = "andi"  # 12,
-  elif   inst[op]   == 0b001110: inst_name = "xori"  # 14,
-  elif   inst[op]   == 0b001010: inst_name = "slti"  # 15,
-  elif   inst[op]   == 0b001011: inst_name = "sltiu" # 16,
-  elif   inst[op]   == 0b011100: inst_name = "mul"   # 24,
-  elif   inst[op]   == 0b100111:                     #
-    if   inst[func] == 0b000101: inst_name = "div"   # 25,
-    elif inst[func] == 0b000111: inst_name = "divu"  # 26,
-    elif inst[func] == 0b000110: inst_name = "rem"   # 27,
-    elif inst[func] == 0b001000: inst_name = "remu"  # 28,
-  elif   inst[op]   == 0b100001: inst_name = "lh"    # 30,
-  elif   inst[op]   == 0b100101: inst_name = "lhu"   # 31,
-  elif   inst[op]   == 0b100000: inst_name = "lb"    # 32,
-  elif   inst[op]   == 0b100100: inst_name = "lbu"   # 33,
-  elif   inst[op]   == 0b101001: inst_name = "sh"    # 35,
-  elif   inst[op]   == 0b101000: inst_name = "sb"    # 36,
-  elif   inst[op]   == 0b000010: inst_name = "j"     # 37,
-  elif   inst[op]   == 0b000011: inst_name = "jal"   # 38,
-  elif   inst[op]   == 0b000100: inst_name = "beq"   # 41,
-  elif   inst[op]   == 0b000110: inst_name = "blez"  # 43,
-  elif   inst[op]   == 0b000111: inst_name = "bgtz"  # 44,
-  elif   inst[op]   == 0b000001:                     #
-    if   inst[rt]   == 0b00000:  inst_name = "bltz"  # 45,
-    elif inst[rt]   == 0b00001:  inst_name = "bgez"  # 46,
+  if     inst       == 0:        inst_name = "nop"    #  2,
+  elif   inst[op]   == 0b001001: inst_name = "addiu"  # 11,
+  elif   inst[op]   == 0b001101: inst_name = "ori"    # 13,
+  elif   inst[op]   == 0b001111: inst_name = "lui"    # 23,
+  elif   inst[op]   == 0b100011: inst_name = "lw"     # 29,
+  elif   inst[op]   == 0b101011: inst_name = "sw"     # 34,
+  elif   inst[op]   == 0b000011: inst_name = "jal"    # 38,
+  elif   inst[op]   == 0b000101: inst_name = "bne"    # 42,
+  elif   inst[op]   == 0b010000:                      #
+    if   inst[rs]   == 0b00100:  inst_name = "mtc0"   #  1,
+    elif inst[rs]   == 0b00000:  inst_name = "mfc0"   #  0,
+  elif   inst[op]   == 0b010010:                      #
+    if   inst[rd]   == 0b00000:  inst_name = "mtx"    # 47,
+    if   inst[rd]   == 0b00001:  inst_name = "mfx"    # 48,
+  elif   inst[op]   == 0b000000:                      #
+    if   inst[func] == 0b100001: inst_name = "addu"   #  3,
+    elif inst[func] == 0b001000: inst_name = "jr"     # 39,
+    elif inst[func] == 0b000000: inst_name = "sll"    # 17,
+    elif inst[func] == 0b000010: inst_name = "srl"    # 18,
+    elif inst[func] == 0b000011: inst_name = "sra"    # 19,
+    elif inst[func] == 0b000100: inst_name = "sllv"   # 20,
+    elif inst[func] == 0b000110: inst_name = "srlv"   # 21,
+    elif inst[func] == 0b000111: inst_name = "srav"   # 22,
+    elif inst[func] == 0b100011: inst_name = "subu"   #  4,
+    elif inst[func] == 0b100100: inst_name = "and"    #  5,
+    elif inst[func] == 0b100101: inst_name = "or"     #  6,
+    elif inst[func] == 0b100110: inst_name = "xor"    #  7,
+    elif inst[func] == 0b100111: inst_name = "nor"    #  8,
+    elif inst[func] == 0b101010: inst_name = "slt"    #  9,
+    elif inst[func] == 0b101011: inst_name = "sltu"   # 10,
+    elif inst[func] == 0b001001: inst_name = "jalr"   # 40,
+  elif   inst[op]   == 0b001100: inst_name = "andi"   # 12,
+  elif   inst[op]   == 0b001110: inst_name = "xori"   # 14,
+  elif   inst[op]   == 0b001010: inst_name = "slti"   # 15,
+  elif   inst[op]   == 0b001011: inst_name = "sltiu"  # 16,
+  elif   inst[op]   == 0b011100: inst_name = "mul"    # 24,
+  elif   inst[op]   == 0b100111:                      #
+    if   inst[func] == 0b000101: inst_name = "div"    # 25,
+    elif inst[func] == 0b000111: inst_name = "divu"   # 26,
+    elif inst[func] == 0b000110: inst_name = "rem"    # 27,
+    elif inst[func] == 0b001000: inst_name = "remu"   # 28,
+  elif   inst[op]   == 0b100001: inst_name = "lh"     # 30,
+  elif   inst[op]   == 0b100101: inst_name = "lhu"    # 31,
+  elif   inst[op]   == 0b100000: inst_name = "lb"     # 32,
+  elif   inst[op]   == 0b100100: inst_name = "lbu"    # 33,
+  elif   inst[op]   == 0b101001: inst_name = "sh"     # 35,
+  elif   inst[op]   == 0b101000: inst_name = "sb"     # 36,
+  elif   inst[op]   == 0b000010: inst_name = "j"      # 37,
+  elif   inst[op]   == 0b000011: inst_name = "jal"    # 38,
+  elif   inst[op]   == 0b000100: inst_name = "beq"    # 41,
+  elif   inst[op]   == 0b000110: inst_name = "blez"   # 43,
+  elif   inst[op]   == 0b000111: inst_name = "bgtz"   # 44,
+  elif   inst[op]   == 0b000001:                      #
+    if   inst[rt]   == 0b00000:  inst_name = "bltz"   # 45,
+    elif inst[rt]   == 0b00001:  inst_name = "bgez"   # 46,
 
   if inst_name == "":
     raise AssertionError( "Illegal instruction {}!".format(inst) )

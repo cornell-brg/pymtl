@@ -57,9 +57,11 @@ class PisaSemantics (object):
     self.mngr2proc_queue = mngr2proc_queue
     self.proc2mngr_queue = proc2mngr_queue
 
-    self.xcel_mvmult = xcel_mvmult
-
     self.R     = PisaSemantics.RegisterFile()
+
+    # Accelerator registers
+
+    self.xregs = [ Bits(32,0) for i in xrange(32) ]
 
     self.reset()
 
@@ -376,19 +378,15 @@ class PisaSemantics (object):
       s.PC += 4
 
   #-----------------------------------------------------------------------
-  # CP2 instructions
+  # Accelerator instructions
   #-----------------------------------------------------------------------
 
-  def execute_mtc2( s, inst ):
+  def execute_mtx( s, inst ):
+    s.xregs[inst.rs] = Bits( 32, s.R[inst.rt] )
+    s.PC += 4
 
-    if   inst.rd == 1: s.xcel_mvmult.set_size      ( s.R[inst.rt] )
-    elif inst.rd == 2: s.xcel_mvmult.set_src0_addr ( s.R[inst.rt] )
-    elif inst.rd == 3: s.xcel_mvmult.set_src1_addr ( s.R[inst.rt] )
-    elif inst.rd == 4: s.xcel_mvmult.set_dest_addr ( s.R[inst.rt] )
-
-    elif inst.rd == 0 and s.R[inst.rt] == 1:
-      s.xcel_mvmult.go()
-
+  def execute_mfx( s, inst ):
+    s.R[inst.rt] = Bits( 32, s.xregs[inst.rs] )
     s.PC += 4
 
   #-----------------------------------------------------------------------
@@ -449,7 +447,8 @@ class PisaSemantics (object):
     'bltz'  : execute_bltz,
     'bgez'  : execute_bgez,
 
-    'mtc2'  : execute_mtc2,
+    'mtx'   : execute_mtx,
+    'mfx'   : execute_mfx,
 
   }
 
