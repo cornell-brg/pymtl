@@ -8,13 +8,13 @@ import pytest
 import pisa
 import struct
 
-from pymtl        import *
-from pclib.test   import TestSource, TestSink, TestMemory
-from pclib.ifcs import mem_msgs
-from ParcProcFL   import ParcProcFL
+from pymtl         import *
+from pclib.test    import TestSource, TestSink
+from pclib.ifcs    import MemMsg
+from ParcProcFL    import ParcProcFL
+from GenericXcelFL import GenericXcelFL
 
-from accel.mvmult.mvmult_fl import MatrixVecFL
-from accel.mvmult.mvmult_cl import MatrixVecCL
+from pclib.test.TestMemoryFuture import TestMemory
 
 from pisa.pisa_inst_test_utils import asm_test
 
@@ -24,20 +24,15 @@ class TestHarness (Model):
   # constructor
   #-----------------------------------------------------------------------
 
-  def __init__( s, XcelModel, mem_delay ):
-
-    # Create parameters
-
-    memreq_p  = mem_msgs.MemReqParams(32,32)
-    memresp_p = mem_msgs.MemRespParams(32)
+  def __init__( s ):
 
     # Instantiate models
 
-    s.src    = TestSource  ( 32, [], 0 )
-    s.sink   = TestSink    ( 32, [], 0 )
-    s.proc   = ParcProcFL  ()
-    s.mem    = TestMemory  ( memreq_p, memresp_p, 3, mem_delay )
-    s.mvmult = XcelModel   ()
+    s.src    = TestSource    ( 32, [], 0 )
+    s.sink   = TestSink      ( 32, [], 0 )
+    s.proc   = ParcProcFL    ()
+    s.mem    = TestMemory    ( MemMsg(32,32), 3 )
+    s.xcel   = GenericXcelFL ()
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -59,13 +54,13 @@ class TestHarness (Model):
 
     # Processor <-> Accelerator
 
-    s.connect( s.proc.to_cp2,    s.mvmult.from_cpu )
-    s.connect( s.proc.from_cp2,  s.mvmult.to_cpu   )
+    s.connect( s.proc.xcelreq,   s.xcel.xcelreq    )
+    s.connect( s.proc.xcelresp,  s.xcel.xcelresp   )
 
     # Accelerator <-> Memory
 
-    s.connect( s.mvmult.memreq,  s.mem.reqs[2]     )
-    s.connect( s.mvmult.memresp, s.mem.resps[2]    )
+    # s.connect( s.mvmult.memreq,  s.mem.reqs[2]     )
+    # s.connect( s.mvmult.memresp, s.mem.resps[2]    )
 
   #-----------------------------------------------------------------------
   # load
@@ -97,14 +92,14 @@ class TestHarness (Model):
       else:
         start_addr = section.addr
         stop_addr  = section.addr + len(section.data)
-        self.mem.mem.mem[start_addr:stop_addr] = section.data
+        self.mem.mem[start_addr:stop_addr] = section.data
 
   #-----------------------------------------------------------------------
   # cleanup
   #-----------------------------------------------------------------------
 
   def cleanup( s ):
-    del s.mem.mem.mem[:]
+    del s.mem.mem[:]
 
   #-----------------------------------------------------------------------
   # done
@@ -118,21 +113,21 @@ class TestHarness (Model):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return s.src.line_trace()    + " > " + \
-           s.proc.line_trace()   + " " + \
-           s.mvmult.line_trace() + " " + \
-           s.mem.line_trace()    + " > " + \
+    return s.src.line_trace()  + " > " + \
+           s.proc.line_trace() + "|" + \
+           s.xcel.line_trace() + " " + \
+           s.mem.line_trace()  + " > " + \
            s.sink.line_trace()
 
 #-------------------------------------------------------------------------
 # run_test
 #-------------------------------------------------------------------------
 
-def run_test( gen_test, XcelModel=MatrixVecFL ):
+def run_test( gen_test ):
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( XcelModel, 0 )
+  model = TestHarness()
   model.elaborate()
 
   # Assemble the test program
@@ -955,24 +950,17 @@ def test_bgez( name, test ):
   run_test( test )
 
 #-------------------------------------------------------------------------
-# mtc2 (with functional-level mvmult impl)
+# mtx/mfx
 #-------------------------------------------------------------------------
 
-import pisa.pisa_inst_mtc2_test
+import pisa.pisa_inst_xcel_test
 
 @pytest.mark.parametrize( "name,test", [
-  asm_test( pisa.pisa_inst_mtc2_test.gen_basic_test ),
+  asm_test( pisa.pisa_inst_xcel_test.gen_basic_test      ),
+  asm_test( pisa.pisa_inst_xcel_test.gen_bypass_mtx_test ),
+  asm_test( pisa.pisa_inst_xcel_test.gen_bypass_mfx_test ),
+  asm_test( pisa.pisa_inst_xcel_test.gen_bypass_test     ),
 ])
-def test_mtc2_fl( name, test ):
+def test_mtx( name, test ):
   run_test( test )
-
-#-------------------------------------------------------------------------
-# mtc2 (with cycle-level mvmult impl)
-#-------------------------------------------------------------------------
-
-@pytest.mark.parametrize( "name,test", [
-  asm_test( pisa.pisa_inst_mtc2_test.gen_basic_test ),
-])
-def test_mtc2_cl( name, test ):
-  run_test( test, MatrixVecCL )
 

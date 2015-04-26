@@ -7,10 +7,6 @@
 #  -v --verbose  Verbose mode
 #     --trace    Turn on line tracing
 #
-#     --impl     Choose MatrixVec implementation (default fl)
-#                  fl : functional-level model
-#                  cl : cycle-level model
-#
 # The simulator will load the given ELF file. Assumes that the program
 # has been compiled such that the start of the program is at 0x1000. The
 # simulator will automatically add the following instructions at address
@@ -32,13 +28,13 @@ import sys
 import re
 import time
 
-from pymtl import *
-from pclib import *
-from pisa      import *
+from pymtl      import *
+from pisa       import *
+from pclib.test import TestSource, TestSink
+from pclib.ifcs import MemMsg
 
-from ParcProcFL import ParcProcFL
-from mvmult_fl  import MatrixVecFL
-from mvmult_cl  import MatrixVecCL
+from ParcProcFL    import ParcProcFL
+from GenericXcelFL import GenericXcelFL
 
 #-------------------------------------------------------------------------
 # Command line processing
@@ -83,20 +79,15 @@ class TestHarness (Model):
   # constructor
   #-----------------------------------------------------------------------
 
-  def __init__( s, XcelModel, mem_delay ):
-
-    # Create parameters
-
-    memreq_p  = mem_msgs.MemReqParams(32,32)
-    memresp_p = mem_msgs.MemRespParams(32)
+  def __init__( s, mem_delay ):
 
     # Instantiate models
 
-    s.src    = TestSource  ( 32, [], 0 )
-    s.sink   = TestSink    ( 32, [], 0 )
-    s.proc   = ParcProcFL  ( test_en=False )
-    s.mem    = TestMemory  ( memreq_p, memresp_p, 3, mem_delay )
-    s.mvmult = XcelModel   ()
+    s.src    = TestSource    ( 32, [], 0 )
+    s.sink   = TestSink      ( 32, [], 0 )
+    s.proc   = ParcProcFL    ( test_en=False )
+    s.mem    = TestMemory    ( MemMsg(32,32), 3 )
+    s.xcel   = GenericXcelFL ()
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -118,13 +109,13 @@ class TestHarness (Model):
 
     # Processor <-> Accelerator
 
-    s.connect( s.proc.to_cp2,    s.mvmult.from_cpu )
-    s.connect( s.proc.from_cp2,  s.mvmult.to_cpu   )
+    s.connect( s.proc.xcelreq,   s.xcel.xcelreq    )
+    s.connect( s.proc.xcelresp,  s.xcel.xcelresp   )
 
     # Accelerator <-> Memory
 
-    s.connect( s.mvmult.memreq,  s.mem.reqs[2]     )
-    s.connect( s.mvmult.memresp, s.mem.resps[2]    )
+    # s.connect( s.xcel.memreq,    s.mem.reqs[2]     )
+    # s.connect( s.xcel.memresp,   s.mem.resps[2]    )
 
   #-----------------------------------------------------------------------
   # load
@@ -150,10 +141,10 @@ class TestHarness (Model):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return s.src.line_trace()    + " > " + \
-           s.proc.line_trace()   + " " + \
-           s.mvmult.line_trace() + " " + \
-           s.mem.line_trace()    + " > " + \
+    return s.src.line_trace()  + " > " + \
+           s.proc.line_trace() + " " + \
+           s.xcel.line_trace() + " " + \
+           s.mem.line_trace()  + " > " + \
            s.sink.line_trace()
 
 #-------------------------------------------------------------------------
@@ -197,13 +188,6 @@ def main():
   binrewrite_mem_image = pisa_encoding.assemble( binrewrite_asm )
   binrewrite_bytes = binrewrite_mem_image.get_section(".text").data
   mem_image.add_section( ".binrewrite", 0x1008, binrewrite_bytes )
-
-  # Determine which model to use in the simulator
-
-  model_impl_dict = {
-    'fl' : MatrixVecFL,
-    'cl' : MatrixVecCL,
-  }
 
   # Instantiate and elaborate the model
 

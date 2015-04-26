@@ -5,23 +5,17 @@
 from __future__ import print_function
 
 import greenlet
+import types
 
 from pymtl      import *
-from pclib.ifcs import InValRdyBundle, OutValRdyBundle, mem_msgs
-
-from pclib.fl import (
-    GreenletWrapper,  BytesMemPortProxy,
-    InQueuePortProxy, OutQueuePortProxy
-)
+from pclib.ifcs import InValRdyBundle, OutValRdyBundle
+from pclib.ifcs import XcelReqMsg, XcelRespMsg
+from pclib.ifcs import MemMsg, MemReqMsg, MemRespMsg
+from pclib.fl   import InValRdyQueueAdapter, OutValRdyQueueAdapter
+from pclib.fl   import BytesMemPortAdapter
 
 from pisa import PisaSemantics
 from pisa import PisaInst
-
-from accel.mvmult.mvmult_fl import (
-     MatrixVecProxy,
-     InMatrixVecBundle,
-     OutMatrixVecBundle
-)
 
 class ParcProcFL( Model ):
 
@@ -34,56 +28,70 @@ class ParcProcFL( Model ):
     s.reset_vector = reset_vector
     s.test_en      = test_en
 
-    mreq_p  = mem_msgs.MemReqParams ( 32, 32 )
-    mresp_p = mem_msgs.MemRespParams( 32 )
+    # Proc/Mngr Interface
 
-    # TestProcManager Interface (only used when test_en=False)
+    s.mngr2proc  = InValRdyBundle  ( 32 )
+    s.proc2mngr  = OutValRdyBundle ( 32 )
+
+    # Instruction Memory Request/Response Interface
+
+    s.imemreq    = OutValRdyBundle ( MemReqMsg(32,32) )
+    s.imemresp   = InValRdyBundle  ( MemRespMsg(32)   )
+
+    # Data Memory Request/Response Interface
+
+    s.dmemreq    = OutValRdyBundle ( MemReqMsg(32,32) )
+    s.dmemresp   = InValRdyBundle  ( MemRespMsg(32)   )
+
+    # Accelerator Interface
+
+    s.xcelreq    = OutValRdyBundle ( XcelReqMsg()  )
+    s.xcelresp   = InValRdyBundle  ( XcelRespMsg() )
+
+    # Memory Proxy
+
+    s.imem = BytesMemPortAdapter( s.imemreq, s.imemresp )
+    s.dmem = BytesMemPortAdapter( s.dmemreq, s.dmemresp )
+
+    # Proc/Mngr Queue Adapters
+
+    s.mngr2proc_q  = InValRdyQueueAdapter  ( s.mngr2proc )
+    s.proc2mngr_q  = OutValRdyQueueAdapter ( s.proc2mngr )
+
+    # Accelerator Queue Adapters
+
+    s.xcelreq_q    = OutValRdyQueueAdapter ( s.xcelreq  )
+    s.xcelresp_q   = InValRdyQueueAdapter  ( s.xcelresp )
+
+    # Extra Interfaces
 
     s.go        = InPort   ( 1  )
     s.status    = OutPort  ( 32 )
     s.stats_en  = OutPort  ( 1  )
     s.num_insts = OutPort  ( 32 )
 
-    # Proc/Mngr Interface
-
-    s.mngr2proc  = OutValRdyBundle( 32 )
-    s.proc2mngr  = InValRdyBundle( 32 )
-
-    # Instruction Memory Request/Response Interface
-
-    s.imemreq    = OutValRdyBundle( mreq_p.nbits )
-    s.imemresp   = InValRdyBundle( mresp_p.nbits )
-
-    # Data Memory Request/Response Interface
-
-    s.dmemreq    = OutValRdyBundle( mreq_p.nbits )
-    s.dmemresp   = InValRdyBundle( mresp_p.nbits )
-
-    # Coprocessor Interface
-
-    s.to_cp2   = OutValRdyBundle( 5+32 )
-    s.from_cp2 = InMatrixVecBundle()
-
-    # Memory Proxy
-
-    s.imem = BytesMemPortProxy( mreq_p, mresp_p, s.imemreq, s.imemresp )
-    s.dmem = BytesMemPortProxy( mreq_p, mresp_p, s.dmemreq, s.dmemresp )
-
-    # Queue Proxies
-
-    s.mngr2proc_queue = InQueuePortProxy  ( s.mngr2proc )
-    s.proc2mngr_queue = OutQueuePortProxy ( s.proc2mngr )
-
-    # Accelerator Proxy
-
-    s.xcel_mvmult = MatrixVecProxy( s.to_cp2, s.from_cp2 )
-
     # Construct the ISA semantics object
 
-    s.isa = PisaSemantics( s.dmem,
-                           s.mngr2proc_queue,
-                           s.proc2mngr_queue,
-                           s.xcel_mvmult )
+    s.isa = PisaSemantics( s.dmem, s.mngr2proc_q, s.proc2mngr_q )
+
+    # We "monkey patch" the mtx/mfx execution functions so that they
+    # interact with the above queue adapters
+
+    def execute_mtx( s_, inst ):
+      s.xcelreq_q.append( XcelReqMsg().mk_wr( inst.rs, s_.R[inst.rt] ) )
+      xcelresp_msg = s.xcelresp_q.popleft()
+      s_.PC += 4
+
+    def execute_mfx( s_, inst ):
+      s.xcelreq_q.append( XcelReqMsg().mk_rd( inst.rs ) )
+      xcelresp_msg = s.xcelresp_q.popleft()
+      s_.R[inst.rt] = xcelresp_msg.data
+      s_.PC += 4
+
+    s.isa.execute_mtx = execute_mtx
+    s.isa.execute_mfx = execute_mfx
+    s.isa.execute_dispatch['mtx'] = s.isa.execute_mtx
+    s.isa.execute_dispatch['mfx'] = s.isa.execute_mfx
 
     # Reset
 
@@ -167,5 +175,5 @@ class ParcProcFL( Model ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return s.trace + " " + s.xcel_mvmult.line_trace()
+    return s.trace
 

@@ -4,5 +4,6 @@
 
 # List of single-class modules
 
-from ParcProcFL import ParcProcFL
+from ParcProcFL    import ParcProcFL
+from GenericXcelFL import GenericXcelFL
 
