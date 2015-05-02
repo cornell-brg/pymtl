@@ -72,6 +72,9 @@ pytestmark = requires_verilator
   (test_translation_slices13,
    'FIXME: my_signal[x*4:x*4+2+2] does not work!'),
 
+  (test_translation_true_false,
+   'FIXME: translate True and False keywords!'),
+
 ]]
 
 # Exception raises appear as print statements in Verilator
