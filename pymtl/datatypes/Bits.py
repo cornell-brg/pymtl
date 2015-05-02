@@ -34,9 +34,12 @@ class Bits( SignalValue ):
     self._mask = ( 1 << self.nbits ) - 1
     self.slice = slice( None )
 
-    if not trunc:
-      #assert nbits >= helpers.get_nbits( value )
-      assert self._min <= value <= self._max
+    if not trunc and not (self._min <= value <= self._max):
+      raise ValueError(
+        'Value is to big to be represented with Bits({})!\n'
+        "({} bits are needed to represent value = {} in two's complement.)"
+        .format( self.nbits, helpers.get_nbits(value), value )
+      )
 
     # Convert negative values into unsigned ints and store them
     value_uint = value if ( value >= 0 ) else ( ~(-value) + 1 )
@@ -182,9 +185,11 @@ class Bits( SignalValue ):
 
       # Verify our ranges are sane
       if not (start < stop):
-        raise IndexError('Start index is not less than stop index')
+        raise IndexError('Start index ({}) is not less than stop index ({})'
+                         .format(start, stop) )
       if not (0 <= start < stop <= self.nbits):
-        raise IndexError('Bits index out of range')
+        raise IndexError('Slice indices [{}:{}] out of range (0 - {})'
+                         .format(start, stop, self.nbits) )
 
       # Create a new Bits object containing the slice value and return it
       nbits = stop - start
@@ -199,7 +204,8 @@ class Bits( SignalValue ):
 
       # Verify the index is sane
       if not (0 <= addr < self.nbits):
-        raise IndexError('Bits index out of range')
+        raise IndexError('Bits index ({}) out of range (0 - {})'
+                         .format(addr, self.nbits) )
 
       # Create a new Bits object containing the bit value and return it
       value = (self._uint & (1 << addr)) >> addr
