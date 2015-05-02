@@ -330,3 +330,32 @@ def test_translation_true_false( setup_sim ):
     m.i.value = val
     sim.cycle()
     assert m.o == (val > 2)
+
+#-----------------------------------------------------------------------
+# translation_temporary_scope
+#-----------------------------------------------------------------------
+def test_translation_temporary_scope( setup_sim ):
+
+  class TestTranslationTemporaryScope( Model ):
+    def __init__( s ):
+      s.a = InPort ( 2 )
+      s.b = InPort ( 2 )
+      s.o = OutPort( 1 )
+      s.p = OutPort( 1 )
+      @s.combinational
+      def logic0():
+        temp = s.a > s.b
+        s.o.value = temp
+
+      @s.combinational
+      def logic1():
+        temp = s.b < s.a
+        s.p.value = temp
+
+  m, sim = setup_sim( TestTranslationTemporaryScope() )
+  for i in range(10):
+    a,b = [randrange(0,2**2) for _ in range(2)]
+    m.a.value, m.b.value = a, b
+    sim.cycle()
+    assert m.o == (1 if a > b else 0)
+    assert m.p == (1 if a > b else 0)

@@ -75,6 +75,9 @@ pytestmark = requires_verilator
   (test_translation_true_false,
    'FIXME: translate True and False keywords!'),
 
+  (test_translation_temporary_scope,
+   'FIXME: using identical temporary name in two blocks fails!'),
+
 ]]
 
 # Exception raises appear as print statements in Verilator
