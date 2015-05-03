@@ -307,6 +307,8 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   # visit_Name
   #-----------------------------------------------------------------------
   def visit_Name(self, node):
+    if   node.id == 'True' : return "1'b1"
+    elif node.id == 'False': return "1'b0"
     return node.id
 
   #-----------------------------------------------------------------------
