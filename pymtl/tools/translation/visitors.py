@@ -485,7 +485,20 @@ class InferTemporaryTypes( ast.NodeTransformer ):
     # First visit the RHS to update Name nodes that have been inferred
     self.visit( node.value )
 
-    assert len(node.targets) == 1
+    # Catch untranslatable constructs
+    if len(node.targets) != 1:
+      raise VerilogTranslationError(
+        'Chained assignments are not supported!\n'
+        'Please modify "x = y = ..." to be two separate lines.',
+        node.lineno
+      )
+
+    if isinstance(node.targets[0], (ast.Tuple)):
+      raise VerilogTranslationError(
+        'Multiple items on the left of an assignment are not supported!\n'
+        'Please modify "x,y = ..." to be two separate lines.',
+        node.lineno
+      )
 
     # Need this to visit potential temporaries used in slice indices!
     self.visit( node.targets[0] )

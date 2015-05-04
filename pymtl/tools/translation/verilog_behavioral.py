@@ -69,10 +69,22 @@ def translate_logic_blocks( model ):
     # If we run into a VerilogTranslationError, provide some more debug
     # information for the user, then re-raise the exception
     except Exception as e:
+      src, funclineno = inspect.getsourcelines( func )
+
+      error      = e.message
+      file_name  = inspect.getfile(func)
       class_name = model.class_name
       func_name  = func.func_name
-      msg  = 'Problem translating {}() in model {}:\n  {}' \
-             .format( func_name, class_name, e.message )
+      lineno     = funclineno + e.lineno - 1
+      srcline    = src[e.lineno-1]
+
+      msg  = ('\n{error}\n\n'
+              '> {srcline}\n'
+              'File:      {file_name}\n'
+              'Model:     {class_name}\n'
+              'Function:  {func_name}\n'
+              'Line:      {lineno}\n'
+              .format( **locals() ) )
       e.args = (msg,)
       raise
 
@@ -186,12 +198,22 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_Assign(self, node):
 
-    # TODO: implement multiple left hand targets?
-    assert len(node.targets) == 1
+    # NOTE: this should really be caught earlier
+    if len(node.targets) != 1 or isinstance(node.targets[0], (ast.Tuple)):
+      raise VerilogTranslationError(
+        'Assignments can only have one item on the left-hand side!\n'
+        'Please modify "x,y = ..." to be two separate lines.'
+      )
+
     lhs = self.visit( node.targets[0] )
     rhs = self.visit( node.value )
 
     return '{}{} {} {};\n'.format( self.indent, lhs, self.assign, rhs )
+
+  #-----------------------------------------------------------------------
+  # visit_Tuple
+  #-----------------------------------------------------------------------
+  #def visit_Tuple(self, node):
 
   #-----------------------------------------------------------------------
   # visit_AugAssign

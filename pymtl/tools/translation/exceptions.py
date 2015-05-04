@@ -3,7 +3,9 @@
 #-----------------------------------------------------------------------
 
 class VerilogTranslationError( Exception ):
-  pass
+  def __init__( self, message, lineno=None ):
+    super( VerilogTranslationError, self ).__init__( message )
+    self.lineno = lineno
 
 class VerilatorCompileError( Exception ):
   pass
