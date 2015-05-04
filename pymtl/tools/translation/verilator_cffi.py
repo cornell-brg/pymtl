@@ -13,6 +13,7 @@ from ...tools.simulation.vcd import get_vcd_timescale
 from subprocess          import check_output, STDOUT, CalledProcessError
 from ...model.signals    import InPort, OutPort
 from ...model.PortBundle import PortBundle
+from exceptions          import VerilatorCompileError
 
 #-----------------------------------------------------------------------
 # verilog_to_pymtl
@@ -96,7 +97,7 @@ def verilate_model( filename, model_name, vcd_file, lint ):
     # Source:
     # \x1b[31m {source} \x1b[0m
 
-    raise Exception( error_msg.format(
+    raise VerilatorCompileError( error_msg.format(
       command = e.cmd,
       error   = e.output
     ))

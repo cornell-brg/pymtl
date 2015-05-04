@@ -4,7 +4,8 @@
 
 import pytest
 
-from pymtl import *
+from pymtl      import *
+from exceptions import VerilatorCompileError
 
 pytestmark = requires_verilator
 
@@ -76,4 +77,20 @@ def test_bitstruct_reg( config ):
 
   with open( model.__class__.__name__+'.v', 'r' ) as fp:
     assert 'output reg' in fp.read()
+
+#-----------------------------------------------------------------------
+# test_verilator_compile_error
+#-----------------------------------------------------------------------
+def test_verilator_compile_error( ):
+  class TestVerilatorCompileError( Model ):
+    def __init__( s ):
+      s.in_ = InPort(8)
+      s.out = OutPort(8)
+      @s.combinational
+      def logic():
+        s.in_.value = s.out
+
+  with pytest.raises( VerilatorCompileError ):
+    model = TestVerilatorCompileError()
+    model, sim = setup_sim( model )
 

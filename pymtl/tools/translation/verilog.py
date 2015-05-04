@@ -11,6 +11,7 @@ import tempfile
 from subprocess         import check_output, STDOUT, CalledProcessError
 from verilog_structural import *
 from verilog_behavioral import translate_logic_blocks
+from exceptions         import IVerilogCompileError
 
 from ..integration      import verilog
 
@@ -98,10 +99,11 @@ def check_compile( model ):
       output.seek(0)
       verilog_src = output.read()
 
-      raise Exception( 'Module did not compile!\n\n'
-                       'Command:\n {}\n\n'
-                       'Error:\n {}'
-                       'Source:\n {}'
-                       .format( ' '.join(e.cmd), e.output, verilog_src )
-                     )
+      raise IVerilogCompileError(
+        'Module did not compile!\n\n'
+        'Command:\n {}\n\n'
+        'Error:\n {}'
+        'Source:\n {}'
+        .format( ' '.join(e.cmd), e.output, verilog_src )
+      )
 
