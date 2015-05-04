@@ -89,9 +89,9 @@ def test_bit_bounds_checking():
     x[-1] = 1
   with pytest.raises( IndexError ):
     x[4] = 1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x[0] = 2
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x[3] = -1
 
 def test_get_slice():
@@ -122,8 +122,14 @@ def test_set_slice():
   x[:3] = 0b110
   assert x.uint() == 0b0110
 
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x[1:3] = 0b110
+
+  x[:]   = 0b1111
+  assert x.uint() == 0b1111
+
+  with pytest.raises( ValueError ):
+    x[:]   = 0b10000
 
 def test_slice_bounds_checking():
 
