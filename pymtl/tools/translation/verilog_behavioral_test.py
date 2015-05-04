@@ -3,8 +3,10 @@
 #=======================================================================
 
 import pytest
+import functools
 
 from verilator_sim import TranslationTool
+from exceptions    import VerilogTranslationError
 
 #-----------------------------------------------------------------------
 # Test Config
@@ -23,7 +25,7 @@ from ..simulation.SimulationTool_transl_test import *
 
 pytestmark = requires_verilator
 
-# These tests are specifically marked skip
+# These tests are specifically marked to fail
 
 [ pytest.mark.xfail(reason=y)(x) for x,y in [
 
@@ -62,8 +64,8 @@ pytestmark = requires_verilator
   (test_translation_slices04,
    'FIXME: my_signal[0:x+1] does not work, inferred as part select!'),
 
-  #'FIXME: my_signal[-2]'),
-  #'FIXME: my_signal[0:-2]'),
+  #'FIXME: my_signal[-2]   issue #31'),
+  #'FIXME: my_signal[0:-2] issue #31'),
 
   (test_translation_slices11,
    'FIXME: my_signal[A:B+4] does not work, if A = x*4 and B = 4*x!'),
@@ -73,18 +75,38 @@ pytestmark = requires_verilator
    #'FIXME: for loop reverse iteration'
 ]]
 
-# Exception raises appear as print statements in Verilator
-pytest.mark.skipif( True )( test_RaiseException )
+# These tests are specifically marked to skip
 
-# PyMTLErrors are raised only in the simulator
-[ pytest.mark.skipif( True )( x ) for x in [
-  test_ValueInSequentialBlock,
-  test_MissingNextInSequentialBlock,
-  test_MissingListNextInSequentialBlock,
-  test_NextInCombinationalBlock,
-  test_MissingValueInCombinationalBlock,
-  test_MissingListValueInCombinationalBlock,
+[ pytest.mark.skipif(True, reason=y)(x) for x,y in [
+    (test_RaiseException,
+     'Exception raises appear as print statements in Verilator'),
+    (test_ValueInSequentialBlock,
+     'PyMTLErrors are raised only in the simulator'),
+    (test_MissingNextInSequentialBlock,
+     'PyMTLErrors are raised only in the simulator'),
+    (test_MissingListNextInSequentialBlock,
+     'PyMTLErrors are raised only in the simulator'),
+    (test_NextInCombinationalBlock,
+     'PyMTLErrors are raised only in the simulator'),
+    (test_MissingValueInCombinationalBlock,
+     'PyMTLErrors are raised only in the simulator'),
+    (test_MissingListValueInCombinationalBlock,
+     'PyMTLErrors are raised only in the simulator'),
 ]]
+
+# These tests are specifically meant to check for VerilogTranslationErrors
+
+def mark_raises( ExceptionType, func ):
+  'Helper to apply wrapper and replace the name in global scope'
+  #@functools.wraps
+  def test_wrapper( setup_sim ):
+    with pytest.raises( ExceptionType ):
+      func( setup_sim )
+  # FIXME: super hacky, does this work?
+  globals()[ func.func_name ] = test_wrapper
+
+mark_raises( VerilogTranslationError, test_translation_multiple_lhs_tuple   )
+mark_raises( VerilogTranslationError, test_translation_multiple_lhs_targets )
 
 #-----------------------------------------------------------------------
 # local_setup_sim
@@ -103,4 +125,3 @@ def local_setup_sim( model ):
   model.elaborate()
   sim = SimulationTool( model )
   return model, sim
-

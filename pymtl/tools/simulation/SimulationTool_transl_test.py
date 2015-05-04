@@ -311,6 +311,25 @@ def test_translation_slices13( setup_sim ):
     assert m.o == val[i*4:i*4+4]
 
 #-----------------------------------------------------------------------
+# translation_slices07
+#-----------------------------------------------------------------------
+#def test_translation_slices07( setup_sim ):
+#  class TestTranslationSlices07( Model ):
+#    def __init__( s ):
+#      s.i = InPort ( 16 )
+#      s.o = OutPort(  8 )
+#      off = 8
+#      @s.combinational
+#      def logic():
+#        s.o.value = s.i[off:]
+#  m, sim = setup_sim( TestTranslationSlices07() )
+#  for i in range(10):
+#    val = Bits(16, randrange(0,2**16) )
+#    m.i.value = val
+#    sim.cycle()
+#    assert m.o == val[8:]
+
+#-----------------------------------------------------------------------
 # translation_true_false
 #-----------------------------------------------------------------------
 def test_translation_true_false( setup_sim ):
@@ -359,3 +378,50 @@ def test_translation_temporary_scope( setup_sim ):
     sim.cycle()
     assert m.o == (1 if a > b else 0)
     assert m.p == (1 if a > b else 0)
+
+#-----------------------------------------------------------------------
+# translation_temporary_multiple_lhs_tuple
+#-----------------------------------------------------------------------
+def test_translation_multiple_lhs_tuple( setup_sim ):
+
+  class TestTranslationMultipleLHS_Tuple( Model ):
+    def __init__( s ):
+      s.i0 = InPort ( 2 )
+      s.i1 = InPort ( 2 )
+      s.o0 = OutPort( 2 )
+      s.o1 = OutPort( 2 )
+      @s.combinational
+      def logic0():
+        s.o0.value, s.o1.value = s.i0, s.i1
+
+  m, sim = setup_sim( TestTranslationMultipleLHS_Tuple() )
+  for i in range(10):
+    a,b = [randrange(0,2**2) for _ in range(2)]
+    m.i0.value, m.i1.value = a, b
+    sim.cycle()
+    assert m.o0 == a
+    assert m.o1 == b
+
+#-----------------------------------------------------------------------
+# translation_temporary_multiple_lhs_targets
+#-----------------------------------------------------------------------
+@pytest.mark.xfail
+def test_translation_multiple_lhs_targets( setup_sim ):
+
+  class TestTranslationMultipleLHS_Targets( Model ):
+    def __init__( s ):
+      s.i0 = InPort ( 2 )
+      s.o0 = OutPort( 2 )
+      s.o1 = OutPort( 2 )
+      @s.combinational
+      def logic0():
+        s.o0.value = s.o1.value = s.i0
+
+  m, sim = setup_sim( TestTranslationMultipleLHS_Targets() )
+  for i in range(10):
+    a = randrange(0,2**2)
+    m.i0.value = a
+    sim.cycle()
+    assert m.o0 == a
+    assert m.o1 == a
+
