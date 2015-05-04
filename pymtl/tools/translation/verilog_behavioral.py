@@ -323,6 +323,12 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   # visit_Subscript
   #-----------------------------------------------------------------------
   def visit_Subscript(self, node):
+    print_simple_ast( node )
+
+    # FIXME: hack for type-inferenced objects incorrectly updating their
+    #        parent subscript! Should handle this in TypeInference pass.
+    if not node._object:
+      node._object = node.value._object
 
     # notify slice/index of nbits so we can handle relative indexes
     try:
