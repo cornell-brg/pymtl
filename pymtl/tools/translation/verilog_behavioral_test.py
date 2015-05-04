@@ -72,9 +72,7 @@ pytestmark = requires_verilator
   (test_translation_slices13,
    'FIXME: my_signal[x*4:x*4+2+2] does not work!'),
 
-  (test_translation_temporary_scope,
-   'FIXME: using identical temporary name in two blocks fails!'),
-
+   #'FIXME: for loop reverse iteration'
 ]]
 
 # Exception raises appear as print statements in Verilator

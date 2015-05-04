@@ -2,6 +2,8 @@
 # visitors.py
 #=========================================================================
 
+from __future__ import print_function
+
 import ast, _ast
 import re
 import warnings
@@ -455,14 +457,28 @@ class BitStructToSlice( ast.NodeTransformer ):
 #-------------------------------------------------------------------------
 import copy
 class InferTemporaryTypes( ast.NodeTransformer ):
+  last_model = None
+  func_id    = 0
 
   def __init__( self, model ):
     self.model      = model
     self.infer_dict = {}
 
+    # Create unique ids for each function we visit in a given model.
+    # This ensures we can assign unique names to temporaries to provide
+    # 'scoping' behavior similar to Python.
+    if id(self.model) != InferTemporaryTypes.last_model:
+      InferTemporaryTypes.last_model = id(self.model)
+      InferTemporaryTypes.func_id    = 0
+    else:
+      InferTemporaryTypes.func_id   += 1
+
   def _insert( self, node, value ):
     node.targets[0]._object = value
     self.infer_dict[ node.targets[0].id ] = value
+
+  def _uniq_name( self, node_id ):
+    return node_id + '__{}'.format( self.func_id )
 
   def visit_Assign( self, node ):
 
@@ -471,11 +487,18 @@ class InferTemporaryTypes( ast.NodeTransformer ):
 
     assert len(node.targets) == 1
 
+    # Need this to visit potential temporaries used in slice indices!
+    self.visit( node.targets[0] )
+
     # The LHS doesn't have a type, we need to infer it
     if node.targets[0]._object == None:
 
       # The LHS should be a Name node!
       assert isinstance(node.targets[0], _ast.Name)
+
+      # Assign unique name to this temporary in case the same temporary
+      # name is used in another concurrent block.
+      node.targets[0].id = self._uniq_name( node.targets[0].id )
 
       # Copy the object returned by the RHS, set the name appropriately
       if   isinstance( node.value, ast.Name ):
@@ -562,7 +585,11 @@ class InferTemporaryTypes( ast.NodeTransformer ):
   def visit_Name( self, node ):
     try:
       if node._object == None:
-        node._object = self.infer_dict[ node.id ]
+        # Update all other references to inferred temporaries to use the
+        # newly assigned uniquified name.
+        temp_name = self._uniq_name( node.id )
+        node._object = self.infer_dict[ temp_name ]
+        node.id = temp_name
     except KeyError:
       pass
 
