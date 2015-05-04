@@ -62,10 +62,8 @@ pytestmark = requires_verilator
   (test_translation_slices04,
    'FIXME: my_signal[0:x+1] does not work, inferred as part select!'),
 
-  (test_translation_slices05,
-   'FIXME: my_signal[:x] does not work, need [0:x]!'),
-  (test_translation_slices07,
-   'FIXME: my_signal[x:] does not work, need [x:stop]!'),
+  #'FIXME: my_signal[-2]'),
+  #'FIXME: my_signal[0:-2]'),
 
   (test_translation_slices11,
    'FIXME: my_signal[A:B+4] does not work, if A = x*4 and B = 4*x!'),

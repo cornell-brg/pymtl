@@ -2,6 +2,8 @@
 # verilog_behavioral.py
 #=======================================================================
 
+from __future__ import print_function
+
 import ast, _ast
 import collections
 import inspect
@@ -321,6 +323,13 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   # visit_Subscript
   #-----------------------------------------------------------------------
   def visit_Subscript(self, node):
+
+    # notify slice/index of nbits so we can handle relative indexes
+    try:
+      node.slice._nbits = node._object.nbits
+    except AttributeError:
+      node.slice._nbits = len( node._object )
+
     signal = self.visit( node.value )
     index  = self.visit( node.slice )
     return '{}[{}]'.format( signal, index )
@@ -336,8 +345,10 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_Slice(self, node):
     assert not node.step
-    assert     node.lower
-    assert     node.upper
+
+    # handle open slices [:upper], [lower:], and [:]
+    if node.lower == None: node.lower = ast.Num( 0 )
+    if node.upper == None: node.upper = ast.Num( node._nbits )
 
     # Special handling of variable part-selects
     # TODO: make this more resilient?
