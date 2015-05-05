@@ -380,7 +380,7 @@ def test_translation_temporary_scope( setup_sim ):
     assert m.p == (1 if a > b else 0)
 
 #-----------------------------------------------------------------------
-# translation_temporary_multiple_lhs_tuple
+# translation_multiple_lhs_tuple
 #-----------------------------------------------------------------------
 def test_translation_multiple_lhs_tuple( setup_sim ):
 
@@ -403,7 +403,7 @@ def test_translation_multiple_lhs_tuple( setup_sim ):
     assert m.o1 == b
 
 #-----------------------------------------------------------------------
-# translation_temporary_multiple_lhs_targets
+# translation_multiple_lhs_targets
 #-----------------------------------------------------------------------
 @pytest.mark.xfail
 def test_translation_multiple_lhs_targets( setup_sim ):
@@ -424,4 +424,51 @@ def test_translation_multiple_lhs_targets( setup_sim ):
     sim.cycle()
     assert m.o0 == a
     assert m.o1 == a
+
+#-----------------------------------------------------------------------
+# translation_multiple_decorators
+#-----------------------------------------------------------------------
+def test_translation_multiple_decorators( setup_sim ):
+
+  def test_decorator( fn ):
+    return fn
+
+  class TestTranslationMultipleDecorators( Model ):
+    def __init__( s ):
+      s.i0 = InPort ( 2 )
+      s.o0 = OutPort( 2 )
+      @test_decorator
+      @s.combinational
+      def logic0():
+        s.o0.value = s.i0
+
+  m, sim = setup_sim( TestTranslationMultipleDecorators() )
+  for i in range(10):
+    a = randrange(0,2**2)
+    m.i0.value = a
+    sim.cycle()
+    assert m.o0 == a
+
+#-----------------------------------------------------------------------
+# translation_for_loop_iterable
+#-----------------------------------------------------------------------
+def test_translation_for_loop_iterable( setup_sim ):
+
+  class TestTranslationLoopIterable( Model ):
+    def __init__( s ):
+      s.i = InPort [4]( 2 )
+      s.o = OutPort[4]( 2 )
+      @s.posedge_clk
+      def logic0():
+        # TODO: does not work for @s.combinational because can't detect
+        #       s.i in sensitivity list. Add check?
+        for i, inport in enumerate( s.i ):
+          s.o[i].next = inport
+
+  m, sim = setup_sim( TestTranslationLoopIterable() )
+  for i in range(10):
+    js = [randrange(0,2**2) for _ in range( 4 )]
+    for k in range(4): m.i[k].value = js[k]
+    sim.cycle()
+    for k in range(4): assert m.o[k] == js[k]
 

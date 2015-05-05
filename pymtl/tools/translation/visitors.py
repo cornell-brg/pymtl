@@ -361,9 +361,15 @@ class SimplifyDecorator( ast.NodeTransformer ):
 
     # TODO: currently assume decorator is of the form 'self.dec_name'
     if len( node.decorator_list ) != 1:
+      def get_dec_name( dec ):
+        if   hasattr( dec, 'id'   ): return dec.id
+        elif hasattr( dec, 'attr' ): return dec.attr
+        else:                        return dec
       raise VerilogTranslationError(
-        "Expecting exactly one decorator, instead got: {}"
-        .format( node.decorator_list )
+        'Translated behavioral blocks should only have one decorator!\n'
+        'Current decorators: {}'.format(
+          [ get_dec_name( x ) for x in node.decorator_list ]
+        ), node.lineno
       )
 
     dec = node.decorator_list[0].attr
@@ -384,10 +390,16 @@ class ThreeExprLoops( ast.NodeTransformer ):
   def visit_For( self, node ):
     self.generic_visit( node )
 
-    assert isinstance( node.iter,      _ast.Call ) # TODO: allow iterables
-    assert isinstance( node.iter.func, _ast.Name )
+    if not ( isinstance( node.iter,      _ast.Call ) and
+             isinstance( node.iter.func, _ast.Name ) and
+             node.iter.func.id in ['range', 'xrange'] ):
+      raise VerilogTranslationError(
+        'For loops are only translatable when using range or xrange!\n'
+        'Please use "for i in range(...)/xrange(...)".',
+        node.lineno
+      )
+
     call = node.iter
-    assert call.func.id in ['range','xrange']
 
     if   len( call.args ) == 1:
       start = _ast.Num( n=0 )

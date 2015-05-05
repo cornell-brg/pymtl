@@ -66,17 +66,25 @@ def translate_logic_blocks( model ):
       visitor     = TranslateBehavioralVerilog()
       block_code += visitor.visit( new_tree )
 
+    # If we run into an assertion, just reraise it
+    except AssertionError as e:
+      raise
+
     # If we run into a VerilogTranslationError, provide some more debug
     # information for the user, then re-raise the exception
     except Exception as e:
-      src, funclineno = inspect.getsourcelines( func )
+      src, filelineno = inspect.getsourcelines( func )
 
       error      = e.message
       file_name  = inspect.getfile(func)
       class_name = model.class_name
       func_name  = func.func_name
-      lineno     = funclineno + e.lineno - 1
-      srcline    = src[e.lineno-1]
+      if hasattr( e, 'lineno'):
+        lineno   = filelineno + e.lineno - 1
+        srcline  = src[e.lineno-1]
+      else:
+        lineno   = '~{}'.format( filelineno - 1 )
+        srcline  = '<unknown>'
 
       msg  = ('\n{error}\n\n'
               '> {srcline}\n'

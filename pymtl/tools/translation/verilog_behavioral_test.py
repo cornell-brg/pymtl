@@ -107,6 +107,8 @@ def mark_raises( ExceptionType, func ):
 
 mark_raises( VerilogTranslationError, test_translation_multiple_lhs_tuple   )
 mark_raises( VerilogTranslationError, test_translation_multiple_lhs_targets )
+mark_raises( VerilogTranslationError, test_translation_multiple_decorators  )
+mark_raises( VerilogTranslationError, test_translation_for_loop_iterable    )
 
 #-----------------------------------------------------------------------
 # local_setup_sim
