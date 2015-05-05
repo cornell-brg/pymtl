@@ -13,7 +13,7 @@ def get_long_description():
 setup(
 
     name    = 'pymtl',
-    version = '1.4alpha4', # https://www.python.org/dev/peps/pep-0440/
+    version = '1.4alpha5', # https://www.python.org/dev/peps/pep-0440/
 
     description      = 'Python-based hardware modeling framework',
     long_description = get_long_description(),
