@@ -188,11 +188,10 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
   # 1) sensitivity list: all variables read
   # 2) reg types: all variables written to
   def visit_Assign( self, node ):
-    # We currently don't handle multiple LHS targets
-    assert len( node.targets ) == 1
 
     self.assign = True
-    self.visit( node.targets[0] )
+    for target in node.targets:
+      self.visit( target )
     self.visit( node.value )
     self.assign = False
 
