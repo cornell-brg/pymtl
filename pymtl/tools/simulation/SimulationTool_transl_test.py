@@ -450,25 +450,216 @@ def test_translation_multiple_decorators( setup_sim ):
     assert m.o0 == a
 
 #-----------------------------------------------------------------------
-# translation_for_loop_iterable
+# translation_for_loop_enumerate
 #-----------------------------------------------------------------------
-def test_translation_for_loop_iterable( setup_sim ):
+def test_translation_for_loop_enumerate( setup_sim ):
 
-  class TestTranslationLoopIterable( Model ):
+  class TestTranslationLoopEnumerate( Model ):
     def __init__( s ):
       s.i = InPort [4]( 2 )
       s.o = OutPort[4]( 2 )
       @s.posedge_clk
       def logic0():
-        # TODO: does not work for @s.combinational because can't detect
-        #       s.i in sensitivity list. Add check?
-        for i, inport in enumerate( s.i ):
-          s.o[i].next = inport
+        for x, inport in enumerate( s.i ):
+          s.o[x].next = inport
 
-  m, sim = setup_sim( TestTranslationLoopIterable() )
+  m, sim = setup_sim( TestTranslationLoopEnumerate() )
   for i in range(10):
     js = [randrange(0,2**2) for _ in range( 4 )]
     for k in range(4): m.i[k].value = js[k]
     sim.cycle()
     for k in range(4): assert m.o[k] == js[k]
+
+#-----------------------------------------------------------------------
+# translation_for_loop_enumerate_comb
+#-----------------------------------------------------------------------
+@pytest.mark.xfail(
+  reason='Signals read in for loops are not added to sensitivity list!'
+)
+def test_translation_for_loop_enumerate_comb( setup_sim ):
+
+  class TestTranslationLoopEnumerateComb( Model ):
+    def __init__( s ):
+      s.i = InPort [4]( 2 )
+      s.o = OutPort[4]( 2 )
+      @s.combinational
+      def logic0():
+        for x, inport in enumerate( s.i ):
+          s.o[x].value = inport
+
+  m, sim = setup_sim( TestTranslationLoopEnumerateComb() )
+  for i in range(10):
+    js = [randrange(0,2**2) for _ in range( 4 )]
+    for k in range(4): m.i[k].value = js[k]
+    sim.cycle()
+    for k in range(4): assert m.o[k] == js[k]
+
+#-----------------------------------------------------------------------
+# test_translation_bad_decorator
+#-----------------------------------------------------------------------
+def test_translation_bad_decorator( setup_sim ):
+  class TestTranslationBadDecorator( Model ):
+    def __init__( s ):
+      s.i = InPort ( 2 )
+      s.o = OutPort( 2 )
+      @s.tick_cl
+      def logic0():
+        s.o.next = s.i
+
+  m, sim = setup_sim( TestTranslationBadDecorator() )
+  for i in range(10):
+    k = randrange(0,2**2)
+    m.i.value = k
+    sim.cycle()
+    assert m.o == k
+
+#-----------------------------------------------------------------------
+# test_translation_bit_iterator
+#-----------------------------------------------------------------------
+def test_translation_bit_iterator( setup_sim ):
+  class TestTranslationBitIterator( Model ):
+    def __init__( s ):
+      s.i = InPort ( 2 )
+      s.o = OutPort( 2 )
+      @s.tick_rtl
+      def logic0():
+        for x in range( 2 ):
+          s.o[x].next = s.i[x]
+
+  m, sim = setup_sim( TestTranslationBitIterator() )
+  for i in range(10):
+    k = randrange(0,2**2)
+    m.i.value = k
+    sim.cycle()
+    assert m.o == k
+
+#-----------------------------------------------------------------------
+# test_translation_loopvar_port_name_conflict
+#-----------------------------------------------------------------------
+def test_translation_loopvar_port_name_conflict( setup_sim ):
+  class TestTranslationLoopvarPortNameConflict( Model ):
+    def __init__( s ):
+      s.i = InPort ( 2 )
+      s.o = OutPort( 2 )
+      @s.tick_rtl
+      def logic0():
+        for i in range( 2 ):
+          s.o[i].next = s.i[i]
+
+  m, sim = setup_sim( TestTranslationLoopvarPortNameConflict() )
+  for i in range(10):
+    k = randrange(0,2**2)
+    m.i.value = k
+    sim.cycle()
+    assert m.o == k
+
+#-----------------------------------------------------------------------
+# test_translation_bad_comparison
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('impl', range(4) )
+def test_translation_bad_comparison( setup_sim, impl ):
+
+  class TestTranslationBadComparison( Model ):
+    def __init__( s, num ):
+      s.i = InPort ( 2 )
+      s.o = OutPort( 1 )
+
+      if num == 0:
+        @s.tick_rtl
+        def logic0():
+          s.o.next = 0 < s.i < 3
+
+      if num == 1:
+        @s.combinational
+        def logic0():
+          s.o.value = 0 < s.i < 3
+
+      if num == 2:
+        @s.tick_rtl
+        def logic0():
+          if 0 < s.i < 3: s.o.next = 1
+          else:           s.o.next = 0
+
+      if num == 3:
+        @s.combinational
+        def logic0():
+          if 0 < s.i < 3: s.o.value = 1
+          else:           s.o.value = 0
+
+  m, sim = setup_sim( TestTranslationBadComparison(impl) )
+  for i in range(10):
+    k = randrange(0,2**2)
+    m.i.value = k
+    sim.cycle()
+    assert m.o == (0 < k < 3)
+
+#-----------------------------------------------------------------------
+# translation_list_slice_temp
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize( 'num', range(2) )
+def test_translation_list_slice_temp( setup_sim, num ):
+
+  class TestTranslationListSliceTemp( Model ):
+    def __init__( s, num ):
+      s.in_ = InPort [4]( 2 )
+      s.o1  = OutPort[2]( 2 )
+      s.o2  = OutPort[2]( 2 )
+
+      if num == 0:
+        s.evens = []
+        s.odds  = []
+        @s.posedge_clk
+        def logic0():
+          s.evens = s.in_[ ::2]
+          s.odds  = s.in_[1::2]
+          for i in range(2):
+            s.o1[i].next = s.evens[i]
+          for j in range(2):
+            s.o2[j].next = s.odds[j]
+
+      elif num == 1:
+        @s.posedge_clk
+        def logic0():
+          evens = s.in_[ ::2]
+          odds  = s.in_[1::2]
+          for i in range(2):
+            s.o1[i].next = evens[i]
+          for j in range(2):
+            s.o2[j].next = odds[j]
+
+  m, sim = setup_sim( TestTranslationListSliceTemp(num) )
+  for i in range(10):
+    js = [randrange(0,2**2) for _ in range( 4 )]
+    for k in range(4): m.in_[k].value = js[k]
+    sim.cycle()
+    for k, j in enumerate(js[ ::2]):
+      assert m.o1[k] == j
+    for k, j in enumerate(js[1::2]):
+      assert m.o2[k] == j
+
+#-----------------------------------------------------------------------
+# translation_list_slice_step
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize( 'num', range(2) )
+def test_translation_list_slice_step( setup_sim, num ):
+
+  class TestTranslationListSliceStep( Model ):
+    def __init__( s, num ):
+      s.in_ = InPort ( 4 )
+      s.out = OutPort( 4 )
+
+      @s.posedge_clk
+      def logic0():
+        for i in range(4)[ ::2]: s.out[i].next = not s.in_[i]
+        for j in range(4)[1::2]: s.out[j].next =     s.in_[j]
+
+  m, sim = setup_sim( TestTranslationListSliceStep(num) )
+  for i in range(10):
+    k = Bits(4,randrange(0,2**2))
+    m.in_.value = k
+    sim.cycle()
+    for i in range( 4 ):
+      print i, 'even' if (i%2) else 'odd', m.out[i], k[i]
+      if (i % 2): assert m.out[i] ==      k[i]
+      else:       assert m.out[i] == (not k[i])
 

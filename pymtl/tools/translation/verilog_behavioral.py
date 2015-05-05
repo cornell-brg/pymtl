@@ -83,8 +83,10 @@ def translate_logic_blocks( model ):
         lineno   = filelineno + e.lineno - 1
         srcline  = src[e.lineno-1]
       else:
+        error    = ('Unexpected error during VerilogTranslation!\n'
+                    'Please contact the PyMTL devs!\n' + error )
         lineno   = '~{}'.format( filelineno - 1 )
-        srcline  = '<unknown>'
+        srcline  = '<unknown>\n'
 
       msg  = ('\n{error}\n\n'
               '> {srcline}\n'
@@ -180,25 +182,37 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Unsupported annotation
     else:
+      def get_dec_name( dec ):
+        if   hasattr( dec, 'id'   ): return dec.id
+        elif hasattr( dec, 'attr' ): return dec.attr
+        else:                        return dec
       raise VerilogTranslationError(
-        'No valid decorator provided: {}'.format( node.decorator_list )
+        'An invalid decorator was encountered!\nOnly @s.combinational,\n'
+        '@s.tick_rtl, and @s.posedge_clk are currently translatable.\n'
+        'Current decorators: {}'.format(
+          [ get_dec_name( x ) for x in node.decorator_list ]
+        ), node.lineno
       )
 
     # Visit the body of the function
     body = self.fmt_body( node.body )
 
-    return fmt("""
+    return fmt('''
     // logic for {}()
     always @ ({}) begin
     {}
     end
-    """, self.indent ).format( node.name, sensitivity, body )
+    ''', self.indent ).format( node.name, sensitivity, body )
 
   #-----------------------------------------------------------------------
   # visit_Expr
   #-----------------------------------------------------------------------
   def visit_Expr(self, node):
-    raise VerilogTranslationError("TODO: visit_Expr not implemented")
+    raise VerilogTranslationError(
+      'An unexpected Expr node was encountered!\n'
+      'Please inform the PyMTL developers!',
+      node.lineno
+    )
     return '{}{};\n'.format( self.indent, self.visit(node.value) )
 
   #-----------------------------------------------------------------------
@@ -210,7 +224,8 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     if len(node.targets) != 1 or isinstance(node.targets[0], (ast.Tuple)):
       raise VerilogTranslationError(
         'Assignments can only have one item on the left-hand side!\n'
-        'Please modify "x,y = ..." to be two separate lines.'
+        'Please modify "x,y = ..." to be two separate lines.',
+        node.lineno
       )
 
     lhs = self.visit( node.targets[0] )
@@ -261,8 +276,13 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_For(self, node):
 
-    assert isinstance( node.iter,   _ast.Slice )
-    assert isinstance( node.target, _ast.Name  )
+    if not (isinstance( node.iter,   _ast.Slice ) or
+            isinstance( node.target, _ast.Name  )):
+      raise VerilogTranslationError(
+        'An unexpected error when translating For loops was encountered!\n'
+        'Please inform the PyMTL developers!',
+        node.lineno
+      )
 
     i     = self.visit( node.target )
     lower = self.visit( node.iter.lower )
@@ -323,7 +343,12 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   # visit_Compare
   #-----------------------------------------------------------------------
   def visit_Compare(self, node):
-    assert len(node.ops) == 1
+    if len(node.ops) != 1:
+      raise VerilogTranslationError(
+        'Chained comparisons are currently not translatable!\n'
+        'Please change "x < y < z" to the form "(x < y) and (y < z)!',
+        node.lineno
+      )
     left  = self.visit( node.left )
     op    = opmap[ type(node.ops[0]) ]
     right = self.visit( node.comparators[0] )
@@ -380,7 +405,12 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   # visit_Slice
   #-----------------------------------------------------------------------
   def visit_Slice(self, node):
-    assert not node.step
+    if node.step:
+      raise VerilogTranslationError(
+        'An unexpected error when translating Slices was encountered!\n'
+        'Please inform the PyMTL developers!',
+        node.lineno
+      )
 
     # handle open slices [:upper], [lower:], and [:]
     if node.lower == None: node.lower = ast.Num( 0 )
@@ -390,26 +420,47 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     # TODO: make this more resilient?
     # http://www.sutherland-hdl.com/papers/2000-HDLCon-paper_Verilog-2000.pdf
     if isinstance( node.upper, _ast.BinOp ):
-      assert isinstance( node.upper.op, (_ast.Add, _ast.Sub) )
 
-      lower   = self.visit( node.lower      )
-      left_op = self.visit( node.upper.left )
-      assert lower == left_op
+      if not isinstance( node.upper.op, (_ast.Add, _ast.Sub) ):
+        raise VerilogTranslationError(
+          'Slicing in behavioral blocks cannot contain arbitrary arithmetic!\n'
+          'Variable slices must be of the form [x:x+N] or [x:x-N]!\n'
+          '(and N must be constant!)\n',
+          node.lineno
+        )
 
-      # Widths for part selects can't be 0 (ie. select a single bit).
-      # This is a hacky work around.
-      try:
-        if node.upper.right._object == 1:
-          return '{}'.format( lower )
-      # Num AST members dont have _objects...
-      except AttributeError:
-        assert isinstance( node.upper.right, _ast.Num )
-        if node.upper.right.n == 1:
-          return '{}'.format( lower )
+      lower     = self.visit( node.lower      )
+      left_op   = self.visit( node.upper.left )
+      right_num = node.upper.right
 
-      op      = opmap[type(node.upper.op)]
-      upper   =  self.visit( node.upper.right )
-      return '{} {}: {}'.format( lower, op, upper )
+      if lower != left_op:
+        raise VerilogTranslationError(
+          'Slicing in behavioral blocks cannot contain arbitrary arithmetic!\n'
+          'Variable slices must be of the form [x:x+N] or [x:x-N]!\n'
+          '(and N must be constant!)\n',
+          node.lineno
+        )
+
+      # Determine the width of the part-select.
+      # FIXME: elif needed b/c Num AST nodes dont have _objects...
+      if   hasattr( right_num, '_object' ):          width = right_num._object
+      elif isinstance( node.upper.right, _ast.Num ): width = right_num.n
+      else:
+        raise VerilogTranslationError(
+          'Slicing in behavioral blocks cannot contain arbitrary arithmetic!\n'
+          'Variable slices must be of the form [x:x+N] or [x:x-N]!\n'
+          '(and N must be constant!)\n',
+          node.lineno
+        )
+
+      # Widths for part selects can't be 0 (ie. select a single bit), work
+      # around this limitation by converting into a normal index access.
+      if width == 1:
+        return '{}'.format( lower )
+      else:
+        op      = opmap[type(node.upper.op)]
+        upper   =  self.visit( node.upper.right )
+        return '{} {}: {}'.format( lower, op, upper )
 
     # Normal slices
     lower = self.visit( node.lower )
@@ -429,7 +480,11 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   def visit_Call(self, node):
 
     # Can only translate calls generated from Name nodes
-    assert isinstance( node.func, _ast.Name )
+    if not isinstance( node.func, _ast.Name ):
+      raise VerilogTranslationError(
+        'Encountered a non-translatable function call!',
+        node.lineno
+      )
     func_name = self.visit( node.func )
 
     # Handle sign extension
@@ -473,12 +528,18 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     if func_name  == 'Bits':
       if isinstance( node.args[0], ast.Num ): nbits = node.args[0].n
       else:                                   nbits = node.args[0]._object
-      assert isinstance( nbits, int )
+      if not isinstance( nbits, int ):
+        raise VerilogTranslationError(
+          'Encountered a non-translatable Bits instantiation!\n'
+          'The first argument provided to Bits(nbits,val) is not a constant!',
+          node.lineno
+        )
       value = self.visit( node.args[1] ) if len(node.args) == 2 else '0'
       return "{nbits}'d{value}".format( nbits=nbits, value=value )
 
-    raise TranslationError(
-      "Function is not translatable: {}".format( func_name )
+    raise VerilogTranslationError(
+      'Encountered a non-translatable function call: {}!'.format( func_name ),
+      node.lineno
     )
 
   #-----------------------------------------------------------------------

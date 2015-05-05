@@ -72,6 +72,11 @@ pytestmark = requires_verilator
   (test_translation_slices13,
    'FIXME: my_signal[x*4:x*4+2+2] does not work!'),
 
+  (test_translation_bad_decorator,
+   'FIXME: @tick_cl does not throw any notice of no translation!'),
+  (test_translation_loopvar_port_name_conflict,
+   'FIXME: loop variables and ports have conflicting names post-translation!'),
+
    #'FIXME: for loop reverse iteration'
 ]]
 
@@ -97,7 +102,7 @@ pytestmark = requires_verilator
 # These tests are specifically meant to check for VerilogTranslationErrors
 
 def mark_raises( ExceptionType, func ):
-  'Helper to apply wrapper and replace the name in global scope'
+  'Helper to apply wrapper and replace the name in global scope.'
   #@functools.wraps
   def test_wrapper( setup_sim ):
     with pytest.raises( ExceptionType ):
@@ -108,7 +113,23 @@ def mark_raises( ExceptionType, func ):
 mark_raises( VerilogTranslationError, test_translation_multiple_lhs_tuple   )
 mark_raises( VerilogTranslationError, test_translation_multiple_lhs_targets )
 mark_raises( VerilogTranslationError, test_translation_multiple_decorators  )
-mark_raises( VerilogTranslationError, test_translation_for_loop_iterable    )
+mark_raises( VerilogTranslationError, test_translation_for_loop_enumerate   )
+mark_raises( VerilogTranslationError, test_translation_for_loop_enumerate_comb )
+
+pytest.mark.xfail(
+  reason = 'Chained comparisons are currently not translatable.',
+  raises = VerilogTranslationError,
+)( test_translation_bad_comparison )
+
+pytest.mark.xfail(
+  reason = 'Assigning sliced list in behavior block does not work.',
+  raises = Exception,
+)( test_translation_list_slice_temp )
+
+pytest.mark.xfail(
+  reason = 'Cannot slice a range() operator and iterate over it.',
+  raises = VerilogTranslationError,
+)( test_translation_list_slice_step )
 
 #-----------------------------------------------------------------------
 # local_setup_sim
