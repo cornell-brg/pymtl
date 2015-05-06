@@ -180,6 +180,11 @@ class Bits( SignalValue ):
     # Handle slices
     if isinstance( addr, slice ):
 
+      if addr.step:
+        raise IndexError(
+          'Bits slicing using steps [start:stop:step] is not supported'
+        )
+
       # Parse address range
       start = addr.start
       stop  = addr.stop
@@ -201,10 +206,10 @@ class Bits( SignalValue ):
 
       # Verify our ranges are sane
       if not (start < stop):
-        raise IndexError('Start index ({}) is not less than stop index ({})'
-                         .format(start, stop) )
+        raise IndexError('Bits slicing start index is not less than stop index'
+                         '[start={}:stop={}]'.format(start, stop) )
       if not (0 <= start < stop <= self.nbits):
-        raise IndexError('Slice indices [{}:{}] out of range (0 - {})'
+        raise IndexError('Bits slice indices [{}:{}] out of range (0 - {})'
                          .format(start, stop, self.nbits) )
 
       # Create a new Bits object containing the slice value and return it
@@ -220,7 +225,7 @@ class Bits( SignalValue ):
 
       # Verify the index is sane
       if not (0 <= addr < self.nbits):
-        raise IndexError('Bits index ({}) out of range (0 - {})'
+        raise IndexError('Bits index [{}] out of range (0 - {})'
                          .format(addr, self.nbits) )
 
       # Create a new Bits object containing the bit value and return it
@@ -239,6 +244,11 @@ class Bits( SignalValue ):
 
     # Handle slices
     if isinstance( addr, slice ):
+
+      if addr.step:
+        raise IndexError(
+          'Bits slicing using steps [start:stop:step] is not supported'
+        )
 
       # Parse address range
       start = addr.start
@@ -264,8 +274,12 @@ class Bits( SignalValue ):
         stop = self.nbits
 
       # Verify our ranges are sane
+      if not (start < stop):
+        raise IndexError('Bits slicing start index is not less than stop index'
+                         '[start={}:stop={}]'.format(start, stop) )
       if not (0 <= start < stop <= self.nbits):
-        raise IndexError('Bits index out of range')
+        raise IndexError('Bits slice indices [{}:{}] out of range (0 - {})'
+                         .format(start, stop, self.nbits) )
 
       nbits = stop - start
 
@@ -292,7 +306,8 @@ class Bits( SignalValue ):
 
       # Verify the index and values are sane
       if not (0 <= addr < self.nbits):
-        raise IndexError('Bits index out of range')
+        raise IndexError('Bits index [{}] out of range (0 - {})'
+                         .format(addr, self.nbits) )
       if not (0 <= value <= 1):
         raise ValueError(
           'Provided value is too big to fit in 1 bit!\n'
