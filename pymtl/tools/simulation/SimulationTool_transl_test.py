@@ -455,7 +455,7 @@ def test_translation_for_loop_enumerate( setup_sim ):
 # translation_for_loop_enumerate_comb
 #-----------------------------------------------------------------------
 @pytest.mark.xfail(
-  reason='Signals read in for loops are not added to sensitivity list!'
+  reason='FIXME: Signals read in for loops are not added to sensitivity list!'
 )
 def test_translation_for_loop_enumerate_comb( setup_sim ):
 

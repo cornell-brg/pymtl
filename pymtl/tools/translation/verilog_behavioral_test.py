@@ -105,15 +105,20 @@ pytestmark = requires_verilator
 # These tests are specifically meant to check for VerilogTranslationErrors
 [ pytest.mark.xfail(raises=VerilogTranslationError, reason=y)(x) for x,y in [
 
-  (test_translation_multiple_lhs_tuple,      ''),
-  (test_translation_multiple_lhs_targets,    ''),
-  (test_translation_multiple_decorators,     ''),
-  (test_translation_for_loop_enumerate,      ''),
-  #(test_translation_for_loop_enumerate_comb, '' ),
+  (test_translation_multiple_lhs_tuple,
+   'Assigning to a tuple on the LHS is not supported (x,y = ...).'),
+  (test_translation_multiple_lhs_targets,
+   'Chained assignments are not supported (x = y = ...).'),
+  (test_translation_multiple_decorators,
+   'Multiple decorators on concurrent blocks not supported.'),
+  (test_translation_for_loop_enumerate,
+   'Only range/xrange are supported for looping, not enumerate.'),
+  #(test_translation_for_loop_enumerate_comb,
+  # 'Signals read in for loops are not added to sensitivity list!'),
   (test_translation_bad_comparison,
    'Chained comparisons are currently not translatable.'),
   (test_translation_list_slice_step,
-    'Cannot slice a range() operator and iterate over it.'),
+   'Cannot slice a range() operator and iterate over it.'),
 ]]
 
 #-----------------------------------------------------------------------
