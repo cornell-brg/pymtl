@@ -464,7 +464,7 @@ class BitStructToSlice( ast.NodeTransformer ):
   def visit_Attribute( self, node ):
     self.generic_visit( node )
     if isinstance( node._object, _SignalSlice ):
-      if node._object.step:
+      if node._object.slice.step:
         raise VerilogTranslationError(
           'Slices with steps ([start:stop:step]) are not translatable!\n',
           node.lineno
