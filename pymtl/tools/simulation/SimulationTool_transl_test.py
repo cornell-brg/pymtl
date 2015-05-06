@@ -640,7 +640,23 @@ def test_translation_list_slice_step( setup_sim, num ):
     m.in_.value = k
     sim.cycle()
     for i in range( 4 ):
-      print i, 'even' if (i%2) else 'odd', m.out[i], k[i]
       if (i % 2): assert m.out[i] ==      k[i]
       else:       assert m.out[i] == (not k[i])
+
+# TODO: type inference from unsupported function
+# TODO: type inference from slices larger than 1 bit
+# TODO: slices with step
+# TODO: invalid number of arguments to range/xrange
+
+# TODO: member variable with empty list
+# TODO: member variable with ints in list
+# TODO: member variable with Bits in list
+
+#'TODO: negative indexes: my_signal[-2]   issue #31
+#'TODO: negative indexes: my_signal[0:-2] issue #31
+#'TODO: for-loop reverse iteration'
+
+#'TODO: 2nd argument to sext not an int'
+#'TODO: 2nd argument to zext not an int'
+#'TODO: 1st argument to Bits not an int'
 

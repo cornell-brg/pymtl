@@ -62,11 +62,7 @@ pytestmark = requires_verilator
     test_ListOfSubmodPortBundles, VerilatorCompileError ),
 
   ('FIXME: TranslationError: cannot infer temporary from subscript',
-   test_SliceTempWriteCheck, Exception), # TODO: VerilogTranslationError ),
-
-  #'TODO: my_signal[-2]   issue #31'),
-  #'TODO: my_signal[0:-2] issue #31'),
-  #'TODO: for loop reverse iteration'
+   test_SliceTempWriteCheck, VerilogTranslationError ),
 
   ('FIXME: my_signal[0:x-1] does not work, inferred as part select!',
    test_translation_slices03, VerilogTranslationError),

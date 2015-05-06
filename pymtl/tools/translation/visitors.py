@@ -414,7 +414,10 @@ class ThreeExprLoops( ast.NodeTransformer ):
       stop  = call.args[1]
       step  = call.args[2]
     else:
-      raise Exception("Invalid # of arguments to range function!")
+      raise VerilogTranslationError(
+        'An invalid number of arguments provided to (x)range function!\n',
+        node.lineno
+      )
 
     node.iter = _ast.Slice( lower=start, upper=stop, step=step )
 
@@ -428,7 +431,11 @@ class ConstantToSlice( ast.NodeTransformer ):
   def visit_Attribute( self, node ):
     self.generic_visit( node )
     if isinstance( node._object, slice ):
-      assert not node._object.step
+      if node._object.step:
+        raise VerilogTranslationError(
+          'Slices with steps ([start:stop:step]) are not translatable!\n',
+          node.lineno
+        )
       new_node = ast.Slice( ast.Num( node._object.start ),
                             ast.Num( node._object.stop ),
                             None )
@@ -438,7 +445,11 @@ class ConstantToSlice( ast.NodeTransformer ):
   def visit_Name( self, node ):
     self.generic_visit( node )
     if isinstance( node._object, slice ):
-      assert not node._object.step
+      if node._object.step:
+        raise VerilogTranslationError(
+          'Slices with steps ([start:stop:step]) are not translatable!\n',
+          node.lineno
+        )
       new_node = ast.Slice( ast.Num( node._object.start ),
                             ast.Num( node._object.stop ),
                             None )
@@ -453,7 +464,11 @@ class BitStructToSlice( ast.NodeTransformer ):
   def visit_Attribute( self, node ):
     self.generic_visit( node )
     if isinstance( node._object, _SignalSlice ):
-      assert not node._object.slice.step
+      if node._object.step:
+        raise VerilogTranslationError(
+          'Slices with steps ([start:stop:step]) are not translatable!\n',
+          node.lineno
+        )
       new_node = ast.Subscript( node.value,
                    ast.Slice( ast.Num( node._object.slice.start ),
                               ast.Num( node._object.slice.stop ),
@@ -519,7 +534,12 @@ class InferTemporaryTypes( ast.NodeTransformer ):
     if node.targets[0]._object == None:
 
       # The LHS should be a Name node!
-      assert isinstance(node.targets[0], _ast.Name)
+      if not isinstance(node.targets[0], _ast.Name):
+        raise VerilogTranslationError(
+          'An internal error occured when performing type inference!\n'
+          'Please contact the PyMTL developers!',
+          node.lineno
+        )
 
       # Assign unique name to this temporary in case the same temporary
       # name is used in another concurrent block.
@@ -562,11 +582,12 @@ class InferTemporaryTypes( ast.NodeTransformer ):
            isinstance( node.value.slice, ast.Index     ):
 
         if isinstance( node.value.slice.value, ast.Slice ):
-          signal_name = node.targets[0].id
-          model_name  = self.model.__class__
-          raise Exception('Cannot infer "{}" in model "{}": '
-                          'RHS slice wider than a single bit!'
-                          .format( signal_name, model_name ) )
+          raise VerilogTranslationError(
+            'Type inference from slices > 1-bit is not currently supported!'
+            '\nCannot infer type of temporary variable "{}".'
+             .format( node.targets[0].id ),
+            node.lineno
+          )
 
         obj      = Wire( 1 )
         obj.name = node.targets[0].id
@@ -579,7 +600,12 @@ class InferTemporaryTypes( ast.NodeTransformer ):
           nbits_arg = node.value.args[1]
           if isinstance( nbits_arg, ast.Num ): nbits = nbits_arg.n
           else:                                nbits = nbits_arg._object
-          assert isinstance( nbits, int )
+          if not isinstance( nbits, int ):
+            raise VerilogTranslationError(
+              'The second argument to function "{}" must be an int!'
+              .format( func_name ),
+              node.lineno
+            )
           obj      = Wire( nbits )
         elif func_name == 'concat':
           nbits    = sum( [x._object.nbits for x in node.value.args ] )
@@ -590,20 +616,32 @@ class InferTemporaryTypes( ast.NodeTransformer ):
           nbits_arg = node.value.args[0]
           if isinstance( nbits_arg, ast.Num ): nbits = nbits_arg.n
           else:                                nbits = nbits_arg._object
-          assert isinstance( nbits, int )
+          if not isinstance( nbits, int ):
+            raise VerilogTranslationError(
+              'The first argument to the Bits constructor must be an int!',
+              node.lineno
+            )
           obj      = Wire( nbits )
         else:
           print_simple_ast( node )
-          raise Exception('Cannot infer type from Function "{}" in model "{}"!'
-                          .format( func_name, self.model.__class__ ) )
+          raise VerilogTranslationError(
+            'Type inference from the function "{}" is not currently supported!'
+            '\nCannot infer type of temporary variable "{}".'
+             .format( func_name, node.targets[0].id ),
+            node.lineno
+          )
 
         obj.name = node.targets[0].id
         self._insert( node, obj )
 
       else:
         print_simple_ast( node )
-        raise Exception('Cannot infer type from "{}" nodes in model "{}"!'
-                        .format( node.value, self.model.__class__ ) )
+        raise VerilogTranslationError(
+          'Type inference of "{}" AST nodes is not currently supported!'
+          '\nCannot infer type of temporary variable "{}".'
+           .format( type(node.value).__name__, node.targets[0].id ),
+          node.lineno
+        )
 
     return node
 
@@ -688,7 +726,12 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     #self.generic_visit( node )
 
   def visit_Assign( self, node ):
-    assert len(node.targets) == 1
+    if len(node.targets) != 1:
+      raise VerilogTranslationError(
+        'Chained assignments are not supported!\n'
+        'Please modify "x = y = ..." to be two separate lines.',
+        node.lineno
+      )
 
     self._is_lhs = True
     self.visit( node.targets[0] )
@@ -711,8 +754,13 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
       self.store[ obj._signal.fullname ] = obj._signal
 
   def visit_For( self, node ):
-    assert isinstance( node.iter,   _ast.Slice )
-    assert isinstance( node.target, _ast.Name  )
+    if not (isinstance( node.iter,   _ast.Slice ) and
+            isinstance( node.target, _ast.Name  )):
+      raise VerilogTranslationError(
+        'An internal error occured when translating a for loop!\n'
+        'Please contact the PyMTL developers!',
+        node.lineno
+      )
     self.loopvar.add( node.target.id )
     self.generic_visit( node )
 
