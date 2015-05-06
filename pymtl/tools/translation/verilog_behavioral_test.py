@@ -6,7 +6,7 @@ import pytest
 import functools
 
 from verilator_sim import TranslationTool
-from exceptions    import VerilogTranslationError
+from exceptions    import VerilogTranslationError, VerilatorCompileError
 
 #-----------------------------------------------------------------------
 # Test Config
@@ -25,21 +25,25 @@ from ..simulation.SimulationTool_transl_test import *
 
 pytestmark = requires_verilator
 
-# These tests are specifically marked to fail
+#-----------------------------------------------------------------------
+# tests specifically marked to fail
+#-----------------------------------------------------------------------
 
-[ pytest.mark.xfail(reason=y)(x) for x,y in [
+[ pytest.mark.xfail(reason=x,raises=z)(y) for x,y,z in [
 
+  #---------------------------------------------------------------------
+  # documented bugs
+  #---------------------------------------------------------------------
 
-  (test_SubscriptTemp,
-   'FIXME: Verilator/PyMTL simulation mismatch! Verilator bug?'),
+  ('FIXME: Verilator/PyMTL simulation mismatch! Verilator bug?',
+   test_SubscriptTemp, None ),
 
-  (test_ListOfMixedUseWires,
-   'This works fine in Python Simulation, but does not translate into '
+  ('This works fine in Python Simulation, but does not translate into '
    'Verilog correctly because we assume all elements of a list of wires '
-   'will have the same assignment structure!'),
+   'will have the same assignment structure!',
+    test_ListOfMixedUseWires, None ),
 
-  (test_ListOfSubmodPortBundles,
-    'FIXME: Incorrect Verilog translation'),
+  ('FIXME: Incorrect Verilog translation',
     # PYMTL:
     #   @s.combinational
     #   def logic1():
@@ -55,70 +59,72 @@ pytestmark = requires_verilator
     #       in__b = in__b[i];
     #     end
     #   end
+    test_ListOfSubmodPortBundles, VerilatorCompileError ),
 
-  (test_SliceTempWriteCheck,
-   'FIXME: TranslationError: cannot infer temporary from subscript'),
+  ('FIXME: TranslationError: cannot infer temporary from subscript',
+   test_SliceTempWriteCheck, Exception), # TODO: VerilogTranslationError ),
 
-  (test_translation_slices03,
-   'FIXME: my_signal[0:x-1] does not work, inferred as part select!'),
-  (test_translation_slices04,
-   'FIXME: my_signal[0:x+1] does not work, inferred as part select!'),
+  #'TODO: my_signal[-2]   issue #31'),
+  #'TODO: my_signal[0:-2] issue #31'),
+  #'TODO: for loop reverse iteration'
 
-  #'FIXME: my_signal[-2]   issue #31'),
-  #'FIXME: my_signal[0:-2] issue #31'),
+  ('FIXME: my_signal[0:x-1] does not work, inferred as part select!',
+   test_translation_slices03, VerilogTranslationError),
+  ('FIXME: my_signal[0:x+1] does not work, inferred as part select!',
+   test_translation_slices04, VerilogTranslationError),
+  ('FIXME: my_signal[A:B+4] does not work, if A = x*4 and B = 4*x!' ,
+   test_translation_slices11, VerilogTranslationError),
+  ('FIXME: my_signal[x*4:x*4+2+2] does not work!' ,
+   test_translation_slices13, VerilogTranslationError),
 
-  (test_translation_slices11,
-   'FIXME: my_signal[A:B+4] does not work, if A = x*4 and B = 4*x!'),
-  (test_translation_slices13,
-   'FIXME: my_signal[x*4:x*4+2+2] does not work!'),
+  ('FIXME: @tick_cl does not throw any notice of no translation!',
+   test_translation_bad_decorator, None ),
 
-  (test_translation_bad_decorator,
-   'FIXME: @tick_cl does not throw any notice of no translation!'),
-  (test_translation_loopvar_port_name_conflict,
-   'FIXME: loop variables and ports have conflicting names post-translation!'),
+  ('FIXME: loop variables and ports have conflicting names post-translation!',
+   test_translation_loopvar_port_name_conflict, VerilatorCompileError ),
 
-  (test_translation_list_slice_temp,
-   'Assigning sliced list in behavior block does not work.'),
+  #---------------------------------------------------------------------
+  # VerilogTranslationError tests
+  #---------------------------------------------------------------------
 
-   #'FIXME: for loop reverse iteration'
+  ('Assigning sliced list in behavior block does not work.',
+   test_translation_list_slice_temp, Exception), # TODO: VerilogTranslationError),
+  ('Assigning to a tuple on the LHS is not supported (x,y = ...).',
+   test_translation_multiple_lhs_tuple, VerilogTranslationError ),
+  ('Chained assignments are not supported (x = y = ...).',
+   test_translation_multiple_lhs_targets, VerilogTranslationError ),
+  ('Multiple decorators on concurrent blocks not supported.',
+   test_translation_multiple_decorators, VerilogTranslationError ),
+  ('Only range/xrange are supported for looping, not enumerate.',
+   test_translation_for_loop_enumerate, VerilogTranslationError ),
+  #('Signals read in for loops are not added to sensitivity list!'),
+  # test_translation_for_loop_enumerate_comb, VerilogTranslationError ),
+  ('Chained comparisons are currently not translatable.',
+   test_translation_bad_comparison, VerilogTranslationError ),
+  ('Cannot slice a range() operator and iterate over it.',
+   test_translation_list_slice_step, VerilogTranslationError ),
+
 ]]
 
-# These tests are specifically marked to skip
+#-----------------------------------------------------------------------
+# tests are specifically marked to skip
+#-----------------------------------------------------------------------
 
-[ pytest.mark.skipif(True, reason=y)(x) for x,y in [
-    (test_RaiseException,
-     'Exception raises appear as print statements in Verilator'),
-    (test_ValueInSequentialBlock,
-     'PyMTLErrors are raised only in the simulator'),
-    (test_MissingNextInSequentialBlock,
-     'PyMTLErrors are raised only in the simulator'),
-    (test_MissingListNextInSequentialBlock,
-     'PyMTLErrors are raised only in the simulator'),
-    (test_NextInCombinationalBlock,
-     'PyMTLErrors are raised only in the simulator'),
-    (test_MissingValueInCombinationalBlock,
-     'PyMTLErrors are raised only in the simulator'),
-    (test_MissingListValueInCombinationalBlock,
-     'PyMTLErrors are raised only in the simulator'),
-]]
-
-# These tests are specifically meant to check for VerilogTranslationErrors
-[ pytest.mark.xfail(raises=VerilogTranslationError, reason=y)(x) for x,y in [
-
-  (test_translation_multiple_lhs_tuple,
-   'Assigning to a tuple on the LHS is not supported (x,y = ...).'),
-  (test_translation_multiple_lhs_targets,
-   'Chained assignments are not supported (x = y = ...).'),
-  (test_translation_multiple_decorators,
-   'Multiple decorators on concurrent blocks not supported.'),
-  (test_translation_for_loop_enumerate,
-   'Only range/xrange are supported for looping, not enumerate.'),
-  #(test_translation_for_loop_enumerate_comb,
-  # 'Signals read in for loops are not added to sensitivity list!'),
-  (test_translation_bad_comparison,
-   'Chained comparisons are currently not translatable.'),
-  (test_translation_list_slice_step,
-   'Cannot slice a range() operator and iterate over it.'),
+[ pytest.mark.skipif(True, reason=x)(y) for x,y in [
+    ('Exception raises appear as print statements in Verilator' ,
+     test_RaiseException,),
+    ('PyMTLErrors are raised only in the simulator',
+     test_ValueInSequentialBlock,),
+    ('PyMTLErrors are raised only in the simulator',
+     test_MissingNextInSequentialBlock,),
+    ('PyMTLErrors are raised only in the simulator',
+     test_MissingListNextInSequentialBlock,),
+    ('PyMTLErrors are raised only in the simulator',
+     test_NextInCombinationalBlock,),
+    ('PyMTLErrors are raised only in the simulator',
+     test_MissingValueInCombinationalBlock,),
+    ('PyMTLErrors are raised only in the simulator',
+     test_MissingListValueInCombinationalBlock,),
 ]]
 
 #-----------------------------------------------------------------------
