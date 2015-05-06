@@ -72,6 +72,11 @@ pytestmark = requires_verilator
    test_translation_slices11, VerilogTranslationError),
   ('FIXME: my_signal[x*4:x*4+2+2] does not work!' ,
    test_translation_slices13, VerilogTranslationError),
+  ('Slicing of Bits with steps are not supported.',
+   test_translation_slices14, None), #TODO: VerilogTranslationError),
+
+  ('Type inferences of slices > 1-bit are not supported.',
+   test_translation_slices15, VerilogTranslationError),
 
   ('FIXME: @tick_cl does not throw any notice of no translation!',
    test_translation_bad_decorator, None ),

@@ -577,11 +577,10 @@ class InferTemporaryTypes( ast.NodeTransformer ):
         obj.name = node.targets[0].id
         self._insert( node, obj )
 
-      # TODO: assumes ast.Index does NOT contain a slice object
-      elif isinstance( node.value,       ast.Subscript ) and \
-           isinstance( node.value.slice, ast.Index     ):
+      elif isinstance( node.value, ast.Subscript ):
 
-        if isinstance( node.value.slice.value, ast.Slice ):
+        # TODO: assumes ast.Index does NOT contain a slice object
+        if not isinstance( node.value.slice, ast.Index ):
           raise VerilogTranslationError(
             'Type inference from slices > 1-bit is not currently supported!'
             '\nCannot infer type of temporary variable "{}".'

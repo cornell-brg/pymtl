@@ -311,6 +311,76 @@ def test_translation_slices13( setup_sim ):
     assert m.o == val[i*4:i*4+4]
 
 #-----------------------------------------------------------------------
+# translation_slices14
+#-----------------------------------------------------------------------
+@pytest.mark.xfail(
+  reason='Slicing of Bits with steps are not supported.',
+  #raises=IndexError # TODO
+)
+def test_translation_slices14( setup_sim ):
+
+  class TestTranslationSlices14( Model ):
+    def __init__( s ):
+      s.in_  = InPort ( 4 )
+      s.even = OutPort( 2 )
+      s.odd  = OutPort( 1 )
+
+      @s.posedge_clk
+      def logic0():
+        s.even.next = s.in_[ ::2]
+        s.odd .next = s.in_[1::2]
+
+  m, sim = setup_sim( TestTranslationSlices14() )
+  for i in range(10):
+    k = Bits(4,randrange(0,2**4))
+    m.in_.value = k
+    sim.cycle()
+    assert m.even == concat( m.in_[2], m.in_[0] )
+    assert m.odd  == concat( m.in_[3], m.in_[1] )
+
+#-----------------------------------------------------------------------
+# translation_slices15
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize( 'num', range(3) )
+def test_translation_slices15( setup_sim, num ):
+
+  class TestTranslationSlices15( Model ):
+    def __init__( s, num ):
+      s.in_ = InPort ( 4 )
+      s.out = OutPort( 4 )
+
+      if num == 0:
+        @s.combinational
+        def logic0():
+          a = s.in_[0]
+          b = s.in_[1]
+          c = s.in_[2]
+          d = s.in_[3]
+          s.out.value = concat( d, c, b, a )
+
+      elif num == 1:
+        @s.combinational
+        def logic0():
+          a = s.in_[0:2]
+          b = s.in_[2:4]
+          s.out.value = concat( b, a )
+
+      elif num == 2:
+        @s.combinational
+        def logic0():
+          a = s.in_[0:4]
+          s.out.value = a
+
+      else: raise Exception('Invalid Configuration!')
+
+  m, sim = setup_sim( TestTranslationSlices15( num ) )
+  for i in range(10):
+    k = Bits(4,randrange(0,2**4))
+    m.in_.value = k
+    sim.cycle()
+    assert m.out == k
+
+#-----------------------------------------------------------------------
 # translation_true_false
 #-----------------------------------------------------------------------
 def test_translation_true_false( setup_sim ):
@@ -386,7 +456,9 @@ def test_translation_multiple_lhs_tuple( setup_sim ):
 #-----------------------------------------------------------------------
 # translation_multiple_lhs_targets
 #-----------------------------------------------------------------------
-@pytest.mark.xfail
+@pytest.mark.xfail(
+  reason='Chained assignments are not supported (x = y = ...).'
+)
 def test_translation_multiple_lhs_targets( setup_sim ):
 
   class TestTranslationMultipleLHS_Targets( Model ):
@@ -636,27 +708,26 @@ def test_translation_list_slice_step( setup_sim, num ):
 
   m, sim = setup_sim( TestTranslationListSliceStep(num) )
   for i in range(10):
-    k = Bits(4,randrange(0,2**2))
+    k = Bits(4,randrange(0,2**4))
     m.in_.value = k
     sim.cycle()
     for i in range( 4 ):
       if (i % 2): assert m.out[i] ==      k[i]
       else:       assert m.out[i] == (not k[i])
 
+
+#'TODO: negative indexes: my_signal[-2]   issue #31
+#'TODO: negative indexes: my_signal[0:-2] issue #31
+
 # TODO: type inference from unsupported function
-# TODO: type inference from slices larger than 1 bit
-# TODO: slices with step
+#'TODO: 2nd argument to sext not an int'
+#'TODO: 2nd argument to zext not an int'
+#'TODO: 1st argument to Bits not an int'
+
 # TODO: invalid number of arguments to range/xrange
+#'TODO: for-loop reverse iteration'
 
 # TODO: member variable with empty list
 # TODO: member variable with ints in list
 # TODO: member variable with Bits in list
-
-#'TODO: negative indexes: my_signal[-2]   issue #31
-#'TODO: negative indexes: my_signal[0:-2] issue #31
-#'TODO: for-loop reverse iteration'
-
-#'TODO: 2nd argument to sext not an int'
-#'TODO: 2nd argument to zext not an int'
-#'TODO: 1st argument to Bits not an int'
 
