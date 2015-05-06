@@ -311,25 +311,6 @@ def test_translation_slices13( setup_sim ):
     assert m.o == val[i*4:i*4+4]
 
 #-----------------------------------------------------------------------
-# translation_slices07
-#-----------------------------------------------------------------------
-#def test_translation_slices07( setup_sim ):
-#  class TestTranslationSlices07( Model ):
-#    def __init__( s ):
-#      s.i = InPort ( 16 )
-#      s.o = OutPort(  8 )
-#      off = 8
-#      @s.combinational
-#      def logic():
-#        s.o.value = s.i[off:]
-#  m, sim = setup_sim( TestTranslationSlices07() )
-#  for i in range(10):
-#    val = Bits(16, randrange(0,2**16) )
-#    m.i.value = val
-#    sim.cycle()
-#    assert m.o == val[8:]
-
-#-----------------------------------------------------------------------
 # translation_true_false
 #-----------------------------------------------------------------------
 def test_translation_true_false( setup_sim ):
