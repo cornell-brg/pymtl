@@ -550,8 +550,8 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     # Handle Bits
     if func_name  == 'Bits':
       try:
-        if isinstance( node.args[1], ast.Num ): nbits = node.args[1].n
-        else:                                   nbits = node.args[1]._object
+        if isinstance( node.args[0], ast.Num ): nbits = node.args[0].n
+        else:                                   nbits = node.args[0]._object
         assert isinstance( nbits, int )
       except (AssertionError,AttributeError):
         raise VerilogTranslationError(
