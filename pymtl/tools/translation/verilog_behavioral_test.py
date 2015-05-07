@@ -110,6 +110,8 @@ pytestmark = requires_verilator
    test_translation_unsupported_func, VerilogTranslationError ),
   ('The sext/zext/Bits funcs cannot take a non-integer as a param',
    test_translation_func_not_int, VerilogTranslationError ),
+  ('The step provided to range/xrange must be a constant, non-zero int.',
+   test_translation_iter_unsupported_step, VerilogTranslationError ),
 
 ]]
 

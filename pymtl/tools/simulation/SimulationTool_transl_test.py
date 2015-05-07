@@ -835,14 +835,130 @@ def test_translation_inf_func_not_int( setup_sim, num ):
     elif num == 1: assert m.out == k
     elif num == 2: assert m.out == k
 
+#-----------------------------------------------------------------------
+# translation_reverse_iter
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('num', range(8) )
+def test_translation_reverse_iter( setup_sim, num ):
 
+  class TestTranslationReverseIter( Model ):
+    def __init__( s, num ):
+      s.in_ = InPort ( 8 )
+      s.out = OutPort( 8 )
+
+      if num == 0:
+        @s.combinational
+        def logic0():
+          for i in range( 8 ):
+            s.out[i].value = s.in_[i]
+
+      elif num == 1:
+        @s.combinational
+        def logic0():
+          for i in range( 0, 8, 2 ):
+            s.out[i].value = s.in_[i]
+          for i in range( 1, 8, 2 ):
+            s.out[i].value = s.in_[i]
+
+      elif num == 2:
+        @s.combinational
+        def logic0():
+          for i in xrange( 8 ):
+            s.out[i].value = s.in_[i]
+
+      elif num == 3:
+        @s.combinational
+        def logic0():
+          for i in xrange( 0, 8, 2 ):
+            s.out[i].value = s.in_[i]
+          for i in xrange( 1, 8, 2 ):
+            s.out[i].value = s.in_[i]
+
+      elif num == 4:
+        @s.combinational
+        def logic0():
+          for i in range( 7,-1,-1 ):
+            s.out[i].value = s.in_[i]
+
+      elif num == 5:
+        @s.combinational
+        def logic0():
+          for i in range( 7, -1, -2 ):
+            s.out[i].value = s.in_[i]
+          for i in range( 6, -1, -2 ):
+            s.out[i].value = s.in_[i]
+
+      elif num == 6:
+        step = 1
+        @s.combinational
+        def logic0():
+          for i in range( 0,8,step ):
+            s.out[i].value = s.in_[i]
+
+      elif num == 7:
+        step = -1
+        @s.combinational
+        def logic0():
+          for i in range( 7,-1,step ):
+            s.out[i].value = s.in_[i]
+
+      else:
+        raise Exception('Invalid Configuration!')
+
+  n = 4
+  m, sim = setup_sim( TestTranslationReverseIter(num) )
+  for i in range(10):
+    k = Bits(n,randrange(0,2**n))
+    m.in_.value = k
+    sim.cycle()
+    assert m.out == k
+
+#-----------------------------------------------------------------------
+# translation_iter_unsupported_step
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('num',
+  [pytest.mark.xfail(reason='Range w/ step= 0')(0), 1, 2,]
+)
+def test_translation_iter_unsupported_step( setup_sim, num ):
+
+  class TestTranslationIterUnsupportedStep( Model ):
+    def __init__( s, num ):
+      s.in_ = InPort ( 8 )
+      s.out = OutPort( 8 )
+
+      if num == 0:
+        @s.combinational
+        def logic0():
+          for i in range( 0, 8, 0 ):
+            s.out[i].value = s.in_[i]
+      elif num == 1:
+        @s.combinational
+        def logic0():
+          for i in range( 0, 8, 0+1 ):
+            s.out[i].value = s.in_[i]
+      elif num == 2:
+        @s.combinational
+        def logic0():
+          for i in range( 7,-1, 0-1 ):
+            s.out[i].value = s.in_[i]
+
+      else:
+        raise Exception('Invalid Configuration!')
+
+  n = 4
+  m, sim = setup_sim( TestTranslationIterUnsupportedStep(num) )
+  for i in range(10):
+    k = Bits(n,randrange(0,2**n))
+    m.in_.value = k
+    sim.cycle()
+    assert m.out == k
 
 
 #'TODO: negative indexes: my_signal[-2]   issue #31
 #'TODO: negative indexes: my_signal[0:-2] issue #31
 
 # TODO: invalid number of arguments to range/xrange
-#'TODO: for-loop reverse iteration'
+# TODO: support reversed( range(...) )
 
 # TODO: member variable with empty list
 # TODO: member variable with ints in list

@@ -419,7 +419,21 @@ class ThreeExprLoops( ast.NodeTransformer ):
         node.lineno
       )
 
-    node.iter = _ast.Slice( lower=start, upper=stop, step=step )
+    # Must know if the step is negative or positive in order to set the
+    # correct bound check. This is because of Python's range behavior.
+    try:
+      if   hasattr( step, '_object' ): step_val = step._object
+      elif hasattr( step, 'n'       ): step_val = step.n
+      assert step_val != 0
+    except (UnboundLocalError,AssertionError):
+      raise VerilogTranslationError(
+        'An error occurred when translating a "for loop"!\n'
+        'The "step" parameter to range must be a constant integer value != 0!',
+        node.lineno
+      )
+
+    node.iter       = _ast.Slice( lower=start, upper=stop, step=step )
+    node.iter.lt_gt = '<' if step_val > 0 else '>'
 
     return node
 

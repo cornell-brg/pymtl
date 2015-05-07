@@ -75,7 +75,7 @@ def translate_logic_blocks( model ):
     except Exception as e:
       src, filelineno = inspect.getsourcelines( func )
 
-      error      = e.message
+      error      = str(e.message)
       file_name  = inspect.getfile(func)
       class_name = model.class_name
       func_name  = func.func_name
@@ -279,7 +279,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     if not (isinstance( node.iter,   _ast.Slice ) or
             isinstance( node.target, _ast.Name  )):
       raise VerilogTranslationError(
-        'An unexpected error when translating For loops was encountered!\n'
+        'An unexpected error occurred when translating a "for loop"!\n'
         'Please inform the PyMTL developers!',
         node.lineno
       )
@@ -288,15 +288,16 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
     lower = self.visit( node.iter.lower )
     upper = self.visit( node.iter.upper )
     step  = self.visit( node.iter.step  )
+    lt_gt = node.iter.lt_gt
 
     body  = self.fmt_body( node.body )
 
     x = fmt("""
-    for ({0}={1}; {0} < {2}; {0}={0}+{3})
+    for ({i}={lower}; {i} {lt_gt} {upper}; {i}={i}+{step})
     begin
-    {4}
+    {body}
     end
-    """, self.indent ).format( i, lower, upper, step, body )
+    """, self.indent ).format( **locals() )
 
     return x
 
