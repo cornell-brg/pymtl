@@ -11,7 +11,7 @@ import copy
 # _get_nbits
 #-----------------------------------------------------------------------
 def _get_nbits( N ):
-  'Utility class for calculating number of bits to store a value'
+  'Utility class for calculating number of bits needed to store a value'
   if N > 0: return N.bit_length()
   else:     return N.bit_length() + 1
 
@@ -209,7 +209,7 @@ class Bits( SignalValue ):
         raise IndexError('Bits slicing start index is not less than stop index'
                          '[start={}:stop={}]'.format(start, stop) )
       if not (0 <= start < stop <= self.nbits):
-        raise IndexError('Bits slice indices [{}:{}] out of range (0 - {})'
+        raise IndexError('Bits slice indices [{}:{}] out of range [0 - {}]'
                          .format(start, stop, self.nbits) )
 
       # Create a new Bits object containing the slice value and return it
@@ -225,7 +225,7 @@ class Bits( SignalValue ):
 
       # Verify the index is sane
       if not (0 <= addr < self.nbits):
-        raise IndexError('Bits index [{}] out of range (0 - {})'
+        raise IndexError('Bits index [{}] out of range [0 - {}]'
                          .format(addr, self.nbits) )
 
       # Create a new Bits object containing the bit value and return it
@@ -278,7 +278,7 @@ class Bits( SignalValue ):
         raise IndexError('Bits slicing start index is not less than stop index'
                          '[start={}:stop={}]'.format(start, stop) )
       if not (0 <= start < stop <= self.nbits):
-        raise IndexError('Bits slice indices [{}:{}] out of range (0 - {})'
+        raise IndexError('Bits slice indices [{}:{}] out of range [0 - {}]'
                          .format(start, stop, self.nbits) )
 
       nbits = stop - start
@@ -306,7 +306,7 @@ class Bits( SignalValue ):
 
       # Verify the index and values are sane
       if not (0 <= addr < self.nbits):
-        raise IndexError('Bits index [{}] out of range (0 - {})'
+        raise IndexError('Bits index [{}] out of range [0 - {}]'
                          .format(addr, self.nbits) )
       if not (0 <= value <= 1):
         raise ValueError(
