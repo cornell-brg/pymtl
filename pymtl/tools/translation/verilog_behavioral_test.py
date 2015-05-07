@@ -83,6 +83,8 @@ pytestmark = requires_verilator
 
   ('FIXME: loop variables and ports have conflicting names post-translation!',
    test_translation_loopvar_port_name_conflict, VerilatorCompileError ),
+  ('FIXME: Inference from sext/zext/Bits cannot take Bits() obj as param.',
+   test_translation_inf_func_not_int, VerilogTranslationError ),
 
   #---------------------------------------------------------------------
   # VerilogTranslationError tests
@@ -104,6 +106,10 @@ pytestmark = requires_verilator
    test_translation_bad_comparison, VerilogTranslationError ),
   ('Cannot slice a range() operator and iterate over it.',
    test_translation_list_slice_step, VerilogTranslationError ),
+  ('Cannot infer functions not explicitly supported.',
+   test_translation_unsupported_func, VerilogTranslationError ),
+  ('The sext/zext/Bits funcs cannot take a non-integer as a param',
+   test_translation_func_not_int, VerilogTranslationError ),
 
 ]]
 

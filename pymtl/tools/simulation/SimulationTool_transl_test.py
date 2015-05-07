@@ -715,14 +715,131 @@ def test_translation_list_slice_step( setup_sim, num ):
       if (i % 2): assert m.out[i] ==      k[i]
       else:       assert m.out[i] == (not k[i])
 
+#-----------------------------------------------------------------------
+# translation_unsupported_func
+#-----------------------------------------------------------------------
+def test_translation_unsupported_func( setup_sim ):
+
+  class TestTranslationUnsupportedFunc( Model ):
+    def __init__( s ):
+      s.in_ = InPort [4]( 1 )
+      s.out = OutPort   ( 4 )
+
+      c = concat
+
+      @s.combinational
+      def logic0():
+        s.out.value = c( s.in_[3], s.in_[2], s.in_[1], s.in_[0] )
+
+  m, sim = setup_sim( TestTranslationUnsupportedFunc() )
+  for i in range(10):
+    k = Bits(4,randrange(0,2**4))
+    for i in range(4):
+      m.in_[i].value = k[i]
+    sim.cycle()
+    assert m.out == k
+
+#-----------------------------------------------------------------------
+# translation_func_not_int
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('num', range(6) )
+def test_translation_func_not_int( setup_sim, num ):
+
+  class TestTranslationFuncNotInt( Model ):
+    def __init__( s, num ):
+      s.in_ = InPort ( 4 )
+      s.out = OutPort( 8 )
+
+      if num == 0:
+        @s.combinational
+        def logic0():
+          s.out.value = sext( s.in_, 8.1 )
+
+      elif num == 1:
+        @s.combinational
+        def logic0():
+          s.out.value = zext( s.in_, 8.1 )
+
+      elif num == 2:
+        @s.combinational
+        def logic0():
+          s.out.value = Bits( 8.1, s.in_ )
+
+      elif num == 3:
+        @s.combinational
+        def logic0():
+          s.out.value = sext( s.in_, 4+4 )
+
+      elif num == 4:
+        @s.combinational
+        def logic0():
+          s.out.value = zext( s.in_, 4+4 )
+
+      elif num == 5:
+        @s.combinational
+        def logic0():
+          s.out.value = Bits( 4+4, s.in_ )
+
+      else:
+        raise Exception('Invalid Configuration!')
+
+  m, sim = setup_sim( TestTranslationFuncNotInt(num) )
+  for i in range(10):
+    k = Bits(4,randrange(0,2**4))
+    m.in_.value = k
+    sim.cycle()
+    if   num == 0: assert m.out == sext( k, 8 )
+    elif num == 1: assert m.out == k
+    elif num == 2: assert m.out == k
+
+#-----------------------------------------------------------------------
+# translation_func_not_int_inf
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('num', range(3) )
+def test_translation_inf_func_not_int( setup_sim, num ):
+
+  class TestTranslationInfFuncNotInt( Model ):
+    def __init__( s, num ):
+      s.in_ = InPort ( 4 )
+      s.out = OutPort( 8 )
+
+      new_bw = Bits(4,8)
+
+      if num == 0:
+        @s.combinational
+        def logic0():
+          tmp = sext( s.in_, new_bw )
+          s.out.value = tmp
+
+      elif num == 1:
+        @s.combinational
+        def logic0():
+          tmp = zext( s.in_, new_bw )
+          s.out.value = tmp
+
+      elif num == 2:
+        @s.combinational
+        def logic0():
+          tmp = Bits( new_bw, s.in_ )
+          s.out.value = tmp
+
+      else:
+        raise Exception('Invalid Configuration!')
+
+  m, sim = setup_sim( TestTranslationInfFuncNotInt(num) )
+  for i in range(10):
+    k = Bits(4,randrange(0,2**4))
+    m.in_.value = k
+    sim.cycle()
+    if   num == 0: assert m.out == sext( k, 8 )
+    elif num == 1: assert m.out == k
+    elif num == 2: assert m.out == k
+
+
+
 
 #'TODO: negative indexes: my_signal[-2]   issue #31
 #'TODO: negative indexes: my_signal[0:-2] issue #31
-
-# TODO: type inference from unsupported function
-#'TODO: 2nd argument to sext not an int'
-#'TODO: 2nd argument to zext not an int'
-#'TODO: 1st argument to Bits not an int'
 
 # TODO: invalid number of arguments to range/xrange
 #'TODO: for-loop reverse iteration'

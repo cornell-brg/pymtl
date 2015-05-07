@@ -491,6 +491,16 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Handle sign extension
     if func_name  == 'sext':
+      try:
+        if isinstance( node.args[1], ast.Num ): nbits = node.args[1].n
+        else:                                   nbits = node.args[1]._object
+        assert isinstance( nbits, int )
+      except (AssertionError,AttributeError):
+        raise VerilogTranslationError(
+          'Encountered a non-translatable sext call!\n'
+          'Argument "nbits" of sext(in,nbits) is not a constant int!',
+          node.lineno
+        )
       sig_name   = self.visit( node.args[0] )
       sig_nbits  = node.args[0]._object.nbits
       ext_nbits  = self.visit( node.args[1] )
@@ -499,6 +509,16 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Handle zero extension
     if func_name  == 'zext':
+      try:
+        if isinstance( node.args[1], ast.Num ): nbits = node.args[1].n
+        else:                                   nbits = node.args[1]._object
+        assert isinstance( nbits, int )
+      except (AssertionError,AttributeError):
+        raise VerilogTranslationError(
+          'Encountered a non-translatable sext call!\n'
+          'Argument "nbits" of sext(in,nbits) is not a constant int!',
+          node.lineno
+        )
       sig_name   = self.visit( node.args[0] )
       sig_nbits  = node.args[0]._object.nbits
       ext_nbits  = self.visit( node.args[1] )
@@ -528,12 +548,14 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Handle Bits
     if func_name  == 'Bits':
-      if isinstance( node.args[0], ast.Num ): nbits = node.args[0].n
-      else:                                   nbits = node.args[0]._object
-      if not isinstance( nbits, int ):
+      try:
+        if isinstance( node.args[1], ast.Num ): nbits = node.args[1].n
+        else:                                   nbits = node.args[1]._object
+        assert isinstance( nbits, int )
+      except (AssertionError,AttributeError):
         raise VerilogTranslationError(
-          'Encountered a non-translatable Bits instantiation!\n'
-          'The first argument provided to Bits(nbits,val) is not a constant!',
+          'Encountered a non-translatable sext call!\n'
+          'Argument "nbits" of sext(in,nbits) is not a constant int!',
           node.lineno
         )
       value = self.visit( node.args[1] ) if len(node.args) == 2 else '0'
