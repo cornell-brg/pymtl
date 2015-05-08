@@ -1089,6 +1089,58 @@ def test_translation_bits_constr( setup_sim, num ):
     sim.cycle()
     assert m.out == num
 
+#-----------------------------------------------------------------------
+# translation_issue_88
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('num', range(2))
+def test_translation_issue_88( setup_sim, num ):
+
+  class TestTranslationIssue88( Model ):
+    def __init__( s, num, nports=2, size=4 ):
+      clog2   = get_sel_nbits
+      addr_sz = clog2( size )
+
+      s.wr_addr = InPort [nports]( addr_sz )
+      s.wr_data = InPort [nports]( 8 )
+      s.rd_data = OutPort[size  ]( 8 )
+
+      s.regs     = Wire[size]( 8 )
+
+      if   num == 0:
+        @s.posedge_clk
+        def write_logic():
+          for i in range( nports ):
+            s.regs[ s.wr_addr[i] ].next = s.wr_data[i]
+
+      elif num == 1:
+        @s.posedge_clk
+        def write_logic():
+          for i in range( nports ):
+            j = s.wr_addr[i]
+            s.regs[ j ].next = s.wr_data[i]
+
+      else:
+        raise Exception('Invalid Configuration!')
+
+      @s.combinational
+      def read_logic():
+        for i in range( size ):
+          s.rd_data[i].value = s.regs[i]
+
+  m, sim = setup_sim( TestTranslationIssue88( num ) )
+  for i in range(10):
+    # ensure no addr conflict in write ports
+    a_addr, b_addr = randrange(0,2), randrange(2,4)
+    a_data, b_data = [randrange(0,2**8) for _ in range(2)]
+    m.wr_addr[0].value = a_addr
+    m.wr_addr[1].value = b_addr
+    m.wr_data[0].value = a_data
+    m.wr_data[1].value = b_data
+    sim.cycle()
+    assert m.rd_data[ a_addr ] == a_data
+    assert m.rd_data[ b_addr ] == b_data
+
+
 
 #'TODO: negative indexes: my_signal[-2]   issue #31
 #'TODO: negative indexes: my_signal[0:-2] issue #31
