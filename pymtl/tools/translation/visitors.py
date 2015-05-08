@@ -800,6 +800,9 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     self.visit( node.slice )
     self._is_lhs = True
 
+  def visit_Print( self, node ):
+    return node
+
 #------------------------------------------------------------------------
 # PyObj
 #------------------------------------------------------------------------

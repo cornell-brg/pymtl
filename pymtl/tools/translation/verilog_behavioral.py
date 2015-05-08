@@ -629,6 +629,17 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   def visit_Raise(self, node):
     return fmt( '$display("An Exception was raised!!!");', self.indent )
 
+  #-----------------------------------------------------------------------
+  # visit_Print
+  #-----------------------------------------------------------------------
+  def visit_Print(self, node):
+
+    signals = [ self.visit( expr ) for expr in node.values ]
+    fmt_str = ' ' .join( ['%d']*len(signals) )
+    sig_lst = ', '.join( signals )
+    msg     = '$display( "{}", {} );'.format( fmt_str, sig_lst )
+    return fmt( msg, self.indent )
+
 #-----------------------------------------------------------------------
 # opmap
 #-----------------------------------------------------------------------
