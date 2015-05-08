@@ -523,9 +523,6 @@ class InferTemporaryTypes( ast.NodeTransformer ):
 
   def visit_Assign( self, node ):
 
-    # First visit the RHS to update Name nodes that have been inferred
-    self.visit( node.value )
-
     # Catch untranslatable constructs
     if len(node.targets) != 1:
       raise VerilogTranslationError(
@@ -534,12 +531,15 @@ class InferTemporaryTypes( ast.NodeTransformer ):
         node.lineno
       )
 
-    if isinstance(node.targets[0], (ast.Tuple)):
+    if isinstance(node.targets[0], ast.Tuple):
       raise VerilogTranslationError(
         'Multiple items on the left of an assignment are not supported!\n'
         'Please modify "x,y = ..." to be two separate lines.',
         node.lineno
       )
+
+    # First visit the RHS to update Name nodes that have been inferred
+    self.visit( node.value )
 
     # Need this to visit potential temporaries used in slice indices!
     self.visit( node.targets[0] )
@@ -795,7 +795,10 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
     self.visit( node.value )
 
     # visit slice to find params
+    # _is_lhs is false because vars in index are only read, not written!
+    self._is_lhs = False
     self.visit( node.slice )
+    self._is_lhs = True
 
 #------------------------------------------------------------------------
 # PyObj
