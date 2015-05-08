@@ -488,10 +488,36 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
         'Encountered a non-translatable function call!',
         node.lineno
       )
+    if node.keywords:
+      raise VerilogTranslationError(
+        'Cannot translate function calls with keyword arguments!\n'
+        'Please replace "f( a, argname=b )" with "f( a, b )".',
+        node.lineno
+      )
+    if node.starargs:
+      raise VerilogTranslationError(
+        'Cannot translate function calls with arg unpacking!\n'
+        'Please replace "f( *arg_list )" with "f( a, b )".',
+        node.lineno
+      )
+    if node.kwargs:
+      raise VerilogTranslationError(
+        'Cannot translate function calls with kwarg unpacking!\n'
+        'Please replace "f( **arg_dict )" with "f( a, b )".',
+        node.lineno
+      )
+
+    # Handle sign extension
     func_name = self.visit( node.func )
 
     # Handle sign extension
     if func_name  == 'sext':
+      if len(node.args) != 2:
+        raise VerilogTranslationError(
+          'Encountered a non-translatable sext call!\n'
+          'sext(in, nbits) must have exactly two arguments!',
+          node.lineno
+        )
       try:
         if isinstance( node.args[1], ast.Num ): nbits = node.args[1].n
         else:                                   nbits = node.args[1]._object
@@ -510,14 +536,20 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Handle zero extension
     if func_name  == 'zext':
+      if len(node.args) != 2:
+        raise VerilogTranslationError(
+          'Encountered a non-translatable zext call!\n'
+          'zext(in, nbits) must have exactly two arguments!',
+          node.lineno
+        )
       try:
         if isinstance( node.args[1], ast.Num ): nbits = node.args[1].n
         else:                                   nbits = node.args[1]._object
         assert isinstance( nbits, int )
       except (AssertionError,AttributeError):
         raise VerilogTranslationError(
-          'Encountered a non-translatable sext call!\n'
-          'Argument "nbits" of sext(in,nbits) is not a constant int!',
+          'Encountered a non-translatable zext call!\n'
+          'Argument "nbits" of zext(in,nbits) is not a constant int!',
           node.lineno
         )
       sig_name   = self.visit( node.args[0] )
@@ -549,17 +581,41 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Handle Bits
     if func_name  == 'Bits':
-      try:
-        if isinstance( node.args[0], ast.Num ): nbits = node.args[0].n
-        else:                                   nbits = node.args[0]._object
-        assert isinstance( nbits, int )
-      except (AssertionError,AttributeError):
+      if len(node.args) > 2:
         raise VerilogTranslationError(
-          'Encountered a non-translatable sext call!\n'
-          'Argument "nbits" of sext(in,nbits) is not a constant int!',
+          'Encountered a non-translatable Bits call!\n'
+          'Bits(nbits,value) must have exactly two arguments!',
           node.lineno
         )
-      value = self.visit( node.args[1] ) if len(node.args) == 2 else '0'
+      if not isinstance( node.args[0], (ast.Num, ast.Name, ast.Attribute)):
+        raise VerilogTranslationError(
+          'Encountered a non-translatable Bits call!\n'
+          'Argument "nbits" of Bits(nbits,value) is not a constant int!',
+          node.lineno
+        )
+      if len(node.args) == 2 and \
+         not isinstance( node.args[1], (ast.Num, ast.Name, ast.Attribute)):
+        raise VerilogTranslationError(
+          'Encountered a non-translatable Bits call!\n'
+          'Argument "value" of Bits(nbits,value) is not a constant int!',
+          node.lineno
+        )
+
+      try:
+        if   isinstance( node.args[0], ast.Num ): nbits = node.args[0].n
+        else:                                     nbits = node.args[0]._object
+        if   len(node.args) == 1:                 value = 0
+        elif isinstance( node.args[1], ast.Num ): value = node.args[1].n
+        else:                                     value = node.args[1]._object
+        assert isinstance( nbits, int )
+        assert isinstance( value, int )
+      except (AssertionError,AttributeError):
+        raise VerilogTranslationError(
+          'Encountered a non-translatable Bits call!\n'
+          'Arguments of Bits(nbits,value) are not both constant ints!',
+          node.lineno
+        )
+
       return "{nbits}'d{value}".format( nbits=nbits, value=value )
 
     raise VerilogTranslationError(

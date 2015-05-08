@@ -112,6 +112,10 @@ pytestmark = requires_verilator
    test_translation_func_not_int, VerilogTranslationError ),
   ('The step provided to range/xrange must be a constant, non-zero int.',
    test_translation_iter_unsupported_step, VerilogTranslationError ),
+  ('Keyword args, arg list unpacking, and arg dict unpacking are not supported!',
+   test_translation_keyword_args, VerilogTranslationError ),
+  ('Non-literal Bits constructors not supported',
+   test_translation_issue_123, VerilogTranslationError ),
 
 ]]
 

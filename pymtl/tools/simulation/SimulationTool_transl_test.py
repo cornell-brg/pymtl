@@ -953,6 +953,142 @@ def test_translation_iter_unsupported_step( setup_sim, num ):
     sim.cycle()
     assert m.out == k
 
+#-----------------------------------------------------------------------
+# translation_keyword_args
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('num', range(3))
+def test_translation_keyword_args( setup_sim, num ):
+
+  class TestTranslationKeywordArgs( Model ):
+    def __init__( s, num ):
+      s.a   = InPort ( 8 )
+      s.b   = InPort ( 8 )
+      s.out = OutPort( 8 )
+
+      if num == 0:
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits(8, 4, trunc=True)
+          print s.out.value
+
+      elif num == 1:
+        my_args = [8,4]
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits( *my_args )
+
+      elif num == 2:
+        my_args = { 'nbits':8, 'value':4 }
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits( **my_args )
+
+      else:
+        raise Exception('Invalid Configuration!')
+
+  m, sim = setup_sim( TestTranslationKeywordArgs(num) )
+  for i in range(10):
+    sim.cycle()
+    assert m.out == 4
+
+#-----------------------------------------------------------------------
+# translation_issue_123
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('num', range(4))
+def test_translation_issue_123( setup_sim, num ):
+
+  class TestTranslationIssue123( Model ):
+    def __init__( s, num ):
+      s.a   = InPort ( 8 )
+      s.b   = InPort ( 8 )
+      s.out = OutPort( 16 )
+
+      if num == 0:
+        @s.combinational
+        def logic():
+          s.out.value = Bits(16, s.a*s.b, True)
+
+      elif num == 1:
+        @s.combinational
+        def logic():
+          s.out.value = Bits(16, s.a*s.b)
+
+      elif num == 2:
+        @s.combinational
+        def logic():
+          s.out.value = Bits(16, s.a)
+
+      elif num == 3:
+        @s.combinational
+        def logic():
+          s.out.value = Bits(8+8, s.a)
+
+      else:
+        raise Exception('Invalid Configuration!')
+
+  m, sim = setup_sim( TestTranslationIssue123(num) )
+  for i in range(10):
+    a, b = [randrange(2**8) for _ in range(2)]
+    m.a.value, m.b.value = a, b
+    sim.cycle()
+    if num == 0: assert m.out == m.a*m.b
+    if num == 1: assert m.out == m.a*m.b
+    if num == 2: assert m.out == m.a
+    if num == 3: assert m.out == m.a
+
+#-----------------------------------------------------------------------
+# translation_bits_constr
+#-----------------------------------------------------------------------
+@pytest.mark.parametrize('num', range(6))
+def test_translation_bits_constr( setup_sim, num ):
+
+  class TestTranslationBitsConstr( Model ):
+    def __init__( s, num ):
+      s.a   = InPort ( 8 )
+      s.out = OutPort( 16 )
+
+      if num == 0:
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits(16)
+
+      elif num == 1:
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits(16, 1)
+
+      elif num == 2:
+        s.tmp = num
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits(16, s.tmp)
+
+      elif num == 3:
+        tmp = num
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits(16, tmp)
+
+      elif num == 4:
+        s.tmp = 16
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits(s.tmp, 4)
+
+      elif num == 5:
+        tmp = 16
+        @s.posedge_clk
+        def logic():
+          s.out.next = Bits(tmp, 5)
+
+      else:
+        raise Exception('Invalid Configuration!')
+
+  m, sim = setup_sim( TestTranslationBitsConstr(num) )
+  for i in range(10):
+    sim.cycle()
+    assert m.out == num
+
 
 #'TODO: negative indexes: my_signal[-2]   issue #31
 #'TODO: negative indexes: my_signal[0:-2] issue #31
