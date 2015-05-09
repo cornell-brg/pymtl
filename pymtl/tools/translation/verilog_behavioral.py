@@ -119,6 +119,7 @@ def ast_pipeline( tree, model, func ):
   tree = visitors.AnnotateWithObjects( model, func ).visit( tree )
   tree = visitors.RemoveModule       (             ).visit( tree )
   tree = visitors.SimplifyDecorator  (             ).visit( tree )
+  tree = visitors.AnnotateAssignments(             ).visit( tree )
   tree = visitors.RemoveValueNext    (             ).visit( tree )
   tree = visitors.RemoveSelf         ( model       ).visit( tree )
   tree = visitors.FlattenSubmodAttrs (             ).visit( tree )
@@ -171,13 +172,11 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
 
     # Combinational Block
     if 'combinational' in node.decorator_list:
-      self.assign = '='
       sensitivity = '*'
 
     # Posedge Clock
     elif ('posedge_clk' in node.decorator_list or
           'tick_rtl'    in node.decorator_list):
-      self.assign = '<='
       sensitivity = 'posedge clk'
 
     # Unsupported annotation
@@ -228,10 +227,12 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
         node.lineno
       )
 
-    lhs = self.visit( node.targets[0] )
-    rhs = self.visit( node.value )
+    lhs    = self.visit( node.targets[0] )
+    rhs    = self.visit( node.value )
+    assign = '=' if node._is_blocking else '<='
+    indent = self.indent
 
-    return '{}{} {} {};\n'.format( self.indent, lhs, self.assign, rhs )
+    return '{indent}{lhs} {assign} {rhs};\n'.format(**vars())
 
   #-----------------------------------------------------------------------
   # visit_Tuple
@@ -243,12 +244,13 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
   #-----------------------------------------------------------------------
   def visit_AugAssign(self, node):
 
-    lhs = self.visit( node.target )
-    rhs = self.visit( node.value )
-    op  = opmap[ type(node.op) ]
+    lhs    = self.visit( node.target )
+    rhs    = self.visit( node.value )
+    op     = opmap[ type(node.op) ]
+    assign = '=' if node._is_blocking else '<='
+    indent = self.indent
 
-    return '{4}{0} {1} {0} {2} {3};\n'.format( lhs, self.assign, op, rhs,
-                                               self.indent )
+    return '{indent}{lhs} {assign} {lhs} {op} {rhs};\n'.format(**vars())
 
   #-----------------------------------------------------------------------
   # visit_If

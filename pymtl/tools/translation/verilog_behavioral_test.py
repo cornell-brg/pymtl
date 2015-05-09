@@ -82,8 +82,6 @@ pytestmark = requires_verilator
    test_translation_loopvar_port_name_conflict, VerilatorCompileError ),
   ('FIXME: Inference from sext/zext/Bits cannot take Bits() obj as param.',
    test_translation_inf_func_not_int, VerilogTranslationError ),
-  ('FIXME: Array reads on LHS of assignment translate incorrectly',
-   test_translation_issue_88, Exception ),
 
   #---------------------------------------------------------------------
   # VerilogTranslationError tests

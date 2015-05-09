@@ -107,6 +107,40 @@ class AnnotateWithObjects( ast.NodeTransformer ):
     return node
 
 #-------------------------------------------------------------------------
+# AnnotateAssignments
+#-------------------------------------------------------------------------
+class AnnotateAssignments( ast.NodeTransformer ):
+  'Annotate assign nodes with ._is_blocking attribute'
+
+  def visit_Assign( self, node ):
+
+    # catch untranslatable constructs
+    if len(node.targets) != 1:
+      raise VerilogTranslationError(
+        'Chained assignments are not supported!\n'
+        'Please modify "x = y = ..." to be two separate lines.',
+        node.lineno
+      )
+
+    # annotate the assignment with _is_blocking if not sequential update
+    lhs = node.targets[0]
+    seq = isinstance( lhs, ast.Attribute ) and lhs.attr in ['next','n']
+    node._is_blocking = not seq
+
+    self.generic_visit( node )
+    return node
+
+  def visit_AugAssign( self, node ):
+
+    # annotate the assignment with _is_blocking if not sequential update
+    lhs = node.target
+    seq = isinstance( lhs, ast.Attribute ) and lhs.attr in ['next','n']
+    node._is_blocking = not seq
+
+    self.generic_visit( node )
+    return node
+
+#-------------------------------------------------------------------------
 # RemoveValueNext
 #-------------------------------------------------------------------------
 # Remove .value and .next.
