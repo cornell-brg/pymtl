@@ -1140,6 +1140,29 @@ def test_translation_issue_88( setup_sim, num ):
     assert m.rd_data[ a_addr ] == a_data
     assert m.rd_data[ b_addr ] == b_data
 
+#-----------------------------------------------------------------------
+# translation_issue_136
+#-----------------------------------------------------------------------
+def test_translation_issue_136( setup_sim ):
+  class TestTranslationIssue136( Model ):
+    def __init__( s ):
+      s.a = InPort [ 2 ]( 4 )
+      s.b = OutPort[ 2 ]( 4 )
+
+      @s.combinational
+      def logic():
+        j = s.a[0]
+        s.b[0].value = j
+        s.b[1].value = s.a[1]
+
+  m, sim = setup_sim( TestTranslationIssue136() )
+  for i in range(10):
+    a = [randrange(2**4) for _ in range(2)]
+    m.a[0].value, m.a[1].value = a
+    sim.cycle()
+    assert m.b[0] == a[0]
+    assert m.b[1] == a[1]
+
 
 
 #'TODO: negative indexes: my_signal[-2]   issue #31

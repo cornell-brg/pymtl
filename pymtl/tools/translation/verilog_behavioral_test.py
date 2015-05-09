@@ -35,9 +35,6 @@ pytestmark = requires_verilator
   # documented bugs
   #---------------------------------------------------------------------
 
-  ('FIXME: Verilator/PyMTL simulation mismatch! Verilator bug?',
-   test_SubscriptTemp, None ),
-
   ('This works fine in Python Simulation, but does not translate into '
    'Verilog correctly because we assume all elements of a list of wires '
    'will have the same assignment structure!',

@@ -602,7 +602,19 @@ class InferTemporaryTypes( ast.NodeTransformer ):
             node.lineno
           )
 
-        obj      = Wire( 1 )
+        if   isinstance( node.value._object, Signal ):
+          obj = Wire( 1 )
+        elif isinstance( node.value._object,    list   ) and \
+             isinstance( node.value._object[0], Signal ):
+          obj = Wire( node.value._object[0].nbits )
+        else:
+          raise VerilogTranslationError(
+            'Type inference from unsupported list construct!'
+            '\nCannot infer type of temporary variable "{}".'
+             .format( node.targets[0].id ),
+            node.lineno
+          )
+
         obj.name = node.targets[0].id
         self._insert( node, obj )
 
