@@ -842,9 +842,9 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
     # visit slice to find params
     # _is_lhs is false because vars in index are only read, not written!
-    self._is_lhs = False
+    stash_is_lhs, self._is_lhs = self._is_lhs, False
     self.visit( node.slice )
-    self._is_lhs = True
+    self._is_lhs = stash_is_lhs
 
   def visit_Print( self, node ):
     return node
