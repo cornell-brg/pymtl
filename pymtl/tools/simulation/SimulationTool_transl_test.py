@@ -1141,10 +1141,10 @@ def test_translation_issue_88( setup_sim, num ):
     assert m.rd_data[ b_addr ] == b_data
 
 #-----------------------------------------------------------------------
-# translation_issue_136
+# translation_issue_136_a
 #-----------------------------------------------------------------------
-def test_translation_issue_136( setup_sim ):
-  class TestTranslationIssue136( Model ):
+def test_translation_issue_136_a( setup_sim ):
+  class TestTranslationIssue136_A( Model ):
     def __init__( s ):
       s.a = InPort [ 2 ]( 4 )
       s.b = OutPort[ 2 ]( 4 )
@@ -1155,7 +1155,7 @@ def test_translation_issue_136( setup_sim ):
         s.b[0].value = j
         s.b[1].value = s.a[1]
 
-  m, sim = setup_sim( TestTranslationIssue136() )
+  m, sim = setup_sim( TestTranslationIssue136_A() )
   for i in range(10):
     a = [randrange(2**4) for _ in range(2)]
     m.a[0].value, m.a[1].value = a
@@ -1163,6 +1163,74 @@ def test_translation_issue_136( setup_sim ):
     assert m.b[0] == a[0]
     assert m.b[1] == a[1]
 
+#-----------------------------------------------------------------------
+# translation_issue_136_b
+#-----------------------------------------------------------------------
+def test_translation_issue_136_b( setup_sim ):
+
+  class TestTranslationIssue136_Bchild( Model ):
+    def __init__( s ):
+      s.in_ = InPort ( 4 )
+      s.out = OutPort( 4 )
+      @s.combinational
+      def logic():
+        s.out.value = s.in_.value
+
+  class TestTranslationIssue136_B( Model ):
+    def __init__( s ):
+      s.in_  = InPort [ 1 ]( 4 )
+      s.out  = OutPort[ 1 ]( 4 )
+      s.isub = TestTranslationIssue136_Bchild[1]()
+      s.osub = TestTranslationIssue136_Bchild[1]()
+      s.connect( s.in_[0], s.isub[0].in_ )
+      s.connect( s.out[0], s.osub[0].out )
+      @s.combinational
+      def logic():
+        for i in range(4):
+          s.osub[0].in_[i].value = s.isub[0].out[i] and s.isub[0].out[i]
+
+  m, sim = setup_sim( TestTranslationIssue136_B() )
+  for i in range(10):
+    a = randrange(2**4)
+    m.in_[0].value = a
+    sim.cycle()
+    assert m.out[0] == a
+
+#-----------------------------------------------------------------------
+# translation_issue_136_c
+#-----------------------------------------------------------------------
+def test_translation_issue_136_c( setup_sim ):
+
+  class TestTranslationIssue136_Cchild( Model ):
+    def __init__( s ):
+      s.in_ = InPort ( 4 )
+      s.out = OutPort( 4 )
+      @s.combinational
+      def logic():
+        s.out.value = s.in_.value
+
+  class TestTranslationIssue136_C( Model ):
+    def __init__( s ):
+      s.in_  = InPort [ 1 ]( 4 )
+      s.val  = InPort [ 4 ]( 1 )
+      s.out  = OutPort[ 1 ]( 4 )
+      s.isub = TestTranslationIssue136_Cchild[1]()
+      s.osub = TestTranslationIssue136_Cchild[1]()
+      s.connect( s.in_[0], s.isub[0].in_ )
+      s.connect( s.out[0], s.osub[0].out )
+      @s.combinational
+      def logic():
+        for i in range(4):
+          s.osub[0].in_[i].value = s.val[i] and s.isub[0].out[i]
+
+  m, sim = setup_sim( TestTranslationIssue136_C() )
+  for j in range(4):
+    m.val[j].value = 1
+  for i in range(10):
+    a = randrange(2**4)
+    m.in_[0].value = a
+    sim.cycle()
+    assert m.out[0] == a
 
 
 #'TODO: negative indexes: my_signal[-2]   issue #31
