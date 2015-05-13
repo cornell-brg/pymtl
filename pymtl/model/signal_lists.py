@@ -22,6 +22,14 @@ class PortList( list ):
     """Allow PortLists to be hashable."""
     return hash( tuple(self) )
 
+  @property
+  def parent( self ):
+    return self[0].parent
+
+  @parent.setter
+  def parent( self, value ):
+    raise AttributeError('Attempting to set parent of PortList!')
+
 #-----------------------------------------------------------------------
 # WireList
 #-----------------------------------------------------------------------
@@ -35,3 +43,11 @@ class WireList( list ):
   def __hash__( self ):
     """Allow PortLists to be hashable."""
     return hash( tuple(self) )
+
+  @property
+  def parent( self ):
+    return self[0].parent
+
+  @parent.setter
+  def parent( self, value ):
+    raise AttributeError('Attempting to set parent of WireList!')
