@@ -1164,11 +1164,11 @@ def test_translation_issue_136_a( setup_sim ):
     assert m.b[1] == a[1]
 
 #-----------------------------------------------------------------------
-# translation_issue_136_b
+# translation_issue_88_b
 #-----------------------------------------------------------------------
-def test_translation_issue_136_b( setup_sim ):
+def test_translation_issue_88_b( setup_sim ):
 
-  class TestTranslationIssue136_Bchild( Model ):
+  class TestTranslationIssue88_Bchild( Model ):
     def __init__( s ):
       s.in_ = InPort ( 4 )
       s.out = OutPort( 4 )
@@ -1176,12 +1176,12 @@ def test_translation_issue_136_b( setup_sim ):
       def logic():
         s.out.value = s.in_.value
 
-  class TestTranslationIssue136_B( Model ):
+  class TestTranslationIssue88_B( Model ):
     def __init__( s ):
       s.in_  = InPort [ 1 ]( 4 )
       s.out  = OutPort[ 1 ]( 4 )
-      s.isub = TestTranslationIssue136_Bchild[1]()
-      s.osub = TestTranslationIssue136_Bchild[1]()
+      s.isub = TestTranslationIssue88_Bchild[1]()
+      s.osub = TestTranslationIssue88_Bchild[1]()
       s.connect( s.in_[0], s.isub[0].in_ )
       s.connect( s.out[0], s.osub[0].out )
       @s.combinational
@@ -1189,7 +1189,7 @@ def test_translation_issue_136_b( setup_sim ):
         for i in range(4):
           s.osub[0].in_[i].value = s.isub[0].out[i] and s.isub[0].out[i]
 
-  m, sim = setup_sim( TestTranslationIssue136_B() )
+  m, sim = setup_sim( TestTranslationIssue88_B() )
   for i in range(10):
     a = randrange(2**4)
     m.in_[0].value = a
@@ -1197,11 +1197,11 @@ def test_translation_issue_136_b( setup_sim ):
     assert m.out[0] == a
 
 #-----------------------------------------------------------------------
-# translation_issue_136_c
+# translation_issue_88_c
 #-----------------------------------------------------------------------
-def test_translation_issue_136_c( setup_sim ):
+def test_translation_issue_88_c( setup_sim ):
 
-  class TestTranslationIssue136_Cchild( Model ):
+  class TestTranslationIssue88_Cchild( Model ):
     def __init__( s ):
       s.in_ = InPort ( 4 )
       s.out = OutPort( 4 )
@@ -1209,13 +1209,13 @@ def test_translation_issue_136_c( setup_sim ):
       def logic():
         s.out.value = s.in_.value
 
-  class TestTranslationIssue136_C( Model ):
+  class TestTranslationIssue88_C( Model ):
     def __init__( s ):
       s.in_  = InPort [ 1 ]( 4 )
       s.val  = InPort [ 4 ]( 1 )
       s.out  = OutPort[ 1 ]( 4 )
-      s.isub = TestTranslationIssue136_Cchild[1]()
-      s.osub = TestTranslationIssue136_Cchild[1]()
+      s.isub = TestTranslationIssue88_Cchild[1]()
+      s.osub = TestTranslationIssue88_Cchild[1]()
       s.connect( s.in_[0], s.isub[0].in_ )
       s.connect( s.out[0], s.osub[0].out )
       @s.combinational
@@ -1223,9 +1223,41 @@ def test_translation_issue_136_c( setup_sim ):
         for i in range(4):
           s.osub[0].in_[i].value = s.val[i] and s.isub[0].out[i]
 
-  m, sim = setup_sim( TestTranslationIssue136_C() )
+  m, sim = setup_sim( TestTranslationIssue88_C() )
   for j in range(4):
     m.val[j].value = 1
+  for i in range(10):
+    a = randrange(2**4)
+    m.in_[0].value = a
+    sim.cycle()
+    assert m.out[0] == a
+
+#-----------------------------------------------------------------------
+# translation_issue_88_d
+#-----------------------------------------------------------------------
+def test_translation_issue_88_d( setup_sim ):
+
+  class TestTranslationIssue88_Dchild( Model ):
+    def __init__( s ):
+      s.in_ = InPort [1]( 4 )
+      s.out = OutPort[1]( 4 )
+      @s.combinational
+      def logic():
+        s.out[0].value = s.in_[0]
+
+  class TestTranslationIssue88_D( Model ):
+    def __init__( s ):
+      s.in_  = InPort [ 1 ]( 4 )
+      s.out  = OutPort[ 1 ]( 4 )
+      s.isub = TestTranslationIssue88_Dchild[1]()
+      s.osub = TestTranslationIssue88_Dchild[1]()
+      s.connect( s.in_[0], s.isub[0].in_[0] )
+      s.connect( s.out[0], s.osub[0].out[0] )
+      @s.combinational
+      def logic():
+        s.osub[0].in_[0].value = s.isub[0].out[0]
+
+  m, sim = setup_sim( TestTranslationIssue88_D() )
   for i in range(10):
     a = randrange(2**4)
     m.in_[0].value = a

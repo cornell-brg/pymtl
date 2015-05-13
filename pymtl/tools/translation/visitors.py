@@ -720,7 +720,7 @@ class InferTemporaryTypes( ast.NodeTransformer ):
 #-------------------------------------------------------------------------
 # PortListNameHack
 #-------------------------------------------------------------------------
-# Temporary hack to handle cases where
+# Temporary hack to handle cases where port lists are named improperly.
 class PortListNameHack( ast.NodeTransformer ):
 
   def __init__( self, model ):
@@ -739,18 +739,18 @@ class PortListNameHack( ast.NodeTransformer ):
     # if the PortList parent is not the same as the current modules parent, but
     # there is no '$' in the name, it's been named improperly! fix it!
 
-    if plist[0].parent != self.model and not '$' in plist.name:
+    if plist.parent != self.model and not '$' in plist.name:
 
       # this only works if all children of the list have the same parent, throw
       # an error if we can detect that that is not the case
 
-      if len( plist) > 1 and plist[0].parent != plist[1].parent:
+      if len(plist) > 1 and plist[0].parent != plist[1].parent:
         raise Exception( "Error during translation!" )
 
       # generate the updated name, and also make a copy of the PortList to make
       # sure we aren't impacting any other AST references to this object
 
-      name              = '{}${}'.format( plist[0].parent.name, plist.name )
+      name              = '{}${}'.format( plist.parent.name, plist.name )
       node._object      = PortList( node._object )
       node._object.name = name
 
@@ -839,6 +839,10 @@ class GetRegsIntsParamsTempsArrays( ast.NodeVisitor ):
 
     # visit value to find nested subscripts
     self.visit( node.value )
+
+    if (isinstance( node._object,    list ) and
+        isinstance( node._object[0], list )):
+      self.arrays.remove( node._object[0] )
 
     # visit slice to find params
     # _is_lhs is false because vars in index are only read, not written!

@@ -7,7 +7,9 @@ import re
 import sys
 import collections
 
-from ...model.signals import InPort, OutPort, Constant
+from ...model.signals      import Signal, InPort, OutPort, Wire, Constant
+from ...model.signal_lists import PortList, WireList
+from exceptions            import VerilogTranslationError
 
 #-----------------------------------------------------------------------
 # header
@@ -294,38 +296,92 @@ def create_declarations( model, regs, ints, params, arrays ):
 #-----------------------------------------------------------------------
 # array_declarations
 #-----------------------------------------------------------------------
-# TODO: clean this up!
 def array_declarations( model, symtab ):
 
-  arrays = symtab[-1]
-  scode  = ''
+  if not symtab[-1]:
+    return '\n'
 
-  # Print the array declarations
-  if arrays:
-    arrays = sorted( arrays, key=lambda x: x.name )
-    scode += '  // array declarations\n'
-    for ports in arrays:
+  #---------------------------------------------------------------------
+  # helper to generate arrays to output port assignments
+  #---------------------------------------------------------------------
+  def _gen_array_to_output( ports ):
+    if isinstance( ports[0], (Wire,InPort,OutPort) ):
+      stmts = '  reg    [{:4}:0] {}[0:{}];\n' \
+              .format(ports[0].nbits-1, ports.name, len(ports)-1)
+      for i, port in enumerate(ports):
+        stmts += '  assign {0} = {1}[{2:3}];\n' \
+                 .format(signal_to_str(port, None, model), ports.name, i)
 
-      first = ports[0]
+    elif isinstance( ports[0], (PortList,WireList) ):
+      if not isinstance( ports[0][0], (Wire,InPort,OutPort) ):
+        raise VerilogTranslationError(
+          'Port lists with more than 2 dimenstions are not supported!'
+        )
+      stmts = '  reg    [{bw:4}:0] {name}[0:{sz0}][0:{sz1}];\n' \
+              .format( bw   = ports[0][0].nbits-1,
+                       name = ports.name,
+                       sz0  = len(ports)-1,
+                       sz1  = len(ports[0])-1 )
+      for i, plist in enumerate(ports):
+        for j, port in enumerate(plist):
+          stmts += '  assign {0} = {1}[{2:3}][{3:3}];\n' \
+                   .format(signal_to_str(port, None, model),
+                           ports.name, i, j)
 
-      # Output Port
-      if ports.is_lhs:
-        scode += '  reg    [{:4}:0] {}[0:{}];\n'.format(
-            first.nbits-1, ports.name, len(ports)-1)
-        for i, port in enumerate(ports):
-          scode += '  assign {0} = {1}[{2:3}];\n'.format(
-              signal_to_str( port, None, model ), ports.name, i )
+    else:
+      raise VerilogTranslationError(
+        'An internal error occured when translating array accesses!\n'
+        'Expected a list of Wires or Ports, instead got: {}'
+        .format( type(ports[0]) )
+      )
 
-      # Input Port
-      else:
-        scode += '  wire   [{:4}:0] {}[0:{}];\n'.format(
-            first.nbits-1, ports.name, len(ports)-1)
-        for i, port in enumerate(ports):
-          scode += '  assign {1}[{2:3}] = {0};\n'.format(
-              signal_to_str( port, None, model ), ports.name, i )
+    return stmts
 
-    scode += '\n'
+  #---------------------------------------------------------------------
+  # helper to generate input port to array assignments
+  #---------------------------------------------------------------------
+  def _gen_input_to_array( ports ):
+    if isinstance( ports[0], (Wire,InPort,OutPort) ):
+      stmts = '  wire   [{:4}:0] {}[0:{}];\n' \
+              .format(ports[0].nbits-1, ports.name, len(ports)-1)
+      for i, port in enumerate(ports):
+        stmts += '  assign {1}[{2:3}] = {0};\n' \
+                 .format(signal_to_str(port, None, model), ports.name, i)
 
-  return scode
+    elif isinstance( ports[0], (PortList,WireList) ):
+      if not isinstance( ports[0][0], (Wire,InPort,OutPort) ):
+        raise VerilogTranslationError(
+          'Port lists with more than 2 dimenstions are not supported!'
+        )
+      stmts = '  wire   [{bw:4}:0] {name}[0:{sz0}][0:{sz1}];\n' \
+              .format( bw   = ports[0][0].nbits-1,
+                       name = ports.name,
+                       sz0  = len(ports)-1,
+                       sz1  = len(ports[0])-1 )
+      for i, plist in enumerate(ports):
+        for j, port in enumerate(plist):
+          stmts += '  assign {1}[{2:3}][{3:3}] = {0};\n' \
+                   .format(signal_to_str(port, None, model),
+                           ports.name, i, j)
+
+    else:
+      raise VerilogTranslationError(
+        'An internal error occured when translating array accesses!\n'
+        'Expected a list of Wires or Ports, instead got: {}'
+        .format( type(ports[0]) )
+      )
+    return stmts
+
+  #---------------------------------------------------------------------
+  # print the array declarations
+  #---------------------------------------------------------------------
+  arrays = sorted( symtab[-1], key=lambda x: x.name )
+  scode  = '  // array declarations\n'
+
+  for ports in arrays:
+    if ports.is_lhs: scode += _gen_array_to_output( ports )
+    else:            scode += _gen_input_to_array ( ports )
+
+  return scode + '\n'
 
 
