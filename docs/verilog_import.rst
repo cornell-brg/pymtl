@@ -1,5 +1,5 @@
 ===============================================================================
-Importing Verilog Components
+Importing Verilog Components into PyMTL
 ===============================================================================
 
 PyMTL provides facilities for importing Verilog source for testing and
@@ -11,7 +11,7 @@ and wrapping this C++ code in a PyMTL harness.
 Steps for Importing Verilog
 -------------------------------------------------------------------------------
 
-In order to import Verilog, the user must following the following steps:
+In order to import Verilog, the user must perform the following steps:
 
 1. Write/modify Verilog source to meet the PyMTL naming and style restrictions.
 2. Write a PyMTL VerilogModel wrapper.
@@ -35,13 +35,13 @@ inference facilities of the VerilogModel importer. Creating wrappers for these
 modules using a manual mapping approach is discussed later in this document.
 
 Given a Verilog module named ``Foo``, the use of the "name inference" mechanism
-requires that the source code of ``Foo`` and the associated PyMTL VerilogModel
-wrapper meet **all** of the following criteria:
+requires that the source code of ``Foo`` and the associated PyMTL wrapper meet
+the following criteria:
 
 1. The definition of Verilog module ``Foo`` must be in a Verilog source file
    named ``Foo.v``.
    (The Verilog source file name must match the Verilog module name).
-2. The Verilog module must have clk and reset ports (even if unused).
+2. The Verilog module must have ``clk`` and ``reset`` ports (even if unused).
 3. The PyMTL wrapper class must also be named ``Foo``.
    (The PyMTL wrapper class name must match the Verilog module name).
 4. The PyMTL wrapper source file must be named ``Foo.py``.
@@ -81,7 +81,7 @@ Given a Verilog file named ``EnResetRegVRTL.v`` containing the following
     ...
   endmodule
 
-A VerilogModel wrapper using name inference would look like this::
+A PyMTL Verilog wrapper using name inference would look like this::
 
   #============================================================================
   # EnResetRegVRTL.py
@@ -107,11 +107,13 @@ A VerilogModel wrapper using name inference would look like this::
      s.q   = OutPort( nbits )
 
 Once the VerilogModel is correctly specified, it can be imported and tested in
-a py.test test file like so::
+a py.test testing harness like so::
 
   #============================================================================
   # EnResetRegVRTL_test.py
   #============================================================================
+
+  import pytest
 
   from pymtl          import *
   from EnResetRegVRTL import EnResetRegVRTL
@@ -163,20 +165,46 @@ To run the above test file, use py.test at the commandline::
   > py.test ../verilog_wrappers/EnResetRegVRTL_test.py --verbose --test-verilog
 
 -------------------------------------------------------------------------------
-Creating a VerilogModel Wrapper Manually to use PortBundles
+Creating a VerilogModel Wrapper Manually
 -------------------------------------------------------------------------------
 
-One example use case where a user may want to forego the name inference
-capabilities of VerilogModule import and use the manual approach to wrapper
-specification is when the user wants the PyMTL wrapper to expose a PortBundle
+In some cases the user may prefer not to modify the Verilog source to meet
+naming conventions, or may want more power over the mapping of identifiers from
+the PyMTL wrapper to the Verilog source code. In these scenarios the wrapper
+author can manually specify the Verilog file, module, parameter, and port names
+using the VerilogModule attributes and methods described below:
+
+- ``modulename``: a class or instance attribute which specifies the name of the
+  Verilog module to be imported.
+- ``sourcefile``: a class or instance attribute which specifies the file from
+  which the Verilog module should be imported (must be a fully qualified path).
+- ``set_params()``: a method that takes a dictionary mapping of Verilog
+  parameter names to desired parameter values.
+- ``set_ports()``: a method that takes a dictionary mapping of Verilog port
+  names to PyMTL ports.
+
+Users can use all or only some of the above configuration attributes/methods
+when writing PyMTL wrappers for their Verilog modules. Configuration details
+which are not explicitly specified will be set using the name inference rules
+described above. However, note that the VerilogModule import mechanism will
+**not** use name inference for only some parameters (ports) if the
+``set_params()`` (``set_ports()``) methods are used: a complete specification
+of all parameters (ports) is required if ``set_params()`` (``set_ports()``) is
+called!  Also note that the user must explicitly specify the mapping of ``clk``
+and ``reset`` ports which are implicitly added to all PyMTL models.
+
+-------------------------------------------------------------------------------
+Example: Creating a VerilogModel Wrapper Manually to use PortBundles
+-------------------------------------------------------------------------------
+
+One example use case where a user may want to use a manual specification rather
+than name inference is when writing a PyMTL wrapper that exposes a PortBundle
 interface. Because Verilog has no notion of PortBundles, type inference cannot
-be used here and the wrapper author must instead manually map PyMTL port names
-to the proper counterparts in the Verilog source file. An example of this is
-shown below.
+be used and the wrapper author must manually map PyMTL ports to their proper
+counterparts in the Verilog source file. An example is shown below.
 
 Given a Verilog file named ``PortBundleExVRTL.v`` containing the following
 (incomplete) source code::
-
 
   //===========================================================================
   // PortBundleExVRTL.v
@@ -199,8 +227,8 @@ Given a Verilog file named ``PortBundleExVRTL.v`` containing the following
     ...
   endmodule
 
-A VerilogModel using name inference for the file, module, and parameter names,
-but manually specified port names would like this::
+A PyMTL Verilog wrapper using manually specified port names and inferred file,
+module, and parameter names would look like the following::
 
   #============================================================================
   # PortBundleExVRTL.py
@@ -226,34 +254,34 @@ but manually specified port names would like this::
       # map the PyMTL Model ports to the port names of the Verilog module.
 
       s.set_ports({
-        'clk'   :  s.clk,
-        'reset' :  s.reset,
         'in_msg':  s.in_.msg,
         'in_val':  s.in_.val,
         'in_rdy':  s.in_.rdy,
         'out_msg': s.out.msg,
         'out_val': s.out.val,
         'out_rdy': s.out.rdy,
+
+        # The implicit PyMTL clk and reset ports must be explicitly connected.
+        'clk'   :  s.clk,
+        'reset' :  s.reset,
       })
 
 -------------------------------------------------------------------------------
 Creating a VerilogModel Wrapper Manually: A More Complex Example
 -------------------------------------------------------------------------------
 
-The previous example used a manually mapping for the module ports but name
+The previous example used a manual mapping for the module ports but name
 inference for the file name, module name, and parameter names. In some cases,
 the user may one to manually specify **all** of these configuration parameters
-in their VerilogModel wrapper.
+in their PyMTL Verilog wrapper.
 
-Below is an alternative implementation of ``PortBundleExRTL.py`` which uses
-no name inference and manually specifies the file name, module name,
-parameters, and ports of the wrapper::
+Below is an alternate implementation of ``PortBundleExRTL.py`` that uses no
+name inference and manually specifies the file, module, parameter, and port
+names of the wrapper::
 
   #============================================================================
   # PortBundleExVRTL.py
   #============================================================================
-  # The PyMTL source file name matches the PyMTL class name, so name inference
-  # can be used for the file name.
 
   from pymtl import *
 
@@ -291,9 +319,4 @@ parameters, and ports of the wrapper::
         'out_val': s.out.val,
         'out_rdy': s.out.rdy,
       })
-
-
-
-
-
 
