@@ -1,6 +1,6 @@
--------------------------------------------------------------------------------
-Running Processor Tests
--------------------------------------------------------------------------------
+===============================================================================
+Building and Running PARC Processor Tests
+===============================================================================
 
 The majority of the processor tests require the use of binaries compiled using
 the PARC cross-compiler toolchain. This toolchain is already installed on the
