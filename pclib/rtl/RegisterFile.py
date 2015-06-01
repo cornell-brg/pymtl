@@ -4,9 +4,9 @@
 
 from pymtl import *
 
-#=======================================================================
+#-----------------------------------------------------------------------
 # RegisterFile
-#=======================================================================
+#-----------------------------------------------------------------------
 class RegisterFile( Model ):
 
   #---------------------------------------------------------------------
@@ -14,12 +14,6 @@ class RegisterFile( Model ):
   #---------------------------------------------------------------------
   def __init__( s, nbits=32, nregs=32, rd_ports=1, wr_ports=1,
                 const_zero=False ):
-
-    s.rd_ports   = rd_ports
-    s.wr_ports   = wr_ports
-    s.nregs      = nregs
-    s.nbits      = nbits
-    s.const_zero = const_zero
 
     addr_bits  = get_sel_nbits( nregs )
 
@@ -45,12 +39,7 @@ class RegisterFile( Model ):
     #  s.wr_data  = [ InPort( nbits )     for x in range(wr_ports) ]
     #  s.wr_en    = [ InPort( 1 )         for x in range(wr_ports) ]
 
-  #---------------------------------------------------------------------
-  # elaborate_logic()
-  #---------------------------------------------------------------------
-  def elaborate_logic( s ):
-
-    s.regs     = [ Wire( s.nbits ) for x in xrange( s.nregs ) ]
+    s.regs     = [ Wire( nbits ) for x in xrange( nregs ) ]
 
     #-------------------------------------------------------------------
     # Combinational read logic
@@ -58,8 +47,8 @@ class RegisterFile( Model ):
     @s.combinational
     def comb_logic():
 
-      for i in xrange( s.rd_ports ):
-        assert s.rd_addr[i] < s.nregs
+      for i in xrange( rd_ports ):
+        assert s.rd_addr[i] < nregs
         s.rd_data[i].value = s.regs[ s.rd_addr[i] ]
 
     # Select write logic depending on if this register file should have
@@ -68,7 +57,7 @@ class RegisterFile( Model ):
     #-------------------------------------------------------------------
     # Sequential write logic, single write port
     #-------------------------------------------------------------------
-    if s.wr_ports == 1 and not s.const_zero:
+    if wr_ports == 1 and not const_zero:
 
       @s.posedge_clk
       def seq_logic():
@@ -78,7 +67,7 @@ class RegisterFile( Model ):
     #-------------------------------------------------------------------
     # Sequential write logic, single write port, constant zero
     #-------------------------------------------------------------------
-    elif s.wr_ports == 1:
+    elif wr_ports == 1:
 
       @s.posedge_clk
       def seq_logic_const_zero():
@@ -88,7 +77,7 @@ class RegisterFile( Model ):
     #-------------------------------------------------------------------
     # Sequential write logic, multiple write ports
     #-------------------------------------------------------------------
-    elif not s.const_zero:
+    elif not const_zero:
 
       @s.posedge_clk
       def seq_logic_multiple_wr():
@@ -98,7 +87,7 @@ class RegisterFile( Model ):
       # TODO: fix translation of this!
       #@s.posedge_clk
       #def seq_logic_multiple_wr():
-      #  for i in range( s.wr_ports ):
+      #  for i in range( wr_ports ):
       #    if s.wr_en[i]:
       #      s.regs[ s.wr_addr[i] ].next = s.wr_data[i]
 
@@ -115,7 +104,7 @@ class RegisterFile( Model ):
       # TODO: fix translation of this!
       #@s.posedge_clk
       #def seq_logic_multiple_wr():
-      #  for i in range( s.wr_ports ):
+      #  for i in range( wr_ports ):
       #    if s.wr_en[i] and s.wr_addr[i] != 0:
       #      s.regs[ s.wr_addr[i] ].next = s.wr_data[i]
 

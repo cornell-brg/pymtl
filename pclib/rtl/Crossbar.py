@@ -8,20 +8,16 @@ class Crossbar( Model ):
 
   def __init__( s, nports, nbits ):
 
-    s.nports  = nports
     sel_nbits = get_sel_nbits( nports )
 
-    # Interface Ports
+    s.in_     = [ InPort  ( nbits )     for x in range( nports ) ]
+    s.out     = [ OutPort ( nbits )     for x in range( nports ) ]
+    s.sel     = [ InPort  ( sel_nbits ) for x in range( nports ) ]
 
-    s.in_    = [ InPort  ( nbits )     for x in range( nports ) ]
-    s.out    = [ OutPort ( nbits )     for x in range( nports ) ]
-    s.sel    = [ InPort  ( sel_nbits ) for x in range( nports ) ]
-
-  def elaborate_logic( s ) :
     @s.combinational
     def comb_logic():
 
-      for i in range( s.nports ):
+      for i in range( nports ):
         s.out[i].value = s.in_[ s.sel[ i ] ]
 
   def line_trace( s ):

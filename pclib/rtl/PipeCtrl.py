@@ -1,40 +1,43 @@
-#=========================================================================
-# PipeCtrl
-#=========================================================================
-# This class models the pipeline squash and stall control signals for a
-# given pipeline stage. A state element in the model represents the valid
-# bit of the pipeline stage.
-#
-# Inputs:
-# -------
-#
-# pvalid  : Valid bit coming from the previous stage in the pipeline
-# nstall  : Stall signal originating from the next stage in the pipeline
-# nsquash : Squash signal originating from the next stage in the pipeline
-# ostall  : Stall signal originating from the current pipeline stage
-# osquash : Squash signal originating from the current pipeline stage
-#
-# Outputs:
-# --------
-#
-# nvalid      : Valid bit calculation for the next stage
-# pstall      : Aggregate stall signal for the previous stage
-# psquash     : Aggregate squash signal for the previous stage
-# pipereg_en  : Enable Signal for all the pipeline registers at the begining
-#               of current pipeline stage
-# pipereg_val : Combinational valid bit value of the current stage
-# pipe_go     : Go signal to perform the current pipeline stage transaction
+#=======================================================================
+# PipeCtrl.py
+#=======================================================================
 
 from pymtl     import *
 from pclib.rtl import RegEnRst
 
+#-----------------------------------------------------------------------
+# PipeCtrl
+#-----------------------------------------------------------------------
 class PipeCtrl( Model ):
+  '''Manages squash and stall ctrl signals for a single pipeline stage.
+
+   Inputs
+   ------
+
+   pvalid  : Valid bit coming from the previous stage
+   nstall  : Stall signal originating from the next stage
+   nsquash : Squash signal originating from the next stage
+   ostall  : Stall signal originating from the current pipeline stage
+   osquash : Squash signal originating from the current pipeline stage
+
+   Outputs
+   -------
+
+   nvalid      : Valid bit calculation for the next stage
+   pstall      : Aggregate stall signal for the previous stage
+   psquash     : Aggregate squash signal for the previous stage
+   pipereg_en  : Enable Signal for all the pipeline registers at the
+                 begining of current pipeline stage
+   pipereg_val : Combinational valid bit value of the current stage
+   pipe_go     : Go signal to perform the current pipeline stage
+                 transaction
+   '''
 
   def __init__( s ):
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Input  Ports
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.pvalid      = InPort ( 1 )
     s.nstall      = InPort ( 1 )
@@ -42,9 +45,9 @@ class PipeCtrl( Model ):
     s.ostall      = InPort ( 1 )
     s.osquash     = InPort ( 1 )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Output Ports
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.nvalid      = OutPort ( 1 )
     s.pstall      = OutPort ( 1 )
@@ -53,11 +56,9 @@ class PipeCtrl( Model ):
     s.pipereg_val = OutPort ( 1 )
     s.pipe_go     = OutPort ( 1 )
 
-  #---------------------------------------------------------------------
-  # Static Elaboration
-  #---------------------------------------------------------------------
-
-  def elaborate_logic( s ):
+    #-------------------------------------------------------------------
+    # Static Elaboration
+    #-------------------------------------------------------------------
 
     # current pipeline stage valid bit register
 
@@ -70,26 +71,26 @@ class PipeCtrl( Model ):
 
     s.connect( s.val_reg.out, s.pipereg_val )
 
-    #-----------------------------------------------------------------------
+    #---------------------------------------------------------------------
     # Combinational Logic
-    #-----------------------------------------------------------------------
+    #---------------------------------------------------------------------
 
     @s.combinational
     def comb():
 
       # Insert microarchitectural 'nop' value when the current stage is
-      # squashed due to nsquash or when the current stage is stalled due to
-      # ostall or when the current stage is stalled due to nstall. Otherwise
-      # pipeline the valid bit
+      # squashed due to nsquash or when the current stage is stalled due
+      # to ostall or when the current stage is stalled due to nstall.
+      # Otherwise pipeline the valid bit
 
       if s.nsquash.value or s.nstall.value or s.ostall.value:
         s.nvalid.value = 0
       else:
         s.nvalid.value = s.val_reg.out.value
 
-      # Enable the pipeline registers when the current stage is squashed due
-      # to nsquash or when the current stage is not stalling due to the
-      # ostall or nstall. Otherwise do not set the enable signal
+      # Enable the pipeline registers when the current stage is squashed
+      # due to nsquash or when the current stage is not stalling due to
+      # the ostall or nstall. Otherwise do not set the enable signal
 
       if s.nsquash.value or not ( s.nstall.value or s.ostall.value ):
         s.pipereg_en.value = 1
@@ -98,8 +99,9 @@ class PipeCtrl( Model ):
         s.pipereg_en.value = 0
         s.val_reg.en.value = 0
 
-      # Set pipego when the current stage is not squashed and not stalled and
-      # if the valid bit is set. Else a pipeline transaction will not occur.
+      # Set pipego when the current stage is not squashed and not
+      # stalled and if the valid bit is set. Else a pipeline transaction
+      # will not occur.
 
       if ( s.val_reg.out.value and not s.nsquash.value
            and not s.nstall.value and not s.ostall.value ):
@@ -114,3 +116,4 @@ class PipeCtrl( Model ):
       # Accumulate squash signals
 
       s.psquash.value = s.nsquash.value | s.osquash.value
+

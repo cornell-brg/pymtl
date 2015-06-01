@@ -1,35 +1,36 @@
-#=========================================================================
+#=======================================================================
 # PipeCtrl_test.py
-#=========================================================================
-# We create a incrementer pipeline (IncrPipe) to test the PipeCtrl unit by
-# instantiating it in the control unit of the IncrPipe model. The pipeline
-# has 5 stages: A, B, C, D, E. Frontend of the pipeline is attached to a
-# TestSource model and Backend is attached to a TestSink. Datapath has an
-# incrementer in C,D,E stages. We assume that we can never originate a
-# stall in B stage. B stage sends the control word to the control unit
-# based on the transaction it is currently processing. TestSource contains
-# the transaction as below:
-#
-#  Transaction Format:
-#
-#  16          14 13          11 10           8 7         0
-#  +-------------+--------------+--------------+-----------+
-#  | stall_stage | stall_cycles | squash_stage | value     |
-#  +-------------+--------------+--------------+-----------+
-#
-# stall_stage  : indicates the stage where we want to originate a stall
-# stall_cycles : number of cycles we want to stall for
-# squash_stage : indicates the stage where we want to originate a squash
-# value        : 8-bit value which the datapath increments
-#
-# TestSink merely holds the expected value based on the increments
+#=======================================================================
+'''We create a incrementer pipeline (IncrPipe) to test the PipeCtrl unit
+by instantiating it in the control unit of the IncrPipe model. The
+pipeline has 5 stages: A, B, C, D, E. Frontend of the pipeline is
+attached to a TestSource model and Backend is attached to a TestSink.
+Datapath has an incrementer in C,D,E stages. We assume that we can never
+originate a stall in B stage. B stage sends the control word to the
+control unit based on the transaction it is currently processing.
+TestSource contains the transaction as below:
+
+  Transaction Format:
+
+  16          14 13          11 10           8 7         0
+  +-------------+--------------+--------------+-----------+
+  | stall_stage | stall_cycles | squash_stage | value     |
+  +-------------+--------------+--------------+-----------+
+
+ stall_stage  : indicates the stage where we want to originate a stall
+ stall_cycles : number of cycles we want to stall for
+ squash_stage : indicates the stage where we want to originate a squash
+ value        : 8-bit value which the datapath increments
+
+TestSink merely holds the expected value based on the increments.
+'''
 
 import pytest
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.test   import TestSource, TestSink
-from PipeCtrl     import PipeCtrl
+from pclib.test import TestSource, TestSink
+from PipeCtrl   import PipeCtrl
 
 import regs
 import arith
@@ -53,21 +54,18 @@ CW_SQUASH_STAGE   = slice(  0, 3  )
 CW_STALL_CYCLES   = slice(  3, 6  )
 CW_STALL_STAGE    = slice(  6, 9  )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # IncrPipeDpath
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class IncrPipeDpath( Model ):
-  """5-stage Incrementer Pipeline Datapath."""
+  '''5-stage Incrementer Pipeline Datapath.'''
 
   def __init__( s, nbits ):
-
-    # Interface Ports
 
     s.in_msg    = InPort  ( TRANSACTION_NBITS )
     s.out_msg   = OutPort ( nbits )
 
     # Ctrl Signals (ctrl -> dpath)
-
     s.a_reg_en  = InPort  ( 1 )
     s.b_reg_en  = InPort  ( 1 )
     s.c_reg_en  = InPort  ( 1 )
@@ -75,22 +73,11 @@ class IncrPipeDpath( Model ):
     s.e_reg_en  = InPort  ( 1 )
 
     # Status Signals (ctrl <- dpath)
-
     s.inst_b    = OutPort ( 9 )
 
-    s.nbits = nbits
-
-  #---------------------------------------------------------------------
-  # Static Elaboration
-  #---------------------------------------------------------------------
-
-  def elaborate_logic( s ):
-
-    nbits = s.nbits
-
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # A Stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.a_reg  = regs.RegEn( TRANSACTION_NBITS )
 
@@ -99,9 +86,9 @@ class IncrPipeDpath( Model ):
     s.connect( s.a_reg.in_, s.in_msg    )
     s.connect( s.a_reg.en,  s.a_reg_en  )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # B Stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.b_reg  = regs.RegEn( TRANSACTION_NBITS )
 
@@ -112,9 +99,9 @@ class IncrPipeDpath( Model ):
 
     s.connect( s.b_reg.out[CW], s.inst_b    )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # C Stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.c_reg  = regs.RegEn( nbits )
 
@@ -125,9 +112,9 @@ class IncrPipeDpath( Model ):
 
     s.connect( s.c_incr.in_, s.c_reg.out )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # D Stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.d_reg  = regs.RegEn( nbits )
 
@@ -138,9 +125,9 @@ class IncrPipeDpath( Model ):
 
     s.connect( s.d_incr.in_, s.d_reg.out )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # E Stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.e_reg  = regs.RegEn( nbits )
 
@@ -155,15 +142,13 @@ class IncrPipeDpath( Model ):
 
     s.connect( s.e_incr.out, s.out_msg   )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # IncrPipeCtrl
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class IncrPipeCtrl (Model):
   """5-stage Incrementer Pipeline Control."""
 
   def __init__( s ):
-
-    # Interface Ports
 
     s.in_val    = InPort  ( 1 )
     s.in_rdy    = OutPort ( 1 )
@@ -172,7 +157,6 @@ class IncrPipeCtrl (Model):
     s.out_rdy   = InPort  ( 1 )
 
     # Ctrl Signals (ctrl -> dpath )
-
     s.a_reg_en  = OutPort  ( 1 )
     s.b_reg_en  = OutPort  ( 1 )
     s.c_reg_en  = OutPort  ( 1 )
@@ -180,18 +164,11 @@ class IncrPipeCtrl (Model):
     s.e_reg_en  = OutPort  ( 1 )
 
     # Status Signals (ctrl <- dpath)
-
     s.inst_b    = InPort   ( 9 )
 
-  #---------------------------------------------------------------------
-  # Static Elaboration
-  #---------------------------------------------------------------------
-
-  def elaborate_logic( s ):
-
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Stage A
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.pipe_a = PipeCtrl()
 
@@ -200,9 +177,9 @@ class IncrPipeCtrl (Model):
     s.connect( s.pipe_a.pvalid,      s.in_val         )
     s.connect( s.pipe_a.pipereg_en,  s.a_reg_en       )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Stage B
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.pipe_b = PipeCtrl()
 
@@ -211,9 +188,9 @@ class IncrPipeCtrl (Model):
     s.connect( s.pipe_b.psquash,     s.pipe_a.nsquash )
     s.connect( s.pipe_b.pipereg_en,  s.b_reg_en       )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Stage C
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.pipe_c = PipeCtrl()
 
@@ -227,9 +204,9 @@ class IncrPipeCtrl (Model):
     s.inst_c        = Wire( 9 )
     s.stall_count_c = Wire( 3 )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Stage D
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.pipe_d = PipeCtrl()
 
@@ -243,9 +220,9 @@ class IncrPipeCtrl (Model):
     s.inst_d        = Wire( 9 )
     s.stall_count_d = Wire( 3 )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Stage E
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     s.pipe_e = PipeCtrl()
 
@@ -259,12 +236,12 @@ class IncrPipeCtrl (Model):
     s.inst_e        = Wire( 9 )
     s.stall_count_e = Wire( 3 )
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # A stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     @s.combinational
-    def comb_a ():
+    def comb_a():
 
       # pipe_a ostall & o_squash
 
@@ -280,12 +257,12 @@ class IncrPipeCtrl (Model):
 
       # no modifications to architectural state or val/rdy calculations
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # B stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     @s.combinational
-    def comb_b ():
+    def comb_b():
 
       # pipe_b ostall & o_squash
 
@@ -296,13 +273,13 @@ class IncrPipeCtrl (Model):
 
       # no modifications to architectural state or val/rdy calculations
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # B->C
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Registers at the start of C stage
 
     @s.posedge_clk
-    def seq_bc ():
+    def seq_bc():
 
       # copy control word if enabled
 
@@ -320,12 +297,12 @@ class IncrPipeCtrl (Model):
       elif s.pipe_c.pipereg_en.value:
         s.stall_count_c.next = s.inst_b[CW_STALL_CYCLES].value
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # C stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     @s.combinational
-    def comb_c ():
+    def comb_c():
 
       # ostall in c
 
@@ -349,13 +326,13 @@ class IncrPipeCtrl (Model):
 
       # no modifications to architectural state or val/rdy calculations
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # C->D
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Registers at the start of D stage
 
     @s.posedge_clk
-    def seq_cd ():
+    def seq_cd():
 
       # copy control word if enabled
 
@@ -373,12 +350,12 @@ class IncrPipeCtrl (Model):
       elif s.pipe_d.pipereg_en.value:
         s.stall_count_d.next = s.inst_c[CW_STALL_CYCLES].value
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # D stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     @s.combinational
-    def comb_d ():
+    def comb_d():
 
       # ostall in d
 
@@ -402,13 +379,13 @@ class IncrPipeCtrl (Model):
 
       # no modifications to architectural state or val/rdy calculations
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # D->E
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # Registers at the start of E stage
 
     @s.posedge_clk
-    def seq_de ():
+    def seq_de():
 
       # copy control word if enabled
 
@@ -426,12 +403,12 @@ class IncrPipeCtrl (Model):
       elif s.pipe_e.pipereg_en.value:
         s.stall_count_e.next = s.inst_d[CW_STALL_CYCLES].value
 
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # E stage
-    #---------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     @s.combinational
-    def comb_e ():
+    def comb_e():
 
       # stall pipe_e stage if the sink is not ready
 
@@ -465,32 +442,21 @@ class IncrPipeCtrl (Model):
       else:
         s.out_val.value = 0
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # IncrPipe
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class IncrPipe( Model ):
   """5-stage Incrementer Pipeline toplevel."""
 
   def __init__( s, nbits ):
 
-    # Interface Ports
-
     s.in_ = InValRdyBundle( TRANSACTION_NBITS )
-
     s.out = OutValRdyBundle( nbits )
-
-    s.nbits   = nbits
-
-  #---------------------------------------------------------------------
-  # Static Elaboration
-  #---------------------------------------------------------------------
-
-  def elaborate_logic( s ):
 
     # Static Elaboration
 
     s.ctrl  = IncrPipeCtrl()
-    s.dpath = IncrPipeDpath( s.nbits )
+    s.dpath = IncrPipeDpath( nbits )
 
     # s.connect ctrl
 
@@ -582,9 +548,9 @@ class IncrPipe( Model ):
 
     return out_str
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # TestHarness
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class TestHarness( Model ):
 
   def __init__( s, ModelType, src_msgs, sink_msgs,
@@ -602,10 +568,7 @@ class TestHarness( Model ):
     if test_verilog:
       s.incr_pipe = TranslationTool( s.incr_pipe )
 
-  def elaborate_logic( s ):
-
     s.connect( s.incr_pipe.in_ , s.src.out )
-
     s.connect( s.incr_pipe.out , s.sink.in_ )
 
   def done( s ):
@@ -615,9 +578,9 @@ class TestHarness( Model ):
     return s.src.line_trace() + " > " + s.incr_pipe.line_trace() \
            + " > " + s.sink.line_trace()
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # run_incr_pipe_test
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 def run_incr_pipe_test( dump_vcd, src_msgs, sink_msgs,
                         ModelType, src_delay, sink_delay, test_verilog ):
 
@@ -647,9 +610,9 @@ def run_incr_pipe_test( dump_vcd, src_msgs, sink_msgs,
   sim.cycle()
   sim.cycle()
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # mk_req helper function
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 def mk_req( st_stage, st_cycles, sq_stage, value ):
   bits = Bits( TRANSACTION_NBITS )
@@ -659,9 +622,9 @@ def mk_req( st_stage, st_cycles, sq_stage, value ):
   bits[VALUE]        = value
   return bits
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Simple Pipeline Test - No stalls or squashes
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 #
 # Modeling;
 #
@@ -697,10 +660,10 @@ def test_simple_pipe( dump_vcd, test_verilog, src_delay, sink_delay ):
   run_incr_pipe_test( dump_vcd, src_simple_msgs, sink_simple_msgs,
                       IncrPipe, src_delay, sink_delay, test_verilog )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Stall Pipeline Test - no squashes
-#-------------------------------------------------------------------------
-# Note: For the current microarchitecture, we can't stall in A or B stage
+#-----------------------------------------------------------------------
+# Note: For the current microarchitecture, can't stall in A or B stage
 #
 # Modeling;
 #
@@ -736,9 +699,9 @@ def test_stall_pipe( dump_vcd, test_verilog, src_delay, sink_delay ):
   run_incr_pipe_test( dump_vcd, src_stall_msgs, sink_stall_msgs,
                       IncrPipe, src_delay, sink_delay, test_verilog )
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Squash Pipeline Test - no stalls
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Squash cannot be tested with random delays currently.
 #
 # Modeling;

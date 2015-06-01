@@ -1,20 +1,20 @@
-#=========================================================================
-# Register with different implementations
-#=========================================================================
+#=======================================================================
+# regs.py
+#=======================================================================
 
 from pymtl import *
 
-#-------------------------------------------------------------------------
-# Register
-#-------------------------------------------------------------------------
-
+#-----------------------------------------------------------------------
+# Reg
+#-----------------------------------------------------------------------
 class Reg( Model ):
+  '''Register without enable or reset.'''
 
   def __init__( s, nbits = 1 ):
+
     s.in_ = InPort  ( nbits )
     s.out = OutPort ( nbits )
 
-  def elaborate_logic( s ):
     @s.posedge_clk
     def seq_logic():
       s.out.next = s.in_
@@ -22,18 +22,18 @@ class Reg( Model ):
   def line_trace( s ):
     return "{} ({}) {}".format( s.in_, s.out, s.out )
 
-#-------------------------------------------------------------------------
-# Register with enable signal
-#-------------------------------------------------------------------------
-
+#-----------------------------------------------------------------------
+# RegEn
+#-----------------------------------------------------------------------
 class RegEn( Model ):
+  '''Register with enable signal.'''
 
   def __init__( s, nbits = 1 ):
+
     s.in_ = InPort  ( nbits )
     s.en  = InPort  ( 1     )
     s.out = OutPort ( nbits )
 
-  def elaborate_logic( s ):
     @s.posedge_clk
     def seq_logic():
       if s.en:
@@ -42,30 +42,25 @@ class RegEn( Model ):
   def line_trace( s ):
     return "{} ({}) {}".format( s.in_, s.out, s.out )
 
-#-------------------------------------------------------------------------
-# Register with reset signal
-#-------------------------------------------------------------------------
-# If reset = 1, then value will be reset to a default reset_value on the
-# next clock edge
-
+#-----------------------------------------------------------------------
+# RegRst
+#-----------------------------------------------------------------------
 class RegRst( Model ):
+  '''Register with reset signal.
+
+  When reset == 1 the register will be set to reset_value on the next
+  clock edge.
+  '''
 
   def __init__( s, nbits = 1, reset_value = 0 ):
-
-    # Ports
 
     s.in_ = InPort( nbits )
     s.out = OutPort( nbits )
 
-    # Constants
-
-    s.reset_value = reset_value
-
-  def elaborate_logic( s ):
     @s.posedge_clk
     def seq_logic():
       if s.reset:
-        s.out.next = s.reset_value
+        s.out.next = reset_value
       else:
         s.out.next = s.in_
 
@@ -78,25 +73,26 @@ class RegRst( Model ):
 # If reset = 1, the value will be reset to default reset_value on the
 # next clock edge, no matter whether en = 1 or not
 
+#-----------------------------------------------------------------------
+# RegEnRst
+#-----------------------------------------------------------------------
 class RegEnRst( Model ):
+  '''Register with enable and reset.
+
+  When reset == 1 the register will be set to reset_value on the next
+  clock edge, whether en == 1 or not.
+  '''
 
   def __init__( s, nbits = 1, reset_value = 0 ):
-
-    # Ports
 
     s.en  = InPort( 1 )
     s.in_ = InPort( nbits )
     s.out = OutPort( nbits )
 
-    # Constants
-
-    s.reset_value = reset_value
-
-  def elaborate_logic( s ):
     @s.posedge_clk
     def seq_logic():
       if s.reset:
-        s.out.next = s.reset_value
+        s.out.next = reset_value
       elif s.en:
         s.out.next = s.in_
 

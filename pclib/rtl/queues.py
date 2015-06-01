@@ -1,32 +1,26 @@
-#=========================================================================
+#=======================================================================
 # queues.py
-#=========================================================================
-# This file contains a collection of various queue model implementations
+#=======================================================================
+'''A collection of queue model implementations.'''
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.rtl    import RegEn, Mux, RegisterFile
+from pclib.rtl  import RegEn, Mux, RegisterFile
 
-#=========================================================================
-# Single-Element Normal Queue
-#=========================================================================
+#-----------------------------------------------------------------------
+# SingleElementNormalQueue
+#-----------------------------------------------------------------------
 class SingleElementNormalQueue( Model ):
 
   def __init__( s, data_nbits ):
 
-    s.data_nbits = data_nbits
-
-    # Interface Ports
-
     s.enq = InValRdyBundle ( data_nbits )
     s.deq = OutValRdyBundle( data_nbits )
-
-  def elaborate_logic( s ):
 
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementNormalQueueCtrl ()
-    s.dpath = SingleElementNormalQueueDpath( s.data_nbits )
+    s.dpath = SingleElementNormalQueueDpath( data_nbits )
 
     # Ctrl unit connections
 
@@ -42,39 +36,27 @@ class SingleElementNormalQueue( Model ):
 
     # Control Signal connections (ctrl -> dpath)
 
-    s.connect( s.dpath.wen,      s.ctrl.wen )
-
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
+    s.connect( s.dpath.wen, s.ctrl.wen )
 
   def line_trace( s ):
     return "{} () {}".format( s.enq, s.deq )
 
-
-#-------------------------------------------------------------------------
-# Single-Element Normal Queue Datapath
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# SingleElementNormalQueueDpath
+#-----------------------------------------------------------------------
 class SingleElementNormalQueueDpath( Model ):
 
   def __init__( s, data_nbits ):
-
-    s.data_nbits = data_nbits
-
-    # Interface Ports
 
     s.enq_bits  = InPort  ( data_nbits )
     s.deq_bits  = OutPort ( data_nbits )
 
     # Control signal (ctrl -> dpath)
-
     s.wen       = InPort  ( 1     )
-
-  def elaborate_logic( s ):
 
     # Queue storage
 
-    s.queue = RegEn( s.data_nbits )
+    s.queue = RegEn( data_nbits )
 
     # Connect queue storage
 
@@ -82,9 +64,9 @@ class SingleElementNormalQueueDpath( Model ):
     s.connect( s.queue.in_, s.enq_bits )
     s.connect( s.queue.out, s.deq_bits )
 
-#-------------------------------------------------------------------------
-# Single-Element Normal Queue Control
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# SingleElementNormalQueueCtrl
+#-----------------------------------------------------------------------
 class SingleElementNormalQueueCtrl( Model ):
 
   def __init__( s ):
@@ -97,10 +79,7 @@ class SingleElementNormalQueueCtrl( Model ):
     s.deq_rdy  = InPort  ( 1 )
 
     # Control signal (ctrl -> dpath)
-
     s.wen      = OutPort ( 1 )
-
-  def elaborate_logic( s ):
 
     s.full     = Wire ( 1 )
 
@@ -134,26 +113,20 @@ class SingleElementNormalQueueCtrl( Model ):
       elif s.enq_rdy and s.enq_val: s.full.next = 1
       else:                         s.full.next = s.full
 
-#=========================================================================
-# Single-Element Bypass Queue
-#=========================================================================
+#-----------------------------------------------------------------------
+# SingleElementBypassQueue
+#-----------------------------------------------------------------------
 class SingleElementBypassQueue( Model ):
 
   def __init__( s, data_nbits ):
 
-    s.data_nbits = data_nbits
-
-    # Interface Ports
-
     s.enq = InValRdyBundle ( data_nbits )
     s.deq = OutValRdyBundle( data_nbits )
-
-  def elaborate_logic( s ):
 
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementBypassQueueCtrl ()
-    s.dpath = SingleElementBypassQueueDpath( s.data_nbits )
+    s.dpath = SingleElementBypassQueueDpath( data_nbits )
 
     # Ctrl unit connections
 
@@ -172,59 +145,45 @@ class SingleElementBypassQueue( Model ):
     s.connect( s.dpath.wen,            s.ctrl.wen            )
     s.connect( s.dpath.bypass_mux_sel, s.ctrl.bypass_mux_sel )
 
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
-
   def line_trace( s ):
     return "{} (v{},r{}) {}".format( s.enq, s.deq.val, s.deq.rdy, s.deq )
 
-
-#-------------------------------------------------------------------------
-# Single-Element Bypass Queue Datapath
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# SingleElementBypassQueueDpath
+#-----------------------------------------------------------------------
 class SingleElementBypassQueueDpath( Model ):
 
   def __init__( s, data_nbits ):
 
-    s.data_nbits = data_nbits
-
-    # Interface Ports
-
-    s.enq_bits      = InPort  ( data_nbits )
-    s.deq_bits      = OutPort ( data_nbits )
+    s.enq_bits       = InPort  ( data_nbits )
+    s.deq_bits       = OutPort ( data_nbits )
 
     # Control signal (ctrl -> dpath)
-
     s.wen            = InPort ( 1 )
     s.bypass_mux_sel = InPort ( 1 )
 
-  def elaborate_logic( s ):
-
     # Queue storage
 
-    s.queue = RegEn( s.data_nbits )
+    s.queue = RegEn( data_nbits )
 
     s.connect( s.queue.en,  s.wen      )
     s.connect( s.queue.in_, s.enq_bits )
 
     # Bypass mux
 
-    s.bypass_mux = Mux( s.data_nbits, 2 )
+    s.bypass_mux = Mux( data_nbits, 2 )
 
     s.connect( s.bypass_mux.in_[0], s.queue.out      )
     s.connect( s.bypass_mux.in_[1], s.enq_bits       )
     s.connect( s.bypass_mux.sel,    s.bypass_mux_sel )
     s.connect( s.bypass_mux.out,    s.deq_bits       )
 
-#-------------------------------------------------------------------------
-# Single-Element Bypass Queue Control
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# SingleElementBypassQueueCtrl
+#-----------------------------------------------------------------------
 class SingleElementBypassQueueCtrl( Model ):
 
   def __init__( s ):
-
-    # Interface Ports
 
     s.enq_val        = InPort  ( 1 )
     s.enq_rdy        = OutPort ( 1 )
@@ -232,11 +191,8 @@ class SingleElementBypassQueueCtrl( Model ):
     s.deq_rdy        = InPort  ( 1 )
 
     # Control signal (ctrl -> dpath)
-
     s.wen            = OutPort ( 1 )
     s.bypass_mux_sel = OutPort ( 1 )
-
-  def elaborate_logic( s ):
 
     # Full bit storage
 
@@ -295,30 +251,21 @@ class SingleElementBypassQueueCtrl( Model ):
       elif s.do_enq and not s.do_bypass: s.full.next = 1
       else:                              s.full.next = s.full
 
-#=========================================================================
-# Multiple Entry Normal Queue
-#=========================================================================
+#-----------------------------------------------------------------------
+# NormalQueue
+#-----------------------------------------------------------------------
 class NormalQueue( Model ):
 
   def __init__( s, num_entries, data_nbits ):
 
-    s.num_entries = num_entries
-    s.data_nbits  = data_nbits
-    s.addr_nbits  = get_sel_nbits( num_entries )
-
-    # Interface Ports
-
-    s.enq = InValRdyBundle ( data_nbits )
-    s.deq = OutValRdyBundle( data_nbits )
-
-    s.num_free_entries = OutPort ( s.addr_nbits + 1 )
-
-  def elaborate_logic( s ):
+    s.enq              = InValRdyBundle ( data_nbits )
+    s.deq              = OutValRdyBundle( data_nbits )
+    s.num_free_entries = OutPort( get_nbits(num_entries) )
 
     # Ctrl and Dpath unit instantiation
 
-    s.ctrl  = NormalQueueCtrl ( s.num_entries               )
-    s.dpath = NormalQueueDpath( s.num_entries, s.data_nbits )
+    s.ctrl  = NormalQueueCtrl ( num_entries             )
+    s.dpath = NormalQueueDpath( num_entries, data_nbits )
 
     # Ctrl unit connections
 
@@ -339,42 +286,28 @@ class NormalQueue( Model ):
     s.connect( s.dpath.waddr,    s.ctrl.waddr )
     s.connect( s.dpath.raddr,    s.ctrl.raddr )
 
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
-
   def line_trace( s ):
     return "{} () {}".format( s.enq, s.deq )
 
-
-#-------------------------------------------------------------------------
-# Normal Queue Datapath
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# NormalQueueDpath
+#-----------------------------------------------------------------------
 class NormalQueueDpath( Model ):
 
   def __init__( s, num_entries, data_nbits ):
-
-    s.num_entries = num_entries
-    s.data_nbits  = data_nbits
-    s.addr_nbits  = get_sel_nbits( num_entries )
-
-    # Interface Ports
 
     s.enq_bits  = InPort  ( data_nbits )
     s.deq_bits  = OutPort ( data_nbits )
 
     # Control signal (ctrl -> dpath)
-
+    addr_nbits  = get_sel_nbits( num_entries )
     s.wen       = InPort  ( 1 )
-
-    s.waddr     = InPort  ( s.addr_nbits )
-    s.raddr     = InPort  ( s.addr_nbits )
-
-  def elaborate_logic( s ):
+    s.waddr     = InPort  ( addr_nbits )
+    s.raddr     = InPort  ( addr_nbits )
 
     # Queue storage
 
-    s.queue = RegisterFile( s.data_nbits, s.num_entries )
+    s.queue = RegisterFile( data_nbits, num_entries )
 
     # Connect queue storage
 
@@ -384,15 +317,15 @@ class NormalQueueDpath( Model ):
     s.connect( s.queue.wr_addr,    s.waddr    )
     s.connect( s.queue.wr_data,    s.enq_bits )
 
-#-------------------------------------------------------------------------
-# Normal Queue Control
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# NormalQueueCtrl
+#-----------------------------------------------------------------------
 class NormalQueueCtrl( Model ):
 
   def __init__( s, num_entries ):
 
-    s.num_entries  = num_entries
-    s.addr_nbits   = get_sel_nbits( num_entries )
+    s.num_entries = num_entries
+    addr_nbits    = get_sel_nbits( num_entries )
 
     # Interface Ports
 
@@ -400,15 +333,12 @@ class NormalQueueCtrl( Model ):
     s.enq_rdy          = OutPort ( 1 )
     s.deq_val          = OutPort ( 1 )
     s.deq_rdy          = InPort  ( 1 )
-    s.num_free_entries = OutPort ( s.addr_nbits + 1 )
+    s.num_free_entries = OutPort ( get_nbits( num_entries ) )
 
     # Control signal (ctrl -> dpath)
-
     s.wen              = OutPort ( 1 )
-    s.waddr            = OutPort ( s.addr_nbits )
-    s.raddr            = OutPort ( s.addr_nbits )
-
-  def elaborate_logic( s ):
+    s.waddr            = OutPort ( addr_nbits )
+    s.raddr            = OutPort ( addr_nbits )
 
     # Wires
 
@@ -416,17 +346,16 @@ class NormalQueueCtrl( Model ):
     s.empty            = Wire ( 1 )
     s.do_enq           = Wire ( 1 )
     s.do_deq           = Wire ( 1 )
-    s.enq_ptr          = Wire ( s.addr_nbits )
-    s.deq_ptr          = Wire ( s.addr_nbits )
-    s.enq_ptr_next     = Wire ( s.addr_nbits )
-    s.deq_ptr_next     = Wire ( s.addr_nbits )
+    s.enq_ptr          = Wire ( addr_nbits )
+    s.deq_ptr          = Wire ( addr_nbits )
+    s.enq_ptr_next     = Wire ( addr_nbits )
+    s.deq_ptr_next     = Wire ( addr_nbits )
     # TODO: can't infer these temporaries due to if statement, fix
-    s.enq_ptr_inc      = Wire ( s.addr_nbits )
-    s.deq_ptr_inc      = Wire ( s.addr_nbits )
-
+    s.enq_ptr_inc      = Wire ( addr_nbits )
+    s.deq_ptr_inc      = Wire ( addr_nbits )
     s.full_next_cycle  = Wire ( 1 )
 
-    s.last_idx         = s.num_entries - 1
+    s.last_idx         = num_entries - 1
 
     @s.combinational
     def comb():
@@ -497,27 +426,20 @@ class NormalQueueCtrl( Model ):
       elif (s.do_deq and s.full): s.full.next = 0
       else:                       s.full.next = s.full
 
-
-#=========================================================================
-# Single-Element Pipelined Queue
-#=========================================================================
+#-----------------------------------------------------------------------
+# SingleElementPipelinedQueue
+#-----------------------------------------------------------------------
 class SingleElementPipelinedQueue( Model ):
 
   def __init__( s, data_nbits ):
 
-    s.data_nbits = data_nbits
-
-    # Interface Ports
-
     s.enq = InValRdyBundle ( data_nbits )
     s.deq = OutValRdyBundle( data_nbits )
-
-  def elaborate_logic( s ):
 
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementPipelinedQueueCtrl ()
-    s.dpath = SingleElementPipelinedQueueDpath( s.data_nbits )
+    s.dpath = SingleElementPipelinedQueueDpath( data_nbits )
 
     # Ctrl unit connections
 
@@ -535,37 +457,25 @@ class SingleElementPipelinedQueue( Model ):
 
     s.connect( s.dpath.wen,      s.ctrl.wen )
 
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
-
   def line_trace( s ):
     return "{} () {}".format( s.enq, s.deq )
 
-
-#-------------------------------------------------------------------------
-# Single-Element Pipelined Queue Datapath
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# SingleElementPipelinedQueueDpath
+#-----------------------------------------------------------------------
 class SingleElementPipelinedQueueDpath( Model ):
 
   def __init__( s, data_nbits ):
-
-    s.data_nbits = data_nbits
-
-    # Interface Ports
 
     s.enq_bits  = InPort  ( data_nbits )
     s.deq_bits  = OutPort ( data_nbits )
 
     # Control signal (ctrl -> dpath)
-
     s.wen       = InPort  ( 1     )
-
-  def elaborate_logic( s ):
 
     # Queue storage
 
-    s.queue = RegEn( s.data_nbits )
+    s.queue = RegEn( data_nbits )
 
     # Connect queue storage
 
@@ -573,9 +483,9 @@ class SingleElementPipelinedQueueDpath( Model ):
     s.connect( s.queue.in_, s.enq_bits )
     s.connect( s.queue.out, s.deq_bits )
 
-#-------------------------------------------------------------------------
-# Single-Element Pipelined Queue Control
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# SingleElementPipelinedQueueCtrl
+#-----------------------------------------------------------------------
 class SingleElementPipelinedQueueCtrl( Model ):
 
   def __init__( s ):
@@ -588,10 +498,7 @@ class SingleElementPipelinedQueueCtrl( Model ):
     s.deq_rdy = InPort  ( 1 )
 
     # Control signal (ctrl -> dpath)
-
     s.wen     = OutPort ( 1 )
-
-  def elaborate_logic( s ):
 
     # Full bit storage
 
@@ -639,26 +546,24 @@ class SingleElementPipelinedQueueCtrl( Model ):
       elif s.do_enq:              s.full.next = 1
       else:                       s.full.next = s.full
 
-#=========================================================================
-# Single-Element Bypass Queue
-#=========================================================================
+#-----------------------------------------------------------------------
+# SingleElementSkidQueue
+#-----------------------------------------------------------------------
 class SingleElementSkidQueue( Model ):
+  '''Similiar to bypass queue, but saves value even if bypassed.
+
+  Can dequeue and enqueue on the same clock edge.
+  '''
 
   def __init__( s, data_nbits ):
-
-    s.data_nbits = data_nbits
-
-    # Interface Ports
 
     s.enq = InValRdyBundle ( data_nbits )
     s.deq = OutValRdyBundle( data_nbits )
 
-  def elaborate_logic( s ):
-
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementSkidQueueCtrl ()
-    s.dpath = SingleElementSkidQueueDpath( s.data_nbits )
+    s.dpath = SingleElementSkidQueueDpath( data_nbits )
 
     # Ctrl unit connections
 
@@ -677,24 +582,15 @@ class SingleElementSkidQueue( Model ):
     s.connect( s.dpath.wen,            s.ctrl.wen            )
     s.connect( s.dpath.bypass_mux_sel, s.ctrl.bypass_mux_sel )
 
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
-
   def line_trace( s ):
     return "{} ({}, {}) {}".format( s.enq,s.ctrl.do_bypass,s.enq.msg, s.deq )
 
-
-#-------------------------------------------------------------------------
-# Single-Element Bypass Queue Datapath
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# SingleElementSkidQueueDpath
+#-----------------------------------------------------------------------
 class SingleElementSkidQueueDpath( Model ):
 
   def __init__( s, data_nbits ):
-
-    s.data_nbits = data_nbits
-
-    # Interface Ports
 
     s.enq_bits      = InPort  ( data_nbits )
     s.deq_bits      = OutPort ( data_nbits )
@@ -704,35 +600,28 @@ class SingleElementSkidQueueDpath( Model ):
     s.wen            = InPort ( 1 )
     s.bypass_mux_sel = InPort ( 1 )
 
-  def elaborate_logic( s ):
-
     # Queue storage
 
-    s.queue = RegEn( s.data_nbits )
+    s.queue = RegEn( data_nbits )
 
     s.connect( s.queue.en,  s.wen      )
     s.connect( s.queue.in_, s.enq_bits )
 
     # Bypass mux
 
-    s.bypass_mux = Mux( s.data_nbits, 2 )
+    s.bypass_mux = Mux( data_nbits, 2 )
 
     s.connect( s.bypass_mux.in_[0], s.queue.out      )
     s.connect( s.bypass_mux.in_[1], s.enq_bits       )
     s.connect( s.bypass_mux.sel,    s.bypass_mux_sel )
     s.connect( s.bypass_mux.out,    s.deq_bits       )
 
-#-------------------------------------------------------------------------
-# Single-Element Skid Queue Control
-#-------------------------------------------------------------------------
-#This queue is similiar to a bypass queue, but when a value is bypassed
-#it is saved into the queue anyways.
-#Able to dequeue and enqueue on the same clock edge.
+#-----------------------------------------------------------------------
+# SingleElementSkidQueueCtrl
+#-----------------------------------------------------------------------
 class SingleElementSkidQueueCtrl( Model ):
 
   def __init__( s ):
-
-    # Interface Ports
 
     s.enq_val        = InPort  ( 1 )
     s.enq_rdy        = OutPort ( 1 )
@@ -740,11 +629,8 @@ class SingleElementSkidQueueCtrl( Model ):
     s.deq_rdy        = InPort  ( 1 )
 
     # Control signal (ctrl -> dpath)
-
     s.wen            = OutPort ( 1 )
     s.bypass_mux_sel = OutPort ( 1 )
-
-  def elaborate_logic( s ):
 
     # Full bit storage
 

@@ -218,8 +218,6 @@ class TestHarness( Model ):
     if test_verilog:
       s.queue = TranslationTool( s.queue )
 
-  def elaborate_logic( s ):
-
     # Connect
 
     s.connect( s.src.out,  s.queue.enq )
