@@ -10,9 +10,9 @@ class Crossbar( Model ):
 
     sel_nbits = get_sel_nbits( nports )
 
-    s.in_     = [ InPort  ( nbits )     for x in range( nports ) ]
-    s.out     = [ OutPort ( nbits )     for x in range( nports ) ]
-    s.sel     = [ InPort  ( sel_nbits ) for x in range( nports ) ]
+    s.in_     = [ InPort  ( nbits )     for _ in range( nports ) ]
+    s.out     = [ OutPort ( nbits )     for _ in range( nports ) ]
+    s.sel     = [ InPort  ( sel_nbits ) for _ in range( nports ) ]
 
     @s.combinational
     def comb_logic():

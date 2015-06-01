@@ -23,7 +23,7 @@ def run_test_mux( dump_vcd, test_verilog,
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, test_vector ):
-    for i in xrange(num_inputs):
+    for i in range(num_inputs):
       model.in_[i].value = test_vector[i]
     model.sel.value = test_vector[num_inputs]
 

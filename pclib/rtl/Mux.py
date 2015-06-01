@@ -14,7 +14,7 @@ class Mux( Model ):
 
     nsel  = get_sel_nbits( nports )
 
-    s.in_ = [ InPort( nbits ) for x in xrange( nports ) ]
+    s.in_ = [ InPort( nbits ) for _ in range( nports ) ]
     s.sel = InPort  ( nsel )
     s.out = OutPort ( nbits )
 

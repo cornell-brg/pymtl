@@ -12,7 +12,7 @@ class Mux( Model ):
   def __init__( s, nports, data_nbits ):
 
     s.sel = InPort ( data_nbits )
-    s.in_ = [ InPort( data_nbits ) for x in range( nports ) ]
+    s.in_ = [ InPort( data_nbits ) for _ in range( nports ) ]
     s.out = OutPort( data_nbits )
 
     @s.combinational
@@ -39,7 +39,7 @@ class Demux( Model ):
 
     s.sel = InPort( data_nbits )
     s.in_ = InPort( data_nbits )
-    s.out = [ OutPort( data_nbits ) for x in range( nports ) ]
+    s.out = [ OutPort( data_nbits ) for _ in range( nports ) ]
 
     @s.combinational
     def logic():

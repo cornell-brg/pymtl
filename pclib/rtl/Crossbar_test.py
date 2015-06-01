@@ -21,13 +21,13 @@ def run_test_crossbar( model, test_vectors ):
 
   def tv_in( model, test_vector ):
     n = num_inputs
-    for i in xrange(num_inputs):
+    for i in range(num_inputs):
       model.in_[i].value = test_vector[i]
       model.sel[i].value = test_vector[n+i]
 
   def tv_out( model, test_vector ):
     n = 2*num_inputs
-    for i in xrange(num_inputs):
+    for i in range(num_inputs):
       assert model.out[i].value == test_vector[n+i]
 
   # Run the test

@@ -17,8 +17,8 @@ class RegisterFile( Model ):
 
     addr_bits  = get_sel_nbits( nregs )
 
-    s.rd_addr  = [ InPort( addr_bits ) for x in xrange(rd_ports) ]
-    s.rd_data  = [ OutPort( nbits )    for x in xrange(rd_ports) ]
+    s.rd_addr  = [ InPort( addr_bits ) for _ in range(rd_ports) ]
+    s.rd_data  = [ OutPort( nbits )    for _ in range(rd_ports) ]
 
     # TODO: temporary hacky handling for up to 2 write_ports, fix!
     assert wr_ports <= 2
@@ -35,11 +35,11 @@ class RegisterFile( Model ):
     #  s.wr_data  = InPort( nbits )
     #  s.wr_en    = InPort( 1 )
     #else:
-    #  s.wr_addr  = [ InPort( addr_bits ) for x in range(wr_ports) ]
-    #  s.wr_data  = [ InPort( nbits )     for x in range(wr_ports) ]
-    #  s.wr_en    = [ InPort( 1 )         for x in range(wr_ports) ]
+    #  s.wr_addr  = [ InPort( addr_bits ) for _ in range(wr_ports) ]
+    #  s.wr_data  = [ InPort( nbits )     for _ in range(wr_ports) ]
+    #  s.wr_en    = [ InPort( 1 )         for _ in range(wr_ports) ]
 
-    s.regs     = [ Wire( nbits ) for x in xrange( nregs ) ]
+    s.regs     = [ Wire( nbits ) for _ in range( nregs ) ]
 
     #-------------------------------------------------------------------
     # Combinational read logic
@@ -47,7 +47,7 @@ class RegisterFile( Model ):
     @s.combinational
     def comb_logic():
 
-      for i in xrange( rd_ports ):
+      for i in range( rd_ports ):
         assert s.rd_addr[i] < nregs
         s.rd_data[i].value = s.regs[ s.rd_addr[i] ]
 
