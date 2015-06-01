@@ -182,7 +182,7 @@ class SparseMemoryImage:
             # deconstruct the 32-bit individual into its constituent bytes
             # since we need to extend a list of bytes.
 
-            for i in xrange( 4 ):
+            for i in range( 4 ):
               bytes_list.append( inst_bits[i*8:i*8+8].uint() )
 
       # we iterate through all the lines in the file and the for loop
@@ -290,7 +290,7 @@ class SparseMemoryImage:
             # deconstruct the 32-bit individual into its constituent bytes
             # since we need to extend a list of bytes.
 
-            for i in xrange( 4 ):
+            for i in range( 4 ):
               bytes_list.append( inst_bits[i*8:i*8+8].uint() )
 
       # we iterate through all the lines in the file and the for loop

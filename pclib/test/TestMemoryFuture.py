@@ -25,7 +25,7 @@ class TestMemory (Model):
 
     # Interface
 
-    xr = xrange
+    xr = range
     s.reqs  = [ InValRdyBundle  ( mem_ifc_types.req  ) for _ in xr(nports) ]
     s.resps = [ OutValRdyBundle ( mem_ifc_types.resp ) for _ in xr(nports) ]
 
@@ -89,7 +89,7 @@ class TestMemory (Model):
             # Copy the bytes from the bytearray into read data bits
 
             read_data = Bits( s.mem_ifc_types.req.data.nbits )
-            for j in xrange( nbytes ):
+            for j in range( nbytes ):
               read_data[j*8:j*8+8] = s.mem[ memreq.addr + j ]
 
             # Create and enqueu response message
@@ -108,7 +108,7 @@ class TestMemory (Model):
             # Copy write data bits into bytearray
 
             write_data = memreq.data
-            for j in xrange( nbytes ):
+            for j in range( nbytes ):
               s.mem[ memreq.addr + j ] = write_data[j*8:j*8+8].uint()
 
             # Create and enqueu response message

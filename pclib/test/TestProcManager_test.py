@@ -6,10 +6,10 @@ from __future__ import print_function
 
 import pytest
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.test   import SparseMemoryImage, TestMemory, TestProcManager
-from pclib.test   import TestSource, TestSink
+from pclib.test import SparseMemoryImage, TestMemory, TestProcManager
+from pclib.test import TestSource, TestSink
 
 import pclib.ifcs.mem_msgs as mem_msgs
 
@@ -176,8 +176,8 @@ def single_port_mem_test_msgs():
   memreq_params  = mem_msgs.MemReqParams( 32, 32 )
   memresp_params = mem_msgs.MemRespParams( 32 )
 
-  src_msgs  = [ [] for x in xrange( nports ) ]
-  sink_msgs = [ [] for x in xrange( nports ) ]
+  src_msgs  = [ [] for _ in range( nports ) ]
+  sink_msgs = [ [] for _ in range( nports ) ]
 
   # Syntax helpers
 

@@ -31,18 +31,18 @@ class TestHarness( Model ):
     # Instantiate models
 
     s.srcs = []
-    for i in xrange(nports):
+    for i in range(nports):
       s.srcs.append( TestSource( mem_msgs.req, src_msgs[i], src_delay ) )
 
     s.mem  = TestMemory( mem_msgs, nports, stall_prob, latency )
 
     s.sinks = []
-    for i in xrange(nports):
+    for i in range(nports):
       s.sinks.append( TestSink( mem_msgs.resp, sink_msgs[i], sink_delay ) )
 
     # Connect
 
-    for i in xrange( nports ):
+    for i in range( nports ):
       s.connect( s.srcs[i].out,  s.mem.reqs[i]  )
       s.connect( s.sinks[i].in_, s.mem.resps[i] )
 
@@ -98,7 +98,7 @@ def basic_msgs( base_addr ):
 def stream_msgs( base_addr ):
 
   msgs = []
-  for i in xrange(20):
+  for i in range(20):
     msgs.extend([
       req( 'wr', base_addr+4*i, 0, i ), resp( 'wr', 0, 0 ),
       req( 'rd', base_addr+4*i, 0, 0 ), resp( 'rd', 0, i ),
@@ -165,15 +165,15 @@ def random_msgs( base_addr ):
   rgen = random.Random()
   rgen.seed(0xa4e28cc2)
 
-  vmem = [ rgen.randint(0,0xffffffff) for i in xrange(20) ]
+  vmem = [ rgen.randint(0,0xffffffff) for _ in range(20) ]
   msgs = []
 
-  for i in xrange(20):
+  for i in range(20):
     msgs.extend([
       req( 'wr', base_addr+4*i, 0, vmem[i] ), resp( 'wr', 0, 0 ),
     ])
 
-  for i in xrange(20):
+  for i in range(20):
     idx = rgen.randint(0,19)
 
     if rgen.randint(0,1):
@@ -248,7 +248,7 @@ def test_read_write_mem( dump_vcd ):
 
   # Test data we want to write into memory
 
-  data = [ rgen.randint(-(2**31),2**31-1) for i in xrange(20) ]
+  data = [ rgen.randrange(-(2**31),2**31) for _ in range(20) ]
 
   # Convert test data into byte array
 
@@ -257,9 +257,9 @@ def test_read_write_mem( dump_vcd ):
   # Create memory messages to read and verify memory contents
 
   msgs = []
-  for i in xrange(len(data)):
+  for i, item in enumerate(data):
     msgs.extend([
-      req( 'rd', 0x1000+4*i, 0, 0 ), resp( 'rd', 0, data[i] ),
+      req( 'rd', 0x1000+4*i, 0, 0 ), resp( 'rd', 0, item ),
     ])
 
   # Create test harness with above memory messages

@@ -25,24 +25,21 @@ class TestHarness( Model ):
     # Instantiate models
 
     s.src  = [ TestSource ( 67, src_msgs[x],  src_delay  ) for
-               x in xrange( nports ) ]
-
+               x in range( nports ) ]
     s.mem  = TestSimpleMemory ( memreq_params, memresp_params, nports )
-
     s.sink = [ TestSink   ( 35, sink_msgs[x], sink_delay ) for
-               x in xrange( nports ) ]
+               x in range( nports ) ]
 
   def elaborate_logic( s ):
 
-    for i in xrange( s.nports ):
-      s.connect( s.src[i].out, s.mem.reqs[i]  )
-
+    for i in range( s.nports ):
+      s.connect( s.src[i].out,  s.mem.reqs[i]  )
       s.connect( s.sink[i].in_, s.mem.resps[i] )
 
   def done( s ):
 
     done_flag = 1
-    for i in xrange( s.nports ):
+    for i in range( s.nports ):
       done_flag &= s.src[i].done and s.sink[i].done
     return done_flag
 
@@ -104,8 +101,8 @@ def single_port_mem_test_msgs():
   memreq_params  = mem_msgs.MemReqParams( 32, 32 )
   memresp_params = mem_msgs.MemRespParams( 32 )
 
-  src_msgs  = [ [] for x in xrange( nports ) ]
-  sink_msgs = [ [] for x in xrange( nports ) ]
+  src_msgs  = [ [] for x in range( nports ) ]
+  sink_msgs = [ [] for x in range( nports ) ]
 
   # Syntax helpers
 
@@ -168,8 +165,8 @@ def dual_port_mem_test_msgs():
   memreq_params  = mem_msgs.MemReqParams( 32, 32 )
   memresp_params = mem_msgs.MemRespParams( 32 )
 
-  src_msgs  = [ [] for x in xrange( nports ) ]
-  sink_msgs = [ [] for x in xrange( nports ) ]
+  src_msgs  = [ [] for x in range( nports ) ]
+  sink_msgs = [ [] for x in range( nports ) ]
 
   # Syntax helpers
 
@@ -257,8 +254,8 @@ def quad_port_mem_test_msgs():
   memreq_params  = mem_msgs.MemReqParams( 32, 32 )
   memresp_params = mem_msgs.MemRespParams( 32 )
 
-  src_msgs  = [ [] for x in xrange( nports ) ]
-  sink_msgs = [ [] for x in xrange( nports ) ]
+  src_msgs  = [ [] for _ in range( nports ) ]
+  sink_msgs = [ [] for _ in range( nports ) ]
 
   # Syntax helpers
 

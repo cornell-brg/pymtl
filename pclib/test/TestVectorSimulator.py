@@ -53,9 +53,10 @@ class TestVectorSimulator( object ):
       self.set_inputs_func( self.model, test_vector )
 
       # Evaluate combinational concurrent blocks in simulator
-      if self.wait_cycles == 0: sim.eval_combinational()
+      if self.wait_cycles == 0:
+        sim.eval_combinational()
       else:
-        for i in xrange(self.wait_cycles):
+        for i in range(self.wait_cycles):
           sim.cycle()
 
       # Print the line trace

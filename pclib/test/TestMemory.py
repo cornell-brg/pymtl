@@ -5,9 +5,9 @@
 # based on the number of memory request/response ports and includes random
 # delays for responses.
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.test   import TestRandomDelay
+from pclib.test import TestRandomDelay
 
 from TestSimpleMemory import TestSimpleMemory
 
@@ -25,63 +25,42 @@ class TestMemory( Model ):
 
     # Local constant - store the number of ports
 
-    s.nports = nports
-    s.memreq_params = memreq_params
+    s.nports         = nports
+    s.memreq_params  = memreq_params
     s.memresp_params = memresp_params
-    s.max_mem_delay = max_mem_delay
-    s.mem_nbytes = mem_nbytes
+    s.max_mem_delay  = max_mem_delay
+    s.mem_nbytes     = mem_nbytes
+    req_nbits        = memreq_params.nbits
+    resp_nbits       = memresp_params.nbits
 
     # List of memory request port bundles
 
-    s.reqs = [ InValRdyBundle( memreq_params.nbits ) for x in
-                         xrange( nports ) ]
+    s.reqs  = [ InValRdyBundle( req_nbits )   for _ in range( nports ) ]
 
     # List of memory response msg, val, rdy ports
 
-    s.resps = [ OutValRdyBundle( memresp_params.nbits ) for x in
-                         xrange( nports ) ]
+    s.resps = [ OutValRdyBundle( resp_nbits ) for _ in range( nports ) ]
 
   def elaborate_logic( s ):
 
     # delay responses
 
-    s.delay_resps = [ TestRandomDelay( s.memresp_params.nbits,
-                                          s.max_mem_delay )
-                         for x in xrange( s.nports ) ]
+    s.delay_resps = [ TestRandomDelay( s.memresp_params.nbits, s.max_mem_delay )
+                      for x in range( s.nports ) ]
 
     # simple test memory with no delays
 
     s.mem = TestSimpleMemory( s.memreq_params, s.memresp_params,
                                  s.nports, s.mem_nbytes )
-    ## List of Unpack models
-
-    #s.memreq = [ mem_msgs.MemReqFromBits( s.memreq_params ) for x in
-    #                xrange( s.nports ) ]
-
-    ## List of Pack models
-
-    #s.memresp = [ mem_msgs.MemRespToBits( s.memresp_params ) for x in
-    #                 xrange( s.nports ) ]
-
-    ## Connect memreq_msg port list to Unpack port list
-
-    #for i in xrange( s.nports ):
-    #  s.connect( s.reqs[i].msg, s.memreq[i].bits )
-
-    ## Connect memresp_msg port list to Pack port list
-
-    #for i in xrange( s.nports ):
-    #  s.connect( s.delay_resps[i].out.msg, s.memresp[i].bits )
-
     # Connect
 
-    for i in xrange( s.nports ):
+    for i in range( s.nports ):
 
       # Connect memory inputs
 
       s.connect( s.reqs[i],  s.mem.reqs[i] )
 
-      ## Connect memory outputs to random delays
+      # Connect memory outputs to random delays
 
       s.connect( s.mem.resps[i], s.delay_resps[i].in_ )
       #s.connect( s.mem.resps[i], s.resps[i] )
@@ -113,7 +92,7 @@ class TestMemory( Model ):
     memresp_str  = ''
     memtrace_str = ''
 
-    for i in xrange( s.nports ):
+    for i in range( s.nports ):
       memreq_str  = \
         valrdy.valrdy_to_str(
           #  str(s.mem.reqs[i].msg.value.uint()) + s.mem.memreq[i].line_trace(),

@@ -23,17 +23,17 @@ class TestSimpleMemory (Model):
 
     # Local constant - store the number of ports
 
-    s.nports = nports
+    s.nports   = nports
+    req_nbits  = memreq_params.nbits
+    resp_nbits = memresp_params.nbits
 
     # List of memory request ports
 
-    s.reqs = [ InValRdyBundle( memreq_params.nbits ) for x in
-                      xrange( nports ) ]
+    s.reqs  = [ InValRdyBundle( req_nbits )   for _ in range( nports ) ]
 
     # List of memory response ports
 
-    s.resps = [ OutValRdyBundle( memresp_params.nbits ) for x in
-                      xrange( nports ) ]
+    s.resps = [ OutValRdyBundle( resp_nbits ) for _ in range( nports ) ]
 
     # Memory message parameters
 
@@ -47,13 +47,13 @@ class TestSimpleMemory (Model):
 
     # List of Unpack models
 
-    s.memreq = [ mem_msgs.MemReqFromBits( memreq_params ) for x in
-                    xrange( nports ) ]
+    s.memreq = [ mem_msgs.MemReqFromBits( memreq_params ) for _ in
+                    range( nports ) ]
 
     # List of Pack models
 
-    s.memresp = [ mem_msgs.MemRespToBits( memresp_params ) for x in
-                     xrange( nports ) ]
+    s.memresp = [ mem_msgs.MemRespToBits( memresp_params ) for _ in
+                     range( nports ) ]
 
     s.mem_nbytes = mem_nbytes
   #-----------------------------------------------------------------------
@@ -64,23 +64,23 @@ class TestSimpleMemory (Model):
 
     # Buffers to hold memory request messages
 
-    s.memreq_type = [ Bits( 1) for x in xrange( s.nports ) ]
-    s.memreq_addr = [ Bits(32) for x in xrange( s.nports ) ]
-    s.memreq_len  = [ Bits( 2) for x in xrange( s.nports ) ]
-    s.memreq_data = [ Bits(32) for x in xrange( s.nports ) ]
+    s.memreq_type = [ Bits( 1) for _ in range( s.nports ) ]
+    s.memreq_addr = [ Bits(32) for _ in range( s.nports ) ]
+    s.memreq_len  = [ Bits( 2) for _ in range( s.nports ) ]
+    s.memreq_data = [ Bits(32) for _ in range( s.nports ) ]
 
-    s.memreq_full = [ Wire(1) for x in xrange( s.nports ) ]
+    s.memreq_full = [ Wire(1) for _ in range( s.nports ) ]
 
     # Actual memory
     s.mem = bytearray( s.mem_nbytes )
 
     # Connect memreq_msg port list to Unpack port list
-    for i in xrange( s.nports ):
+    for i in range( s.nports ):
       s.connect( s.reqs[i].msg, s.memreq[i].bits )
 
 
     # Connect memresp_msg port list to Pack port list
-    for i in xrange( s.nports ):
+    for i in range( s.nports ):
       s.connect( s.resps[i].msg, s.memresp[i].bits )
 
     #-----------------------------------------------------------------------
@@ -92,7 +92,7 @@ class TestSimpleMemory (Model):
 
       # Iterate over the port list
 
-      for i in xrange( s.nports ):
+      for i in range( s.nports ):
 
         # At the end of the cycle, we AND together the val/rdy bits to
         # determine if the request/memresp message transactions occured.
@@ -132,7 +132,7 @@ class TestSimpleMemory (Model):
             # Copy the bytes from the bytearray into read data bits
 
             read_data = Bits( s.memreq_params.data_nbits )
-            for j in xrange( nbytes ):
+            for j in range( nbytes ):
               read_data[j*8:j*8+8] = s.mem[ s.memreq_addr[i] + j ]
 
             # Create the response message
@@ -148,7 +148,7 @@ class TestSimpleMemory (Model):
             # Copy write data bits into bytearray
 
             write_data = s.memreq_data[i]
-            for j in xrange( nbytes ):
+            for j in range( nbytes ):
               s.mem[ s.memreq_addr[i] + j ] = write_data[j*8:j*8+8].uint()
 
             # Create the response message
@@ -177,7 +177,7 @@ class TestSimpleMemory (Model):
 
       # Iterate over the port list
 
-      for i in xrange( s.nports ):
+      for i in range( s.nports ):
 
         s.reqs[i].rdy.value  = ( not s.memreq_full[i] or s.resps[i].rdy )
         s.resps[i].val.value = s.memreq_full[i]
@@ -191,7 +191,7 @@ class TestSimpleMemory (Model):
     memresp_str  = ''
     memtrace_str = ''
 
-    for i in xrange( s.nports ):
+    for i in range( s.nports ):
       memreq_str  = \
         valrdy.valrdy_to_str( s.memreq[i].line_trace(),
           s.reqs[i].val, s.reqs[i].rdy )
