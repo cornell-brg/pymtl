@@ -58,7 +58,7 @@ class Bytes (object):
       else:
         bits = Bits( num_bytes*8, value )
 
-      for i in xrange(num_bytes):
+      for i in range(num_bytes):
         self.mem[start_addr+i] = bits[i*8:i*8+8]
 
   #-----------------------------------------------------------------------
@@ -73,7 +73,7 @@ class Bytes (object):
       num_bytes = int(key.stop) - int(key.start)
       bits = Bits( 8*num_bytes )
 
-      for i in xrange(num_bytes):
+      for i in range(num_bytes):
         bits[i*8:i*8+8] = \
           struct.unpack_from("<B",buffer(self.mem,start_addr+i,1))[0]
 

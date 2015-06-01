@@ -20,7 +20,7 @@ from BytesMemPortProxy import BytesMemPortProxy
 
 def mem_copy( mem, src_ptr, dest_ptr, nbytes ):
 
-  for i in xrange(nbytes):
+  for i in range(nbytes):
     mem[dest_ptr+i] = mem[src_ptr+i]
 
 #-------------------------------------------------------------------------
@@ -31,14 +31,14 @@ def test_mem_copy():
 
   data = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 ]
   data_bytes = Bytes(18)
-  for i in xrange(18):
+  for i in range(18):
     data_bytes[i] = data[i]
 
   mem_copy( data_bytes, 4, 12, 4 )
 
   data_ref = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 4, 5, 6, 7, 16, 17 ]
   data_ref_bytes = Bytes(18)
-  for i in xrange(18):
+  for i in range(18):
     data_ref_bytes[i] = data_ref[i]
 
   assert data_bytes == data_ref_bytes
@@ -164,7 +164,7 @@ def test( dump_vcd, mem_delay ):
 
   # Write test data into the test memory
 
-  for i in xrange(18):
+  for i in range(18):
     model.mem.mem.mem[ 0x0000 + i ] = i
 
   # Create a simulator using the simulation tool
@@ -189,6 +189,6 @@ def test( dump_vcd, mem_delay ):
   # Verify the output
 
   data_ref = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 4, 5, 6, 7, 16, 17 ]
-  for i in xrange(18):
+  for i in range(18):
     assert model.mem.mem.mem[ 0x0000 + i ] == data_ref[i]
 

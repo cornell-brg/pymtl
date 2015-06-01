@@ -21,7 +21,7 @@ from QueuePortProxy import InQueuePortProxy, OutQueuePortProxy
 
 def queue_copy( n, in_queue, out_queue ):
 
-  for i in xrange(n):
+  for _ in range(n):
     out_queue.append( in_queue.popleft() )
 
 #-------------------------------------------------------------------------
