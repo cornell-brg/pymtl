@@ -44,9 +44,6 @@ class InValRdyQueue( Model ):
     s.data = deque( maxlen = size )
     s.deq  = s._pipe_deq if pipe else s._simple_deq
 
-  def elaborate_logic( s ):
-    pass
-
   def is_empty( s ):
     return len( s.data ) == 0
 
@@ -81,9 +78,6 @@ class OutValRdyQueue( Model ):
     s.out  = OutValRdyBundle( MsgType )
     s.data = deque( maxlen = size )
     s.enq  = s._bypass_enq if bypass else s._simple_enq
-
-  def elaborate_logic( s ):
-    pass
 
   def is_full( s ):
     return len( s.data ) == s.data.maxlen
@@ -130,9 +124,6 @@ class ChildReqRespQueueAdapter( Model ):
     s.req_q.xtick()
     s.resp_q.xtick()
 
-  def elaborate_logic( s ):
-    pass
-
   def get_req( s ):
     return s.req_q.deq()
 
@@ -160,9 +151,6 @@ class ParentReqRespQueueAdapter( Model ):
   def xtick( s ):
     s.req_q.xtick()
     s.resp_q.xtick()
-
-  def elaborate_logic( s ):
-    pass
 
   def push_req( s, resp ):
     s.req_q.enq( resp )

@@ -55,13 +55,8 @@ class InValRdyQueueHarness( Model ):
     s.in_  = InValRdyBundle ( MsgType )
     s.out  = OutValRdyBundle( MsgType )
 
-    s.size  = size
-    s.pipeq = pipeq
-
-  def elaborate_logic( s ):
-
     msg_type = s.in_.msg.msg_type
-    s.queue = InValRdyQueue( msg_type, size=s.size, pipe=s.pipeq )
+    s.queue = InValRdyQueue( msg_type, size=size, pipe=pipeq )
     s.connect( s.in_, s.queue.in_ )
 
     s.out_buffer_full = False
@@ -112,16 +107,10 @@ class OutValRdyQueueHarness( Model ):
     s.in_  = InValRdyBundle ( MsgType )
     s.out  = OutValRdyBundle( MsgType )
 
-    s.size    = size
-    s.bypassq = bypassq
-
-  def elaborate_logic( s ):
-
     msg_type = s.in_.msg.msg_type
-    s.queue = OutValRdyQueue( msg_type, size=s.size, bypass=s.bypassq )
-    s.connect( s.out, s.queue.out )
 
-    #s.out_buffer_full = False
+    s.queue = OutValRdyQueue( msg_type, size=size, bypass=bypassq )
+    s.connect( s.out, s.queue.out )
 
     @s.tick
     def logic():
@@ -168,14 +157,9 @@ class InOutValRdyQueueHarness( Model ):
     s.in_  = InValRdyBundle ( MsgType )
     s.out  = OutValRdyBundle( MsgType )
 
-    s.size    = size
-    s.pipeq   = pipeq
-    s.bypassq = bypassq
+    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, size=size, pipe  =pipeq   )
+    s.out_q = OutValRdyQueue( s.out.msg.msg_type, size=size, bypass=bypassq )
 
-  def elaborate_logic( s ):
-
-    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, size=s.size, pipe  =s.pipeq  )
-    s.out_q = OutValRdyQueue( s.out.msg.msg_type, size=s.size, bypass=s.bypassq)
     s.connect( s.in_, s.in_q. in_ )
     s.connect( s.out, s.out_q.out )
 

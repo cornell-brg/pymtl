@@ -53,15 +53,10 @@ class ValRdyPipelineHarness( Model ):
     s.in_  = InValRdyBundle ( MsgType )
     s.out  = OutValRdyBundle( MsgType )
 
-    s.stages  = stages
-    s.pipeq   = pipeq
-    s.bypassq = bypassq
+    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, pipe  =pipeq   )
+    s.out_q = OutValRdyQueue( s.out.msg.msg_type, bypass=bypassq )
 
-  def elaborate_logic( s ):
-
-    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, pipe  =s.pipeq   )
-    s.out_q = OutValRdyQueue( s.out.msg.msg_type, bypass=s.bypassq )
-    s.pipe  = Pipeline( s.stages )
+    s.pipe  = Pipeline( stages )
     s.connect( s.in_, s.in_q. in_ )
     s.connect( s.out, s.out_q.out )
 
