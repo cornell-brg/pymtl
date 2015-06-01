@@ -55,9 +55,19 @@ class Model( object ):
     definitions: ``super( Model, self ).__init__()`` is too ugly!
     """
 
+    # Instantiate a new Python object
     inst       = object.__new__( cls, *args, **kwargs )
+
+    # Add implicit clk and reset ports
     inst.clk   = InPort( 1 )
     inst.reset = InPort( 1 )
+
+    # Initialize internal datastructures
+    inst._tick_blocks          = []
+    inst._posedge_clk_blocks   = []
+    inst._combinational_blocks = []
+    inst._connections          = set()
+
     return inst
 
   #---------------------------------------------------------------------
@@ -85,31 +95,33 @@ class Model( object ):
 
     >>> s.connect( s.my_bundle_a, s.my_bundle_b )
     """
+
+    # Throw an error if connect() is used on two wires.
     if isinstance( left_port, Wire ) and isinstance( right_port, Wire ):
-      e    = ("Connecting two Wire signals is not supported!\n"
-              "If you are certain this is something you really need to do, "
-              "use connect_wire instead:\n\n "
-              "  # translation will fail if directionality is wrong!!!\n"
-              "  connect_wire( dest = <s.out>, src = <s.in_> )"
-             )
+      e = ('Connecting two Wire signals is not supported!\n'
+           'If you are certain this is something you really need to do, '
+           'use connect_wire instead:\n\n '
+           '  # translation will fail if directionality is wrong!!!\n'
+           '  connect_wire( dest = <s.out>, src = <s.in_> )'
+          )
       frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
       msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
       msg += '>'.join( lines )
       raise PyMTLConnectError( msg )
 
+    # Try to connect the two signals/portbundles
     try:
       if  isinstance( left_port, PortBundle ):
         self._connect_bundle( left_port, right_port )
       else:
         self._connect_signal( left_port, right_port )
+
+    # Throw a helpful error on failure
     except PyMTLConnectError as e:
       frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
       msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
       msg += '>'.join( lines )
       raise PyMTLConnectError( msg )
-
-    # elif isinstance( left_port, dict ):
-    #   self.connect_dict( left_port )
 
   #-----------------------------------------------------------------------
   # connect_pairs
@@ -132,6 +144,8 @@ class Model( object ):
     >>> s.connect_pairs( *signal_list )
 
     """
+
+    # Throw an error if user tries to connect an odd number of signals
     if len( connections ) & 1:
       e    = 'An odd number of signals were provided!'
       frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
@@ -139,15 +153,18 @@ class Model( object ):
       msg += '>'.join( lines )
       raise PyMTLConnectError( msg )
 
+    # Iterate through signals pairwise
     citer = iter( connections )
     for left_port, right_port in zip( citer, citer ):
       try:
         self.connect( left_port, right_port )
+
+      # Throw a helpful error if any pairwise connection fails
       except PyMTLConnectError as e:
-       frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
-       msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
-       msg += '>'.join( lines )
-       raise PyMTLConnectError( msg )
+        frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
+        msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
+        msg += '>'.join( lines )
+        raise PyMTLConnectError( msg )
 
   #-----------------------------------------------------------------------
   # connect_dict
@@ -170,6 +187,8 @@ class Model( object ):
     for left_port, right_port in connections.iteritems():
       try:
         self.connect( left_port, right_port )
+
+      # Throw a helpful error if any pairwise connection fails
       except PyMTLConnectError as e:
        frame, filename, lineno, func_name, lines, idx = inspect.stack()[1]
        msg  = '{}\n\nLine: {} in File: {}\n>'.format( e, lineno, filename )
@@ -183,7 +202,7 @@ class Model( object ):
     """Structurally connect two Wires where direction must be specified.
 
     Directly connecting two Wires is not encouraged in PyMTL modeling.
-    Typically, intermediate Wires objects should not be needed for
+    Typically, intermediate Wire objects should not be needed for
     structural connectivity since Ports can be directly connected, and
     Wires are primarily intended for communicating values between
     behavioral blocks within a Model.
@@ -249,7 +268,7 @@ class Model( object ):
   # tick_rtl
   #---------------------------------------------------------------------
   def tick_rtl( self, func ):
-    """Decorator to mark a register-transfer level sequential logic.
+    """Decorator to mark register-transfer level sequential logic.
 
     Logic blocks marked with @s.tick_cl fire every clock cycle, and are
     meant to be Verilog translatable. Note that translation only works
@@ -278,10 +297,8 @@ class Model( object ):
 
     # DEBUG, make permanent to aid debugging?
     #func.func_name = self.name + '.' + func.func_name
-    try:
-      self._combinational_blocks.append( func )
-    except:
-      self._combinational_blocks = [func]
+
+    self._combinational_blocks.append( func )
     func._model = self
     return func
 
@@ -289,14 +306,16 @@ class Model( object ):
   # posedge_clk
   #---------------------------------------------------------------------
   def posedge_clk( self, func ):
-    """Decorator to mark a register-transfer level sequential logic,
-    this is an alias for @tick_rtl).
+    """Decorator to mark register-transfer level sequential logic.
+
+    (This is an alias for @tick_rtl).
+
+    >>> @s.posedge_clk
+    >>> def my_logic()
+    >>>   s.out.next = s.in_
     """
 
-    try:
-      self._posedge_clk_blocks.append( func )
-    except:
-      self._posedge_clk_blocks = [func]
+    self._posedge_clk_blocks.append( func )
     func._model = self
     return func
 
@@ -304,14 +323,12 @@ class Model( object ):
   # tick
   #---------------------------------------------------------------------
   def tick( self, func ):
-    """Decorator to mark a cycle-level sequential logic, this is an
-    alias for @tick_cl.
+    """Decorator to mark a cycle-level sequential logic.
+
+    (This is an alias for @tick_cl).
     """
 
-    try:
-      self._tick_blocks.append( func )
-    except:
-      self._tick_blocks = [func]
+    self._tick_blocks.append( func )
     func._model = self
     return func
 
@@ -441,14 +458,6 @@ class Model( object ):
     current_model.parent     = None
     current_model.name       = instance_name
 
-    # Initialize function lists for concurrent blocks  TODO: cleanme
-    try:    current_model._tick_blocks[0]
-    except: current_model._tick_blocks = []
-    try:    current_model._posedge_clk_blocks[0]
-    except: current_model._posedge_clk_blocks = []
-    try:    current_model._combinational_blocks[0]
-    except: current_model._combinational_blocks = []
-
     # Call user implemented elaborate_logic() function
     current_model.elaborate_logic()
 
@@ -458,8 +467,6 @@ class Model( object ):
     current_model._outports       = []
     current_model._hports         = []
     current_model._submodules     = []
-    if not hasattr( current_model, '_connections' ):
-      current_model._connections = set()
 
     # Disable line tracing by default
     current_model._line_trace_en  = False
@@ -661,10 +668,8 @@ class Model( object ):
     connection_edge = ConnectionEdge( left_port, right_port )
 
     # Add the connection to the Model's connection list
-    # TODO: this is hacky, FIX
-    if not hasattr( self, '_connections' ):
-      self._connections = set()
-    if not connection_edge: raise Exception( "Invalid Connection!")
+    if not connection_edge:
+      raise Exception( "Invalid Connection!")
     self._connections.add( connection_edge )
 
   #-----------------------------------------------------------------------
@@ -712,8 +717,4 @@ class Model( object ):
       for key in dict3:
         if key in dict2:
           self.connect(dict2[key], dict3[key])
-
-
-
-
 
