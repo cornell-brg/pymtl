@@ -76,7 +76,7 @@ class TestHarness (Model):
 random.seed(0xdeadbeef)
 
 basic_msgs  = [ 0, 1, 2, 3, 4 ]
-random_msgs = [ random.randint(0,0xffff) for i in xrange(20) ]
+random_msgs = [ random.randint(0,0xffff) for _ in range(20) ]
 
 #-------------------------------------------------------------------------
 # Test Case Table
