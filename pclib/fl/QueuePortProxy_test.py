@@ -63,12 +63,6 @@ class QueueCopy( Model ):
     s.in_queue  = InQueuePortProxy  ( s.in_ )
     s.out_queue = OutQueuePortProxy ( s.out )
 
-  #-----------------------------------------------------------------------
-  # elaborate_logic
-  #-----------------------------------------------------------------------
-
-  def elaborate_logic( s ):
-
     # This looks like a regular tick block, but because it is a
     # pausable_tick there is something more sophisticated is going on.
     # The first time we call the tick, the queue_copy function will try
@@ -104,15 +98,9 @@ class TestHarness (Model):
 
   def __init__( s, src_msgs, sink_msgs, src_delay, sink_delay ):
 
-    # Instantiate models
-
     s.src   = TestSource ( 32, src_msgs,  src_delay  )
     s.qcopy = QueueCopy  ( 32, len(src_msgs)         )
     s.sink  = TestSink   ( 32, sink_msgs, sink_delay )
-
-  def elaborate_logic( s ):
-
-    # Connect
 
     s.connect( s.src.out,   s.qcopy.in_ )
     s.connect( s.qcopy.out, s.sink.in_  )

@@ -75,12 +75,6 @@ class MemCopy (Model):
 
     s.mem = BytesMemPortAdapter( s.memreq, s.memresp )
 
-  #-----------------------------------------------------------------------
-  # elaborate_logic
-  #-----------------------------------------------------------------------
-
-  def elaborate_logic( s ):
-
     # This looks like a regular tick block, but because it is a
     # pausable_tick there is something more sophisticated is going on.
     # The first time we call the tick, the mem_copy function will try to

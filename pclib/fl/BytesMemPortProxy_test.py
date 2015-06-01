@@ -77,12 +77,6 @@ class MemCopy (Model):
 
     s.mem = BytesMemPortProxy( mreq_p, mresp_p, s.memreq, s.memresp )
 
-  #-----------------------------------------------------------------------
-  # elaborate_logic
-  #-----------------------------------------------------------------------
-
-  def elaborate_logic( s ):
-
     # This looks like a regular tick block, but because it is a
     # pausable_tick there is something more sophisticated is going on.
     # The first time we call the tick, the mem_copy function will try to
@@ -133,8 +127,6 @@ class TestHarness( Model ):
                        src_ptr, dest_ptr, nbytes )
 
     s.mem = TestMemory( memreq_params, memresp_params, 1, mem_delay )
-
-  def elaborate_logic( s ):
 
     s.connect( s.mcopy.memreq,  s.mem.reqs[0]  )
     s.connect( s.mcopy.memresp, s.mem.resps[0] )
