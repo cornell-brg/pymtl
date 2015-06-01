@@ -458,7 +458,7 @@ class Model( object ):
     current_model.parent     = None
     current_model.name       = instance_name
 
-    # Call user implemented elaborate_logic() function
+    # DEPRECATED: Call user implemented elaborate_logic() function
     current_model.elaborate_logic()
 
     # Initialize lists for signals, submodules and connections
@@ -592,69 +592,11 @@ class Model( object ):
 
     # Set direction of all connections
     for c in self._connections:
-      self._set_edge_direction( c )
+      c.set_edge_direction()
 
     # Recursively enter submodules
     for submodule in self._submodules:
       submodule._recurse_connections()
-
-  #---------------------------------------------------------------------
-  # _set_edge_direction
-  #---------------------------------------------------------------------
-  def _set_edge_direction(self, edge):
-    """Set the edge direction of a single ConnectionEdge"""
-
-    a = edge.src_node
-    b = edge.dest_node
-
-    # Constants should always be the source node
-    if isinstance( a, Constant ): return
-    if isinstance( b, Constant ): edge.swap_direction()
-
-    # Model connecting own InPort to own OutPort
-    elif ( a.parent == b.parent and
-           isinstance( a, OutPort ) and isinstance( b, InPort  )):
-      edge.swap_direction()
-
-    # Model InPort connected to InPort of a submodule
-    elif ( a.parent in b.parent._submodules and
-           isinstance( a, InPort  ) and isinstance( b, InPort  )):
-      edge.swap_direction()
-
-    # Model OutPort connected to OutPort of a submodule
-    elif ( b.parent in a.parent._submodules and
-           isinstance( a, OutPort ) and isinstance( b, OutPort )):
-      edge.swap_direction()
-
-    # Model OutPort connected to InPort of a submodule
-    elif ( a.parent in b.parent._submodules and
-           isinstance( a, InPort ) and isinstance( b, OutPort )):
-      edge.swap_direction()
-
-    # Wire connected to InPort
-    elif ( a.parent == b.parent and
-           isinstance( a, Wire ) and isinstance( b, InPort )):
-      edge.swap_direction()
-
-    # Wire connected to OutPort
-    elif ( a.parent == b.parent and
-           isinstance( a, OutPort ) and isinstance( b, Wire )):
-      edge.swap_direction()
-
-    # Wire connected to InPort of a submodule
-    elif ( a.parent in b.parent._submodules and
-           isinstance( a, InPort  ) and isinstance( b, Wire )):
-      edge.swap_direction()
-
-    # Wire connected to OutPort of a submodule
-    elif ( b.parent in a.parent._submodules and
-           isinstance( a, Wire ) and isinstance( b, OutPort )):
-      edge.swap_direction()
-
-    # Chaining submodules together (OutPort of one to InPort of another)
-    elif ( a.parent != b.parent and a.parent.parent == b.parent.parent and
-           isinstance( a, InPort  ) and isinstance( b, OutPort )):
-      edge.swap_direction()
 
   #---------------------------------------------------------------------
   # _connect_signal
