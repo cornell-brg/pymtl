@@ -4,8 +4,9 @@
 # This module contains helper classes for working with memory request and
 # response messages.
 
-from pymtl import *
 import math
+
+from pymtl import *
 
 #=========================================================================
 # Memory Request Messages
@@ -109,11 +110,11 @@ class MemReqParams:
     bits[ s.data_slice ] = data
 
     return bits
-    
+
   def unpck_req(s , bits):
-    b = Bits(s.nbits,value = bits)
-    return (b[s.type_slice],b[s.addr_slice],b[s.len_slice],b[s.data_slice])
-    
+    b = Bits(s.nbits, value = bits)
+    return b[s.type_slice], b[s.addr_slice], b[s.len_slice], b[s.data_slice]
+
   def __hash__( s ):
     return hash( frozenset( (s.addr_nbits, s.data_nbits) ) )
 
@@ -135,24 +136,24 @@ class MemReqFromBits (Model):
 
     s.memreq_params = memreq_params
 
-  def elaborate_logic( s ):
     # Connections
 
     #s.connect( s.bits[ s.memreq_params.type_slice ], s.type_ )
     #s.connect( s.bits[ s.memreq_params.addr_slice ], s.addr  )
     #s.connect( s.bits[ s.memreq_params.len_slice  ], s.len_  )
     #s.connect( s.bits[ s.memreq_params.data_slice ], s.data  )
+
     @s.combinational
     def comb_logic():
-      s.type_.value = s.bits[ s.memreq_params.type_slice ].value
-      s.addr.value  = s.bits[ s.memreq_params.addr_slice ].value
-      s.len_.value  = s.bits[ s.memreq_params.len_slice  ].value
-      s.data.value  = s.bits[ s.memreq_params.data_slice ].value
+      s.type_.value = s.bits[ s.memreq_params.type_slice ]
+      s.addr .value = s.bits[ s.memreq_params.addr_slice ]
+      s.len_ .value = s.bits[ s.memreq_params.len_slice  ]
+      s.data .value = s.bits[ s.memreq_params.data_slice ]
 
   def line_trace( s ):
     return "{}{}:{}:{}" \
-      .format( s.memreq_params.type_to_str[ s.type_.value.uint() ],
-               s.len_.value, s.addr.value, s.data.value )
+      .format( s.memreq_params.type_to_str[ s.type_.uint() ],
+               s.len_, s.addr, s.data )
 
 #-------------------------------------------------------------------------
 # MemReqToBits
@@ -169,20 +170,17 @@ class MemReqToBits (Model):
 
     s.bits  = OutPort ( memreq_params.nbits      )
 
+    s.connect( s.bits[ memreq_params.type_slice ], s.type_ )
+    s.connect( s.bits[ memreq_params.addr_slice ], s.addr  )
+    s.connect( s.bits[ memreq_params.len_slice  ], s.len_  )
+    s.connect( s.bits[ memreq_params.data_slice ], s.data  )
+
     s.memreq_params = memreq_params
-
-  def elaborate_logic( s ):
-    # Connections
-
-    s.connect( s.bits[ s.memreq_params.type_slice ], s.type_ )
-    s.connect( s.bits[ s.memreq_params.addr_slice ], s.addr  )
-    s.connect( s.bits[ s.memreq_params.len_slice  ], s.len_  )
-    s.connect( s.bits[ s.memreq_params.data_slice ], s.data  )
 
   def line_trace( s ):
     return "{}{}:{}:{}" \
-      .format( s.memreq_params.type_to_str[ s.type_.value.uint() ],
-               s.len_.value, s.addr_.value, s.data.value )
+      .format( s.memreq_params.type_to_str[ s.type_.uint() ],
+               s.len_, s.addr_, s.data )
 
 #=========================================================================
 # Memory Response Messages
@@ -279,11 +277,11 @@ class MemRespParams:
     bits[ s.data_slice ] = data
 
     return bits
-  
+
   def unpck_resp(s, bits):
-    b = Bits(s.nbits, value=bits)
+    b = Bits(s.nbits, value = bits)
     return (b[s.type_slice],b[s.len_slice],b[s.data_slice])
-  
+
   def __hash__( s ):
     return hash( s.data_nbits )
 
@@ -301,19 +299,16 @@ class MemRespFromBits (Model):
     s.len_  = OutPort ( memresp_params.len_nbits  )
     s.data  = OutPort ( memresp_params.data_nbits )
 
+    s.connect( s.bits[ memresp_params.type_slice ], s.type_ )
+    s.connect( s.bits[ memresp_params.len_slice  ], s.len_  )
+    s.connect( s.bits[ memresp_params.data_slice ], s.data  )
+
     s.memresp_params = memresp_params
-
-  def elaborate_logic( s ):
-    # Connections
-
-    s.connect( s.bits[ s.memresp_params.type_slice ], s.type_ )
-    s.connect( s.bits[ s.memresp_params.len_slice  ], s.len_  )
-    s.connect( s.bits[ s.memresp_params.data_slice ], s.data  )
 
   def line_trace( s ):
     return "{}{}:{}" \
-      .format( s.memresp_params.type_to_str[ s.type_.value.uint() ],
-               s.len_.value, s.data.value )
+      .format( s.memresp_params.type_to_str[ s.type_.uint() ],
+               s.len_, s.data )
 
 #-------------------------------------------------------------------------
 # MemRespToBits
@@ -331,20 +326,18 @@ class MemRespToBits (Model):
 
     s.memresp_params = memresp_params
 
-  def elaborate_logic( s ):
-    # Connections
-
     #s.connect( s.bits[ s.memresp_params.type_slice ], s.type_ )
     #s.connect( s.bits[ s.memresp_params.len_slice  ], s.len_  )
     #s.connect( s.bits[ s.memresp_params.data_slice ], s.data  )
+
     @s.combinational
     def comb_logic():
-      s.bits[ s.memresp_params.type_slice ].value = s.type_.value 
-      s.bits[ s.memresp_params.len_slice  ].value = s.len_.value  
-      s.bits[ s.memresp_params.data_slice ].value = s.data.value  
+      s.bits[ memresp_params.type_slice ].value = s.type_
+      s.bits[ memresp_params.len_slice  ].value = s.len_
+      s.bits[ memresp_params.data_slice ].value = s.data
 
   def line_trace( s ):
     return "{}{}:{}" \
-      .format( s.memresp_params.type_to_str[ s.type_.value.uint() ],
-               s.len_.value, s.data.value )
+      .format( s.memresp_params.type_to_str[ s.type_.uint() ],
+               s.len_, s.data )
 
