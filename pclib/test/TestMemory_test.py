@@ -5,7 +5,6 @@
 from __future__ import print_function
 
 import pytest
-
 import pclib.ifcs.mem_msgs as mem_msgs
 
 from pymtl      import *
@@ -19,8 +18,6 @@ class TestHarness( Model ):
   def __init__( s, memreq_params, memresp_params, nports,
                 src_msgs, sink_msgs, src_delay, sink_delay, mem_delay ):
 
-    s.nports = nports
-
     # Instantiate models
 
     s.src  = [ TestSource( memreq_params.nbits, src_msgs[x], src_delay )
@@ -31,20 +28,17 @@ class TestHarness( Model ):
     s.sink = [ TestSink( memresp_params.nbits, sink_msgs[x], sink_delay )
                for x in range( nports ) ]
 
-  def elaborate_logic( s ):
     # connect
 
-    for i in range( s.nports ):
-      s.connect( s.src[i].out, s.mem.reqs[i]  )
-
+    for i in range( nports ):
+      s.connect( s.src[i].out,  s.mem.reqs[i]  )
       s.connect( s.sink[i].in_, s.mem.resps[i] )
 
   def done( s ):
 
     done_flag = 1
-    for i in range( s.nports ):
-      done_flag &= s.src[i].done.value.uint() and \
-                          s.sink[i].done.value.uint()
+    for src, sink in zip( s.src, s.sink ):
+      done_flag &= (src.done.uint() and sink.done.uint())
     return done_flag
 
   def line_trace( s ):

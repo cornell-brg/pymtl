@@ -22,16 +22,8 @@ class TestSource( Model ):
     s.out  = OutValRdyBundle( nbits )
     s.done = OutPort        ( 1     )
 
-    s.nbits            = nbits
-    s.msgs             = msgs
-    s.max_random_delay = max_random_delay
-
-  def elaborate_logic( s ):
-
-    # Instantiate modules
-
-    s.src   = TestSimpleSource( s.nbits, s.msgs )
-    s.delay = TestRandomDelay ( s.nbits, s.max_random_delay )
+    s.src   = TestSimpleSource( nbits, msgs )
+    s.delay = TestRandomDelay ( nbits, max_random_delay )
 
     # Connect test source -> random delay -> output ports
 

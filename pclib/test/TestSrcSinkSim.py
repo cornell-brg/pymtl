@@ -78,11 +78,6 @@ class TestSrcSinkHarness( Model ):
     s.model = model_inst
     s.sink  = TestSink  ( sink_msg_type, sink_msgs, sink_delay )
 
-  #-----------------------------------------------------------------------
-  # elaborate_logic
-  #-----------------------------------------------------------------------
-  # TODO: get rid of elaborate_logic()?
-  def elaborate_logic( s ):
     s.connect( s.src  .out, s.model.in_ )
     s.connect( s.model.out, s.sink .in_ )
 

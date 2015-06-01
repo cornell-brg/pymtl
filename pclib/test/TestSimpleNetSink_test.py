@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import pytest
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle, NetMsg
 
 from TestSimpleSource  import TestSimpleSource
@@ -18,18 +18,9 @@ from TestSimpleNetSink import TestSimpleNetSink
 class TestHarness( Model ):
 
   def __init__( s, msg_type, src_msgs, sink_msgs ):
-    s.msg_type  = msg_type
-    s.src_msgs  = src_msgs
-    s.sink_msgs = sink_msgs
 
-  def elaborate_logic( s ):
-
-    # Instantiate models
-
-    s.src  = TestSimpleSource ( s.msg_type, s.src_msgs  )
-    s.sink = TestSimpleNetSink( s.msg_type, s.sink_msgs )
-
-    # Connect
+    s.src  = TestSimpleSource ( msg_type, src_msgs  )
+    s.sink = TestSimpleNetSink( msg_type, sink_msgs )
 
     s.connect( s.src.out,  s.sink.in_  )
     s.connect( s.src.done, s.sink.done )
@@ -86,7 +77,7 @@ def run_test( dump_vcd, src_msgs, sink_msgs ):
 # TestSimpleNetSink unit test - Inorder Messages
 #-------------------------------------------------------------------------
 def test_inorder_msgs( dump_vcd ):
-  src_msgs = sink_msgs = [
+  src_msgs = [
             # dest src seqnum payload
       mk_msg( 1,   0,  0,     0x00000100 ),
       mk_msg( 1,   0,  1,     0x00000101 ),
@@ -105,6 +96,8 @@ def test_inorder_msgs( dump_vcd ):
       mk_msg( 0,   3,  2,     0x00000032 ),
       mk_msg( 0,   3,  3,     0x00000033 ),
   ]
+
+  sink_msgs = src_msgs[:]
 
   run_test( dump_vcd, src_msgs, sink_msgs )
 

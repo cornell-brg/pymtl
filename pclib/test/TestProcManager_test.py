@@ -38,7 +38,6 @@ class DummyProc( Model ):
     s.mem_src  = TestSource( memreq_params.nbits,  mem_src_msgs,  src_delay  )
     s.mem_sink = TestSink  ( memresp_params.nbits, mem_sink_msgs, sink_delay )
 
-  def elaborate_logic( s ):
     s.connect( s.mem_src.out, s.memreq       )
     s.connect( s.memresp,     s.mem_sink.in_ )
 
@@ -76,7 +75,6 @@ class TestHarness (Model):
     s.procreq_val = Wire( 1 )
     s.memreq_rdy  = Wire( 1 )
 
-  def elaborate_logic( s ):
     # Connect
 
     s.connect( s.proc_mgr.proc_go,     s.proc.proc_go     )

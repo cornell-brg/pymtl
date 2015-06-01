@@ -23,7 +23,6 @@ class TestSimpleMemory (Model):
 
     # Local constant - store the number of ports
 
-    s.nports   = nports
     req_nbits  = memreq_params.nbits
     resp_nbits = memresp_params.nbits
 
@@ -56,31 +55,30 @@ class TestSimpleMemory (Model):
                      range( nports ) ]
 
     s.mem_nbytes = mem_nbytes
-  #-----------------------------------------------------------------------
-  # Connectivity and Logic
-  #-----------------------------------------------------------------------
 
-  def elaborate_logic( s ):
+    #---------------------------------------------------------------------
+    # Connectivity and Logic
+    #---------------------------------------------------------------------
 
     # Buffers to hold memory request messages
 
-    s.memreq_type = [ Bits( 1) for _ in range( s.nports ) ]
-    s.memreq_addr = [ Bits(32) for _ in range( s.nports ) ]
-    s.memreq_len  = [ Bits( 2) for _ in range( s.nports ) ]
-    s.memreq_data = [ Bits(32) for _ in range( s.nports ) ]
+    s.memreq_type = [ Bits( 1) for _ in range( nports ) ]
+    s.memreq_addr = [ Bits(32) for _ in range( nports ) ]
+    s.memreq_len  = [ Bits( 2) for _ in range( nports ) ]
+    s.memreq_data = [ Bits(32) for _ in range( nports ) ]
 
-    s.memreq_full = [ Wire(1) for _ in range( s.nports ) ]
+    s.memreq_full = [ Wire(1) for _ in range( nports ) ]
 
     # Actual memory
     s.mem = bytearray( s.mem_nbytes )
 
     # Connect memreq_msg port list to Unpack port list
-    for i in range( s.nports ):
+    for i in range( nports ):
       s.connect( s.reqs[i].msg, s.memreq[i].bits )
 
 
     # Connect memresp_msg port list to Pack port list
-    for i in range( s.nports ):
+    for i in range( nports ):
       s.connect( s.resps[i].msg, s.memresp[i].bits )
 
     #-----------------------------------------------------------------------
@@ -92,7 +90,7 @@ class TestSimpleMemory (Model):
 
       # Iterate over the port list
 
-      for i in range( s.nports ):
+      for i in range( nports ):
 
         # At the end of the cycle, we AND together the val/rdy bits to
         # determine if the request/memresp message transactions occured.
@@ -177,7 +175,7 @@ class TestSimpleMemory (Model):
 
       # Iterate over the port list
 
-      for i in range( s.nports ):
+      for i in range( nports ):
 
         s.reqs[i].rdy.value  = ( not s.memreq_full[i] or s.resps[i].rdy )
         s.resps[i].val.value = s.memreq_full[i]
@@ -187,21 +185,11 @@ class TestSimpleMemory (Model):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    memreq_str   = ''
-    memresp_str  = ''
+
     memtrace_str = ''
 
-    for i in range( s.nports ):
-      memreq_str  = \
-        valrdy.valrdy_to_str( s.memreq[i].line_trace(),
-          s.reqs[i].val, s.reqs[i].rdy )
-
-      memresp_str = \
-        valrdy.valrdy_to_str( s.memresp[i].line_trace(),
-          s.resps[i].val, s.resps[i].rdy )
-
-      memtrace_str += "|{} () {}" \
-        .format( memreq_str, memresp_str )
+    for req, resp in zip( s.reqs, s.resps ):
+      memtrace_str += "|{} () {}".format( req, resp )
 
     return memtrace_str
 

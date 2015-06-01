@@ -2,7 +2,7 @@
 # TestSimpleNetSink.py
 #=========================================================================
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
 #-------------------------------------------------------------------------
@@ -14,10 +14,6 @@ from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 # information
 class TestSimpleNetSink( Model ):
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
-
   def __init__( s, msg_type, msgs ):
 
     s.in_  = InValRdyBundle( msg_type )
@@ -27,12 +23,6 @@ class TestSimpleNetSink( Model ):
     s.recv        = []
     s.idx         = 0
     s.msgs_len    = len( msgs )
-
-  #-----------------------------------------------------------------------
-  # Tick
-  #-----------------------------------------------------------------------
-
-  def elaborate_logic( s ):
 
     @s.tick
     def tick():

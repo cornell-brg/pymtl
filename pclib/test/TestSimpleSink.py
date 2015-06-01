@@ -5,14 +5,10 @@
 # to a predefined list.
 #
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle
 
 class TestSimpleSink( Model ):
-
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
 
   def __init__( s, nbits, msgs ):
 
@@ -22,11 +18,6 @@ class TestSimpleSink( Model ):
     s.msgs = msgs
     s.idx  = 0
 
-  #-----------------------------------------------------------------------
-  # Tick
-  #-----------------------------------------------------------------------
-  def elaborate_logic( s ):
-
     @s.tick
     def tick():
 
@@ -34,7 +25,7 @@ class TestSimpleSink( Model ):
 
       if s.reset:
         s.in_.rdy.next = False
-        s.done.next    = False
+        s.done   .next = False
         return
 
       # At the end of the cycle, we AND together the val/rdy bits to
@@ -53,14 +44,11 @@ class TestSimpleSink( Model ):
 
       if ( s.idx < len(s.msgs) ):
         s.in_.rdy.next = True
-        s.done.next    = False
+        s.done   .next = False
       else:
         s.in_.rdy.next = False
-        s.done.next    = True
+        s.done   .next = True
 
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
 
   def line_trace( s ):
 

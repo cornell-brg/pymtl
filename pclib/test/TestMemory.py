@@ -19,7 +19,6 @@ class TestMemory( Model ):
   #-----------------------------------------------------------------------
   # Constructor
   #-----------------------------------------------------------------------
-
   def __init__( s, memreq_params, memresp_params, nports,
                 max_mem_delay = 0, mem_nbytes=2**20 ):
 
@@ -40,8 +39,6 @@ class TestMemory( Model ):
     # List of memory response msg, val, rdy ports
 
     s.resps = [ OutValRdyBundle( resp_nbits ) for _ in range( nports ) ]
-
-  def elaborate_logic( s ):
 
     # delay responses
 
@@ -77,15 +74,12 @@ class TestMemory( Model ):
   # load the memory data structure.
   # section_len, section_addr, section_data encapsulated in a helper
   # function?
-
   def load_memory( s, section_list ):
-    
     s.mem.load_memory( section_list )
 
   #-----------------------------------------------------------------------
   # Line tracing
   #-----------------------------------------------------------------------
-
   def line_trace( s ):
 
     memreq_str   = ''

@@ -19,19 +19,9 @@ class TestHarness( Model ):
 
   def __init__( s, nbits, msgs, delay ):
 
-    s.nbits = nbits
-    s.msgs  = msgs
-    s.delay = delay
-
-  def elaborate_logic( s ):
-
-    # Instantiate models
-
-    s.src   = TestSimpleSource ( s.nbits, s.msgs  )
-    s.delay = TestRandomDelay  ( s.nbits, s.delay )
-    s.sink  = TestSimpleSink   ( s.nbits, s.msgs  )
-
-    # Connect chain
+    s.src   = TestSimpleSource ( nbits, msgs  )
+    s.delay = TestRandomDelay  ( nbits, delay )
+    s.sink  = TestSimpleSink   ( nbits, msgs  )
 
     s.connect( s.src.out,   s.delay.in_ )
     s.connect( s.delay.out, s.sink.in_  )

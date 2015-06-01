@@ -24,8 +24,6 @@ class ValRdyQueue( Model ):
     s.full  = Wire( 1 )
     s.wen   = Wire( 1 )
 
-  def elaborate_logic( s ):
-
     @s.combinational
     def comb():
 

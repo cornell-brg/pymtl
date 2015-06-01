@@ -15,8 +15,6 @@ class Incrementer( Model ):
     self.in_ = InPort  ( 16 )
     self.out = OutPort ( 16 )
 
-  def elaborate_logic( self ):
-
     @self.combinational
     def comb_logic():
       self.out.value = self.in_ + 1

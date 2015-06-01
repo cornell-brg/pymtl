@@ -10,10 +10,6 @@ from pclib.ifcs import OutValRdyBundle
 
 class TestSimpleSource( Model ):
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
-
   def __init__( s, nbits, msgs ):
 
     s.out  = OutValRdyBundle( nbits )
@@ -21,12 +17,6 @@ class TestSimpleSource( Model ):
 
     s.msgs = msgs
     s.idx  = 0
-
-  #-----------------------------------------------------------------------
-  # Tick
-  #-----------------------------------------------------------------------
-
-  def elaborate_logic( s ):
 
     @s.tick
     def tick():
@@ -36,8 +26,8 @@ class TestSimpleSource( Model ):
       if s.reset:
         if s.msgs:
           s.out.msg.next = s.msgs[0]
-        s.out.val.next = False
-        s.done.next    = False
+        s.out.val  .next = False
+        s.done     .next = False
         return
 
       # Check if we have more messages to send.
@@ -45,8 +35,8 @@ class TestSimpleSource( Model ):
       if ( s.idx == len(s.msgs) ):
         if s.msgs:
           s.out.msg.next = s.msgs[0]
-        s.out.val.next = False
-        s.done.next    = True
+        s.out.val  .next = False
+        s.done     .next = True
         return
 
       # At the end of the cycle, we AND together the val/rdy bits to
@@ -65,15 +55,11 @@ class TestSimpleSource( Model ):
       if ( s.idx < len(s.msgs) ):
         s.out.msg.next = s.msgs[s.idx]
         s.out.val.next = True
-        s.done.next    = False
+        s.done   .next = False
       else:
         s.out.msg.next = s.msgs[0]
         s.out.val.next = False
-        s.done.next    = True
-
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
+        s.done   .next = True
 
   def line_trace( s ):
 

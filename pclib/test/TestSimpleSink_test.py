@@ -16,15 +16,10 @@ class TestHarness( Model ):
 
   def __init__( s, nbits, msgs ):
 
-    s.nbits = nbits
-    s.msgs  = msgs
-
-  def elaborate_logic( s ):
-
     # Instantiate models
 
-    s.src  = TestSimpleSource ( s.nbits, s.msgs )
-    s.sink = TestSimpleSink   ( s.nbits, s.msgs )
+    s.src  = TestSimpleSource ( nbits, msgs )
+    s.sink = TestSimpleSink   ( nbits, msgs )
 
     # Connect chain
 

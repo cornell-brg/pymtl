@@ -17,19 +17,8 @@ class TestHarness( Model ):
 
   def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
-    s.nbits      = nbits
-    s.msgs       = msgs
-    s.src_delay  = src_delay
-    s.sink_delay = src_delay
-
-  def elaborate_logic( s ):
-
-    # Instantiate models
-
-    s.src  = TestSource ( s.nbits, s.msgs, s.src_delay  )
-    s.sink = TestSink   ( s.nbits, s.msgs, s.sink_delay )
-
-    # Connect
+    s.src  = TestSource ( nbits, msgs, src_delay  )
+    s.sink = TestSink   ( nbits, msgs, sink_delay )
 
     s.connect( s.src.out, s.sink.in_ )
 
@@ -47,20 +36,9 @@ class TestHarnessExtraDelay( Model ):
 
   def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
-    s.nbits      = nbits
-    s.msgs       = msgs
-    s.src_delay  = src_delay
-    s.sink_delay = src_delay
-
-  def elaborate_logic( s ):
-
-    # Instantiate models
-
-    s.src   = TestSource      ( s.nbits, s.msgs, s.src_delay )
-    s.delay = TestRandomDelay ( s.nbits, 5 )
-    s.sink  = TestSink        ( s.nbits, s.msgs, s.sink_delay )
-
-    # Connect
+    s.src   = TestSource      ( nbits, msgs, src_delay )
+    s.delay = TestRandomDelay ( nbits, 5 )
+    s.sink  = TestSink        ( nbits, msgs, sink_delay )
 
     s.connect( s.src.out,   s.delay.in_ )
     s.connect( s.delay.out, s.sink.in_  )
@@ -81,19 +59,10 @@ class TestHarnessTwoDelay( Model ):
 
   def __init__( s, nbits, msgs, src_delay, sink_delay ):
 
-    s.nbits      = nbits
-    s.msgs       = msgs
-    s.src_delay  = src_delay
-    s.sink_delay = src_delay
-
-  def elaborate_logic( s ):
-
-    # Instantiate models
-
-    s.src1   = TestSource      ( s.nbits, s.msgs[:-2], s.src_delay )
-    s.sink1  = TestSink        ( s.nbits, s.msgs[:-2], s.sink_delay )
-    s.src2   = TestSource      ( s.nbits, s.msgs,      s.src_delay )
-    s.sink2  = TestSink        ( s.nbits, s.msgs,      s.sink_delay )
+    s.src1   = TestSource      ( nbits, msgs[:-2], src_delay )
+    s.sink1  = TestSink        ( nbits, msgs[:-2], sink_delay )
+    s.src2   = TestSource      ( nbits, msgs,      src_delay )
+    s.sink2  = TestSink        ( nbits, msgs,      sink_delay )
 
     # Connect
 

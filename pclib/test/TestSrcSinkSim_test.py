@@ -19,8 +19,6 @@ class ValRdyBuffer( Model ):
     s.in_ = InValRdyBundle( MsgType )
     s.out = InValRdyBundle( MsgType )
 
-  def elaborate_logic( s ):
-
     s.data = None
 
     @s.tick

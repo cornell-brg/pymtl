@@ -17,18 +17,10 @@ class TestHarness( Model ):
 
   def __init__( s, msg_type, src_msgs, sink_msgs, src_delay, sink_delay ):
 
-    s.msg_type   = msg_type
-    s.src_msgs   = src_msgs
-    s.sink_msgs  = sink_msgs
-    s.src_delay  = src_delay
-    s.sink_delay = sink_delay
-
-  def elaborate_logic( s ):
-
     # Instantiate models
 
-    s.src  = TestSource  ( s.msg_type, s.src_msgs,  s.src_delay  )
-    s.sink = TestNetSink ( s.msg_type, s.sink_msgs, s.sink_delay )
+    s.src  = TestSource  ( msg_type, src_msgs,  src_delay  )
+    s.sink = TestNetSink ( msg_type, sink_msgs, sink_delay )
 
     # Connect
 

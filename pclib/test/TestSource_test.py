@@ -19,18 +19,8 @@ class TestHarness( Model ):
 
   def __init__( s, nbits, msgs, delay ):
 
-    s.nbits = nbits
-    s.msgs  = msgs
-    s.delay = delay
-
-  def elaborate_logic( s ):
-
-    # Instantiate models
-
-    s.src  = TestSource     ( s.nbits, s.msgs, s.delay )
-    s.sink = TestSimpleSink ( s.nbits, s.msgs )
-
-    # Connect
+    s.src  = TestSource     ( nbits, msgs, delay )
+    s.sink = TestSimpleSink ( nbits, msgs )
 
     s.connect( s.src.out, s.sink.in_ )
 
@@ -48,19 +38,9 @@ class TestHarnessExtraDelay( Model ):
 
   def __init__( s, nbits, msgs, delay ):
 
-    s.nbits = nbits
-    s.msgs  = msgs
-    s.delay = delay
-
-  def elaborate_logic( s ):
-
-    # Instantiate models
-
-    s.src   = TestSource      ( s.nbits, s.msgs, s.delay )
-    s.delay = TestRandomDelay ( s.nbits, 5 )
-    s.sink  = TestSimpleSink  ( s.nbits, s.msgs )
-
-    # Connect
+    s.src   = TestSource      ( nbits, msgs, delay )
+    s.delay = TestRandomDelay ( nbits, 5 )
+    s.sink  = TestSimpleSink  ( nbits, msgs )
 
     s.connect( s.src.out,   s.delay.in_ )
     s.connect( s.delay.out, s.sink.in_  )

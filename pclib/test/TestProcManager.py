@@ -22,7 +22,7 @@ class TestProcManager (Model):
 
     # Test Memory load done signal
 
-    s.load_done    = 0
+    s.load_done  = 0
     s.curr_label = 0
 
     # test memory pointer
@@ -36,10 +36,7 @@ class TestProcManager (Model):
     s.STATE_LOAD = 0
     s.STATE_RUN  = 1
     s.STATE_DONE = 2
-
     s.state      = s.STATE_LOAD
-
-  def elaborate_logic( s ):
 
     #-----------------------------------------------------------------------
     # Tick
