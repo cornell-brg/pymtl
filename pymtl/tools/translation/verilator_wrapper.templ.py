@@ -19,24 +19,33 @@ class {model_name}( Model ):
     # initialize FFI, define the exposed interface
     ffi = FFI()
     ffi.cdef('''
-      void create_model( const char * );
-      void destroy_model( void );
-      void eval( void );
+      typedef struct {{
 
-      {port_decls}
+        // Exposed port interface
+        {port_decls}
+
+        // Verilator model
+        void * model;
+
+      }} V{model_name}_t;
+
+      V{model_name}_t * create_model( const char * );
+      void destroy_model( V{model_name}_t *);
+      void eval( V{model_name}_t * );
+
     ''')
 
     # set vcd_file attribute, give verilator_vcd_file a slightly
     # different name so PyMTL .vcd and Verilator .vcd can coexist
-    s.vcd_file          = vcd_file
+    s.vcd_file         = vcd_file
     verilator_vcd_file = vcd_file
     if vcd_file:
       filen, ext         = os.path.splitext( vcd_file )
       verilator_vcd_file = '{{}}.verilator{{}}'.format( filen, ext )
 
     # import the shared library containing the model and construct it
-    s._model = ffi.dlopen('./{lib_file}')
-    s._model.create_model( ffi.new("char[]", verilator_vcd_file) )
+    s._ffi = ffi.dlopen('./{lib_file}')
+    s._m   = s._ffi.create_model( ffi.new("char[]", verilator_vcd_file) )
 
     # dummy class to emulate PortBundles
     class BundleProxy( PortBundle ):
@@ -46,7 +55,7 @@ class {model_name}( Model ):
     {port_defs}
 
   def __del__( s ):
-    s._model.destroy_model()
+    s._ffi.destroy_model( s._m )
 
   def elaborate_logic( s ):
 
@@ -57,7 +66,7 @@ class {model_name}( Model ):
       {set_inputs}
 
       # execute combinational logic
-      s._model.eval()
+      s._ffi.eval( s._m )
 
       # set outputs
       # FIXME: currently write all outputs, not just combinational outs
@@ -66,10 +75,10 @@ class {model_name}( Model ):
     @s.posedge_clk
     def tick():
 
-      s._model.clk[0] = 0
-      s._model.eval()
-      s._model.clk[0] = 1
-      s._model.eval()
+      s._m.clk[0] = 0
+      s._ffi.eval( s._m )
+      s._m.clk[0] = 1
+      s._ffi.eval( s._m )
 
       # double buffer register outputs
       # FIXME: currently write all outputs, not just registered outs

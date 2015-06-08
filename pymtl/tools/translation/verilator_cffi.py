@@ -129,7 +129,7 @@ def create_c_wrapper( model, c_wrapper_file, vcd_file ):
 
   # Utility function for creating port initializations
   def port_to_init( port ):
-    code = '{verilator_name} = {dereference}model->{verilator_name};'
+    code = 'm->{verilator_name} = {dereference}model->{verilator_name};'
 
     verilator_name = port.verilator_name
     bitwidth       = port.nbits
@@ -138,15 +138,14 @@ def create_c_wrapper( model, c_wrapper_file, vcd_file ):
     return code.format( **locals() )
 
   # Create port declaration, initialization, and extern statements
-  pfx         = 'extern '
   indent_zero = '\n'
   indent_two  = '\n  '
   indent_four = '\n    '
   indent_six  = '\n      '
 
-  port_externs = indent_two .join( [ pfx+port_to_decl( x ) for x in ports ] )
-  port_decls   = indent_zero.join( [     port_to_decl( x ) for x in ports ] )
-  port_inits   = indent_two .join( [     port_to_init( x ) for x in ports ] )
+  port_externs = indent_two .join( [ port_to_decl( x ) for x in ports ] )
+  port_decls   = indent_zero.join( [ port_to_decl( x ) for x in ports ] )
+  port_inits   = indent_two .join( [ port_to_init( x ) for x in ports ] )
 
   # Generate the source code using the template
   with open( template_filename , 'r' ) as template, \
@@ -334,7 +333,7 @@ def get_indices( port ):
 def set_input_stmt( port ):
   inputs = []
   for idx, offset in get_indices( port ):
-    inputs.append( 's._model.{v_name}[{idx}] = s.{py_name}{offset}' \
+    inputs.append( 's._m.{v_name}[{idx}] = s.{py_name}{offset}' \
                     .format( v_name  = port.verilator_name,
                              py_name = port.name,
                              idx     = idx,
@@ -351,7 +350,7 @@ def set_input_stmt( port ):
 def set_output_stmt( port ):
   comb, next_ = [], []
   for idx, offset in get_indices( port ):
-    assign = 's.{py_name}{offset}.{sigtype} = s._model.{v_name}[{idx}]' \
+    assign = 's.{py_name}{offset}.{sigtype} = s._m.{v_name}[{idx}]' \
              .format( v_name  = port.verilator_name,
                       py_name = port.name,
                       idx     = idx,

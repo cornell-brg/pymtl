@@ -20,22 +20,25 @@
 
 // simulation methods and model interface ports exposed to CFFI
 extern "C" {{
-  extern void create_model( const char * );
-  extern void destroy_model( void );
-  extern void eval( void );
+  typedef struct {{
 
-  {port_externs}
+    // Exposed port interface
+    {port_externs}
+
+    // Verilator model
+    void * model;
+
+  }} V{model_name}_t;
+
+  V{model_name}_t * create_model( const char * );
+  void destroy_model( V{model_name}_t *);
+  void eval( V{model_name}_t * );
+
 }}
-
-// interface port pointers exposed via CFFI
-{port_decls}
 
 //----------------------------------------------------------------------
 // Private data
 //----------------------------------------------------------------------
-
-// Verilator model
-V{model_name} * model;
 
 #if DUMP_VCD
 // VCD tracing helpers
@@ -50,8 +53,15 @@ unsigned char prev_clk;
 // Construct a new verilator simulation, initialize interface signals
 // exposed via CFFI, and setup VCD tracing if enabled.
 //
-void create_model( const char *vcd_filename ) {{
+V{model_name}_t * create_model( const char *vcd_filename ) {{
+
+  V{model_name}_t * m;
+  V{model_name}   * model;
+
+  m     = (V{model_name}_t *) malloc( sizeof(V{model_name}_t) );
   model = new V{model_name}();
+
+  m->model = (void *) model;
 
 #if DUMP_VCD
   // enable tracing
@@ -66,6 +76,8 @@ void create_model( const char *vcd_filename ) {{
 
   // initialize exposed model interface pointers
   {port_inits}
+
+  return m;
 }}
 
 //----------------------------------------------------------------------
@@ -73,7 +85,9 @@ void create_model( const char *vcd_filename ) {{
 //----------------------------------------------------------------------
 // Finalize the Verilator simulation, close files, call destructors.
 //
-void destroy_model() {{
+void destroy_model( V{model_name}_t * m ) {{
+
+  V{model_name} * model = (V{model_name} *) m->model;
 
   // finalize verilator simulation
   model->final();
@@ -95,7 +109,9 @@ void destroy_model() {{
 //----------------------------------------------------------------------
 // Simulate one time-step in the Verilated model.
 //
-void eval() {{
+void eval( V{model_name}_t * m ) {{
+
+  V{model_name} * model = (V{model_name} *) m->model;
 
   // evaluate one time step
   model->eval();
