@@ -529,7 +529,7 @@ class Mux( Model ):
   def __init__( s, nbits, nports ):
     s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
     s.out = OutPort( nbits )
-    s.sel = InPort ( get_sel_nbits( nports ) )
+    s.sel = InPort ( clog2( nports ) )
   def elaborate_logic( s ):
     @s.combinational
     def logic():
@@ -548,7 +548,7 @@ class IfMux( Model ):
     assert nports == 3
     s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
     s.out = OutPort( nbits )
-    s.sel = InPort ( get_sel_nbits( nbits ) )
+    s.sel = InPort ( clog2( nbits ) )
   def elaborate_logic( s ):
     @s.combinational
     def logic():
@@ -572,7 +572,7 @@ class SubscriptTemp( Model ):
     assert nports == 3
     s.in_ = [ InPort( nbits ) for x in range( nports  ) ]
     s.out = OutPort( nbits )
-    s.sel = InPort ( get_sel_nbits( nbits ) )
+    s.sel = InPort ( clog2( nbits ) )
   def elaborate_logic( s ):
     @s.combinational
     def logic():

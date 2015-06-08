@@ -27,8 +27,8 @@ class NetMsg( BitStructDefinition ):
 
     # Specify the size of each field
 
-    srcdest_nbits = get_sel_nbits( nrouters  )
-    seqnum_nbits  = get_sel_nbits( nmessages )
+    srcdest_nbits = clog2( nrouters  )
+    seqnum_nbits  = clog2( nmessages )
 
     # Specify fields
 

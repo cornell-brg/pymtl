@@ -12,7 +12,7 @@ class Mux( Model ):
 
   def __init__( s, nbits = 1, nports = 2 ):
 
-    nsel  = get_sel_nbits( nports )
+    nsel  = clog2( nports )
 
     s.in_ = [ InPort( nbits ) for _ in range( nports ) ]
     s.sel = InPort  ( nsel )

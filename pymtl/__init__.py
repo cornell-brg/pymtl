@@ -19,7 +19,7 @@ from model.PortBundle import PortBundle, create_PortBundles
 from datatypes.Bits        import Bits
 from datatypes.BitStruct   import BitStruct, BitStructDefinition, BitField
 from datatypes.helpers     import (
-    get_nbits, get_sel_nbits, zext, sext, concat,
+    get_nbits, clog2, zext, sext, concat,
     reduce_and, reduce_or, reduce_xor
 )
 from datatypes.SignalValue import CreateWrappedClass
@@ -82,7 +82,7 @@ __all__ = [ # Model Construction
             'CreateWrappedClass',
             # Helper Functions
             'get_nbits',
-            'get_sel_nbits',
+            'clog2',
             'sext',
             'zext',
             'concat',

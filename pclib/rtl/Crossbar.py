@@ -8,7 +8,7 @@ class Crossbar( Model ):
 
   def __init__( s, nports, nbits ):
 
-    sel_nbits = get_sel_nbits( nports )
+    sel_nbits = clog2( nports )
 
     s.in_     = [ InPort  ( nbits )     for _ in range( nports ) ]
     s.out     = [ OutPort ( nbits )     for _ in range( nports ) ]

@@ -11,7 +11,6 @@ from random import randrange
 from SimulationTool_seq_test import setup_sim, local_setup_sim
 
 bits  = get_nbits
-clog2 = get_sel_nbits
 
 #-----------------------------------------------------------------------
 # translation_slices00
@@ -1097,7 +1096,6 @@ def test_translation_issue_88( setup_sim, num ):
 
   class TestTranslationIssue88( Model ):
     def __init__( s, num, nports=2, size=4 ):
-      clog2   = get_sel_nbits
       addr_sz = clog2( size )
 
       s.wr_addr = InPort [nports]( addr_sz )

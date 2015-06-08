@@ -12,7 +12,7 @@ class RegisterFile( Model ):
   def __init__( s, nbits=32, nregs=32, rd_ports=1, wr_ports=1,
                 const_zero=False ):
 
-    addr_bits  = get_sel_nbits( nregs )
+    addr_bits  = clog2( nregs )
 
     s.rd_addr  = [ InPort( addr_bits ) for _ in range(rd_ports) ]
     s.rd_data  = [ OutPort( nbits )    for _ in range(rd_ports) ]

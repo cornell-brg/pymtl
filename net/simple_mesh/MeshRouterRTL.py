@@ -236,7 +236,7 @@ class RouteCompute( Model ):
     s.xnodes = int( sqrt( nrouters ) )
     s.x      = id_ % s.xnodes
     s.y      = id_ / s.xnodes
-    nbits    = get_sel_nbits( nrouters )
+    nbits    = clog2( nrouters )
 
     s.dest  = InPort ( nbits )
     s.route = OutPort( 5 )

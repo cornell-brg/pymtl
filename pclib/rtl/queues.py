@@ -300,7 +300,7 @@ class NormalQueueDpath( Model ):
     s.deq_bits  = OutPort ( data_nbits )
 
     # Control signal (ctrl -> dpath)
-    addr_nbits  = get_sel_nbits( num_entries )
+    addr_nbits  = clog2( num_entries )
     s.wen       = InPort  ( 1 )
     s.waddr     = InPort  ( addr_nbits )
     s.raddr     = InPort  ( addr_nbits )
@@ -325,7 +325,7 @@ class NormalQueueCtrl( Model ):
   def __init__( s, num_entries ):
 
     s.num_entries = num_entries
-    addr_nbits    = get_sel_nbits( num_entries )
+    addr_nbits    = clog2( num_entries )
 
     # Interface Ports
 
