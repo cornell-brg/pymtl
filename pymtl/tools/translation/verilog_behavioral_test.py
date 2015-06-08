@@ -147,8 +147,9 @@ pytestmark = requires_verilator
 #
 def local_setup_sim( model ):
 
+  # debug
   #model.vcd_file = \
-  #  'pymtl.tools.simulation.vcd_test.{}.vcd'.format( model.class_name )
+  #  'pymtl.tools.simulation.vcd_test.{}.vcd'.format( model.__class__.__name__ )
 
   model = TranslationTool( model )
   model.elaborate()

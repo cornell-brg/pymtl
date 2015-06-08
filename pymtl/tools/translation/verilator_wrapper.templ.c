@@ -119,8 +119,8 @@ void eval( V{model_name}_t * m ) {{
 #if DUMP_VCD
 
   // update simulation time only on clock toggle
-  if (prev_clk != *clk) {{ trace_time += 50; }}
-  prev_clk = *clk;
+  if (prev_clk != model->clk) {{ trace_time += 50; }}
+  prev_clk = model->clk;
 
   // dump current signal values
   tfp->dump( trace_time );
