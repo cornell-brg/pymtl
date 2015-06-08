@@ -12,6 +12,9 @@ from pymtl  import *
 from SimulationTool_comb_test import verify_bit_blast, set_ports
 from SimulationTool_seq_test  import setup_sim, local_setup_sim
 
+def is_translated( model ):
+  return hasattr( model, '_ffi' )
+
 #-----------------------------------------------------------------------
 # PassThrough Tester
 #-----------------------------------------------------------------------
@@ -23,7 +26,7 @@ def passthrough_tester( setup_sim, model_type ):
 
   # Note: no need to call cycle, no @combinational block unless it is a
   # Verilog translation.
-  transl = hasattr( model, '_model' )
+  transl = is_translated( model )
 
   # call eval if this is a Verilog translated model
   if transl: sim.eval_combinational()
@@ -85,7 +88,7 @@ def test_PassThroughList( setup_sim ):
 
   # Note: no need to call cycle, no @combinational block unless it is a
   # Verilog translation.
-  transl = hasattr( model, '_model' )
+  transl = is_translated( model )
 
   for i in range( 4 ):
     model.in_[i].v = i
@@ -125,7 +128,7 @@ def test_PassThroughListWire( setup_sim ):
 
   # Note: no need to call cycle, no @combinational block unless it is a
   # Verilog translation.
-  transl = hasattr( model, '_model' )
+  transl = is_translated( model )
 
   for i in range( 4 ):
     model.in_[i].v = i
@@ -193,7 +196,7 @@ def splitter_tester( setup_sim, model_type ):
 
   # Note: no need to call cycle, no @combinational block unless it is a
   # Verilog translation.
-  transl = hasattr( model, '_model' )
+  transl = is_translated( model )
 
   model.in_.v = 8
 
@@ -600,7 +603,7 @@ def test_ConstantPort( setup_sim ):
 
     # if this is a verilog translation, need to perform a reset/cycle
     # before this is applied
-    if hasattr( model, '_model' ):
+    if is_translated( model ):
       sim.eval_combinational()
 
     assert model.out == 4
@@ -626,7 +629,7 @@ def test_ConstantSlice( setup_sim ):
 
   # if this is a verilog translation, need to perform a reset/cycle
   # before this is applied
-  if hasattr( model, '_model' ):
+  if is_translated( model ):
     sim.eval_combinational()
 
   assert model.out.v[ 0:16] == 4
@@ -706,7 +709,7 @@ def test_ListOfPortBundles( setup_sim ):
 
   # if this is a verilog translation, need to perform a reset/cycle
   # before this is applied
-  if hasattr( model, '_model' ):
+  if is_translated( model ):
     sim.eval_combinational()
 
   for i in range( 4 ):
