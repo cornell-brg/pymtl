@@ -283,7 +283,6 @@ def test_wrapped_VerilogModel( nbits, rst, all_verilog ):
 @pytest.mark.parametrize( "nbits,rst,all_verilog",
   [(6,2,True), (6,2,False),]
 )
-@pytest.mark.xfail
 def test_chained_VerilogModel( dump_vcd, nbits, rst, all_verilog ):
 
   class ModelChainer( Model ):
