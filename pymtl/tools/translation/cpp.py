@@ -167,7 +167,7 @@ def declare_signals( nets, ast_next, o ):
     net   = list( n )
 
     # returns the type, if it is an object/class generate the C def
-    type_ = get_type( net[0].msg_type(), o ) # TODO: add obj decl to extern
+    type_ = get_type( net[0].dtype(), o ) # TODO: add obj decl to extern
 
     # declare the net
     cname = 'net_{:05}'.format( id_ )

@@ -125,8 +125,8 @@ def insert_signal_values( sim, nets ):
     group.add( temp )
 
     # TODO: should this be visible to sim?
-    svalue       = temp.msg_type()
-    svalue._next = temp.msg_type()
+    svalue       = temp.dtype()
+    svalue._next = temp.dtype()
 
     #svalue._DEBUG_signal_names = group
 

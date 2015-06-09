@@ -19,22 +19,22 @@ class Signal( object ):
   #---------------------------------------------------------------------
   # __init__
   #---------------------------------------------------------------------
-  def __init__( self, msg_type ):
-    """Construct a new Signal for carrying data of type msg_type.
+  def __init__( self, dtype ):
+    """Construct a new Signal for carrying data of type dtype.
 
-    Note that msg_type should be a subclass of SignalValue, like Bits:
+    Note that dtype should be a subclass of SignalValue, like Bits:
 
     >>> Signal( Bits( 5 ) )
 
-    If the msg_type parameter provided is an integer value instead of a
-    SignalValue, the msg_type will instead b set to be Bits( msg_type ).
+    If the dtype parameter provided is an integer value instead of a
+    SignalValue, the dtype will instead b set to be Bits( dtype ).
 
     >>> Signal( 5 )  # Equivalent to Signal( Bits( 5 ) )
     """
 
-    is_int             = isinstance( msg_type, int )
-    self.msg_type      = msg_type if not is_int else Bits( msg_type )
-    self.nbits         = self.msg_type.nbits
+    is_int             = isinstance( dtype, int )
+    self.dtype         = dtype if not is_int else Bits( dtype )
+    self.nbits         = self.dtype.nbits
     self.slice         = slice( None )
 
     self.name          = "NO NAME: not elaborated yet!"
@@ -49,11 +49,11 @@ class Signal( object ):
   # __getattr__
   #---------------------------------------------------------------------
   def __getattr__( self, name ):
-    """Proxy attribute accesses to the underlying msg_type so we can refer
-    to fields when the msg_type is a BitStruct."""
+    """Proxy attribute accesses to the underlying dtype so we can refer
+    to fields when the dtype is a BitStruct."""
 
-    if name in self.msg_type.bitfields:
-      return self[ self.msg_type.bitfields[ name ] ]
+    if name in self.dtype.bitfields:
+      return self[ self.dtype.bitfields[ name ] ]
     raise AttributeError( "'{}' object has no attribute '{}'"
                           .format( self.__class__.__name__, name ) )
 
@@ -119,19 +119,19 @@ class InPort( Signal ):
   #---------------------------------------------------------------------
   # __init__
   #---------------------------------------------------------------------
-  def __init__( self, msg_type ):
-    """Construct a new InPort for carrying data of type msg_type.
+  def __init__( self, dtype ):
+    """Construct a new InPort for carrying data of type dtype.
 
-    Note that msg_type should be a subclass of SignalValue, like Bits:
+    Note that dtype should be a subclass of SignalValue, like Bits:
 
     >>> InPort( Bits( 5 ) )
 
-    If the msg_type parameter provided is an integer value instead of a
-    SignalValue, the msg_type will instead b set to be Bits( msg_type ).
+    If the dtype parameter provided is an integer value instead of a
+    SignalValue, the dtype will instead b set to be Bits( dtype ).
 
     >>> InPort( 5 )  # Equivalent to InPort( Bits( 5 ) )
     """
-    super( InPort, self ).__init__( msg_type )
+    super( InPort, self ).__init__( dtype )
 
 #-----------------------------------------------------------------------
 # OutPort
@@ -141,19 +141,19 @@ class OutPort( Signal ):
   #---------------------------------------------------------------------
   # __init__
   #---------------------------------------------------------------------
-  def __init__( self, msg_type ):
-    """Construct a new OutPort for carrying data of type msg_type.
+  def __init__( self, dtype ):
+    """Construct a new OutPort for carrying data of type dtype.
 
-    Note that msg_type should be a subclass of SignalValue, like Bits:
+    Note that dtype should be a subclass of SignalValue, like Bits:
 
     >>> OutPort( Bits( 5 ) )
 
-    If the msg_type parameter provided is an integer value instead of a
-    SignalValue, the msg_type will instead b set to be Bits( msg_type ).
+    If the dtype parameter provided is an integer value instead of a
+    SignalValue, the dtype will instead b set to be Bits( dtype ).
 
     >>> OutPort( 5 )  # Equivalent to OutPort( Bits( 5 ) )
     """
-    super( OutPort, self ).__init__( msg_type )
+    super( OutPort, self ).__init__( dtype )
 
 #-----------------------------------------------------------------------
 # Wire
@@ -164,19 +164,19 @@ class Wire( Signal ):
   #---------------------------------------------------------------------
   # __init__
   #---------------------------------------------------------------------
-  def __init__( self, msg_type ):
-    """Construct a new Wire for carrying data of type msg_type.
+  def __init__( self, dtype ):
+    """Construct a new Wire for carrying data of type dtype.
 
-    Note that msg_type should be a subclass of SignalValue, like Bits:
+    Note that dtype should be a subclass of SignalValue, like Bits:
 
     >>> Wire( Bits( 5 ) )
 
-    If the msg_type parameter provided is an integer value instead of a
-    SignalValue, the msg_type will instead b set to be Bits( msg_type ).
+    If the dtype parameter provided is an integer value instead of a
+    SignalValue, the dtype will instead b set to be Bits( dtype ).
 
     >>> Wire( 5 )  # Equivalent to Wire( Bits( 5 ) )
     """
-    super( Wire, self ).__init__( msg_type )
+    super( Wire, self ).__init__( dtype )
 
 #-----------------------------------------------------------------------
 # Constant

@@ -109,9 +109,9 @@ def test_bitstruct_fields():
 def test_bitstruct_call():
 
     # Test instantiation
-    msg_type = MemMsg( 16, 32 )
-    x = msg_type()
-    y = msg_type()
+    dtype = MemMsg( 16, 32 )
+    x = dtype()
+    y = dtype()
     assert type( x ) == type( y )
     assert x is not y
 
@@ -530,9 +530,9 @@ def test_buggy_struct():
 
   class BasicModel( Model ):
     def __init__(s):
-      msg_type = MyStruct( 16 )
-      s.input  = InValRdyBundle ( msg_type )
-      s.out    = OutValRdyBundle( msg_type )
+      dtype    = MyStruct( 16 )
+      s.input  = InValRdyBundle ( dtype )
+      s.out    = OutValRdyBundle( dtype )
 
     def elaborate_logic(s):
       @s.combinational

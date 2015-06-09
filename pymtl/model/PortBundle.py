@@ -9,8 +9,8 @@
 # two halves (Left and Right) of the bundle interface.
 #
 #   def MyBundle( PortBundle ):
-#     def __init__( nbits ):
-#       self.data = InPort ( nbits )
+#     def __init__( dtype ):
+#       self.data = InPort ( dtype )
 #       self.rdy  = OutPort( 1 )
 #
 #   InMyBundle, OutMyBundle = create_PortBundles( MyBundle )
@@ -75,10 +75,10 @@ class PortBundle( object ):
     for var_name, var_obj in self.__dict__.items():
 
       if   isinstance( var_obj, InPort ):
-        self.__dict__[var_name] = OutPort ( var_obj.msg_type )
+        self.__dict__[var_name] = OutPort ( var_obj.dtype )
       elif isinstance( var_obj, OutPort ):
-        self.__dict__[var_name] = InPort  ( var_obj.msg_type )
-      
+        self.__dict__[var_name] = InPort  ( var_obj.dtype )
+
     return self
 
   #---------------------------------------------------------------------

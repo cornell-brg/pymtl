@@ -12,8 +12,8 @@ from pclib.test import TestVectorSimulator
 #---------------------------------------------------------------------
 
 class ValRdyBundle( PortBundle ):
-  def __init__( s, nbits ):
-    s.msg = InPort  ( nbits )
+  def __init__( s, dtype ):
+    s.msg = InPort  ( dtype )
     s.val = InPort  ( 1 )
     s.rdy = OutPort ( 1 )
 
@@ -39,10 +39,10 @@ InValRdyBundle, OutValRdyBundle = create_PortBundles( ValRdyBundle )
 
 class PortBundleQueue( Model ):
 
-  def __init__( s, nbits ):
+  def __init__( s, dtype ):
 
-    s.enq   = InValRdyBundle( nbits )
-    s.deq   = OutValRdyBundle( nbits )
+    s.enq   = InValRdyBundle ( dtype )
+    s.deq   = OutValRdyBundle( dtype )
 
     s.full  = Wire( 1 )
     s.wen   = Wire( 1 )
@@ -108,17 +108,13 @@ def test_elaboration():
 
 class TwoQueues( Model ):
 
-  def __init__( s, nbits ):
+  def __init__( s, dtype ):
 
-    s.nbits = nbits
+    s.in_ = InValRdyBundle ( dtype )
+    s.out = OutValRdyBundle( dtype )
 
-    s.in_ = InValRdyBundle ( nbits )
-    s.out = OutValRdyBundle( nbits )
-
-  def elaborate_logic( s ):
-
-    s.q1 = PortBundleQueue( s.nbits )
-    s.q2 = PortBundleQueue( s.nbits )
+    s.q1 = PortBundleQueue ( dtype )
+    s.q2 = PortBundleQueue ( dtype )
 
     s.connect( s.in_,    s.q1.enq )
     s.connect( s.q1.deq, s.q2.enq )
@@ -215,12 +211,12 @@ def test_portbundle_queue_sim( dump_vcd ):
 
 class ParameterizablePortBundleQueue( Model ):
 
-  def __init__( s, nbits, nports ):
+  def __init__( s, dtype, nports ):
 
     s.nports = nports
 
-    s.enq    = [ InValRdyBundle ( nbits ) for x in range( s.nports ) ]
-    s.deq    = [ OutValRdyBundle( nbits ) for x in range( s.nports ) ]
+    s.enq    = [ InValRdyBundle ( dtype ) for x in range( s.nports ) ]
+    s.deq    = [ OutValRdyBundle( dtype ) for x in range( s.nports ) ]
 
   def elaborate_logic( s ):
 
@@ -361,9 +357,9 @@ class ParameterizablePortBundleBitStructQueue( Model ):
 
     s.nports = nports
 
-    msg_type = MemMsg( 16, 32 )
-    s.enq    = InValRdyBundle [ nports ]( msg_type )
-    s.deq    = OutValRdyBundle[ nports ]( msg_type )
+    dtype = MemMsg( 16, 32 )
+    s.enq = InValRdyBundle [ nports ]( dtype )
+    s.deq = OutValRdyBundle[ nports ]( dtype )
 
   def elaborate_logic( s ):
 

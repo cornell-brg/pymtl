@@ -172,8 +172,8 @@ class BitStruct( Bits ):
   # allows the following syntax
   #
   #   # MyBitStruct acting as a type
-  #   msg_type  = MyBitStruct( 32, 32 )
-  #   msg_inst1 = msg_type()
+  #   dtype     = MyBitStruct( 32, 32 )
+  #   msg_inst1 = dtype()
   #
   #   # MyBitStruct acting as an instance
   #   msg_inst2 = MyBitStruct( 32, 32 )
