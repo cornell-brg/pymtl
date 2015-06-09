@@ -39,8 +39,8 @@ class Queue( object ):
 #-----------------------------------------------------------------------
 class InValRdyQueue( Model ):
 
-  def __init__( s, MsgType, size=1, pipe=False ):
-    s.in_  = InValRdyBundle( MsgType )
+  def __init__( s, dtype, size=1, pipe=False ):
+    s.in_  = InValRdyBundle( dtype )
     s.data = deque( maxlen = size )
     s.deq  = s._pipe_deq if pipe else s._simple_deq
 
@@ -74,8 +74,8 @@ class InValRdyQueue( Model ):
 #-----------------------------------------------------------------------
 class OutValRdyQueue( Model ):
 
-  def __init__( s, MsgType, size=1, bypass=False ):
-    s.out  = OutValRdyBundle( MsgType )
+  def __init__( s, dtype, size=1, bypass=False ):
+    s.out  = OutValRdyBundle( dtype )
     s.data = deque( maxlen = size )
     s.enq  = s._bypass_enq if bypass else s._simple_enq
 

@@ -15,12 +15,12 @@ from pclib.ifcs import InValRdyBundle, OutValRdyBundle, NetMsg
 #-------------------------------------------------------------------------
 class TestHarness( Model ):
 
-  def __init__( s, msg_type, src_msgs, sink_msgs, src_delay, sink_delay ):
+  def __init__( s, dtype, src_msgs, sink_msgs, src_delay, sink_delay ):
 
     # Instantiate models
 
-    s.src  = TestSource  ( msg_type, src_msgs,  src_delay  )
-    s.sink = TestNetSink ( msg_type, sink_msgs, sink_delay )
+    s.src  = TestSource  ( dtype, src_msgs,  src_delay  )
+    s.sink = TestNetSink ( dtype, sink_msgs, sink_delay )
 
     # Connect
 
@@ -133,8 +133,8 @@ def run_test( dump_vcd, src_delay, sink_delay, src_msgs, sink_msgs ):
 
   # Instantiate and elaborate the model
 
-  msg_type = NetMsg( 4, 16, 32 )
-  model = TestHarness( msg_type, src_msgs, sink_msgs,
+  dtype = NetMsg( 4, 16, 32 )
+  model = TestHarness( dtype, src_msgs, sink_msgs,
                        src_delay, sink_delay )
   model.vcd_file = dump_vcd
   model.elaborate()

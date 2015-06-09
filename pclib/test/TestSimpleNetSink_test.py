@@ -17,10 +17,10 @@ from TestSimpleNetSink import TestSimpleNetSink
 #-------------------------------------------------------------------------
 class TestHarness( Model ):
 
-  def __init__( s, msg_type, src_msgs, sink_msgs ):
+  def __init__( s, dtype, src_msgs, sink_msgs ):
 
-    s.src  = TestSimpleSource ( msg_type, src_msgs  )
-    s.sink = TestSimpleNetSink( msg_type, sink_msgs )
+    s.src  = TestSimpleSource ( dtype, src_msgs  )
+    s.sink = TestSimpleNetSink( dtype, sink_msgs )
 
     s.connect( s.src.out,  s.sink.in_  )
     s.connect( s.src.done, s.sink.done )
@@ -49,8 +49,8 @@ def run_test( dump_vcd, src_msgs, sink_msgs ):
 
   # Instantiate and elaborate the model
 
-  msg_type = NetMsg( 4, 16, 32 )
-  model = TestHarness( msg_type, src_msgs, sink_msgs )
+  dtype = NetMsg( 4, 16, 32 )
+  model = TestHarness( dtype, src_msgs, sink_msgs )
   model.vcd_file = dump_vcd
   model.elaborate()
 

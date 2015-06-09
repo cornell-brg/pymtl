@@ -4,20 +4,20 @@
 
 import pytest
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.test   import TestSrcSinkSim
+from pclib.test import TestSrcSinkSim
 
 #-------------------------------------------------------------------------
 # ValRdyBuffer
 #-------------------------------------------------------------------------
-# Simple example model for testing the TestSrcSinkSim.
 class ValRdyBuffer( Model ):
+  'Simple example model for testing the TestSrcSinkSim.'
 
-  def __init__( s, MsgType ):
+  def __init__( s, dtype ):
 
-    s.in_ = InValRdyBundle( MsgType )
-    s.out = InValRdyBundle( MsgType )
+    s.in_ = InValRdyBundle( dtype )
+    s.out = InValRdyBundle( dtype )
 
     s.data = None
 
@@ -39,8 +39,6 @@ class ValRdyBuffer( Model ):
 #-------------------------------------------------------------------------
 # test_TestSrcSinkSim
 #-------------------------------------------------------------------------
-# Test with various source and sink delays.
-#
 @pytest.mark.parametrize( ('src_delay', 'sink_delay'), [
   (0, 0),
   (3, 0),
@@ -48,6 +46,7 @@ class ValRdyBuffer( Model ):
   (3, 5),
 ])
 def test_TestSrcSinkSim( dump_vcd, src_delay, sink_delay ):
+  'Test with various source and sink delays.'
 
   # Create some messages
   src_msgs = sink_msgs = range( 15 )

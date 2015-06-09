@@ -9,8 +9,6 @@
 
 from greenlet import greenlet
 
-from pclib.ifcs import MemReqMsg, MemRespMsg
-
 #-------------------------------------------------------------------------
 # ListMemPortAdapter
 #-------------------------------------------------------------------------
@@ -25,8 +23,8 @@ class ListMemPortAdapter (object):
 
     # Shorter names
 
-    s.MemReqMsgType  = memreq.msg.msg_type
-    s.MemRespMsgType = memresp.msg.msg_type
+    s.MemReqMsgType  = memreq.msg.dtype
+    s.MemRespMsgType = memresp.msg.dtype
 
     # References to the memory request and response ports
 
@@ -36,7 +34,7 @@ class ListMemPortAdapter (object):
     s.size = 0
     s.base = 0
     s.base_set = False
-    s.trace          = " "
+    s.trace = " "
 
   #-----------------------------------------------------------------------
   # __getitem__
@@ -59,8 +57,8 @@ class ListMemPortAdapter (object):
 
     s.trace = "r"
 
-    memreq_msg = s.MemReqMsgType()
-    memreq_msg.type_ = MemReqMsg.TYPE_READ
+    memreq_msg       = s.MemReqMsgType()
+    memreq_msg.type_ = s.MemReqMsgType.TYPE_READ
     memreq_msg.addr  = s.base + 4 * addr
     memreq_msg.len   = len_
 
@@ -118,8 +116,8 @@ class ListMemPortAdapter (object):
 
     s.trace = "w"
 
-    memreq_msg = s.MemReqMsgType()
-    memreq_msg.type_ = MemReqMsg.TYPE_WRITE
+    memreq_msg       = s.MemReqMsgType()
+    memreq_msg.type_ = s.MemReqMsgType.TYPE_WRITE
     memreq_msg.addr  = s.base + 4 * addr
     memreq_msg.len   = len_
     memreq_msg.data  = value

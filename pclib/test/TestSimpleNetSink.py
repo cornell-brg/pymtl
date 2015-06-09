@@ -14,10 +14,10 @@ from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 # information
 class TestSimpleNetSink( Model ):
 
-  def __init__( s, msg_type, msgs ):
+  def __init__( s, dtype, msgs ):
 
-    s.in_  = InValRdyBundle( msg_type )
-    s.done = OutPort       ( 1        )
+    s.in_  = InValRdyBundle( dtype )
+    s.done = OutPort       ( 1     )
 
     s.msgs        = msgs
     s.recv        = []

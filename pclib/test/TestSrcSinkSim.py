@@ -69,14 +69,14 @@ class TestSrcSinkHarness( Model ):
 
     # Source and sink take on the same input and output type as the
     # model under test
-    src_msg_type  = model_inst.in_.msg.msg_type
-    sink_msg_type = model_inst.out.msg.msg_type
+    src_dtype  = model_inst.in_.msg.dtype
+    sink_dtype = model_inst.out.msg.dtype
 
     # Instantiate src and sink
     # TODO: should model be a model instance, or a type + params?
-    s.src   = TestSource( src_msg_type,  src_msgs,  src_delay  )
+    s.src   = TestSource( src_dtype,  src_msgs,  src_delay  )
     s.model = model_inst
-    s.sink  = TestSink  ( sink_msg_type, sink_msgs, sink_delay )
+    s.sink  = TestSink  ( sink_dtype, sink_msgs, sink_delay )
 
     s.connect( s.src  .out, s.model.in_ )
     s.connect( s.model.out, s.sink .in_ )

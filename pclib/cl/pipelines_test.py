@@ -48,13 +48,13 @@ def test_Pipeline( dump_vcd, stages ):
 # TestValRdyPipeline
 #-------------------------------------------------------------------------
 class ValRdyPipelineHarness( Model ):
-  def __init__( s, MsgType, stages, pipeq, bypassq ):
+  def __init__( s, dtype, stages, pipeq, bypassq ):
 
-    s.in_  = InValRdyBundle ( MsgType )
-    s.out  = OutValRdyBundle( MsgType )
+    s.in_  = InValRdyBundle ( dtype )
+    s.out  = OutValRdyBundle( dtype )
 
-    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, pipe  =pipeq   )
-    s.out_q = OutValRdyQueue( s.out.msg.msg_type, bypass=bypassq )
+    s.in_q  = InValRdyQueue ( dtype, pipe  =pipeq   )
+    s.out_q = OutValRdyQueue( dtype, bypass=bypassq )
 
     s.pipe  = Pipeline( stages )
     s.connect( s.in_, s.in_q. in_ )

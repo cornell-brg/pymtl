@@ -50,13 +50,12 @@ def test_Queue( size ):
 #------------------------------------------------------------------------
 # Model an input Simple or Bypass queue connected to an output register.
 class InValRdyQueueHarness( Model ):
-  def __init__( s, MsgType, size, pipeq ):
+  def __init__( s, dtype, size, pipeq ):
 
-    s.in_  = InValRdyBundle ( MsgType )
-    s.out  = OutValRdyBundle( MsgType )
+    s.in_ = InValRdyBundle ( dtype )
+    s.out = OutValRdyBundle( dtype )
 
-    msg_type = s.in_.msg.msg_type
-    s.queue = InValRdyQueue( msg_type, size=size, pipe=pipeq )
+    s.queue = InValRdyQueue( dtype, size=size, pipe=pipeq )
     s.connect( s.in_, s.queue.in_ )
 
     s.out_buffer_full = False
@@ -102,14 +101,12 @@ def test_InValRdyQueue( dump_vcd, qsize, pipeq, src_delay, sink_delay ):
 # OutValRdyQueueHarness
 #-------------------------------------------------------------------------
 class OutValRdyQueueHarness( Model ):
-  def __init__( s, MsgType, size, bypassq ):
+  def __init__( s, dtype, size, bypassq ):
 
-    s.in_  = InValRdyBundle ( MsgType )
-    s.out  = OutValRdyBundle( MsgType )
+    s.in_  = InValRdyBundle ( dtype )
+    s.out  = OutValRdyBundle( dtype )
 
-    msg_type = s.in_.msg.msg_type
-
-    s.queue = OutValRdyQueue( msg_type, size=size, bypass=bypassq )
+    s.queue = OutValRdyQueue( s.in_.msg.dtype, size=size, bypass=bypassq )
     s.connect( s.out, s.queue.out )
 
     @s.tick
@@ -152,13 +149,13 @@ def test_OutValRdyQueue( dump_vcd, qsize, bypassq, src_delay, sink_delay ):
 # InOutValRdyQueueHarness
 #-------------------------------------------------------------------------
 class InOutValRdyQueueHarness( Model ):
-  def __init__( s, MsgType, size, pipeq, bypassq ):
+  def __init__( s, dtype, size, pipeq, bypassq ):
 
-    s.in_  = InValRdyBundle ( MsgType )
-    s.out  = OutValRdyBundle( MsgType )
+    s.in_  = InValRdyBundle ( dtype )
+    s.out  = OutValRdyBundle( dtype )
 
-    s.in_q  = InValRdyQueue ( s.in_.msg.msg_type, size=size, pipe  =pipeq   )
-    s.out_q = OutValRdyQueue( s.out.msg.msg_type, size=size, bypass=bypassq )
+    s.in_q  = InValRdyQueue ( dtype, size=size, pipe  =pipeq   )
+    s.out_q = OutValRdyQueue( dtype, size=size, bypass=bypassq )
 
     s.connect( s.in_, s.in_q. in_ )
     s.connect( s.out, s.out_q.out )

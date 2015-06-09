@@ -20,13 +20,13 @@ class TestNetSink( Model ):
   #-----------------------------------------------------------------------
   # __init__
   #-----------------------------------------------------------------------
-  def __init__( s, msg_type, msgs, max_random_delay = 0 ):
+  def __init__( s, dtype, msgs, max_random_delay = 0 ):
 
-    s.in_  = InValRdyBundle( msg_type )
+    s.in_  = InValRdyBundle( dtype )
     s.done = OutPort       ( 1          )
 
-    s.delay = TestRandomDelay  ( msg_type, max_random_delay )
-    s.sink  = TestSimpleNetSink( msg_type, msgs             )
+    s.delay = TestRandomDelay  ( dtype, max_random_delay )
+    s.sink  = TestSimpleNetSink( dtype, msgs             )
 
     s.connect( s.in_,       s.delay.in_ )
     s.connect( s.delay.out, s.sink.in_  )
