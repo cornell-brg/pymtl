@@ -1,25 +1,22 @@
-#=========================================================================
+#=======================================================================
 # TestRandomDelay
-#=========================================================================
-# This class will insert random delays between and input val/rdy
-# interface and an output val/rdy interface.
-#
+#=======================================================================
 
 import random
 
 from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
+#-----------------------------------------------------------------------
+# TestRandomDelay
+#-----------------------------------------------------------------------
 class TestRandomDelay( Model ):
+  'Inserts random delays between input and output val/rdy interfaces.'
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
+  def __init__( s, dtype, max_random_delay = 0, seed=0xb601bc01 ):
 
-  def __init__( s, nbits = 1, max_random_delay = 0, seed=0xb601bc01 ):
-
-    s.in_  = InValRdyBundle ( nbits )
-    s.out  = OutValRdyBundle( nbits )
+    s.in_  = InValRdyBundle ( dtype )
+    s.out  = OutValRdyBundle( dtype )
 
     # We keep our own internal random number generator to keep the state
     # of this generator completely separate from other generators. This
@@ -88,10 +85,6 @@ class TestRandomDelay( Model ):
 
       s.in_.rdy.next = ( s.counter == 0 ) and not s.buf_full
       s.out.val.next = ( s.counter == 0 ) and     s.buf_full
-
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
 
   def line_trace( s ):
 

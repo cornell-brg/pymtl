@@ -60,10 +60,10 @@ CW_STALL_STAGE    = slice(  6, 9  )
 class IncrPipeDpath( Model ):
   '''5-stage Incrementer Pipeline Datapath.'''
 
-  def __init__( s, nbits ):
+  def __init__( s, dtype ):
 
     s.in_msg    = InPort  ( TRANSACTION_NBITS )
-    s.out_msg   = OutPort ( nbits )
+    s.out_msg   = OutPort ( dtype )
 
     # Ctrl Signals (ctrl -> dpath)
     s.a_reg_en  = InPort  ( 1 )
@@ -103,12 +103,12 @@ class IncrPipeDpath( Model ):
     # C Stage
     #-------------------------------------------------------------------
 
-    s.c_reg  = regs.RegEn( nbits )
+    s.c_reg  = regs.RegEn( dtype )
 
     s.connect( s.c_reg.in_, s.b_reg.out[VALUE] )
     s.connect( s.c_reg.en,  s.c_reg_en         )
 
-    s.c_incr = arith.Incrementer( nbits, increment_amount = 1 )
+    s.c_incr = arith.Incrementer( dtype, increment_amount = 1 )
 
     s.connect( s.c_incr.in_, s.c_reg.out )
 
@@ -116,12 +116,12 @@ class IncrPipeDpath( Model ):
     # D Stage
     #-------------------------------------------------------------------
 
-    s.d_reg  = regs.RegEn( nbits )
+    s.d_reg  = regs.RegEn( dtype )
 
     s.connect( s.d_reg.in_, s.c_incr.out )
     s.connect( s.d_reg.en,  s.d_reg_en   )
 
-    s.d_incr = arith.Incrementer( nbits, increment_amount = 1 )
+    s.d_incr = arith.Incrementer( dtype, increment_amount = 1 )
 
     s.connect( s.d_incr.in_, s.d_reg.out )
 
@@ -129,12 +129,12 @@ class IncrPipeDpath( Model ):
     # E Stage
     #-------------------------------------------------------------------
 
-    s.e_reg  = regs.RegEn( nbits )
+    s.e_reg  = regs.RegEn( dtype )
 
     s.connect( s.e_reg.in_, s.d_incr.out )
     s.connect( s.e_reg.en,  s.e_reg_en   )
 
-    s.e_incr = arith.Incrementer( nbits, increment_amount = 1 )
+    s.e_incr = arith.Incrementer( dtype, increment_amount = 1 )
 
     s.connect( s.e_incr.in_, s.e_reg.out )
 
@@ -448,15 +448,15 @@ class IncrPipeCtrl (Model):
 class IncrPipe( Model ):
   """5-stage Incrementer Pipeline toplevel."""
 
-  def __init__( s, nbits ):
+  def __init__( s, dtype ):
 
     s.in_ = InValRdyBundle( TRANSACTION_NBITS )
-    s.out = OutValRdyBundle( nbits )
+    s.out = OutValRdyBundle( dtype )
 
     # Static Elaboration
 
     s.ctrl  = IncrPipeCtrl()
-    s.dpath = IncrPipeDpath( nbits )
+    s.dpath = IncrPipeDpath( dtype )
 
     # s.connect ctrl
 

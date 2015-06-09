@@ -9,11 +9,11 @@ from pymtl import *
 #-----------------------------------------------------------------------
 class Mux( Model ):
 
-  def __init__( s, nports, data_nbits ):
+  def __init__( s, nports, dtype ):
 
-    s.sel = InPort ( data_nbits )
-    s.in_ = [ InPort( data_nbits ) for _ in range( nports ) ]
-    s.out = OutPort( data_nbits )
+    s.sel = InPort ( nports )
+    s.in_ = [ InPort( dtype ) for _ in range( nports ) ]
+    s.out = OutPort( dtype )
 
     @s.combinational
     def logic():
@@ -35,11 +35,11 @@ class Mux( Model ):
 #-----------------------------------------------------------------------
 class Demux( Model ):
 
-  def __init__( s, nports, data_nbits ):
+  def __init__( s, nports, dtype ):
 
-    s.sel = InPort( data_nbits )
-    s.in_ = InPort( data_nbits )
-    s.out = [ OutPort( data_nbits ) for _ in range( nports ) ]
+    s.sel = InPort( nports )
+    s.in_ = InPort( dtype )
+    s.out = [ OutPort( dtype ) for _ in range( nports ) ]
 
     @s.combinational
     def logic():

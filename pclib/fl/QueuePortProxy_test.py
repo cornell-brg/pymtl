@@ -45,18 +45,14 @@ def test_queue_copy():
 # interface to an output val/rdy interface.
 class QueueCopy( Model ):
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
-
-  def __init__( s, nbits, nmsgs ):
+  def __init__( s, dtype, nmsgs ):
 
     s.nmsgs = nmsgs
 
     # Queue interfaces
 
-    s.in_ = InValRdyBundle  ( nbits )
-    s.out = OutValRdyBundle ( nbits )
+    s.in_ = InValRdyBundle  ( dtype )
+    s.out = OutValRdyBundle ( dtype )
 
     # QueuePortProxy objects
 

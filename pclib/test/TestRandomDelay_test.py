@@ -1,6 +1,6 @@
-#=========================================================================
+#=======================================================================
 # TestRandomDelay_test.py
-#=========================================================================
+#=======================================================================
 
 from __future__ import print_function
 
@@ -12,16 +12,16 @@ from pclib.test import TestRandomDelay
 from TestSimpleSource import TestSimpleSource
 from TestSimpleSink   import TestSimpleSink
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # TestHarness
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class TestHarness( Model ):
 
-  def __init__( s, nbits, msgs, delay ):
+  def __init__( s, dtype, msgs, delay ):
 
-    s.src   = TestSimpleSource ( nbits, msgs  )
-    s.delay = TestRandomDelay  ( nbits, delay )
-    s.sink  = TestSimpleSink   ( nbits, msgs  )
+    s.src   = TestSimpleSource ( dtype, msgs  )
+    s.delay = TestRandomDelay  ( dtype, delay )
+    s.sink  = TestSimpleSink   ( dtype, msgs  )
 
     s.connect( s.src.out,   s.delay.in_ )
     s.connect( s.delay.out, s.sink.in_  )
@@ -34,9 +34,9 @@ class TestHarness( Model ):
            s.delay.line_trace() + " | " + \
            s.sink.line_trace()
 
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # test_delay
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @pytest.mark.parametrize('random_delay', [
    0,
    1,

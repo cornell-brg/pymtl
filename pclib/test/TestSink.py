@@ -1,27 +1,27 @@
 #=========================================================================
 # TestSink
 #=========================================================================
-# This class will sink messages from a val/rdy interface and compare them
-# to a predefined list. Includes support for random delays.
-#
 
-from pymtl        import *
-from pclib.test   import TestRandomDelay
+from pymtl      import *
+from pclib.test import TestRandomDelay
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
 from TestSimpleSink import TestSimpleSink
 
+#-------------------------------------------------------------------------
+# TestSink
+#-------------------------------------------------------------------------
 class TestSink( Model ):
 
-  def __init__( s, nbits, msgs, max_random_delay = 0 ):
+  def __init__( s, dtype, msgs, max_random_delay = 0 ):
 
-    s.in_  = InValRdyBundle( nbits )
+    s.in_  = InValRdyBundle( dtype )
     s.done = OutPort       ( 1     )
 
     # Instantiate modules
 
-    s.delay = TestRandomDelay( nbits, max_random_delay )
-    s.sink  = TestSimpleSink ( nbits, msgs )
+    s.delay = TestRandomDelay( dtype, max_random_delay )
+    s.sink  = TestSimpleSink ( dtype, msgs )
 
     # Connect the input ports -> random delay -> sink
 

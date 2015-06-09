@@ -8,15 +8,15 @@ from pymtl import *
 # Mux
 #-----------------------------------------------------------------------
 class Mux( Model ):
-  '''Multiplexor parameterizable by ports and bitwidth.'''
+  'Multiplexor parameterizable by ports and datatype.'
 
-  def __init__( s, nbits = 1, nports = 2 ):
+  def __init__( s, dtype = 1, nports = 2 ):
 
     nsel  = clog2( nports )
 
-    s.in_ = [ InPort( nbits ) for _ in range( nports ) ]
+    s.in_ = [ InPort( dtype ) for _ in range( nports ) ]
     s.sel = InPort  ( nsel )
-    s.out = OutPort ( nbits )
+    s.out = OutPort ( dtype )
 
     @s.combinational
     def comb_logic():

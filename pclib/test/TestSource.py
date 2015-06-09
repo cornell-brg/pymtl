@@ -2,28 +2,24 @@
 # TestSource.py
 #=========================================================================
 
-from pymtl        import *
-from pclib.test   import TestRandomDelay
+from pymtl      import *
+from pclib.test import TestRandomDelay
 from pclib.ifcs import OutValRdyBundle
 
 from TestSimpleSource import TestSimpleSource
 
 #-------------------------------------------------------------------------
-# Constructor
+# TestSource
 #-------------------------------------------------------------------------
 class TestSource( Model ):
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
+  def __init__( s, dtype, msgs, max_random_delay = 0 ):
 
-  def __init__( s, nbits, msgs, max_random_delay = 0 ):
-
-    s.out  = OutValRdyBundle( nbits )
+    s.out  = OutValRdyBundle( dtype )
     s.done = OutPort        ( 1     )
 
-    s.src   = TestSimpleSource( nbits, msgs )
-    s.delay = TestRandomDelay ( nbits, max_random_delay )
+    s.src   = TestSimpleSource( dtype, msgs )
+    s.delay = TestRandomDelay ( dtype, max_random_delay )
 
     # Connect test source -> random delay -> output ports
 
@@ -33,10 +29,6 @@ class TestSource( Model ):
     # Connect test source done signal to output port
 
     s.connect( s.src.done, s.done )
-
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
 
   def line_trace( s ):
 

@@ -10,10 +10,10 @@ from pymtl import *
 class Reg( Model ):
   '''Register without enable or reset.'''
 
-  def __init__( s, nbits = 1 ):
+  def __init__( s, dtype = 1 ):
 
-    s.in_ = InPort  ( nbits )
-    s.out = OutPort ( nbits )
+    s.in_ = InPort  ( dtype )
+    s.out = OutPort ( dtype )
 
     @s.posedge_clk
     def seq_logic():
@@ -28,11 +28,11 @@ class Reg( Model ):
 class RegEn( Model ):
   '''Register with enable signal.'''
 
-  def __init__( s, nbits = 1 ):
+  def __init__( s, dtype = 1 ):
 
-    s.in_ = InPort  ( nbits )
+    s.in_ = InPort  ( dtype )
     s.en  = InPort  ( 1     )
-    s.out = OutPort ( nbits )
+    s.out = OutPort ( dtype )
 
     @s.posedge_clk
     def seq_logic():
@@ -52,10 +52,10 @@ class RegRst( Model ):
   clock edge.
   '''
 
-  def __init__( s, nbits = 1, reset_value = 0 ):
+  def __init__( s, dtype = 1, reset_value = 0 ):
 
-    s.in_ = InPort( nbits )
-    s.out = OutPort( nbits )
+    s.in_ = InPort( dtype )
+    s.out = OutPort( dtype )
 
     @s.posedge_clk
     def seq_logic():
@@ -83,11 +83,11 @@ class RegEnRst( Model ):
   clock edge, whether en == 1 or not.
   '''
 
-  def __init__( s, nbits = 1, reset_value = 0 ):
+  def __init__( s, dtype = 1, reset_value = 0 ):
 
     s.en  = InPort( 1 )
-    s.in_ = InPort( nbits )
-    s.out = OutPort( nbits )
+    s.in_ = InPort ( dtype )
+    s.out = OutPort( dtype )
 
     @s.posedge_clk
     def seq_logic():

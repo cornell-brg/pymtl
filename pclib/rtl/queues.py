@@ -12,15 +12,15 @@ from pclib.rtl  import RegEn, Mux, RegisterFile
 #-----------------------------------------------------------------------
 class SingleElementNormalQueue( Model ):
 
-  def __init__( s, data_nbits ):
+  def __init__( s, dtype ):
 
-    s.enq = InValRdyBundle ( data_nbits )
-    s.deq = OutValRdyBundle( data_nbits )
+    s.enq = InValRdyBundle ( dtype )
+    s.deq = OutValRdyBundle( dtype )
 
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementNormalQueueCtrl ()
-    s.dpath = SingleElementNormalQueueDpath( data_nbits )
+    s.dpath = SingleElementNormalQueueDpath( dtype )
 
     # Ctrl unit connections
 
@@ -46,17 +46,17 @@ class SingleElementNormalQueue( Model ):
 #-----------------------------------------------------------------------
 class SingleElementNormalQueueDpath( Model ):
 
-  def __init__( s, data_nbits ):
+  def __init__( s, dtype ):
 
-    s.enq_bits  = InPort  ( data_nbits )
-    s.deq_bits  = OutPort ( data_nbits )
+    s.enq_bits  = InPort  ( dtype )
+    s.deq_bits  = OutPort ( dtype )
 
     # Control signal (ctrl -> dpath)
     s.wen       = InPort  ( 1     )
 
     # Queue storage
 
-    s.queue = RegEn( data_nbits )
+    s.queue = RegEn( dtype )
 
     # Connect queue storage
 
@@ -118,15 +118,15 @@ class SingleElementNormalQueueCtrl( Model ):
 #-----------------------------------------------------------------------
 class SingleElementBypassQueue( Model ):
 
-  def __init__( s, data_nbits ):
+  def __init__( s, dtype ):
 
-    s.enq = InValRdyBundle ( data_nbits )
-    s.deq = OutValRdyBundle( data_nbits )
+    s.enq = InValRdyBundle ( dtype )
+    s.deq = OutValRdyBundle( dtype )
 
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementBypassQueueCtrl ()
-    s.dpath = SingleElementBypassQueueDpath( data_nbits )
+    s.dpath = SingleElementBypassQueueDpath( dtype )
 
     # Ctrl unit connections
 
@@ -153,10 +153,10 @@ class SingleElementBypassQueue( Model ):
 #-----------------------------------------------------------------------
 class SingleElementBypassQueueDpath( Model ):
 
-  def __init__( s, data_nbits ):
+  def __init__( s, dtype ):
 
-    s.enq_bits       = InPort  ( data_nbits )
-    s.deq_bits       = OutPort ( data_nbits )
+    s.enq_bits       = InPort  ( dtype )
+    s.deq_bits       = OutPort ( dtype )
 
     # Control signal (ctrl -> dpath)
     s.wen            = InPort ( 1 )
@@ -164,14 +164,14 @@ class SingleElementBypassQueueDpath( Model ):
 
     # Queue storage
 
-    s.queue = RegEn( data_nbits )
+    s.queue = RegEn( dtype )
 
     s.connect( s.queue.en,  s.wen      )
     s.connect( s.queue.in_, s.enq_bits )
 
     # Bypass mux
 
-    s.bypass_mux = Mux( data_nbits, 2 )
+    s.bypass_mux = Mux( dtype, 2 )
 
     s.connect( s.bypass_mux.in_[0], s.queue.out      )
     s.connect( s.bypass_mux.in_[1], s.enq_bits       )
@@ -256,16 +256,16 @@ class SingleElementBypassQueueCtrl( Model ):
 #-----------------------------------------------------------------------
 class NormalQueue( Model ):
 
-  def __init__( s, num_entries, data_nbits ):
+  def __init__( s, num_entries, dtype ):
 
-    s.enq              = InValRdyBundle ( data_nbits )
-    s.deq              = OutValRdyBundle( data_nbits )
+    s.enq              = InValRdyBundle ( dtype )
+    s.deq              = OutValRdyBundle( dtype )
     s.num_free_entries = OutPort( get_nbits(num_entries) )
 
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = NormalQueueCtrl ( num_entries             )
-    s.dpath = NormalQueueDpath( num_entries, data_nbits )
+    s.dpath = NormalQueueDpath( num_entries, dtype )
 
     # Ctrl unit connections
 
@@ -294,10 +294,10 @@ class NormalQueue( Model ):
 #-----------------------------------------------------------------------
 class NormalQueueDpath( Model ):
 
-  def __init__( s, num_entries, data_nbits ):
+  def __init__( s, num_entries, dtype ):
 
-    s.enq_bits  = InPort  ( data_nbits )
-    s.deq_bits  = OutPort ( data_nbits )
+    s.enq_bits  = InPort  ( dtype )
+    s.deq_bits  = OutPort ( dtype )
 
     # Control signal (ctrl -> dpath)
     addr_nbits  = clog2( num_entries )
@@ -307,7 +307,7 @@ class NormalQueueDpath( Model ):
 
     # Queue storage
 
-    s.queue = RegisterFile( data_nbits, num_entries )
+    s.queue = RegisterFile( dtype, num_entries )
 
     # Connect queue storage
 
@@ -431,15 +431,15 @@ class NormalQueueCtrl( Model ):
 #-----------------------------------------------------------------------
 class SingleElementPipelinedQueue( Model ):
 
-  def __init__( s, data_nbits ):
+  def __init__( s, dtype ):
 
-    s.enq = InValRdyBundle ( data_nbits )
-    s.deq = OutValRdyBundle( data_nbits )
+    s.enq = InValRdyBundle ( dtype )
+    s.deq = OutValRdyBundle( dtype )
 
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementPipelinedQueueCtrl ()
-    s.dpath = SingleElementPipelinedQueueDpath( data_nbits )
+    s.dpath = SingleElementPipelinedQueueDpath( dtype )
 
     # Ctrl unit connections
 
@@ -465,17 +465,17 @@ class SingleElementPipelinedQueue( Model ):
 #-----------------------------------------------------------------------
 class SingleElementPipelinedQueueDpath( Model ):
 
-  def __init__( s, data_nbits ):
+  def __init__( s, dtype ):
 
-    s.enq_bits  = InPort  ( data_nbits )
-    s.deq_bits  = OutPort ( data_nbits )
+    s.enq_bits  = InPort  ( dtype )
+    s.deq_bits  = OutPort ( dtype )
 
     # Control signal (ctrl -> dpath)
     s.wen       = InPort  ( 1     )
 
     # Queue storage
 
-    s.queue = RegEn( data_nbits )
+    s.queue = RegEn( dtype )
 
     # Connect queue storage
 
@@ -555,15 +555,15 @@ class SingleElementSkidQueue( Model ):
   Can dequeue and enqueue on the same clock edge.
   '''
 
-  def __init__( s, data_nbits ):
+  def __init__( s, dtype ):
 
-    s.enq = InValRdyBundle ( data_nbits )
-    s.deq = OutValRdyBundle( data_nbits )
+    s.enq = InValRdyBundle ( dtype )
+    s.deq = OutValRdyBundle( dtype )
 
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementSkidQueueCtrl ()
-    s.dpath = SingleElementSkidQueueDpath( data_nbits )
+    s.dpath = SingleElementSkidQueueDpath( dtype )
 
     # Ctrl unit connections
 
@@ -590,10 +590,10 @@ class SingleElementSkidQueue( Model ):
 #-----------------------------------------------------------------------
 class SingleElementSkidQueueDpath( Model ):
 
-  def __init__( s, data_nbits ):
+  def __init__( s, dtype ):
 
-    s.enq_bits      = InPort  ( data_nbits )
-    s.deq_bits      = OutPort ( data_nbits )
+    s.enq_bits      = InPort  ( dtype )
+    s.deq_bits      = OutPort ( dtype )
 
     # Control signal (ctrl -> dpath)
 
@@ -602,14 +602,14 @@ class SingleElementSkidQueueDpath( Model ):
 
     # Queue storage
 
-    s.queue = RegEn( data_nbits )
+    s.queue = RegEn( dtype )
 
     s.connect( s.queue.en,  s.wen      )
     s.connect( s.queue.in_, s.enq_bits )
 
     # Bypass mux
 
-    s.bypass_mux = Mux( data_nbits, 2 )
+    s.bypass_mux = Mux( dtype, 2 )
 
     s.connect( s.bypass_mux.in_[0], s.queue.out      )
     s.connect( s.bypass_mux.in_[1], s.enq_bits       )

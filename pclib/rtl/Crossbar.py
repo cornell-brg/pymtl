@@ -6,13 +6,13 @@ from pymtl import *
 
 class Crossbar( Model ):
 
-  def __init__( s, nports, nbits ):
+  def __init__( s, nports, dtype ):
 
     sel_nbits = clog2( nports )
 
-    s.in_     = [ InPort  ( nbits )     for _ in range( nports ) ]
-    s.out     = [ OutPort ( nbits )     for _ in range( nports ) ]
-    s.sel     = [ InPort  ( sel_nbits ) for _ in range( nports ) ]
+    s.in_ = [ InPort  ( dtype )     for _ in range( nports ) ]
+    s.out = [ OutPort ( dtype )     for _ in range( nports ) ]
+    s.sel = [ InPort  ( sel_nbits ) for _ in range( nports ) ]
 
     @s.combinational
     def comb_logic():

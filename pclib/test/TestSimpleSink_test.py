@@ -14,12 +14,12 @@ from TestSimpleSink   import TestSimpleSink
 #-------------------------------------------------------------------------
 class TestHarness( Model ):
 
-  def __init__( s, nbits, msgs ):
+  def __init__( s, dtype, msgs ):
 
     # Instantiate models
 
-    s.src  = TestSimpleSource ( nbits, msgs )
-    s.sink = TestSimpleSink   ( nbits, msgs )
+    s.src  = TestSimpleSource ( dtype, msgs )
+    s.sink = TestSimpleSink   ( dtype, msgs )
 
     # Connect chain
 

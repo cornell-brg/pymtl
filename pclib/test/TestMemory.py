@@ -1,9 +1,6 @@
-#=========================================================================
+#=======================================================================
 # TestMemory
-#=========================================================================
-# This model implements a behavioral Test Memory which is parameterized
-# based on the number of memory request/response ports and includes random
-# delays for responses.
+#=======================================================================
 
 from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
@@ -14,44 +11,37 @@ from TestSimpleMemory import TestSimpleMemory
 import pclib.ifcs.valrdy   as valrdy
 import pclib.ifcs.mem_msgs as mem_msgs
 
+#-----------------------------------------------------------------------
+# TestMemory
+#-----------------------------------------------------------------------
 class TestMemory( Model ):
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
   def __init__( s, memreq_params, memresp_params, nports,
-                max_mem_delay = 0, mem_nbytes=2**20 ):
+                   max_mem_delay = 0, mem_nbytes=2**20 ):
 
-    # Local constant - store the number of ports
-
-    s.nports         = nports
-    s.memreq_params  = memreq_params
-    s.memresp_params = memresp_params
-    s.max_mem_delay  = max_mem_delay
-    s.mem_nbytes     = mem_nbytes
-    req_nbits        = memreq_params.nbits
-    resp_nbits       = memresp_params.nbits
+    req_dtype  = memreq_params.nbits
+    resp_dtype = memresp_params.nbits
 
     # List of memory request port bundles
 
-    s.reqs  = [ InValRdyBundle( req_nbits )   for _ in range( nports ) ]
+    s.reqs  = [ InValRdyBundle( req_dtype )   for _ in range( nports ) ]
 
     # List of memory response msg, val, rdy ports
 
-    s.resps = [ OutValRdyBundle( resp_nbits ) for _ in range( nports ) ]
+    s.resps = [ OutValRdyBundle( resp_dtype ) for _ in range( nports ) ]
 
     # delay responses
 
-    s.delay_resps = [ TestRandomDelay( s.memresp_params.nbits, s.max_mem_delay )
-                      for x in range( s.nports ) ]
+    s.delay_resps = [ TestRandomDelay( resp_dtype, max_mem_delay )
+                      for x in range( nports ) ]
 
     # simple test memory with no delays
 
-    s.mem = TestSimpleMemory( s.memreq_params, s.memresp_params,
-                                 s.nports, s.mem_nbytes )
+    s.mem = TestSimpleMemory(memreq_params, memresp_params, nports, mem_nbytes)
+
     # Connect
 
-    for i in range( s.nports ):
+    for i in range( nports ):
 
       # Connect memory inputs
 
@@ -60,26 +50,29 @@ class TestMemory( Model ):
       # Connect memory outputs to random delays
 
       s.connect( s.mem.resps[i], s.delay_resps[i].in_ )
-      #s.connect( s.mem.resps[i], s.resps[i] )
 
       # Connect random delays to memory outputs
 
       s.connect( s.delay_resps[i].out, s.resps[i] )
 
+    # Config constants
 
-  #-----------------------------------------------------------------------
-  # load memory function
-  #-----------------------------------------------------------------------
-  # load memory function accepts a section address and a list of bytes to
-  # load the memory data structure.
-  # section_len, section_addr, section_data encapsulated in a helper
-  # function?
+    s.nports = nports
+
+  #---------------------------------------------------------------------
+  # load_memory
+  #---------------------------------------------------------------------
   def load_memory( s, section_list ):
+    '''Accepts a section address and a list of bytes to load the memory.
+
+    section_len, section_addr, section_data encapsulated in a helper
+    function?
+    '''
     s.mem.load_memory( section_list )
 
-  #-----------------------------------------------------------------------
-  # Line tracing
-  #-----------------------------------------------------------------------
+  #---------------------------------------------------------------------
+  # line_tracing
+  #---------------------------------------------------------------------
   def line_trace( s ):
 
     memreq_str   = ''

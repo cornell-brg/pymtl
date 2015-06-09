@@ -9,24 +9,24 @@ from pymtl import *
 #-----------------------------------------------------------------------
 class RegisterFile( Model ):
 
-  def __init__( s, nbits=32, nregs=32, rd_ports=1, wr_ports=1,
-                const_zero=False ):
+  def __init__( s, dtype = Bits(32), nregs = 32, rd_ports = 1, wr_ports = 1,
+                   const_zero=False ):
 
-    addr_bits  = clog2( nregs )
+    addr_nbits  = clog2( nregs )
 
-    s.rd_addr  = [ InPort( addr_bits ) for _ in range(rd_ports) ]
-    s.rd_data  = [ OutPort( nbits )    for _ in range(rd_ports) ]
+    s.rd_addr  = [ InPort ( addr_nbits ) for _ in range(rd_ports) ]
+    s.rd_data  = [ OutPort( dtype )      for _ in range(rd_ports) ]
 
     if wr_ports == 1:
-      s.wr_addr  = InPort( addr_bits )
-      s.wr_data  = InPort( nbits )
+      s.wr_addr  = InPort( addr_nbits )
+      s.wr_data  = InPort( dtype )
       s.wr_en    = InPort( 1 )
     else:
-      s.wr_addr  = [ InPort( addr_bits ) for _ in range(wr_ports) ]
-      s.wr_data  = [ InPort( nbits )     for _ in range(wr_ports) ]
-      s.wr_en    = [ InPort( 1 )         for _ in range(wr_ports) ]
+      s.wr_addr  = [ InPort( addr_nbits ) for _ in range(wr_ports) ]
+      s.wr_data  = [ InPort( dtype )      for _ in range(wr_ports) ]
+      s.wr_en    = [ InPort( 1 )          for _ in range(wr_ports) ]
 
-    s.regs = [ Wire( nbits ) for _ in range( nregs ) ]
+    s.regs = [ Wire( dtype ) for _ in range( nregs ) ]
 
     #-------------------------------------------------------------------
     # Combinational read logic

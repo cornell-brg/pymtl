@@ -1,18 +1,19 @@
-#=========================================================================
+#=======================================================================
 # TestSimpleSource
-#=========================================================================
-# This class will output messages on a val/rdy interface from a
-# predefined list.
-#
+#=======================================================================
 
-from pymtl        import *
+from pymtl      import *
 from pclib.ifcs import OutValRdyBundle
 
+#-----------------------------------------------------------------------
+# TestSimpleSource
+#-----------------------------------------------------------------------
 class TestSimpleSource( Model ):
+  'Outputs data provided in ``msgs`` onto a val/rdy interface.'
 
-  def __init__( s, nbits, msgs ):
+  def __init__( s, dtype, msgs ):
 
-    s.out  = OutValRdyBundle( nbits )
+    s.out  = OutValRdyBundle( dtype )
     s.done = OutPort        ( 1     )
 
     s.msgs = msgs

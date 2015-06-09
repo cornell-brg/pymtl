@@ -17,10 +17,10 @@ from TestSimpleSink import TestSimpleSink
 class TestHarness( Model ):
   """Connect source directly to sink."""
 
-  def __init__( s, nbits, msgs, delay ):
+  def __init__( s, dtype, msgs, delay ):
 
-    s.src  = TestSource     ( nbits, msgs, delay )
-    s.sink = TestSimpleSink ( nbits, msgs )
+    s.src  = TestSource     ( dtype, msgs, delay )
+    s.sink = TestSimpleSink ( dtype, msgs )
 
     s.connect( s.src.out, s.sink.in_ )
 
@@ -36,11 +36,11 @@ class TestHarness( Model ):
 class TestHarnessExtraDelay( Model ):
   """Connect source to sink through extra delay."""
 
-  def __init__( s, nbits, msgs, delay ):
+  def __init__( s, dtype, msgs, delay ):
 
-    s.src   = TestSource      ( nbits, msgs, delay )
-    s.delay = TestRandomDelay ( nbits, 5 )
-    s.sink  = TestSimpleSink  ( nbits, msgs )
+    s.src   = TestSource      ( dtype, msgs, delay )
+    s.delay = TestRandomDelay ( dtype, 5 )
+    s.sink  = TestSimpleSink  ( dtype, msgs )
 
     s.connect( s.src.out,   s.delay.in_ )
     s.connect( s.delay.out, s.sink.in_  )

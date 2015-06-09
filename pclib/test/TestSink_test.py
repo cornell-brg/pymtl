@@ -15,10 +15,10 @@ from pclib.test import TestSource, TestSink, TestRandomDelay
 class TestHarness( Model ):
   """Directly connect source to sink."""
 
-  def __init__( s, nbits, msgs, src_delay, sink_delay ):
+  def __init__( s, dtype, msgs, src_delay, sink_delay ):
 
-    s.src  = TestSource ( nbits, msgs, src_delay  )
-    s.sink = TestSink   ( nbits, msgs, sink_delay )
+    s.src  = TestSource ( dtype, msgs, src_delay  )
+    s.sink = TestSink   ( dtype, msgs, sink_delay )
 
     s.connect( s.src.out, s.sink.in_ )
 
@@ -34,11 +34,11 @@ class TestHarness( Model ):
 class TestHarnessExtraDelay( Model ):
   """Connect source to delay to sink."""
 
-  def __init__( s, nbits, msgs, src_delay, sink_delay ):
+  def __init__( s, dtype, msgs, src_delay, sink_delay ):
 
-    s.src   = TestSource      ( nbits, msgs, src_delay )
-    s.delay = TestRandomDelay ( nbits, 5 )
-    s.sink  = TestSink        ( nbits, msgs, sink_delay )
+    s.src   = TestSource      ( dtype, msgs, src_delay  )
+    s.delay = TestRandomDelay ( dtype, 5 )
+    s.sink  = TestSink        ( dtype, msgs, sink_delay )
 
     s.connect( s.src.out,   s.delay.in_ )
     s.connect( s.delay.out, s.sink.in_  )
@@ -57,12 +57,12 @@ class TestHarnessExtraDelay( Model ):
 class TestHarnessTwoDelay( Model ):
   """Two independent source->delay->sink pipelines."""
 
-  def __init__( s, nbits, msgs, src_delay, sink_delay ):
+  def __init__( s, dtype, msgs, src_delay, sink_delay ):
 
-    s.src1   = TestSource      ( nbits, msgs[:-2], src_delay )
-    s.sink1  = TestSink        ( nbits, msgs[:-2], sink_delay )
-    s.src2   = TestSource      ( nbits, msgs,      src_delay )
-    s.sink2  = TestSink        ( nbits, msgs,      sink_delay )
+    s.src1   = TestSource ( dtype, msgs[:-2], src_delay  )
+    s.sink1  = TestSink   ( dtype, msgs[:-2], sink_delay )
+    s.src2   = TestSource ( dtype, msgs,      src_delay  )
+    s.sink2  = TestSink   ( dtype, msgs,      sink_delay )
 
     # Connect
 

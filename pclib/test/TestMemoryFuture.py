@@ -1,10 +1,6 @@
-#=========================================================================
-# TestMemory with Multiple Ports
-#=========================================================================
-# This model implements a behavioral Test Memory which is parameterized
-# based on the number of memory request/response ports. This version is a
-# little different from the one in pclib because we actually use the
-# memory messages correctly in the interface.
+#=======================================================================
+# TestMemory
+#=======================================================================
 
 from __future__ import print_function
 
@@ -14,25 +10,30 @@ from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 from pclib.cl   import InValRdyRandStallAdapter
 from pclib.cl   import OutValRdyInelasticPipeAdapter
 
-class TestMemory (Model):
+#-----------------------------------------------------------------------
+# TestMemory
+#-----------------------------------------------------------------------
+class TestMemory( Model ):
+  '''A behavioral Test Memory which is parameterized
+  based on the number of memory request/response ports.
 
-  #-----------------------------------------------------------------------
-  # Constructor
-  #-----------------------------------------------------------------------
+  This version is a little different from the one in pclib because we
+  actually use the memory messages correctly in the interface.
+  '''
 
-  def __init__( s, mem_ifc_types=MemMsg(32,32), nports=1,
+  def __init__( s, mem_ifc_dtypes=MemMsg(32,32), nports=1,
                 stall_prob=0, latency=0, mem_nbytes=2**20 ):
 
     # Interface
 
     xr = range
-    s.reqs  = [ InValRdyBundle  ( mem_ifc_types.req  ) for _ in xr(nports) ]
-    s.resps = [ OutValRdyBundle ( mem_ifc_types.resp ) for _ in xr(nports) ]
+    s.reqs  = [ InValRdyBundle  ( mem_ifc_dtypes.req  ) for _ in xr(nports) ]
+    s.resps = [ OutValRdyBundle ( mem_ifc_dtypes.resp ) for _ in xr(nports) ]
 
     # Checks
 
-    assert mem_ifc_types.req.data.nbits  % 8 == 0
-    assert mem_ifc_types.resp.data.nbits % 8 == 0
+    assert mem_ifc_dtypes.req.data.nbits  % 8 == 0
+    assert mem_ifc_dtypes.resp.data.nbits % 8 == 0
 
     # Buffers to hold memory request/response messages
 
@@ -50,7 +51,7 @@ class TestMemory (Model):
 
     # Local constants
 
-    s.mem_ifc_types = mem_ifc_types
+    s.mem_ifc_dtypes = mem_ifc_dtypes
     s.nports = nports
 
     #---------------------------------------------------------------------
@@ -80,7 +81,7 @@ class TestMemory (Model):
 
           nbytes = memreq.len
           if memreq.len == 0:
-            nbytes = s.mem_ifc_types.req.data.nbits/8
+            nbytes = s.mem_ifc_dtypes.req.data.nbits/8
 
           # Handle a read request
 
@@ -88,13 +89,13 @@ class TestMemory (Model):
 
             # Copy the bytes from the bytearray into read data bits
 
-            read_data = Bits( s.mem_ifc_types.req.data.nbits )
+            read_data = Bits( s.mem_ifc_dtypes.req.data.nbits )
             for j in range( nbytes ):
               read_data[j*8:j*8+8] = s.mem[ memreq.addr + j ]
 
             # Create and enqueu response message
 
-            memresp = s.mem_ifc_types.resp()
+            memresp = s.mem_ifc_dtypes.resp()
             memresp.type_ = MemRespMsg.TYPE_READ
             memresp.len   = memreq.len
             memresp.data  = read_data
@@ -113,7 +114,7 @@ class TestMemory (Model):
 
             # Create and enqueu response message
 
-            memresp = s.mem_ifc_types.resp()
+            memresp = s.mem_ifc_dtypes.resp()
             memresp.type_ = MemRespMsg.TYPE_WRITE
             memresp.len   = 0
             memresp.data  = 0
@@ -121,9 +122,8 @@ class TestMemory (Model):
             resp_q.enq( memresp )
 
   #-----------------------------------------------------------------------
-  # Line tracing
+  # line_trace
   #-----------------------------------------------------------------------
-
   def line_trace( s ):
 
     trace_str = ""
@@ -133,20 +133,18 @@ class TestMemory (Model):
     return trace_str
 
   #-----------------------------------------------------------------------
-  # write memory function
+  # write_mem
   #-----------------------------------------------------------------------
-  # Writes the list of bytes to the given memory address.
-
   def write_mem( s, addr, data ):
+    'Writes the list of bytes to the given memory address.'
     assert len(s.mem) > (addr + len(data))
     s.mem[ addr : addr + len(data) ] = data
 
   #-----------------------------------------------------------------------
-  # read memory function
+  # read_mem
   #-----------------------------------------------------------------------
-  # Reads size bytes from the given memory address
-
   def read_mem( s, addr, size ):
+    'Reads size bytes from the given memory address.'
     assert len(s.mem) > (addr + size)
     return s.mem[ addr : addr + size ]
 

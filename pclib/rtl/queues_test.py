@@ -22,11 +22,11 @@ from queues import NormalQueue
 # test_1entry_normal_queue_tv
 #-------------------------------------------------------------------------
 def test_1entry_normal_queue_tv( dump_vcd, test_verilog ):
-  """Single-Element Normal Queue Test Vector Tests
+  '''Single-Element Normal Queue Test Vector Tests
 
   Directed performance tests for single element queue. We use the
   TestVectorSimulator to do some white box testing.
-  """
+  '''
 
   test_vectors = [
 
@@ -101,7 +101,7 @@ def test_1entry_bypass_queue_tv( dump_vcd, test_verilog ):
     [ 1,      0,      0x0003,  1,      0,      0x0002 ],
     [ 0,      0,      0x0003,  1,      0,      0x0002 ],
     [ 1,      0,      0x0003,  1,      1,      0x0002 ],
-    [ 1,      1,      0x0003,  1,      1,      0x0003  ],
+    [ 1,      1,      0x0003,  1,      1,      0x0003 ],
     [ 1,      1,      0x0004,  1,      1,      0x0004 ],
     [ 0,      1,      0x0004,  0,      1,      '?'    ],
 
@@ -204,13 +204,13 @@ class TestHarness( Model ):
   """Source Sink Test Harness."""
 
   def __init__( s, ModelType, src_msgs, sink_msgs,
-                src_delay, sink_delay, nbits, test_verilog, dump_vcd ):
+                src_delay, sink_delay, dtype, test_verilog, dump_vcd ):
 
     # Instantiate models
 
-    s.src    = TestSource ( nbits, src_msgs,  src_delay  )
-    s.queue  = ModelType  ( nbits )
-    s.sink   = TestSink   ( nbits, sink_msgs, sink_delay )
+    s.src    = TestSource ( dtype, src_msgs,  src_delay  )
+    s.queue  = ModelType  ( dtype )
+    s.sink   = TestSink   ( dtype, sink_msgs, sink_delay )
 
     s.      vcd_file = dump_vcd
     s.queue.vcd_file = dump_vcd
@@ -235,7 +235,7 @@ class TestHarness( Model ):
 # run_1entry_queue_test
 #-------------------------------------------------------------------------
 def run_1entry_queue_test( dump_vcd, test_verilog, ModelType,
-                                   src_delay, sink_delay, nbits ):
+                                   src_delay, sink_delay, dtype ):
   """Tests for single element queue using test source and sink."""
 
   q_msgs = [
@@ -252,7 +252,7 @@ def run_1entry_queue_test( dump_vcd, test_verilog, ModelType,
   # Instantiate and elaborate the model
 
   model = TestHarness( ModelType, q_msgs, q_msgs,
-                       src_delay, sink_delay, nbits, test_verilog, dump_vcd )
+                       src_delay, sink_delay, dtype, test_verilog, dump_vcd )
   model.elaborate()
 
   # Run the test
@@ -274,35 +274,35 @@ def run_1entry_queue_test( dump_vcd, test_verilog, ModelType,
   sim.cycle()
   sim.cycle()
 
-@pytest.mark.parametrize( "src_delay,sink_delay,nbits", [
+@pytest.mark.parametrize( "src_delay,sink_delay,dtype", [
   (  0, 0, 16 ),
   (  0, 5, 16 ),
   (  5, 0, 16 ),
   ( 10, 5, 16 ),
 ])
-def test_1entry_normal( dump_vcd, test_verilog, src_delay, sink_delay, nbits ):
+def test_1entry_normal( dump_vcd, test_verilog, src_delay, sink_delay, dtype ):
   run_1entry_queue_test( dump_vcd, test_verilog,
-                SingleElementNormalQueue, src_delay, sink_delay, nbits )
+                SingleElementNormalQueue, src_delay, sink_delay, dtype )
 
-@pytest.mark.parametrize( "src_delay,sink_delay,nbits", [
+@pytest.mark.parametrize( "src_delay,sink_delay,dtype", [
   (  0, 0, 16 ),
   (  0, 5, 16 ),
   (  5, 0, 16 ),
   ( 10, 5, 16 ),
 ])
-def test_1entry_bypass( dump_vcd, test_verilog, src_delay, sink_delay, nbits ):
+def test_1entry_bypass( dump_vcd, test_verilog, src_delay, sink_delay, dtype ):
   run_1entry_queue_test( dump_vcd, test_verilog,
-                SingleElementBypassQueue, src_delay, sink_delay, nbits )
+                SingleElementBypassQueue, src_delay, sink_delay, dtype )
 
-@pytest.mark.parametrize( "src_delay,sink_delay,nbits", [
+@pytest.mark.parametrize( "src_delay,sink_delay,dtype", [
   (  0, 0, 16 ),
   (  0, 5, 16 ),
   (  5, 0, 16 ),
   ( 10, 5, 16 ),
 ])
-def test_1entry_pipe( dump_vcd, test_verilog, src_delay, sink_delay, nbits ):
+def test_1entry_pipe( dump_vcd, test_verilog, src_delay, sink_delay, dtype ):
   run_1entry_queue_test( dump_vcd, test_verilog,
-                SingleElementPipelinedQueue, src_delay, sink_delay, nbits )
+                SingleElementPipelinedQueue, src_delay, sink_delay, dtype )
 
 #=========================================================================
 # Test Vector Tests - Multi-Entry

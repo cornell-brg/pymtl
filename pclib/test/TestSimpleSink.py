@@ -1,18 +1,19 @@
-#=========================================================================
+#=======================================================================
 # TestSimpleSink
-#=========================================================================
-# This class will sink messages from a val/rdy interface and compare them
-# to a predefined list.
-#
+#=======================================================================
 
 from pymtl      import *
 from pclib.ifcs import InValRdyBundle
 
+#-----------------------------------------------------------------------
+# TestSimpleSink
+#-----------------------------------------------------------------------
 class TestSimpleSink( Model ):
+  'Verifies data sinked from a val/rdy interface matches``msgs``.'
 
-  def __init__( s, nbits, msgs ):
+  def __init__( s, dtype, msgs ):
 
-    s.in_  = InValRdyBundle( nbits )
+    s.in_  = InValRdyBundle( dtype )
     s.done = OutPort       ( 1     )
 
     s.msgs = msgs
