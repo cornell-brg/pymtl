@@ -28,24 +28,21 @@ extern "C" {{
     // Verilator model
     void * model;
 
+    // VCD tracing helpers
+    #if DUMP_VCD
+    void *        tfp;
+    unsigned int  trace_time;
+    unsigned char prev_clk;
+    #endif
+
   }} V{model_name}_t;
 
+  // Exposed methods
   V{model_name}_t * create_model( const char * );
   void destroy_model( V{model_name}_t *);
   void eval( V{model_name}_t * );
-
 }}
 
-//----------------------------------------------------------------------
-// Private data
-//----------------------------------------------------------------------
-
-#if DUMP_VCD
-// VCD tracing helpers
-VerilatedVcdC * tfp;
-unsigned int  trace_time;
-unsigned char prev_clk;
-#endif
 
 //----------------------------------------------------------------------
 // create_model()
@@ -63,16 +60,20 @@ V{model_name}_t * create_model( const char *vcd_filename ) {{
 
   m->model = (void *) model;
 
-#if DUMP_VCD
   // enable tracing
+
+  #if DUMP_VCD
   Verilated::traceEverOn( true );
-  tfp = new VerilatedVcdC();
+  VerilatedVcdC * tfp = new VerilatedVcdC();
+
   model->trace( tfp, 99 );
   tfp->spTrace()->set_time_resolution( "{vcd_timescale}" );
   tfp->open( vcd_filename );
-  trace_time = 0;
-  prev_clk   = 0;
-#endif
+
+  m->tfp        = (void *) tfp;
+  m->trace_time = 0;
+  m->prev_clk   = 0;
+  #endif
 
   // initialize exposed model interface pointers
   {port_inits}
@@ -94,7 +95,8 @@ void destroy_model( V{model_name}_t * m ) {{
 
 #if DUMP_VCD
   // close the vcd file
-  printf("DESTROYING %d\n", trace_time );
+  printf("DESTROYING %d\n", m->trace_time );
+  VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
   tfp->close();
 #endif
 
@@ -119,11 +121,13 @@ void eval( V{model_name}_t * m ) {{
 #if DUMP_VCD
 
   // update simulation time only on clock toggle
-  if (prev_clk != model->clk) {{ trace_time += 50; }}
-  prev_clk = model->clk;
+  if (m->prev_clk != model->clk)
+    m->trace_time += 50;
+  m->prev_clk = model->clk;
 
   // dump current signal values
-  tfp->dump( trace_time );
+  VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
+  tfp->dump( m->trace_time );
   tfp->flush();
 #endif
 

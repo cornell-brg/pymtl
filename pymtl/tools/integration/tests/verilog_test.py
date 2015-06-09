@@ -9,7 +9,7 @@ import random
 import pytest
 
 def _sim_setup( model, all_verilog, dump_vcd='' ):
-  model.vcd_file = dump_vcd
+  #model.vcd_file = dump_vcd  # TODO: hack for issue #135
   m = TranslationTool( model ) if all_verilog else model
   m.elaborate()
   sim = SimulationTool( m )
@@ -22,9 +22,10 @@ def _sim_setup( model, all_verilog, dump_vcd='' ):
 @pytest.mark.parametrize( "nbits,all_verilog",
  [(4,True),(128,False)]
 )
-def test_Reg( nbits, all_verilog ):
+def test_Reg( dump_vcd, nbits, all_verilog ):
 
   class vc_Reg( VerilogModel ):
+    vcd_file   = dump_vcd  # TODO: hack for issue #135
     modulename = 'vc_Reg'
     sourcefile = os.path.join( os.path.dirname(__file__),
                                'vc-regs.v' )
@@ -47,7 +48,7 @@ def test_Reg( nbits, all_verilog ):
   # test
   #---------------------------------------------------------------------
 
-  m, sim = _sim_setup( vc_Reg(nbits), all_verilog )
+  m, sim = _sim_setup( vc_Reg(nbits), all_verilog, dump_vcd )
   for i in range( 10 ):
     m.in_.value = i
     sim.cycle()
@@ -290,6 +291,9 @@ def test_chained_VerilogModel( dump_vcd, nbits, rst, all_verilog ):
       s.en  = InPort ( 1 )
       s.d   = InPort ( nbits )
       s.q   = OutPort( nbits )
+
+      # TODO: hack for issue #135
+      EnResetRegVRTL.vcd_file = dump_vcd
 
       s.mod = m = EnResetRegVRTL[3]( nbits, rst )
 

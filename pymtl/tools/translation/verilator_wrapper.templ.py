@@ -13,6 +13,7 @@ from cffi  import FFI
 # {model_name}
 #-----------------------------------------------------------------------
 class {model_name}( Model ):
+  id_ = 0
 
   def __init__( s, vcd_file='' ):
 
@@ -41,7 +42,7 @@ class {model_name}( Model ):
     verilator_vcd_file = vcd_file
     if vcd_file:
       filen, ext         = os.path.splitext( vcd_file )
-      verilator_vcd_file = '{{}}.verilator{{}}'.format( filen, ext )
+      verilator_vcd_file = '{{}}.verilator{{}}{{}}'.format(filen, s.id_, ext)
 
     # import the shared library containing the model and construct it
     s._ffi = ffi.dlopen('./{lib_file}')
@@ -53,6 +54,9 @@ class {model_name}( Model ):
 
     # define the port interface
     {port_defs}
+
+    # increment instance count
+    {model_name}.id_ += 1
 
   def __del__( s ):
     s._ffi.destroy_model( s._m )
