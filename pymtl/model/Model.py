@@ -569,7 +569,7 @@ class Model( object ):
     # TODO: huge hack, fix this!
     for key, value in model._args.items():
       if isinstance( value, Bits.Bits ):
-        print('\nWARNING: assuming Bits parameter wants .nbits, not .value')
+        #print('\nWARNING: assuming Bits parameter wants .nbits, not .value')
         model._args[ key ] = value.nbits
 
     # Generate a unique name for the Model instance based on its params
