@@ -35,6 +35,7 @@ from pclib.ifcs import MemMsg
 
 from ParcProcFL    import ParcProcFL
 from GenericXcelFL import GenericXcelFL
+from pclib.test.TestMemoryFuture import TestMemory
 
 #-------------------------------------------------------------------------
 # Command line processing
@@ -127,7 +128,7 @@ class TestHarness (Model):
     for section in sections:
       start_addr = section.addr
       stop_addr  = section.addr + len(section.data)
-      self.mem.mem.mem[start_addr:stop_addr] = section.data
+      self.mem.mem[start_addr:stop_addr] = section.data
 
   #-----------------------------------------------------------------------
   # done
@@ -191,7 +192,7 @@ def main():
 
   # Instantiate and elaborate the model
 
-  model = TestHarness( model_impl_dict[opts.impl], 0 )
+  model = TestHarness( ParcProcFL() )
   model.elaborate()
 
   # Load the program into the model

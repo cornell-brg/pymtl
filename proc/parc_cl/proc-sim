@@ -90,11 +90,11 @@ class TestHarness (Model):
 
     # Instantiate models
 
-    s.src  = TestSource  ( 32, [], 0 )
-    s.sink = TestSink    ( 32, [], 0 )
-    s.proc = ProcModel   ( test_en=False )
-    s.mem  = TestMemory  ( MemMsg(32,32), 3 )
-    s.xcel = XcelModel   ()
+    s.src  = TestSource    ( 32, [], 0 )
+    s.sink = TestSink      ( 32, [], 0 )
+    s.proc = ProcModel     ( test_en=False )
+    s.mem  = TestMemory    ( MemMsg(32,32), 3 )
+    s.xcel = GenericXcelFL ()
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -134,7 +134,7 @@ class TestHarness (Model):
     for section in sections:
       start_addr = section.addr
       stop_addr  = section.addr + len(section.data)
-      self.mem.mem.mem[start_addr:stop_addr] = section.data
+      self.mem.mem[start_addr:stop_addr] = section.data
 
   #-----------------------------------------------------------------------
   # done
