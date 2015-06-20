@@ -116,3 +116,72 @@ def test( test_params, dump_vcd ):
                         test_params.src_delay, test_params.sink_delay ),
            dump_vcd )
 
+#-------------------------------------------------------------------------
+# Test val-rdy protocol
+#-------------------------------------------------------------------------
+# This test checks if the OutValRdyInelasticPipeAdapter adheres to the
+# val-rdy hadnshaking protocol. In general we never make val and rdy
+# signals for a given port to depdend on each other. In situations when
+# this is not possible, we can choose the rdy signal depend on the val
+# signal but not the val signal to depend on the rdy signal. This test
+# essentially checks if the val signal is ever dependent on the rdy signal
+# and if so it should essentially reach the max timeout limit. If the model
+# correctly adheres to the val-rdy handshaking protocol as described above
+# the cylce count for the simulations would be lower than the max timeout
+# limit.
+
+class TestValRdyProtocolHarness( Model ):
+
+  def __init__( s, msgs, nstages ):
+
+    # Instantiate models
+    s.src   = TestSource  ( 16, msgs, 0 )
+    s.model = TestModelCL ( nstages )
+
+    # Wire
+    s.out_rdy = Wire( 1 )
+
+    # Connect
+    s.connect( s.src.out,       s.model.in_ )
+    s.connect( s.model.out.val, s.out_rdy   )
+
+    # NOTE: we are making the rdy signal depend on the val to test if the
+    # val signal is dependent on the rdy signal in the model under test
+    s.connect( s.model.out.rdy, s.out_rdy   )
+
+  def line_trace( s ):
+    return s.src.line_trace() + " > " + \
+           s.model.line_trace()
+
+@pytest.mark.parametrize(
+  ('nstages'),[0]
+)
+def test_valrdy_protocol( dump_vcd, nstages ):
+
+  # max_cycles
+  max_cycles = 100
+
+  # Setup the model
+  dut = TestValRdyProtocolHarness( basic_msgs, nstages )
+  dut.vcd_file = dump_vcd
+  dut.elaborate()
+
+  # Create a simulator
+  sim = SimulationTool( dut )
+
+  # Reset the model
+  sim.reset()
+  print()
+
+  # Run Simulation
+  while not dut.src.done() and sim.ncycles < max_cycles:
+    sim.print_line_trace()
+    sim.cycle()
+
+  # Force a test failure if we timed out
+  assert sim.ncycles < max_cycles
+
+  # Extra ticks to make the VCD easier to read
+  sim.cycle()
+  sim.cycle()
+  sim.cycle()
