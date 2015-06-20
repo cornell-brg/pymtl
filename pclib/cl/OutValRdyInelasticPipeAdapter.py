@@ -34,9 +34,8 @@ class OutValRdyInelasticPipeAdapter (object):
     if s.nstages == 0:
       assert not s.skidbuffer_full()
       s.skidbuffer.append( item )
-      if len( s.skidbuffer ) != 0:
-        s.out.msg.next = s.skidbuffer[0]
-      s.out.val.next = len( s.skidbuffer ) != 0
+      s.out.msg.next = s.skidbuffer[0]
+      s.out.val.next = 1
     else:
       assert s.out.rdy
       s.pipe[-1] = deepcopy(item)
@@ -49,9 +48,7 @@ class OutValRdyInelasticPipeAdapter (object):
 
       if s.out.rdy and s.out.val:
         s.skidbuffer.popleft()
-      if len( s.skidbuffer ) != 0:
-        s.out.msg.next = s.skidbuffer[0]
-      s.out.val.next = len( s.skidbuffer ) != 0
+        s.out.val.next = 0
 
     # ... else we model pipeline behavior
 
