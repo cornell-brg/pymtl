@@ -174,7 +174,7 @@ def test_valrdy_protocol( dump_vcd, nstages ):
   print()
 
   # Run Simulation
-  while not dut.src.done() and sim.ncycles < max_cycles:
+  while not dut.src.done and sim.ncycles < max_cycles:
     sim.print_line_trace()
     sim.cycle()
 

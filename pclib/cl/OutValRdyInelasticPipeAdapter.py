@@ -16,20 +16,30 @@ from pymtl       import *
 class OutValRdyInelasticPipeAdapter (object):
 
   def __init__( s, out, nstages=1 ):
-    s.out     = out
-    s.nstages = nstages
-    s.pipe    = deque( [None]*(nstages+1) )
+    s.out        = out
+    s.nstages    = nstages
+    s.pipe       = deque( [None]*(nstages+1) )
+    s.skidbuffer = deque( maxlen = 1 )
+
+  def skidbuffer_full( s ):
+    return len( s.skidbuffer ) == s.skidbuffer.maxlen
 
   def full( s ):
-    return not s.out.rdy
+    if s.nstages == 0:
+      return s.skidbuffer_full()
+    else:
+      return not s.out.rdy
 
   def enq( s, item ):
-    assert s.out.rdy
-    s.pipe[-1] = deepcopy(item)
-
     if s.nstages == 0:
-      s.out.val.next = 1
-      s.out.msg.next = s.pipe[0]
+      assert not s.skidbuffer_full()
+      s.skidbuffer.append( item )
+      if len( s.skidbuffer ) != 0:
+        s.out.msg.next = s.skidbuffer[0]
+      s.out.val.next = len( s.skidbuffer ) != 0
+    else:
+      assert s.out.rdy
+      s.pipe[-1] = deepcopy(item)
 
   def xtick( s ):
 
@@ -38,17 +48,10 @@ class OutValRdyInelasticPipeAdapter (object):
     if s.nstages == 0:
 
       if s.out.rdy and s.out.val:
-        s.pipe.popleft()
-        s.pipe.append( None )
-        s.out.val.next = 0
-        s.out.msg.next = 0
-
-      else:
-        s.out.val.next = s.pipe[0] != None
-        if s.pipe[0] != None:
-          s.out.msg.next = s.pipe[0]
-        else:
-          s.out.msg.next = 0
+        s.skidbuffer.popleft()
+      if len( s.skidbuffer ) != 0:
+        s.out.msg.next = s.skidbuffer[0]
+      s.out.val.next = len( s.skidbuffer ) != 0
 
     # ... else we model pipeline behavior
 
