@@ -154,7 +154,7 @@ class TestValRdyProtocolHarness( Model ):
            s.model.line_trace()
 
 @pytest.mark.parametrize(
-  ('nstages'),[0]
+  ('nstages'),[0,1,2,4]
 )
 def test_valrdy_protocol( dump_vcd, nstages ):
 

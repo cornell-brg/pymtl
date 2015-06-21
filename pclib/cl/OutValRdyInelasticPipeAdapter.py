@@ -8,38 +8,8 @@
 from copy        import deepcopy
 from collections import deque
 from pymtl       import *
+from pclib.cl    import OutValRdyQueueAdapter
 from pipelines   import Pipeline
-
-#-----------------------------------------------------------------------
-# OutValRdyBypassAdapter
-#-----------------------------------------------------------------------
-# An output val-rdy bypass adapter
-
-class OutValRdyBypassAdapter( Model ):
-
-  def __init__( s, out, size=1 ):
-    s.out  = out
-    s.data = deque( maxlen = size )
-
-  def is_full( s ):
-    return len( s.data ) == s.data.maxlen
-
-  def full( s ):
-    return s.is_full()
-
-  def enq( s, item ):
-    assert not s.is_full()
-    s.data.append( item )
-    if len( s.data ) != 0:
-      s.out.msg.next = s.data[0]
-    s.out.val.next = len( s.data ) != 0
-
-  def xtick( s ):
-    if s.out.rdy and s.out.val:
-      s.data.popleft()
-    if len( s.data ) != 0:
-      s.out.msg.next = s.data[0]
-    s.out.val.next = len( s.data ) != 0
 
 #-------------------------------------------------------------------------
 # OutValRdyInelasticPipeAdapter
@@ -50,9 +20,11 @@ class OutValRdyInelasticPipeAdapter (object):
   def __init__( s, out, nstages=1 ):
 
     s.nstages    = nstages
-    s.out_q      = OutValRdyBypassAdapter( out, size = 1 )
 
-    # instantiate a pipeline if requires
+    # instantiate a single-entry bypass queue adapter
+    s.out_q      = OutValRdyQueueAdapter( out )
+
+    # instantiate a cycle-level pipeline
     if s.nstages > 0:
       s.pipe       = Pipeline( s.nstages )
 
@@ -71,12 +43,14 @@ class OutValRdyInelasticPipeAdapter (object):
 
   def xtick( s ):
 
+    # Call the xtick of output bypass queue adapter
     s.out_q.xtick()
 
+    # Model the pipeline behavior
     if s.nstages != 0:
 
       # If the output bypass queue adapter is not full
-      if not s.out_q.is_full():
+      if not s.out_q.full():
 
         # Items graduating from pipeline, add to output queue
         if s.pipe.ready():
