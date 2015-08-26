@@ -1,6 +1,6 @@
-#------------------------------------------------------------------------
+#=========================================================================
 # VM setup
-#------------------------------------------------------------------------
+#=========================================================================
 
 language: python
 python:
@@ -9,20 +9,21 @@ python:
 
 env:
  - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="-n 2"
- - TEST_DIRS="../accel ../labs  ../mem     "  CONFIG="-n 2"
+ - TEST_DIRS="../accel                     "  CONFIG="-n 2"
  - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="-n 2"
 
  - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="--test-verilog"
- - TEST_DIRS="../accel ../labs  ../mem     "  CONFIG="--test-verilog"
+ - TEST_DIRS="../accel                     "  CONFIG="--test-verilog"
  - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="--test-verilog"
 
  - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="-n 2 --dump-vcd"
- - TEST_DIRS="../accel ../labs  ../mem     "  CONFIG="-n 2 --dump-vcd"
+ - TEST_DIRS="../accel                     "  CONFIG="-n 2 --dump-vcd"
  - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="-n 2 --dump-vcd"
 
 #------------------------------------------------------------------------
 # before dependency installation
 #------------------------------------------------------------------------
+
 before_install:
  - ARTIFACTS=http://brg.csl.cornell.edu/artifacts
  - echo $PWD
@@ -31,6 +32,7 @@ before_install:
 #------------------------------------------------------------------------
 # install dependencies
 #------------------------------------------------------------------------
+
 install:
 
  # Install verilator
@@ -58,6 +60,7 @@ install:
 #------------------------------------------------------------------------
 # before test runner
 #------------------------------------------------------------------------
+
 before_script:
 
  # Build assembly tests
@@ -74,5 +77,7 @@ before_script:
 #------------------------------------------------------------------------
 # test runner
 #------------------------------------------------------------------------
+
 script:
  - py.test $TEST_DIRS --verbose --maxfail 20 $CONFIG
+
