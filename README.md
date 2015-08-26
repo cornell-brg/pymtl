@@ -1,6 +1,4 @@
-
 ![PyMTL](docs/pymtl_logo.png)
-
 ==========================================================================
 
 [![Build Status](https://travis-ci.org/cornell-brg/pymtl.svg?branch=master)](https://travis-ci.org/cornell-brg/pymtl)
