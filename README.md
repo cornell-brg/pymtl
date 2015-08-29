@@ -25,7 +25,7 @@ PyMTL is offered under the terms of the Open Source Initiative BSD
 Publications
 --------------------------------------------------------------------------
 
-If you use PyMTL in your research, please cite our [MICRO'15 paper][1]:
+If you use PyMTL in your research, please cite our [MICRO'15 paper][2]:
 
 ```
   @inproceedings{lockhart-pymtl-micro2014,
@@ -40,7 +40,7 @@ If you use PyMTL in your research, please cite our [MICRO'15 paper][1]:
   }
 ```
 
- [1]: http://dx.doi.org/10.1109/MICRO.2014.50
+ [2]: http://dx.doi.org/10.1109/MICRO.2014.50
 
 Installation
 --------------------------------------------------------------------------
@@ -57,7 +57,7 @@ distribution are shown below. They have been tested with Ubuntu Trusty
 
 ### Install Verilator
 
-[Verilator][1] is an open-source toolchain for compiling Verilog RTL
+[Verilator][3] is an open-source toolchain for compiling Verilog RTL
 models into C++ simulators. PyMTL uses Verilator for both Verilog
 translation and Verilog import. The following commands will build and
 install Verilator from source:
@@ -79,7 +79,7 @@ The `PYMTL_VERILATOR_INCLUDE_DIR` environment variable is used to tell
 PyMTL where to find the various Verilator source files when peforming
 both Verilog translation and Verilog import.
 
- [1]: http://www.veripool.org/wiki/verilator
+ [3]: http://www.veripool.org/wiki/verilator
 
 ### Install git, Python headers, and libffi
 
@@ -95,7 +95,7 @@ commands will install the appropriate packages:
 
 ### Install virtualenv
 
-While not strictly necessary, we strongly recommend using [virtualenv][1]
+While not strictly necessary, we strongly recommend using [virtualenv][4]
 to install PyMTL and the Python packages that PyMTL depends on.
 virtualenv enables creating isolated Python environments. The following
 commands will install virtualenv:
@@ -114,7 +114,7 @@ script to activate the new virtual environment:
   % source ${HOME}/venvs/pymtl/bin/activate
 ```
 
- [1]: https://virtualenv.pypa.io/en/latest
+ [4]: https://virtualenv.pypa.io/en/latest/
 
 ### Install PyMTL
 
