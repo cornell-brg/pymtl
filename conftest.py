@@ -1,3 +1,7 @@
+#=========================================================================
+# conftest
+#=========================================================================
+
 import pytest
 
 def pytest_addoption(parser):
@@ -40,3 +44,4 @@ def pytest_runtest_setup(item):
   test_verilog = item.config.option.test_verilog
   if test_verilog and 'test_verilog' not in item.funcargnames:
     pytest.skip("ignoring non-Verilog tests")
+

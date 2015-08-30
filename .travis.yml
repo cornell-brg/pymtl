@@ -1,11 +1,10 @@
 #=========================================================================
-# VM setup
+# TravisCI Setup
 #=========================================================================
 
 language: python
 python:
  - "2.7"
-# - "pypy"
 
 env:
  - CONFIG=""
@@ -42,13 +41,13 @@ before_script:
 
  # Make build directory
 
- - mkdir -p sim/build
- - cd sim/build
+ - mkdir -p build
+ - cd build
 
 #------------------------------------------------------------------------
 # test runner
 #------------------------------------------------------------------------
 
 script:
- - py.test .. --verbose --maxfail 20 $CONFIG
+ - py.test .. $CONFIG
 

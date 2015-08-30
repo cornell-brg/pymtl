@@ -37,7 +37,7 @@ setup(
     ],
 
     packages = find_packages(
-      exclude=['scripts', 'tests', 'ubmark', 'perf_tests']
+      exclude=['scripts']
     ),
 
     package_data={
@@ -49,10 +49,11 @@ setup(
     },
 
     install_requires = [
-      'cffi',
-      'greenlet',
       'pytest',
       'pytest-xdist',
+      'cffi',
+      'greenlet',
+      'pyparsing'
     ],
 
 )
