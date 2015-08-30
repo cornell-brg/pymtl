@@ -8,26 +8,9 @@ python:
 # - "pypy"
 
 env:
- - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="-n 2"
- - TEST_DIRS="../accel                     "  CONFIG="-n 2"
- - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="-n 2"
-
- - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="--test-verilog"
- - TEST_DIRS="../accel                     "  CONFIG="--test-verilog"
- - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="--test-verilog"
-
- - TEST_DIRS="../pymtl ../pclib ../examples"  CONFIG="-n 2 --dump-vcd"
- - TEST_DIRS="../accel                     "  CONFIG="-n 2 --dump-vcd"
- - TEST_DIRS="../net   ../pisa  ../proc    "  CONFIG="-n 2 --dump-vcd"
-
-#------------------------------------------------------------------------
-# before dependency installation
-#------------------------------------------------------------------------
-
-before_install:
- - ARTIFACTS=http://brg.csl.cornell.edu/artifacts
- - echo $PWD
- - mkdir build
+ - CONFIG=""
+ - CONFIG="--test-verilog"
+ - CONFIG="--dump-vcd"
 
 #------------------------------------------------------------------------
 # install dependencies
@@ -37,18 +20,12 @@ install:
 
  # Install verilator
 
- - wget $ARTIFACTS/verilator-travis-3.876.tar.gz
+ - wget http://brg.csl.cornell.edu/artifacts/verilator-travis-3.876.tar.gz
  - tar xvfz verilator-travis-3.876.tar.gz
  - export VERILATOR_ROOT=$PWD/verilator-3.876
  - export PATH=$VERILATOR_ROOT/bin:$PATH
  - export PYMTL_VERILATOR_INCLUDE_DIR=$VERILATOR_ROOT/include
  - verilator --version
-
- # Install PARC cross-compiler
-
- - wget $ARTIFACTS/maven-xcc.tar.bz2
- - tar xvfj maven-xcc.tar.bz2
- - export PATH=$PWD/maven-sys-xcc-0.0-209-g75c3473/bin:$PATH
 
  # Install Python requirements
 
@@ -63,21 +40,15 @@ install:
 
 before_script:
 
- # Build assembly tests
+ # Make build directory
 
- - mkdir -p tests/build
- - cd tests/build
- - ../configure --host=maven; cat config.log
- - make
-
- # Return to build directory
-
- - cd ../../build
+ - mkdir -p sim/build
+ - cd sim/build
 
 #------------------------------------------------------------------------
 # test runner
 #------------------------------------------------------------------------
 
 script:
- - py.test $TEST_DIRS --verbose --maxfail 20 $CONFIG
+ - py.test .. --verbose --maxfail 20 $CONFIG
 
