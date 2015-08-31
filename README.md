@@ -17,9 +17,8 @@ Cornell ECE 4750
 --------------------------------------------------------------------------
 
 Cornell ECE 4750 students should note that we are using the PyMTL version
-on the ece4750 branch. If you would like to browse the PyMTL source code
-or install PyMTL on your own machine you must use the [ece4750
-branch][2].
+on the [ece4750 branch][2]. If you would like to browse the PyMTL source
+code or install PyMTL on your own machine you must use the [ece4750 branch][2].
 
  [2]: https://github.com/cornell-brg/pymtl/tree/ece4750
 
@@ -76,7 +75,7 @@ install Verilator from source:
   % sudo apt-get install git make autoconf g++ flex bison
   % mkdir -p ${HOME}/src
   % cd ${HOME}/src
-a  % wget http://www.veripool.org/ftp/verilator-3.876.tgz
+  % wget http://www.veripool.org/ftp/verilator-3.876.tgz
   % tar -xzvf verilator-3.876
   % cd verilator-3.876
   % ./configure
@@ -140,7 +139,8 @@ actively work in the PyMTL git repo.
 ```
 
 NOTE: If you are a Cornell ECE 4750 student and setting up your own
-development environment, you must install the [ece4750 branch][6] like this:
+development environment, you must install the [ece4750 branch][6] like
+this:
 
 ```
   % mkdir -p ${HOME}/vc/git-hub/cornell-brg
@@ -149,7 +149,7 @@ development environment, you must install the [ece4750 branch][6] like this:
   % pip install --editable ./pymtl
 ```
 
- [2]: https://github.com/cornell-brg/pymtl/tree/ece4750
+ [6]: https://github.com/cornell-brg/pymtl/tree/ece4750
 
 Testing
 --------------------------------------------------------------------------
