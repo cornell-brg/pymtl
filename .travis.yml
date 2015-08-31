@@ -2,6 +2,14 @@
 # TravisCI Setup
 #=========================================================================
 
+# Force TravisCI to use new container-based infrastructure
+
+sudo: false
+
+#------------------------------------------------------------------------
+# language and build matrix
+#------------------------------------------------------------------------
+
 language: python
 python:
  - "2.7"
