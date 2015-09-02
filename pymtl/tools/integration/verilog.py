@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import re
 import os
+import sys
 import inspect
 import collections
 from   ...model.metaclasses        import MetaCollectArgs
@@ -175,6 +176,31 @@ def import_sources( source_list, o ):
   as any source files specified by `include within those files.
   """
 
+  # For now we assume the first file in the sources_list is top?
+
+  top_verilog_file = source_list[0]
+
+  # All verilog includes are relative to the root of the PyMTL project.
+  # We identify the root of the PyMTL project by looking for the special
+  # .pymtl-python-path file.
+
+  _path = os.path.dirname( top_verilog_file )
+  special_file_found = False
+  include_path = os.path.dirname( os.path.abspath( top_verilog_file ) )
+  while include_path:
+    if os.path.exists( include_path + os.path.sep + ".pymtl-python-path" ):
+      special_file_found = True
+      sys.path.insert(0,include_path)
+      break
+    include_path = os.path.dirname(include_path)
+
+  # If we could not find the special .pymtl-python-path file, then assume
+  # the include directory is the same as the directory that contains the
+  # verilog file.
+
+  if not special_file_found:
+    include_path = os.path.dirname( os.path.abspath( top_verilog_file ) )
+
   # Regex to extract verilog filenames from `include statements
 
   include_re = re.compile( r'"(?P<filename>[\w/\.-]*)"' )
@@ -184,7 +210,6 @@ def import_sources( source_list, o ):
 
   for verilog_file in source_list:
 
-    include_path = os.path.dirname( verilog_file )
     with open( verilog_file, 'r' ) as fp:
       for line in fp:
         if '`include' in line:
