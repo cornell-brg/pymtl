@@ -20,12 +20,12 @@ from exceptions          import VerilatorCompileError
 #-----------------------------------------------------------------------
 # Create a PyMTL compatible interface for Verilog HDL.
 def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file, vcd_file, lint ):
+                      lib_file, py_wrapper_file, vcd_en, lint ):
 
   model_name = model.class_name
 
   # Verilate the model  # TODO: clean this up
-  verilate_model( verilog_file, model_name, vcd_file, lint )
+  verilate_model( verilog_file, model_name, vcd_en, lint )
 
   # Add names to ports of module
   for port in model.get_ports():
@@ -33,10 +33,10 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
     port.verilator_name = verilator_mangle( port.verilog_name )
 
   # Create C++ Wrapper
-  cdefs = create_c_wrapper( model, c_wrapper_file, vcd_file )
+  cdefs = create_c_wrapper( model, c_wrapper_file, vcd_en )
 
   # Create Shared C Library
-  create_shared_lib( model_name, c_wrapper_file, lib_file, vcd_file )
+  create_shared_lib( model_name, c_wrapper_file, lib_file, vcd_en )
 
   # Create PyMTL wrapper for CFFI interface to Verilated model
   create_verilator_py_wrapper( model, py_wrapper_file, lib_file, cdefs )
@@ -46,7 +46,7 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
 #-----------------------------------------------------------------------
 # Convert Verilog HDL into a C++ simulator using Verilator.
 # http://www.veripool.org/wiki/verilator
-def verilate_model( filename, model_name, vcd_file, lint ):
+def verilate_model( filename, model_name, vcd_en, lint ):
 
   # verilator commandline template
 
@@ -62,7 +62,8 @@ def verilate_model( filename, model_name, vcd_file, lint ):
               '-Wno-UNOPTFLAT',
               '--unroll-count 1000000',
               '--unroll-stmts 1000000',
-              '--trace' if vcd_file else '',
+              '--assert',
+              '--trace' if vcd_en else '',
             ])
 
   # remove the obj_dir because issues with staleness
@@ -106,7 +107,7 @@ def verilate_model( filename, model_name, vcd_file, lint ):
 # create_c_wrapper
 #-----------------------------------------------------------------------
 # Generate a C wrapper file for Verilated C++.
-def create_c_wrapper( model, c_wrapper_file, vcd_file ):
+def create_c_wrapper( model, c_wrapper_file, vcd_en ):
 
   template_dir      = os.path.dirname( os.path.abspath( __file__ ) )
   template_filename = template_dir + os.path.sep + 'verilator_wrapper.templ.c'
@@ -156,9 +157,10 @@ def create_c_wrapper( model, c_wrapper_file, vcd_file ):
                           port_externs  = port_externs,
                           port_decls    = port_decls,
                           port_inits    = port_inits,
-                          vcd_prefix    = vcd_file[:-4],
+                          # What was this for? -cbatten
+                          # vcd_prefix    = vcd_file[:-4],
                           vcd_timescale = get_vcd_timescale( model ),
-                          dump_vcd      = '1' if vcd_file else '0',
+                          dump_vcd      = '1' if vcd_en else '0',
                         )
 
     output.write( c_src )
@@ -209,46 +211,23 @@ def create_c_wrapper( model, c_wrapper_file, vcd_file ):
 # some larger designs report better performance using "-Os".
 #
 # http://www.veripool.org/projects/verilator/wiki/Manual-verilator
-#
-def create_shared_lib( model_name, c_wrapper_file, lib_file, vcd_file ):
 
-  # gcc template string
+# I have added a new feature which compiles all of the standard Verilator
+# code into a static library and then simply links this in. This reduces
+# compile times.
 
-  compile_cmd  = 'g++ {flags} -I {include_dir} -o {libname} {cpp_sources}'
+def try_cmd( name, cmd ):
 
-  flags        = '-O1 -fstrict-aliasing -fPIC -shared'
-  include_dir  = os.environ['PYMTL_VERILATOR_INCLUDE_DIR']
-  libname      = lib_file
-  cpp_sources  = ' '.join( [
-                   'obj_dir_{model_name}/V{model_name}.cpp',
-                   'obj_dir_{model_name}/V{model_name}__Syms.cpp',
-                   '{include_dir}/verilated.cpp',
-                   '{c_wrapper}'
-                 ]
-                 # Add the following sources only if vcd_file
-                 + ( [] if not vcd_file else [
-                   '{include_dir}/verilated_vcd_c.cpp',
-                   'obj_dir_{model_name}/V{model_name}__Trace.cpp',
-                   'obj_dir_{model_name}/V{model_name}__Trace__Slow.cpp',
-                 ]))
-
-  # substitute flags in compiler string, then any remaining flags
-
-  compile_cmd = compile_cmd.format( **vars() )
-  compile_cmd = compile_cmd.format( model_name  = model_name,
-                                    c_wrapper   = c_wrapper_file,
-                                    include_dir = include_dir )
-
-  # try compilation
+  # print( "cmd: ", cmd )
 
   try:
-    result = check_output( compile_cmd.split() , stderr=STDOUT )
+    result = check_output( cmd.split() , stderr=STDOUT )
 
   # handle gcc/llvm failure
 
   except CalledProcessError as e:
     error_msg = """
-      Module did not compile!
+      {name} error!
 
       Command:
       {command}
@@ -257,13 +236,117 @@ def create_shared_lib( model_name, c_wrapper_file, lib_file, vcd_file ):
       {error}
     """
 
-    # Source:
-    # \x1b[31m {source} \x1b[0m
-
     raise Exception( error_msg.format(
-      command = ' '.join( e.cmd ),
-      error   = e.output
+      name      = name,
+      command   = ' '.join( e.cmd ),
+      error     = e.output
     ))
+
+def compile( flags, include_dirs, output_file, input_files ):
+
+  compile_cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles}'
+
+  compile_cmd = compile_cmd.format(
+    flags  = flags,
+    idirs  = ' '.join( [ '-I'+s for s in include_dirs ] ),
+    ofile  = output_file,
+    ifiles = ' '.join( input_files ),
+  )
+
+  try_cmd( "Compilation", compile_cmd )
+
+def make_lib( output_file, input_files ):
+
+  # First run ar command
+
+  ar_cmd = 'ar rcv {ofile} {ifiles}'
+
+  ar_cmd = ar_cmd.format(
+    ofile  = output_file,
+    ifiles = ' '.join( input_files ),
+  )
+
+  try_cmd( "Make library", ar_cmd )
+
+  # Then run ranlib command
+
+  ranlib_cmd = 'ranlib {lib}'
+
+  ranlib_cmd = ranlib_cmd.format(
+    lib = output_file,
+  )
+
+  try_cmd( "Make library", ranlib_cmd )
+
+def create_shared_lib( model_name, c_wrapper_file, lib_file, vcd_en ):
+
+  # We always use the following include directories
+
+  verilator_include_dir = os.environ['PYMTL_VERILATOR_INCLUDE_DIR']
+  include_dirs = [
+    verilator_include_dir,
+    verilator_include_dir+"/vltstd",
+  ]
+
+  # Compile standard Verilator code if libverilator.a does not exist.
+  # Originally, I was also including verilated_dpi.cpp in this library,
+  # but for some reason that screws up line tracing. Somehow there is
+  # some kind of global state or something that is shared across the
+  # shared libraries or something. I was able to fix it by recompiling
+  # verilated_dpi if linetracing is enabled.
+
+  if not os.path.exists( "libverilator.a" ):
+
+    compile(
+      flags        = "-O3 -c",
+      include_dirs = include_dirs,
+      output_file  = "verilator.o",
+      input_files  = [ verilator_include_dir+"/verilated.cpp" ]
+    )
+
+    compile(
+      flags        = "-O3 -c",
+      include_dirs = include_dirs,
+      output_file  = "verilator_vcd_c.o",
+      input_files  = [ verilator_include_dir+"/verilated_vcd_c.cpp" ]
+    )
+
+    # compile(
+    #   flags        = "-O3 -c",
+    #   include_dirs = include_dirs,
+    #   output_file  = "verilator_dpi.o",
+    #   input_files  = [ verilator_include_dir+"/verilated_dpi.cpp" ]
+    # )
+
+    make_lib(
+      output_file  = "libverilator.a",
+      # input_files  = [ "verilator.o", "verilator_vcd_c.o", "verilator_dpi.o" ]
+      input_files  = [ "verilator.o", "verilator_vcd_c.o" ]
+     )
+
+  # Compile this module
+
+  obj_dir_prefix = "obj_dir_{m}/V{m}".format( m=model_name )
+
+  cpp_sources_list = [
+    obj_dir_prefix+".cpp",
+    obj_dir_prefix+"__Syms.cpp",
+    verilator_include_dir+"/verilated_dpi.cpp",
+    c_wrapper_file,
+  ]
+
+  if vcd_en:
+    cpp_sources_list += [
+      obj_dir_prefix+"__Trace.cpp",
+      obj_dir_prefix+"__Trace__Slow.cpp",
+    ]
+
+  compile(
+    flags        = "-O1 -fstrict-aliasing -fPIC -shared -L. -lverilator",
+    include_dirs = include_dirs,
+    output_file  = lib_file,
+    input_files  = cpp_sources_list,
+  )
 
 #-----------------------------------------------------------------------
 # create_verilator_py_wrapper
@@ -445,12 +528,12 @@ def pymtl_wrapper_from_ports( in_ports, out_ports, model_name, filename_w,
 
     py_src = template.read()
     py_src = py_src.format(
-        model_name  = model_name,
-        port_decls  = cdefs,
-        port_defs   = '\n    '  .join( port_defs ),
-        set_inputs  = '\n      '.join( set_inputs ),
-        set_comb    = '\n      '.join( set_comb ),
-        set_next    = '\n      '.join( set_next ),
+      model_name  = model_name,
+      port_decls  = cdefs,
+      port_defs   = '\n    '  .join( port_defs ),
+      set_inputs  = '\n      '.join( set_inputs ),
+      set_comb    = '\n      '.join( set_comb ),
+      set_next    = '\n      '.join( set_next ),
     )
 
     # TODO: needed for tracing?

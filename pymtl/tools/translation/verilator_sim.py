@@ -34,10 +34,13 @@ def TranslationTool( model_inst, lint=False ):
   py_wrapper_file = model_name + '_v.py'
   lib_file        = 'lib{}_v.so'.format( model_name )
 
+  vcd_en   = True
+  vcd_file = ''
   try:
-    vcd_file      = model_inst.vcd_file
+    vcd_en   = ( model_inst.vcd_file != '' )
+    vcd_file = model_inst.vcd_file
   except AttributeError:
-    vcd_file      = ''
+    vcd_en = False
 
   # Write the output to a temporary file
   with open( temp_file, 'w+' ) as fd:
@@ -57,7 +60,7 @@ def TranslationTool( model_inst, lint=False ):
   if not cached:
     print( "NOT CACHED", verilog_file )
     verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file, vcd_file, lint )
+                      lib_file, py_wrapper_file, vcd_en, lint )
 
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )
@@ -66,6 +69,9 @@ def TranslationTool( model_inst, lint=False ):
 
   # Get the model class from the module, instantiate and elaborate it
   model_class = imported_module.__dict__[ model_name ]
-  model_inst  = model_class( vcd_file )
+  model_inst  = model_class()
+
+  if vcd_en:
+    model_inst.vcd_file = vcd_file
 
   return model_inst

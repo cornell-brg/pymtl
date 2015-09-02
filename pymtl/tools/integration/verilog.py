@@ -42,7 +42,15 @@ class SomeMeta( MetaCollectArgs ):
     # >>> my_verilog_model = TranslationTool( MyVerilogModel( p1, p2 ) )
     #
 
+    # I think there is no way to turn on VCD dumping after the fact, so I
+    # think we have no choice but to always turn on VCD dumping for now
+    # if we are using Verilog import? -cbatten
+
+    inst.vcd_file = '__dummy__'
+
     new_inst = TranslationTool( inst, lint=True )
+
+    new_inst.vcd_file = None
 
     # TODO: THIS IS SUPER HACKY. FIXME
     # We hack the TranslationTool model in all kinds of awful ways to make
@@ -73,6 +81,7 @@ class SomeMeta( MetaCollectArgs ):
 #-----------------------------------------------------------------------
 # VerilogModel
 #-----------------------------------------------------------------------
+
 class VerilogModel( Model ):
   """
   A PyMTL model for importing hand-written Verilog modules.
@@ -85,6 +94,7 @@ class VerilogModel( Model ):
 
   modulename   = None
   sourcefile   = None
+  vprefix      = None
 
   _param_dict  = None
   _port_dict   = None
@@ -176,6 +186,9 @@ def import_sources( source_list, o ):
   as any source files specified by `include within those files.
   """
 
+  if not source_list:
+    return
+
   # For now we assume the first file in the sources_list is top?
 
   top_verilog_file = source_list[0]
@@ -187,7 +200,7 @@ def import_sources( source_list, o ):
   _path = os.path.dirname( top_verilog_file )
   special_file_found = False
   include_path = os.path.dirname( os.path.abspath( top_verilog_file ) )
-  while include_path:
+  while include_path != "/":
     if os.path.exists( include_path + os.path.sep + ".pymtl-python-path" ):
       special_file_found = True
       sys.path.insert(0,include_path)

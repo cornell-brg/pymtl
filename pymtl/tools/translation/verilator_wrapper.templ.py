@@ -15,11 +15,11 @@ from cffi  import FFI
 class {model_name}( Model ):
   id_ = 0
 
-  def __init__( s, vcd_file='' ):
+  def __init__( s ):
 
     # initialize FFI, define the exposed interface
-    ffi = FFI()
-    ffi.cdef('''
+    s.ffi = FFI()
+    s.ffi.cdef('''
       typedef struct {{
 
         // Exposed port interface
@@ -27,6 +27,9 @@ class {model_name}( Model ):
 
         // Verilator model
         void * model;
+
+        // VCD state
+        int _vcd_en;
 
       }} V{model_name}_t;
 
@@ -36,17 +39,11 @@ class {model_name}( Model ):
 
     ''')
 
-    # set vcd_file attribute, give verilator_vcd_file a slightly
-    # different name so PyMTL .vcd and Verilator .vcd can coexist
-    s.vcd_file         = vcd_file
-    verilator_vcd_file = vcd_file
-    if vcd_file:
-      filen, ext         = os.path.splitext( vcd_file )
-      verilator_vcd_file = '{{}}.verilator{{}}{{}}'.format(filen, s.id_, ext)
+    # Import the shared library containing the model. We defer
+    # construction to the elaborate_logic function to allow the user to
+    # set the vcd_file.
 
-    # import the shared library containing the model and construct it
-    s._ffi = ffi.dlopen('./{lib_file}')
-    s._m   = s._ffi.create_model( ffi.new("char[]", verilator_vcd_file) )
+    s._ffi = s.ffi.dlopen('./{lib_file}')
 
     # dummy class to emulate PortBundles
     class BundleProxy( PortBundle ):
@@ -58,10 +55,25 @@ class {model_name}( Model ):
     # increment instance count
     {model_name}.id_ += 1
 
+    # Defer vcd dumping until later
+    s.vcd_file = None
+
   def __del__( s ):
     s._ffi.destroy_model( s._m )
 
   def elaborate_logic( s ):
+
+    # Give verilator_vcd_file a slightly different name so PyMTL .vcd and
+    # Verilator .vcd can coexist
+
+    verilator_vcd_file = ""
+    if s.vcd_file:
+      filen, ext         = os.path.splitext( s.vcd_file )
+      verilator_vcd_file = '{{}}.verilator{{}}{{}}'.format(filen, s.id_, ext)
+
+    # Construct the model.
+
+    s._m = s._ffi.create_model( s.ffi.new("char[]", verilator_vcd_file) )
 
     @s.combinational
     def logic():
