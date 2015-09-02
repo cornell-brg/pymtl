@@ -199,12 +199,14 @@ def import_sources( source_list, o ):
   # lines with `include statements.
 
   for verilog_file in reversed( source_list ):
-    src = title_bar.replace('-','=').format( verilog_file )
+    src = '`line 1 "{}" 0\n'.format( verilog_file )
 
     with open( verilog_file, 'r' ) as fp:
       for line in fp:
         if '`include' not in line:
           src += line
+        else:
+          src += "// " + line
 
     print( src, file=o )
 
