@@ -14,6 +14,14 @@
 // set to true when VCD tracing is enabled in Verilator
 #define DUMP_VCD {dump_vcd}
 
+// set to true when Verilog module has line tracing
+#define VLINETRACE {vlinetrace}
+
+#if VLINETRACE
+#include "obj_dir_{model_name}/V{model_name}__Syms.h"
+#include "svdpi.h"
+#endif
+
 //----------------------------------------------------------------------
 // CFFI Interface
 //----------------------------------------------------------------------
@@ -44,6 +52,10 @@ extern "C" {{
   V{model_name}_t * create_model( const char * );
   void destroy_model( V{model_name}_t *);
   void eval( V{model_name}_t * );
+
+  #if VLINETRACE
+  void trace( V{model_name}_t *, char * );
+  #endif
 }}
 
 //----------------------------------------------------------------------
@@ -159,4 +171,69 @@ void eval( V{model_name}_t * m ) {{
   #endif
 
 }}
+
+//----------------------------------------------------------------------
+// trace()
+//----------------------------------------------------------------------
+// Note that we assume a trace string buffer of 512 characters. This is
+// assumed in a couple of places, including the Python wrapper template
+// and the Verilog vc/trace.v code. So if we change it, we need to change
+// it everywhere.
+
+#if VLINETRACE
+void trace( V{model_name}_t * m, char* str ) {{
+
+  V{model_name} * model = (V{model_name} *) m->model;
+
+  const int nchars = 512;
+  const int nwords = nchars/4;
+
+  uint32_t words[nwords];
+  words[0] = nchars-1;
+
+  // Setup scope for accessing the line tracing function throug DPI.
+  // Note, I tried using just this:
+  //
+  //  svSetScope( svGetScopeFromName("TOP.v.verilog_module") );
+  //
+  // but it did not seem to work. We would see correct line tracing for
+  // the first test case but not any of the remaining tests cases. After
+  // digging around a bit, it seemed like the line_trace task was still
+  // associated with the very first model as opposed to the newly
+  // instantiated models. Directly setting the scope seemed to fix
+  // this issue.
+
+  svSetScope( &model->__VlSymsp->__Vscope_v__verilog_module );
+  model->line_trace( words );
+
+  // Note that the way the line tracing works, the line tracing function
+  // will store how the last character used in the line trace in the
+  // first element of the word array. The line tracing functions store
+  // the line trace starting from the most-signicant character due to the
+  // way that Verilog handles strings.
+
+  int nchar_last  = words[0];
+  int nchars_used = ( nchars - 1 - nchar_last );
+
+  // We subtract since one of the words (i.e., 4 characters) is for
+  // storing the nchars_used.
+
+  assert ( nchars_used < (nchars - 4) );
+
+  // Now we need to iterate from the most-significant character to the
+  // last character written by the line tracing functions and copy these
+  // characters into the given character array. So we are kind of
+  // flipping the order of the characters due to the different between
+  // how Verilog and C handle strings.
+
+  int j = 0;
+  for ( int i = nchars-1; i > nchar_last; i-- ) {{
+    char c = static_cast<char>( words[i/4] >> (8*(i%4)) );
+    str[j] = c;
+    j++;
+  }}
+  str[j] = '\0';
+
+}}
+#endif
 

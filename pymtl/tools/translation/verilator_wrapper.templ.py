@@ -36,6 +36,7 @@ class {model_name}( Model ):
       V{model_name}_t * create_model( const char * );
       void destroy_model( V{model_name}_t *);
       void eval( V{model_name}_t * );
+      void trace( V{model_name}_t *, char * );
 
     ''')
 
@@ -57,6 +58,10 @@ class {model_name}( Model ):
 
     # Defer vcd dumping until later
     s.vcd_file = None
+
+    # Buffer for line tracing
+    s._line_trace_str = s.ffi.new("char[512]")
+    s._convert_string = s.ffi.string
 
   def __del__( s ):
     s._ffi.destroy_model( s._m )
@@ -99,4 +104,11 @@ class {model_name}( Model ):
       # double buffer register outputs
       # FIXME: currently write all outputs, not just registered outs
       {set_next}
+
+  def line_trace( s ):
+    if {vlinetrace}:
+      s._ffi.trace( s._m, s._line_trace_str )
+      return s._convert_string( s._line_trace_str )
+    else:
+      return ""
 

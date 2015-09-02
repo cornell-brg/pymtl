@@ -19,6 +19,13 @@ from ..translation.verilog_structural import (
   start_param, end_param, start_ports, end_ports, connection,
 )
 
+#-----------------------------------------------------------------------
+# VerilogImportError
+#-----------------------------------------------------------------------
+
+class VerilogImportError( Exception ):
+  pass
+
 class SomeMeta( MetaCollectArgs ):
   def __call__( self, *args, **kwargs ):
     inst = super( SomeMeta, self ).__call__( *args, **kwargs )
@@ -65,6 +72,7 @@ class SomeMeta( MetaCollectArgs ):
     new_inst.vprefix     = inst.vprefix
     new_inst.modulename  = inst.modulename
     new_inst.sourcefile  = inst.sourcefile
+    new_inst.vlinetrace  = inst.vlinetrace
     new_inst._param_dict = inst._param_dict
     new_inst._port_dict  = inst._port_dict
 
@@ -73,6 +81,16 @@ class SomeMeta( MetaCollectArgs ):
     # VerilogModel to the generated Python wrapper.
     try:
       new_inst.__class__.line_trace = inst.__class__.__dict__['line_trace']
+
+      # If we make it here this means the user has set Verilog line
+      # tracing to true, but has _also_ defined a PyMTL line tracing, but
+      # you can't have both.
+
+      if inst.vlinetrace:
+        raise VerilogImportError( "Cannot define a PyMTL line_trace\n"
+          "function and also use vlinetrace = True. Must use _either_\n"
+          "PyMTL line tracing or use Verilog line tracing." )
+
     except KeyError:
       pass
 
@@ -95,6 +113,7 @@ class VerilogModel( Model ):
   modulename   = None
   sourcefile   = None
   vprefix      = None
+  vlinetrace   = False
 
   _param_dict  = None
   _port_dict   = None
