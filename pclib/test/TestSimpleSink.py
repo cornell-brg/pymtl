@@ -44,7 +44,7 @@ class TestSimpleSink( Model ):
         if s.in_.msg != s.msgs[s.idx]:
 
           error_msg = """
- The test sink received an unexpected message.
+ The test sink received an incorrect message!
   - sink name    : {sink_name}
   - msg number   : {msg_number}
   - expected msg : {expected_msg}
