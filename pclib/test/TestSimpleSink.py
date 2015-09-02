@@ -5,11 +5,14 @@
 from pymtl      import *
 from pclib.ifcs import InValRdyBundle
 
+class TestSinkError( Exception ):
+  pass
+
 #-----------------------------------------------------------------------
 # TestSimpleSink
 #-----------------------------------------------------------------------
+
 class TestSimpleSink( Model ):
-  'Verifies data sinked from a val/rdy interface matches``msgs``.'
 
   def __init__( s, dtype, msgs ):
 
@@ -38,7 +41,23 @@ class TestSimpleSink( Model ):
       # expected. then increment the index.
 
       if in_go:
-        assert s.in_.msg == s.msgs[s.idx]
+        if s.in_.msg != s.msgs[s.idx]:
+
+          error_msg = """
+ The test sink received an unexpected message.
+  - sink name    : {sink_name}
+  - msg number   : {msg_number}
+  - expected msg : {expected_msg}
+  - actual msg   : {actual_msg}
+"""
+
+          raise TestSinkError( error_msg.format(
+            sink_name    = s.name,
+            msg_number   = s.idx,
+            expected_msg = s.msgs[s.idx],
+            actual_msg   = s.in_.msg,
+          ))
+
         s.idx = s.idx + 1
 
       # Set the ready and done signals.
@@ -52,6 +71,5 @@ class TestSimpleSink( Model ):
 
 
   def line_trace( s ):
-
     return "{} ({:2})".format( s.in_, s.idx )
 
