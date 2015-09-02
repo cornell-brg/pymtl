@@ -53,6 +53,7 @@ class SomeMeta( MetaCollectArgs ):
     new_inst.__class__.__name__  = inst.__class__.__name__
     new_inst.__class__.__bases__ = (VerilogModel,)
     new_inst._args       = inst._args
+    new_inst.vprefix     = inst.vprefix
     new_inst.modulename  = inst.modulename
     new_inst.sourcefile  = inst.sourcefile
     new_inst._param_dict = inst._param_dict
@@ -137,6 +138,9 @@ class VerilogModel( Model ):
       file_ = inspect.getfile( self.__class__ )
       self.sourcefile = os.path.join( os.path.dirname( file_ ),
                                       self.modulename+'.v' )
+
+    if self.vprefix:
+      self.modulename = self.vprefix + "_" + self.modulename
 
     if not self._param_dict:
       self._param_dict = self._args
