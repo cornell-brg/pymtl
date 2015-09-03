@@ -50,15 +50,15 @@ def TranslationTool( model_inst, lint=False ):
   cached = False
   if exists(verilog_file) and exists(py_wrapper_file) and exists(lib_file):
     cached = filecmp.cmp( temp_file, verilog_file )
-    if not cached:
-      os.system( ' diff %s %s'%( temp_file, verilog_file ))
+    # if not cached:
+    #   os.system( ' diff %s %s'%( temp_file, verilog_file ))
 
   # Rename temp to actual output
   os.rename( temp_file, verilog_file )
 
   # Verilate the module only if we've updated the verilog source
   if not cached:
-    print( "NOT CACHED", verilog_file )
+    # print( "NOT CACHED", verilog_file )
     verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
                       lib_file, py_wrapper_file, vcd_en, lint )
 

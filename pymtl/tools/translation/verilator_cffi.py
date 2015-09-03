@@ -19,6 +19,7 @@ from exceptions          import VerilatorCompileError
 # verilog_to_pymtl
 #-----------------------------------------------------------------------
 # Create a PyMTL compatible interface for Verilog HDL.
+
 def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
                       lib_file, py_wrapper_file, vcd_en, lint ):
 
@@ -53,6 +54,7 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
 #-----------------------------------------------------------------------
 # Convert Verilog HDL into a C++ simulator using Verilator.
 # http://www.veripool.org/wiki/verilator
+
 def verilate_model( filename, model_name, vcd_en, lint ):
 
   # verilator commandline template
@@ -85,29 +87,42 @@ def verilate_model( filename, model_name, vcd_en, lint ):
   # try compilation
 
   try:
-    print( compile_cmd )
+    # print( compile_cmd )
     result = check_output( compile_cmd, stderr=STDOUT, shell=True )
-    print( result )
+    # print( result )
 
   # handle verilator failure
 
   except CalledProcessError as e:
+    # error_msg = """
+    #   Module did not Verilate!
+    #
+    #   Command:
+    #   {command}
+    #
+    #   Error:
+    #   {error}
+    # """
+
+    # We remove the final "Error: Command Failed" line to make the output
+    # more succinct.
+
+    split_output = e.output.splitlines()
+    error = '\n'.join(split_output[:-1])
+
+    if not split_output[-1].startswith("%Error: Command Failed"):
+      error += "\n"+split_output[-1]
+
     error_msg = """
-      Module did not Verilate!
+See "Errors and Warnings" section in the manual located here
+http://www.veripool.org/projects/verilator/wiki/Manual-verilator
+for more details on various Verilator warnings and error messages.
 
-      Command:
-      {command}
-
-      Error:
-      {error}
-    """
-
-    # Source:
-    # \x1b[31m {source} \x1b[0m
+{error}"""
 
     raise VerilatorCompileError( error_msg.format(
       command = e.cmd,
-      error   = e.output
+      error   = error
     ))
 
 #-----------------------------------------------------------------------
