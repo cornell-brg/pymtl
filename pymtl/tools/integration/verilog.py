@@ -181,6 +181,7 @@ class VerilogModel( Model ):
 #-----------------------------------------------------------------------
 # import_module
 #-----------------------------------------------------------------------
+
 def import_module( model, o ):
   """Generate Verilog source for a user-defined VerilogModule and return
   the name of the source file containing the imported component.
@@ -200,6 +201,7 @@ def import_module( model, o ):
 #-----------------------------------------------------------------------
 # import_sources
 #-----------------------------------------------------------------------
+
 def import_sources( source_list, o ):
   """Import Verilog source from all Verilog files source_list, as well
   as any source files specified by `include within those files.
@@ -256,7 +258,15 @@ def import_sources( source_list, o ):
   # lines with `include statements.
 
   for verilog_file in reversed( source_list ):
-    src = '`line 1 "{}" 0\n'.format( verilog_file )
+
+    # We remove the include directory from the verilog file name to make
+    # error reporting by Verilator more succinct. -cbatten
+
+    short_verilog_file = verilog_file
+    if verilog_file.startswith( include_path+"/" ):
+      short_verilog_file = verilog_file[len(include_path+"/"):]
+
+    src = '`line 1 "{}" 0\n'.format( short_verilog_file )
 
     with open( verilog_file, 'r' ) as fp:
       for line in fp:
@@ -270,6 +280,7 @@ def import_sources( source_list, o ):
 #-----------------------------------------------------------------------
 # _instantiate_verilog
 #-----------------------------------------------------------------------
+
 def _instantiate_verilog( model ):
 
   model._auto_init()
