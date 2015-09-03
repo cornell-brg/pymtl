@@ -33,6 +33,7 @@ def TranslationTool( model_inst, lint=False ):
   c_wrapper_file  = model_name + '_v.cpp'
   py_wrapper_file = model_name + '_v.py'
   lib_file        = 'lib{}_v.so'.format( model_name )
+  obj_dir         = 'obj_dir_' + model_name
 
   vcd_en   = True
   vcd_file = ''
@@ -47,9 +48,15 @@ def TranslationTool( model_inst, lint=False ):
     verilog.translate( model_inst, fd )
 
   # Check if the temporary file matches an existing file (caching)
+
   cached = False
-  if exists(verilog_file) and exists(py_wrapper_file) and exists(lib_file):
+  if (     exists(verilog_file)
+       and exists(py_wrapper_file)
+       and exists(lib_file)
+       and exists(obj_dir) ):
+
     cached = filecmp.cmp( temp_file, verilog_file )
+
     # if not cached:
     #   os.system( ' diff %s %s'%( temp_file, verilog_file ))
 
@@ -58,9 +65,11 @@ def TranslationTool( model_inst, lint=False ):
 
   # Verilate the module only if we've updated the verilog source
   if not cached:
-    # print( "NOT CACHED", verilog_file )
+    #print( "NOT CACHED", verilog_file )
     verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
                       lib_file, py_wrapper_file, vcd_en, lint )
+  #else:
+  #  print( "CACHED", verilog_file )
 
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )
