@@ -14,3 +14,6 @@ from ListMemPortAdapterOld import ListMemPortAdapterOld
 from QueuePortProxy import InQueuePortProxy  as InValRdyQueueAdapter
 from QueuePortProxy import OutQueuePortProxy as OutValRdyQueueAdapter
 
+from QueuePortProxy import InQueuePortProxy  as InValRdyQueueAdapterFL
+from QueuePortProxy import OutQueuePortProxy as OutValRdyQueueAdapterFL
+
