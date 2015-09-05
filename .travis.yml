@@ -36,10 +36,8 @@ install:
 
  # Install Python requirements
 
- - pip install -e .
- - pip install -r requirements.txt
- - pip install yolk
- - yolk -l
+ - pip install --editable .
+ - pip list
 
 #------------------------------------------------------------------------
 # before test runner
