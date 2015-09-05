@@ -20,7 +20,11 @@ from subprocess import check_output
 
 def get_version():
   cmd = "git describe --dirty"
-  return check_output( cmd.split() ).strip()
+  try:
+    result = check_output( cmd.split(),  ).strip()
+  except:
+    result = "?"
+  return result
 
 #-------------------------------------------------------------------------
 # get_long_descrption
