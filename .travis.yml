@@ -27,7 +27,7 @@ install:
 
  # Install verilator
 
- - git clone git@github.com:cornell-brg/verilator-travisci-cache
+ - git clone https://github.com/cornell-brg/verilator-travisci-cache.git
  - tar xfz verilator-travisci-cache/verilator-travis-3.876.tar.gz
  - export VERILATOR_ROOT=$PWD/verilator-3.876
  - export PATH=$VERILATOR_ROOT/bin:$PATH
