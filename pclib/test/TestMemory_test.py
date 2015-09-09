@@ -5,387 +5,286 @@
 from __future__ import print_function
 
 import pytest
-import pclib.ifcs.mem_msgs as mem_msgs
+import random
+import struct
 
 from pymtl      import *
-from pclib.test import TestSource, TestSink, TestMemory
+from pclib.test import mk_test_case_table, run_sim
+from pclib.test import TestSource, TestSink
+from pclib.ifcs import MemMsg, MemReqMsg, MemRespMsg
+from TestMemory import TestMemory
+from pclib.ifcs import MemMsg4B, MemReqMsg4B, MemRespMsg4B
 
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
+
 class TestHarness( Model ):
 
-  def __init__( s, memreq_params, memresp_params, nports,
-                src_msgs, sink_msgs, src_delay, sink_delay, mem_delay ):
+  def __init__( s, nports, src_msgs, sink_msgs, stall_prob, latency,
+                src_delay, sink_delay ):
+
+    # Messge type
+
+    mem_msgs = MemMsg4B()
 
     # Instantiate models
 
-    s.src  = [ TestSource( memreq_params.nbits, src_msgs[x], src_delay )
-               for x in range( nports ) ]
+    s.srcs = []
+    for i in range(nports):
+      s.srcs.append( TestSource( mem_msgs.req, src_msgs[i], src_delay ) )
 
-    s.mem  = TestMemory( memreq_params, memresp_params, nports, mem_delay )
+    s.mem  = TestMemory( mem_msgs, nports, stall_prob, latency )
 
-    s.sink = [ TestSink( memresp_params.nbits, sink_msgs[x], sink_delay )
-               for x in range( nports ) ]
+    s.sinks = []
+    for i in range(nports):
+      s.sinks.append( TestSink( mem_msgs.resp, sink_msgs[i], sink_delay ) )
 
-    # connect
+    # Connect
 
     for i in range( nports ):
-      s.connect( s.src[i].out,  s.mem.reqs[i]  )
-      s.connect( s.sink[i].in_, s.mem.resps[i] )
+      s.connect( s.srcs[i].out,  s.mem.reqs[i]  )
+      s.connect( s.sinks[i].in_, s.mem.resps[i] )
 
   def done( s ):
 
     done_flag = 1
-    for src, sink in zip( s.src, s.sink ):
-      done_flag &= (src.done.uint() and sink.done.uint())
+    for src,sink in zip( s.srcs, s.sinks ):
+      done_flag &= src.done and sink.done
     return done_flag
 
-  def line_trace( s ):
-    return s.mem.line_trace()
+  def line_trace(s ):
+    return s.srcs[0].line_trace() + " " + s.mem.line_trace() + " " + s.sinks[0].line_trace()
 
 #-------------------------------------------------------------------------
-# run_mem_test
+# make messages
 #-------------------------------------------------------------------------
-def run_mem_test( dump_vcd, src_delay, sink_delay,
-                  mem_delay, nports, test_msgs ):
 
-  # Create parameters
+def req( type_, opaque, addr, len, data ):
+  msg = MemReqMsg4B()
 
-  memreq_params  = mem_msgs.MemReqParams( 32, 32 )
-  memresp_params = mem_msgs.MemRespParams( 32 )
+  if   type_ == 'rd': msg.type_ = MemReqMsg.TYPE_READ
+  elif type_ == 'wr': msg.type_ = MemReqMsg.TYPE_WRITE
 
-  # src/sink msgs
+  msg.addr   = addr
+  msg.opaque = opaque
+  msg.len    = len
+  msg.data   = data
+  return msg
 
-  src_msgs  = test_msgs[0]
-  sink_msgs = test_msgs[1]
+def resp( type_, opaque, len, data ):
+  msg = MemRespMsg4B()
 
-  # Instantiate and elaborate the model
+  if   type_ == 'rd': msg.type_ = MemRespMsg.TYPE_READ
+  elif type_ == 'wr': msg.type_ = MemRespMsg.TYPE_WRITE
 
-  model = TestHarness( memreq_params, memresp_params, nports, src_msgs,
-                       sink_msgs, src_delay, sink_delay, mem_delay )
-  model.vcd_file = dump_vcd
-  model.elaborate()
+  msg.opaque = opaque
+  msg.len    = len
+  msg.data   = data
+  return msg
 
-  # Create a simulator using the simulation tool
+#----------------------------------------------------------------------
+# Test Case: basic
+#----------------------------------------------------------------------
 
-  sim = SimulationTool( model )
+def basic_msgs( base_addr ):
+  return [
+    req( 'wr', 0x0, base_addr, 0, 0xdeadbeef ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'rd', 0x1, base_addr, 0, 0          ), resp( 'rd', 0x1, 0, 0xdeadbeef ),
+  ]
 
-  # Run the simulation
+#----------------------------------------------------------------------
+# Test Case: stream
+#----------------------------------------------------------------------
 
-  print()
+def stream_msgs( base_addr ):
 
-  sim.reset()
-  while not model.done():
-    sim.print_line_trace()
-    sim.cycle()
+  msgs = []
+  for i in range(20):
+    msgs.extend([
+      req( 'wr', i, base_addr+4*i, 0, i ), resp( 'wr', i, 0, 0 ),
+      req( 'rd', i, base_addr+4*i, 0, 0 ), resp( 'rd', i, 0, i ),
+    ])
 
-  # Add a couple extra ticks so that the VCD dump is nicer
+  return msgs
 
-  sim.cycle()
-  sim.cycle()
-  sim.cycle()
+#----------------------------------------------------------------------
+# Test Case: subword reads
+#----------------------------------------------------------------------
 
-#-------------------------------------------------------------------------
-# single port memory test messages
-#-------------------------------------------------------------------------
-def single_port_mem_test_msgs():
+def subword_rd_msgs( base_addr ):
+  return [
 
-  # number of memory ports
-  nports = 1
+    req( 'wr', 0x0, base_addr+0, 0, 0xdeadbeef ), resp( 'wr', 0x0, 0, 0          ),
 
-  # Create parameters
+    req( 'rd', 0x1, base_addr+0, 1, 0          ), resp( 'rd', 0x1, 1, 0x000000ef ),
+    req( 'rd', 0x2, base_addr+1, 1, 0          ), resp( 'rd', 0x2, 1, 0x000000be ),
+    req( 'rd', 0x3, base_addr+2, 1, 0          ), resp( 'rd', 0x3, 1, 0x000000ad ),
+    req( 'rd', 0x4, base_addr+3, 1, 0          ), resp( 'rd', 0x4, 1, 0x000000de ),
 
-  memreq_params  = mem_msgs.MemReqParams( 32, 32 )
-  memresp_params = mem_msgs.MemRespParams( 32 )
+    req( 'rd', 0x5, base_addr+0, 2, 0          ), resp( 'rd', 0x5, 2, 0x0000beef ),
+    req( 'rd', 0x6, base_addr+1, 2, 0          ), resp( 'rd', 0x6, 2, 0x0000adbe ),
+    req( 'rd', 0x7, base_addr+2, 2, 0          ), resp( 'rd', 0x7, 2, 0x0000dead ),
 
-  src_msgs  = [ [] for x in range( nports ) ]
-  sink_msgs = [ [] for x in range( nports ) ]
+    req( 'rd', 0x8, base_addr+0, 3, 0          ), resp( 'rd', 0x8, 3, 0x00adbeef ),
+    req( 'rd', 0x9, base_addr+1, 3, 0          ), resp( 'rd', 0x9, 3, 0x00deadbe ),
 
-  # Syntax helpers
+    req( 'rd', 0xa, base_addr+0, 0, 0          ), resp( 'rd', 0xa, 0, 0xdeadbeef ),
 
-  req  = memreq_params.mk_req
-  resp = memresp_params.mk_resp
+  ]
 
-  def req_rd( addr, len_, data ):
-    return req( memreq_params.type_read, addr, len_, data )
+#----------------------------------------------------------------------
+# Test Case: subword writes
+#----------------------------------------------------------------------
 
-  def req_wr( addr, len_, data ):
-    return req( memreq_params.type_write, addr, len_, data )
+def subword_wr_msgs( base_addr ):
+  return [
 
-  def resp_rd( len_, data ):
-    return resp( memresp_params.type_read, len_, data )
+    req( 'wr', 0x0, base_addr+0, 1, 0x000000ef ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'wr', 0x1, base_addr+1, 1, 0x000000be ), resp( 'wr', 0x1, 0, 0          ),
+    req( 'wr', 0x2, base_addr+2, 1, 0x000000ad ), resp( 'wr', 0x2, 0, 0          ),
+    req( 'wr', 0x3, base_addr+3, 1, 0x000000de ), resp( 'wr', 0x3, 0, 0          ),
+    req( 'rd', 0x4, base_addr+0, 0, 0          ), resp( 'rd', 0x4, 0, 0xdeadbeef ),
 
-  def resp_wr( len_, data ):
-    return resp( memresp_params.type_write, len_, data )
+    req( 'wr', 0x5, base_addr+0, 2, 0x0000abcd ), resp( 'wr', 0x5, 0, 0          ),
+    req( 'wr', 0x6, base_addr+2, 2, 0x0000ef01 ), resp( 'wr', 0x6, 0, 0          ),
+    req( 'rd', 0x7, base_addr+0, 0, 0          ), resp( 'rd', 0x7, 0, 0xef01abcd ),
 
-  def mk_req_resp( idx, req, resp ):
-    src_msgs[idx].append( req )
-    sink_msgs[idx].append( resp )
+    req( 'wr', 0x8, base_addr+1, 2, 0x00002345 ), resp( 'wr', 0x8, 0, 0          ),
+    req( 'rd', 0xa, base_addr+0, 0, 0          ), resp( 'rd', 0xa, 0, 0xef2345cd ),
 
-  # Test messages
+    req( 'wr', 0xb, base_addr+0, 3, 0x00cafe02 ), resp( 'wr', 0xb, 0, 0          ),
+    req( 'rd', 0xc, base_addr+0, 0, 0          ), resp( 'rd', 0xc, 0, 0xefcafe02 ),
 
-  #            port mem_request                          mem_response
-  mk_req_resp( 0,   req_wr( 0x00001000, 1, 0x000000ab ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001000, 1, 0x00000000 ), resp_rd( 1, 0x000000ab ) )
-  mk_req_resp( 0,   req_wr( 0x00001001, 1, 0x000000cd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001001, 1, 0x00000000 ), resp_rd( 1, 0x000000cd ) )
-  mk_req_resp( 0,   req_wr( 0x00001000, 1, 0x000000ef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001000, 1, 0x00000000 ), resp_rd( 1, 0x000000ef ) )
+  ]
 
-  mk_req_resp( 0,   req_wr( 0x00002000, 2, 0x0000abcd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002000, 2, 0x00000000 ), resp_rd( 2, 0x0000abcd ) )
-  mk_req_resp( 0,   req_wr( 0x00002002, 2, 0x0000ef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002002, 2, 0x00000000 ), resp_rd( 2, 0x0000ef01 ) )
-  mk_req_resp( 0,   req_wr( 0x00002000, 2, 0x00002345 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002000, 2, 0x00000000 ), resp_rd( 2, 0x00002345 ) )
+#----------------------------------------------------------------------
+# Test Case: random
+#----------------------------------------------------------------------
 
-  mk_req_resp( 0,   req_wr( 0x00004000, 0, 0xabcdef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xabcdef01 ) )
-  mk_req_resp( 0,   req_wr( 0x00004004, 0, 0x23456789 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004004, 0, 0x00000000 ), resp_rd( 0, 0x23456789 ) )
-  mk_req_resp( 0,   req_wr( 0x00004000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
+def random_msgs( base_addr ):
 
-  return [ src_msgs, sink_msgs ]
+  rgen = random.Random()
+  rgen.seed(0xa4e28cc2)
 
-#-------------------------------------------------------------------------
-# dual port memory test messages
-#-------------------------------------------------------------------------
-def dual_port_mem_test_msgs():
+  vmem = [ rgen.randint(0,0xffffffff) for _ in range(20) ]
+  msgs = []
 
-  # number of memory ports
-  nports = 2
+  for i in range(20):
+    msgs.extend([
+      req( 'wr', i, base_addr+4*i, 0, vmem[i] ), resp( 'wr', i, 0, 0 ),
+    ])
 
-  # Create parameters
+  for i in range(20):
+    idx = rgen.randint(0,19)
 
-  memreq_params  = mem_msgs.MemReqParams( 32, 32 )
-  memresp_params = mem_msgs.MemRespParams( 32 )
+    if rgen.randint(0,1):
 
-  src_msgs  = [ [] for x in range( nports ) ]
-  sink_msgs = [ [] for x in range( nports ) ]
+      correct_data = vmem[idx]
+      msgs.extend([
+        req( 'rd', i, base_addr+4*idx, 0, 0 ), resp( 'rd', i, 0, correct_data ),
+      ])
 
-  # Syntax helpers
+    else:
 
-  req  = memreq_params.mk_req
-  resp = memresp_params.mk_resp
+      new_data = rgen.randint(0,0xffffffff)
+      vmem[idx] = new_data
+      msgs.extend([
+        req( 'wr', i, base_addr+4*idx, 0, new_data ), resp( 'wr', i, 0, 0 ),
+      ])
 
-  def req_rd( addr, len_, data ):
-    return req( memreq_params.type_read, addr, len_, data )
-
-  def req_wr( addr, len_, data ):
-    return req( memreq_params.type_write, addr, len_, data )
-
-  def resp_rd( len_, data ):
-    return resp( memresp_params.type_read, len_, data )
-
-  def resp_wr( len_, data ):
-    return resp( memresp_params.type_write, len_, data )
-
-  def mk_req_resp( idx, req, resp ):
-    src_msgs[idx].append( req )
-    sink_msgs[idx].append( resp )
-
-  # Test messages
-
-  # Note: Set the address of port 1 to large enough offset such that there
-  # will be no overlap between port 0 and port 1 requests
-
-  #            port mem_request                          mem_response
-  mk_req_resp( 0,   req_wr( 0x00001000, 1, 0x000000ab ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00011000, 1, 0x000000ab ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001000, 1, 0x00000000 ), resp_rd( 1, 0x000000ab ) )
-  mk_req_resp( 1,   req_rd( 0x00011000, 1, 0x00000000 ), resp_rd( 1, 0x000000ab ) )
-  mk_req_resp( 0,   req_wr( 0x00001001, 1, 0x000000cd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00011001, 1, 0x000000cd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001001, 1, 0x00000000 ), resp_rd( 1, 0x000000cd ) )
-  mk_req_resp( 1,   req_rd( 0x00011001, 1, 0x00000000 ), resp_rd( 1, 0x000000cd ) )
-  mk_req_resp( 0,   req_wr( 0x00001000, 1, 0x000000ef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00011000, 1, 0x000000ef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001000, 1, 0x00000000 ), resp_rd( 1, 0x000000ef ) )
-  mk_req_resp( 1,   req_rd( 0x00011000, 1, 0x00000000 ), resp_rd( 1, 0x000000ef ) )
-
-  mk_req_resp( 0,   req_wr( 0x00002000, 2, 0x0000abcd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00012000, 2, 0x0000abcd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002000, 2, 0x00000000 ), resp_rd( 2, 0x0000abcd ) )
-  mk_req_resp( 1,   req_rd( 0x00012000, 2, 0x00000000 ), resp_rd( 2, 0x0000abcd ) )
-  mk_req_resp( 0,   req_wr( 0x00002002, 2, 0x0000ef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00012002, 2, 0x0000ef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002002, 2, 0x00000000 ), resp_rd( 2, 0x0000ef01 ) )
-  mk_req_resp( 1,   req_rd( 0x00012002, 2, 0x00000000 ), resp_rd( 2, 0x0000ef01 ) )
-  mk_req_resp( 0,   req_wr( 0x00002000, 2, 0x00002345 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00012000, 2, 0x00002345 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002000, 2, 0x00000000 ), resp_rd( 2, 0x00002345 ) )
-  mk_req_resp( 1,   req_rd( 0x00012000, 2, 0x00000000 ), resp_rd( 2, 0x00002345 ) )
-
-  mk_req_resp( 0,   req_wr( 0x00004000, 0, 0xabcdef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00014000, 0, 0xabcdef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xabcdef01 ) )
-  mk_req_resp( 1,   req_rd( 0x00014000, 0, 0x00000000 ), resp_rd( 0, 0xabcdef01 ) )
-  mk_req_resp( 0,   req_wr( 0x00004004, 0, 0x23456789 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00014004, 0, 0x23456789 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004004, 0, 0x00000000 ), resp_rd( 0, 0x23456789 ) )
-  mk_req_resp( 1,   req_rd( 0x00014004, 0, 0x00000000 ), resp_rd( 0, 0x23456789 ) )
-  mk_req_resp( 0,   req_wr( 0x00004000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00014000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
-  mk_req_resp( 1,   req_rd( 0x00014000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
-
-  return [ src_msgs, sink_msgs ]
+  return msgs
 
 #-------------------------------------------------------------------------
-# quad port memory test messages
+# Test Case Table
 #-------------------------------------------------------------------------
-def quad_port_mem_test_msgs():
 
-  # number of memory ports
-  nports = 4
-
-  # Create parameters
-
-  memreq_params  = mem_msgs.MemReqParams( 32, 32 )
-  memresp_params = mem_msgs.MemRespParams( 32 )
-
-  src_msgs  = [ [] for _ in range( nports ) ]
-  sink_msgs = [ [] for _ in range( nports ) ]
-
-  # Syntax helpers
-
-  req  = memreq_params.mk_req
-  resp = memresp_params.mk_resp
-
-  def req_rd( addr, len_, data ):
-    return req( memreq_params.type_read, addr, len_, data )
-
-  def req_wr( addr, len_, data ):
-    return req( memreq_params.type_write, addr, len_, data )
-
-  def resp_rd( len_, data ):
-    return resp( memresp_params.type_read, len_, data )
-
-  def resp_wr( len_, data ):
-    return resp( memresp_params.type_write, len_, data )
-
-  def mk_req_resp( idx, req, resp ):
-    src_msgs[idx].append( req )
-    sink_msgs[idx].append( resp )
-
-  # Test messages
-
-  # Note: Set the address of ports to large enough offset such that there
-  # will be no overlap between port 0, port 1, port 2 and port 3 requests
-
-  #            port mem_request                          mem_response
-  mk_req_resp( 0,   req_wr( 0x00001000, 1, 0x000000ab ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00011000, 1, 0x000000ab ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00021000, 1, 0x000000ab ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00031000, 1, 0x000000ab ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001000, 1, 0x00000000 ), resp_rd( 1, 0x000000ab ) )
-  mk_req_resp( 1,   req_rd( 0x00011000, 1, 0x00000000 ), resp_rd( 1, 0x000000ab ) )
-  mk_req_resp( 2,   req_rd( 0x00021000, 1, 0x00000000 ), resp_rd( 1, 0x000000ab ) )
-  mk_req_resp( 3,   req_rd( 0x00031000, 1, 0x00000000 ), resp_rd( 1, 0x000000ab ) )
-  mk_req_resp( 0,   req_wr( 0x00001001, 1, 0x000000cd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00011001, 1, 0x000000cd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00021001, 1, 0x000000cd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00031001, 1, 0x000000cd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001001, 1, 0x00000000 ), resp_rd( 1, 0x000000cd ) )
-  mk_req_resp( 1,   req_rd( 0x00011001, 1, 0x00000000 ), resp_rd( 1, 0x000000cd ) )
-  mk_req_resp( 2,   req_rd( 0x00021001, 1, 0x00000000 ), resp_rd( 1, 0x000000cd ) )
-  mk_req_resp( 3,   req_rd( 0x00031001, 1, 0x00000000 ), resp_rd( 1, 0x000000cd ) )
-  mk_req_resp( 0,   req_wr( 0x00001000, 1, 0x000000ef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00011000, 1, 0x000000ef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00021000, 1, 0x000000ef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00031000, 1, 0x000000ef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00001000, 1, 0x00000000 ), resp_rd( 1, 0x000000ef ) )
-  mk_req_resp( 1,   req_rd( 0x00011000, 1, 0x00000000 ), resp_rd( 1, 0x000000ef ) )
-  mk_req_resp( 2,   req_rd( 0x00021000, 1, 0x00000000 ), resp_rd( 1, 0x000000ef ) )
-  mk_req_resp( 3,   req_rd( 0x00031000, 1, 0x00000000 ), resp_rd( 1, 0x000000ef ) )
-
-  mk_req_resp( 0,   req_wr( 0x00002000, 2, 0x0000abcd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00012000, 2, 0x0000abcd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00022000, 2, 0x0000abcd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00032000, 2, 0x0000abcd ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002000, 2, 0x00000000 ), resp_rd( 2, 0x0000abcd ) )
-  mk_req_resp( 1,   req_rd( 0x00012000, 2, 0x00000000 ), resp_rd( 2, 0x0000abcd ) )
-  mk_req_resp( 2,   req_rd( 0x00022000, 2, 0x00000000 ), resp_rd( 2, 0x0000abcd ) )
-  mk_req_resp( 3,   req_rd( 0x00032000, 2, 0x00000000 ), resp_rd( 2, 0x0000abcd ) )
-  mk_req_resp( 0,   req_wr( 0x00002002, 2, 0x0000ef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00012002, 2, 0x0000ef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00022002, 2, 0x0000ef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00032002, 2, 0x0000ef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002002, 2, 0x00000000 ), resp_rd( 2, 0x0000ef01 ) )
-  mk_req_resp( 1,   req_rd( 0x00012002, 2, 0x00000000 ), resp_rd( 2, 0x0000ef01 ) )
-  mk_req_resp( 2,   req_rd( 0x00022002, 2, 0x00000000 ), resp_rd( 2, 0x0000ef01 ) )
-  mk_req_resp( 3,   req_rd( 0x00032002, 2, 0x00000000 ), resp_rd( 2, 0x0000ef01 ) )
-  mk_req_resp( 0,   req_wr( 0x00002000, 2, 0x00002345 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00012000, 2, 0x00002345 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00022000, 2, 0x00002345 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00032000, 2, 0x00002345 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00002000, 2, 0x00000000 ), resp_rd( 2, 0x00002345 ) )
-  mk_req_resp( 1,   req_rd( 0x00012000, 2, 0x00000000 ), resp_rd( 2, 0x00002345 ) )
-  mk_req_resp( 2,   req_rd( 0x00022000, 2, 0x00000000 ), resp_rd( 2, 0x00002345 ) )
-  mk_req_resp( 3,   req_rd( 0x00032000, 2, 0x00000000 ), resp_rd( 2, 0x00002345 ) )
-
-  mk_req_resp( 0,   req_wr( 0x00004000, 0, 0xabcdef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00014000, 0, 0xabcdef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00024000, 0, 0xabcdef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00034000, 0, 0xabcdef01 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xabcdef01 ) )
-  mk_req_resp( 1,   req_rd( 0x00014000, 0, 0x00000000 ), resp_rd( 0, 0xabcdef01 ) )
-  mk_req_resp( 2,   req_rd( 0x00024000, 0, 0x00000000 ), resp_rd( 0, 0xabcdef01 ) )
-  mk_req_resp( 3,   req_rd( 0x00034000, 0, 0x00000000 ), resp_rd( 0, 0xabcdef01 ) )
-  mk_req_resp( 0,   req_wr( 0x00004004, 0, 0x23456789 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00014004, 0, 0x23456789 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00024004, 0, 0x23456789 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00034004, 0, 0x23456789 ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004004, 0, 0x00000000 ), resp_rd( 0, 0x23456789 ) )
-  mk_req_resp( 1,   req_rd( 0x00014004, 0, 0x00000000 ), resp_rd( 0, 0x23456789 ) )
-  mk_req_resp( 2,   req_rd( 0x00024004, 0, 0x00000000 ), resp_rd( 0, 0x23456789 ) )
-  mk_req_resp( 3,   req_rd( 0x00034004, 0, 0x00000000 ), resp_rd( 0, 0x23456789 ) )
-  mk_req_resp( 0,   req_wr( 0x00004000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 1,   req_wr( 0x00014000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 2,   req_wr( 0x00024000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 3,   req_wr( 0x00034000, 0, 0xdeadbeef ), resp_wr( 0, 0x00000000 ) )
-  mk_req_resp( 0,   req_rd( 0x00004000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
-  mk_req_resp( 1,   req_rd( 0x00014000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
-  mk_req_resp( 2,   req_rd( 0x00024000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
-  mk_req_resp( 3,   req_rd( 0x00034000, 0, 0x00000000 ), resp_rd( 0, 0xdeadbeef ) )
-
-  return [ src_msgs, sink_msgs ]
-
-#-------------------------------------------------------------------------
-# test_single_port
-#-------------------------------------------------------------------------
-@pytest.mark.parametrize('src_delay,sink_delay,mem_delay,nports',[
-  ( 0,  0,  3,  1),
-  ( 5, 10,  8,  1),
-  (10,  5,  2,  1),
+test_case_table = mk_test_case_table([
+  (                             "msg_func          stall lat src sink"),
+  [ "basic",                     basic_msgs,       0.0,  0,  0,  0    ],
+  [ "stream",                    stream_msgs,      0.0,  0,  0,  0    ],
+  [ "subword_rd",                subword_rd_msgs,  0.0,  0,  0,  0    ],
+  [ "subword_wr",                subword_wr_msgs,  0.0,  0,  0,  0    ],
+  [ "random",                    random_msgs,      0.0,  0,  0,  0    ],
+  [ "random_3x14",               random_msgs,      0.0,  0,  3,  14   ],
+  [ "stream_stall0.5_lat0",      stream_msgs,      0.5,  0,  0,  0    ],
+  [ "stream_stall0.0_lat4",      stream_msgs,      0.0,  4,  0,  0    ],
+  [ "stream_stall0.5_lat4",      stream_msgs,      0.5,  4,  0,  0    ],
+  [ "random_stall0.5_lat4_3x14", random_msgs,      0.5,  4,  3,  14   ],
 ])
-def test_single_port( dump_vcd, src_delay, sink_delay, mem_delay, nports ):
-  run_mem_test( dump_vcd, src_delay, sink_delay, mem_delay, nports,
-                single_port_mem_test_msgs() )
 
 #-------------------------------------------------------------------------
-# test_dual_port
+# Test cases for 1 port
 #-------------------------------------------------------------------------
-@pytest.mark.parametrize('src_delay,sink_delay,mem_delay,nports',[
-  ( 0,  0,  4,  2),
-  ( 5, 10,  3,  2),
-  (10,  5,  3,  2),
-])
-def test_dual_port( dump_vcd, src_delay, sink_delay, mem_delay, nports ):
-  run_mem_test( dump_vcd, src_delay, sink_delay, mem_delay, nports,
-                dual_port_mem_test_msgs() )
+
+@pytest.mark.parametrize( **test_case_table )
+def test_1port( test_params, dump_vcd ):
+  msgs = test_params.msg_func(0x1000)
+  run_sim( TestHarness( 1, [ msgs[::2] ], [ msgs[1::2] ],
+                        test_params.stall, test_params.lat,
+                        test_params.src, test_params.sink ),
+           dump_vcd )
 
 #-------------------------------------------------------------------------
-# test_quad_port
+# Test cases for 2 port
 #-------------------------------------------------------------------------
-@pytest.mark.parametrize('src_delay,sink_delay,mem_delay,nports',[
-  ( 0,  0,  7,  4),
-  ( 5, 10,  4,  4),
-  (10,  5,  6,  4),
-])
-def test_quad_port( dump_vcd, src_delay, sink_delay, mem_delay, nports ):
-  run_mem_test( dump_vcd, src_delay, sink_delay, mem_delay, nports,
-                quad_port_mem_test_msgs() )
+
+@pytest.mark.parametrize( **test_case_table )
+def test_2port( test_params, dump_vcd ):
+  msgs0 = test_params.msg_func(0x1000)
+  msgs1 = test_params.msg_func(0x2000)
+  run_sim( TestHarness( 2, [ msgs0[::2],  msgs1[::2]  ],
+                           [ msgs0[1::2], msgs1[1::2] ],
+                        test_params.stall, test_params.lat,
+                        test_params.src, test_params.sink ),
+           dump_vcd )
+
+#-------------------------------------------------------------------------
+# Test Read/Write Mem
+#-------------------------------------------------------------------------
+
+def test_read_write_mem( dump_vcd ):
+
+  rgen = random.Random()
+  rgen.seed(0x05a3e95b)
+
+  # Test data we want to write into memory
+
+  data = [ rgen.randrange(-(2**31),2**31) for _ in range(20) ]
+
+  # Convert test data into byte array
+
+  data_bytes = struct.pack("<{}i".format(len(data)),*data)
+
+  # Create memory messages to read and verify memory contents
+
+  msgs = []
+  for i, item in enumerate(data):
+    msgs.extend([
+      req( 'rd', 0x1, 0x1000+4*i, 0, 0 ), resp( 'rd', 0x1, 0, item ),
+    ])
+
+  # Create test harness with above memory messages
+
+  th = TestHarness( 1, [msgs[::2]], [msgs[1::2]], 0, 0, 0, 0 )
+
+  # Write the data into the test memory
+
+  th.mem.write_mem( 0x1000, data_bytes )
+
+  # Run the test
+
+  run_sim( th, dump_vcd )
+
+  # Read the data back out of the test memory
+
+  result_bytes = th.mem.read_mem( 0x1000, len(data_bytes) )
+
+  # Convert result bytes into list of ints
+
+  result = list(struct.unpack("<{}i".format(len(data)),result_bytes))
+
+  # Compare result to original data
+
+  assert result == data
 
