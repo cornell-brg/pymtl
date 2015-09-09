@@ -201,6 +201,34 @@ def import_module( model, o ):
 #-----------------------------------------------------------------------
 # import_sources
 #-----------------------------------------------------------------------
+# The right way to do this is to use a recursive function like I have
+# done below. This ensures that files are inserted into the output stream
+# in the correct order. -cbatten
+
+# Regex to extract verilog filenames from `include statements
+
+include_re = re.compile( r'"(?P<filename>[\w/\.-]*)"' )
+
+def output_verilog_file( fout, include_path, verilog_file ):
+  with open( verilog_file, 'r' ) as fp:
+
+    short_verilog_file = verilog_file
+    if verilog_file.startswith( include_path+"/" ):
+      short_verilog_file = verilog_file[len(include_path+"/"):]
+
+    fout.write( '`line 1 "{}" 0\n'.format( short_verilog_file ) )
+
+    line_num = 0
+    for line in fp:
+      line_num += 1
+      if '`include' in line:
+        filename = include_re.search( line ).group( 'filename' )
+        fullname = os.path.join( include_path, filename )
+        output_verilog_file( fout, include_path, fullname )
+        fout.write( '\n' )
+        fout.write( '`line {} "{}" 0\n'.format( line_num+1, short_verilog_file ) )
+      else:
+        fout.write( line )
 
 def import_sources( source_list, o ):
   """Import Verilog source from all Verilog files source_list, as well
@@ -242,40 +270,43 @@ def import_sources( source_list, o ):
   # Iterate through all source files and add any `include files to the
   # list of source files to import.
 
-  for verilog_file in source_list:
+  output_verilog_file( o, include_path, source_list[0] )
 
-    with open( verilog_file, 'r' ) as fp:
-      for line in fp:
-        if '`include' in line:
-          filename = include_re.search( line ).group( 'filename' )
-          fullname = os.path.join( include_path, filename )
-          if fullname not in source_list:
-            source_list.append( fullname )
+  # for verilog_file in source_list:
+  #
+  #   print(verilog_file)
+  #   with open( verilog_file, 'r' ) as fp:
+  #     for line in fp:
+  #       if '`include' in line:
+  #         filename = include_re.search( line ).group( 'filename' )
+  #         fullname = os.path.join( include_path, filename )
+  #         if fullname not in source_list:
+  #           source_list.append( fullname )
 
   # Iterate through all source files in reverse order and write out all
   # source code from imported/`included verilog files. Do this in reverse
   # order to (hopefully) resolve any `define dependencies, and remove any
   # lines with `include statements.
 
-  for verilog_file in reversed( source_list ):
-
-    # We remove the include directory from the verilog file name to make
-    # error reporting by Verilator more succinct. -cbatten
-
-    short_verilog_file = verilog_file
-    if verilog_file.startswith( include_path+"/" ):
-      short_verilog_file = verilog_file[len(include_path+"/"):]
-
-    src = '`line 1 "{}" 0\n'.format( short_verilog_file )
-
-    with open( verilog_file, 'r' ) as fp:
-      for line in fp:
-        if '`include' not in line:
-          src += line
-        else:
-          src += "// " + line
-
-    print( src, file=o )
+  # for verilog_file in reversed( source_list ):
+  #
+  #   # We remove the include directory from the verilog file name to make
+  #   # error reporting by Verilator more succinct. -cbatten
+  #
+  #   short_verilog_file = verilog_file
+  #   if verilog_file.startswith( include_path+"/" ):
+  #     short_verilog_file = verilog_file[len(include_path+"/"):]
+  #
+  #   src = '`line 1 "{}" 0\n'.format( short_verilog_file )
+  #
+  #   with open( verilog_file, 'r' ) as fp:
+  #     for line in fp:
+  #       if '`include' not in line:
+  #         src += line
+  #       else:
+  #         src += "// " + line
+  #
+  #   print( src, file=o )
 
 #-----------------------------------------------------------------------
 # _instantiate_verilog
@@ -304,5 +335,3 @@ def _instantiate_verilog( model ):
   s += tab + end_ports + endl
 
   return s
-
-
