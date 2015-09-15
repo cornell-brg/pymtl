@@ -681,3 +681,26 @@ class SingleElementSkidQueueCtrl( Model ):
       elif s.do_enq:                     s.full.next = 1
       else:                              s.full.next = s.full
 
+#-------------------------------------------------------------------------
+# TwoElementBypassQueuePRTL.py
+#-------------------------------------------------------------------------
+# FIXME: This is just cascaded two single-element bypass queues. We definitely
+# need a better one.
+
+class TwoElementBypassQueue( Model ):
+
+  def __init__( s, dtype ):
+
+    s.enq = InValRdyBundle ( dtype )
+    s.deq = OutValRdyBundle( dtype )
+
+    s.queue0 = SingleElementBypassQueue( dtype )
+    s.queue1 = SingleElementBypassQueue( dtype )
+
+    s.connect_pairs( s.enq,        s.queue0.enq,
+                     s.queue0.deq, s.queue1.enq,
+                     s.queue1.deq, s.deq
+    )
+
+  def line_trace( s ):
+    return "{} (v{},r{}) {}".format( s.enq, s.deq.val, s.deq.rdy, s.deq )
