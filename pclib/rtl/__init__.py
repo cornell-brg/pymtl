@@ -20,5 +20,6 @@ from queues import (
   NormalQueue,
   SingleElementPipelinedQueue,
   SingleElementSkidQueue,
+  TwoElementBypassQueue,
 )
 
