@@ -100,6 +100,9 @@ class MemReqMsg( BitStructDefinition ):
     elif s.type_ == MemReqMsg.TYPE_WRITE:
       return "wr:{}:{}:{}".format( s.opaque, s.addr, s.data )
 
+    else:
+      return "??:{}:{}:{}".format( s.opaque, s.addr, ' '*(s.data.nbits/4) )
+
 #-------------------------------------------------------------------------
 # MemRespMsg
 #-------------------------------------------------------------------------
@@ -196,6 +199,9 @@ class MemRespMsg( BitStructDefinition ):
 
     elif s.type_ == MemRespMsg.TYPE_WRITE:
       return "wr:{}:{}".format( s.opaque, ' '*(s.data.nbits/4) )
+
+    else:
+      return "??:{}:{}".format( s.opaque, ' '*(s.data.nbits/4) )
 
 #-------------------------------------------------------------------------
 # MemMsg
