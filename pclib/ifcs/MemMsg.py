@@ -160,6 +160,11 @@ class MemRespMsg( BitStructDefinition ):
 
   TYPE_READ  = 0
   TYPE_WRITE = 1
+  # write no-refill
+  TYPE_WRITE_INIT = 2
+  TYPE_AMO_ADD    = 3
+  TYPE_AMO_AND    = 4
+  TYPE_AMO_OR     = 5
 
   def __init__( s, opaque_nbits, data_nbits ):
 
