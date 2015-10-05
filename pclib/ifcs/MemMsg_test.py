@@ -132,7 +132,7 @@ def test_resp_str():
 
   # Verify string
 
-  assert str(msg) == "rd:07:0000adbeef"
+  assert str(msg) == "rd:07:2:0000adbeef"
 
   # Create msg
 
@@ -145,5 +145,5 @@ def test_resp_str():
 
   # Verify string
 
-  assert str(msg) == "wr:9:          "
+  assert str(msg) == "wr:9:1:          "
 
