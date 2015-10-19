@@ -13,6 +13,7 @@ from RegisterFile import RegisterFile
 from Crossbar     import Crossbar
 from PipeCtrl     import PipeCtrl
 from arbiters     import RoundRobinArbiter, RoundRobinArbiterEn
+from SRAMs        import SRAMBitsComb_rst_1rw, SRAMBytesComb_rst_1rw
 
 from queues import (
   SingleElementNormalQueue,
