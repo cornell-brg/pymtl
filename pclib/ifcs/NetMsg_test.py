@@ -40,5 +40,5 @@ def test_mk_msg():
 
   assert msg.dest    == 1
   assert msg.src     == 2
-  assert msg.seqnum  == 255
+  assert msg.opaque  == 255
   assert msg.payload == 0xaabbccdd
