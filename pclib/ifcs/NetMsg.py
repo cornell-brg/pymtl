@@ -9,7 +9,7 @@
 # 8 routers in the system, total of 256 messages and payload_nbits = 32,
 # would have a network message format as below:
 #
-#   41  39 38  36 35    32 31             0
+#   45  43 42  40 39    32 31             0
 #  +------+------+--------+---------------+
 #  | dest | src  | opaque | payload_nbits |
 #  +------+------+--------+---------------+
@@ -23,7 +23,7 @@ from pymtl import *
 # BitStruct designed to create network messages.
 class NetMsg( BitStructDefinition ):
 
-  def __init__( s, nrouters = 8, nmessages = 16, payload_nbits = 32 ):
+  def __init__( s, nrouters = 8, nmessages = 256, payload_nbits = 32 ):
 
     # Specify the size of each field
 
