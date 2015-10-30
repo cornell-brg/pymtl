@@ -2,6 +2,8 @@
 # TestSimpleSink
 #=======================================================================
 
+from copy       import deepcopy
+
 from pymtl      import *
 from pclib.ifcs import InValRdyBundle
 
@@ -19,7 +21,7 @@ class TestSimpleSink( Model ):
     s.in_  = InValRdyBundle( dtype )
     s.done = OutPort       ( 1     )
 
-    s.msgs = msgs
+    s.msgs = deepcopy( msgs )
     s.idx  = 0
 
     @s.tick
