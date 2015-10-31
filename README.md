@@ -21,6 +21,15 @@ on the [ece4750 branch][2]. If you would like to browse the PyMTL source
 code or install PyMTL on your own machine you must use the [ece4750 branch][2].
 
  [2]: https://github.com/cornell-brg/pymtl/tree/ece4750
+ 
+Tutorials
+--------------------------------------------------------------------------
+
+If you are interested in learning more about the PyMTL framework, we recommend you take a look at two tutorials that have been developed for Cornell ECE 4750. This is a course on computer architecture targeting seniors and first-year graduate students. Throughout the semester, students gradually design, implement, test, and evaluate a basic multicore system capable of running simple parallel applications at the register-transfer level. This year, students are using the PyMTL framework for all functional-level modeling and testing. Students have the option of using PyMTL or Verilog for the RTL design portion of the lab assignments. The first tutorial focuses on the PyMTL framework, while the second tutorial illustrates how PyMTL's Verilog import feature can enable applying PyMTL's powerful functional-level and testing features to RTL designs written in Verilog. Note that to complete these tutorials you will need to install the PyMTL version
+on the [ece4750 branch][2].
+
+ - http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut3-pymtl.pdf
+ - http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut4-verilog.pdf
 
 License
 --------------------------------------------------------------------------
@@ -85,7 +94,7 @@ install Verilator from source:
 ```
 
 The `PYMTL_VERILATOR_INCLUDE_DIR` environment variable is used to tell
-PyMTL where to find the various Verilator source files when peforming
+PyMTL where to find the various Verilator source files when performing
 both Verilog translation and Verilog import.
 
  [4]: http://www.veripool.org/wiki/verilator
