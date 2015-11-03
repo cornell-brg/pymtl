@@ -65,6 +65,11 @@ def req( type_, opaque, addr, len, data ):
 
   if   type_ == 'rd': msg.type_ = MemReqMsg.TYPE_READ
   elif type_ == 'wr': msg.type_ = MemReqMsg.TYPE_WRITE
+  elif type_ == 'ad': msg.type_ = MemReqMsg.TYPE_AMO_ADD
+  elif type_ == 'an': msg.type_ = MemReqMsg.TYPE_AMO_AND
+  elif type_ == 'or': msg.type_ = MemReqMsg.TYPE_AMO_OR
+  elif type_ == 'xg': msg.type_ = MemReqMsg.TYPE_AMO_XCHG
+  elif type_ == 'mn': msg.type_ = MemReqMsg.TYPE_AMO_MIN
 
   msg.addr   = addr
   msg.opaque = opaque
@@ -77,6 +82,11 @@ def resp( type_, opaque, len, data ):
 
   if   type_ == 'rd': msg.type_ = MemRespMsg.TYPE_READ
   elif type_ == 'wr': msg.type_ = MemRespMsg.TYPE_WRITE
+  elif type_ == 'ad': msg.type_ = MemRespMsg.TYPE_AMO_ADD
+  elif type_ == 'an': msg.type_ = MemRespMsg.TYPE_AMO_AND
+  elif type_ == 'or': msg.type_ = MemRespMsg.TYPE_AMO_OR
+  elif type_ == 'xg': msg.type_ = MemRespMsg.TYPE_AMO_XCHG
+  elif type_ == 'mn': msg.type_ = MemRespMsg.TYPE_AMO_MIN
 
   msg.opaque = opaque
   msg.len    = len
@@ -159,6 +169,39 @@ def subword_wr_msgs( base_addr ):
   ]
 
 #----------------------------------------------------------------------
+# Test Case: amos
+#----------------------------------------------------------------------
+
+def amo_msgs( base_addr ):
+  return [
+    # load some initial data
+    req( 'wr', 0x0, base_addr   , 0, 0x01234567 ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'wr', 0x0, base_addr+4 , 0, 0x98765432 ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'wr', 0x0, base_addr+8 , 0, 0x22002200 ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'wr', 0x0, base_addr+12, 0, 0x00112233 ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'wr', 0x0, base_addr+16, 0, 0x44556677 ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'wr', 0x0, base_addr+20, 0, 0x01230123 ), resp( 'wr', 0x0, 0, 0          ),
+    # amo.add
+    req( 'ad', 0x1, base_addr   , 0, 0x12345678 ), resp( 'ad', 0x1, 0, 0x01234567 ),
+    req( 'rd', 0x2, base_addr   , 0, 0          ), resp( 'rd', 0x2, 0, 0x13579bdf ),
+    # amo.and
+    req( 'an', 0x3, base_addr+4 , 0, 0x23456789 ), resp( 'an', 0x3, 0, 0x98765432 ),
+    req( 'rd', 0x4, base_addr+4 , 0, 0          ), resp( 'rd', 0x4, 0, 0x00444400 ),
+    # amo.or
+    req( 'or', 0x5, base_addr+8 , 0, 0x01230123 ), resp( 'or', 0x5, 0, 0x22002200 ),
+    req( 'rd', 0x6, base_addr+8 , 0, 0          ), resp( 'rd', 0x6, 0, 0x23232323 ),
+    # amo.xchg
+    req( 'xg', 0x5, base_addr+12, 0, 0xdeadbeef ), resp( 'xg', 0x5, 0, 0x00112233 ),
+    req( 'rd', 0x6, base_addr+12, 0, 0          ), resp( 'rd', 0x6, 0, 0xdeadbeef ),
+    # amo.min -- mem is smaller
+    req( 'mn', 0x7, base_addr+16, 0, 0xcafebabe ), resp( 'mn', 0x7, 0, 0x44556677 ),
+    req( 'rd', 0x8, base_addr+16, 0, 0          ), resp( 'rd', 0x8, 0, 0x44556677 ),
+    # amo.min -- arg is smaller
+    req( 'mn', 0x9, base_addr+20, 0, 0x01201234 ), resp( 'mn', 0x9, 0, 0x01230123 ),
+    req( 'rd', 0xa, base_addr+20, 0, 0          ), resp( 'rd', 0xa, 0, 0x01201234 ),
+  ]
+
+#----------------------------------------------------------------------
 # Test Case: random
 #----------------------------------------------------------------------
 
@@ -205,6 +248,7 @@ test_case_table = mk_test_case_table([
   [ "stream",                    stream_msgs,      0.0,  0,  0,  0    ],
   [ "subword_rd",                subword_rd_msgs,  0.0,  0,  0,  0    ],
   [ "subword_wr",                subword_wr_msgs,  0.0,  0,  0,  0    ],
+  [ "amo",                       amo_msgs,         0.0,  0,  0,  0    ],
   [ "random",                    random_msgs,      0.0,  0,  0,  0    ],
   [ "random_3x14",               random_msgs,      0.0,  0,  3,  14   ],
   [ "stream_stall0.5_lat0",      stream_msgs,      0.5,  0,  0,  0    ],

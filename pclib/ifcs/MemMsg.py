@@ -60,6 +60,8 @@ class MemReqMsg( BitStructDefinition ):
   TYPE_AMO_ADD    = 3
   TYPE_AMO_AND    = 4
   TYPE_AMO_OR     = 5
+  TYPE_AMO_XCHG   = 6
+  TYPE_AMO_MIN    = 7
 
   def __init__( s, opaque_nbits, addr_nbits, data_nbits ):
 
@@ -97,6 +99,17 @@ class MemReqMsg( BitStructDefinition ):
 
     return msg
 
+  def mk_msg( s, type_, opaque, addr, len_, data ):
+
+    msg        = s()
+    msg.type_  = type_
+    msg.opaque = opaque
+    msg.addr   = addr
+    msg.len    = len_
+    msg.data   = data
+
+    return msg
+
   def __str__( s ):
 
     if s.type_ == MemReqMsg.TYPE_READ:
@@ -107,6 +120,21 @@ class MemReqMsg( BitStructDefinition ):
 
     elif s.type_ == MemReqMsg.TYPE_WRITE_INIT:
       return "in:{}:{}:{}".format( s.opaque, s.addr, s.data )
+
+    elif s.type_ == MemReqMsg.TYPE_AMO_ADD:
+      return "ad:{}:{}:{}".format( s.opaque, s.addr, s.data )
+
+    elif s.type_ == MemReqMsg.TYPE_AMO_AND:
+      return "an:{}:{}:{}".format( s.opaque, s.addr, s.data )
+
+    elif s.type_ == MemReqMsg.TYPE_AMO_OR:
+      return "or:{}:{}:{}".format( s.opaque, s.addr, s.data )
+
+    elif s.type_ == MemReqMsg.TYPE_AMO_XCHG:
+      return "xg:{}:{}:{}".format( s.opaque, s.addr, s.data )
+
+    elif s.type_ == MemReqMsg.TYPE_AMO_MIN:
+      return "mn:{}:{}:{}".format( s.opaque, s.addr, s.data )
 
     else:
       return "??:{}:{}:{}".format( s.opaque, s.addr, ' '*(s.data.nbits/4) )
@@ -161,13 +189,15 @@ class MemReqMsg( BitStructDefinition ):
 
 class MemRespMsg( BitStructDefinition ):
 
-  TYPE_READ  = 0
-  TYPE_WRITE = 1
+  TYPE_READ       = 0
+  TYPE_WRITE      = 1
   # write no-refill
   TYPE_WRITE_INIT = 2
   TYPE_AMO_ADD    = 3
   TYPE_AMO_AND    = 4
   TYPE_AMO_OR     = 5
+  TYPE_AMO_XCHG   = 6
+  TYPE_AMO_MIN    = 7
 
   def __init__( s, opaque_nbits, data_nbits ):
 
@@ -205,6 +235,17 @@ class MemRespMsg( BitStructDefinition ):
 
     return msg
 
+  def mk_msg( s, type_, opaque, len_, data ):
+
+    msg        = s()
+    msg.type_  = type_
+    msg.opaque = opaque
+    msg.test   = 0
+    msg.len    = len_
+    msg.data   = data
+
+    return msg
+
   def __str__( s ):
 
     if s.type_ == MemRespMsg.TYPE_READ:
@@ -215,6 +256,21 @@ class MemRespMsg( BitStructDefinition ):
 
     elif s.type_ == MemRespMsg.TYPE_WRITE_INIT:
       return "in:{}:{}:{}".format( s.opaque, s.test, ' '*(s.data.nbits/4) )
+
+    elif s.type_ == MemRespMsg.TYPE_AMO_ADD:
+      return "ad:{}:{}:{}".format( s.opaque, s.test, s.data )
+
+    elif s.type_ == MemRespMsg.TYPE_AMO_AND:
+      return "an:{}:{}:{}".format( s.opaque, s.test, s.data )
+
+    elif s.type_ == MemRespMsg.TYPE_AMO_OR:
+      return "or:{}:{}:{}".format( s.opaque, s.test, s.data )
+
+    elif s.type_ == MemRespMsg.TYPE_AMO_XCHG:
+      return "xg:{}:{}:{}".format( s.opaque, s.test, s.data )
+
+    elif s.type_ == MemRespMsg.TYPE_AMO_MIN:
+      return "mn:{}:{}:{}".format( s.opaque, s.test, s.data )
 
     else:
       return "??:{}:{}:{}".format( s.opaque, s.test, ' '*(s.data.nbits/4) )

@@ -48,10 +48,11 @@ class TestMemory( Model ):
 
     # Local constants
 
-    s.mk_rd_resp = mem_ifc_dtypes.resp.mk_rd
-    s.mk_wr_resp = mem_ifc_dtypes.resp.mk_wr
-    s.data_nbits = mem_ifc_dtypes.req.data.nbits
-    s.nports = nports
+    s.mk_rd_resp   = mem_ifc_dtypes.resp.mk_rd
+    s.mk_wr_resp   = mem_ifc_dtypes.resp.mk_wr
+    s.mk_misc_resp = mem_ifc_dtypes.resp.mk_msg
+    s.data_nbits   = mem_ifc_dtypes.req.data.nbits
+    s.nports       = nports
 
     #---------------------------------------------------------------------
     # Tick
@@ -110,6 +111,42 @@ class TestMemory( Model ):
 
             resp_q.enq( s.mk_wr_resp( memreq.opaque, 0 ) )
 
+          # AMOS
+
+          elif ( memreq.type_ == MemReqMsg.TYPE_AMO_ADD  or
+                 memreq.type_ == MemReqMsg.TYPE_AMO_AND  or
+                 memreq.type_ == MemReqMsg.TYPE_AMO_OR   or
+                 memreq.type_ == MemReqMsg.TYPE_AMO_XCHG or
+                 memreq.type_ == MemReqMsg.TYPE_AMO_MIN ):
+
+            req_data = memreq.data
+
+            # Copy the bytes from the bytearray into read data bits
+
+            read_data = Bits( s.data_nbits )
+            for j in range( nbytes ):
+              read_data[j*8:j*8+8] = s.mem[ memreq.addr + j ]
+
+            # compute the data to be written
+
+            write_data = AMO_FUNS[ memreq.type_.uint() ]( read_data, req_data )
+
+            # Copy write data bits into bytearray
+
+            for j in range( nbytes ):
+              s.mem[ memreq.addr + j ] = write_data[j*8:j*8+8].uint()
+
+            # Create and enqueue response message
+
+            resp_q.enq( s.mk_misc_resp( memreq.type_, memreq.opaque,
+                                        memreq.len, read_data ) )
+
+          # Unknown message type -- throw an exception
+
+          else:
+            raise Exception( "TestMemory doesn't know how to handle message type {}"
+                             .format( memreq.type_ ) )
+
   #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------
@@ -139,4 +176,18 @@ class TestMemory( Model ):
   def read_mem( s, addr, size ):
     assert len(s.mem) > (addr + size)
     return s.mem[ addr : addr + size ]
+
+#-------------------------------------------------------------------------
+# AMO_FUNS
+#-------------------------------------------------------------------------
+# Implementations of the amo functions. First argument is the value read
+# from memory, the second argument is the data coming from the memory
+# request.
+
+AMO_FUNS = { MemReqMsg.TYPE_AMO_ADD  : lambda m,a : m+a,
+             MemReqMsg.TYPE_AMO_AND  : lambda m,a : m&a,
+             MemReqMsg.TYPE_AMO_OR   : lambda m,a : m|a,
+             MemReqMsg.TYPE_AMO_XCHG : lambda m,a : a,
+             MemReqMsg.TYPE_AMO_MIN  : min,
+           }
 
