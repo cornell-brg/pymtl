@@ -42,7 +42,9 @@ class InValRdyRandStallAdapter (object):
   def xtick( s ):
 
     if s.in_.rdy and s.in_.val:
-      s.data = deepcopy(s.in_.msg)
+      # TODO: this used to be deepcopy'ied but removed it for performance
+      # might break some stuff
+      s.data = s.in_.msg
 
     s.in_.rdy.next = ( s.data == None ) and ( s.rgen.random() > s.stall_prob )
 

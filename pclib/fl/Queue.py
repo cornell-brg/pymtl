@@ -15,7 +15,9 @@ class Queue (object):
 
   def enq( s, value ):
     assert not s.full()
-    s.queue.append( copy.deepcopy(value) )
+    # TODO: this used to be deepcopy'ied but now removed. It might break
+    # some stuff.
+    s.queue.append( value )
 
   def deq( s ):
     assert not s.empty()
