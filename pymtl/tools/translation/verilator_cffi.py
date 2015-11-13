@@ -351,12 +351,29 @@ def create_shared_lib( model_name, c_wrapper_file, lib_file,
   #     input_files  = [ "verilator.o", "verilator_vcd_c.o" ]
   #    )
 
-  # Compile this module
-
   obj_dir_prefix = "obj_dir_{m}/V{m}".format( m=model_name )
 
-  cpp_sources_list = [
-    obj_dir_prefix+".cpp",
+  # We need to find a list of all the generated classes. We look in the
+  # Verilator makefile for that.
+
+  cpp_sources_list = []
+
+  with open( obj_dir_prefix+"_classes.mk" ) as mkfile:
+    found = False
+    for line in mkfile:
+      if line.startswith("VM_CLASSES_FAST += "):
+        found = True
+      elif found:
+        if line.strip() == "":
+          found = False
+        else:
+          filename = line.strip()[:-2]
+          cpp_file = "obj_dir_{m}/{f}.cpp".format( m=model_name, f=filename )
+          cpp_sources_list.append( cpp_file )
+
+  # Compile this module
+
+  cpp_sources_list += [
     obj_dir_prefix+"__Syms.cpp",
     verilator_include_dir+"/verilated.cpp",
     verilator_include_dir+"/verilated_dpi.cpp",
