@@ -307,7 +307,11 @@ def create_shared_lib( model_name, c_wrapper_file, lib_file,
 
   # We always use the following include directories
 
-  verilator_include_dir = os.environ['PYMTL_VERILATOR_INCLUDE_DIR']
+  verilator_include_dir = os.environ.get('PYMTL_VERILATOR_INCLUDE_DIR')
+  if verilator_include_dir is None:
+      cmd = ['pkg-config', '--variable=includedir', 'verilator']
+      verilator_include_dir = check_output(cmd, universal_newlines=True).strip()
+
   include_dirs = [
     verilator_include_dir,
     verilator_include_dir+"/vltstd",
