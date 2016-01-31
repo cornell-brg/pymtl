@@ -169,7 +169,12 @@ class VerilogModel( Model ):
       self.sourcefile = os.path.join( os.path.dirname( file_ ),
                                       self.modulename+'.v' )
 
-    if self.vprefix:
+    # I added an extra check to only add the prefix if has not already
+    # been added. Once we started using Verilog import and then turning
+    # around and translated in the importing module this is what I needed
+    # to do to get things to work -cbatten.
+
+    if self.vprefix and not self.modulename.startswith(self.vprefix):
       self.modulename = self.vprefix + "_" + self.modulename
 
     if not self._param_dict:
