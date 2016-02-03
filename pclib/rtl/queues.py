@@ -123,6 +123,10 @@ class SingleElementBypassQueue( Model ):
     s.enq = InValRdyBundle ( dtype )
     s.deq = OutValRdyBundle( dtype )
 
+    # set high if full
+
+    s.full = OutPort( 1 )
+
     # Ctrl and Dpath unit instantiation
 
     s.ctrl  = SingleElementBypassQueueCtrl ()
@@ -134,6 +138,8 @@ class SingleElementBypassQueue( Model ):
     s.connect( s.ctrl.enq_rdy, s.enq.rdy )
     s.connect( s.ctrl.deq_val, s.deq.val )
     s.connect( s.ctrl.deq_rdy, s.deq.rdy )
+
+    s.connect( s.ctrl.full, s.full )
 
     # Dpath unit connections
 
@@ -694,6 +700,9 @@ class TwoElementBypassQueue( Model ):
     s.enq = InValRdyBundle ( dtype )
     s.deq = OutValRdyBundle( dtype )
 
+    s.full  = OutPort( 1 )
+    s.empty = OutPort( 1 )
+
     s.queue0 = SingleElementBypassQueue( dtype )
     s.queue1 = SingleElementBypassQueue( dtype )
 
@@ -701,6 +710,11 @@ class TwoElementBypassQueue( Model ):
                      s.queue0.deq, s.queue1.enq,
                      s.queue1.deq, s.deq
     )
+
+    @s.combinational
+    def full_empty():
+      s.full.value  = s.queue0.full & s.queue1.full
+      s.empty.value = (~s.queue0.full) & (~s.queue1.full)
 
   def line_trace( s ):
     return "{} (v{},r{}) {}".format( s.enq, s.deq.val, s.deq.rdy, s.deq )
