@@ -202,7 +202,8 @@ class SingleElementBypassQueueCtrl( Model ):
 
     # Full bit storage
 
-    s.full           = Wire ( 1 )
+    s.full           = OutPort( 1 )
+
     # TODO: figure out how to make these work as temporaries
     s.do_deq         = Wire ( 1 )
     s.do_enq         = Wire ( 1 )
