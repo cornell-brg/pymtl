@@ -19,7 +19,7 @@ from ..integration      import verilog
 # translate
 #-----------------------------------------------------------------------
 # Generates Verilog source from a PyMTL model.
-def translate( model, o=sys.stdout ):
+def translate( model, o=sys.stdout, enable_blackbox=False ):
 
   # List of models to translate
   translation_queue = collections.OrderedDict()
@@ -43,7 +43,7 @@ def translate( model, o=sys.stdout ):
       if x not in append_queue:
         append_queue.append( x )
     else:
-      translate_module( v, o )
+      translate_module( v, o, enable_blackbox )
 
   # Append source code for imported modules and dependecies
   verilog.import_sources( append_queue, o )
@@ -51,26 +51,37 @@ def translate( model, o=sys.stdout ):
 #-----------------------------------------------------------------------
 # translate_module
 #-----------------------------------------------------------------------
-def translate_module( model, o ):
+def translate_module( model, o, enable_blackbox=False ):
 
   # Visit concurrent blocks in design
   logic, symtab = translate_logic_blocks( model )
 
-  print( header             ( model,    symtab ), file=o, end='' )
-  print( start_mod.format   ( model.class_name ), file=o,        )
+  print( header             ( model, symtab, enable_blackbox ), file=o, end=''   )
+
+  if enable_blackbox and model.vblackbox and model.vbb_modulename:
+    print( start_mod.format ( model.vbb_modulename ), file=o,      )
+  else:
+    print( start_mod.format ( model.class_name ), file=o,          )
   # Signal Declarations
-  print( port_declarations  ( model,    symtab ), file=o, end='' )
-  print( wire_declarations  ( model,    symtab ), file=o, end='' )
-  print( create_declarations( model,   *symtab ), file=o, end='' )
-  # Structural Verilog
-  print( submodel_instances ( model,    symtab ), file=o, end='' )
-  print( signal_assignments ( model,    symtab ), file=o,        )
-  # Array Declarations
-  print( array_declarations ( model,    symtab ), file=o, end='' )
-  # Behavioral Verilog
-  print( logic,                                   file=o )
-  print( end_mod  .format   ( model.class_name ), file=o )
-  print( file=o)
+  print( port_declarations  ( model, symtab, enable_blackbox), file=o, end=''   )
+
+  if not ( enable_blackbox and model.vblackbox ):
+    print( wire_declarations  ( model,    symtab ), file=o, end='' )
+    print( create_declarations( model,   *symtab ), file=o, end='' )
+    # Structural Verilog
+    print( submodel_instances ( model, symtab, enable_blackbox ), file=o, end='' )
+    print( signal_assignments ( model,    symtab ), file=o,        )
+    # Array Declarations
+    print( array_declarations ( model,    symtab ), file=o, end='' )
+    # Behavioral Verilog
+    print( logic,                                   file=o         )
+
+  if enable_blackbox and model.vblackbox and model.vbb_modulename:
+    print( end_mod  .format   ( model.vbb_modulename ), file=o     )
+  else:
+    print( end_mod  .format   ( model.class_name ), file=o         )
+
+  print( file=o )
 
 #-----------------------------------------------------------------------
 # check_compile

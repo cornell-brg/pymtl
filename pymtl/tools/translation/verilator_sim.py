@@ -15,12 +15,13 @@ from verilator_cffi import verilog_to_pymtl
 #-----------------------------------------------------------------------
 # TranslationTool
 #-----------------------------------------------------------------------
-def TranslationTool( model_inst, lint=False ):
+def TranslationTool( model_inst, lint=False, enable_blackbox=False ):
   """Translates a PyMTL model into Python-wrapped Verilog.
 
-  model_inst: an un-elaborated Model instance
-  lint:       run verilator linter, warnings are fatal
-              (disables -Wno-lint flag)
+  model_inst:      an un-elaborated Model instance
+  lint:            run verilator linter, warnings are fatal
+                   (disables -Wno-lint flag)
+  enable_blackbox: also generate a .v file with black boxes
   """
 
   model_inst.elaborate()
@@ -34,7 +35,8 @@ def TranslationTool( model_inst, lint=False ):
   py_wrapper_file = model_name + '_v.py'
   lib_file        = 'lib{}_v.so'.format( model_name )
   obj_dir         = 'obj_dir_' + model_name
-
+  blackbox_file   = model_name + '_blackbox' + '.v'
+  
   vcd_en   = True
   vcd_file = ''
   try:
@@ -46,6 +48,11 @@ def TranslationTool( model_inst, lint=False ):
   # Write the output to a temporary file
   with open( temp_file, 'w+' ) as fd:
     verilog.translate( model_inst, fd )
+
+  # write Verilog with black boxes
+  if enable_blackbox:
+    with open( blackbox_file, 'w+' ) as fd:
+      verilog.translate( model_inst, fd, enable_blackbox=True )
 
   # Check if the temporary file matches an existing file (caching)
 

@@ -40,6 +40,22 @@ class Model( object ):
   __metaclass__ = MetaCollectArgs
   _debug        = False
 
+  # The following set of options are useful for generating a black box
+  # for this module when get translated to Verilog. For example, if you
+  # want to incorporate a SRAM or some other hard IP you could have a
+  # behavioral model in PyMTL for simulation, when pushed to the ASIC
+  # flow it will be treated as a black box and can be linked to the
+  # library of that SRAM or IP.
+
+  # To use this feature, turn on enable_blackbox option of the
+  # TranslationTool
+  # for example: s.sram = TranslationTool( s.sram, enable_blackbox=True )
+
+  vblackbox      = False  # Mark this module as a black box
+  vbb_modulename = ""     # Use a custom module name for this black box
+  vbb_no_reset   = False  # Do not generate reset port in Verilog
+  vbb_no_clk     = False  # Do not generate clk   port in Verilog
+
   #=====================================================================
   # Modeling API
   #=====================================================================

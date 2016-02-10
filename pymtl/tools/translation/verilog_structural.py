@@ -14,8 +14,13 @@ from exceptions            import VerilogTranslationError
 #-----------------------------------------------------------------------
 # header
 #-----------------------------------------------------------------------
-def header( model, symtab ):
-  s    = title_bar.format( model.class_name )
+def header( model, symtab, enable_blackbox=False ):
+  # black box with custom module name
+  if enable_blackbox and model.vblackbox and model.vbb_modulename != "":
+    s = title_bar.format( model.vbb_modulename )
+  else:
+    s = title_bar.format( model.class_name )
+
   for name, value in model._args.items():
     value_str = '{}'.format( value )
     if 'instance at' in value_str:
@@ -24,6 +29,10 @@ def header( model, symtab ):
 
   dump_vcd = hasattr( model, 'vcd_file' ) and model.vcd_file != ''
   s   += '// dump-vcd: {}'.format( dump_vcd ) + endl
+  
+  if enable_blackbox:
+    if model.vblackbox:
+      s += '// This module is treated as a black box' + endl
 
   s   += net_none + endl
   return s
@@ -32,13 +41,22 @@ def header( model, symtab ):
 # port_declarations
 #-----------------------------------------------------------------------
 # Generate Verilog source for port declarations.
-def port_declarations( model, symtab ):
+def port_declarations( model, symtab, enable_blackbox=False ):
   if not model.get_ports(): return ''
   regs = symtab[0]
   for port in model.get_ports():
     port._is_reg = port in regs
     if port._is_reg: regs.remove( port )
+
   sorted_ports = sorted( model.get_ports(), key=lambda x: x.name )
+
+  # for black boxes, remove clk or reset if necessary
+  if enable_blackbox and model.vblackbox:
+    if model.vbb_no_reset:
+      sorted_ports = [ p for p in sorted_ports if p.name != 'reset' ]
+    if model.vbb_no_clk:
+      sorted_ports = [ p for p in sorted_ports if p.name != 'clk'   ]
+
   port_list = [ port_decl( x ) for x in sorted_ports ]
   s  = start_ports + endl
   s += port_delim.join( port_list ) + endl
@@ -64,7 +82,7 @@ def wire_declarations( model, symtab ):
 # submodel_instances
 #-----------------------------------------------------------------------
 # Generate Verilog source for submodel instances.
-def submodel_instances( model, symtab ):
+def submodel_instances( model, symtab, enable_blackbox=False ):
 
   if not model.get_submodules(): return ''
   regs = symtab[0]
@@ -76,7 +94,9 @@ def submodel_instances( model, symtab ):
     submodel_name = mangle_name( submodel.name )
     temporaries = []
     connections = []
+
     for p in submodel.get_ports():
+
       port_name = mangle_name( p.name )
       temp_name = signal_to_str( p, None, model )
 
@@ -87,6 +107,15 @@ def submodel_instances( model, symtab ):
       if p not in regs:
         temporaries.append( wire_to_str( p, None, model ) )
 
+      # if submodel is a black box, then remove reset and/or clk
+      # if necessary
+
+      if enable_blackbox and submodel.vblackbox:
+        if submodel.vbb_no_reset and p.name == 'reset':
+          continue
+        if submodel.vbb_no_clk   and p.name == 'clk':
+          continue
+
       connections.append( connection.format( port_name, temp_name ) )
 
     connections = pretty_align( connections, '(' )
@@ -96,7 +125,10 @@ def submodel_instances( model, symtab ):
     s += wire_delim.join( temporaries ) + wire_delim + endl
 
     # Print the submodule instantiation
-    s += instance.format( submodel.class_name, submodel_name ) + endl
+    if enable_blackbox and submodel.vblackbox and submodel.vbb_modulename != "":
+      s += instance.format( submodel.vbb_modulename, submodel_name ) + endl
+    else:
+      s += instance.format( submodel.class_name, submodel_name ) + endl
     s += tab + start_ports + endl
     s += port_delim.join( connections ) + endl
     s += tab + end_ports + endl
