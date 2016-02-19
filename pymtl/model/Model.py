@@ -56,6 +56,21 @@ class Model( object ):
   vbb_no_reset   = False  # Do not generate reset port in Verilog
   vbb_no_clk     = False  # Do not generate clk   port in Verilog
 
+  # The following option allows annotation of an array when translating to
+  # Verilog. For example, in order for FPGA synthesis tools to infer BRAM,
+  # the array must be annotated like this:
+  #
+  #   (* RAM_STYLE="BLOCK" *) reg [p_col_width-1:0]  ram [31:0];
+  #
+  # This option is set up as a dict with the names of the arrays to
+  # annotate as keys and annotation strings as values. For example,
+  # generating the above annotation looks like this:
+  #
+  #   vannotate = { 'ram': '(* RAM_STYLE="BLOCK" *)' }
+  #
+
+  vannotate_arrays = {}     # Annotate arrays
+
   #=====================================================================
   # Modeling API
   #=====================================================================
