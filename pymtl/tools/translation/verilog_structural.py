@@ -29,7 +29,7 @@ def header( model, symtab, enable_blackbox=False ):
 
   dump_vcd = hasattr( model, 'vcd_file' ) and model.vcd_file != ''
   s   += '// dump-vcd: {}'.format( dump_vcd ) + endl
-  
+
   if enable_blackbox:
     if model.vblackbox:
       s += '// This module is treated as a black box' + endl
@@ -338,8 +338,15 @@ def array_declarations( model, symtab ):
   #---------------------------------------------------------------------
   def _gen_array_to_output( ports ):
     if isinstance( ports[0], (Wire,InPort,OutPort) ):
-      stmts = '  reg    [{:4}:0] {}[0:{}];\n' \
-              .format(ports[0].nbits-1, ports.name, len(ports)-1)
+
+      # Annotate arrays if vannotate_arrays is available
+      annotation = ''
+      if model.vannotate_arrays:
+        if ports.name in model.vannotate_arrays:
+          annotation = model.vannotate_arrays[ports.name] + ' '
+
+      stmts = '  {}reg    [{:4}:0] {}[0:{}];\n' \
+              .format(annotation, ports[0].nbits-1, ports.name, len(ports)-1)
       for i, port in enumerate(ports):
         stmts += '  assign {0} = {1}[{2:3}];\n' \
                  .format(signal_to_str(port, None, model), ports.name, i)

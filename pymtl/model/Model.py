@@ -56,6 +56,21 @@ class Model( object ):
   vbb_no_reset   = False  # Do not generate reset port in Verilog
   vbb_no_clk     = False  # Do not generate clk   port in Verilog
 
+  # The following option allows annotation of an array when translating to
+  # Verilog. For example, in order for FPGA synthesis tools to infer BRAM,
+  # the array must be annotated like this:
+  #
+  #   (* RAM_STYLE="BLOCK" *) reg [p_col_width-1:0]  ram [31:0];
+  #
+  # This option is set up as a dict with the names of the arrays to
+  # annotate as keys and annotation strings as values. For example,
+  # generating the above annotation looks like this:
+  #
+  #   vannotate = { 'ram': '(* RAM_STYLE="BLOCK" *)' }
+  #
+
+  vannotate_arrays = {}     # Annotate arrays
+
   #=====================================================================
   # Modeling API
   #=====================================================================
@@ -591,8 +606,13 @@ class Model( object ):
     # Generate a unique name for the Model instance based on its params
     # http://stackoverflow.com/a/5884123
     try:
-      hashables = frozenset({ x for x in model._args.items()
-                              if isinstance( x[1], collections.Hashable ) })
+      hashables = { x for x in model._args.items()
+                    if isinstance( x[1], collections.Hashable ) }
+
+      # Also add class name to prevent same-name same-args collisions
+      hashables.add( model.__class__ )
+
+      hashables = frozenset( hashables )
       suffix = abs( hash( hashables ) )
       return name + '_' + hex( suffix )
     # No _args attribute, so no need to create a specialized name
