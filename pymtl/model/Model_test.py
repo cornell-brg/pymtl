@@ -336,4 +336,37 @@ def test_PortConstAssertSize():
   with pytest.raises( PyMTLConnectError ):
     m = inst_elab_model( PortConstAssertSize2 )
 
+#-----------------------------------------------------------------------
+# ClassNameCollision
+#-----------------------------------------------------------------------
+# Test a corner case for module name collisions fixed by commit 94c107d.
+#
+# A model's class_name is generated during elaboration based on a hash of
+# the list of arguments and their values. If two models have the same
+# class name, same args, and same arg values (e.g., two Mux's each with 2
+# ports and 47 bits, but one is one-hot and one is not), the hashes will
+# collide. In Verilog translation, collided names result in both modules
+# pointing at the same module definition, so one is incorrect. The fix
+# added the model's __class__ to the hash generation to prevent collision.
+#
+# This test case checks for this kind of collision using two classes named
+# "ClassNameCollision" placed at different levels of the hierarchy, but
+# instantiated with the same name and same args.
+
+class ClassNameCollision( Model ):
+  def __init__( s, arg1, arg2 ):
+    s.arg1 = arg1
+    s.arg2 = arg2
+
+  class ClassNameCollision( Model ):
+    def __init__( s, arg1, arg2 ):
+      s.arg1 = arg1
+      s.arg2 = arg2
+
+def test_ClassNameCollision():
+  model1 = ClassNameCollision( 1, 2 )
+  model2 = ClassNameCollision.ClassNameCollision( 1, 2 )
+  model1.elaborate()
+  model2.elaborate()
+  assert model1.class_name != model2.class_name
 
