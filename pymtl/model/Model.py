@@ -56,20 +56,58 @@ class Model( object ):
   vbb_no_reset   = False  # Do not generate reset port in Verilog
   vbb_no_clk     = False  # Do not generate clk   port in Verilog
 
+  # Option: vannotate_arrays
+  #
   # The following option allows annotation of an array when translating to
-  # Verilog. For example, in order for FPGA synthesis tools to infer BRAM,
-  # the array must be annotated like this:
+  # Verilog.
+  #
+  # For example, in order for FPGA synthesis tools to infer BRAM, the
+  # array must be annotated like this:
   #
   #   (* RAM_STYLE="BLOCK" *) reg [p_col_width-1:0]  ram [31:0];
   #
-  # This option is set up as a dict with the names of the arrays to
-  # annotate as keys and annotation strings as values. For example,
-  # generating the above annotation looks like this:
+  # The vannotate_arrays option is set up as a dict. Keys are the names of
+  # the arrays to annotate, and values are annotation strings. For
+  # example, generating the above annotation (before the 'reg' keyword)
+  # looks like this:
   #
-  #   vannotate = { 'ram': '(* RAM_STYLE="BLOCK" *)' }
+  #   vannotate_arrays = { 'ram': '(* RAM_STYLE="BLOCK" *)' }
   #
 
-  vannotate_arrays = {}     # Annotate arrays
+  vannotate_arrays = {}
+
+  # Option: vmark_as_bram (inferring BRAM on FPGA)
+  #
+  # The following option marks the current Model as a BRAM and makes it
+  # _easier_ for the FPGA tools to infer BRAM. Note that you still need to
+  # check the synthesis report to make sure!
+  #
+  # Specifically, vmark_as_bram does the following:
+  #
+  # - suppress wire declarations. I.e., removes these declarations:
+  #
+  #     // wire declarations
+  #     wire   [  31:0] ram$000;
+  #     wire   [  31:0] ram$001;
+  #
+  # - suppress array declarations. I.e., removes these declarations:
+  #
+  #     // array declarations
+  #     assign ram$000 = ram[  0];
+  #     assign ram$001 = ram[  1];
+  #
+  # For some reason, wire/array declarations make the tools not infer
+  # BRAM. We generate these so we can peek into the array in the VCD. We
+  # will have to give that up to infer BRAM.
+  #
+  # Note: You should also add a vannotate_arrays annotation to hint that
+  # the ram array should be a BRAM:
+  #
+  #   vannotate_arrays = { 'ram': '(* RAM_STYLE="BLOCK" *)' }
+  #
+  # See above for how to use vannotate_arrays.
+
+  vmark_as_bram = False
 
   #=====================================================================
   # Modeling API

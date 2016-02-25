@@ -34,6 +34,13 @@ def header( model, symtab, enable_blackbox=False ):
     if model.vblackbox:
       s += '// This module is treated as a black box' + endl
 
+  if model.vannotate_arrays:
+    s += '// vannotate_arrays has annotated: {}'.format(
+        str(model.vannotate_arrays.keys()) ) + endl
+
+  if model.vmark_as_bram:
+    s += '// vmark_as_bram: True' + endl
+
   s   += net_none + endl
   return s
 
@@ -74,7 +81,12 @@ def wire_declarations( model, symtab ):
   wires = [ wire_decl( x ) for x in model.get_wires() if x not in regs ]
   if not wires: return ''
   s  = '  // wire declarations' + endl
-  s += wire_delim.join( wires ) + wire_delim + endl
+
+  # Generate declarations
+  gen_declarations = not model.vmark_as_bram # unless marked as BRAM
+  if gen_declarations:
+    s += wire_delim.join( wires ) + wire_delim + endl
+
   s += endl
   return s
 
@@ -347,9 +359,13 @@ def array_declarations( model, symtab ):
 
       stmts = '  {}reg    [{:4}:0] {}[0:{}];\n' \
               .format(annotation, ports[0].nbits-1, ports.name, len(ports)-1)
-      for i, port in enumerate(ports):
-        stmts += '  assign {0} = {1}[{2:3}];\n' \
-                 .format(signal_to_str(port, None, model), ports.name, i)
+
+      # Generate declarations
+      gen_declarations = not model.vmark_as_bram # unless marked as BRAM
+      if gen_declarations:
+        for i, port in enumerate(ports):
+          stmts += '  assign {0} = {1}[{2:3}];\n' \
+                   .format(signal_to_str(port, None, model), ports.name, i)
 
     elif isinstance( ports[0], (PortList,WireList) ):
       if not isinstance( ports[0][0], (Wire,InPort,OutPort) ):
