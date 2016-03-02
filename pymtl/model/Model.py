@@ -647,8 +647,10 @@ class Model( object ):
       hashables = { x for x in model._args.items()
                     if isinstance( x[1], collections.Hashable ) }
 
-      # Also add class name to prevent same-name same-args collisions
-      hashables.add( model.__class__ )
+      # Add module name to the set to prevent collisions between classes
+      # with same name and same args but in different modules (see test
+      # case in Model_test.py, ClassNameCollision)
+      hashables.add( model.__module__ )
 
       hashables = frozenset( hashables )
       suffix = abs( hash( hashables ) )

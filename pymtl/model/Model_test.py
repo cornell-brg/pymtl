@@ -339,34 +339,72 @@ def test_PortConstAssertSize():
 #-----------------------------------------------------------------------
 # ClassNameCollision
 #-----------------------------------------------------------------------
-# Test a corner case for module name collisions fixed by commit 94c107d.
-#
 # A model's class_name is generated during elaboration based on a hash of
 # the list of arguments and their values. If two models have the same
 # class name, same args, and same arg values (e.g., two Mux's each with 2
 # ports and 47 bits, but one is one-hot and one is not), the hashes will
 # collide. In Verilog translation, collided names result in both modules
-# pointing at the same module definition, so one is incorrect. The fix
-# added the model's __class__ to the hash generation to prevent collision.
+# pointing at the same module definition, so one is incorrect.
 #
-# This test case checks for this kind of collision using two classes named
-# "ClassNameCollision" placed at different levels of the hierarchy, but
-# instantiated with the same name and same args.
+# This collision is prevented by adding the model's __module__ to the hash
+# generation (_gen_class_name). A class's __module__ will be different
+# when importing from different modules.
+#
+# This test case creates two models of class name ClassNameCollisionModel,
+# one in this module and one in the Model_dummy_test.py module. They have
+# the same name and same args. The test case checks that their Model
+# class_name's do not collide after elaborate.
 
-class ClassNameCollision( Model ):
+from Model_dummy_test import ClassNameCollisionModel as ClassNameCollisionModelDummy
+
+class ClassNameCollisionModel( Model ):
   def __init__( s, arg1, arg2 ):
     s.arg1 = arg1
     s.arg2 = arg2
 
-  class ClassNameCollision( Model ):
-    def __init__( s, arg1, arg2 ):
-      s.arg1 = arg1
-      s.arg2 = arg2
-
 def test_ClassNameCollision():
-  model1 = ClassNameCollision( 1, 2 )
-  model2 = ClassNameCollision.ClassNameCollision( 1, 2 )
+  model1 = ClassNameCollisionModel     ( 1, 2 ) # same arg values
+  model2 = ClassNameCollisionModelDummy( 1, 2 ) # same arg values
   model1.elaborate()
   model2.elaborate()
   assert model1.class_name != model2.class_name
+
+#-----------------------------------------------------------------------
+# ClassNameCollisionSameModule
+#-----------------------------------------------------------------------
+# The ClassNameCollision test case checks for class name collisions due to
+# same-name same-args classes in _different_ modules. Collisions can still
+# happen if the same-name same-arg classes are in the same module. This
+# test case checks for this kind of collision using two classes named
+# "ClassNameCollision" placed at different levels of the hierarchy, but
+# instantiated with the same name and same args.
+#
+# TODO: This corner case is not yet fixed and may not need to be fixed. If
+# this seems like it is ever going to happen in practice, we will need
+# this test case to pass. This test case will pass if we use __class__ in
+# the class name generation (_gen_class_name). While this always avoids
+# collisions, it also gives a differently named translated Verilog file on
+# every run. Having the filename always changing can make it difficult for
+# other tools to point to the generated Verilog. Using __module__ in the
+# hash generation still avoids class name collisions across modules but
+# also keeps the name of the translated Verilog file the same. It means we
+# are not avoiding same-class-name same-args collisions in the same
+# module, but this seems kind of rare.
+
+# class ClassNameCollisionSameModule( Model ):
+#   def __init__( s, arg1, arg2 ):
+#     s.arg1 = arg1
+#     s.arg2 = arg2
+#
+#   class ClassNameCollisionSameModule( Model ):
+#     def __init__( s, arg1, arg2 ):
+#       s.arg1 = arg1
+#       s.arg2 = arg2
+#
+# def test_ClassNameCollisionSameModule():
+#   model1 = ClassNameCollisionSameModule( 1, 2 )
+#   model2 = ClassNameCollisionSameModule.ClassNameCollisionSameModule( 1, 2 )
+#   model1.elaborate()
+#   model2.elaborate()
+#   assert model1.class_name != model2.class_name
 
