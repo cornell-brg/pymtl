@@ -16,7 +16,7 @@ from exceptions            import VerilogTranslationError
 #-----------------------------------------------------------------------
 def header( model, symtab, enable_blackbox=False ):
   # black box with custom module name
-  if model.vbb_modulename != "":
+  if enable_blackbox and model.vbb_modulename != "":
     s = title_bar.format( model.vbb_modulename )
   else:
     s = title_bar.format( model.class_name )
@@ -137,7 +137,7 @@ def submodel_instances( model, symtab, enable_blackbox=False ):
     s += wire_delim.join( temporaries ) + wire_delim + endl
 
     # Print the submodule instantiation
-    if submodel.vbb_modulename != "":
+    if enable_blackbox and submodel.vbb_modulename != "":
       s += instance.format( submodel.vbb_modulename, submodel_name ) + endl
     else:
       s += instance.format( submodel.class_name, submodel_name ) + endl

@@ -36,7 +36,7 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False ):
   lib_file        = 'lib{}_v.so'.format( model_name )
   obj_dir         = 'obj_dir_' + model_name
   blackbox_file   = model_name + '_blackbox' + '.v'
-  
+
   vcd_en   = True
   vcd_file = ''
   try:

@@ -59,7 +59,7 @@ def translate_module( model, o, enable_blackbox=False ):
 
   print( header             ( model, symtab, enable_blackbox ), file=o, end=''   )
 
-  if model.vbb_modulename:
+  if enable_blackbox and model.vbb_modulename:
     print( start_mod.format ( model.vbb_modulename ), file=o,      )
   else:
     print( start_mod.format ( model.class_name ), file=o,          )
@@ -77,7 +77,7 @@ def translate_module( model, o, enable_blackbox=False ):
     # Behavioral Verilog
     print( logic,                                   file=o         )
 
-  if model.vbb_modulename:
+  if enable_blackbox and model.vbb_modulename:
     print( end_mod  .format   ( model.vbb_modulename ), file=o     )
   else:
     print( end_mod  .format   ( model.class_name ), file=o         )
