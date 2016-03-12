@@ -337,6 +337,70 @@ def test_PortConstAssertSize():
     m = inst_elab_model( PortConstAssertSize2 )
 
 #-----------------------------------------------------------------------
+# ModelArgsHash
+#-----------------------------------------------------------------------
+# Verify that we create unique hashes for the following four
+# combinations:
+#
+#   - constructor without default values + instance uses pos args
+#   - constructor without default values + instance uses kw  args
+#   - constructor with    default values + instance uses pos args
+#   - constructor with    default values + instance uses kw  args
+#
+
+def cmp_class_name_eq( model1, model2 ):
+  model1.elaborate()
+  model2.elaborate()
+  assert model1.class_name == model2.class_name
+
+def cmp_class_name_neq( model1, model2 ):
+  model1.elaborate()
+  model2.elaborate()
+  assert model1.class_name != model2.class_name
+
+class ModelArgsHashWithoutDefault( Model ):
+  def __init__( s, arg1, arg2 ):
+    s.arg1 = arg1
+    s.arg2 = arg2
+
+def test_ModelArgsHashWithoutDefault():
+
+  M = ModelArgsHashWithoutDefault
+
+  cmp_class_name_eq  ( M(      3,      4 ), M(      3,      4 ) )
+  cmp_class_name_neq ( M(      3,      4 ), M(      5,      6 ) )
+
+  cmp_class_name_eq  ( M(      3, arg2=4 ), M(      3, arg2=4 ) )
+  cmp_class_name_neq ( M(      3, arg2=4 ), M(      5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M( arg1=3, arg2=4 ), M( arg1=3, arg2=4 ) )
+  cmp_class_name_neq ( M( arg1=3, arg2=4 ), M( arg1=5, arg2=6 ) )
+
+class ModelArgsHashWithDefault( Model ):
+  def __init__( s, arg1=1, arg2=2 ):
+    s.arg1 = arg1
+    s.arg2 = arg2
+
+def test_ModelArgsHashWithDefault():
+
+  M = ModelArgsHashWithDefault
+
+  cmp_class_name_eq  ( M(      3,      4 ), M(      3,      4 ) )
+  cmp_class_name_neq ( M(      3,      4 ), M(      5,      6 ) )
+
+  cmp_class_name_eq  ( M(      3, arg2=4 ), M(      3, arg2=4 ) )
+  cmp_class_name_neq ( M(      3, arg2=4 ), M(      5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M( arg1=3, arg2=4 ), M( arg1=3, arg2=4 ) )
+  cmp_class_name_neq ( M( arg1=3, arg2=4 ), M( arg1=5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M(      3 ), M(      3 ) )
+  cmp_class_name_neq ( M(      3 ), M(      5 ) )
+
+  cmp_class_name_eq  ( M( arg1=3 ), M( arg1=3 ) )
+  cmp_class_name_neq ( M( arg1=3 ), M( arg1=5 ) )
+
+#-----------------------------------------------------------------------
 # ClassNameCollision
 #-----------------------------------------------------------------------
 # A model's class_name is generated during elaboration based on a hash of
