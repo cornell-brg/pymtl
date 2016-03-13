@@ -632,6 +632,13 @@ class Model( object ):
   def _gen_class_name( self, model ):
     """Generate a unique class name for model instances."""
 
+    # First check to see if designer has set an explicit name to use for
+    # this model.
+
+    if hasattr( model, 'explicit_modulename' ):
+      model.class_name = model.explicit_modulename
+      return model.explicit_modulename
+
     # Base name is always just the class name
     name = model.__class__.__name__
 
