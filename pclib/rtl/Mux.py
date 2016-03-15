@@ -14,10 +14,7 @@ class Mux( Model ):
 
     nsel  = clog2( nports )
 
-    # round-up the number of cells to the nearest power of 2
-    ncels = 2 ** nsel
-
-    s.in_ = [ InPort( dtype ) for _ in range( ncels ) ]
+    s.in_ = [ InPort( dtype ) for _ in range( nports ) ]
     s.sel = InPort  ( nsel )
     s.out = OutPort ( dtype )
 
