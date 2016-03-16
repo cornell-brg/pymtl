@@ -376,6 +376,9 @@ def test_ModelArgsHashWithoutDefault():
   cmp_class_name_eq  ( M( arg1=3, arg2=4 ), M( arg1=3, arg2=4 ) )
   cmp_class_name_neq ( M( arg1=3, arg2=4 ), M( arg1=5, arg2=6 ) )
 
+  cmp_class_name_eq  ( M( arg2=4, arg1=3 ), M( arg1=3, arg2=4 ) )
+  cmp_class_name_neq ( M( arg2=4, arg1=3 ), M( arg1=5, arg2=6 ) )
+
 class ModelArgsHashWithDefault( Model ):
   def __init__( s, arg1=1, arg2=2 ):
     s.arg1 = arg1
@@ -393,6 +396,9 @@ def test_ModelArgsHashWithDefault():
 
   cmp_class_name_eq  ( M( arg1=3, arg2=4 ), M( arg1=3, arg2=4 ) )
   cmp_class_name_neq ( M( arg1=3, arg2=4 ), M( arg1=5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M( arg2=4, arg1=3 ), M( arg1=3, arg2=4 ) )
+  cmp_class_name_neq ( M( arg2=4, arg1=3 ), M( arg1=5, arg2=6 ) )
 
   cmp_class_name_eq  ( M(      3 ), M(      3 ) )
   cmp_class_name_neq ( M(      3 ), M(      5 ) )
