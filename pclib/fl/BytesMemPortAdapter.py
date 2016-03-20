@@ -52,11 +52,12 @@ class BytesMemPortAdapter (object):
 
     s.trace = "r"
 
-    memreq_msg       = s.MemReqMsgType()
-    memreq_msg.type_ = s.MemReqMsgType.TYPE_READ
-    memreq_msg.addr  = addr
-    memreq_msg.len   = len_
-    memreq_msg.data  = 0
+    memreq_msg        = s.MemReqMsgType()
+    memreq_msg.type_  = s.MemReqMsgType.TYPE_READ
+    memreq_msg.addr   = addr
+    memreq_msg.opaque = 0
+    memreq_msg.len    = len_
+    memreq_msg.data   = 0
 
     s.memreq.msg.next  = memreq_msg
     s.memreq.val.next  = 1
@@ -112,11 +113,12 @@ class BytesMemPortAdapter (object):
 
     s.trace = "w"
 
-    memreq_msg       = s.MemReqMsgType()
-    memreq_msg.type_ = s.MemReqMsgType.TYPE_WRITE
-    memreq_msg.addr  = addr
-    memreq_msg.len   = len_
-    memreq_msg.data  = value
+    memreq_msg        = s.MemReqMsgType()
+    memreq_msg.type_  = s.MemReqMsgType.TYPE_WRITE
+    memreq_msg.opaque = 0
+    memreq_msg.addr   = addr
+    memreq_msg.len    = len_
+    memreq_msg.data   = value
 
     s.memreq.msg.next  = memreq_msg
     s.memreq.val.next  = 1

@@ -10,9 +10,9 @@ import struct
 
 from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
-from pclib.ifcs import MemMsg
+from pclib.ifcs import MemMsg4B
 
-from pclib.test.TestMemoryFuture import TestMemory
+from pclib.test import TestMemory
 
 from Bytes               import Bytes
 from BytesMemPortAdapter import BytesMemPortAdapter
@@ -118,8 +118,8 @@ class TestHarness( Model ):
 
     # Instantiate models
 
-    s.mcopy = MemCopy( MemMsg(32,32), src_ptr, dest_ptr, nbytes )
-    s.mem   = TestMemory( MemMsg(32,32), 1, stall_prob, latency )
+    s.mcopy = MemCopy( MemMsg4B(), src_ptr, dest_ptr, nbytes )
+    s.mem   = TestMemory( MemMsg4B(), 1, stall_prob, latency )
 
     # Connect models
 

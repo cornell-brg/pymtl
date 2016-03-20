@@ -7,6 +7,9 @@ from   pymtl       import *
 import collections
 import re
 
+class RunTestVectorSimError( Exception ):
+  pass
+
 #-------------------------------------------------------------------------
 # mk_test_case_table
 #-------------------------------------------------------------------------
@@ -107,7 +110,9 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
 
   # Run the simulation
 
+  row_num = 0
   for row in test_vectors:
+    row_num += 1
 
     # Apply test inputs
 
@@ -145,8 +150,21 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
         else:
           out_value = getattr( model, port_name[0:-1] )
 
-        if ( ref_value != '?' ):
-          assert out_value == ref_value
+        if ( ref_value != '?' ) and ( out_value != ref_value ):
+
+          error_msg = """
+ run_test_vector_sim received an incorrect value!
+  - row number     : {row_number}
+  - port name      : {port_name}
+  - expected value : {expected_msg}
+  - actual value   : {actual_msg}
+"""
+          raise RunTestVectorSimError( error_msg.format(
+            row_number   = row_num,
+            port_name    = port_name,
+            expected_msg = ref_value,
+            actual_msg   = out_value
+          ))
 
     # Tick the simulation
 

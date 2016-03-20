@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import re
 import os
+import sys
 import inspect
 import collections
 from   ...model.metaclasses        import MetaCollectArgs
@@ -17,6 +18,13 @@ from ..translation.verilog_structural import (
   title_bar, header, start_mod, port_declarations, end_mod,
   start_param, end_param, start_ports, end_ports, connection,
 )
+
+#-----------------------------------------------------------------------
+# VerilogImportError
+#-----------------------------------------------------------------------
+
+class VerilogImportError( Exception ):
+  pass
 
 class SomeMeta( MetaCollectArgs ):
   def __call__( self, *args, **kwargs ):
@@ -41,7 +49,15 @@ class SomeMeta( MetaCollectArgs ):
     # >>> my_verilog_model = TranslationTool( MyVerilogModel( p1, p2 ) )
     #
 
+    # I think there is no way to turn on VCD dumping after the fact, so I
+    # think we have no choice but to always turn on VCD dumping for now
+    # if we are using Verilog import? -cbatten
+
+    inst.vcd_file = '__dummy__'
+
     new_inst = TranslationTool( inst, lint=True )
+
+    new_inst.vcd_file = None
 
     # TODO: THIS IS SUPER HACKY. FIXME
     # We hack the TranslationTool model in all kinds of awful ways to make
@@ -53,8 +69,10 @@ class SomeMeta( MetaCollectArgs ):
     new_inst.__class__.__name__  = inst.__class__.__name__
     new_inst.__class__.__bases__ = (VerilogModel,)
     new_inst._args       = inst._args
+    new_inst.vprefix     = inst.vprefix
     new_inst.modulename  = inst.modulename
     new_inst.sourcefile  = inst.sourcefile
+    new_inst.vlinetrace  = inst.vlinetrace
     new_inst._param_dict = inst._param_dict
     new_inst._port_dict  = inst._port_dict
 
@@ -63,6 +81,16 @@ class SomeMeta( MetaCollectArgs ):
     # VerilogModel to the generated Python wrapper.
     try:
       new_inst.__class__.line_trace = inst.__class__.__dict__['line_trace']
+
+      # If we make it here this means the user has set Verilog line
+      # tracing to true, but has _also_ defined a PyMTL line tracing, but
+      # you can't have both.
+
+      if inst.vlinetrace:
+        raise VerilogImportError( "Cannot define a PyMTL line_trace\n"
+          "function and also use vlinetrace = True. Must use _either_\n"
+          "PyMTL line tracing or use Verilog line tracing." )
+
     except KeyError:
       pass
 
@@ -71,6 +99,7 @@ class SomeMeta( MetaCollectArgs ):
 #-----------------------------------------------------------------------
 # VerilogModel
 #-----------------------------------------------------------------------
+
 class VerilogModel( Model ):
   """
   A PyMTL model for importing hand-written Verilog modules.
@@ -83,6 +112,8 @@ class VerilogModel( Model ):
 
   modulename   = None
   sourcefile   = None
+  vprefix      = None
+  vlinetrace   = False
 
   _param_dict  = None
   _port_dict   = None
@@ -138,6 +169,14 @@ class VerilogModel( Model ):
       self.sourcefile = os.path.join( os.path.dirname( file_ ),
                                       self.modulename+'.v' )
 
+    # I added an extra check to only add the prefix if has not already
+    # been added. Once we started using Verilog import and then turning
+    # around and translated in the importing module this is what I needed
+    # to do to get things to work -cbatten.
+
+    if self.vprefix and not self.modulename.startswith(self.vprefix):
+      self.modulename = self.vprefix + "_" + self.modulename
+
     if not self._param_dict:
       self._param_dict = self._args
 
@@ -147,6 +186,7 @@ class VerilogModel( Model ):
 #-----------------------------------------------------------------------
 # import_module
 #-----------------------------------------------------------------------
+
 def import_module( model, o ):
   """Generate Verilog source for a user-defined VerilogModule and return
   the name of the source file containing the imported component.
@@ -166,10 +206,67 @@ def import_module( model, o ):
 #-----------------------------------------------------------------------
 # import_sources
 #-----------------------------------------------------------------------
+# The right way to do this is to use a recursive function like I have
+# done below. This ensures that files are inserted into the output stream
+# in the correct order. -cbatten
+
+# Regex to extract verilog filenames from `include statements
+
+include_re = re.compile( r'"(?P<filename>[\w/\.-]*)"' )
+
+def output_verilog_file( fout, include_path, verilog_file ):
+  with open( verilog_file, 'r' ) as fp:
+
+    short_verilog_file = verilog_file
+    if verilog_file.startswith( include_path+"/" ):
+      short_verilog_file = verilog_file[len(include_path+"/"):]
+
+    fout.write( '`line 1 "{}" 0\n'.format( short_verilog_file ) )
+
+    line_num = 0
+    for line in fp:
+      line_num += 1
+      if '`include' in line:
+        filename = include_re.search( line ).group( 'filename' )
+        fullname = os.path.join( include_path, filename )
+        output_verilog_file( fout, include_path, fullname )
+        fout.write( '\n' )
+        fout.write( '`line {} "{}" 0\n'.format( line_num+1, short_verilog_file ) )
+      else:
+        fout.write( line )
+
 def import_sources( source_list, o ):
   """Import Verilog source from all Verilog files source_list, as well
   as any source files specified by `include within those files.
   """
+
+  if not source_list:
+    return
+
+  # For now we assume the first file in the sources_list is top?
+
+  top_verilog_file = source_list[0]
+
+  # All verilog includes are relative to the root of the PyMTL project.
+  # We identify the root of the PyMTL project by looking for the special
+  # .pymtl-python-path file.
+
+  _path = os.path.dirname( top_verilog_file )
+  special_file_found = False
+  include_path = os.path.dirname( os.path.abspath( top_verilog_file ) )
+  while include_path != "/":
+    if os.path.exists( include_path + os.path.sep + ".pymtl-python-path" ):
+      special_file_found = True
+      sys.path.insert(0,include_path)
+      break
+    include_path = os.path.dirname(include_path)
+
+  # If we could not find the special .pymtl-python-path file, then assume
+  # the include directory is the same as the directory that contains the
+  # verilog file.
+
+  if not special_file_found:
+    include_path = os.path.dirname( os.path.abspath( top_verilog_file ) )
 
   # Regex to extract verilog filenames from `include statements
 
@@ -178,35 +275,48 @@ def import_sources( source_list, o ):
   # Iterate through all source files and add any `include files to the
   # list of source files to import.
 
-  for verilog_file in source_list:
+  output_verilog_file( o, include_path, source_list[0] )
 
-    include_path = os.path.dirname( verilog_file )
-    with open( verilog_file, 'r' ) as fp:
-      for line in fp:
-        if '`include' in line:
-          filename = include_re.search( line ).group( 'filename' )
-          fullname = os.path.join( include_path, filename )
-          if fullname not in source_list:
-            source_list.append( fullname )
+  # for verilog_file in source_list:
+  #
+  #   print(verilog_file)
+  #   with open( verilog_file, 'r' ) as fp:
+  #     for line in fp:
+  #       if '`include' in line:
+  #         filename = include_re.search( line ).group( 'filename' )
+  #         fullname = os.path.join( include_path, filename )
+  #         if fullname not in source_list:
+  #           source_list.append( fullname )
 
   # Iterate through all source files in reverse order and write out all
   # source code from imported/`included verilog files. Do this in reverse
   # order to (hopefully) resolve any `define dependencies, and remove any
   # lines with `include statements.
 
-  for verilog_file in reversed( source_list ):
-    src = title_bar.replace('-','=').format( verilog_file )
-
-    with open( verilog_file, 'r' ) as fp:
-      for line in fp:
-        if '`include' not in line:
-          src += line
-
-    print( src, file=o )
+  # for verilog_file in reversed( source_list ):
+  #
+  #   # We remove the include directory from the verilog file name to make
+  #   # error reporting by Verilator more succinct. -cbatten
+  #
+  #   short_verilog_file = verilog_file
+  #   if verilog_file.startswith( include_path+"/" ):
+  #     short_verilog_file = verilog_file[len(include_path+"/"):]
+  #
+  #   src = '`line 1 "{}" 0\n'.format( short_verilog_file )
+  #
+  #   with open( verilog_file, 'r' ) as fp:
+  #     for line in fp:
+  #       if '`include' not in line:
+  #         src += line
+  #       else:
+  #         src += "// " + line
+  #
+  #   print( src, file=o )
 
 #-----------------------------------------------------------------------
 # _instantiate_verilog
 #-----------------------------------------------------------------------
+
 def _instantiate_verilog( model ):
 
   model._auto_init()
@@ -230,5 +340,3 @@ def _instantiate_verilog( model ):
   s += tab + end_ports + endl
 
   return s
-
-

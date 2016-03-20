@@ -1,5 +1,5 @@
 pytest
+pytest-xdist
 cffi
 greenlet
-pytest-xdist
 pyparsing

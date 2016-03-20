@@ -6,12 +6,12 @@
 #
 # The network message is parameterized for given routers present in the
 # network, number of total messages  and the payload bitwidth. For example,
-# 3 routers in the system, total of 256 messages and payload_nbits = 32,
+# 8 routers in the system, total of 256 messages and payload_nbits = 32,
 # would have a network message format as below:
 #
 #   45  43 42  40 39    32 31             0
 #  +------+------+--------+---------------+
-#  | dest | src  | seqnum | payload_nbits |
+#  | dest | src  | opaque | payload_nbits |
 #  +------+------+--------+---------------+
 #
 
@@ -23,18 +23,18 @@ from pymtl import *
 # BitStruct designed to create network messages.
 class NetMsg( BitStructDefinition ):
 
-  def __init__( s, nrouters, nmessages, payload_nbits ):
+  def __init__( s, nrouters = 8, nmessages = 256, payload_nbits = 32 ):
 
     # Specify the size of each field
 
     srcdest_nbits = clog2( nrouters  )
-    seqnum_nbits  = clog2( nmessages )
+    opaque_nbits  = clog2( nmessages )
 
     # Specify fields
 
     s.dest    = BitField( srcdest_nbits )
     s.src     = BitField( srcdest_nbits )
-    s.seqnum  = BitField( seqnum_nbits  )
+    s.opaque  = BitField( opaque_nbits  )
     s.payload = BitField( payload_nbits )
 
     s.nrouters      = nrouters
@@ -42,12 +42,12 @@ class NetMsg( BitStructDefinition ):
     s.payload_nbits = payload_nbits
 
   # TODO: Should this be a class method?
-  def mk_msg( s, dest, src, seqnum, payload ):
+  def mk_msg( s, dest, src, opaque, payload ):
 
     msg         = s()
     msg.dest    = dest
     msg.src     = src
-    msg.seqnum  = seqnum
+    msg.opaque  = opaque
     msg.payload = payload
 
     return msg
@@ -58,5 +58,5 @@ class NetMsg( BitStructDefinition ):
 
   # TODO: Should this be a class method?
   def __str__( s ):
-    return "{}:{}:{}:{}".format( s.dest, s.src, s.seqnum, s.payload )
+    return "{}:{}:{}:{}".format( s.dest, s.src, s.opaque, s.payload )
 

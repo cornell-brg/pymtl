@@ -2,6 +2,8 @@
 # TestSimpleNetSink.py
 #=========================================================================
 
+from copy       import deepcopy
+
 from pymtl      import *
 from pclib.ifcs import InValRdyBundle, OutValRdyBundle
 
@@ -19,7 +21,7 @@ class TestSimpleNetSink( Model ):
     s.in_  = InValRdyBundle( dtype )
     s.done = OutPort       ( 1     )
 
-    s.msgs        = msgs
+    s.msgs        = deepcopy( msgs )
     s.recv        = []
     s.idx         = 0
     s.msgs_len    = len( msgs )

@@ -225,9 +225,12 @@ class SignalValueWrapper( SignalValue ):
 
       # Utility function to create proxying logic.
       def make_proxy( name ):
-        def proxy( self, *args ):
+        def getter( self, *args ):
           return getattr( self._data, name )
-        return proxy
+        def setter( self, value ):
+          return setattr( self._data, name, value )
+
+        return getter, setter
 
       # Create the wrapper class.
       type.__init__( cls, name, bases, dct )
@@ -240,7 +243,15 @@ class SignalValueWrapper( SignalValue ):
           if name.startswith("__"):
             if name not in ignore and name not in dct:
               attr = getattr( cls.__wraps__, name )
-              setattr( cls, name, property( make_proxy( name ) ) )
+              getter, _ = make_proxy( name )
+              setattr( cls, name, property( getter ) )
+
+      # In addition, create a proxy for all attributes in the __fields__
+      # list.
+      if cls.__wraps__ and cls.__wraps__.__fields__:
+        for name in cls.__wraps__.__fields__:
+          getter, setter = make_proxy( name )
+          setattr( cls, name, property( getter, setter ) )
 
 
 #-----------------------------------------------------------------------

@@ -336,4 +336,145 @@ def test_PortConstAssertSize():
   with pytest.raises( PyMTLConnectError ):
     m = inst_elab_model( PortConstAssertSize2 )
 
+#-----------------------------------------------------------------------
+# ModelArgsHash
+#-----------------------------------------------------------------------
+# Verify that we create unique hashes for the following four
+# combinations:
+#
+#   - constructor without default values + instance uses pos args
+#   - constructor without default values + instance uses kw  args
+#   - constructor with    default values + instance uses pos args
+#   - constructor with    default values + instance uses kw  args
+#
+
+def cmp_class_name_eq( model1, model2 ):
+  model1.elaborate()
+  model2.elaborate()
+  assert model1.class_name == model2.class_name
+
+def cmp_class_name_neq( model1, model2 ):
+  model1.elaborate()
+  model2.elaborate()
+  assert model1.class_name != model2.class_name
+
+class ModelArgsHashWithoutDefault( Model ):
+  def __init__( s, arg1, arg2 ):
+    s.arg1 = arg1
+    s.arg2 = arg2
+
+def test_ModelArgsHashWithoutDefault():
+
+  M = ModelArgsHashWithoutDefault
+
+  cmp_class_name_eq  ( M(      3,      4 ), M(      3,      4 ) )
+  cmp_class_name_neq ( M(      3,      4 ), M(      5,      6 ) )
+
+  cmp_class_name_eq  ( M(      3, arg2=4 ), M(      3, arg2=4 ) )
+  cmp_class_name_neq ( M(      3, arg2=4 ), M(      5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M( arg1=3, arg2=4 ), M( arg1=3, arg2=4 ) )
+  cmp_class_name_neq ( M( arg1=3, arg2=4 ), M( arg1=5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M( arg2=4, arg1=3 ), M( arg1=3, arg2=4 ) )
+  cmp_class_name_neq ( M( arg2=4, arg1=3 ), M( arg1=5, arg2=6 ) )
+
+class ModelArgsHashWithDefault( Model ):
+  def __init__( s, arg1=1, arg2=2 ):
+    s.arg1 = arg1
+    s.arg2 = arg2
+
+def test_ModelArgsHashWithDefault():
+
+  M = ModelArgsHashWithDefault
+
+  cmp_class_name_eq  ( M(      3,      4 ), M(      3,      4 ) )
+  cmp_class_name_neq ( M(      3,      4 ), M(      5,      6 ) )
+
+  cmp_class_name_eq  ( M(      3, arg2=4 ), M(      3, arg2=4 ) )
+  cmp_class_name_neq ( M(      3, arg2=4 ), M(      5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M( arg1=3, arg2=4 ), M( arg1=3, arg2=4 ) )
+  cmp_class_name_neq ( M( arg1=3, arg2=4 ), M( arg1=5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M( arg2=4, arg1=3 ), M( arg1=3, arg2=4 ) )
+  cmp_class_name_neq ( M( arg2=4, arg1=3 ), M( arg1=5, arg2=6 ) )
+
+  cmp_class_name_eq  ( M(      3 ), M(      3 ) )
+  cmp_class_name_neq ( M(      3 ), M(      5 ) )
+
+  cmp_class_name_eq  ( M( arg1=3 ), M( arg1=3 ) )
+  cmp_class_name_neq ( M( arg1=3 ), M( arg1=5 ) )
+
+#-----------------------------------------------------------------------
+# ClassNameCollision
+#-----------------------------------------------------------------------
+# A model's class_name is generated during elaboration based on a hash of
+# the list of arguments and their values. If two models have the same
+# class name, same args, and same arg values (e.g., two Mux's each with 2
+# ports and 47 bits, but one is one-hot and one is not), the hashes will
+# collide. In Verilog translation, collided names result in both modules
+# pointing at the same module definition, so one is incorrect.
+#
+# This collision is prevented by adding the model's __module__ to the hash
+# generation (_gen_class_name). A class's __module__ will be different
+# when importing from different modules.
+#
+# This test case creates two models of class name ClassNameCollisionModel,
+# one in this module and one in the Model_dummy_test.py module. They have
+# the same name and same args. The test case checks that their Model
+# class_name's do not collide after elaborate.
+
+from Model_dummy_test import ClassNameCollisionModel as ClassNameCollisionModelDummy
+
+class ClassNameCollisionModel( Model ):
+  def __init__( s, arg1, arg2 ):
+    s.arg1 = arg1
+    s.arg2 = arg2
+
+def test_ClassNameCollision():
+  model1 = ClassNameCollisionModel     ( 1, 2 ) # same arg values
+  model2 = ClassNameCollisionModelDummy( 1, 2 ) # same arg values
+  model1.elaborate()
+  model2.elaborate()
+  assert model1.class_name != model2.class_name
+
+#-----------------------------------------------------------------------
+# ClassNameCollisionSameModule
+#-----------------------------------------------------------------------
+# The ClassNameCollision test case checks for class name collisions due to
+# same-name same-args classes in _different_ modules. Collisions can still
+# happen if the same-name same-arg classes are in the same module. This
+# test case checks for this kind of collision using two classes named
+# "ClassNameCollision" placed at different levels of the hierarchy, but
+# instantiated with the same name and same args.
+#
+# TODO: This corner case is not yet fixed and may not need to be fixed. If
+# this seems like it is ever going to happen in practice, we will need
+# this test case to pass. This test case will pass if we use __class__ in
+# the class name generation (_gen_class_name). While this always avoids
+# collisions, it also gives a differently named translated Verilog file on
+# every run. Having the filename always changing can make it difficult for
+# other tools to point to the generated Verilog. Using __module__ in the
+# hash generation still avoids class name collisions across modules but
+# also keeps the name of the translated Verilog file the same. It means we
+# are not avoiding same-class-name same-args collisions in the same
+# module, but this seems kind of rare.
+
+# class ClassNameCollisionSameModule( Model ):
+#   def __init__( s, arg1, arg2 ):
+#     s.arg1 = arg1
+#     s.arg2 = arg2
+#
+#   class ClassNameCollisionSameModule( Model ):
+#     def __init__( s, arg1, arg2 ):
+#       s.arg1 = arg1
+#       s.arg2 = arg2
+#
+# def test_ClassNameCollisionSameModule():
+#   model1 = ClassNameCollisionSameModule( 1, 2 )
+#   model2 = ClassNameCollisionSameModule.ClassNameCollisionSameModule( 1, 2 )
+#   model1.elaborate()
+#   model2.elaborate()
+#   assert model1.class_name != model2.class_name
 

@@ -40,6 +40,75 @@ class Model( object ):
   __metaclass__ = MetaCollectArgs
   _debug        = False
 
+  # The following set of options are useful for generating a black box
+  # for this module when get translated to Verilog. For example, if you
+  # want to incorporate a SRAM or some other hard IP you could have a
+  # behavioral model in PyMTL for simulation, when pushed to the ASIC
+  # flow it will be treated as a black box and can be linked to the
+  # library of that SRAM or IP.
+
+  # To use this feature, turn on enable_blackbox option of the
+  # TranslationTool
+  # for example: s.sram = TranslationTool( s.sram, enable_blackbox=True )
+
+  vblackbox      = False  # Mark this module as a black box
+  vbb_modulename = ""     # Use a custom module name for this black box
+  vbb_no_reset   = False  # Do not generate reset port in Verilog
+  vbb_no_clk     = False  # Do not generate clk   port in Verilog
+
+  # Option: vannotate_arrays
+  #
+  # The following option allows annotation of an array when translating to
+  # Verilog.
+  #
+  # For example, in order for FPGA synthesis tools to infer BRAM, the
+  # array must be annotated like this:
+  #
+  #   (* RAM_STYLE="BLOCK" *) reg [p_col_width-1:0]  ram [31:0];
+  #
+  # The vannotate_arrays option is set up as a dict. Keys are the names of
+  # the arrays to annotate, and values are annotation strings. For
+  # example, generating the above annotation (before the 'reg' keyword)
+  # looks like this:
+  #
+  #   vannotate_arrays = { 'ram': '(* RAM_STYLE="BLOCK" *)' }
+  #
+
+  vannotate_arrays = {}
+
+  # Option: vmark_as_bram (inferring BRAM on FPGA)
+  #
+  # The following option marks the current Model as a BRAM and makes it
+  # _easier_ for the FPGA tools to infer BRAM. Note that you still need to
+  # check the synthesis report to make sure!
+  #
+  # Specifically, vmark_as_bram does the following:
+  #
+  # - suppress wire declarations. I.e., removes these declarations:
+  #
+  #     // wire declarations
+  #     wire   [  31:0] ram$000;
+  #     wire   [  31:0] ram$001;
+  #
+  # - suppress array declarations. I.e., removes these declarations:
+  #
+  #     // array declarations
+  #     assign ram$000 = ram[  0];
+  #     assign ram$001 = ram[  1];
+  #
+  # For some reason, wire/array declarations make the tools not infer
+  # BRAM. We generate these so we can peek into the array in the VCD. We
+  # will have to give that up to infer BRAM.
+  #
+  # Note: You should also add a vannotate_arrays annotation to hint that
+  # the ram array should be a BRAM:
+  #
+  #   vannotate_arrays = { 'ram': '(* RAM_STYLE="BLOCK" *)' }
+  #
+  # See above for how to use vannotate_arrays.
+
+  vmark_as_bram = False
+
   #=====================================================================
   # Modeling API
   #=====================================================================
@@ -563,6 +632,13 @@ class Model( object ):
   def _gen_class_name( self, model ):
     """Generate a unique class name for model instances."""
 
+    # First check to see if designer has set an explicit name to use for
+    # this model.
+
+    if hasattr( model, 'explicit_modulename' ):
+      model.class_name = model.explicit_modulename
+      return model.explicit_modulename
+
     # Base name is always just the class name
     name = model.__class__.__name__
 
@@ -575,8 +651,15 @@ class Model( object ):
     # Generate a unique name for the Model instance based on its params
     # http://stackoverflow.com/a/5884123
     try:
-      hashables = frozenset({ x for x in model._args.items()
-                              if isinstance( x[1], collections.Hashable ) })
+      hashables = { x for x in model._args.items()
+                    if isinstance( x[1], collections.Hashable ) }
+
+      # Add module name to the set to prevent collisions between classes
+      # with same name and same args but in different modules (see test
+      # case in Model_test.py, ClassNameCollision)
+      hashables.add( model.__module__ )
+
+      hashables = frozenset( hashables )
       suffix = abs( hash( hashables ) )
       return name + '_' + hex( suffix )
     # No _args attribute, so no need to create a specialized name
