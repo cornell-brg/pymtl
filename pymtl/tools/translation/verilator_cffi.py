@@ -305,12 +305,65 @@ def make_lib( output_file, input_files ):
 def create_shared_lib( model_name, c_wrapper_file, lib_file,
                        vcd_en, vlinetrace ):
 
-  # We always use the following include directories
+  # We need to find out where the verilator include directories are
+  # globally installed. We first check the PYMTL_VERILATOR_INCLUDE_DIR
+  # environment variable, and if that does not exist then we fall back on
+  # using pkg-config.
 
   verilator_include_dir = os.environ.get('PYMTL_VERILATOR_INCLUDE_DIR')
   if verilator_include_dir is None:
-      cmd = ['pkg-config', '--variable=includedir', 'verilator']
-      verilator_include_dir = check_output(cmd, universal_newlines=True).strip()
+    cmd = ['pkg-config', '--variable=includedir', 'verilator']
+
+    try:
+
+      verilator_include_dir = check_output( cmd, stderr=STDOUT ).strip()
+
+    except OSError as e:
+
+      error_msg = """
+Error trying to find verilator include directories. The
+PYMTL_VERILATOR_INCLUDE_DIR environment variable was not set,
+so we attempted to use pkg-config to find where verilator was
+installed, but it looks like we had trouble finding or executing
+pkg-config itself. Try running the following command on your own
+to debug the issue.
+
+Command:
+{command}
+
+Error:
+[Errno {errno}] {strerror}
+      """
+
+      raise VerilatorCompileError( error_msg.format(
+        command  = ' '.join( cmd ),
+        errno    = e.errno,
+        strerror = e.strerror,
+      ))
+
+    except CalledProcessError as e:
+
+      error_msg = """
+Error trying to find verilator include directories. The
+PYMTL_VERILATOR_INCLUDE_DIR environment variable was not set,
+so we attempted to use pkg-config to find where verilator was
+installed, but it looks like pkg-config had trouble finding
+the verilator.pc file installed by verilator. Is a recent
+version of verilator installed? Older versions of verilator
+did not have pkg-config support. Try running the following
+command on your own to debug the issue.
+
+Command:
+{command}
+
+Error:
+{error}
+      """
+
+      raise VerilatorCompileError( error_msg.format(
+        command = ' '.join( e.cmd ),
+        error   = e.output,
+      ))
 
   include_dirs = [
     verilator_include_dir,
