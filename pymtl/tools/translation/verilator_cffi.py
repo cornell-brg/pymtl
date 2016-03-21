@@ -21,7 +21,7 @@ from exceptions          import VerilatorCompileError
 # Create a PyMTL compatible interface for Verilog HDL.
 
 def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file, vcd_en, lint ):
+                      lib_file, py_wrapper_file, vcd_en, lint, verilator_xinit ):
 
   model_name = model.class_name
 
@@ -39,7 +39,7 @@ def verilog_to_pymtl( model, verilog_file, c_wrapper_file,
     port.verilator_name = verilator_mangle( port.verilog_name )
 
   # Create C++ Wrapper
-  cdefs = create_c_wrapper( model, c_wrapper_file, vcd_en, vlinetrace )
+  cdefs = create_c_wrapper( model, c_wrapper_file, vcd_en, vlinetrace, verilator_xinit )
 
   # Create Shared C Library
   create_shared_lib( model_name, c_wrapper_file, lib_file,
@@ -130,7 +130,7 @@ for more details on various Verilator warnings and error messages.
 #-----------------------------------------------------------------------
 # Generate a C wrapper file for Verilated C++.
 
-def create_c_wrapper( model, c_wrapper_file, vcd_en, vlinetrace ):
+def create_c_wrapper( model, c_wrapper_file, vcd_en, vlinetrace, verilator_xinit ):
 
   template_dir      = os.path.dirname( os.path.abspath( __file__ ) )
   template_filename = template_dir + os.path.sep + 'verilator_wrapper.templ.c'
@@ -171,6 +171,12 @@ def create_c_wrapper( model, c_wrapper_file, vcd_en, vlinetrace ):
   port_decls   = indent_zero.join( [ port_to_decl( x ) for x in ports ] )
   port_inits   = indent_two .join( [ port_to_init( x ) for x in ports ] )
 
+  # Convert verilator_xinit to number
+  if   ( verilator_xinit == "zeros" ) : verilator_xinit_num = 0
+  elif ( verilator_xinit == "ones"  ) : verilator_xinit_num = 1
+  elif ( verilator_xinit == "rand"  ) : verilator_xinit_num = 2
+  else : print( "Not valid choice" )
+
   # Generate the source code using the template
   with open( template_filename , 'r' ) as template, \
        open( c_wrapper_file,     'w' ) as output:
@@ -185,6 +191,8 @@ def create_c_wrapper( model, c_wrapper_file, vcd_en, vlinetrace ):
                           vcd_timescale = get_vcd_timescale( model ),
                           dump_vcd      = '1' if vcd_en else '0',
                           vlinetrace    = '1' if vlinetrace else '0',
+
+                          verilator_xinit_num = verilator_xinit_num,
                         )
 
     output.write( c_src )
