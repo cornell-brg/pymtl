@@ -14,7 +14,7 @@ from exceptions            import VerilogTranslationError
 #-----------------------------------------------------------------------
 # header
 #-----------------------------------------------------------------------
-def header( model, symtab, enable_blackbox=False ):
+def header( model, symtab, enable_blackbox=False, verilator_xinit='zeros' ):
   # black box with custom module name
   if enable_blackbox and model.vbb_modulename != "":
     s = title_bar.format( model.vbb_modulename )
@@ -29,6 +29,8 @@ def header( model, symtab, enable_blackbox=False ):
 
   dump_vcd = hasattr( model, 'vcd_file' ) and model.vcd_file != ''
   s   += '// dump-vcd: {}'.format( dump_vcd ) + endl
+
+  s += '// verilator-xinit: {}'.format( verilator_xinit ) + endl
 
   if enable_blackbox:
     if model.vblackbox:
