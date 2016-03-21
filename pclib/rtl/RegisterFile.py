@@ -31,12 +31,25 @@ class RegisterFile( Model ):
     #-------------------------------------------------------------------
     # Combinational read logic
     #-------------------------------------------------------------------
-    @s.combinational
-    def comb_logic():
 
-      for i in range( rd_ports ):
-        assert s.rd_addr[i] < nregs
-        s.rd_data[i].value = s.regs[ s.rd_addr[i] ]
+    # constant zero
+
+    if const_zero:
+      @s.combinational
+      def comb_logic():
+        for i in range( rd_ports ):
+          assert s.rd_addr[i] < nregs
+          if s.rd_addr[i] == 0:
+            s.rd_data[i].value = 0
+          else:
+            s.rd_data[i].value = s.regs[ s.rd_addr[i] ]
+
+    else:
+      @s.combinational
+      def comb_logic():
+        for i in range( rd_ports ):
+          assert s.rd_addr[i] < nregs
+          s.rd_data[i].value = s.regs[ s.rd_addr[i] ]
 
     # Select write logic depending on if this register file should have
     # a constant zero register or not!
