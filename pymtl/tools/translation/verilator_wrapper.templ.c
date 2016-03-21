@@ -83,6 +83,8 @@ V{model_name}_t * create_model( const char *vcd_filename ) {{
   V{model_name}_t * m;
   V{model_name}   * model;
 
+  Verilated::randReset( {verilator_xinit_num} );
+
   m     = (V{model_name}_t *) malloc( sizeof(V{model_name}_t) );
   model = new V{model_name}();
 
