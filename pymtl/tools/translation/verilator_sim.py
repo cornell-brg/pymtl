@@ -15,7 +15,7 @@ from verilator_cffi import verilog_to_pymtl
 #-----------------------------------------------------------------------
 # TranslationTool
 #-----------------------------------------------------------------------
-def TranslationTool( model_inst, lint=False, enable_blackbox=False ):
+def TranslationTool( model_inst, lint=False, enable_blackbox=False, verilator_xinit="zeros" ):
   """Translates a PyMTL model into Python-wrapped Verilog.
 
   model_inst:      an un-elaborated Model instance
@@ -47,12 +47,12 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False ):
 
   # Write the output to a temporary file
   with open( temp_file, 'w+' ) as fd:
-    verilog.translate( model_inst, fd )
+    verilog.translate( model_inst, fd, verilator_xinit=verilator_xinit )
 
   # write Verilog with black boxes
   if enable_blackbox:
     with open( blackbox_file, 'w+' ) as fd:
-      verilog.translate( model_inst, fd, enable_blackbox=True )
+      verilog.translate( model_inst, fd, enable_blackbox=True, verilator_xinit=verilator_xinit )
 
   # Check if the temporary file matches an existing file (caching)
 
@@ -74,7 +74,8 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False ):
   if not cached:
     #print( "NOT CACHED", verilog_file )
     verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file, vcd_en, lint )
+                      lib_file, py_wrapper_file, vcd_en, lint,
+                      verilator_xinit )
   #else:
   #  print( "CACHED", verilog_file )
 
