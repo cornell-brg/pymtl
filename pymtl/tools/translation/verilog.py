@@ -20,7 +20,7 @@ from ..integration      import verilog
 # translate
 #-----------------------------------------------------------------------
 # Generates Verilog source from a PyMTL model.
-def translate( model, o=sys.stdout, enable_blackbox=False ):
+def translate( model, o=sys.stdout, enable_blackbox=False, verilator_xinit='zeros' ):
 
   # List of models to translate
   translation_queue = collections.OrderedDict()
@@ -44,7 +44,7 @@ def translate( model, o=sys.stdout, enable_blackbox=False ):
       if x not in append_queue:
         append_queue.append( x )
     else:
-      translate_module( v, o, enable_blackbox )
+      translate_module( v, o, enable_blackbox, verilator_xinit )
 
   # Append source code for imported modules and dependecies
   verilog.import_sources( append_queue, o )
@@ -52,12 +52,12 @@ def translate( model, o=sys.stdout, enable_blackbox=False ):
 #-----------------------------------------------------------------------
 # translate_module
 #-----------------------------------------------------------------------
-def translate_module( model, o, enable_blackbox=False ):
+def translate_module( model, o, enable_blackbox=False, verilator_xinit='zeros' ):
 
   # Visit concurrent blocks in design
   logic, symtab = translate_logic_blocks( model )
 
-  print( header             ( model, symtab, enable_blackbox ), file=o, end=''   )
+  print( header             ( model, symtab, enable_blackbox, verilator_xinit ), file=o, end=''   )
 
   if enable_blackbox and model.vbb_modulename:
     print( start_mod.format ( model.vbb_modulename ), file=o,      )
