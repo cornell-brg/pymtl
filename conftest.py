@@ -1,7 +1,3 @@
-#=========================================================================
-# conftest
-#=========================================================================
-
 import pytest
 
 def pytest_addoption(parser):
@@ -11,8 +7,8 @@ def pytest_addoption(parser):
                     help="dump asm file for each test" )
   parser.addoption( "--dump-bin", action="store_true",
                     help="dump binary file for each test" )
-  parser.addoption( "--test-verilog", action="store_true",
-                    help="run verilog translation" )
+  parser.addoption( "--test-verilog", action="store", default='', nargs='?', const='zeros', choices=[ '', 'zeros', 'ones', 'rand' ],
+                    help="run verilog translation, " )
 
 def pytest_funcarg__dump_vcd(request):
   """Dump VCD for each test."""
@@ -44,4 +40,3 @@ def pytest_runtest_setup(item):
   test_verilog = item.config.option.test_verilog
   if test_verilog and 'test_verilog' not in item.funcargnames:
     pytest.skip("ignoring non-Verilog tests")
-
