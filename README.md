@@ -8,25 +8,27 @@ modeling. It was introduced at MICRO-47 in December, 2014. Please note
 that PyMTL is currently **alpha** software that is under active
 development and documentation is currently quite sparse. We have recently
 received funding from the National Science Foundation under [Award #1512937][1]
-to improve PyMTL performance, documentation, and reference
-models. Please stay tuned over the next few months.
+to improve PyMTL performance, documentation, and reference models. Please
+stay tuned over the next few months.
 
  [1]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=1512937
 
-Cornell ECE 4750
---------------------------------------------------------------------------
-
-Cornell ECE 4750 students should note that we are using the PyMTL version
-on the [ece4750 branch][2]. If you would like to browse the PyMTL source
-code or install PyMTL on your own machine you must use the [ece4750 branch][2].
-
- [2]: https://github.com/cornell-brg/pymtl/tree/ece4750
- 
 Tutorials
 --------------------------------------------------------------------------
 
-If you are interested in learning more about the PyMTL framework, we recommend you take a look at two tutorials that have been developed for Cornell ECE 4750. This is a course on computer architecture targeting seniors and first-year graduate students. Throughout the semester, students gradually design, implement, test, and evaluate a basic multicore system capable of running simple parallel applications at the register-transfer level. This year, students are using the PyMTL framework for all functional-level modeling and testing. Students have the option of using PyMTL or Verilog for the RTL design portion of the lab assignments. The first tutorial focuses on the PyMTL framework, while the second tutorial illustrates how PyMTL's Verilog import feature can enable applying PyMTL's powerful functional-level and testing features to RTL designs written in Verilog. Note that to complete these tutorials you will need to install the PyMTL version
-on the [ece4750 branch][2].
+If you are interested in learning more about the PyMTL framework, we
+recommend you take a look at two tutorials that have been developed for
+Cornell ECE 4750. This is a course on computer architecture targeting
+seniors and first-year graduate students. Throughout the semester,
+students gradually design, implement, test, and evaluate a basic
+multicore system capable of running simple parallel applications at the
+register-transfer level. This year, students are using the PyMTL
+framework for all functional-level modeling and testing. Students have
+the option of using PyMTL or Verilog for the RTL design portion of the
+lab assignments. The first tutorial focuses on the PyMTL framework, while
+the second tutorial illustrates how PyMTL's Verilog import feature can
+enable applying PyMTL's powerful functional-level and testing features to
+RTL designs written in Verilog.
 
  - http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut3-pymtl.pdf
  - http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut4-verilog.pdf
@@ -43,7 +45,7 @@ PyMTL is offered under the terms of the Open Source Initiative BSD
 Publications
 --------------------------------------------------------------------------
 
-If you use PyMTL in your research, please cite our [MICRO'15 paper][3]:
+If you use PyMTL in your research, please cite our [MICRO'14 paper][3]:
 
 ```
   @inproceedings{lockhart-pymtl-micro2014,
@@ -65,7 +67,7 @@ Installation
 
 PyMTL requires Python2.7 and has the following additional prerequisites:
 
- - verilator
+ - verilator, pkg-config
  - git, Python headers, and libffi
  - virtualenv
 
@@ -77,25 +79,46 @@ distribution are shown below. They have been tested with Ubuntu Trusty
 
 [Verilator][4] is an open-source toolchain for compiling Verilog RTL
 models into C++ simulators. PyMTL uses Verilator for both Verilog
-translation and Verilog import. The following commands will build and
-install Verilator from source:
+translation and Verilog import. You can install Verilator using the
+standard package manager but the version available in the package
+repositories is several years old. This means you will need to build and
+install Verilator from source using the following commands:
 
 ```
-  % sudo apt-get install git make autoconf g++ flex bison
-  % mkdir -p ${HOME}/src
-  % cd ${HOME}/src
-  % wget http://www.veripool.org/ftp/verilator-3.876.tgz
-  % tar -xzvf verilator-3.876
-  % cd verilator-3.876
-  % ./configure
-  % make
-  % sudo make install
-  % export PYMTL_VERILATOR_INCLUDE_DIR="/usr/local/share/verilator/include"
+ % sudo apt-get install git make autoconf g++ flex bison
+ % mkdir -p ${HOME}/src
+ % cd ${HOME}/src
+ % wget http://www.veripool.org/ftp/verilator-3.876.tgz
+ % tar -xzvf verilator-3.876.tgz
+ % cd verilator-3.876
+ % ./configure
+ % make
+ % sudo make install
 ```
 
-The `PYMTL_VERILATOR_INCLUDE_DIR` environment variable is used to tell
-PyMTL where to find the various Verilator source files when performing
-both Verilog translation and Verilog import.
+Verify that Verilator is on your path as follows:
+
+```
+ % cd $HOME
+ % which verilator
+ % verilator --version
+```
+
+PyMTL uses `pkg-config` to find the Verilator source files when
+performing both Verilog translation and Verilog import. Install
+`pkg-config` and verify that it is setup correctly as follows:
+
+```
+ % sudo apt-get install pkg-config
+ % pkg-config --print-variables verilator
+```
+
+If `pkg-config` cannot find information about verilator, then you can
+also explicitly set the following special environment variable:
+
+```
+ % export PYMTL_VERILATOR_INCLUDE_DIR="/usr/local/share/verilator/include"
+```
 
  [4]: http://www.veripool.org/wiki/verilator
 
@@ -108,7 +131,7 @@ Verilator. We will use git to grab the PyMTL source. The following
 commands will install the appropriate packages:
 
 ```
-  % sudo apt-get install git python-dev libffi-dev
+ % sudo apt-get install git python-dev libffi-dev
 ```
 
 ### Install virtualenv
@@ -119,7 +142,7 @@ virtualenv enables creating isolated Python environments. The following
 commands will install virtualenv:
 
 ```
-  % sudo apt-get install python-virtualenv
+ % sudo apt-get install python-virtualenv
 ```
 
 Now we can use the `virtualenv` command to create a new virtual
@@ -127,9 +150,9 @@ environment for PyMTL, and then we can use the corresponding `activate`
 script to activate the new virtual environment:
 
 ```
-  % mkdir ${HOME}/venvs
-  % virtualenv --python=python2.7 ${HOME}/venvs/pymtl
-  % source ${HOME}/venvs/pymtl/bin/activate
+ % mkdir ${HOME}/venvs
+ % virtualenv --python=python2.7 ${HOME}/venvs/pymtl
+ % source ${HOME}/venvs/pymtl/bin/activate
 ```
 
  [5]: https://virtualenv.pypa.io/en/latest/
@@ -141,24 +164,11 @@ its dependencies. Note that we use pip in editable mode so that we can
 actively work in the PyMTL git repo.
 
 ```
-  % mkdir -p ${HOME}/vc/git-hub/cornell-brg
-  % cd ${HOME}/vc/git-hub/cornell-brg
-  % git clone git+https://github.com/cornell-brg/pymtl.git
-  % pip install --editable ./pymtl
+ % mkdir -p ${HOME}/vc/git-hub/cornell-brg
+ % cd ${HOME}/vc/git-hub/cornell-brg
+ % git clone https://github.com/cornell-brg/pymtl.git
+ % pip install --editable ./pymtl
 ```
-
-NOTE: If you are a Cornell ECE 4750 student and setting up your own
-development environment, you must install the [ece4750 branch][6] like
-this:
-
-```
-  % mkdir -p ${HOME}/vc/git-hub/cornell-brg
-  % cd ${HOME}/vc/git-hub/cornell-brg
-  % git clone git+https://github.com/cornell-brg/pymtl.git@ece4750
-  % pip install --editable ./pymtl
-```
-
- [6]: https://github.com/cornell-brg/pymtl/tree/ece4750
 
 Testing
 --------------------------------------------------------------------------
@@ -167,15 +177,15 @@ Before running any tests, we first create a build directory inside the
 PyMTL repo to hold any temporary files generated during simulation:
 
 ```
-  % mkdir -p ${HOME}/vc/git-hub/cornell-brg/pymtl/build
-  % cd ${HOME}/vc/git-hub/cornell-brg/pymtl/build
+ % mkdir -p ${HOME}/vc/git-hub/cornell-brg/pymtl/build
+ % cd ${HOME}/vc/git-hub/cornell-brg/pymtl/build
 ```
 
 All Python simulation tests can be easily run using py.test (warning:
 there are a lot of tests!):
 
 ```
-  % py.test ..
+ % py.test ..
 ```
 
 The Verilog simulation tests are only executed if the `--test-verilog`
@@ -184,12 +194,12 @@ Verilator is on your `PATH` and that the `PYMTL_VERILATOR_INCLUDE_DIR`
 environment:
 
 ```
-  % py.test .. --test-verilog
+ % py.test .. --test-verilog
 ```
 
 When you're done testing/developing, you can deactivate the virtualenv::
 
 ```
-  % deactivate
+ % deactivate
 ```
 
