@@ -35,6 +35,7 @@ class RegisterFile( Model ):
     # constant zero
 
     if const_zero:
+
       @s.combinational
       def comb_logic():
         for i in range( rd_ports ):
@@ -45,6 +46,7 @@ class RegisterFile( Model ):
             s.rd_data[i].value = s.regs[ s.rd_addr[i] ]
 
     else:
+
       @s.combinational
       def comb_logic():
         for i in range( rd_ports ):
