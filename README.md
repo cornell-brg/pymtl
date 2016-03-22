@@ -30,8 +30,10 @@ the second tutorial illustrates how PyMTL's Verilog import feature can
 enable applying PyMTL's powerful functional-level and testing features to
 RTL designs written in Verilog.
 
- - http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut3-pymtl.pdf
- - http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut4-verilog.pdf
+ - [PyMTL Hardware Modeling Framework Tutorial](http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut3-pymtl.pdf)
+   ([github](https://github.com/cornell-ece4750/ece4750-tut3-pymtl))
+ - [Verilog Hardware Description Language Tutorial](http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut4-verilog.pdf)
+   ([github](https://github.com/cornell-ece4750/ece4750-tut4-verilog))
 
 License
 --------------------------------------------------------------------------
