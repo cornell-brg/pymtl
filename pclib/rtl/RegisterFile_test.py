@@ -59,6 +59,50 @@ def test_regfile_1R1W( dump_vcd, test_verilog ):
   sim.run_test()
 
 #-------------------------------------------------------------------------
+# Test 1R1W Register File w/ const zero
+#-------------------------------------------------------------------------
+
+def test_regfile_1R1Wconst0( dump_vcd, test_verilog ):
+
+  # Test vectors
+
+  test_vectors = [
+    # rd_addr0  rd_data0  wr_en  wr_addr  wr_data
+    [       0,   0x0000,     0,       0,   0x0000 ],
+    [       0,   0x0000,     1,       0,   0x0005 ],
+    [       0,   0x0000,     0,       0,   0x0000 ],
+    [       1,   '?',        0,       1,   0x0000 ],
+    [       1,   0x0000,     1,       1,   0x0015 ],
+    [       1,   0x0015,     0,       1,   0x0000 ],
+    [       1,   0x0015,     0,       1,   0x0000 ],
+  ]
+
+  # Instantiate and elaborate the model
+
+  model = RegisterFile( dtype = 16, nregs = 8, rd_ports = 1, const_zero=True )
+  model.vcd_file = dump_vcd
+  if test_verilog:
+    model = TranslationTool( model, verilator_xinit=test_verilog )
+  model.elaborate()
+
+  # Define functions mapping the test vector to ports in model
+
+  def tv_in( model, test_vector ):
+    model.rd_addr[0].value = test_vector[0]
+    model.wr_en.value      = test_vector[2]
+    model.wr_addr.value    = test_vector[3]
+    model.wr_data.value    = test_vector[4]
+
+  def tv_out( model, test_vector ):
+    if test_vector[1] != '?':
+      assert model.rd_data[0].value == test_vector[1]
+
+  # Run the test
+
+  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim.run_test()
+
+#-------------------------------------------------------------------------
 # Test 2R2W Register File
 #-------------------------------------------------------------------------
 
