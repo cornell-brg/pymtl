@@ -35,6 +35,16 @@ RTL designs written in Verilog.
  - [Verilog Hardware Description Language Tutorial](http://www.csl.cornell.edu/courses/ece4750/handouts/ece4750-tut4-verilog.pdf)
    ([github](https://github.com/cornell-ece4750/ece4750-tut4-verilog))
 
+We have also developed tutorials specifically on PyMTL CL modeling,
+integrating PyMTL with the Xilinx Vivado High-Level Synthesis (HLS) tool,
+and using PyMTL to drive a Synopys-based ASIC EDA toolflow.
+
+ - [PyMTL CL Modeling Tutorial](https://github.com/cornell-ece5745/ece5745-sec-pymtl-cl/blob/master/README.md)
+   ([github](https://github.com/cornell-ece5745/ece5745-sec-pymtl-cl))
+ - [PyMTL/HLS Tutorial](https://github.com/cornell-brg/pymtl-tut-hls/blob/master/README.md)
+   ([github](https://github.com/cornell-brg/pymtl-tut-hls))
+ - [PyMTL-Based ASIC Toolflow Tutorial](http://www.csl.cornell.edu/courses/ece5745/handouts/ece5745-tut-asic-new.pdf)
+
 License
 --------------------------------------------------------------------------
 
