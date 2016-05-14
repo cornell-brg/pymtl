@@ -243,17 +243,17 @@ def import_sources( source_list, o ):
   if not source_list:
     return
 
-  # For now we assume the first file in the sources_list is top?
+  # We will use the first verilog file to find the root of PyMTL project
 
-  top_verilog_file = source_list[0]
+  first_verilog_file = source_list[0]
 
   # All verilog includes are relative to the root of the PyMTL project.
   # We identify the root of the PyMTL project by looking for the special
   # .pymtl-python-path file.
 
-  _path = os.path.dirname( top_verilog_file )
+  _path = os.path.dirname( first_verilog_file )
   special_file_found = False
-  include_path = os.path.dirname( os.path.abspath( top_verilog_file ) )
+  include_path = os.path.dirname( os.path.abspath( first_verilog_file ) )
   while include_path != "/":
     if os.path.exists( include_path + os.path.sep + ".pymtl-python-path" ):
       special_file_found = True
@@ -263,10 +263,10 @@ def import_sources( source_list, o ):
 
   # If we could not find the special .pymtl-python-path file, then assume
   # the include directory is the same as the directory that contains the
-  # verilog file.
+  # first verilog file.
 
   if not special_file_found:
-    include_path = os.path.dirname( os.path.abspath( top_verilog_file ) )
+    include_path = os.path.dirname( os.path.abspath( first_verilog_file ) )
 
   # Regex to extract verilog filenames from `include statements
 
@@ -275,7 +275,8 @@ def import_sources( source_list, o ):
   # Iterate through all source files and add any `include files to the
   # list of source files to import.
 
-  output_verilog_file( o, include_path, source_list[0] )
+  for source in source_list:
+    output_verilog_file( o, include_path, source )
 
   # for verilog_file in source_list:
   #
