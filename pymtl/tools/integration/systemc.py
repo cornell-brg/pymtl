@@ -46,6 +46,47 @@ class SomeMeta( MetaCollectArgs ):
     lib_file        = 'lib{}_sc.so'.format( model_name )
     obj_dir         = 'obj_dir_' + model_name
     
+    # Copy all specified source file to obj folder for later compilation
+    # Also try to copy header files by inferring the file extension
+    # At the same time check caching status
+    
+    cached = True
+    
+    # Check the combination of a path, a filename and a extension
+    # for both the header and the source. According to C++ 
+    # convention the header should have the same filename as the 
+    # source file for the compiler to match.
+    #
+    # The reason why I split the source array and header array into 
+    # two groups is for performance -- to hopefully reduce the number
+    # of disk inode lookup and disk accesses by breaking the loop
+    # when a header is found.
+    
+    # the first group is for header, and the second is for source
+    extensions = [  [".h", ".hh", ".hpp", ".h++"  ],
+                    [".cc", ".c++", ".cpp", ".cxx"] ]
+                    
+    for path in model.sourcefolder:
+      for filename in model.sourcefile:
+        file_prefix = path    + filename
+        temp_prefix = obj_dir + filename
+        
+        for group in extensions:
+          for ext in group: 
+            target_file = file_prefix + ext
+            temp_file   = temp_prefix + ext
+          
+            if exists( target_file ):
+              
+              if not exists( temp_file ):
+                cached = False
+                copyfile( header_file, temp_file )
+                
+              elif not filecmp.cmp( header_file, temp_file ):
+                cached = False
+              
+              break
+    
     # Remake only if we've updated the systemc source
     
     if not cached:
