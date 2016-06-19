@@ -13,8 +13,12 @@ class SystemCCompileError( Exception ): pass
 # Create a PyMTL compatible interface for SystemC.
 
 def systemc_to_pymtl( model, c_wrapper_file, lib_file, py_wrapper_file ):
-  pass
-
+  
+  port_width_dict = { x: y.nbits \
+                      for x,y in model._port_dict.iteritems() }
+  cdef = create_c_wrapper_return_cdef( model.class_name, port_width_dict )
+  print (cdef)
+  
 
 def compile_object( obj, ext, obj_dir, include ):
   
@@ -82,7 +86,7 @@ def gen_sc_datatype(port_width):
 # Create a c_wrapper for given pymtl file which inherits a SystemCModel
 # Returns the cffi cdef string for convenience.
 
-def create_c_wrapper_return_cdef(class_name, port_dict):
+def create_c_wrapper_return_cdef( class_name, port_dict ):
   
   cdef_templ = '''
 typedef struct
@@ -113,6 +117,7 @@ typedef struct
   {port_decls}
   
   void *model;
+  
 }} {class_name}_t;
 
 // Since for now we haven't figured out either a way to totally 
@@ -187,12 +192,12 @@ void sim_cycle()
     new_stmts += ind_2 + "{} *{} = new {};" \
                            .format( sc_type, port_name, sc_type )
     new_stmts += ind_2 + "m->{} = {};".format( port_name, port_name )
-    new_stmts += ind_2 + "model->{}(*{});".format( port_name, port_name )
+    new_stmts += ind_2 + "model->{}(*{});\n".format( port_name, port_name )
     
     delete_stmts += ind_2 + "{} *{} = static_cast<{}*>(obj->{});" \
                               .format( sc_type, port_name, 
                                        sc_type, port_name )
-    delete_stmts += ind_2 + "delete {};".format( port_name )
+    delete_stmts += ind_2 + "delete {};\n".format( port_name )
     
     if port_width < 0: continue # the clock only needs the above two.
     

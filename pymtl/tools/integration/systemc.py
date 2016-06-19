@@ -39,7 +39,8 @@ class SomeMeta( MetaCollectArgs ):
     
     inst.vcd_file = '__dummy__'
     inst.elaborate()
-
+  
+      
     model_name      = inst.class_name
     c_wrapper_file  = model_name + '_sc.cpp'
     py_wrapper_file = model_name + '_sc.py'
@@ -114,8 +115,11 @@ class SomeMeta( MetaCollectArgs ):
         include_dir = deepcopy( inst.sourcefolder )
         include_dir.append( obj_dir )
         compile_object( x, src_ext[x], obj_dir, include_dir )
-      
-      # generate a new shared library
+    
+    # Regenerate the shared library .so file if individual modules are 
+    # updated or the .so file is missing.
+    
+    if not uncached or exists( lib_file ):
       systemc_to_pymtl( inst, c_wrapper_file,
                         lib_file, py_wrapper_file )
 
