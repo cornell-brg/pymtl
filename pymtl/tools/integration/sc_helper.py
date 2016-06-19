@@ -14,14 +14,13 @@ class SystemCCompileError( Exception ): pass
 # Create a PyMTL compatible interface for SystemC.
 
 def systemc_to_pymtl( model, obj_dir, include_dirs, objs, c_wrapper_file, lib_file, py_wrapper_file ):
-  
-  port_width_dict = { x: y.nbits \
+    
+  port_width_dict = { x: y.nbits if y.name != "clk" else -1 \
                       for x,y in model._port_dict.iteritems() }
   
-  cdef = create_c_wrapper( model.class_name, c_wrapper_file, port_width_dict )
+  cdef = create_c_wrapper( model.class_name, c_wrapper_file, port_width_dict )  
   
   create_shared_lib( lib_file, c_wrapper_file, objs, include_dirs, obj_dir )
-  
 
 def compile_object( obj, ext, include_dirs ):
   
@@ -258,8 +257,8 @@ unsigned rd_{}_{}_{}({}_t* obj)
       # single write
       method_impls += '''
 void wr_{}({}_t* obj, const char* x)
-{{ static_cast<{}*>(obj->{})->write({}(x)); }}
-'''       .format(port_name, class_name, sc_type, port_name, sc_type)
+{{ static_cast<{}*>(obj->{})->write(x); }}
+'''       .format(port_name, class_name, sc_type, port_name)
   
   delete_stmts += '''
   {class_name} *model = static_cast< {class_name}* >(obj->model);
@@ -288,20 +287,21 @@ def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir
     ''')
   
    # Get the full include folder
-  include = " ".join( [ "-I. -I ..",
-                        "-I" + os.environ["SYSTEMC_INCLUDE"],
-                      ] + 
-                      [ "-I" + x for x in include_dirs ] )
+  include = " ".join( [ "-I. -I .." ] +
+                      [ "-I" + x for x in include_dirs ] +
+                      [ "-I" + os.environ["SYSTEMC_INCLUDE"] ]
+                    )
+  library = " ".join( [ "-L. -L .." ] +
+                      [ "-L" + obj_dir ] +
+                      [ "-L" + os.environ["SYSTEMC_LIBDIR"] ]
+                    )
+  rpath   = os.environ["SYSTEMC_LIBDIR"]
+  objects = " ".join( all_objs )
   
-  library = " ".join( [ "-L. -L ..",
-                        "-L" + os.environ["SYSTEMC_LIBDIR"],
-                        "-L" + obj_dir
-                      ])
-  objects = " ".join("")
   compile_cmd = ( 'g++ -o {lib_file} {c_wrapper_file} '
                   '{objects} -fPIC -shared -O1 -fstrict-aliasing '
-                  '-Wall -Wno-long-long -Werror {library} {include} '
-                  '-Wl,-rpath={library} -lsystemc -lm' ) \
+                  '-Wall -Wno-long-long -Werror {include} {library} '
+                  '-Wl,-rpath={rpath} -lsystemc -lm' ) \
                   .format( **vars() )
   print(compile_cmd)
   try:
