@@ -1,3 +1,69 @@
+import os
+import sys
+import shutil
+from os.path import basename
+from subprocess import check_output, STDOUT, CalledProcessError
+
+class SystemCIncludeEnvError( Exception ): pass
+class SystemCCompileError( Exception ): pass
+
+#-----------------------------------------------------------------------
+# systemc_to_pymtl
+#-----------------------------------------------------------------------
+# Create a PyMTL compatible interface for SystemC.
+
+def systemc_to_pymtl( model, c_wrapper_file, lib_file, py_wrapper_file ):
+  pass
+
+
+def compile_object( obj, ext, obj_dir, include ):
+  
+  # Check if systemc include folder is in the environment
+  
+  if "SYSTEMC_INCLUDE" not in os.environ:
+    raise SystemCIncludeEnvError( '''\n
+-   SystemC Include Environment Variable $SYSTEMC_INCLUDE doesn't exist!
+    ''')
+  
+  # Get the full include folder
+  include = " ".join( [ "-I. -I ..",
+                        "-I" + os.environ["SYSTEMC_INCLUDE"],
+                      ] + 
+                      [ "-I" + x for x in include ] )
+  
+  # Name, without the folder prefix
+  obj_name = basename( obj )
+  
+  compile_cmd = ( 'g++ -o {obj_dir}{obj_name}.o '
+                  '-fPIC -shared -O1 -fstrict-aliasing '
+                  '-Wall -Wno-long-long -Werror '
+                  ' {include} -c {obj}{ext} '  ).format( **vars() )
+            
+  try:
+    result = check_output( compile_cmd, stderr=STDOUT, shell=True )
+    
+  except CalledProcessError as e:
+    
+    # We remove the final "Error: Command Failed" line to make the output
+    # more succinct.
+
+    split_output = e.output.splitlines()
+    error = '\n-   '.join(split_output[:-1])
+
+    if not split_output[-1].startswith("%Error: Command Failed"):
+      error += "\n-   "+split_output[-1]
+
+    error_msg = "\n\n-   {}\n".format(error)
+
+    raise SystemCCompileError( error_msg )
+
+#-----------------------------------------------------------------------
+# gen_sc_datatype
+#-----------------------------------------------------------------------
+# 1   : sc_signal<bool>
+# <0  : special case for sc_clock
+# <=32: use sc_uint<bitwidth>
+# >32 : use sc_biguint<bitwidth>
 
 def gen_sc_datatype(port_width):
   
@@ -9,7 +75,13 @@ def gen_sc_datatype(port_width):
                   .format("big" if port_width > 32 else "", port_width)
   
   return sc_type
-  
+
+#-----------------------------------------------------------------------
+# create_c_wrapper_return_cdef
+#-----------------------------------------------------------------------
+# Create a c_wrapper for given pymtl file which inherits a SystemCModel
+# Returns the cffi cdef string for convenience.
+
 def create_c_wrapper_return_cdef(class_name, port_dict):
   
   cdef_templ = '''
