@@ -47,6 +47,9 @@ class SomeMeta( MetaCollectArgs ):
     lib_file        = 'lib{}_sc.so'.format( model_name )
     obj_dir         = 'obj_dir_' + model_name + os.sep
     
+    include_dirs     = deepcopy( inst.sourcefolder )
+    include_dirs.append( obj_dir )
+    
     # Copy all specified source file to obj folder for later compilation
     # Also try to copy header files by inferring the file extension
     # At the same time check caching status
@@ -66,6 +69,7 @@ class SomeMeta( MetaCollectArgs ):
     
     uncached = set()
     src_ext  = {}
+    tmp_objs = []
     
     if not exists(obj_dir):
       os.mkdir(obj_dir)
@@ -84,6 +88,8 @@ class SomeMeta( MetaCollectArgs ):
             if not exists( target_file ):
               # OK this is not the correct extension.
               continue
+            
+            tmp_objs.append( temp_obj )
             
             if ext.startswith(".c"):
               src_ext[temp_prefix] = ext
@@ -112,16 +118,23 @@ class SomeMeta( MetaCollectArgs ):
       
       # compile all uncached modules
       for x in uncached:
-        include_dir = deepcopy( inst.sourcefolder )
-        include_dir.append( obj_dir )
-        compile_object( x, src_ext[x], obj_dir, include_dir )
+        compile_object( x, src_ext[x], include_dirs )
     
     # Regenerate the shared library .so file if individual modules are 
     # updated or the .so file is missing.
     
-    if not uncached or exists( lib_file ):
-      systemc_to_pymtl( inst, c_wrapper_file,
-                        lib_file, py_wrapper_file )
+    if uncached or not exists( lib_file ):
+      
+      # use list for tmp_objs and all_objs to keep dependecies 
+      all_objs = []
+      for o in tmp_objs:
+        if o not in all_objs:
+          all_objs.append(o)
+      
+      systemc_to_pymtl( inst, obj_dir, include_dirs,
+                        all_objs, c_wrapper_file, lib_file, # c wrapper
+                        py_wrapper_file # py wrapper
+                      )
 
     # Use some trickery to import the compiled version of the model
     sys.path.append( os.getcwd() )

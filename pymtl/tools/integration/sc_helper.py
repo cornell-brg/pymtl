@@ -5,6 +5,7 @@ from os.path import basename
 from subprocess import check_output, STDOUT, CalledProcessError
 
 class SystemCIncludeEnvError( Exception ): pass
+class SystemCLibraryEnvError( Exception ): pass
 class SystemCCompileError( Exception ): pass
 
 #-----------------------------------------------------------------------
@@ -12,15 +13,17 @@ class SystemCCompileError( Exception ): pass
 #-----------------------------------------------------------------------
 # Create a PyMTL compatible interface for SystemC.
 
-def systemc_to_pymtl( model, c_wrapper_file, lib_file, py_wrapper_file ):
+def systemc_to_pymtl( model, obj_dir, include_dirs, objs, c_wrapper_file, lib_file, py_wrapper_file ):
   
   port_width_dict = { x: y.nbits \
                       for x,y in model._port_dict.iteritems() }
-  cdef = create_c_wrapper_return_cdef( model.class_name, port_width_dict )
-  print (cdef)
+  
+  cdef = create_c_wrapper( model.class_name, c_wrapper_file, port_width_dict )
+  
+  create_shared_lib( lib_file, c_wrapper_file, objs, include_dirs, obj_dir )
   
 
-def compile_object( obj, ext, obj_dir, include ):
+def compile_object( obj, ext, include_dirs ):
   
   # Check if systemc include folder is in the environment
   
@@ -33,12 +36,12 @@ def compile_object( obj, ext, obj_dir, include ):
   include = " ".join( [ "-I. -I ..",
                         "-I" + os.environ["SYSTEMC_INCLUDE"],
                       ] + 
-                      [ "-I" + x for x in include ] )
+                      [ "-I" + x for x in include_dirs ] )
   
   # Name, without the folder prefix
   obj_name = basename( obj )
   
-  compile_cmd = ( 'g++ -o {obj_dir}{obj_name}.o '
+  compile_cmd = ( 'g++ -o {obj}.o '
                   '-fPIC -shared -O1 -fstrict-aliasing '
                   '-Wall -Wno-long-long -Werror '
                   ' {include} -c {obj}{ext} '  ).format( **vars() )
@@ -81,12 +84,12 @@ def gen_sc_datatype(port_width):
   return sc_type
 
 #-----------------------------------------------------------------------
-# create_c_wrapper_return_cdef
+# create_c_wrapper
 #-----------------------------------------------------------------------
 # Create a c_wrapper for given pymtl file which inherits a SystemCModel
 # Returns the cffi cdef string for convenience.
 
-def create_c_wrapper_return_cdef( class_name, port_dict ):
+def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
   
   cdef_templ = '''
 typedef struct
@@ -265,11 +268,60 @@ void wr_{}({}_t* obj, const char* x)
   delete obj;
     '''.format(**vars())
   
-  with open(class_name+"_wrapper.cpp","w") as output:
+  with open(c_wrapper_file,"w") as output:
     output.write(cwrapper_templ.format(**vars()))
     
   return cdef_templ.format(**vars())
 
+def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir ):
+
+  # double check
+    
+  if "SYSTEMC_INCLUDE" not in os.environ:
+    raise SystemCIncludeEnvError( '''\n
+-   SystemC Include Environment Variable $SYSTEMC_INCLUDE doesn't exist!
+    ''')
+    
+  if "SYSTEMC_LIBDIR" not in os.environ:
+    raise SystemCLibraryEnvError( '''\n
+-   SystemC Library Environment Variable $SYSTEMC_LIBDIR doesn't exist!
+    ''')
+  
+   # Get the full include folder
+  include = " ".join( [ "-I. -I ..",
+                        "-I" + os.environ["SYSTEMC_INCLUDE"],
+                      ] + 
+                      [ "-I" + x for x in include_dirs ] )
+  
+  library = " ".join( [ "-L. -L ..",
+                        "-L" + os.environ["SYSTEMC_LIBDIR"],
+                        "-L" + obj_dir
+                      ])
+  objects = " ".join("")
+  compile_cmd = ( 'g++ -o {lib_file} {c_wrapper_file} '
+                  '{objects} -fPIC -shared -O1 -fstrict-aliasing '
+                  '-Wall -Wno-long-long -Werror {library} {include} '
+                  '-Wl,-rpath={library} -lsystemc -lm' ) \
+                  .format( **vars() )
+  print(compile_cmd)
+  try:
+    result = check_output( compile_cmd, stderr=STDOUT, shell=True )
+    
+  except CalledProcessError as e:
+    
+    # We remove the final "Error: Command Failed" line to make the output
+    # more succinct.
+
+    split_output = e.output.splitlines()
+    error = '\n-   '.join(split_output[:-1])
+
+    if not split_output[-1].startswith("%Error: Command Failed"):
+      error += "\n-   "+split_output[-1]
+
+    error_msg = "\n\n-   {}\n".format(error)
+
+    raise SystemCCompileError( error_msg )
+  
 def gen_py_wrapper(class_name):
   
   py_templ = '''
