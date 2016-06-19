@@ -9,8 +9,11 @@ import os
 import sys
 import inspect
 import collections
-from os.path import exists, basename
+from copy import deepcopy
+from os.path import exists
 from shutil  import copyfile
+import filecmp
+from sc_helper import *
 
 from ...model.metaclasses import MetaCollectArgs
 
@@ -20,38 +23,33 @@ from pymtl import *
 # SystemCImportError
 #-----------------------------------------------------------------------
 
-class SystemCImportError( Exception ):
-  pass
-
 class SomeMeta( MetaCollectArgs ):
   def __call__( self, *args, **kwargs ):
     inst = super( SomeMeta, self ).__call__( *args, **kwargs )
+    
+    # Add os path separator to all source folders
 
+    for i in xrange(len(inst.sourcefolder)):
+      if not inst.sourcefolder[i].endswith(os.sep):
+        inst.sourcefolder[i] += os.sep
+        
     # TODO: currently I don't call translation tool for systemc import,
     # but I guess I need to organize the following piece of code into 
     # some "systemcimporttool"
-
+    
     inst.vcd_file = '__dummy__'
-    
-    #new_inst = TranslationTool( inst, lint=True )
-    #-----
-    
-    model_inst = inst
-    
-    model_inst.elaborate()
+    inst.elaborate()
 
-    model_name      = model_inst.class_name
+    model_name      = inst.class_name
     c_wrapper_file  = model_name + '_sc.cpp'
     py_wrapper_file = model_name + '_sc.py'
     lib_file        = 'lib{}_sc.so'.format( model_name )
-    obj_dir         = 'obj_dir_' + model_name
+    obj_dir         = 'obj_dir_' + model_name + os.sep
     
     # Copy all specified source file to obj folder for later compilation
     # Also try to copy header files by inferring the file extension
     # At the same time check caching status
-    
-    cached = True
-    
+    #
     # Check the combination of a path, a filename and a extension
     # for both the header and the source. According to C++ 
     # convention the header should have the same filename as the 
@@ -60,14 +58,19 @@ class SomeMeta( MetaCollectArgs ):
     # The reason why I split the source array and header array into 
     # two groups is for performance -- to hopefully reduce the number
     # of disk inode lookup and disk accesses by breaking the loop
-    # when a header is found.
+    # when a header/source is found.
     
-    # the first group is for header, and the second is for source
     extensions = [  [".h", ".hh", ".hpp", ".h++"  ],
-                    [".cc", ".c++", ".cpp", ".cxx"] ]
-                    
-    for path in model.sourcefolder:
-      for filename in model.sourcefile:
+                    [".cc", ".cpp", ".c++", ".cxx"] ]
+    
+    uncached = set()
+    src_ext  = {}
+    
+    if not exists(obj_dir):
+      os.mkdir(obj_dir)
+    
+    for path in inst.sourcefolder:
+      for filename in inst.sourcefile:
         file_prefix = path    + filename
         temp_prefix = obj_dir + filename
         
@@ -75,27 +78,46 @@ class SomeMeta( MetaCollectArgs ):
           for ext in group: 
             target_file = file_prefix + ext
             temp_file   = temp_prefix + ext
-          
-            if exists( target_file ):
-              
-              if not exists( temp_file ):
-                cached = False
-                copyfile( header_file, temp_file )
+            temp_obj    = temp_prefix + ".o"
+            
+            if not exists( target_file ):
+              # OK this is not the correct extension.
+              continue
+            
+            if ext.startswith(".c"):
+              src_ext[temp_prefix] = ext
                 
-              elif not filecmp.cmp( header_file, temp_file ):
-                cached = False
+            # 1. No .o file, then yeah it hasn't been cached.
+            # 2. No .c file, probably something unexpected happened.
+            # 3. See if the cached file is not up to date.
+            
+            if not exists( temp_obj ) or \
+               not exists( temp_file ) or \
+               not filecmp.cmp( temp_file, target_file ):
               
-              break
+              if exists( temp_obj ):
+                os.remove( temp_obj )
+              copyfile( target_file, temp_file )
+              uncached.add(temp_prefix)
+              
+            break
     
     # Remake only if we've updated the systemc source
-    
-    if not cached:
-      #print( "NOT CACHED", verilog_file )
-      systemc_to_pymtl( model_inst, verilog_file, c_wrapper_file,
-                        lib_file, py_wrapper_file, vcd_en, lint,
-                        verilator_xinit )
-    #else:
-    #  print( "CACHED", verilog_file )
+
+    if not uncached:
+      print( "All Cached!")
+    else:
+      print( "Not Cached", uncached )
+      
+      # compile all uncached modules
+      for x in uncached:
+        include_dir = deepcopy( inst.sourcefolder )
+        include_dir.append( obj_dir )
+        compile_object( x, src_ext[x], obj_dir, include_dir )
+      
+      # generate a new shared library
+      systemc_to_pymtl( inst, c_wrapper_file,
+                        lib_file, py_wrapper_file )
 
     # Use some trickery to import the compiled version of the model
     sys.path.append( os.getcwd() )
