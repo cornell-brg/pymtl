@@ -1,7 +1,6 @@
 import os
 import sys
 import shutil
-from os.path import basename
 from subprocess import check_output, STDOUT, CalledProcessError
 
 class SystemCIncludeEnvError( Exception ): pass
@@ -21,6 +20,13 @@ def systemc_to_pymtl( model, obj_dir, include_dirs, objs, c_wrapper_file, lib_fi
   cdef = create_c_wrapper( model.class_name, c_wrapper_file, port_width_dict )  
   
   create_shared_lib( lib_file, c_wrapper_file, objs, include_dirs, obj_dir )
+  
+  create_py_wrapper( model, py_wrapper_file )
+  
+#-----------------------------------------------------------------------
+# compile_object
+#-----------------------------------------------------------------------
+# Compile {obj}.{ext} to {obj}.o
 
 def compile_object( obj, ext, include_dirs ):
   
@@ -36,9 +42,6 @@ def compile_object( obj, ext, include_dirs ):
                         "-I" + os.environ["SYSTEMC_INCLUDE"],
                       ] + 
                       [ "-I" + x for x in include_dirs ] )
-  
-  # Name, without the folder prefix
-  obj_name = basename( obj )
   
   compile_cmd = ( 'g++ -o {obj}.o '
                   '-fPIC -shared -O1 -fstrict-aliasing '
@@ -90,78 +93,6 @@ def gen_sc_datatype(port_width):
 
 def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
   
-  cdef_templ = '''
-typedef struct
-{{
-  {port_decls}
-  
-  void *model;
-  
-}} {class_name}_t;
-
-{method_decls}
-
-{class_name}_t* create();
-void destroy({class_name}_t *obj);
-
-void sim_comb();
-void sim_cycle();
-'''
-  cwrapper_templ = '''
-#include "systemc.h"
-#include "{class_name}.h"
-
-extern "C"
-{{
-
-typedef struct
-{{
-  {port_decls}
-  
-  void *model;
-  
-}} {class_name}_t;
-
-// Since for now we haven't figured out either a way to totally 
-// destroy cffi instance, or to reset some static data structure by 
-// some idiot systemc developer, we reuse the module.
-
-// Here's why I cannot reset the systemc simulation kernel.
-// http://stackoverflow.com/questions/37841872/access-some-static-variable-that-are-defined-in-cpp-while-its-class-type-is-als
-
-// Here's why I cannot reset cffi context.
-// http://stackoverflow.com/questions/29567200/cleanly-unload-shared-library-and-start-over-with-python-cffi
-
-static {class_name}_t *obj = NULL;
-{method_impls}
-
-{class_name}_t* create()
-{{
-  if (obj)  return obj;
-  {new_stmts}
-  
-  obj = m;
-  return m;
-}}
-void destroy({class_name}_t *obj)
-{{
-  // Currently we don't reset, and reuse the module by the reset
-  // signal, to let it start over again.
-  
-  // sc_get_curr_simcontext()->reset();
-}}
-
-void sim_comb()
-{{
-  sc_start(0, SC_NS);
-}}
-void sim_cycle()
-{{
-  sc_start(1, SC_NS);
-}}
-
-}}
-'''
   ind_0 = '\n'
   ind_2 = '\n  '
   
@@ -267,10 +198,37 @@ void wr_{}({}_t* obj, const char* x)
   delete obj;
     '''.format(**vars())
   
-  with open(c_wrapper_file,"w") as output:
-    output.write(cwrapper_templ.format(**vars()))
+  templ = os.path.dirname( os.path.abspath( __file__ ) ) + \
+          os.path.sep + 'systemc_wrapper.templ.cpp'
+  
+  with open( templ, "r" )           as template, \
+       open( c_wrapper_file, "w" )  as output:
     
-  return cdef_templ.format(**vars())
+    output.write( template.read().format(**vars()) )
+
+  cdef = '''
+    typedef struct
+    {{
+      {port_decls}
+      
+      void *model;
+      
+    }} {class_name}_t;
+
+    {method_decls}
+
+    {class_name}_t* create();
+    void destroy({class_name}_t *obj);
+
+    void sim_comb();
+    void sim_cycle();
+    '''.format( **vars() )
+  
+  return cdef
+#-----------------------------------------------------------------------
+# create_shared_lib
+#-----------------------------------------------------------------------
+# Link all the .o files and systemc lib into a single .so file
 
 def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir ):
 
@@ -321,101 +279,59 @@ def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir
     error_msg = "\n\n-   {}\n".format(error)
 
     raise SystemCCompileError( error_msg )
-  
-def gen_py_wrapper(class_name):
-  
-  py_templ = '''
-#=======================================================================
-# {class_name}_sc.py
-#=======================================================================
-# This wrapper makes a SystemC model appear as if it
-# were a normal PyMTL model.
-
-import os
-
-from pymtl import *
-from cffi  import FFI
-
+    
 #-----------------------------------------------------------------------
-# {class_name}
+# gen_py_wrapper
 #-----------------------------------------------------------------------
-class {class_name}( Model ):
-  id_ = 0
+# Create the python wrapper
 
-  def __init__( s ):
+def create_py_wrapper( model, py_wrapper_file ):
+  
+  port_defs  = []
 
-    # initialize FFI, define the exposed interface
-    s.ffi = FFI()
-    s.ffi.cdef({cdef})
+  from ..translation.cpp_helpers import recurse_port_hierarchy
+  for x in model.get_ports( preserve_hierarchy=True ):
+    recurse_port_hierarchy( x, port_defs )
 
-    # Import the shared library containing the model. We defer
-    # construction to the elaborate_logic function to allow the user to
-    # set the vcd_file.
-
-    s._ffi = s.ffi.dlopen('./lib{}_sc.so'.format( class_name ))
-
-    # dummy class to emulate PortBundles
-    class BundleProxy( PortBundle ):
-      flip = False
-
-    # define the port interface
-    {port_defs}
-
-    # increment instance count
-    {class_name}.id_ += 1
-
-    # Defer vcd dumping until later
-    s.vcd_file = None
-
-    # Buffer for line tracing
-    s._line_trace_str = s.ffi.new("char[512]")
-    s._convert_string = s.ffi.string
-
-  def __del__( s ):
-    s._ffi.destroy( s._m )
-
-  def elaborate_logic( s ):
-
-    # Give verilator_vcd_file a slightly different name so PyMTL .vcd and
-    # Verilator .vcd can coexist
-
-    verilator_vcd_file = ""
-    if s.vcd_file:
-      filen, ext         = os.path.splitext( s.vcd_file )
-      verilator_vcd_file = '{{}}.verilator{{}}{{}}'.format(filen, s.id_, ext)
-
-    # Construct the model.
-
-    s._m = s._ffi.create()
-
-    @s.combinational
-    def logic():
+  set_inputs = []
+  set_comb   = []
+  set_next   = []
+  
+  inports  = model.get_inports()
+  outports = model.get_outports()
+  
+  for (sc_name, port) in model._port_dict.iteritems():
+    if port.name == "clk": continue
+    
+    if port in inports:
+      set_inputs.append( "{sc_name} = s.{port.name}".format(**vars()) )
+      if port.nbits > 32:
+        set_inputs.append( "s._ffi.wr_{sc_name}(m, str(s.{port.name}.uint()))".format(**vars()) )
+      else:
+        set_inputs.append( "s._ffi.wr_{sc_name}(m, s.{port.name})".format(**vars()) )
+        
+    if port in outports:
       
-      m = s._m
-      
-      {set_inputs}
-
-      s._ffi.sim_comb()
-
-      {set_comb}
-
-    @s.posedge_clk
-    def tick():
-
-      s._ffi.sim_cycle()
-      
-      m = s._m
-      
-      {set_next}
-
-  def line_trace( s ):
-    if {sclinetrace}:
-      s._ffi.trace( s._m, s._line_trace_str )
-      return s._convert_string( s._line_trace_str )
-    else:
-      return ""
-'''
-
+      if port.nbits > 32:
+      # stripmine the read
+        for x in xrange(0, port.nbits, 32):
+          lsb, msb = x, min(port.nbits, x+32)-1
+          foo = '{foo}'
+          tmp = ("s.{port.name}[{lsb}:{msb}].{foo} = s._ffi.rd_{sc_name}_{lsb}_{msb}(m)".format(**vars()) )
+          set_comb.append( tmp.format(foo = "value") )
+          set_next.append( tmp.format(foo = "next") )
+      else:
+        set_comb.append( "s.{port.name}.value = s._ffi.rd_{sc_name}(m)".format(**vars()) )
+        set_next.append( "s.{port.name}.next = s._ffi.rd_{sc_name}(m)".format(**vars()) )
+        
+  print "      \n".join(set_inputs)
+  print ""
+  print "      \n".join(set_comb)
+  print ""
+  print "      \n".join(set_next)
+  
+  assert False
+  
 if __name__ == '__main__':
   ports = {
     "xcelreq_msg" : 160,
