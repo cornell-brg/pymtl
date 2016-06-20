@@ -1,3 +1,7 @@
+#=======================================================================
+# sc_helper.py
+#=======================================================================
+
 import os
 import sys
 import shutil
@@ -7,22 +11,6 @@ class SystemCIncludeEnvError( Exception ): pass
 class SystemCLibraryEnvError( Exception ): pass
 class SystemCCompileError( Exception ): pass
 
-#-----------------------------------------------------------------------
-# systemc_to_pymtl
-#-----------------------------------------------------------------------
-# Create a PyMTL compatible interface for SystemC.
-
-def systemc_to_pymtl( model, obj_dir, include_dirs, objs, c_wrapper_file, lib_file, py_wrapper_file ):
-    
-  port_width_dict = { x: y.nbits if y.name != "clk" else -1 \
-                      for x,y in model._port_dict.iteritems() }
-  
-  cdef = create_c_wrapper( model.class_name, c_wrapper_file, port_width_dict )  
-  
-  create_shared_lib( lib_file, c_wrapper_file, objs, include_dirs, obj_dir )
-  
-  create_py_wrapper( model, py_wrapper_file, cdef )
-  
 #-----------------------------------------------------------------------
 # compile_object
 #-----------------------------------------------------------------------
@@ -38,33 +26,35 @@ def compile_object( obj, ext, include_dirs ):
     ''')
   
   # Get the full include folder
-  include = " ".join( [ "-I. -I ..",
-                        "-I" + os.environ["SYSTEMC_INCLUDE"],
-                      ] + 
+  include = " ".join( [ "-I. -I .." ] +
+                      [ "-I" + os.environ["SYSTEMC_INCLUDE"] ] +
                       [ "-I" + x for x in include_dirs ] )
-  
   compile_cmd = ( 'g++ -o {obj}.o '
                   '-fPIC -shared -O1 -fstrict-aliasing '
                   '-Wall -Wno-long-long -Werror '
                   ' {include} -c {obj}{ext} '  ).format( **vars() )
-            
+  
   try:
     result = check_output( compile_cmd, stderr=STDOUT, shell=True )
-    
   except CalledProcessError as e:
+    raise SystemCCompileError( "\n\n-   {}\n".format(e.output) )
+
+#-----------------------------------------------------------------------
+# systemc_to_pymtl
+#-----------------------------------------------------------------------
+# Create a PyMTL compatible interface for SystemC.
+
+def systemc_to_pymtl( model, obj_dir, include_dirs, sc_module_name, 
+                      objs, c_wrapper_file, lib_file, py_wrapper_file ):
     
-    # We remove the final "Error: Command Failed" line to make the output
-    # more succinct.
-
-    split_output = e.output.splitlines()
-    error = '\n-   '.join(split_output[:-1])
-
-    if not split_output[-1].startswith("%Error: Command Failed"):
-      error += "\n-   "+split_output[-1]
-
-    error_msg = "\n\n-   {}\n".format(error)
-
-    raise SystemCCompileError( error_msg )
+  port_width_dict = { x: y.nbits if y.name != "clk" else -1 \
+                      for x,y in model._port_dict.iteritems() }
+  
+  cdef = create_c_wrapper( sc_module_name, c_wrapper_file, port_width_dict )  
+  
+  create_shared_lib( lib_file, c_wrapper_file, objs, include_dirs, obj_dir )
+  
+  create_py_wrapper( model, py_wrapper_file, cdef )
 
 #-----------------------------------------------------------------------
 # gen_sc_datatype
@@ -91,7 +81,7 @@ def gen_sc_datatype(port_width):
 # Create a c_wrapper for given pymtl file which inherits a SystemCModel
 # Returns the cffi cdef string for convenience.
 
-def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
+def create_c_wrapper( sc_module_name, c_wrapper_file, port_dict ):
   
   ind_0 = '\n'
   ind_2 = '\n  '
@@ -100,12 +90,12 @@ def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
   
   cdef_port_decls = ""
   wrap_port_decls = ""
-  method_decls = ""
-  method_impls = ""
+  method_decls    = ""
+  method_impls    = ""
   
   new_stmts = '''
-  {class_name}_t *m     = ({class_name}_t*) malloc(sizeof({class_name}_t));
-  {class_name}   *model = new {class_name}("{class_name}");
+  {sc_module_name}_t *m     = ({sc_module_name}_t*) malloc(sizeof({sc_module_name}_t));
+  {sc_module_name}   *model = new {sc_module_name}("{sc_module_name}");
   m->model = model;
   '''.format(**vars())
   
@@ -145,21 +135,21 @@ def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
     if port_width <= 32:
       # rd
       method_decls += ind_4 + "unsigned rd_{}({}_t* obj);" \
-                                .format(port_name, class_name)
+                                .format( port_name, sc_module_name )
       # wr
       method_decls += ind_4 + "void     wr_{}({}_t* obj, unsigned x);" \
-                                .format(port_name, class_name)
+                                .format( port_name, sc_module_name )
     else:
       # stripmine the read
       for x in xrange(0, port_width, 32):
         lsb, msb = x, min(port_width, x+32)-1
         
         method_decls += ind_4 + "unsigned rd_{}_{}_{}({}_t* obj);" \
-                                  .format(port_name, lsb, msb, class_name)
+                                  .format( port_name, lsb, msb, sc_module_name )
   
       # write a single string
       method_decls += ind_4 + "void     wr_{}({}_t* obj, const char* x);" \
-                                .format(port_name, class_name)
+                                .format( port_name, sc_module_name )
     method_decls += "\n"
     
     #...................................................................
@@ -173,12 +163,12 @@ def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
       method_impls += '''
 unsigned rd_{}({}_t* obj)
 {{ return static_cast<{}*>(obj->{})->read(); }}''' \
-      .format(port_name, class_name, sc_type, port_name)
+      .format( port_name, sc_module_name, sc_type, port_name )
       
       method_impls += '''
 void wr_{}({}_t* obj, unsigned x)
 {{ static_cast<{}*>(obj->{})->write(x); }}
-  '''.format(port_name, class_name, sc_type, port_name)
+  '''.format( port_name, sc_module_name, sc_type, port_name )
       
     else:
       # stripmine the read
@@ -187,20 +177,20 @@ void wr_{}({}_t* obj, unsigned x)
         method_impls += '''
 unsigned rd_{}_{}_{}({}_t* obj)
 {{ return static_cast<{}*>(obj->{})->read().range({},{}).to_uint(); }}''' \
-          .format(port_name, lsb, msb, class_name, sc_type, port_name, msb, lsb)
+          .format( port_name, lsb, msb, sc_module_name, sc_type, port_name, msb, lsb )
       
       # single write
       method_impls += '''
 void wr_{}({}_t* obj, const char* x)
 {{ static_cast<{}*>(obj->{})->write(x); }}
-'''       .format(port_name, class_name, sc_type, port_name)
+'''       .format( port_name, sc_module_name, sc_type, port_name )
   
   delete_stmts += '''
-  {class_name} *model = static_cast< {class_name}* >(obj->model);
+  {sc_module_name} *model = static_cast< {sc_module_name}* >(obj->model);
   delete model;
   
   delete obj;
-    '''.format(**vars())
+    '''.format( **vars() )
   
   templ = os.path.dirname( os.path.abspath( __file__ ) ) + \
           os.path.sep + 'systemc_wrapper.templ.cpp'
@@ -217,12 +207,12 @@ void wr_{}({}_t* obj, const char* x)
       
       void *model;
       
-    }} {class_name}_t;
+    }} {sc_module_name}_t;
 
     {method_decls}
 
-    {class_name}_t* create();
-    void destroy({class_name}_t *obj);
+    {sc_module_name}_t* create();
+    void destroy({sc_module_name}_t *obj);
 
     void sim_comb();
     void sim_cycle();
@@ -265,24 +255,12 @@ def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir
                   '-Wall -Wno-long-long -Werror {include} {library} '
                   '-Wl,-rpath={rpath} -lsystemc -lm' ) \
                   .format( **vars() )
-  print(compile_cmd)
+  # print(compile_cmd)
+  
   try:
     result = check_output( compile_cmd, stderr=STDOUT, shell=True )
-    
   except CalledProcessError as e:
-    
-    # We remove the final "Error: Command Failed" line to make the output
-    # more succinct.
-
-    split_output = e.output.splitlines()
-    error = '\n-   '.join(split_output[:-1])
-
-    if not split_output[-1].startswith("%Error: Command Failed"):
-      error += "\n-   "+split_output[-1]
-
-    error_msg = "\n\n-   {}\n".format(error)
-
-    raise SystemCCompileError( error_msg )
+    raise SystemCCompileError( "\n\n-   {}\n".format(e.output) )
     
 #-----------------------------------------------------------------------
 # gen_py_wrapper
@@ -292,7 +270,6 @@ def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir
 def create_py_wrapper( model, py_wrapper_file, cdef ):
   
   port_defs  = []
-
   from ..translation.cpp_helpers import recurse_port_hierarchy
   for x in model.get_ports( preserve_hierarchy=True ):
     recurse_port_hierarchy( x, port_defs )
@@ -322,9 +299,14 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
       if port.nbits > 32:
       # stripmine the read
         for x in xrange(0, port.nbits, 32):
-          lsb, msb = x, min(port.nbits, x+32)-1
-          foo = '{foo}'
-          tmp = ("s.{port.name}[{lsb}:{msb}].{foo} = s._ffi.rd_{sc_name}_{lsb}_{msb}(m)".format(**vars()) )
+          
+          py_msb = min( port.nbits, x+32 )
+          # because systemc uses range [l,r] but pymtl uses [l,r)
+          sc_msb = py_msb - 1
+          
+          foo   = '{foo}'
+          
+          tmp = ("s.{port.name}[{x}:{py_msb}].{foo} = s._ffi.rd_{sc_name}_{x}_{sc_msb}(m)".format(**vars()) )
           set_comb.append( tmp.format(foo = "value") )
           set_next.append( tmp.format(foo = "next") )
       else:
@@ -335,10 +317,10 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
       set_comb.append("")
       set_next.append("")
         
-  port_defs  = "\n    ".join(port_defs)
-  set_inputs = "\n      ".join(set_inputs)
-  set_comb   = "\n      ".join(set_comb)
-  set_next   = "\n      ".join(set_next)
+  port_defs  = "\n    "  .join( port_defs )
+  set_inputs = "\n      ".join( set_inputs )
+  set_comb   = "\n      ".join( set_comb )
+  set_next   = "\n      ".join( set_next )
   class_name = model.class_name
   sclinetrace = False
   
@@ -349,17 +331,5 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
   with open( templ, 'r' )           as template, \
        open( py_wrapper_file, 'w' ) as output:
     output.write( template.read().format(**vars()) )
-  assert False
-  
-if __name__ == '__main__':
-  ports = {
-    "xcelreq_msg" : 160,
-    "xcelreq_val" : 1,
-    "xcelresp_msg": 69,
-  }
-  
-  
-  cdef = create_c_wrapper_return_cdef("nullxcel", ports)
-  print cdef
   
   

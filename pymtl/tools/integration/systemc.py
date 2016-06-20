@@ -8,39 +8,47 @@ import re
 import os
 import sys
 import inspect
+import filecmp
 import collections
 from copy import deepcopy
-from os.path import exists
+from os.path import exists, basename
 from shutil  import copyfile
-import filecmp
 from sc_helper import *
 
 from ...model.metaclasses import MetaCollectArgs
 
 from pymtl import *
 
-#-----------------------------------------------------------------------
-# SystemCImportError
-#-----------------------------------------------------------------------
+class SystemCSourceFileError( Exception ): pass
 
 class SomeMeta( MetaCollectArgs ):
   def __call__( self, *args, **kwargs ):
     inst = super( SomeMeta, self ).__call__( *args, **kwargs )
     
-    # Add os path separator to all source folders
-
-    for i in xrange(len(inst.sourcefolder)):
-      if not inst.sourcefolder[i].endswith(os.sep):
-        inst.sourcefolder[i] += os.sep
-        
+    # Get the full path of source folders based on the location of 
+    # the python class and the relative path
+    
+    for i, x in enumerate(inst.sourcefolder):
+      
+      if x.startswith("/"):
+        # already absolute path, pass
+        pass
+      else:
+        # relative path, do concatenation
+        x = os.path.dirname( inspect.getfile( inst.__class__ ) ) + os.sep + x
+      
+      if not x.endswith(os.sep):
+        x += os.sep
+      inst.sourcefolder[i] = x
+    
     # TODO: currently I don't call translation tool for systemc import,
     # but I guess I need to organize the following piece of code into 
     # some "systemcimporttool"
     
     inst.vcd_file = '__dummy__'
     inst.elaborate()
-  
-      
+    
+    sc_module_name  = inst.__class__.__name__  
     model_name      = inst.class_name
     c_wrapper_file  = model_name + '_sc.cpp'
     py_wrapper_file = model_name + '_sc.py'
@@ -71,8 +79,8 @@ class SomeMeta( MetaCollectArgs ):
     src_ext  = {}
     tmp_objs = []
     
-    if not exists(obj_dir):
-      os.mkdir(obj_dir)
+    if not exists( obj_dir ):
+      os.mkdir( obj_dir )
     
     for path in inst.sourcefolder:
       for filename in inst.sourcefile:
@@ -105,18 +113,41 @@ class SomeMeta( MetaCollectArgs ):
               if exists( temp_obj ):
                 os.remove( temp_obj )
               copyfile( target_file, temp_file )
-              uncached.add(temp_prefix)
+              uncached.add( temp_prefix )
               
             break
     
-    # Remake only if we've updated the systemc source
+    # This part is used to handle the missing of source file. 
+    # Specifically, if the user specifies "foo" in s.sourcefile, but 
+    # the above code is not able to find foo with every prefix in all
+    # folders in s.sourcefolder, we have to terminate the compilation.
+    
+    unmatched = []
+    for x in inst.sourcefile:
+      matched = False
+      for y in src_ext:
+        if basename(y) == x:
+          matched = True
+          break
+      if not matched:
+        unmatched.append( "\""+ x + "\"" )
+    
+    if unmatched:
+      raise SystemCSourceFileError( '\n'
+        '-   Source file for [{}] not found.\n'
+        '-   Please double check s.sourcefolder and s.sourcefile!'\
+          .format(", ".join( unmatched )) )
+    
+    # Remake only if there're uncached files
 
     if not uncached:
-      print( "All Cached!")
+      # print( "All Cached!")
+      pass
     else:
-      print( "Not Cached", uncached )
+      # print( "Not Cached", uncached )
       
-      # compile all uncached modules
+      # Compile all uncached modules to .o object file
+      
       for x in uncached:
         compile_object( x, src_ext[x], include_dirs )
     
@@ -125,17 +156,23 @@ class SomeMeta( MetaCollectArgs ):
     
     if uncached or not exists( lib_file ):
       
-      # use list for tmp_objs and all_objs to keep dependecies 
+      # Use list for tmp_objs and all_objs to keep dependecies 
+      # O(n^2) but maybe we could refine it later when we need to deal 
+      # with thousands of files ...
+      
       all_objs = []
       for o in tmp_objs:
         if o not in all_objs:
           all_objs.append(o)
       
-      systemc_to_pymtl( inst, obj_dir, include_dirs,
+      systemc_to_pymtl( inst, # model instance
+                        obj_dir, include_dirs, sc_module_name,
                         all_objs, c_wrapper_file, lib_file, # c wrapper
                         py_wrapper_file # py wrapper
                       )
-
+    
+    # Followings are the same as Translation Tool
+    
     # Use some trickery to import the compiled version of the model
     sys.path.append( os.getcwd() )
     __import__( py_wrapper_file[:-3] )
@@ -143,20 +180,19 @@ class SomeMeta( MetaCollectArgs ):
 
     # Get the model class from the module, instantiate and elaborate it
     model_class = imported_module.__dict__[ model_name ]
+    
     new_inst  = model_class()
-    
-    #-----
-    
     new_inst.vcd_file = None
 
     new_inst.__class__.__name__  = inst.__class__.__name__
     new_inst.__class__.__bases__ = (SystemCModel,)
-    new_inst._args       = inst._args
-    new_inst.modulename  = inst.modulename
-    new_inst.sourcefile  = inst.sourcefile
-    new_inst.sclinetrace = inst.sclinetrace
-    new_inst._param_dict = inst._param_dict
-    new_inst._port_dict  = inst._port_dict
+    new_inst._args        = inst._args
+    new_inst.modulename   = inst.modulename
+    new_inst.sourcefile   = inst.sourcefile
+    new_inst.sourcefolder = inst.sourcefolder
+    new_inst.sclinetrace  = inst.sclinetrace
+    new_inst._param_dict  = inst._param_dict
+    new_inst._port_dict   = inst._port_dict
 
     # TODO: THIS IS SUPER HACKY. FIXME
     # This copies the user-defined line_trace method from the

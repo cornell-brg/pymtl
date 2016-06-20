@@ -26,6 +26,7 @@ class {class_name}( Model ):
     # set the vcd_file.
 
     s._ffi = s.ffi.dlopen('./lib{class_name}_sc.so')
+    s._m   = None
 
     # dummy class to emulate PortBundles
     class BundleProxy( PortBundle ):
@@ -44,8 +45,10 @@ class {class_name}( Model ):
     s._line_trace_str = s.ffi.new("char[512]")
     s._convert_string = s.ffi.string
 
-  def __del__( s ):
-    s._ffi.destroy( s._m )
+  # Currently we don't need this.
+  # def __del__( s ):
+    # if s._m:
+      # s._ffi.destroy( s._m )
 
   def elaborate_logic( s ):
 
