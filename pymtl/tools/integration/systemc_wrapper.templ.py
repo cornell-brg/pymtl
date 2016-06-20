@@ -19,13 +19,13 @@ class {class_name}( Model ):
 
     # initialize FFI, define the exposed interface
     s.ffi = FFI()
-    s.ffi.cdef({cdef})
+    s.ffi.cdef('''{cdef}''')
 
     # Import the shared library containing the model. We defer
     # construction to the elaborate_logic function to allow the user to
     # set the vcd_file.
 
-    s._ffi = s.ffi.dlopen('./lib{}_sc.so'.format( class_name ))
+    s._ffi = s.ffi.dlopen('./lib{class_name}_sc.so')
 
     # dummy class to emulate PortBundles
     class BundleProxy( PortBundle ):

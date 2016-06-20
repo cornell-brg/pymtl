@@ -21,7 +21,7 @@ def systemc_to_pymtl( model, obj_dir, include_dirs, objs, c_wrapper_file, lib_fi
   
   create_shared_lib( lib_file, c_wrapper_file, objs, include_dirs, obj_dir )
   
-  create_py_wrapper( model, py_wrapper_file )
+  create_py_wrapper( model, py_wrapper_file, cdef )
   
 #-----------------------------------------------------------------------
 # compile_object
@@ -95,8 +95,11 @@ def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
   
   ind_0 = '\n'
   ind_2 = '\n  '
+  ind_4 = '\n    '
+  ind_6 = '\n      '
   
-  port_decls   = ""
+  cdef_port_decls = ""
+  wrap_port_decls = ""
   method_decls = ""
   method_impls = ""
   
@@ -114,7 +117,8 @@ def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
     # port_decls: for the c_wrapper struct def
     #...................................................................
     
-    port_decls  +=  ind_2 + "void *{};".format(port_name)
+    cdef_port_decls += ind_6 + "void *{};".format(port_name)
+    wrap_port_decls += ind_2 + "void *{};".format(port_name)
     
     #...................................................................
     # new and delete stmts: new and delete the port
@@ -140,21 +144,21 @@ def create_c_wrapper( class_name, c_wrapper_file, port_dict ):
     
     if port_width <= 32:
       # rd
-      method_decls += ind_0 + "unsigned rd_{}({}_t* obj);" \
+      method_decls += ind_4 + "unsigned rd_{}({}_t* obj);" \
                                 .format(port_name, class_name)
       # wr
-      method_decls += ind_0 + "void     wr_{}({}_t* obj, unsigned x);" \
+      method_decls += ind_4 + "void     wr_{}({}_t* obj, unsigned x);" \
                                 .format(port_name, class_name)
     else:
       # stripmine the read
       for x in xrange(0, port_width, 32):
         lsb, msb = x, min(port_width, x+32)-1
         
-        method_decls += ind_0 + "unsigned rd_{}_{}_{}({}_t* obj);" \
+        method_decls += ind_4 + "unsigned rd_{}_{}_{}({}_t* obj);" \
                                   .format(port_name, lsb, msb, class_name)
   
       # write a single string
-      method_decls += ind_0 + "void     wr_{}({}_t* obj, const char* x);" \
+      method_decls += ind_4 + "void     wr_{}({}_t* obj, const char* x);" \
                                 .format(port_name, class_name)
     method_decls += "\n"
     
@@ -209,7 +213,7 @@ void wr_{}({}_t* obj, const char* x)
   cdef = '''
     typedef struct
     {{
-      {port_decls}
+      {cdef_port_decls}
       
       void *model;
       
@@ -285,7 +289,7 @@ def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir
 #-----------------------------------------------------------------------
 # Create the python wrapper
 
-def create_py_wrapper( model, py_wrapper_file ):
+def create_py_wrapper( model, py_wrapper_file, cdef ):
   
   port_defs  = []
 
@@ -309,6 +313,9 @@ def create_py_wrapper( model, py_wrapper_file ):
         set_inputs.append( "s._ffi.wr_{sc_name}(m, str(s.{port.name}.uint()))".format(**vars()) )
       else:
         set_inputs.append( "s._ffi.wr_{sc_name}(m, s.{port.name})".format(**vars()) )
+      
+      # empty line for better looking
+      set_inputs.append("")
         
     if port in outports:
       
@@ -323,13 +330,25 @@ def create_py_wrapper( model, py_wrapper_file ):
       else:
         set_comb.append( "s.{port.name}.value = s._ffi.rd_{sc_name}(m)".format(**vars()) )
         set_next.append( "s.{port.name}.next = s._ffi.rd_{sc_name}(m)".format(**vars()) )
+      
+      # empty line for better looking
+      set_comb.append("")
+      set_next.append("")
         
-  print "      \n".join(set_inputs)
-  print ""
-  print "      \n".join(set_comb)
-  print ""
-  print "      \n".join(set_next)
+  port_defs  = "\n    ".join(port_defs)
+  set_inputs = "\n      ".join(set_inputs)
+  set_comb   = "\n      ".join(set_comb)
+  set_next   = "\n      ".join(set_next)
+  class_name = model.class_name
+  sclinetrace = False
   
+  templ = os.path.dirname( os.path.abspath( __file__ ) ) + \
+          os.path.sep + 'systemc_wrapper.templ.py'
+          
+  # create source
+  with open( templ, 'r' )           as template, \
+       open( py_wrapper_file, 'w' ) as output:
+    output.write( template.read().format(**vars()) )
   assert False
   
 if __name__ == '__main__':

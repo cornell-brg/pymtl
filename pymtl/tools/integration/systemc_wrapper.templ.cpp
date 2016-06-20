@@ -6,7 +6,7 @@ extern "C"
 
 typedef struct
 {{
-  {port_decls}
+  {wrap_port_decls}
   
   void *model;
   
