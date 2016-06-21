@@ -171,7 +171,7 @@ class SomeMeta( MetaCollectArgs ):
                         py_wrapper_file # py wrapper
                       )
     
-    # Followings are the same as Translation Tool
+    # Follows are the same as Translation Tool
     
     # Use some trickery to import the compiled version of the model
     sys.path.append( os.getcwd() )
@@ -223,9 +223,9 @@ class SystemCModel( Model ):
   A PyMTL model for importing hand-written SystemC modules.
 
   Attributes:
-    modulename  Name of the Verilog module to import.
-    
-    TBA
+    modulename   Name of the Verilog module to import.
+    sourcefile   List of C++ source files to be compiled
+    sourcefolder List of folders which contain source files
     
   """
   __metaclass__ = SomeMeta
@@ -271,11 +271,11 @@ class SystemCModel( Model ):
 
     if not self.sourcefile:
       file_ = inspect.getfile( self.__class__ )
-      self.sourcefile = self.modulename
+      self.sourcefile = [ self.modulename ]
       
     if not self.sourcefolder:
       file_ = inspect.getfile( self.__class__ )
-      self.sourcefolder = os.path.dirname( file_ )
+      self.sourcefolder = [ os.path.dirname( file_ ) ]
     
     # I added an extra check to only add the prefix if has not already
     # been added. Once we started using Verilog import and then turning

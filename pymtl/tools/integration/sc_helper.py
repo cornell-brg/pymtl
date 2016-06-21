@@ -9,7 +9,7 @@ from subprocess import check_output, STDOUT, CalledProcessError
 
 class SystemCIncludeEnvError( Exception ): pass
 class SystemCLibraryEnvError( Exception ): pass
-class SystemCCompileError( Exception ): pass
+class SystemCCompileError   ( Exception ): pass
 
 #-----------------------------------------------------------------------
 # compile_object
@@ -27,17 +27,18 @@ def compile_object( obj, ext, include_dirs ):
   
   # Get the full include folder
   include = " ".join( [ "-I. -I .." ] +
-                      [ "-I" + os.environ["SYSTEMC_INCLUDE"] ] +
-                      [ "-I" + x for x in include_dirs ] )
+                      [ "-I" + x for x in include_dirs ] +
+                      [ "-I" + os.environ["SYSTEMC_INCLUDE"] ] )
+  
   compile_cmd = ( 'g++ -o {obj}.o '
                   '-fPIC -shared -O1 -fstrict-aliasing '
                   '-Wall -Wno-long-long -Werror '
                   ' {include} -c {obj}{ext} '  ).format( **vars() )
-  
   try:
     result = check_output( compile_cmd, stderr=STDOUT, shell=True )
   except CalledProcessError as e:
-    raise SystemCCompileError( "\n\n-   {}\n".format(e.output) )
+    raise SystemCCompileError( "\n-\n-   " + 
+                                  "\n-   ".join( e.output.splitlines() ) )
 
 #-----------------------------------------------------------------------
 # systemc_to_pymtl
@@ -46,11 +47,8 @@ def compile_object( obj, ext, include_dirs ):
 
 def systemc_to_pymtl( model, obj_dir, include_dirs, sc_module_name, 
                       objs, c_wrapper_file, lib_file, py_wrapper_file ):
-    
-  port_width_dict = { x: y.nbits if y.name != "clk" else -1 \
-                      for x,y in model._port_dict.iteritems() }
   
-  cdef = create_c_wrapper( sc_module_name, c_wrapper_file, port_width_dict )  
+  cdef = create_c_wrapper( model, sc_module_name, c_wrapper_file )  
   
   create_shared_lib( lib_file, c_wrapper_file, objs, include_dirs, obj_dir )
   
@@ -81,7 +79,10 @@ def gen_sc_datatype(port_width):
 # Create a c_wrapper for given pymtl file which inherits a SystemCModel
 # Returns the cffi cdef string for convenience.
 
-def create_c_wrapper( sc_module_name, c_wrapper_file, port_dict ):
+def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
+  
+  port_width_dict = { x: y.nbits if y.name != "clk" else -1 \
+                      for x,y in model._port_dict.iteritems() }
   
   ind_0 = '\n'
   ind_2 = '\n  '
@@ -101,7 +102,7 @@ def create_c_wrapper( sc_module_name, c_wrapper_file, port_dict ):
   
   delete_stmts = ""
   
-  for port_name, port_width in sorted(port_dict.items()):
+  for port_name, port_width in sorted(port_width_dict.items()):
     
     #...................................................................
     # port_decls: for the c_wrapper struct def
@@ -111,7 +112,7 @@ def create_c_wrapper( sc_module_name, c_wrapper_file, port_dict ):
     wrap_port_decls += ind_2 + "void *{};".format(port_name)
     
     #...................................................................
-    # new and delete stmts: new and delete the port
+    # new and delete stmts: new and delete the ports
     #...................................................................
     
     sc_type = gen_sc_datatype(port_width)
@@ -198,7 +199,7 @@ void wr_{}({}_t* obj, const char* x)
   with open( templ, "r" )           as template, \
        open( c_wrapper_file, "w" )  as output:
     
-    output.write( template.read().format(**vars()) )
+    output.write( template.read().format( **vars() ) )
 
   cdef = '''
     typedef struct
@@ -256,11 +257,11 @@ def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir
                   '-Wl,-rpath={rpath} -lsystemc -lm' ) \
                   .format( **vars() )
   # print(compile_cmd)
-  
   try:
     result = check_output( compile_cmd, stderr=STDOUT, shell=True )
   except CalledProcessError as e:
-    raise SystemCCompileError( "\n\n-   {}\n".format(e.output) )
+    raise SystemCCompileError( "\n-\n-   " + 
+                                  "\n-   ".join( e.output.splitlines() ))
     
 #-----------------------------------------------------------------------
 # gen_py_wrapper
@@ -285,11 +286,12 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
     if port.name == "clk": continue
     
     if port in inports:
-      set_inputs.append( "{sc_name} = s.{port.name}".format(**vars()) )
+      set_inputs.append( "{sc_name} = s.{port.name}".format( **vars() ) )
+      
       if port.nbits > 32:
-        set_inputs.append( "s._ffi.wr_{sc_name}(m, str(s.{port.name}.uint()))".format(**vars()) )
+        set_inputs.append( "s._ffi.wr_{sc_name}(m, str(s.{port.name}.uint()))".format( **vars() ) )
       else:
-        set_inputs.append( "s._ffi.wr_{sc_name}(m, s.{port.name})".format(**vars()) )
+        set_inputs.append( "s._ffi.wr_{sc_name}(m, s.{port.name})".format( **vars() ) )
       
       # empty line for better looking
       set_inputs.append("")
@@ -299,19 +301,18 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
       if port.nbits > 32:
       # stripmine the read
         for x in xrange(0, port.nbits, 32):
-          
           py_msb = min( port.nbits, x+32 )
           # because systemc uses range [l,r] but pymtl uses [l,r)
           sc_msb = py_msb - 1
           
-          foo   = '{foo}'
+          foo = '{foo}'
+          tmp = ("s.{port.name}[{x}:{py_msb}].{foo} = s._ffi.rd_{sc_name}_{x}_{sc_msb}(m)".format( **vars() ) )
           
-          tmp = ("s.{port.name}[{x}:{py_msb}].{foo} = s._ffi.rd_{sc_name}_{x}_{sc_msb}(m)".format(**vars()) )
           set_comb.append( tmp.format(foo = "value") )
           set_next.append( tmp.format(foo = "next") )
       else:
-        set_comb.append( "s.{port.name}.value = s._ffi.rd_{sc_name}(m)".format(**vars()) )
-        set_next.append( "s.{port.name}.next = s._ffi.rd_{sc_name}(m)".format(**vars()) )
+        set_comb.append( "s.{port.name}.value = s._ffi.rd_{sc_name}(m)".format( **vars() ) )
+        set_next.append( "s.{port.name}.next = s._ffi.rd_{sc_name}(m)".format( **vars() ) )
       
       # empty line for better looking
       set_comb.append("")
@@ -327,9 +328,9 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
   templ = os.path.dirname( os.path.abspath( __file__ ) ) + \
           os.path.sep + 'systemc_wrapper.templ.py'
           
-  # create source
+  # write to the py wrapper
   with open( templ, 'r' )           as template, \
        open( py_wrapper_file, 'w' ) as output:
-    output.write( template.read().format(**vars()) )
+    output.write( template.read().format( **vars() ) )
   
   
