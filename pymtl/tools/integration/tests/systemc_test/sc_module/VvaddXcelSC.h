@@ -1,5 +1,5 @@
-#ifndef _NULLXCEL_H_
-#define _NULLXCEL_H_
+#ifndef _VVADDXCELSC_H_
+#define _VVADDXCELSC_H_
 
 #include "systemc.h"
 #include "defines.h"
