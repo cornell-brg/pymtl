@@ -86,7 +86,7 @@ void VvaddXcelSC::xcel_work()
   {
     configure();
     
-    for (unsigned i=0;i<xr[4]<<2;i+=4)
+    for (i=0;i<xr[4]<<2;i+=4)
     {
       MemReqMsg req = MemReq(_rd_, xr[1]+i, 0);
       memreq_put(req);
@@ -104,3 +104,15 @@ void VvaddXcelSC::xcel_work()
     finalize();
   }
 }
+
+#ifndef SYNTHESIS
+#include <string>
+#include <iostream>
+using namespace std;
+void VvaddXcelSC::line_trace(char *str)
+{
+  char tmp[150];
+  sprintf(tmp,"[i=%3d]",i);
+  strcpy(str,tmp);
+}
+#endif

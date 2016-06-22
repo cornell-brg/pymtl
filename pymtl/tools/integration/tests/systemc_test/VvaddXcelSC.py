@@ -14,6 +14,10 @@ from RoccCoreMsg import RoccCoreCmdMsg, RoccCoreRespMsg
 
 class VvaddXcelSC( SystemCModel ): 
   
+  # If you have provided a line_trace() method in SystemC module
+  # Then turn on this
+  sclinetrace = True
+  
   def __init__( s ):
     
     # Port definition, the same thing as we do for verilog import

@@ -86,7 +86,7 @@ class {class_name}( Model ):
 
   def line_trace( s ):
     if {sclinetrace}:
-      s._ffi.trace( s._m, s._line_trace_str )
+      s._ffi.line_trace( s._m, s._line_trace_str )
       return s._convert_string( s._line_trace_str )
     else:
       return ""

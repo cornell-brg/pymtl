@@ -38,6 +38,9 @@ public:
    */
   sc_uint<64> xr[5];
   
+  // loop variable, for line_trace
+  unsigned i;
+  
   SC_CTOR(VvaddXcelSC)
   {
     SC_CTHREAD(xcel_work, clk.pos());
@@ -63,6 +66,8 @@ public:
   
   MemRespMsg memresp_get();
   void memreq_put(const MemReqMsg &msg);
+  
+  void line_trace(char *str);
 };
 
 #endif

@@ -81,6 +81,8 @@ def gen_sc_datatype(port_width):
 
 def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
   
+  sclinetrace = 1 if model.sclinetrace else 0
+  
   port_width_dict = { x: y.nbits if y.name != "clk" else -1 \
                       for x,y in model._port_dict.iteritems() }
   
@@ -217,6 +219,8 @@ void wr_{}({}_t* obj, const char* x)
 
     void sim_comb();
     void sim_cycle();
+    
+    void line_trace({sc_module_name}_t *obj, char *str);
     '''.format( **vars() )
   
   return cdef
@@ -323,7 +327,7 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
   set_comb   = "\n      ".join( set_comb )
   set_next   = "\n      ".join( set_next )
   class_name = model.class_name
-  sclinetrace = False
+  sclinetrace = model.sclinetrace
   
   templ = os.path.dirname( os.path.abspath( __file__ ) ) + \
           os.path.sep + 'systemc_wrapper.templ.py'
