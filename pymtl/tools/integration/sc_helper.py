@@ -59,8 +59,8 @@ def systemc_to_pymtl( model, obj_dir, include_dirs, sc_module_name,
 #-----------------------------------------------------------------------
 # 1   : sc_signal<bool>
 # <0  : special case for sc_clock
-# <=32: use sc_uint<bitwidth>
-# >32 : use sc_biguint<bitwidth>
+# <=64: use sc_uint<bitwidth>
+# >64 : use sc_biguint<bitwidth>
 
 def gen_sc_datatype(port_width):
   
@@ -69,7 +69,7 @@ def gen_sc_datatype(port_width):
     sc_type = "sc_clock" # special case for the clock bit
   if port_width > 1:
     sc_type = "sc_signal< sc_{}uint<{}> >" \
-                  .format("big" if port_width > 32 else "", port_width)
+                  .format("big" if port_width > 64 else "", port_width)
   
   return sc_type
 
@@ -135,19 +135,19 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
     # method_decls: for cffi cdef 
     #...................................................................
     
-    if port_width <= 32:
+    if port_width <= 64:
       # rd
-      method_decls += ind_4 + "unsigned rd_{}({}_t* obj);" \
+      method_decls += ind_4 + "unsigned long rd_{}({}_t* obj);" \
                                 .format( port_name, sc_module_name )
       # wr
-      method_decls += ind_4 + "void     wr_{}({}_t* obj, unsigned x);" \
+      method_decls += ind_4 + "void     wr_{}({}_t* obj, unsigned long x);" \
                                 .format( port_name, sc_module_name )
     else:
       # stripmine the read
-      for x in xrange(0, port_width, 32):
-        lsb, msb = x, min(port_width, x+32)-1
+      for x in xrange(0, port_width, 64):
+        lsb, msb = x, min(port_width, x+64)-1
         
-        method_decls += ind_4 + "unsigned rd_{}_{}_{}({}_t* obj);" \
+        method_decls += ind_4 + "unsigned long rd_{}_{}_{}({}_t* obj);" \
                                   .format( port_name, lsb, msb, sc_module_name )
   
       # write a single string
@@ -161,25 +161,25 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
     
     sc_type = gen_sc_datatype(port_width)
     
-    if port_width <= 32:
+    if port_width <= 64:
       
       method_impls += '''
-unsigned rd_{}({}_t* obj)
+unsigned long rd_{}({}_t* obj)
 {{ return static_cast<{}*>(obj->{})->read(); }}''' \
       .format( port_name, sc_module_name, sc_type, port_name )
       
       method_impls += '''
-void wr_{}({}_t* obj, unsigned x)
+void wr_{}({}_t* obj, unsigned long x)
 {{ static_cast<{}*>(obj->{})->write(x); }}
   '''.format( port_name, sc_module_name, sc_type, port_name )
       
     else:
       # stripmine the read
-      for x in xrange(0, port_width, 32):
-        lsb, msb = x, min(port_width, x+32)-1
+      for x in xrange(0, port_width, 64):
+        lsb, msb = x, min(port_width, x+64)-1
         method_impls += '''
-unsigned rd_{}_{}_{}({}_t* obj)
-{{ return static_cast<{}*>(obj->{})->read().range({},{}).to_uint(); }}''' \
+unsigned long rd_{}_{}_{}({}_t* obj)
+{{ return static_cast<{}*>(obj->{})->read().range({},{}).to_uint64(); }}''' \
           .format( port_name, lsb, msb, sc_module_name, sc_type, port_name, msb, lsb )
       
       # single write
@@ -292,7 +292,7 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
     if port in inports:
       set_inputs.append( "{sc_name} = s.{port.name}".format( **vars() ) )
       
-      if port.nbits > 32:
+      if port.nbits > 64:
         set_inputs.append( "s._ffi.wr_{sc_name}(m, str(s.{port.name}.uint()))".format( **vars() ) )
       else:
         set_inputs.append( "s._ffi.wr_{sc_name}(m, s.{port.name})".format( **vars() ) )
@@ -302,10 +302,10 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
         
     if port in outports:
       
-      if port.nbits > 32:
+      if port.nbits > 64:
       # stripmine the read
-        for x in xrange(0, port.nbits, 32):
-          py_msb = min( port.nbits, x+32 )
+        for x in xrange(0, port.nbits, 64):
+          py_msb = min( port.nbits, x+64 )
           # because systemc uses range [l,r] but pymtl uses [l,r)
           sc_msb = py_msb - 1
           
