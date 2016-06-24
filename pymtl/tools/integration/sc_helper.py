@@ -30,7 +30,7 @@ def compile_object( obj, ext, include_dirs ):
                       [ "-I" + x for x in include_dirs ] +
                       [ "-I" + os.environ["SYSTEMC_INCLUDE"] ] )
   
-  compile_cmd = ( 'g++ -o {obj}.o '
+  compile_cmd = ( 'g++ -o {obj}.o -DSYSTEMC_SIM '
                   '-fPIC -shared -O1 -fstrict-aliasing '
                   '-Wall -Wno-long-long -Werror '
                   ' {include} -c {obj}{ext} '  ).format( **vars() )
@@ -255,7 +255,7 @@ def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir
   rpath   = os.environ["SYSTEMC_LIBDIR"]
   objects = " ".join( all_objs )
   
-  compile_cmd = ( 'g++ -o {lib_file} {c_wrapper_file} '
+  compile_cmd = ( 'g++ -o {lib_file} {c_wrapper_file} -DSYSTEMC_SIM '
                   '{objects} -fPIC -shared -O1 -fstrict-aliasing '
                   '-Wall -Wno-long-long -Werror {include} {library} '
                   '-Wl,-rpath={rpath} -lsystemc -lm' ) \

@@ -1,7 +1,6 @@
 #ifndef _VVADDXCELSC_H_
 #define _VVADDXCELSC_H_
 
-#include "systemc.h"
 #include "defines.h"
 #include "msgs.h"
 

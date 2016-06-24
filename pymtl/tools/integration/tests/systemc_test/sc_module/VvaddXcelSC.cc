@@ -9,6 +9,10 @@
 
 RoccCmdMsg VvaddXcelSC::xcelreq_get()
 { 
+  // These macros are ignored under SYSTEMC_SIM.
+  // See defines.h and systemc-sim.h
+  HLS_DEFINE_PROTOCOL("xcelreq_get"); 
+  
   xcelreq_rdy.write(1);
   do { wait(); } while (xcelreq_val.read()==0);
   xcelreq_rdy.write(0);
@@ -16,13 +20,17 @@ RoccCmdMsg VvaddXcelSC::xcelreq_get()
 }
 void VvaddXcelSC::xcelresp_put(const RoccRespMsg &msg)
 {
+  HLS_DEFINE_PROTOCOL("xcelreq_put"); 
+  
   xcelresp_msg.write(msg);
   xcelresp_val.write(1);
   do { wait(); } while (xcelresp_rdy.read()==0);
   xcelresp_val.write(0);
 }
 MemRespMsg VvaddXcelSC::memresp_get()
-{ 
+{
+  HLS_DEFINE_PROTOCOL("memresp_get"); 
+  
   memresp_rdy.write(1);
   do { wait(); } while (memresp_val.read()==0);
   memresp_rdy.write(0);
@@ -30,7 +38,9 @@ MemRespMsg VvaddXcelSC::memresp_get()
   return memresp_msg.read();
 }
 void VvaddXcelSC::memreq_put(const MemReqMsg &msg)
-{ 
+{
+  HLS_DEFINE_PROTOCOL("memreq_put");
+  
   memreq_msg.write(msg);
   memreq_val.write(1);
   do { wait(); } while (memreq_rdy.read()==0);
@@ -65,8 +75,7 @@ void VvaddXcelSC::xcel_work()
     // otherwise the reset block is not registered.
     // For example, if we put this piece of code into configure()
     // The module won't be reset properly
-    
-    printf("VvaddXcelSC: got reset signal\n");
+    HLS_DEFINE_PROTOCOL("reset");
     
     xcelresp_msg.write(0);
     xcelresp_val.write(false);
