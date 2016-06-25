@@ -44,11 +44,7 @@ void destroy({sc_module_name}_t *obj)
   // sc_get_curr_simcontext()->reset();
 }}
 
-void sim_comb()
-{{
-  sc_start(0, SC_NS);
-}}
-void sim_cycle()
+void sim()
 {{
   sc_start(1, SC_NS);
 }}
@@ -63,4 +59,8 @@ void line_trace({sc_module_name}_t *obj, char *str)
 
 #endif
 
+// To link with libsystemc.so we need a dummy sc_main.
+int sc_main(int argc, char *argv[]){{return 0;}}
 }}
+
+

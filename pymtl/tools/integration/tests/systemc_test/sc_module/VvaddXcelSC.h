@@ -7,7 +7,7 @@
 SC_MODULE(VvaddXcelSC)
 {
 public:
-  sc_in_clk   clk;
+  sc_in<bool> clk;
   sc_in<bool> rst;
   
   // proc ports

@@ -70,17 +70,17 @@ class {class_name}( Model ):
       m = s._m
       
       {set_inputs}
-
-      s._ffi.sim_comb()
-
+      
+      s._ffi.sim()
+      
       {set_comb}
 
     @s.posedge_clk
     def tick():
 
-      s._ffi.sim_cycle()
-      
       m = s._m
+      
+      {set_clock}
       
       {set_next}
 

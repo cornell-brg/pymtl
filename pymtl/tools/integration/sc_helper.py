@@ -58,15 +58,12 @@ def systemc_to_pymtl( model, obj_dir, include_dirs, sc_module_name,
 # gen_sc_datatype
 #-----------------------------------------------------------------------
 # 1   : sc_signal<bool>
-# <0  : special case for sc_clock
 # <=64: use sc_uint<bitwidth>
 # >64 : use sc_biguint<bitwidth>
 
 def gen_sc_datatype(port_width):
   
   sc_type = "sc_signal<bool>" # default 1-bit bool
-  if port_width < 0:
-    sc_type = "sc_clock" # special case for the clock bit
   if port_width > 1:
     sc_type = "sc_signal< sc_{}uint<{}> >" \
                   .format("big" if port_width > 64 else "", port_width)
@@ -83,9 +80,8 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
   
   sclinetrace = 1 if model.sclinetrace else 0
   
-  port_width_dict = { x: y.nbits if y.name != "clk" else -1 \
+  port_width_dict = { x: y.nbits \
                       for x,y in model._port_dict.iteritems() }
-  
   ind_0 = '\n'
   ind_2 = '\n  '
   ind_4 = '\n    '
@@ -119,8 +115,9 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
     
     sc_type = gen_sc_datatype(port_width)
     
-    new_stmts += ind_2 + "{} *{} = new {};" \
-                           .format( sc_type, port_name, sc_type )
+    new_stmts += ind_2 + "{} *{} = new {}(\"{}\");" \
+                           .format( sc_type, port_name, sc_type,
+                                    port_name )
     new_stmts += ind_2 + "m->{} = {};".format( port_name, port_name )
     new_stmts += ind_2 + "model->{}(*{});\n".format( port_name, port_name )
     
@@ -128,8 +125,6 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
                               .format( sc_type, port_name, 
                                        sc_type, port_name )
     delete_stmts += ind_2 + "delete {};\n".format( port_name )
-    
-    if port_width < 0: continue # the clock only needs the above two.
     
     #...................................................................
     # method_decls: for cffi cdef 
@@ -202,7 +197,7 @@ void wr_{}({}_t* obj, const char* x)
        open( c_wrapper_file, "w" )  as output:
     
     output.write( template.read().format( **vars() ) )
-
+  
   cdef = '''
     typedef struct
     {{
@@ -217,8 +212,7 @@ void wr_{}({}_t* obj, const char* x)
     {sc_module_name}_t* create();
     void destroy({sc_module_name}_t *obj);
 
-    void sim_comb();
-    void sim_cycle();
+    void sim();
     
     void line_trace({sc_module_name}_t *obj, char *str);
     '''.format( **vars() )
@@ -282,7 +276,13 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
   set_inputs = []
   set_comb   = []
   set_next   = []
-  
+  set_clock  = '''
+      s._ffi.wr_clk(m, 0)
+      s._ffi.sim()
+      s._ffi.wr_clk(m, 1)
+      s._ffi.sim()
+  ''' if "clk" in model._port_dict else ""
+    
   inports  = model.get_inports()
   outports = model.get_outports()
   

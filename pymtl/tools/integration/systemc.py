@@ -27,6 +27,7 @@ class SomeMeta( MetaCollectArgs ):
     
     # Get the full path of source folders based on the location of 
     # the python class and the relative path
+    inst._auto_init()
     
     for i, x in enumerate(inst.sourcefolder):
       
@@ -276,14 +277,6 @@ class SystemCModel( Model ):
     if not self.sourcefolder:
       file_ = inspect.getfile( self.__class__ )
       self.sourcefolder = [ os.path.dirname( file_ ) ]
-    
-    # I added an extra check to only add the prefix if has not already
-    # been added. Once we started using Verilog import and then turning
-    # around and translated in the importing module this is what I needed
-    # to do to get things to work -cbatten.
-
-    if self.scprefix and not self.modulename.startswith(self.scprefix):
-      self.modulename = self.scprefix + "_" + self.modulename
 
     if not self._param_dict:
       self._param_dict = self._args
