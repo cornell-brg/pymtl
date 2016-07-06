@@ -11,6 +11,92 @@ class SystemCIncludeEnvError( Exception ): pass
 class SystemCLibraryEnvError( Exception ): pass
 class SystemCCompileError   ( Exception ): pass
 
+# get_sc_include and get_sc_lib now support pkg-config
+
+def get_sc_include():
+  
+  # Check if SYSTEMC_INCLUDE is in the environment variable
+  # The environment variable overrides pkg-config.
+
+  sc_include_dir = os.environ.get( "SYSTEMC_INCLUDE" )
+  
+  if sc_include_dir == None:
+    cmd = ["pkg-config", "--variable=includedir", "systemc"]
+    
+    try:
+      sc_include_dir = check_output( cmd, stderr=STDOUT ).strip()
+      
+    except OSError as e:
+      error_msg = """ SystemC include directory not found!
+- $SYSTEMC_INCLUDE doesn't exist. PyMTL resorts to pkg-config instead.
+- Cannot execute "pkg-config". Is pkg-config installed?
+
+Try running the following command on your own to debug the issue.
+{command}
+      """
+      raise SystemCIncludeEnvError( error_msg.format(
+        command  = ' '.join( cmd ),
+        errno    = e.errno,
+        strerror = e.strerror,
+      ))
+
+    except CalledProcessError as e:
+      error_msg = """ SystemC include directory not found!
+- $SYSTEMC_INCLUDE doesn't exist. PyMTL resorts to pkg-config instead.
+- pkg-config cannot find systemc.pc. Is SystemC installed?
+
+Try running the following command on your own to debug the issue.
+{command}
+      """
+      raise SystemCIncludeEnvError( error_msg.format(
+        command = ' '.join( e.cmd ),
+        error   = e.output,
+      ))
+  
+  return sc_include_dir
+
+def get_sc_lib():
+
+  # Check if SYSTEMC_LIBDIR is in the environment variable
+  # The environment variable overrides pkg-config.
+
+  sc_library_dir = os.environ.get( "SYSTEMC_LIBDIR" )
+  
+  if sc_library_dir == None:
+    cmd = ["pkg-config", "--variable=libarchdir", "systemc"]
+    
+    try:
+      sc_library_dir = check_output( cmd, stderr=STDOUT ).strip()
+      
+    except OSError as e:
+      error_msg = """ SystemC library directory not found!
+- $SYSTEMC_LIBDIR doesn't exist. PyMTL resorts to pkg-config instead.
+- Cannot execute "pkg-config". Is pkg-config installed?
+
+Try running the following command on your own to debug the issue.
+{command}
+      """
+      raise SystemCLibraryEnvError( error_msg.format(
+        command  = ' '.join( cmd ),
+        errno    = e.errno,
+        strerror = e.strerror,
+      ))
+
+    except CalledProcessError as e:
+      error_msg = """ SystemC library directory not found!
+- $SYSTEMC_LIBDIR doesn't exist. PyMTL resorts to pkg-config instead.
+- pkg-config cannot find systemc.pc. Is SystemC installed?
+
+Try running the following command on your own to debug the issue.
+{command}
+      """
+      raise SystemCLibraryEnvError( error_msg.format(
+        command = ' '.join( e.cmd ),
+        error   = e.output,
+      ))
+  
+  return sc_library_dir
+
 #-----------------------------------------------------------------------
 # compile_object
 #-----------------------------------------------------------------------
@@ -18,17 +104,9 @@ class SystemCCompileError   ( Exception ): pass
 
 def compile_object( obj, ext, include_dirs ):
   
-  # Check if systemc include folder is in the environment
-  
-  if "SYSTEMC_INCLUDE" not in os.environ:
-    raise SystemCIncludeEnvError( '''\n
--   SystemC Include Environment Variable $SYSTEMC_INCLUDE doesn't exist!
-    ''')
-  
   # Get the full include folder
-  include = " ".join( [ "-I. -I .." ] +
-                      [ "-I" + x for x in include_dirs ] +
-                      [ "-I" + os.environ["SYSTEMC_INCLUDE"] ] )
+  include = " ".join( [ "-I. -I .. -I " + get_sc_include() ] +
+                      [ "-I" + x for x in include_dirs ] )
   
   compile_cmd = ( 'g++ -o {obj}.o -DSYSTEMC_SIM '
                   '-fPIC -shared -O1 -fstrict-aliasing '
@@ -224,29 +302,12 @@ void wr_{}({}_t* obj, const char* x)
 # Link all the .o files and systemc lib into a single .so file
 
 def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir ):
-
-  # double check
-    
-  if "SYSTEMC_INCLUDE" not in os.environ:
-    raise SystemCIncludeEnvError( '''\n
--   SystemC Include Environment Variable $SYSTEMC_INCLUDE doesn't exist!
-    ''')
-    
-  if "SYSTEMC_LIBDIR" not in os.environ:
-    raise SystemCLibraryEnvError( '''\n
--   SystemC Library Environment Variable $SYSTEMC_LIBDIR doesn't exist!
-    ''')
   
-   # Get the full include folder
-  include = " ".join( [ "-I. -I .." ] +
-                      [ "-I" + x for x in include_dirs ] +
-                      [ "-I" + os.environ["SYSTEMC_INCLUDE"] ]
-                    )
-  library = " ".join( [ "-L. -L .." ] +
-                      [ "-L" + obj_dir ] +
-                      [ "-L" + os.environ["SYSTEMC_LIBDIR"] ]
-                    )
-  rpath   = os.environ["SYSTEMC_LIBDIR"]
+  include = " ".join( [ "-I. -I .. -I " + get_sc_include() ] +
+                      [ "-I" + x for x in include_dirs ] )
+  library = " ".join( [ "-L. -L .. -L " + get_sc_lib() ] +
+                      [ "-L" + obj_dir ] )
+  rpath   = get_sc_lib()
   objects = " ".join( all_objs )
   
   compile_cmd = ( 'g++ -o {lib_file} {c_wrapper_file} -DSYSTEMC_SIM '
