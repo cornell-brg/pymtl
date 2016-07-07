@@ -288,7 +288,7 @@ void wr_{}({}_t* obj, const char* x)
     {method_decls}
 
     {sc_module_name}_t* create();
-    void destroy({sc_module_name}_t *obj);
+    void destroy();
 
     void sim();
     

@@ -60,13 +60,6 @@ test_100 = [ (0x1234567890123456789012345, 0x2109876543210987654321098), (0xffe0
 # TODO This is hacky, since I have to register modules earlier
 # in systemc world.
 
-adder_16 = Adder_16()
-adder_16.elaborate()
-adder_40 = Adder_40()
-adder_40.elaborate()
-adder_100 = Adder_100()
-adder_100.elaborate()
-
 @pytest.mark.parametrize( "a,b", test_16)
 def test_Adder_16( a, b ):
   m, sim = _sim_setup( Adder_16() )
@@ -80,6 +73,8 @@ def test_Adder_16( a, b ):
     sim.print_line_trace()
     
     assert m.res_c == a + b + i + i
+  
+  m.destroy()
 
 @pytest.mark.parametrize( "a,b", test_40)
 def test_Adder_40( a, b ):
@@ -94,6 +89,7 @@ def test_Adder_40( a, b ):
     sim.print_line_trace()
     
     assert m.res_c == a + b + i + i
+  m.destroy()
 
 @pytest.mark.parametrize( "a,b", test_100)
 def test_Adder_100( a, b ):
@@ -108,3 +104,19 @@ def test_Adder_100( a, b ):
     sim.print_line_trace()
     
     assert m.res_c == a + b + i + i
+  m.destroy()
+  
+@pytest.mark.parametrize( "a,b", test_16)
+def test_Adder_16_2( a, b ):
+  m, sim = _sim_setup( Adder_16() )
+  
+  for i in xrange(10):
+    m.op_a.value = a + i
+    m.op_b.value = b + i
+  
+    sim.eval_combinational()
+  
+    sim.print_line_trace()
+    
+    assert m.res_c == a + b + i + i
+  m.destroy()

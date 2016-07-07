@@ -49,6 +49,8 @@ def test_simple():
     assert model.out == expected_out
 
   sim.print_line_trace()
+  
+  model.destroy()
 
 #-----------------------------------------------------------------------
 # gen_test_vectors
@@ -87,5 +89,7 @@ def test_random():
     sim.cycle()
     assert model.out == expected_out
   sim.print_line_trace()
+  
+  model.destroy()
   
 

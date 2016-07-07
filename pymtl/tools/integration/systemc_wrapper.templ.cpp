@@ -24,24 +24,30 @@ typedef struct
 // Here's why I cannot reset cffi context.
 // http://stackoverflow.com/questions/29567200/cleanly-unload-shared-library-and-start-over-with-python-cffi
 
-static {sc_module_name}_t *obj = NULL;
+//static {sc_module_name}_t *obj = NULL;
 {method_impls}
 
 {sc_module_name}_t* create()
 {{
-  if (obj)  return obj;
+  //if (obj)  return obj;
   {new_stmts}
-  
-  obj = m;
+  //obj = m;
   return m;
 }}
 
-void destroy({sc_module_name}_t *obj)
+void destroy()
 {{
-  // Currently we don't reset, and reuse the module by the reset
-  // signal, to let it start over again.
+  // Currently we can only remove a simcontext by assign the current to be NULL
+  // Also this is not perfect, since we have to manually call it.
+  // http://forums.accellera.org/topic/2273-problem-with-re-instatiation-of-modules/
   
-  // sc_get_curr_simcontext()->reset();
+  //sc_curr_simcontext = new sc_simcontext();
+  //sc_default_global_context = sc_curr_simcontext;
+  
+  //sc_curr_simcontext = 0;
+  //sc_default_global_context = 0;
+  
+  sc_get_curr_simcontext()->reset();
 }}
 
 void sim()

@@ -90,3 +90,7 @@ class {class_name}( Model ):
       return s._convert_string( s._line_trace_str )
     else:
       return ""
+      
+  def destroy( s ):
+    if s._m:
+      s._ffi.destroy()
