@@ -1,5 +1,5 @@
 #=======================================================================
-# RegIncr_test.py
+# RegAndIncr_test.py
 #=======================================================================
 
 import random
@@ -7,7 +7,7 @@ import pytest
 
 from pymtl import *
 
-from RegIncrSC     import RegIncrSC
+from RegAndIncrSC     import RegAndIncrSC
 
 simple_test_vectors = [
   ( 4,  5),
@@ -26,7 +26,7 @@ def test_simple():
 
   # instantiate the model and elaborate it
 
-  model = RegIncrSC()
+  model = RegAndIncrSC()
 
   model.elaborate()
 
@@ -40,10 +40,9 @@ def test_simple():
   print
 
   for input_vector, expected_out in simple_test_vectors:
-
-    model.in_.value = input_vector
-
     sim.print_line_trace()
+    
+    model.in_.value = input_vector
     sim.cycle()
 
     assert model.out == expected_out
@@ -71,7 +70,7 @@ def test_random():
 
   # elaborate model
 
-  model = RegIncrSC()
+  model = RegAndIncrSC()
   model.elaborate()
 
   # create the simulator
@@ -83,11 +82,13 @@ def test_random():
 
   print
   for input_vector, expected_out in gen_test_vectors( 32 ):
-    #print input_vector, expected_out
-    model.in_.value = input_vector
     sim.print_line_trace()
+    
+    model.in_.value = input_vector
     sim.cycle()
+    
     assert model.out == expected_out
+    
   sim.print_line_trace()
   
   model.destroy()
