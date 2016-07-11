@@ -45,10 +45,10 @@ class {class_name}( Model ):
     s._line_trace_str = s.ffi.new("char[512]")
     s._convert_string = s.ffi.string
 
-  # Currently we don't need this.
-  # def __del__( s ):
-    # if s._m:
-      # s._ffi.destroy( s._m )
+  # this piece has no guarantee to be called :(
+  def __del__( s ):
+    if s._m:
+      s._ffi.destroy( s._m )
 
   def elaborate_logic( s ):
 
@@ -71,7 +71,7 @@ class {class_name}( Model ):
       
       {set_inputs}
       
-      s._ffi.sim()
+      s._ffi.sim( m )
       
       {set_comb}
 
@@ -93,4 +93,4 @@ class {class_name}( Model ):
       
   def destroy( s ):
     if s._m:
-      s._ffi.destroy()
+      s._ffi.destroy( s._m )

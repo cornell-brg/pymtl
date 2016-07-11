@@ -172,6 +172,10 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
   
   new_stmts = '''
   {sc_module_name}_t *m     = ({sc_module_name}_t*) malloc(sizeof({sc_module_name}_t));
+  
+  sc_simcontext* context = new sc_simcontext;
+  m->context = sc_curr_simcontext = context;
+  
   {sc_module_name}   *model = new {sc_module_name}("{sc_module_name}");
   m->model = model;
   '''.format(**vars())
@@ -281,6 +285,7 @@ void wr_{}({}_t* obj, const char* x)
     {{
       {cdef_port_decls}
       
+      void *context;
       void *model;
       
     }} {sc_module_name}_t;
@@ -288,9 +293,9 @@ void wr_{}({}_t* obj, const char* x)
     {method_decls}
 
     {sc_module_name}_t* create();
-    void destroy();
+    void destroy({sc_module_name}_t *obj);
 
-    void sim();
+    void sim({sc_module_name}_t *obj);
     
     void line_trace({sc_module_name}_t *obj, char *str);
     '''.format( **vars() )
@@ -339,9 +344,9 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
   set_next   = []
   set_clock  = '''
       s._ffi.wr_clk(m, 0)
-      s._ffi.sim()
+      s._ffi.sim( m )
       s._ffi.wr_clk(m, 1)
-      s._ffi.sim()
+      s._ffi.sim( m )
   ''' if "clk" in model._port_dict else ""
     
   inports  = model.get_inports()
