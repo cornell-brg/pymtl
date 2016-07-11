@@ -18,6 +18,7 @@ class {class_name}( Model ):
   def __init__( s ):
 
     # initialize FFI, define the exposed interface
+    
     s.ffi = FFI()
     s.ffi.cdef('''{cdef}''')
 
@@ -70,18 +71,14 @@ class {class_name}( Model ):
       m = s._m
       
       {set_inputs}
-      
       s._ffi.sim( m )
-      
       {set_comb}
-
+    
     @s.posedge_clk
     def tick():
 
       m = s._m
-      
       {set_clock}
-      
       {set_next}
 
   def line_trace( s ):

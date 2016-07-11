@@ -9,6 +9,7 @@ extern "C"
 typedef struct
 {{
   {wrap_port_decls}
+  
   void *context;
   void *model;
   
@@ -59,9 +60,7 @@ void destroy({sc_module_name}_t *obj)
   // Also notice that creating one sim context for each model could guarantee
   // that the py.test still moves on when the destroy is not called (assert failed somewhere)
   
-  puts("destroying {sc_module_name}");
   {delete_stmts}
-  
   sc_simcontext *context = static_cast<sc_simcontext*>(obj->context);
   delete context;
 }}
