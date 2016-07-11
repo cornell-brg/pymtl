@@ -7,6 +7,8 @@ from __future__ import print_function
 import re
 import os
 import sys
+import json
+import hashlib
 import inspect
 import filecmp
 import collections
@@ -56,6 +58,8 @@ class SomeMeta( MetaCollectArgs ):
     lib_file        = 'lib{}_sc.so'.format( model_name )
     obj_dir         = 'obj_dir_' + model_name + os.sep
     
+    if not exists( obj_dir ):
+      os.mkdir( obj_dir )
     include_dirs     = deepcopy( inst.sourcefolder )
     include_dirs.append( obj_dir )
     
@@ -73,25 +77,25 @@ class SomeMeta( MetaCollectArgs ):
     # of disk inode lookup and disk accesses by breaking the loop
     # when a header/source is found.
     
-    extensions = [  [".h", ".hh", ".hpp", ".h++"  ],
-                    [".cc", ".cpp", ".c++", ".cxx"] ]
-    
-    uncached = set()
+    uncached = {}
     src_ext  = {}
     tmp_objs = []
     
-    if not exists( obj_dir ):
-      os.mkdir( obj_dir )
+    hashfile = obj_dir + "/.hashdict"
+    hashdict = {}
+    if exists( hashfile ):
+      with open( hashfile, "r" ) as f:
+        hashdict = json.load( f )
     
     for path in inst.sourcefolder:
       for filename in inst.sourcefile:
         file_prefix = path    + filename
         temp_prefix = obj_dir + filename
         
-        for group in extensions:
+        for group in [ [".h", ".hh", ".hpp", ".h++"  ],  # header group
+                       [".cc", ".cpp", ".c++", ".cxx"] ]:# source group
           for ext in group: 
             target_file = file_prefix + ext
-            temp_file   = temp_prefix + ext
             temp_obj    = temp_prefix + ".o"
             
             if not exists( target_file ):
@@ -102,20 +106,44 @@ class SomeMeta( MetaCollectArgs ):
             
             if ext.startswith(".c"):
               src_ext[temp_prefix] = ext
-                
+            
+            # July 11, 2016
+            # This piece of code copies all the files
+            # for caching/tracking purpose.
+            # Now I use SHA1 hash value to track the update of files,
+            # so I comment out these lines.
+            
+            # temp_file = temp_prefix + ext
+            
             # 1. No .o file, then yeah it hasn't been cached.
             # 2. No .c file, probably something unexpected happened.
             # 3. See if the cached file is not up to date.
             
+            # if not exists( temp_obj ) or \
+               # not exists( temp_file ) or \
+               # not filecmp.cmp( temp_file, target_file ):
+              
+              # if exists( temp_obj ):
+                # os.remove( temp_obj )
+              # copyfile( target_file, temp_file )
+              # uncached[temp_prefix] = target_file
+            
+            # 1. No .o file
+            # 2. Not in the hash value dictionary
+            # 3. Hash value match?
+            
+            def get_hash( filename ):
+              with open( filename, "r" ) as f:
+                return hashlib.sha1( f.read() ).hexdigest()
+                
+            h = get_hash( target_file )
+              
             if not exists( temp_obj ) or \
-               not exists( temp_file ) or \
-               not filecmp.cmp( temp_file, target_file ):
-              
-              if exists( temp_obj ):
-                os.remove( temp_obj )
-              copyfile( target_file, temp_file )
-              uncached.add( temp_prefix )
-              
+               target_file not in hashdict or \
+               h != hashdict[target_file]:
+              uncached[temp_prefix] = file_prefix
+              hashdict[target_file] = h
+            
             break
     
     # This part is used to handle the missing of source file. 
@@ -147,10 +175,13 @@ class SomeMeta( MetaCollectArgs ):
     else:
       # print( "Not Cached", uncached )
       
-      # Compile all uncached modules to .o object file
+      # Dump new hashdict
+      with open( hashfile, "w" ) as f:
+        json.dump( hashdict, f )
       
-      for x in uncached:
-        compile_object( x, src_ext[x], include_dirs )
+      # Compile all uncached modules to .o object file
+      for obj, src in uncached.items():
+        compile_object( obj, src + src_ext[obj], include_dirs )
     
     # Regenerate the shared library .so file if individual modules are 
     # updated or the .so file is missing.

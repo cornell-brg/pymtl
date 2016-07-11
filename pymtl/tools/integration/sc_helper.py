@@ -100,18 +100,18 @@ Try running the following command on your own to debug the issue.
 #-----------------------------------------------------------------------
 # compile_object
 #-----------------------------------------------------------------------
-# Compile {obj}.{ext} to {obj}.o
+# Compile {src_name} to {obj_name}.o
 
-def compile_object( obj, ext, include_dirs ):
+def compile_object( obj_name, src_name, include_dirs ):
   
   # Get the full include folder
   include = " ".join( [ "-I. -I .. -I " + get_sc_include() ] +
                       [ "-I" + x for x in include_dirs ] )
   
-  compile_cmd = ( 'g++ -o {obj}.o -DSYSTEMC_SIM '
+  compile_cmd = ( 'g++ -o {obj_name}.o -DSYSTEMC_SIM '
                   '-fPIC -shared -O1 -fstrict-aliasing '
                   '-Wall -Wno-long-long -Werror '
-                  ' {include} -c {obj}{ext} '  ).format( **vars() )
+                  ' {include} -c {src_name} '  ).format( **vars() )
   try:
     result = check_output( compile_cmd, stderr=STDOUT, shell=True )
   except CalledProcessError as e:
