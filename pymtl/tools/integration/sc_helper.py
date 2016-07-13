@@ -7,95 +7,56 @@ import sys
 import shutil
 from subprocess import check_output, STDOUT, CalledProcessError
 
-class SystemCIncludeEnvError( Exception ): pass
-class SystemCLibraryEnvError( Exception ): pass
+class SystemCEnvError( Exception ): pass
 class SystemCCompileError   ( Exception ): pass
 
-# get_sc_include and get_sc_lib now support pkg-config
+# get_sc_dir is used for checking systemc including directory and 
+# library directory. It first check the environment variable.
+# If no match, it calls pkg-config.
 
-def get_sc_include():
+def get_sc_dir( var_name, pkgconfig_name ):
   
-  # Check if SYSTEMC_INCLUDE is in the environment variable
+  # Check if $var_name is in the environment variable
   # The environment variable overrides pkg-config.
 
-  sc_include_dir = os.environ.get( "SYSTEMC_INCLUDE" )
+  ret = os.environ.get( var_name )
   
-  if sc_include_dir == None:
-    cmd = ["pkg-config", "--variable=includedir", "systemc"]
+  if ret == None:
+    cmd = ["pkg-config", "--variable=" + pkgconfig_name, "systemc"]
     
     try:
-      sc_include_dir = check_output( cmd, stderr=STDOUT ).strip()
+      ret = check_output( cmd, stderr=STDOUT ).strip()
       
     except OSError as e:
-      error_msg = """ SystemC include directory not found!
-- $SYSTEMC_INCLUDE doesn't exist. PyMTL resorts to pkg-config instead.
+      error_msg = """ SystemC include/library directory not found!
+- ${var_name} doesn't exist. PyMTL resorts to pkg-config instead.
 - Cannot execute "pkg-config". Is pkg-config installed?
 
 Try running the following command on your own to debug the issue.
 {command}
       """
-      raise SystemCIncludeEnvError( error_msg.format(
+      raise SystemCEnvError( error_msg.format(
+        var_name = var_name,
         command  = ' '.join( cmd ),
         errno    = e.errno,
         strerror = e.strerror,
       ))
 
     except CalledProcessError as e:
-      error_msg = """ SystemC include directory not found!
-- $SYSTEMC_INCLUDE doesn't exist. PyMTL resorts to pkg-config instead.
+      error_msg = """ SystemC include/library directory not found!
+- ${var_name} doesn't exist. PyMTL resorts to pkg-config instead.
 - pkg-config cannot find systemc.pc. Is SystemC installed?
 
 Try running the following command on your own to debug the issue.
 {command}
       """
-      raise SystemCIncludeEnvError( error_msg.format(
-        command = ' '.join( e.cmd ),
-        error   = e.output,
+      raise SystemCEnvError( error_msg.format(
+        var_name = var_name,
+        command  = ' '.join( e.cmd ),
+        error    = e.output,
       ))
   
-  return sc_include_dir
-
-def get_sc_lib():
-
-  # Check if SYSTEMC_LIBDIR is in the environment variable
-  # The environment variable overrides pkg-config.
-
-  sc_library_dir = os.environ.get( "SYSTEMC_LIBDIR" )
-  
-  if sc_library_dir == None:
-    cmd = ["pkg-config", "--variable=libarchdir", "systemc"]
-    
-    try:
-      sc_library_dir = check_output( cmd, stderr=STDOUT ).strip()
-      
-    except OSError as e:
-      error_msg = """ SystemC library directory not found!
-- $SYSTEMC_LIBDIR doesn't exist. PyMTL resorts to pkg-config instead.
-- Cannot execute "pkg-config". Is pkg-config installed?
-
-Try running the following command on your own to debug the issue.
-{command}
-      """
-      raise SystemCLibraryEnvError( error_msg.format(
-        command  = ' '.join( cmd ),
-        errno    = e.errno,
-        strerror = e.strerror,
-      ))
-
-    except CalledProcessError as e:
-      error_msg = """ SystemC library directory not found!
-- $SYSTEMC_LIBDIR doesn't exist. PyMTL resorts to pkg-config instead.
-- pkg-config cannot find systemc.pc. Is SystemC installed?
-
-Try running the following command on your own to debug the issue.
-{command}
-      """
-      raise SystemCLibraryEnvError( error_msg.format(
-        command = ' '.join( e.cmd ),
-        error   = e.output,
-      ))
-  
-  return sc_library_dir
+  return ret
 
 #-----------------------------------------------------------------------
 # compile_object
@@ -104,8 +65,10 @@ Try running the following command on your own to debug the issue.
 
 def compile_object( obj_name, src_name, include_dirs ):
   
-  # Get the full include folder
-  include = " ".join( [ "-I. -I .. -I " + get_sc_include() ] +
+  sc_include = get_sc_dir( "SYSTEMC_INCLUDE", "includedir" )
+  
+  # Generate the full include folder
+  include = " ".join( [ "-I. -I.. -I" + sc_include ] +
                       [ "-I" + x for x in include_dirs ] )
   
   compile_cmd = ( 'g++ -o {obj_name}.o -DSYSTEMC_SIM '
@@ -139,12 +102,12 @@ def systemc_to_pymtl( model, obj_dir, include_dirs, sc_module_name,
 # <=64: use sc_uint<bitwidth>
 # >64 : use sc_biguint<bitwidth>
 
-def gen_sc_datatype(port_width):
+def gen_sc_datatype( port_width ):
   
   sc_type = "sc_signal<bool>" # default 1-bit bool
   if port_width > 1:
     sc_type = "sc_signal< sc_{}uint<{}> >" \
-                  .format("big" if port_width > 64 else "", port_width)
+              .format("big" if port_width > 64 else "", port_width)
   
   return sc_type
 
@@ -301,6 +264,7 @@ void wr_{}({}_t* obj, const char* x)
     '''.format( **vars() )
   
   return cdef
+
 #-----------------------------------------------------------------------
 # create_shared_lib
 #-----------------------------------------------------------------------
@@ -308,11 +272,14 @@ void wr_{}({}_t* obj, const char* x)
 
 def create_shared_lib( lib_file, c_wrapper_file, all_objs, include_dirs, obj_dir ):
   
-  include = " ".join( [ "-I. -I .. -I " + get_sc_include() ] +
+  sc_include = get_sc_dir( "SYSTEMC_INCLUDE", "includedir" )
+  sc_library = get_sc_dir( "SYSTEMC_LIBDIR", "libarchdir" )
+  
+  include = " ".join( [ "-I. -I .. -I " + sc_include ] +
                       [ "-I" + x for x in include_dirs ] )
-  library = " ".join( [ "-L. -L .. -L " + get_sc_lib() ] +
+  library = " ".join( [ "-L. -L .. -L " + sc_library ] +
                       [ "-L" + obj_dir ] )
-  rpath   = get_sc_lib()
+  rpath   = sc_library
   objects = " ".join( all_objs )
   
   compile_cmd = ( 'g++ -o {lib_file} {c_wrapper_file} -DSYSTEMC_SIM '
