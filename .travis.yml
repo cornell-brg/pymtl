@@ -33,6 +33,14 @@ install:
  - export PATH=$VERILATOR_ROOT/bin:$PATH
  - export PYMTL_VERILATOR_INCLUDE_DIR=$VERILATOR_ROOT/include
  - verilator --version
+ 
+ # Install systemc
+ 
+ - git clone https://github.com/cornell-brg/systemc-travisci-cache.git
+ - tar xfz systemc-travisci-cache/systemc-travis-2.3.1.tar.gz
+ - export SYSTEMC_ROOT=$PWD/systemc-2.3.1
+ - export SYSTEMC_INCLUDE=$SYSTEMC_ROOT/include
+ - export SYSTEMC_LIBDIR=$SYSTEMC_ROOT/lib-linux64
 
  # Install Python requirements
 

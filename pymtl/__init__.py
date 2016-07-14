@@ -32,6 +32,7 @@ from tools.simulation.SimulationTool import SimulationTool
 from tools.translation.verilator_sim import TranslationTool
 from tools.translation.cpp_sim       import get_cpp
 from tools.integration.verilog       import VerilogModel
+from tools.integration.systemc       import SystemCModel
 
 #-----------------------------------------------------------------------
 # py.test decorators
@@ -62,6 +63,7 @@ requires_verilator = _mark.skipif( not( _has('verilator') ),
 __all__ = [ # Model Construction
             'Model',
             'VerilogModel',
+            'SystemCModel',
             # Signals
             'InPort',
             'OutPort',
