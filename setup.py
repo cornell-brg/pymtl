@@ -74,6 +74,8 @@ setup(
       'tools/translation/verilator_wrapper.templ.c',
       'tools/translation/verilator_wrapper.templ.py',
       'tools/translation/cpp_wrapper.templ.py',
+      'tools/integration/systemc_wrapper.templ.cpp',
+      'tools/integration/systemc_wrapper.templ.py',
     ],
   },
 
