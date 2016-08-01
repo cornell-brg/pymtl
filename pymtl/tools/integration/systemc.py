@@ -51,6 +51,12 @@ class SomeMeta( MetaCollectArgs ):
     inst.vcd_file = '__dummy__'
     inst.elaborate()
     
+    # Postpone port dict until elaboration.
+    if not inst._port_dict:
+      inst._port_dict = { port.name: port for port in inst.get_ports() }
+    else:
+      print(inst._port_dict)
+    
     sc_module_name  = inst.__class__.__name__  
     model_name      = inst.class_name
     c_wrapper_file  = model_name + '_sc.cpp'
@@ -311,7 +317,4 @@ class SystemCModel( Model ):
 
     if not self._param_dict:
       self._param_dict = self._args
-
-    if not self._port_dict:
-      self._port_dict = { port.name: port for port in self.get_ports() }
 
