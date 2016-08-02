@@ -44,10 +44,6 @@ class SomeMeta( MetaCollectArgs ):
         x += os.sep
       inst.sourcefolder[i] = x
     
-    # TODO: currently I don't call translation tool for systemc import,
-    # but I guess I need to organize the following piece of code into 
-    # some "systemcimporttool"
-    
     inst.vcd_file = '__dummy__'
     inst.elaborate()
     
@@ -311,9 +307,15 @@ class SystemCModel( Model ):
       file_ = inspect.getfile( self.__class__ )
       self.sourcefile = [ self.modulename ]
       
+    # If the sourcefolder is not defined then define it as the same
+    # path as the python file, otherwise just by default append 
+    # the python file path to s.sourcefolder
+    
+    file_ = inspect.getfile( self.__class__ )
     if not self.sourcefolder:
-      file_ = inspect.getfile( self.__class__ )
       self.sourcefolder = [ os.path.dirname( file_ ) ]
+    else:
+      self.sourcefolder.append( os.path.dirname( file_ ) )
 
     if not self._param_dict:
       self._param_dict = self._args
