@@ -147,12 +147,15 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
   
   for port_name, port_width in sorted(port_width_dict.items()):
     
+    # Turn a.b --> a_b to import without explicit set_ports
+    var_name = port_name.replace( ".", "_" ) 
+    
     #...................................................................
     # port_decls: for the c_wrapper struct def
     #...................................................................
     
-    cdef_port_decls += ind_6 + "void *{};".format(port_name)
-    wrap_port_decls += ind_2 + "void *{};".format(port_name)
+    cdef_port_decls += ind_6 + "void *{};".format( var_name )
+    wrap_port_decls += ind_2 + "void *{};".format( var_name )
     
     #...................................................................
     # new and delete stmts: new and delete the ports
@@ -161,15 +164,15 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
     sc_type = gen_sc_datatype(port_width)
     
     new_stmts += ind_2 + "{} *{} = new {}(\"{}\");" \
-                           .format( sc_type, port_name, sc_type,
-                                    port_name )
-    new_stmts += ind_2 + "m->{} = {};".format( port_name, port_name )
-    new_stmts += ind_2 + "model->{}(*{});\n".format( port_name, port_name )
+                           .format( sc_type, var_name, sc_type,
+                                    var_name )
+    new_stmts += ind_2 + "m->{} = {};".format( var_name, var_name )
+    new_stmts += ind_2 + "model->{}(*{});\n".format( port_name, var_name )
     
     delete_stmts += ind_2 + "{} *{} = static_cast<{}*>(obj->{});" \
-                              .format( sc_type, port_name, 
-                                       sc_type, port_name )
-    delete_stmts += ind_2 + "delete {};\n".format( port_name )
+                              .format( sc_type, var_name, 
+                                       sc_type, var_name )
+    delete_stmts += ind_2 + "delete {};\n".format( var_name )
     
     #...................................................................
     # method_decls: for cffi cdef 
@@ -178,21 +181,21 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
     if port_width <= 64:
       # rd
       method_decls += ind_4 + "unsigned long rd_{}({}_t* obj);" \
-                                .format( port_name, sc_module_name )
+                                .format( var_name, sc_module_name )
       # wr
       method_decls += ind_4 + "void     wr_{}({}_t* obj, unsigned long x);" \
-                                .format( port_name, sc_module_name )
+                                .format( var_name, sc_module_name )
     else:
       # stripmine the read
       for x in xrange(0, port_width, 64):
         lsb, msb = x, min(port_width, x+64)-1
         
         method_decls += ind_4 + "unsigned long rd_{}_{}_{}({}_t* obj);" \
-                                  .format( port_name, lsb, msb, sc_module_name )
+                                  .format( var_name, lsb, msb, sc_module_name )
   
       # write a single string
       method_decls += ind_4 + "void     wr_{}({}_t* obj, const char* x);" \
-                                .format( port_name, sc_module_name )
+                                .format( var_name, sc_module_name )
     method_decls += "\n"
     
     #...................................................................
@@ -206,12 +209,12 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
       method_impls += '''
 unsigned long rd_{}({}_t* obj)
 {{ return static_cast<{}*>(obj->{})->read(); }}''' \
-      .format( port_name, sc_module_name, sc_type, port_name )
+      .format( var_name, sc_module_name, sc_type, var_name )
       
       method_impls += '''
 void wr_{}({}_t* obj, unsigned long x)
 {{ static_cast<{}*>(obj->{})->write(x); }}
-  '''.format( port_name, sc_module_name, sc_type, port_name )
+  '''.format( var_name, sc_module_name, sc_type, var_name )
       
     else:
       # stripmine the read
@@ -220,13 +223,13 @@ void wr_{}({}_t* obj, unsigned long x)
         method_impls += '''
 unsigned long rd_{}_{}_{}({}_t* obj)
 {{ return static_cast<{}*>(obj->{})->read().range({},{}).to_uint64(); }}''' \
-          .format( port_name, lsb, msb, sc_module_name, sc_type, port_name, msb, lsb )
+          .format( var_name, lsb, msb, sc_module_name, sc_type, var_name, msb, lsb )
       
       # single write
       method_impls += '''
 void wr_{}({}_t* obj, const char* x)
 {{ static_cast<{}*>(obj->{})->write(x); }}
-'''       .format( port_name, sc_module_name, sc_type, port_name )
+'''       .format( var_name, sc_module_name, sc_type, var_name )
   
   delete_stmts += '''
   {sc_module_name} *model = static_cast< {sc_module_name}* >(obj->model);
@@ -319,16 +322,19 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
   inports  = model.get_inports()
   outports = model.get_outports()
   
-  for (sc_name, port) in model._port_dict.iteritems():
+  for sc_name, port in model._port_dict.iteritems():
     if port.name == "clk": continue
     
+    # Turn a.b --> a_b to import without explicit set_ports
+    var_name = sc_name.replace( ".", "_" ) 
+    
     if port in inports:
-      set_inputs.append( "{sc_name} = s.{port.name}".format( **vars() ) )
+      set_inputs.append( "{var_name} = s.{port.name}".format( **vars() ) )
       
       if port.nbits > 64:
-        set_inputs.append( "s._ffi.wr_{sc_name}(m, str(s.{port.name}.uint()))".format( **vars() ) )
+        set_inputs.append( "s._ffi.wr_{var_name}(m, str(s.{port.name}.uint()))".format( **vars() ) )
       else:
-        set_inputs.append( "s._ffi.wr_{sc_name}(m, s.{port.name})".format( **vars() ) )
+        set_inputs.append( "s._ffi.wr_{var_name}(m, s.{port.name})".format( **vars() ) )
       
       # empty line for better looking
       set_inputs.append("")
@@ -343,13 +349,13 @@ def create_py_wrapper( model, py_wrapper_file, cdef ):
           sc_msb = py_msb - 1
           
           foo = '{foo}'
-          tmp = ("s.{port.name}[{x}:{py_msb}].{foo} = s._ffi.rd_{sc_name}_{x}_{sc_msb}(m)".format( **vars() ) )
+          tmp = ("s.{port.name}[{x}:{py_msb}].{foo} = s._ffi.rd_{var_name}_{x}_{sc_msb}(m)".format( **vars() ) )
           
           set_comb.append( tmp.format(foo = "value") )
           set_next.append( tmp.format(foo = "next") )
       else:
-        set_comb.append( "s.{port.name}.value = s._ffi.rd_{sc_name}(m)".format( **vars() ) )
-        set_next.append( "s.{port.name}.next = s._ffi.rd_{sc_name}(m)".format( **vars() ) )
+        set_comb.append( "s.{port.name}.value = s._ffi.rd_{var_name}(m)".format( **vars() ) )
+        set_next.append( "s.{port.name}.next = s._ffi.rd_{var_name}(m)".format( **vars() ) )
       
       # empty line for better looking
       set_comb.append("")

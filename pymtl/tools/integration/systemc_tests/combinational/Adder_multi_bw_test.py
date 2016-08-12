@@ -56,11 +56,7 @@ test_16  = [ (0x1234, 0x2143), (0xffe0, 0x0001) ]
 test_40  = [ (0x1234567890, 0x2109876543), (0xffe0, 0x0001) ]
 test_100 = [ (0x1234567890123456789012345, 0x2109876543210987654321098), (0xffe0, 0x0001) ]
 
-
-# TODO This is hacky, since I have to register modules earlier
-# in systemc world.
-
-@pytest.mark.parametrize( "a,b", test_16)
+@pytest.mark.parametrize( "a,b", test_16 )
 def test_Adder_16( a, b ):
   m, sim = _sim_setup( Adder_16() )
   
@@ -76,7 +72,7 @@ def test_Adder_16( a, b ):
   
   m.destroy()
 
-@pytest.mark.parametrize( "a,b", test_40)
+@pytest.mark.parametrize( "a,b", test_40 )
 def test_Adder_40( a, b ):
   m, sim = _sim_setup( Adder_40() )
   
@@ -91,7 +87,7 @@ def test_Adder_40( a, b ):
     assert m.res_c == a + b + i + i
   m.destroy()
 
-@pytest.mark.parametrize( "a,b", test_100)
+@pytest.mark.parametrize( "a,b", test_100 )
 def test_Adder_100( a, b ):
   m, sim = _sim_setup( Adder_100() )
   
@@ -106,7 +102,7 @@ def test_Adder_100( a, b ):
     assert m.res_c == a + b + i + i
   m.destroy()
   
-@pytest.mark.parametrize( "a,b", test_16)
+@pytest.mark.parametrize( "a,b", test_16 )
 def test_Adder_16_2( a, b ):
   m, sim = _sim_setup( Adder_16() )
   
