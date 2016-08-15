@@ -50,8 +50,8 @@ class SomeMeta( MetaCollectArgs ):
     # Postpone port dict until elaboration.
     if not inst._port_dict:
       inst._port_dict = { port.name: port for port in inst.get_ports() }
-    else:
-      print(inst._port_dict)
+    # else:
+      # print(inst._port_dict)
     
     sc_module_name  = inst.__class__.__name__  
     model_name      = inst.class_name

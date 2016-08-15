@@ -104,12 +104,15 @@ def systemc_to_pymtl( model, obj_dir, include_dirs, sc_module_name,
 
 def gen_sc_datatype( port_width ):
   
-  sc_type = "sc_signal<bool>" # default 1-bit bool
+  sc_type = "bool" # default 1-bit bool
   if port_width > 1:
-    sc_type = "sc_signal< sc_{}uint<{}> >" \
+    sc_type = "sc_{}uint<{}>" \
               .format("big" if port_width > 64 else "", port_width)
-  
   return sc_type
+
+# wrap the datatype with sc_signal
+def gen_sc_signaltype( port_width ):
+  return "sc_signal< " + gen_sc_datatype(port_width) + " >"
 
 #-----------------------------------------------------------------------
 # create_c_wrapper
@@ -161,17 +164,17 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
     # new and delete stmts: new and delete the ports
     #...................................................................
     
-    sc_type = gen_sc_datatype(port_width)
+    sc_sigtype = gen_sc_signaltype(port_width)
     
     new_stmts += ind_2 + "{} *{} = new {}(\"{}\");" \
-                           .format( sc_type, var_name, sc_type,
+                           .format( sc_sigtype, var_name, sc_sigtype,
                                     var_name )
     new_stmts += ind_2 + "m->{} = {};".format( var_name, var_name )
     new_stmts += ind_2 + "model->{}(*{});\n".format( port_name, var_name )
     
     delete_stmts += ind_2 + "{} *{} = static_cast<{}*>(obj->{});" \
-                              .format( sc_type, var_name, 
-                                       sc_type, var_name )
+                              .format( sc_sigtype, var_name, 
+                                       sc_sigtype, var_name )
     delete_stmts += ind_2 + "delete {};\n".format( var_name )
     
     #...................................................................
@@ -202,19 +205,19 @@ def create_c_wrapper( model, sc_module_name, c_wrapper_file ):
     # method_impls: implements cffi cdef methods in c_wrapper
     #...................................................................
     
-    sc_type = gen_sc_datatype(port_width)
+    sc_sigtype = gen_sc_signaltype(port_width)
     
     if port_width <= 64:
       
       method_impls += '''
 unsigned long rd_{}({}_t* obj)
 {{ return static_cast<{}*>(obj->{})->read(); }}''' \
-      .format( var_name, sc_module_name, sc_type, var_name )
+      .format( var_name, sc_module_name, sc_sigtype, var_name )
       
       method_impls += '''
 void wr_{}({}_t* obj, unsigned long x)
 {{ static_cast<{}*>(obj->{})->write(x); }}
-  '''.format( var_name, sc_module_name, sc_type, var_name )
+  '''.format( var_name, sc_module_name, sc_sigtype, var_name )
       
     else:
       # stripmine the read
@@ -223,13 +226,13 @@ void wr_{}({}_t* obj, unsigned long x)
         method_impls += '''
 unsigned long rd_{}_{}_{}({}_t* obj)
 {{ return static_cast<{}*>(obj->{})->read().range({},{}).to_uint64(); }}''' \
-          .format( var_name, lsb, msb, sc_module_name, sc_type, var_name, msb, lsb )
+          .format( var_name, lsb, msb, sc_module_name, sc_sigtype, var_name, msb, lsb )
       
       # single write
       method_impls += '''
 void wr_{}({}_t* obj, const char* x)
 {{ static_cast<{}*>(obj->{})->write(x); }}
-'''       .format( var_name, sc_module_name, sc_type, var_name )
+'''       .format( var_name, sc_module_name, sc_sigtype, var_name )
   
   delete_stmts += '''
   {sc_module_name} *model = static_cast< {sc_module_name}* >(obj->model);
