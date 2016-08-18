@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import os
 import sys
+import fcntl
 import filecmp
 import verilog
 
@@ -45,6 +46,10 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False, verilator_xi
   except AttributeError:
     vcd_en = False
 
+  # Get exclusive access to temp_file here
+  lock = open( ".lock","w" )
+  fcntl.flock( lock, fcntl.LOCK_EX )
+  
   # Write the output to a temporary file
   with open( temp_file, 'w+' ) as fd:
     verilog.translate( model_inst, fd, verilator_xinit=verilator_xinit )
@@ -69,6 +74,9 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False, verilator_xi
 
   # Rename temp to actual output
   os.rename( temp_file, verilog_file )
+  
+  # Yield exclusive access
+  fcntl.flock( lock, fcntl.LOCK_UN )
 
   # Verilate the module only if we've updated the verilog source
   if not cached:
@@ -79,6 +87,7 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False, verilator_xi
   #else:
   #  print( "CACHED", verilog_file )
 
+  
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )
   __import__( py_wrapper_file[:-3] )
