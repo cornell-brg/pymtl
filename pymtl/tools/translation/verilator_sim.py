@@ -50,30 +50,35 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False, verilator_xi
   lock = open( ".lock","w" )
   fcntl.flock( lock, fcntl.LOCK_EX )
   
-  # Write the output to a temporary file
-  with open( temp_file, 'w+' ) as fd:
-    verilog.translate( model_inst, fd, verilator_xinit=verilator_xinit )
-
-  # write Verilog with black boxes
-  if enable_blackbox:
-    with open( blackbox_file, 'w+' ) as fd:
-      verilog.translate( model_inst, fd, enable_blackbox=True, verilator_xinit=verilator_xinit )
-
-  # Check if the temporary file matches an existing file (caching)
-
   cached = False
-  if (     exists(verilog_file)
-       and exists(py_wrapper_file)
-       and exists(lib_file)
-       and exists(obj_dir) ):
+  
+  try:
+    # Write the output to a temporary file
+    with open( temp_file, 'w+' ) as fd:
+      verilog.translate( model_inst, fd, verilator_xinit=verilator_xinit )
 
-    cached = filecmp.cmp( temp_file, verilog_file )
+    # Write Verilog with black boxes
+    if enable_blackbox:
+      with open( blackbox_file, 'w+' ) as fd:
+        verilog.translate( model_inst, fd, enable_blackbox=True, verilator_xinit=verilator_xinit )
 
-    # if not cached:
-    #   os.system( ' diff %s %s'%( temp_file, verilog_file ))
+    # Check if the temporary file matches an existing file (caching)
+    if (     exists(verilog_file)
+         and exists(py_wrapper_file)
+         and exists(lib_file)
+         and exists(obj_dir) ):
+      cached = filecmp.cmp( temp_file, verilog_file )
 
-  # Rename temp to actual output
-  os.rename( temp_file, verilog_file )
+      # if not cached:
+      #   os.system( ' diff %s %s'%( temp_file, verilog_file ))
+
+    # Rename temp to actual output
+    os.rename( temp_file, verilog_file )
+    
+  except Exception:
+    # Remember to unlock to avoid deadlock
+    fcntl.flock( lock, fcntl.LOCK_UN )
+    raise
   
   # Yield exclusive access
   fcntl.flock( lock, fcntl.LOCK_UN )
