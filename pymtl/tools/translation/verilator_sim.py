@@ -47,7 +47,7 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False, verilator_xi
     vcd_en = False
 
   # Get exclusive access to temp_file here
-  lock = open( ".lock","w" )
+  lock = open( ".lock_%s" % model_name,"w" )
   fcntl.flock( lock, fcntl.LOCK_EX )
   
   cached = False
@@ -75,6 +75,15 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False, verilator_xi
     # Rename temp to actual output
     os.rename( temp_file, verilog_file )
     
+    # Verilate the module only if we've updated the verilog source
+    if not cached:
+      #print( "NOT CACHED", verilog_file )
+      verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
+                        lib_file, py_wrapper_file, vcd_en, lint,
+                        verilator_xinit )
+    #else:
+    #  print( "CACHED", verilog_file )
+
   except Exception:
     # Remember to unlock to avoid deadlock
     fcntl.flock( lock, fcntl.LOCK_UN )
@@ -82,16 +91,6 @@ def TranslationTool( model_inst, lint=False, enable_blackbox=False, verilator_xi
   
   # Yield exclusive access
   fcntl.flock( lock, fcntl.LOCK_UN )
-
-  # Verilate the module only if we've updated the verilog source
-  if not cached:
-    #print( "NOT CACHED", verilog_file )
-    verilog_to_pymtl( model_inst, verilog_file, c_wrapper_file,
-                      lib_file, py_wrapper_file, vcd_en, lint,
-                      verilator_xinit )
-  #else:
-  #  print( "CACHED", verilog_file )
-
   
   # Use some trickery to import the verilated version of the model
   sys.path.append( os.getcwd() )
