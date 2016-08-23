@@ -8,6 +8,7 @@ import re
 import os
 import sys
 import json
+import fcntl
 import hashlib
 import inspect
 import filecmp
@@ -60,150 +61,162 @@ class SomeMeta( MetaCollectArgs ):
     lib_file        = 'lib{}_sc.so'.format( model_name )
     obj_dir         = 'obj_dir_' + model_name + os.sep
     
-    if not exists( obj_dir ):
-      os.mkdir( obj_dir )
-    include_dirs     = deepcopy( inst.sourcefolder )
-    include_dirs.append( obj_dir )
+    lock = open( ".lock_%s" % model_name,"w" )
+    fcntl.flock( lock, fcntl.LOCK_EX )
     
-    # Copy all specified source file to obj folder for later compilation
-    # Also try to copy header files by inferring the file extension
-    # At the same time check caching status
-    #
-    # Check the combination of a path, a filename and a extension
-    # for both the header and the source. According to C++ 
-    # convention the header should have the same filename as the 
-    # source file for the compiler to match.
-    #
-    # The reason why I split the source array and header array into 
-    # two groups is for performance -- to hopefully reduce the number
-    # of disk inode lookup and disk accesses by breaking the loop
-    # when a header/source is found.
-    
-    uncached = {}
-    src_ext  = {}
-    tmp_objs = []
-    
-    hashfile = obj_dir + "/.hashdict"
-    hashdict = {}
-    if exists( hashfile ):
-      with open( hashfile, "r" ) as f:
-        hashdict = json.load( f )
-    
-    for path in inst.sourcefolder:
-      for filename in inst.sourcefile:
-        file_prefix = path    + filename
-        temp_prefix = obj_dir + filename
-        
-        for group in [ [".h", ".hh", ".hpp", ".h++"  ],  # header group
-                       [".cc", ".cpp", ".c++", ".cxx"] ]:# source group
-          for ext in group: 
-            target_file = file_prefix + ext
-            temp_obj    = temp_prefix + ".o"
-            
-            if not exists( target_file ):
-              # OK this is not the correct extension.
-              continue
-            
-            tmp_objs.append( temp_obj )
-            
-            if ext.startswith(".c"):
-              src_ext[temp_prefix] = ext
-            
-            # July 11, 2016
-            # This piece of code copies all the files
-            # for caching/tracking purpose.
-            # Now I use SHA1 hash value to track the update of files,
-            # so I comment out these lines.
-            
-            # temp_file = temp_prefix + ext
-            
-            # 1. No .o file, then yeah it hasn't been cached.
-            # 2. No .c file, probably something unexpected happened.
-            # 3. See if the cached file is not up to date.
-            
-            # if not exists( temp_obj ) or \
-               # not exists( temp_file ) or \
-               # not filecmp.cmp( temp_file, target_file ):
+    try:
+      
+      if not exists( obj_dir ):
+        os.mkdir( obj_dir )
+      include_dirs     = deepcopy( inst.sourcefolder )
+      include_dirs.append( obj_dir )
+      
+      # Copy all specified source file to obj folder for later compilation
+      # Also try to copy header files by inferring the file extension
+      # At the same time check caching status
+      #
+      # Check the combination of a path, a filename and a extension
+      # for both the header and the source. According to C++ 
+      # convention the header should have the same filename as the 
+      # source file for the compiler to match.
+      #
+      # The reason why I split the source array and header array into 
+      # two groups is for performance -- to hopefully reduce the number
+      # of disk inode lookup and disk accesses by breaking the loop
+      # when a header/source is found.
+      
+      uncached = {}
+      src_ext  = {}
+      tmp_objs = []
+      
+      hashfile = obj_dir + "/.hashdict"
+      hashdict = {}
+      if exists( hashfile ):
+        with open( hashfile, "r" ) as f:
+          hashdict = json.load( f )
+      
+      for path in inst.sourcefolder:
+        for filename in inst.sourcefile:
+          file_prefix = path    + filename
+          temp_prefix = obj_dir + filename
+          
+          for group in [ [".h", ".hh", ".hpp", ".h++"  ],  # header group
+                         [".cc", ".cpp", ".c++", ".cxx"] ]:# source group
+            for ext in group: 
+              target_file = file_prefix + ext
+              temp_obj    = temp_prefix + ".o"
               
-              # if exists( temp_obj ):
-                # os.remove( temp_obj )
-              # copyfile( target_file, temp_file )
-              # uncached[temp_prefix] = target_file
-            
-            # 1. No .o file
-            # 2. Not in the hash value dictionary
-            # 3. Hash value match?
-            
-            def get_hash( filename ):
-              with open( filename, "r" ) as f:
-                return hashlib.sha1( f.read() ).hexdigest()
+              if not exists( target_file ):
+                # OK this is not the correct extension.
+                continue
+              
+              tmp_objs.append( temp_obj )
+              
+              if ext.startswith(".c"):
+                src_ext[temp_prefix] = ext
+              
+              # July 11, 2016
+              # This piece of code copies all the files
+              # for caching/tracking purpose.
+              # Now I use SHA1 hash value to track the update of files,
+              # so I comment out these lines.
+              
+              # temp_file = temp_prefix + ext
+              
+              # 1. No .o file, then yeah it hasn't been cached.
+              # 2. No .c file, probably something unexpected happened.
+              # 3. See if the cached file is not up to date.
+              
+              # if not exists( temp_obj ) or \
+                 # not exists( temp_file ) or \
+                 # not filecmp.cmp( temp_file, target_file ):
                 
-            h = get_hash( target_file )
+                # if exists( temp_obj ):
+                  # os.remove( temp_obj )
+                # copyfile( target_file, temp_file )
+                # uncached[temp_prefix] = target_file
               
-            if not exists( temp_obj ) or \
-               target_file not in hashdict or \
-               h != hashdict[target_file]:
-              uncached[temp_prefix] = file_prefix
-              hashdict[target_file] = h
-            
+              # 1. No .o file
+              # 2. Not in the hash value dictionary
+              # 3. Hash value match?
+              
+              def get_hash( filename ):
+                with open( filename, "r" ) as f:
+                  return hashlib.sha1( f.read() ).hexdigest()
+                  
+              h = get_hash( target_file )
+                
+              if not exists( temp_obj ) or \
+                 target_file not in hashdict or \
+                 h != hashdict[target_file]:
+                uncached[temp_prefix] = file_prefix
+                hashdict[target_file] = h
+              
+              break
+      
+      # This part is used to handle the missing of source file. 
+      # Specifically, if the user specifies "foo" in s.sourcefile, but 
+      # the above code is not able to find foo with every prefix in all
+      # folders in s.sourcefolder, we have to terminate the compilation.
+      
+      unmatched = []
+      for x in inst.sourcefile:
+        matched = False
+        for y in src_ext:
+          if basename(y) == x:
+            matched = True
             break
+        if not matched:
+          unmatched.append( "\""+ x + "\"" )
+      
+      if unmatched:
+        raise SystemCSourceFileError( '\n'
+          '-   Source file for [{}] not found.\n'
+          '-   Please double check s.sourcefolder and s.sourcefile!'\
+            .format(", ".join( unmatched )) )
     
-    # This part is used to handle the missing of source file. 
-    # Specifically, if the user specifies "foo" in s.sourcefile, but 
-    # the above code is not able to find foo with every prefix in all
-    # folders in s.sourcefolder, we have to terminate the compilation.
-    
-    unmatched = []
-    for x in inst.sourcefile:
-      matched = False
-      for y in src_ext:
-        if basename(y) == x:
-          matched = True
-          break
-      if not matched:
-        unmatched.append( "\""+ x + "\"" )
-    
-    if unmatched:
-      raise SystemCSourceFileError( '\n'
-        '-   Source file for [{}] not found.\n'
-        '-   Please double check s.sourcefolder and s.sourcefile!'\
-          .format(", ".join( unmatched )) )
-    
-    # Remake only if there're uncached files
+      # Remake only if there're uncached files
 
-    if not uncached:
-      # print( "All Cached!")
-      pass
-    else:
-      # print( "Not Cached", uncached )
+      if uncached:
+        # print( "Not Cached", uncached )
+        
+        # Dump new hashdict
+        with open( hashfile, "w" ) as f:
+          json.dump( hashdict, f )
+        
+        # Compile all uncached modules to .o object file
+        for obj, src in uncached.items():
+          compile_object( obj, src + src_ext[obj], include_dirs )
+      # else:
+        # print( "All Cached!")
       
-      # Dump new hashdict
-      with open( hashfile, "w" ) as f:
-        json.dump( hashdict, f )
+      # Regenerate the shared library .so file if individual modules are 
+      # updated or the .so file is missing.
       
-      # Compile all uncached modules to .o object file
-      for obj, src in uncached.items():
-        compile_object( obj, src + src_ext[obj], include_dirs )
-    
-    # Regenerate the shared library .so file if individual modules are 
-    # updated or the .so file is missing.
-    
-    if uncached or not exists( lib_file ):
-      
-      # Use list for tmp_objs and all_objs to keep dependecies 
-      # O(n^2) but maybe we could refine it later when we need to deal 
-      # with thousands of files ...
-      
-      all_objs = []
-      for o in tmp_objs:
-        if o not in all_objs:
-          all_objs.append(o)
-      
-      systemc_to_pymtl( inst, # model instance
-                        obj_dir, include_dirs, sc_module_name,
-                        all_objs, c_wrapper_file, lib_file, # c wrapper
-                        py_wrapper_file # py wrapper
-                      )
+      if uncached or not exists( lib_file ):
+        
+        # Use list for tmp_objs and all_objs to keep dependecies 
+        # O(n^2) but maybe we could refine it later when we need to deal 
+        # with thousands of files ...
+        
+        all_objs = []
+        for o in tmp_objs:
+          if o not in all_objs:
+            all_objs.append(o)
+        
+        systemc_to_pymtl( inst, # model instance
+                          obj_dir, include_dirs, sc_module_name,
+                          all_objs, c_wrapper_file, lib_file, # c wrapper
+                          py_wrapper_file # py wrapper
+                        )
+                        
+    except Exception:
+      # Remember to unlock to avoid deadlock
+      fcntl.flock( lock, fcntl.LOCK_UN )
+      raise
+  
+    # Yield exclusive access
+    fcntl.flock( lock, fcntl.LOCK_UN )
     
     # Follows are the same as Translation Tool
     
