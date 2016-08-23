@@ -16,7 +16,9 @@ python:
 
 env:
  - CONFIG=""
+ - CONFIG="-n 4"
  - CONFIG="--test-verilog"
+ - CONFIG="--test-verilog -n 4"
  - CONFIG="--dump-vcd"
 
 #------------------------------------------------------------------------
