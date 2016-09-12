@@ -530,9 +530,36 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
           'Argument "nbits" of sext(in,nbits) is not a constant int!',
           node.lineno
         )
-      sig_name   = self.visit( node.args[0] )
-      sig_nbits  = node.args[0]._object.nbits
-      ext_nbits  = self.visit( node.args[1] )
+
+      # This is to handle the special case that sign-extending a sliced
+      # variable is incorrectly translated, by incorporating the slice
+      # value which previously the code wasn't aware of.
+      # Previously the slice [x:y] is a part of sig_name a[x:y] and every
+      # variable has two layers of indices a[x:y][z].
+
+      # Without this piece of code, the translation of
+      # sext( a[31:32], 20 ) will look like
+      #  { { 20-32 { a[(32)-1:31][31] } }, a[(32)-1:31][31:0] }
+      # which is absolutely wrong.
+      # The correct answer is { { 20-1 {a[31]} }, a[31:31] }
+
+      if isinstance( node.args[0], ast.Subscript ):
+        sig_name    = self.visit( node.args[0].value )
+
+        slice_lower = self.visit( node.args[0].slice.value.lower )
+        slice_upper = self.visit( node.args[0].slice.value.upper )
+        sig_nbits   = slice_upper - slice_lower
+
+        ext_nbits   = self.visit( node.args[1] )
+
+        return '{{ {{ {2}-{1} {{ {0}[{3}] }} }}, {0}[{3}:{4}] }}' \
+              .format( sig_name, sig_nbits, ext_nbits,
+                       slice_upper-1, slice_lower )
+
+      sig_name  = self.visit( node.args[0] )
+      sig_nbits = node.args[0]._object.nbits
+      ext_nbits = self.visit( node.args[1] )
+
       return '{{ {{ {3}-{1} {{ {0}[{2}] }} }}, {0}[{2}:0] }}' \
              .format( sig_name, sig_nbits, sig_nbits-1, ext_nbits )
 
@@ -554,9 +581,30 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
           'Argument "nbits" of zext(in,nbits) is not a constant int!',
           node.lineno
         )
-      sig_name   = self.visit( node.args[0] )
-      sig_nbits  = node.args[0]._object.nbits
-      ext_nbits  = self.visit( node.args[1] )
+
+      # This is to handle the special case that zero-extending a sliced
+      # variable is incorrectly translated, by incorporating the slice
+      # value which previously the code wasn't aware of.
+      # Previously the slice [x:y] is a part of sig_name a[x:y] and every
+      # variable has two layers of indices a[x:y][z].
+
+      if isinstance( node.args[0], ast.Subscript ):
+        sig_name    = self.visit( node.args[0].value )
+
+        slice_lower = self.visit( node.args[0].slice.value.lower )
+        slice_upper = self.visit( node.args[0].slice.value.upper )
+        sig_nbits   = slice_upper - slice_lower
+
+        ext_nbits   = self.visit( node.args[1] )
+
+        return "{{ {{ {2}-{1} {{ 1'b0 }} }}, {0}[{3}:{4}] }}" \
+              .format( sig_name, sig_nbits, ext_nbits,
+                       slice_upper-1, slice_lower )
+
+      sig_name  = self.visit( node.args[0] )
+      sig_nbits = node.args[0]._object.nbits
+      ext_nbits = self.visit( node.args[1] )
+
       return "{{ {{ {3}-{1} {{ 1'b0 }} }}, {0}[{2}:0] }}" \
              .format( sig_name, sig_nbits, sig_nbits-1, ext_nbits )
 
