@@ -454,7 +454,7 @@ Error:
 
   compile(
     # flags        = "-O1 -fstrict-aliasing -fPIC -shared -L. -lverilator",
-    flags        = "-O1 -fstrict-aliasing -fPIC -shared",
+    flags        = "-fstrict-aliasing -fPIC -shared", # -O1 removed
     include_dirs = include_dirs,
     output_file  = lib_file,
     input_files  = cpp_sources_list,
