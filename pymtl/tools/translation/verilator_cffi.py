@@ -60,7 +60,7 @@ def verilate_model( filename, model_name, vcd_en, lint ):
   # verilator commandline template
 
   compile_cmd = ( 'verilator -cc {source} -top-module {model_name} '
-                  '--Mdir {obj_dir} {flags}' )
+                  '--Mdir {obj_dir} -O3 {flags}' )
 
   # verilator commandline options
 
@@ -454,7 +454,7 @@ Error:
 
   compile(
     # flags        = "-O1 -fstrict-aliasing -fPIC -shared -L. -lverilator",
-    flags        = "-O1 -fstrict-aliasing -fPIC -shared",
+    flags        = "-O0 -fPIC -shared",
     include_dirs = include_dirs,
     output_file  = lib_file,
     input_files  = cpp_sources_list,
