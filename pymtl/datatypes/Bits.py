@@ -6,14 +6,22 @@
 from SignalValue import SignalValue
 
 import copy
+import math
 
 #-----------------------------------------------------------------------
 # _get_nbits
 #-----------------------------------------------------------------------
 def _get_nbits( N ):
   'Utility class for calculating number of bits needed to store a value'
-  if N > 0: return N.bit_length()
-  else:     return N.bit_length() + 1
+  N = int( N )
+  if N < 0:
+    n  = abs( N )
+    sb = 1
+  else:
+    n  = N + 1
+    sb = 0
+
+  return int( math.ceil( math.log( n, 2 ) ) ) + sb
 
 #-----------------------------------------------------------------------
 # Bits
@@ -35,8 +43,8 @@ class Bits( SignalValue ):
 
     # Set the nbits and bitmask (_mask) attributes
     self.nbits = nbits
-    self._max  = (2**nbits)- 1
-    self._min  = -2**(nbits- 1) if nbits > 1 else 0
+    self._max  = ( 2**(nbits    )) - 1
+    self._min  = (-2**(nbits - 1))
     self._mask = ( 1 << self.nbits ) - 1
     self.slice = slice( None )
 
@@ -130,10 +138,26 @@ class Bits( SignalValue ):
   #---------------------------------------------------------------------
   # bit_length
   #---------------------------------------------------------------------
-  # Implement bit_length method provided by the int built-in. Simplifies
-  # the implementation of get_nbits().
+  # Legacy Comment:
+  #   Implement bit_length method provided by the int built-in. Simplifies
+  #   the implementation of get_nbits().
+  #
+  # Newer:
+  #   Built-in implementation of bit_length() is confusing and produces
+  #   wrong results. This is overridden to the following implementation
+  #   We can also call _get_nbits() in here to make it easier to manage
+  #   future changes.
+  #                                                            -hawajkm
   def bit_length( self ):
-    return self._uint.bit_length()
+    n = self.int()
+    if n < 0:
+      n  = abs(n)
+      bs = 0
+    else:
+      n  = n + 1
+      bs = 1
+
+    return int( math.ceil( math.log( n, 2 ) ) ) + bs
 
   #---------------------------------------------------------------------
   # Print Methods
@@ -308,7 +332,7 @@ class Bits( SignalValue ):
       if not (0 <= addr < self.nbits):
         raise IndexError('Bits index [{}] out of range [0 - {}]'
                          .format(addr, self.nbits) )
-      if not (0 <= value <= 1):
+      if not (1 >= _get_nbits( value )):
         raise ValueError(
           'Provided value is too big to fit in 1 bit!\n'
           '({} bits are needed to represent value = {} in two\'s complement.)'
@@ -320,7 +344,7 @@ class Bits( SignalValue ):
       cleared_val = self._uint & mask
 
       # Set the bits
-      self._uint = cleared_val | (value << addr)
+      self._uint = cleared_val | (abs(value) << addr)
 
   #----------------------------------------------------------------------
   # Arithmetic Operators

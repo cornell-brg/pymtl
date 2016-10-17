@@ -38,7 +38,9 @@ def test_int_bounds_checking():
 
   Bits( 1, 0 )
   Bits( 1, 1 )
-  with pytest.raises( ValueError ): Bits( 1, -1 )
+  # hawajkm: this should not fail
+  #with pytest.raises( ValueError ): Bits( 1, -1 )
+  Bits(1, -1)
   with pytest.raises( ValueError ): Bits( 1, -2 )
 
 def test_uint():
@@ -91,8 +93,9 @@ def test_bit_bounds_checking():
     x[4] = 1
   with pytest.raises( ValueError ):
     x[0] = 2
-  with pytest.raises( ValueError ):
-    x[3] = -1
+  #hawajkm: This shouldn't not be a problem
+  #with pytest.raises( ValueError ):
+  #  x[3] = -1
 
 def test_get_slice():
 
