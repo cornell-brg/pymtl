@@ -131,6 +131,42 @@ def test_set_slice():
   with pytest.raises( ValueError ):
     x[:]   = 0b10000
 
+  # Pos and Neg bounds
+  ## Positive assigns are treated as unsigned
+  ## Negative assigns are treated as 2's complement
+
+  # Positive
+  x[:3] = 3
+  assert x.uint() == 0b1011
+
+  x[:3] = 4
+  assert x.uint() == 0b1100
+
+  x[:3] = 7
+  assert x.uint() == 0b1111
+
+  with pytest.raises( ValueError ):
+    x[:3] = 8
+
+  with pytest.raises( ValueError ):
+    x[:3] = 15
+
+  # Negative
+  x[:3] = -1
+  assert x.uint() == 0b1111
+
+  x[:3] = -3
+  assert x.uint() == 0b1101
+
+  x[:3] = -4
+  assert x.uint() == 0b1100
+
+  with pytest.raises( ValueError ):
+    x[:3] = -5
+
+  with pytest.raises( ValueError ):
+    x[:3] = -15
+
 def test_slice_bounds_checking():
 
   x = Bits( 4, 0b1100 )
