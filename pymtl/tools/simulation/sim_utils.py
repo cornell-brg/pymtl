@@ -164,6 +164,29 @@ def insert_signal_values( sim, nets ):
 #---------------------------------------------------------------------
 # Register all decorated @tick and  @posedge_clk functions.
 # Sequential logic blocks get executed any time cycle() is called.
+
+def cache_ast( model ):
+
+  if hasattr(model, "_combinational_blocks_ast" ) and \
+     hasattr(model, "_tick_blocks_ast" ) and \
+     hasattr(model, "_posedge_clk_blocks_ast"):
+    return
+
+  type(model)._combinational_blocks_ast = []
+  type(model)._tick_blocks_ast = []
+  type(model)._posedge_clk_blocks_ast = []
+
+  # get_method_ast returns a tuple (ast, src) and we only need ast so [0]
+
+  for func in model.get_tick_blocks():
+    type(model)._tick_blocks_ast.append( get_method_ast( func )[0] )
+
+  for func in model.get_posedge_clk_blocks():
+    type(model)._posedge_clk_blocks_ast.append( get_method_ast( func )[0] )
+
+  for func in model.get_combinational_blocks():
+    type(model)._combinational_blocks_ast.append( get_method_ast( func )[0] )
+
 def register_seq_blocks( model ):
 
   all_models = []
@@ -176,10 +199,11 @@ def register_seq_blocks( model ):
 
   sequential_blocks = []
   for i in all_models:
-    for func in i.get_tick_blocks() + i.get_posedge_clk_blocks():
 
-      # Grab the AST and src code of each function
-      tree, src = get_method_ast( func )
+    cache_ast( i )
+
+    for (j, func) in enumerate( i.get_tick_blocks() ):
+      tree = type(i)._tick_blocks_ast[j]
 
       # Check there were no mistakes in use of .value/.next
       DetectIncorrectValueNext( func, 'value' ).visit( tree )
@@ -191,9 +215,22 @@ def register_seq_blocks( model ):
 
       sequential_blocks.append( func )
 
-    for func in i.get_combinational_blocks():
+    for (j, func) in enumerate( i.get_posedge_clk_blocks() ):
+      tree = type(i)._posedge_clk_blocks_ast[j]
 
-      tree, _ = get_method_ast( func )
+      # Check there were no mistakes in use of .value/.next
+      DetectIncorrectValueNext( func, 'value' ).visit( tree )
+      DetectMissingValueNext  ( func, 'next'  ).visit( tree )
+
+      # If function is decorated with tick_fl, wrap it with a greenlet
+      if 'tick_fl' in DetectDecorators().enter( tree ):
+        func = _pausable_tick( func )
+
+      sequential_blocks.append( func )
+
+    for (j, func) in enumerate( i.get_combinational_blocks() ):
+      tree = type(i)._combinational_blocks_ast[j]
+
       DetectIncorrectValueNext( func, 'next'  ).visit( tree )
       DetectMissingValueNext  ( func, 'value' ).visit( tree )
 
@@ -210,8 +247,11 @@ def register_comb_blocks( model, event_queue ):
   # Get the sensitivity list of each event driven (combinational) block
   # TODO: do before or after we swap value nodes?
 
-  for func in model.get_combinational_blocks():
-    tree, _ = get_method_ast( func )
+  cache_ast( model )
+
+  for (j, func) in enumerate( model.get_combinational_blocks() ):
+    tree = type(model)._combinational_blocks_ast[j]
+
     loads, stores = DetectLoadsAndStores().enter( tree )
     for name in loads:
       _add_senses( func, model, name )
