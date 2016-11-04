@@ -32,7 +32,7 @@ class DetectIncorrectValueNext( ast.NodeVisitor ):
           ' Line: {lineno}\n'.format(
             attr     = self.attr,
             kind     = {'value':'@tick','next':'@combinational'}[ self.attr ],
-            srccode  = src[node.lineno-1],
+            srccode  = src[ node.lineno-1 ],
             filename = inspect.getfile( self.func ),
             funcname = self.func.func_name,
             lineno   = lineno,
@@ -49,8 +49,6 @@ class DetectMissingValueNext( ast.NodeVisitor ):
     self.func   = func
     self.dict_  = get_closure_dict( func )
 
-    self.src, self.funclineno = inspect.getsourcelines( self.func )
-
   def visit_Assign( self, node ):
 
     # Because the lhs could contain arbitrary nesting of tuples or lists,
@@ -66,6 +64,9 @@ class DetectMissingValueNext( ast.NodeVisitor ):
       else:
         from ..ast_helpers import print_simple_ast
         print_simple_ast( tgt )
+
+        src,funclineno = inspect.getsourcelines( self.func )
+        lineno         = funclineno + node.lineno - 1
         raise Exception(
           'Unsupported assignment type ({kind})!\n'
           'Please notify the PyMTL developers!\n\n'
@@ -75,10 +76,10 @@ class DetectMissingValueNext( ast.NodeVisitor ):
           ' Line: {lineno}\n'.format(
             attr     = self.attr[0],
             kind     = tgt.__class__,
-            srccode  = self.src[ node.lineno - 1 ],
+            srccode  = src[ node.lineno-1 ],
             filename = inspect.getfile( self.func ),
             funcname = self.func.func_name,
-            lineno   = self.funclineno + node.lineno - 1
+            lineno   = lineno,
           )
         )
 
@@ -124,6 +125,9 @@ class DetectMissingValueNext( ast.NodeVisitor ):
 
         # if the object stored in LHS is a Signal, raise a PyMTLError
         if isinstance( _temp, Signal ):
+
+          src,funclineno = inspect.getsourcelines( self.func )
+          lineno         = funclineno + node.lineno - 1
           raise PyMTLError(
             'Attempting to write a(n) {kind} without .{attr}!\n\n'
             ' {lineno} {srccode}\n'
@@ -132,10 +136,10 @@ class DetectMissingValueNext( ast.NodeVisitor ):
             ' Line: {lineno}\n'.format(
               attr     = self.attr[0],
               kind     = _temp.__class__.__name__,
-              srccode  = self.src[ node.lineno - 1 ],
+              srccode  = src[ node.lineno-1 ],
               filename = inspect.getfile( self.func ),
               funcname = self.func.func_name,
-              lineno   = self.funclineno + node.lineno - 1
+              lineno   = lineno
             )
           )
 
