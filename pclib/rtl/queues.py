@@ -365,6 +365,10 @@ class NormalQueueCtrl( Model ):
     s.last_idx         = num_entries - 1
 
     @s.combinational
+    def cut():
+      s.do_deq.value = s.deq_rdy and s.deq_val
+
+    @s.combinational
     def comb():
 
       # set output signals
@@ -377,7 +381,6 @@ class NormalQueueCtrl( Model ):
       # only enqueue/dequeue if valid and ready
 
       s.do_enq.value = s.enq_rdy and s.enq_val
-      s.do_deq.value = s.deq_rdy and s.deq_val
 
       # set control signals
 

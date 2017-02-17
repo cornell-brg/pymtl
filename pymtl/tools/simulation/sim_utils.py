@@ -128,6 +128,8 @@ def insert_signal_values( sim, nets ):
     svalue       = temp.dtype()
     svalue._next = temp.dtype()
 
+    print ("sig %s -> %s"%(id(temp), id(svalue)))
+
     #svalue._DEBUG_signal_names = group
 
     # Add a callback to the SignalValue to notify SimulationTool every
@@ -206,6 +208,78 @@ def register_seq_blocks( model ):
 # Combinational logic blocks are registered with SignalValue objects
 # and get added to the event queue when values are updated.
 def register_comb_blocks( model, event_queue ):
+
+  # dump static sense, this function is almost identical to _add_senses
+  # [HACKY] this is for creating elaboration time graph
+
+  def dump_variables( func, model, name, func_sig ):
+    obj = _attr_name_to_object( model, name )
+    if   isinstance( obj, tuple ):
+      obj_list, list_name, attr = obj
+      for i, o in enumerate( obj_list ):
+        obj_name = "{}[{}]{}".format( list_name, i, attr )
+        dump_variables( func, model, obj_name, func_sig )
+
+    elif isinstance( obj, SignalValue ):
+      target_bits = obj._target_bits
+      if hasattr( target_bits, '_ucb' ):
+        func_sig[ func ].append( target_bits )
+
+  import inspect, collections
+  func_trigger = collections.defaultdict( list )
+  func_trigger_by = collections.defaultdict( list )
+
+  for func in model.get_combinational_blocks():
+    tree, _ = get_method_ast( func )
+    loads, stores = DetectLoadsAndStores().enter( tree )
+
+    for name in stores:
+      dump_variables(func, model, name, func_trigger_by )
+
+    for name in loads:
+      _add_senses( func, model, name )
+      dump_variables(func, model, name, func_trigger )
+
+  for func in model.get_combinational_blocks():
+    print("COMB %s %s %s"%( id(func),
+                            func._model.class_name,
+                            inspect.getsource( func ).split("\n")[1].lstrip(" ").lstrip("def ")))
+
+  for x, y in func_trigger.items():
+    for z in y:
+      print( "sig %s triggersfun %s"%(id(z), id(x)))
+
+  for x, y in func_trigger_by.items():
+    for z in y:
+      print( "func %s triggerssig %s"%(id(x), id(z)))
+
+  func_trigger = collections.defaultdict( list )
+  func_trigger_by = collections.defaultdict( list )
+
+  for func in model.get_tick_blocks() + model.get_posedge_clk_blocks():
+    print("SEQU %s %s %s"%( id(func),
+                            func._model.class_name,
+                            inspect.getsource( func ).split("\n")[1].lstrip(" ").lstrip("def ")))
+
+    tree, _ = get_method_ast( func )
+    loads, stores = DetectLoadsAndStores().enter( tree )
+
+    for name in stores:
+      # HACKY to get this to work!
+      if name.endswith(".next"):
+        name = name[:-5] + ".value"
+      dump_variables(func, model, name, func_trigger_by )
+
+    for name in loads:
+      dump_variables(func, model, name, func_trigger )
+
+  for x, y in func_trigger.items():
+    for z in y:
+      print( "sig %s triggersfun %s"%(id(z), id(x)))
+
+  for x, y in func_trigger_by.items():
+    for z in y:
+      print( "func %s triggerssig %s"%(id(x), id(z)))
 
   # Get the sensitivity list of each event driven (combinational) block
   # TODO: do before or after we swap value nodes?
@@ -344,6 +418,7 @@ def create_slice_callbacks( slice_connects, event_queue ):
 def _create_slice_cb_closure( c ):
   src       = c.src_node._signalvalue
   dest      = c.dest_node._signalvalue
+
   src_addr  = c.src_slice  if c.src_slice  != None else slice( None )
   dest_bits = dest[ c.dest_slice ] if c.dest_slice != None else dest
   def slice_cb():
@@ -351,6 +426,15 @@ def _create_slice_cb_closure( c ):
     # to a BitSlice will updates the Bits it was sliced from, but
     # not vice versa.
     dest_bits.v = src[ src_addr ]
+
+  print("COMB %s %s %s"%( id(slice_cb),
+                          "%s=%s"%(id(dest),id(src)),
+                          "slice_cb():"))
+
+  print( "sig %s triggersfun %s" %(id(src), id(slice_cb)))
+
+  print( "func %s triggerssig %s"%(id(slice_cb), id(dest)))
+
   return slice_cb
 
 

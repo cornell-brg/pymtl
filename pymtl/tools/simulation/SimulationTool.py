@@ -69,11 +69,26 @@ class SimulationTool( object ):
       self.cycle              = self._dev_cycle
       self.eval_combinational = self._dev_eval
 
-
     # Construct a simulator for the provided model.
 
     signals                 = sim.collect_signals( model )
     nets, slice_connections = sim.signals_to_nets( signals )
+
+    # Print (addr, name) tuple of each signal
+    for z in nets:
+      print(len(z),"connected signal (s)")
+      for x in z:
+        stk = []
+        y = x
+        if (not y.parent):
+          print( "sig %s name %s"%(id(x), y.name) )
+          continue
+        while y.parent:
+          stk.append( y.name )
+          y = y.parent
+        stk.reverse()
+        print( "sig %s name %s"%(id(x), ".".join(stk)) )
+
     sequential_blocks       = sim.register_seq_blocks( model )
 
     sim.insert_signal_values( self, nets )
