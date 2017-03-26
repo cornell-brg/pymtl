@@ -35,12 +35,9 @@ class Bits( SignalValue ):
 
     # Set the nbits and bitmask (_mask) attributes
     self.nbits = nbits
-    self._max  = (2**nbits)- 1
-    self._min  = -2**(nbits- 1) if nbits > 1 else 0
-    self._mask = ( 1 << self.nbits ) - 1
     self.slice = slice( None )
 
-    if not trunc and not (self._min <= value <= self._max):
+    if not trunc and not ((-(1<<(nbits - 1))*(nbits>1)) <= value <= ((1 << nbits) - 1)):
       raise ValueError(
         'Value is too big to be represented with Bits({})!\n'
         '({} bits are needed to represent value = {} in two\'s complement.)'
@@ -49,7 +46,7 @@ class Bits( SignalValue ):
 
     # Convert negative values into unsigned ints and store them
     value_uint = value if ( value >= 0 ) else ( ~(-value) + 1 )
-    self._uint = value_uint & self._mask
+    self._uint = value_uint & ((1 << nbits) - 1)
 
     self._target_bits = self
 
@@ -105,13 +102,13 @@ class Bits( SignalValue ):
   # Implementing abstract write_value method defined by SignalValue.
   def write_value( self, value ):
     value = int( value )
-    if not (self._min <= value <= self._max):
+    if not ((-(1<<(self.nbits - 1))*(self.nbits>1)) <= value <= ((1 << self.nbits) - 1)):
       raise ValueError(
         'Value is too big to be represented with Bits({})!\n'
         '({} bits are needed to represent value = {} in two\'s complement.)'
         .format( self.nbits, _get_nbits(value), value )
       )
-    self._uint = (value & self._mask)
+    self._uint = value & ((1 << self.nbits) - 1)
 
   #---------------------------------------------------------------------
   # write_next
@@ -119,13 +116,13 @@ class Bits( SignalValue ):
   # Implementing abstract write_next method defined by SignalValue.
   def write_next( self, value ):
     value = int( value )
-    if not (self._min <= value <= self._max):
+    if not ((-(1<<(self.nbits - 1))*(self.nbits>1)) <= value <= ((1 << self.nbits) - 1)):
       raise ValueError(
         'Value is too big to be represented with Bits({})!\n'
         '({} bits are needed to represent value = {} in two\'s complement.)'
         .format( self.nbits, _get_nbits(value), value )
       )
-    self._next._uint = (value & self._mask)
+    self._next._uint = value & ((1 << self.nbits) - 1)
 
   #---------------------------------------------------------------------
   # bit_length
@@ -213,10 +210,9 @@ class Bits( SignalValue ):
                          .format(start, stop, self.nbits) )
 
       # Create a new Bits object containing the slice value and return it
-      nbits = stop - start
-      mask  = (1 << nbits) - 1
-      value = (self._uint & (mask << start)) >> start
-      return BitSlice( nbits, value, target_bits = self, offset = start )
+
+      value = (self._uint & ((1 << stop) - 1)) >> start
+      return BitSlice( stop - start, value, target_bits = self, offset = start )
 
     # Handle integers
     else:
@@ -229,7 +225,7 @@ class Bits( SignalValue ):
                          .format(addr, self.nbits) )
 
       # Create a new Bits object containing the bit value and return it
-      value = (self._uint & (1 << addr)) >> addr
+      value = (self._uint >> addr ) & 1
       return BitSlice( 1 , value, target_bits = self, offset = addr )
 
   #----------------------------------------------------------------------
@@ -256,7 +252,7 @@ class Bits( SignalValue ):
 
       # Open-ended range ( [:] )
       if start is None and stop is None:
-        if not (self._min <= value <= self._max):
+        if not ((-(1<<(self.nbits - 1))*(self.nbits>1)) <= value <= ((1 << self.nbits) - 1)):
           raise ValueError(
             'Provided value is too big to be represented with Bits({})!\n'
             '({} bits are needed to represent value = {} in two\'s complement.)'
@@ -292,15 +288,8 @@ class Bits( SignalValue ):
           .format( start, stop, nbits, _get_nbits(value), value )
         )
 
-      # Clear the bits we want to set
-      ones  = (1 << nbits) - 1
-      mask = ~(ones << start)
-      cleared_val = self._uint & mask
-
-      # Set the bits, anding with ones to ensure negative value assign
-      # works that way you would expect.
-      self._uint = cleared_val | ((value & ones) << start)
-
+      self._uint = (self._uint & (~((1 << stop) - (1 << start)))) | \
+                                    ((value & ((1 << stop) - 1)) << start) 
     # Handle integers
     else:
 
@@ -317,10 +306,10 @@ class Bits( SignalValue ):
 
       # Clear the bits we want to set
       mask = ~(1 << addr)
-      cleared_val = self._uint & mask
+      cleared_val = self._uint & ~(1 << addr)
 
       # Set the bits
-      self._uint = cleared_val | (value << addr)
+      self._uint = (self._uint & ~(1 << addr)) | (value << addr)
 
   #----------------------------------------------------------------------
   # Arithmetic Operators
@@ -344,8 +333,8 @@ class Bits( SignalValue ):
   # where the bitwidth of the other type is larger than the bitwidth of the
   # Bits object? ( applies to every other operator as well.... )
   def __mul__( self, other ):
-    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint * other._uint, trunc=True )
-    except: return Bits( 2*self.nbits,                    self._uint * other,       trunc=True )
+    try:    return Bits( max( self.nbits, other.nbits) << 1, self._uint * other._uint, trunc=True )
+    except: return Bits( self.nbits << 1,                    self._uint * other,       trunc=True )
 
   def __radd__( self, other ):
     return self.__add__( other )
@@ -357,16 +346,16 @@ class Bits( SignalValue ):
     return self.__mul__( other )
 
   def __div__(self, other):
-    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint / other._uint, trunc=True )
-    except: return Bits( 2*self.nbits,                    self._uint / other,       trunc=True )
+    try:    return Bits( max( self.nbits, other.nbits) << 1, self._uint / other._uint, trunc=True )
+    except: return Bits( self.nbits << 1,                    self._uint / other,       trunc=True )
 
   def __floordiv__(self, other):
-    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint / other._uint, trunc=True )
-    except: return Bits( 2*self.nbits,                    self._uint / other,       trunc=True )
+    try:    return Bits( max( self.nbits, other.nbits) << 1, self._uint / other._uint, trunc=True )
+    except: return Bits( self.nbits << 1,                    self._uint / other,       trunc=True )
 
   def __mod__(self, other):
-    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint % other._uint, trunc=True )
-    except: return Bits( 2*self.nbits,                    self._uint % other,       trunc=True )
+    try:    return Bits( max( self.nbits, other.nbits) << 1, self._uint % other._uint, trunc=True )
+    except: return Bits( self.nbits << 1,                    self._uint % other,       trunc=True )
 
   # TODO: implement these?
   # def __divmod__(self, other)
@@ -509,17 +498,17 @@ class BitSlice( Bits ):
 
     # Get the updated value and update self.
     value = int( value )
-    if not (self._min <= value <= self._max):
+    if not ((-(1<<(self.nbits - 1))*(self.nbits>1)) <= value <= ((1 << self.nbits) - 1)):
       slc = self.slice
       raise ValueError(
         'Provided value is too big to fit in slice [{}:{}] ({} bits)!\n'
         '({} bits are needed to represent value = {} in two\'s complement.)'
         .format( slc.start, slc.stop, self.nbits, _get_nbits(value), value )
       )
-    self._uint = (value & self._mask)
+    self._uint = value & ((1 << self.nbits) - 1)
 
     # Update target we are slicing. First clear the bits we want to set.
-    shifted_mask = ~( self._mask << self._offset )
+    shifted_mask = ~( ((1 << self.nbits) - 1) << self._offset )
     cleared_val  = self._target_bits._uint & shifted_mask
 
     # Set the bits, write to the target.
@@ -535,19 +524,18 @@ class BitSlice( Bits ):
     # Get the updated value, but no don't update self (BitSlices contain
     # no shadow state).
     value = int( value )
-    if not (self._min <= value <= self._max):
+    if not ((-(1<<(self.nbits - 1))*(self.nbits>1)) <= value <= ((1 << self.nbits) - 1)):
       slc = self.slice
       raise ValueError(
         'Provided value is too big to fit in slice [{}:{}] ({} bits)!\n'
         '({} bits are needed to represent value = {} in two\'s complement.)'
         .format( slc.start, slc.stop, self.nbits, _get_nbits(value), value )
       )
-    value = (value & self._mask)
 
     # Update target we are slicing. First clear the bits we want to set.
-    shifted_mask = ~( self._mask << self._offset )
+    shifted_mask = ~( ((1 << self.nbits) - 1) << self._offset )
     cleared_val  = self._target_bits._next._uint & shifted_mask
 
     # Set the bits, write to the target's shadow state.
-    new_val      = cleared_val | ( value << self._offset )
+    new_val      = cleared_val | ( (value & ((1 << self.nbits) - 1)) << self._offset )
     self._target_bits.write_next( new_val )
