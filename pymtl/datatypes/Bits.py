@@ -289,7 +289,7 @@ class Bits( SignalValue ):
         )
 
       self._uint = (self._uint & (~((1 << stop) - (1 << start)))) | \
-                                    ((value & ((1 << stop) - 1)) << start) 
+                                  ((value & ((1 << nbits) - 1)) << start)
     # Handle integers
     else:
 
@@ -303,10 +303,6 @@ class Bits( SignalValue ):
           '({} bits are needed to represent value = {} in two\'s complement.)'
           .format( _get_nbits(value), value )
         )
-
-      # Clear the bits we want to set
-      mask = ~(1 << addr)
-      cleared_val = self._uint & ~(1 << addr)
 
       # Set the bits
       self._uint = (self._uint & ~(1 << addr)) | (value << addr)
