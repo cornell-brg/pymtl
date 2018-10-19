@@ -108,7 +108,8 @@ install Verilator from source using the following commands:
  % sudo make install
 ```
 
-Verify that Verilator is on your path as follows:
+You may need to install `flex-old` instead of `flex` on newer Linux
+distributions. Verify that Verilator is on your path as follows:
 
 ```
  % cd $HOME
