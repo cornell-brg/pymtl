@@ -19,7 +19,7 @@ from exceptions            import VerilogTranslationError
 #-------------------------------------------------------------------------
 # ResolveClosureVars
 #-------------------------------------------------------------------------
-# Replaces variables caputred in a block's default arguments with values
+# Replaces variables captured in a block's default arguments with values
 # TODO: only works with ints right now
 class ResolveClosureVars( ast.NodeTransformer ):
   def __init__( self, model, func ):
