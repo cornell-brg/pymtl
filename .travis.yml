@@ -13,7 +13,7 @@ python:
  - "2.7"
 
 env:
- - CONFIG="--tb=long"
+ - CONFIG=""
  - CONFIG="--test-verilog"
  - CONFIG="--dump-vcd"
 
@@ -43,7 +43,7 @@ install:
  # Install Python requirements
 
  - pip install --editable .
- - pip install --upgrade pytest
+ - pip install --upgrade pytest<=3.9.1
  - pip list
 
 #------------------------------------------------------------------------
