@@ -112,3 +112,15 @@ def get_method_ast( func ):
 def get_closure_dict( fn ):
   closure_objects = [c.cell_contents for c in fn.func_closure]
   return dict( zip( fn.func_code.co_freevars, closure_objects ))
+
+#-----------------------------------------------------------------------
+# get_default_arg_values
+#-----------------------------------------------------------------------
+# returns a dictionary of arg_name:default_values for the input function
+# https://stackoverflow.com/a/12627118
+def get_default_arg_values(func):
+    args, varargs, keywords, defaults = inspect.getargspec(func)
+    if defaults is None:
+      defaults = []
+    return dict(zip(reversed(args), reversed(defaults)))
+

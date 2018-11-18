@@ -8,13 +8,28 @@ import ast, _ast
 import re
 import warnings
 
-from ..ast_helpers         import get_closure_dict, print_simple_ast
+from ..ast_helpers         import get_closure_dict, print_simple_ast, get_default_arg_values
 from ...model.signals      import Wire, Signal, InPort, OutPort, _SignalSlice
 from ...model.Model        import Model
 from ...model.PortBundle   import PortBundle
 from ...model.signal_lists import PortList, WireList
 from ...datatypes.Bits     import Bits
 from exceptions            import VerilogTranslationError
+
+#-------------------------------------------------------------------------
+# ResolveClosureVars
+#-------------------------------------------------------------------------
+# Replaces variables caputred in a block's default arguments with values
+# TODO: only works with ints right now
+class ResolveClosureVars( ast.NodeTransformer ):
+  def __init__( self, model, func ):
+    self.captured_vars = get_default_arg_values( func )
+
+  def visit_Name( self, node ):
+    if node.id in self.captured_vars:
+      return _ast.Num(n=self.captured_vars[node.id])
+    else:
+      return node
 
 #-------------------------------------------------------------------------
 # AnnotateWithObjects

@@ -116,6 +116,7 @@ def ast_pipeline( tree, model, func ):
 
   #print_simple_ast( tree ) # DEBUG
 
+  tree = visitors.ResolveClosureVars ( model, func ).visit( tree )
   tree = visitors.AnnotateWithObjects( model, func ).visit( tree )
   tree = visitors.RemoveModule       (             ).visit( tree )
   tree = visitors.SimplifyDecorator  (             ).visit( tree )
