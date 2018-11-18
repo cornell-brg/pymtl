@@ -13,7 +13,7 @@ python:
  - "2.7"
 
 env:
- - CONFIG=""
+ - CONFIG="--tb=long"
  - CONFIG="--test-verilog"
  - CONFIG="--dump-vcd"
 
