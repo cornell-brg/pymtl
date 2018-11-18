@@ -43,7 +43,7 @@ install:
  # Install Python requirements
 
  - pip install --editable .
- - pip install --upgrade pytest<=3.9.1
+ - pip install --upgrade 'pytest<=3.9.1'
  - pip list
 
 #------------------------------------------------------------------------
