@@ -27,7 +27,7 @@ class ResolveClosureVars( ast.NodeTransformer ):
 
   def visit_Name( self, node ):
     if node.id in self.captured_vars:
-      return _ast.Num(n=self.captured_vars[node.id])
+      return _ast.Num( n=self.captured_vars[ node.id ] )
     else:
       return node
 

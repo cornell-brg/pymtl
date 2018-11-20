@@ -118,9 +118,9 @@ def get_closure_dict( fn ):
 #-----------------------------------------------------------------------
 # returns a dictionary of arg_name:default_values for the input function
 # https://stackoverflow.com/a/12627118
-def get_default_arg_values(func):
-    args, varargs, keywords, defaults = inspect.getargspec(func)
+def get_default_arg_values( func ):
+    args, varargs, keywords, defaults = inspect.getargspec( func )
     if defaults is None:
       defaults = []
-    return dict(zip(reversed(args), reversed(defaults)))
+    return dict( zip( reversed( args ), reversed( defaults ) ) )
 

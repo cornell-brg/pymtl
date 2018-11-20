@@ -162,13 +162,13 @@ class NStageTick( Model ):
 
     for i in range( s.nstages - 1 ):
       @s.tick_rtl
-      def func( i = i, a = i + 1):  # Need to capture i for this to work
+      def func( i = i, a = i + 1 ):  # Need to capture i for this to work
         s.stage[ a ].n = s.stage[ i ]
 
     @s.combinational
-    def connect_is_broken(last=nstages - 1):
-      s.stage[0].v = s.in_
-      s.out.v = s.stage[last]
+    def connect_is_broken( last=nstages - 1 ):
+      s.stage[ 0 ].v = s.in_
+      s.out.v = s.stage[ last ]
 
 
 def test_NStageTick( setup_sim ):
@@ -192,13 +192,13 @@ class NStagePosedge( Model ):
 
     for i in range( s.nstages - 1 ):
       @s.posedge_clk
-      def func( i = i, a = i + 1):  # Need to capture i for this to work
+      def func( i = i, a = i + 1 ):  # Need to capture i for this to work
         s.stage[ a ].n = s.stage[ i ]
 
     @s.combinational
-    def connect_is_broken(last=nstages - 1):
-      s.stage[0].v = s.in_
-      s.out.v = s.stage[last]
+    def connect_is_broken( last=nstages - 1 ):
+      s.stage[ 0 ].v = s.in_
+      s.out.v = s.stage[ last ]
 
 def test_NStagePosedge( setup_sim ):
   pipeline_tester( setup_sim, NStagePosedge( 16, 3 ), 3 )
@@ -231,8 +231,8 @@ class NStageComb( Model ):
 
     @s.combinational
     def connect_is_broken(last=nstages - 1):
-      s.stage[0].v = s.in_
-      s.out.v = s.stage[last]
+      s.stage[ 0 ].v = s.in_
+      s.out.v = s.stage[ last ]
 
 def test_NStageComb( setup_sim ):
   model      = NStageComb( 16, 3 )
