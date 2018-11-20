@@ -20,6 +20,7 @@ def pipeline_tester( setup_sim, model, nstages ):
   # fill up the pipeline
   for i in range( 10 ):
     model.in_.v = i
+    sim.eval_combinational()
     expected = ( i - nstages + 1 ) if ( i - nstages + 1 ) >= 0 else 0
     assert model.out == expected
     sim.cycle()
@@ -156,16 +157,18 @@ class NStageTick( Model ):
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
 
-    s.wire = [ Wire( s.nbits ) for x in range( s.nstages ) ]
+    s.stage = [ Wire( s.nbits ) for x in range( s.nstages ) ]
 
-    s.connect( s.in_, s.wire[0]  )
 
     for i in range( s.nstages - 1 ):
       @s.tick_rtl
-      def func( i = i ):  # Need to capture i for this to work
-        s.wire[ i + 1 ].n = s.wire[ i ]
+      def func( i = i, a = i + 1 ):  # Need to capture i for this to work
+        s.stage[ a ].n = s.stage[ i ]
 
-    s.connect( s.out, s.wire[-1] )
+    @s.combinational
+    def connect_is_broken( last=nstages - 1 ):
+      s.stage[ 0 ].v = s.in_
+      s.out.v = s.stage[ last ]
 
 
 def test_NStageTick( setup_sim ):
@@ -184,17 +187,18 @@ class NStagePosedge( Model ):
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
 
-    s.wire = [ Wire( s.nbits ) for x in range( s.nstages ) ]
+    s.stage = [ Wire( s.nbits ) for x in range( s.nstages ) ]
 
-    s.connect( s.in_, s.wire[0]  )
 
     for i in range( s.nstages - 1 ):
       @s.posedge_clk
-      def func( i = i ):  # Need to capture i for this to work
-        s.wire[ i + 1 ].n = s.wire[ i ]
+      def func( i = i, a = i + 1 ):  # Need to capture i for this to work
+        s.stage[ a ].n = s.stage[ i ]
 
-    s.connect( s.out, s.wire[-1] )
-
+    @s.combinational
+    def connect_is_broken( last=nstages - 1 ):
+      s.stage[ 0 ].v = s.in_
+      s.out.v = s.stage[ last ]
 
 def test_NStagePosedge( setup_sim ):
   pipeline_tester( setup_sim, NStagePosedge( 16, 3 ), 3 )
@@ -218,16 +222,17 @@ class NStageComb( Model ):
     s.in_     = InPort ( nbits )
     s.out     = OutPort( nbits )
 
-    s.wire = [ Wire( s.nbits ) for x in range( s.nstages ) ]
-
-    s.connect( s.in_, s.wire[0]  )
+    s.stage = [ Wire( s.nbits ) for x in range( s.nstages ) ]
 
     for i in range( s.nstages - 1 ):
       @s.combinational
       def func( i = i ):  # Need to capture i for this to work
-        s.wire[ i + 1 ].v = s.wire[ i ]
+        s.stage[ i + 1 ].v = s.stage[ i ]
 
-    s.connect( s.out, s.wire[-1] )
+    @s.combinational
+    def connect_is_broken(last=nstages - 1):
+      s.stage[ 0 ].v = s.in_
+      s.out.v = s.stage[ last ]
 
 def test_NStageComb( setup_sim ):
   model      = NStageComb( 16, 3 )
