@@ -75,7 +75,7 @@ def translate_logic_blocks( model ):
     except Exception as e:
       src, filelineno = inspect.getsourcelines( func )
 
-      error      = str(e.message)
+      error      = str(e)
       file_name  = inspect.getfile(func)
       class_name = model.class_name
       func_name  = func.func_name
@@ -95,6 +95,7 @@ def translate_logic_blocks( model ):
               'Function:  {func_name}\n'
               'Line:      {lineno}\n'
               .format( **locals() ) )
+
       e.args = (msg,)
       raise
 
