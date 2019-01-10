@@ -916,7 +916,7 @@ def test_translation_reverse_iter( setup_sim, num ):
 # translation_iter_unsupported_step
 #-----------------------------------------------------------------------
 @pytest.mark.parametrize('num',
-  [pytest.mark.xfail(reason='Range w/ step= 0')(0), 1, 2,]
+  [1, 2,]
 )
 def test_translation_iter_unsupported_step( setup_sim, num ):
 
