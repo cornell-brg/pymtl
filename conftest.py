@@ -10,7 +10,8 @@ def pytest_addoption(parser):
   parser.addoption( "--test-verilog", action="store", default='', nargs='?', const='zeros', choices=[ '', 'zeros', 'ones', 'rand' ],
                     help="run verilog translation, " )
 
-def pytest_funcarg__dump_vcd(request):
+@pytest.fixture
+def dump_vcd(request):
   """Dump VCD for each test."""
   if request.config.option.dump_vcd:
     test_module = request.module.__name__
@@ -19,15 +20,18 @@ def pytest_funcarg__dump_vcd(request):
   else:
     return ''
 
-def pytest_funcarg__dump_asm(request):
+@pytest.fixture
+def dump_asm(request):
   """Dump Assembly File for each test."""
   return request.config.option.dump_asm
 
-def pytest_funcarg__dump_bin(request):
+@pytest.fixture
+def dump_bin(request):
   """Dump Binary File for each test."""
   return request.config.option.dump_bin
 
-def pytest_funcarg__test_verilog(request):
+@pytest.fixture
+def test_verilog(request):
   """Test Verilog translation rather than python."""
   return request.config.option.test_verilog
 
