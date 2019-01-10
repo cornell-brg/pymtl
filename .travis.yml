@@ -43,6 +43,7 @@ install:
  # Install Python requirements
 
  - pip install --editable .
+ - pip install --upgrade pytest
  - pip list
 
 #------------------------------------------------------------------------
