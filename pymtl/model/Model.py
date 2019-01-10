@@ -125,7 +125,7 @@ class Model( object ):
     """
 
     # Instantiate a new Python object
-    inst       = object.__new__( cls, *args, **kwargs )
+    inst       = object.__new__( cls )
 
     # Add implicit clk and reset ports
     inst.clk   = InPort( 1 )
