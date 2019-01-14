@@ -181,11 +181,8 @@ actively work in the PyMTL git repo.
  % cd ${HOME}/vc/git-hub/cornell-brg
  % git clone https://github.com/cornell-brg/pymtl.git
  % pip install --editable ./pymtl
- % pip install --upgrade 'pytest<=3.9.1'
+ % pip install --upgrade pytest
 ```
-
-Note that currently we require an older version of `py.test` but we are
-working on upgrading PyMTL to use the most recent version.
 
 Testing
 --------------------------------------------------------------------------
