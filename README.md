@@ -97,7 +97,7 @@ repositories is several years old. This means you will need to build and
 install Verilator from source using the following commands:
 
 ```
- % sudo apt-get install git make autoconf g++ flex bison
+ % sudo apt-get install git make autoconf g++ libfl-dev bison
  % mkdir -p ${HOME}/src
  % cd ${HOME}/src
  % wget http://www.veripool.org/ftp/verilator-3.876.tgz
@@ -108,8 +108,7 @@ install Verilator from source using the following commands:
  % sudo make install
 ```
 
-You may need to install `flex-old` instead of `flex` on newer Linux
-distributions. Verify that Verilator is on your path as follows:
+Verify that Verilator is on your path as follows:
 
 ```
  % cd $HOME
