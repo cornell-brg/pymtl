@@ -1,10 +1,9 @@
 #=======================================================================
-# verilog_from_ast_test.py
+# dynamic_ast_test.py
 #=======================================================================
 # This is the test case that verifies the dynamic AST support of PyMTL.
-# This test is contributed by Zhuanhao Wu through #169, #170 of PyMTL v2.
 #
-# Author : Zhuanhao Wu, Peitian Pan
+# Author : Peitian Pan
 # Date   : Jan 23, 2019
 
 import pytest
@@ -17,57 +16,84 @@ from verilator_sim import TranslationTool
 
 pytestmark = requires_verilator
 
-class ASTRTLModel(Model):
+class DynamicAST(Model):
     def __init__( s ):
-        s.a = InPort(2)
-        s.b = InPort(2)
+        s.in_ = InPort(10)
+        s.out = OutPort(10)
 
-        s.out = OutPort(2)
+        # Testing free vars in the closure
+        s.self_param = 1
+        closure_param = 2
 
-        # a simple clocked adder
         # @s.posedge_clk
-        # def logic():
-        #     s.out.next = s.a + s.b
+        # def dynamic_block():
+        #   s.out.next = s.in_ + s.self_param + closure_param + Bits( 10, 3 )
 
-        # generate the model from ast
-        tree = Module(body=[
-            FunctionDef(name='logic', args=arguments(args=[], defaults=[]), 
-                body= [
-                    Assign(targets=[
-                        Attribute(value=Attribute(value=Name(id='s', ctx=Load()), attr='out', ctx=Load()), attr='next', ctx=Store())
-                        ], 
-                        value=BinOp(left=Attribute(value=Name(id='s', ctx=Load()), attr='a', ctx=Load()), op=Add(), right=Attribute(value=Name(id='s', ctx=Load()), attr='b', ctx=Load()))
-                        )
-                    ],
-                decorator_list=[
-                    Attribute(value=Name(id='s', ctx=Load()), attr='posedge_clk', ctx=Load())
-                    ],
-                returns=None)
-            ])
+        # Dynamically generate AST
+        tree = Module( body = [
+          FunctionDef( name = 'dynamic_block', args = arguments( args = [], defaults = [] ),
+            body = [
+              Assign(
+                targets = [
+                  Attribute( value = Attribute( value = Name( id = 's',\
+                    ctx = Load() ), attr = 'out', ctx = Load() ), attr =\
+                    'next', ctx = Store() )
+                ],
+                value = BinOp(
+                  left = BinOp(
+                    left = BinOp(
+                      left = Attribute( value = Name( id = 's', ctx =\
+                        Load() ), attr = 'in_', ctx = Load() ),
+                      op = Add(),
+                      right = Attribute( value = Name( id = 's', ctx =\
+                        Load() ), attr = 'self_param', ctx = Load() )
+                    ),
+                    op = Add(),
+                    right = Name( id = 'closure_param', ctx = Load() )
+                  ),
+                  op = Add(),
+                  right = Call(
+                    func = Name( id = 'Bits', ctx = Load() ),
+                    args = [ Num( n = 10 ), Num( n = 3 ) ],
+                    keywords = [],
+                    starargs = None,
+                    kwargs = None
+                  )
+                )
+              )
+            ],
+            decorator_list = [
+              Attribute( value = Name( id = 's', ctx = Load() ), attr =\
+                'posedge_clk', ctx = Load() )
+            ],
+            returns = None
+          )
+        ] )
+
+        # Fix missing line numbers, etc
         tree = fix_missing_locations(tree)
 
         # Specifiy the union of globals() and locals() so the free
         # variables in the closure can be captured.
-        exec(compile(tree, filename='<ast>', mode='exec')) in globals().update( locals() )
+        exec(compile(tree, filename='<dynamic_ast>', mode='exec')) in globals().update( locals() )
 
         # As with #175, the user needs to supplement the dynamic AST to
         # the .ast field of the generated function object. 
-        logic.ast = tree
+        dynamic_block.ast = tree
 
-def test_ast_rtl_model_works_in_simulation():
-    mod = ASTRTLModel()
+def test_dynamic_ast_simulation():
+    m = DynamicAST()
 
-    test_vector_table = [('a', 'b', 'out*')]
+    test_vector_table = [('in_', 'out*')]
     last_result = '?'
-    for i in xrange(3):
-        rv1 = Bits(2, random.randint(0, 3))
-        rv2 = Bits(2, random.randint(0, 3))
-        test_vector_table.append( [ rv1, rv2, last_result ] )
-        last_result = Bits(2, rv1 + rv2)
+    for _ in xrange( 10 ):
+        in_ = Bits( 10, random.randint( 0, 100 ) )
+        test_vector_table.append( [ in_, last_result ] )
+        last_result = Bits( 10, in_ + 6 )
 
-    run_test_vector_sim(mod, test_vector_table)
+    run_test_vector_sim( m, test_vector_table )
 
-def test_ast_rtl_model_to_verilog():
-    mod = ASTRTLModel()
-    # TranslationTool should successfully compile ASTRTLModel
-    tool = TranslationTool(mod)
+def test_dynamic_ast_translation():
+    m = DynamicAST()
+
+    tool = TranslationTool(m)

@@ -103,7 +103,7 @@ def translate_logic_blocks( model ):
               .format( **locals() ) )
 
       e.args = (msg,)
-      raise
+      raise e
 
     code += block_code + '\n'
 
