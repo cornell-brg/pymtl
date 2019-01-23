@@ -30,7 +30,7 @@ def header( model, symtab, enable_blackbox=False, verilator_xinit='zeros' ):
   dump_vcd = hasattr( model, 'vcd_file' ) and model.vcd_file != ''
   s   += '// dump-vcd: {}'.format( dump_vcd ) + endl
 
-  s += '// verilator-xinit: {}'.format( verilator_xinit ) + endl
+  s += '// set verilator-xinit: {}'.format( verilator_xinit ) + endl
 
   if enable_blackbox:
     if model.vblackbox:
