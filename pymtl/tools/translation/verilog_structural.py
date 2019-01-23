@@ -25,12 +25,12 @@ def header( model, symtab, enable_blackbox=False, verilator_xinit='zeros' ):
     value_str = '{}'.format( value )
     if 'instance at' in value_str:
       value_str = value_str.split(' at')[0] + '>'
-    s += '// {}: {}'.format( name, value_str ) + endl
+    s += '// PyMTL: {} = {}'.format( name, value_str ) + endl
 
   dump_vcd = hasattr( model, 'vcd_file' ) and model.vcd_file != ''
-  s   += '// dump-vcd: {}'.format( dump_vcd ) + endl
+  s   += '// PyMTL: dump_vcd = {}'.format( dump_vcd ) + endl
 
-  s += '// verilator-xinit: {}'.format( verilator_xinit ) + endl
+  s += '// PyMTL: verilator_xinit = {}'.format( verilator_xinit ) + endl
 
   if enable_blackbox:
     if model.vblackbox:
