@@ -100,9 +100,22 @@ import re
 p = re.compile('( *(@|def))')
 def get_method_ast( func ):
 
-  src = inspect.getsource( func )
-  new_src = p.sub( r'\2', src )
-  tree = ast.parse( new_src )
+  try:
+    src = inspect.getsource( func )
+    new_src = p.sub( r'\2', src )
+    tree = ast.parse( new_src )
+  except IOError:
+    # inspect.getsourcelines() cannot retrieve the source code
+    # The user should have supplemented the dynamically generated AST
+    # as an attribute of the block function.
+    try:
+      tree = func.ast
+      new_src = '' # a dynamically generated AST does not have raw source
+    except AttributeError:
+      raise AttributeError( 
+        'Dynamically generated block ' + func.__name__ + \
+        ' should supplement its AST as ' + func.__name__ + '.ast!' 
+      )
   return tree, new_src
 
 #-----------------------------------------------------------------------
@@ -110,6 +123,10 @@ def get_method_ast( func ):
 #-----------------------------------------------------------------------
 # http://stackoverflow.com/a/19416942
 def get_closure_dict( fn ):
+  # Pull request #170:
+  # The closure of dynamically generated block is empty.
+  if fn.func_closure is None:
+    return {}
   closure_objects = [c.cell_contents for c in fn.func_closure]
   return dict( zip( fn.func_code.co_freevars, closure_objects ))
 

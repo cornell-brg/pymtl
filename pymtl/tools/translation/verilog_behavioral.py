@@ -73,7 +73,13 @@ def translate_logic_blocks( model ):
     # If we run into a VerilogTranslationError, provide some more debug
     # information for the user, then re-raise the exception
     except Exception as e:
-      src, filelineno = inspect.getsourcelines( func )
+      try:
+        src, filelineno = inspect.getsourcelines( func )
+      except IOError:
+        # Dynamically generated AST encountered
+        # Return null source code and line number as they are not
+        # applicable to dynamic AST.
+        src, filelineno = '', 0
 
       error      = str(e)
       file_name  = inspect.getfile(func)
