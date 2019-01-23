@@ -20,6 +20,7 @@ from ..simulation.SimulationTool_seq_test    import *
 from ..simulation.SimulationTool_comb_test   import *
 from ..simulation.SimulationTool_mix_test    import *
 from ..simulation.SimulationTool_transl_test import *
+from ..simulation.dynamic_ast_test           import *
 
 # Skip all tests in module if verilator is not installed
 
