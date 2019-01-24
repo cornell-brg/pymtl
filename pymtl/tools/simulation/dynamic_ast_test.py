@@ -11,13 +11,16 @@ from random import randrange
 
 from SimulationTool_seq_test import setup_sim, local_setup_sim
 
-#--------------------------------------
+#-----------------------------------------------------------------------
 # DynamicAST
-#--------------------------------------
+#-----------------------------------------------------------------------
+
 def test_DynamicAST( setup_sim ):
 
   class DynamicAST( Model ):
+    
     def __init__( s ):
+
       s.in_ = InPort(10)
       s.out = OutPort(10)
 
@@ -82,6 +85,7 @@ def test_DynamicAST( setup_sim ):
       dynamic_block.ast = tree
 
   m, sim = setup_sim( DynamicAST() )
+
   for i in range( 10 ):
     k = Bits( 10, randrange( 0, 2**9 ) )
     m.in_.value = k
