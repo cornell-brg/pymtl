@@ -100,9 +100,9 @@ install Verilator from source using the following commands:
  % sudo apt-get install git make autoconf g++ libfl-dev bison
  % mkdir -p ${HOME}/src
  % cd ${HOME}/src
- % wget http://www.veripool.org/ftp/verilator-3.876.tgz
- % tar -xzvf verilator-3.876.tgz
- % cd verilator-3.876
+ % wget http://www.veripool.org/ftp/verilator-4.008.tgz
+ % tar -xzvf verilator-4.008.tgz
+ % cd verilator-4.008
  % ./configure
  % make
  % sudo make install
