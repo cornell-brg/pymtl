@@ -27,21 +27,13 @@ before_install:
 install:
 
  # Install verilator
- #
- # - git clone https://github.com/cornell-brg/verilator-travisci-cache.git
- # - tar xfz verilator-travisci-cache/verilator-travis-3.876.tar.gz
- # - export VERILATOR_ROOT=$PWD/verilator-3.876
- # - export PATH=$VERILATOR_ROOT/bin:$PATH
- # - export PYMTL_VERILATOR_INCLUDE_DIR=$VERILATOR_ROOT/include
- - verilator --version
 
- # Install systemc
- #
- # - git clone https://github.com/cornell-brg/systemc-travisci-cache.git
- # - tar xfz systemc-travisci-cache/systemc-travis-2.3.1.tar.gz
- # - export SYSTEMC_ROOT=$PWD/systemc-2.3.1
- # - export SYSTEMC_INCLUDE=$SYSTEMC_ROOT/include
- # - export SYSTEMC_LIBDIR=$SYSTEMC_ROOT/lib-linux64
+ - git clone https://github.com/cornell-brg/verilator-travisci-cache.git
+ - tar xfz verilator-travisci-cache/verilator-travis-3.876.tar.gz
+ - export VERILATOR_ROOT=$PWD/verilator-3.876
+ - export PATH=$VERILATOR_ROOT/bin:$PATH
+ - export PYMTL_VERILATOR_INCLUDE_DIR=$VERILATOR_ROOT/include
+ - verilator --version
 
  # Install Python requirements
 
