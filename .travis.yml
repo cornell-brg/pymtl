@@ -2,8 +2,6 @@
 # TravisCI Setup
 #=========================================================================
 
-sudo: false
-
 #------------------------------------------------------------------------
 # language and build matrix
 #------------------------------------------------------------------------
@@ -21,14 +19,12 @@ env:
 # install dependencies
 #------------------------------------------------------------------------
 
-before_install:
- - sudo apt-get install -y verilator
-
 install:
 
  # Install verilator
 
- - git clone https://github.com/cornell-brg/verilator-travisci-cache.git
+ - cd ${HOME}
+ - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.008.tar.gz
  - tar xfz verilator-travisci-cache/verilator-travis-3.876.tar.gz
  - export VERILATOR_ROOT=$PWD/verilator-3.876
  - export PATH=$VERILATOR_ROOT/bin:$PATH
