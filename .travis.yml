@@ -23,12 +23,11 @@ install:
 
  # Install verilator
 
- - cd ${HOME}
  - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.008.tar.gz
- - tar -xzf verilator-travis-4.008.tar.gz
- - export VERILATOR_ROOT=$PWD/verilator
- - export PATH=$VERILATOR_ROOT/bin:$PATH
- - export PYMTL_VERILATOR_INCLUDE_DIR=$VERILATOR_ROOT/include
+ - tar -C ${HOME} -xzf verilator-travis-4.008.tar.gz
+ - export VERILATOR_ROOT=${HOME}/verilator
+ - export PATH=${VERILATOR_ROOT}/bin:${PATH}
+ - export PYMTL_VERILATOR_INCLUDE_DIR=${VERILATOR_ROOT}/include
  - verilator --version
 
  # Install Python requirements
