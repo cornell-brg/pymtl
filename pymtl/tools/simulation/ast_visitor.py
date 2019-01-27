@@ -22,7 +22,13 @@ class DetectIncorrectValueNext( ast.NodeVisitor ):
   def visit_Attribute( self, node ):
     if isinstance( node.ctx, _ast.Store ):
       if node.attr == self.attr:
-        src,funclineno = inspect.getsourcelines( self.func )
+        try:
+          src,funclineno = inspect.getsourcelines( self.func )
+        except IOError:
+          # Dynamically generated AST encountered
+          # Return null source code and line number as they are not
+          # applicable to dynamic AST.
+          src, funclineno = '', 0
         lineno         = funclineno + node.lineno - 1
         raise PyMTLError(
           'Cannot write .{attr} in a {kind} block!\n\n'
@@ -49,7 +55,13 @@ class DetectMissingValueNext( ast.NodeVisitor ):
     self.func   = func
     self.dict_  = get_closure_dict( func )
 
-    self.src, self.funclineno = inspect.getsourcelines( self.func )
+    try:
+      self.src, self.funclineno = inspect.getsourcelines( self.func )
+    except IOError:
+      # Dynamically generated AST encountered
+      # Return null source code and line number as they are not
+      # applicable to dynamic AST.
+      self.src, self.funclineno = '', 0
 
   def visit_Assign( self, node ):
 
