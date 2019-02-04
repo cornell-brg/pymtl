@@ -204,8 +204,16 @@ void trace( V{model_name}_t * m, char* str ) {{
   // associated with the very first model as opposed to the newly
   // instantiated models. Directly setting the scope seemed to fix
   // this issue.
+  //
+  // Note that this issue implies that the mysterious extra .v is no
+  // longer present:
+  //
+  //  https://www.veripool.org/issues/1050-Verilator-Extra-v-in-full-signal-pathnames
+  //
+  // So now we need to explicitly use the model name instead of
+  // Vscope_v__verilog_module.
 
-  svSetScope( &model->__VlSymsp->__Vscope_v__verilog_module );
+  svSetScope( &model->__VlSymsp->__Vscope_{model_name}__verilog_module );
   model->line_trace( words );
 
   // Note that the way the line tracing works, the line tracing function
