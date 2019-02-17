@@ -35,6 +35,27 @@ module vc_Reg
 endmodule
 
 //------------------------------------------------------------------------
+// Postive-edge triggered flip-flop
+//------------------------------------------------------------------------
+// Just a copy of vc_Reg used for testing explicit module names
+
+module vc_RegExplicitModuleName
+#(
+  parameter p_nbits = 1
+)(
+  input                clk, // Clock input
+  output [p_nbits-1:0] q,   // Data output
+  input  [p_nbits-1:0] d    // Data input (sampled on rising clk edge)
+);
+
+  reg q;
+
+  always @( posedge clk )
+    q <= d;
+
+endmodule
+
+//------------------------------------------------------------------------
 // Postive-edge triggered flip-flop with reset
 //------------------------------------------------------------------------
 

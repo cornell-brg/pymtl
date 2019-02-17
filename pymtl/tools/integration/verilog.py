@@ -68,13 +68,17 @@ class SomeMeta( MetaCollectArgs ):
 
     new_inst.__class__.__name__  = inst.__class__.__name__
     new_inst.__class__.__bases__ = (VerilogModel,)
-    new_inst._args       = inst._args
-    new_inst.vprefix     = inst.vprefix
-    new_inst.modulename  = inst.modulename
-    new_inst.sourcefile  = inst.sourcefile
-    new_inst.vlinetrace  = inst.vlinetrace
-    new_inst._param_dict = inst._param_dict
-    new_inst._port_dict  = inst._port_dict
+    new_inst._args               = inst._args
+    new_inst.vprefix             = inst.vprefix
+    new_inst.modulename          = inst.modulename
+
+    if hasattr( inst, 'explicit_modulename' ):
+      new_inst.explicit_modulename = inst.explicit_modulename
+
+    new_inst.sourcefile          = inst.sourcefile
+    new_inst.vlinetrace          = inst.vlinetrace
+    new_inst._param_dict         = inst._param_dict
+    new_inst._port_dict          = inst._port_dict
 
     # TODO: THIS IS SUPER HACKY. FIXME
     # This copies the user-defined line_trace method from the

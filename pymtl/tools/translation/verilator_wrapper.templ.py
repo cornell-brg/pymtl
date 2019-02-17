@@ -71,10 +71,27 @@ class {model_name}( Model ):
     # Give verilator_vcd_file a slightly different name so PyMTL .vcd and
     # Verilator .vcd can coexist
 
+    # NOTE: We used to use this:
+    #
+    #  verilator_vcd_file = '{{}}.verilator{{}}{{}}'.format(filen, s.id_, ext)
+    #
+    # but I am not sure why we neded s.id_. It was added in this commit:
+    #
+    #  https://github.com/cornell-brg/pymtl/commit/c3de1d12
+    #
+    # so something about generating separate files for each instance. But
+    # these instances should all have different VCD file names to start
+    # off with, so maybe this was before we setup our tests to ensure
+    # unique VCD file names? The problem is it means that we end up with
+    # something like .verilator2.vcd when we import Verilog RTL and
+    # .verilator.vcd when we use a pure PyMTL model ... and so that means
+    # we need to special case things for the ASIC flow. So for now
+    # I am removing the s.id_.
+
     verilator_vcd_file = ""
     if s.vcd_file:
       filen, ext         = os.path.splitext( s.vcd_file )
-      verilator_vcd_file = '{{}}.verilator{{}}{{}}'.format(filen, s.id_, ext)
+      verilator_vcd_file = '{{}}.verilator{{}}'.format(filen, ext)
 
     # Construct the model.
 
