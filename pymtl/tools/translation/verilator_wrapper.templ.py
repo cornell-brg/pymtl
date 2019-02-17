@@ -91,7 +91,7 @@ class {model_name}( Model ):
     verilator_vcd_file = ""
     if s.vcd_file:
       filen, ext         = os.path.splitext( s.vcd_file )
-      verilator_vcd_file = '{{}}.verilator{{}}'.format(filen, ext)
+      verilator_vcd_file = '{{}}.verilator1{{}}'.format(filen, ext)
 
     # Construct the model.
 
