@@ -63,7 +63,7 @@ def mangle_name( name ):
 def write_vcd_signal_defs( o, model ):
 
   vcd_symbol = _gen_vcd_symbol()
-  all_nets   = set()
+  all_nets   = []
 
   # Inner utility function to perform recursive descent of the model.
   def recurse_models( model, level ):
@@ -81,13 +81,12 @@ def write_vcd_signal_defs( o, model ):
       if not hasattr( net, '_vcd_symbol' ):
         net._vcd_symbol = vcd_symbol.next()
         net._vcd_is_clk = i.name == 'clk'
+        all_nets.append( net )
       symbol = net._vcd_symbol
 
       print( "$var {type} {nbits} {symbol} {name} $end".format(
           type='reg', nbits=i.nbits, symbol=symbol, name=mangle_name(i.name),
       ), file=o )
-
-      all_nets.add( net )
 
     # Recursively visit all submodels.
     for submodel in model.get_submodules():
