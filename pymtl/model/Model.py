@@ -666,7 +666,8 @@ class Model( object ):
       # Add module name to the set to prevent collisions between classes
       # with same name and same args but in different modules (see test
       # case in Model_test.py, ClassNameCollision)
-      to_hash = '{} {}'.format( model.__module__, json.dumps( Model.strify_keys( model._args ), sort_keys=True, default=str ) )
+      json_str = json.dumps( Model.strify_keys( model._args ), sort_keys=True, default=str )
+      to_hash = '{} {}'.format( model.__module__, json_str )
       suffix = abs( hash( to_hash ) )
       return name + '_' + hex( suffix )
     # No _args attribute, so no need to create a specialized name
