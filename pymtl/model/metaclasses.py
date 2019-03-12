@@ -76,11 +76,6 @@ class MetaCollectArgs( MetaListConstructor ):
     These arguments are stored as an OrderedDict in the _args field of
     the instance so they can be used later.
     """
-
-    # Get the constructor prototype
-
-    argspec = inspect.getargspec( self.__init__ )
-
     # Create an argument dictionary
 
     argdict = collections.OrderedDict()
@@ -88,24 +83,12 @@ class MetaCollectArgs( MetaListConstructor ):
     # Collect all positional arguments (except first, which is self)
 
     for i, arg_value in enumerate( args ):
-      key, value = argspec.args[i+1], arg_value
-      argdict[ key ] = value
+      argdict[str(i)] = arg_value
 
     # Collect all keyword arguments
 
-    for key, value in kwargs.items():
-      argdict[ key ] = value
-
-    # Handle default arguments. Iterate backwards through default values,
-    # matching the default value to the corresponding argument name, then
-    # add the corresponding argument as long as we did not already add it
-    # above.
-
-    if argspec.defaults:
-      for i, default_value in enumerate( reversed(argspec.defaults) ):
-        arg_name = argspec.args[ len(argspec.args) - i - 1 ]
-        if arg_name not in argdict:
-          argdict[ arg_name ] = default_value
+    for key in sorted(kwargs.keys()):
+      argdict[ key ] = kwargs[key]
 
     # Create the instance
 
