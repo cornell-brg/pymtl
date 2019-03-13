@@ -669,6 +669,7 @@ class Model( object ):
       json_str = json.dumps( Model.strify_keys( model._args ), sort_keys=True, default=str )
       to_hash = '{} {}'.format( model.__module__, json_str )
       suffix = abs( hash( to_hash ) )
+      model.to_hash = to_hash
       return name + '_' + hex( suffix )
     # No _args attribute, so no need to create a specialized name
     except AttributeError:

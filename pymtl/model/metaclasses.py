@@ -79,41 +79,13 @@ class MetaCollectArgs( MetaListConstructor ):
 
     # Get the constructor prototype
 
-    argspec = inspect.getargspec( self.__init__ )
-
-    # Create an argument dictionary
-
-    argdict = collections.OrderedDict()
-
-    # Collect all positional arguments (except first, which is self)
-
-    for i, arg_value in enumerate( args ):
-      key, value = argspec.args[i+1], arg_value
-      argdict[ key ] = value
-
-    # Collect all keyword arguments
-
-    for key, value in kwargs.items():
-      argdict[ key ] = value
-
-    # Handle default arguments. Iterate backwards through default values,
-    # matching the default value to the corresponding argument name, then
-    # add the corresponding argument as long as we did not already add it
-    # above.
-
-    if argspec.defaults:
-      for i, default_value in enumerate( reversed(argspec.defaults) ):
-        arg_name = argspec.args[ len(argspec.args) - i - 1 ]
-        if arg_name not in argdict:
-          argdict[ arg_name ] = default_value
-
-    # Create the instance
-
+    call_spec = inspect.getargspec( self.__init__ )
     inst = super( MetaCollectArgs, self ).__call__( *args, **kwargs )
-
-    # Add the argdict to inst
-
-    inst._args = argdict
+    inst._args = inspect.getcallargs(inst.__init__, *args, **kwargs)
+    for key in inst._args.keys():
+      # delete the self argument
+      if inst._args[key] == inst:
+        del inst._args[key]
 
     # Return the instance
 

@@ -21,15 +21,10 @@ def header( model, symtab, enable_blackbox=False, verilator_xinit='zeros' ):
   else:
     s = title_bar.format( model.class_name )
 
-  for name, value in model._args.items():
-    value_str = '{}'.format( value )
-    if 'instance at' in value_str:
-      value_str = value_str.split(' at')[0] + '>'
-    s += '// PyMTL: {} = {}'.format( name, value_str ) + endl
-
   dump_vcd = hasattr( model, 'vcd_file' ) and model.vcd_file != ''
   s   += '// PyMTL: dump_vcd = {}'.format( dump_vcd ) + endl
 
+  s += '// PyMTL: {}'.format(model.to_hash) + endl
   s += '// PyMTL: verilator_xinit = {}'.format( verilator_xinit ) + endl
 
   if enable_blackbox:
