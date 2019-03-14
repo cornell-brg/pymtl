@@ -195,6 +195,7 @@ class SimulationTool( object ):
     while self._event_queue.len():
       self._current_func = func = self._event_queue.deq()
       self.metrics.incr_comb_evals( func )
+      # print('{} {}'.format(func.__module__, func.__name__))
       func()
       self._current_func = None
 

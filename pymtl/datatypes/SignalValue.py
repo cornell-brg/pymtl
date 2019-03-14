@@ -4,6 +4,7 @@
 # Module containing the SignalValue class.
 
 import copy
+# from inspect import getframeinfo, stack
 
 #-----------------------------------------------------------------------
 # SignalValue
@@ -33,6 +34,9 @@ class SignalValue( object ):
       self.write_value( value )
       self.notify_sim_comb_update()
       for func in self._slices: func()
+      # caller = getframeinfo(stack()[1][0])
+      # print("%s:%d" % (caller.filename, caller.lineno))
+
   @value.setter
   def value( self, value ):
     if value != self:
