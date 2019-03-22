@@ -643,14 +643,6 @@ class Model( object ):
   #---------------------------------------------------------------------
   def _gen_class_name( self, model ):
     """Generate a unique class name for model instances."""
-
-    # First check to see if designer has set an explicit name to use for
-    # this model.
-
-    if hasattr( model, 'explicit_modulename' ):
-      model.class_name = model.explicit_modulename
-      return model.explicit_modulename
-
     # Base name is always just the class name
     name = model.__class__.__name__
 
@@ -670,7 +662,11 @@ class Model( object ):
       to_hash = '{} {}'.format( model.__module__, json_str )
       suffix = abs( hash( to_hash ) )
       model.to_hash = to_hash
-      return name + '_' + hex( suffix )
+
+      if hasattr( model, 'explicit_modulename' ):
+        return model.explicit_modulename
+      else:
+        return name + '_' + hex( suffix )
     # No _args attribute, so no need to create a specialized name
     except AttributeError:
       return name
