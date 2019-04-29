@@ -81,11 +81,11 @@ class MetaCollectArgs( MetaListConstructor ):
 
     call_spec = inspect.getargspec( self.__init__ )
     inst = super( MetaCollectArgs, self ).__call__( *args, **kwargs )
-    inst._args = inspect.getcallargs(inst.__init__, *args, **kwargs)
+    inst._args = inspect.getcallargs( inst.__init__, *args, **kwargs )
     for key in inst._args.keys():
       # delete the self argument
-      if inst._args[key] == inst:
-        del inst._args[key]
+      if inst._args[ key ] == inst:
+        del inst._args[ key ]
 
     # Return the instance
 
