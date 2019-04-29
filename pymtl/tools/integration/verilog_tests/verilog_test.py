@@ -11,6 +11,7 @@ import pytest
 def _sim_setup( model, all_verilog, dump_vcd='' ):
   #model.vcd_file = dump_vcd  # TODO: hack for issue #135
   m = TranslationTool( model ) if all_verilog else model
+  m.vcd_file = dump_vcd  # TODO: hack for issue #135
   m.elaborate()
   sim = SimulationTool( m )
   sim.reset()
@@ -449,4 +450,48 @@ def test_lint_warning( dump_vcd, all_verilog ):
 
   ## test max
   #do_add( 2**nbits-1, 2**nbits-1, 1 )
+
+#-----------------------------------------------------------------------
+# test_explicit_module_name
+#-----------------------------------------------------------------------
+
+@pytest.mark.parametrize( "nbits,all_verilog",
+ [(4,False),(4,True),(128,False),(128,True)]
+)
+def test_explicit_module_name( dump_vcd, nbits, all_verilog ):
+
+  class vc_RegExplicitModuleName( VerilogModel ):
+    vcd_file   = dump_vcd  # TODO: hack for issue #135
+    sourcefile = os.path.join( os.path.dirname(__file__),
+                               'vc-regs.v' )
+
+    def __init__( s, nbits ):
+
+      s.in_ = InPort ( nbits )
+      s.out = OutPort( nbits )
+
+      s.explicit_modulename = 'vc_RegExplicitModuleName_{}nbits'.format(nbits)
+
+      s.set_params({
+        'p_nbits' : nbits,
+      })
+
+      s.set_ports({
+        'clk' : s.clk,
+        'd'   : s.in_,
+        'q'   : s.out,
+      })
+
+
+  #---------------------------------------------------------------------
+  # test
+  #---------------------------------------------------------------------
+
+  m, sim = _sim_setup( vc_RegExplicitModuleName(nbits),
+                       all_verilog, dump_vcd )
+  for i in range( 10 ):
+    m.in_.value = i
+    sim.cycle()
+    sim.print_line_trace()
+    assert m.out == i
 
