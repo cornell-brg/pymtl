@@ -45,6 +45,7 @@ class {model_name}( Model ):
     # set the vcd_file.
 
     s._ffi = s.ffi.dlopen('./{lib_file}')
+    s._m = None
 
     # dummy class to emulate PortBundles
     class BundleProxy( PortBundle ):
@@ -64,7 +65,9 @@ class {model_name}( Model ):
     s._convert_string = s.ffi.string
 
   def __del__( s ):
-    s._ffi.destroy_model( s._m )
+    # Cannot destroy if _m doesn't exist yet
+    if s._m:
+      s._ffi.destroy_model( s._m )
 
   def elaborate_logic( s ):
 

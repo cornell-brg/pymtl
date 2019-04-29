@@ -211,10 +211,13 @@ def register_comb_blocks( model, event_queue ):
   # TODO: do before or after we swap value nodes?
 
   for func in model.get_combinational_blocks():
-    tree, _ = get_method_ast( func )
-    loads, stores = DetectLoadsAndStores().enter( tree )
-    for name in loads:
-      _add_senses( func, model, name )
+    if not hasattr( func, 'generate_senses' ):
+      tree, _ = get_method_ast( func )
+      loads, stores = DetectLoadsAndStores().enter( tree )
+      for name in loads:
+        _add_senses( func, model, name )
+    else:
+      model._newsenses[ func ] = func.generate_senses()
 
   # Iterate through all @combinational decorated function names we
   # detected, retrieve their associated function pointer, then add

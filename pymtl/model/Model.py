@@ -22,6 +22,7 @@ import collections
 import inspect
 import warnings
 import math
+import json
 
 #=======================================================================
 # Model
@@ -627,18 +628,21 @@ class Model( object ):
         self._check_type( current_model, item_name, item, nested=True )
 
   #---------------------------------------------------------------------
+  # strify_keys
+  #---------------------------------------------------------------------
+  @staticmethod
+  def strify_keys( o ):
+    if isinstance( o, dict ):
+      # dictionary keys are probably types with a deterministic str
+      return { str( key ): Model.strify_keys( value ) for key, value in o.iteritems( ) }
+    else:
+      return o
+
+  #---------------------------------------------------------------------
   # _gen_class_name
   #---------------------------------------------------------------------
   def _gen_class_name( self, model ):
     """Generate a unique class name for model instances."""
-
-    # First check to see if designer has set an explicit name to use for
-    # this model.
-
-    if hasattr( model, 'explicit_modulename' ):
-      model.class_name = model.explicit_modulename
-      return model.explicit_modulename
-
     # Base name is always just the class name
     name = model.__class__.__name__
 
@@ -651,17 +655,18 @@ class Model( object ):
     # Generate a unique name for the Model instance based on its params
     # http://stackoverflow.com/a/5884123
     try:
-      hashables = { x for x in model._args.items()
-                    if isinstance( x[1], collections.Hashable ) }
-
       # Add module name to the set to prevent collisions between classes
       # with same name and same args but in different modules (see test
       # case in Model_test.py, ClassNameCollision)
-      hashables.add( model.__module__ )
+      json_str = json.dumps( Model.strify_keys( model._args ), sort_keys=True, default=str )
+      to_hash = '{} {}'.format( model.__module__, json_str )
+      suffix = abs( hash( to_hash ) )
+      model.to_hash = to_hash
 
-      hashables = frozenset( hashables )
-      suffix = abs( hash( hashables ) )
-      return name + '_' + hex( suffix )
+      if hasattr( model, 'explicit_modulename' ):
+        return model.explicit_modulename
+      else:
+        return name + '_' + hex( suffix )
     # No _args attribute, so no need to create a specialized name
     except AttributeError:
       return name

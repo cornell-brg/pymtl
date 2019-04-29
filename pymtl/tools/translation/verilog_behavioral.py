@@ -541,7 +541,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
       sig_name   = self.visit( node.args[0] )
       sig_nbits  = node.args[0]._object.nbits
       ext_nbits  = self.visit( node.args[1] )
-      return '{{ {{ {3}-{1} {{ {0}[{2}] }} }}, {0}[{2}:0] }}' \
+      return '{{ {{ {3}-{1} {{ {0}[{2}] }} }}, {0} }}' \
              .format( sig_name, sig_nbits, sig_nbits-1, ext_nbits )
 
     # Handle zero extension
@@ -565,7 +565,7 @@ class TranslateBehavioralVerilog( ast.NodeVisitor ):
       sig_name   = self.visit( node.args[0] )
       sig_nbits  = node.args[0]._object.nbits
       ext_nbits  = self.visit( node.args[1] )
-      return "{{ {{ {3}-{1} {{ 1'b0 }} }}, {0}[{2}:0] }}" \
+      return "{{ {{ {3}-{1} {{ 1'b0 }} }}, {0} }}" \
              .format( sig_name, sig_nbits, sig_nbits-1, ext_nbits )
 
     # Handle concatentation
