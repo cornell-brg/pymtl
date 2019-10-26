@@ -1,6 +1,8 @@
  ![PyMTL](docs/pymtl_logo.png)
 ==========================================================================
 
+#### DEPRECATION NOTE: We have stopped maintaining this PyMTL version 2 repo and moved to the new PyMTL version 3 repo [pymtl3](https://github.com/cornell-brg/pymtl3). PyMTL3 overhauls the software architecture from the ground up to create a more collaborative community. While we still provide very limited support for PyMTL2, we encourage new users to try out PyMTL3. In addition, PyMTL2 only works in Python 2.7 (which will be soon dropped by the Python community), whereas PyMTL3 works in Python 3.5+.
+
 [![Build Status](https://travis-ci.org/cornell-brg/pymtl.svg?branch=master)](https://travis-ci.org/cornell-brg/pymtl)
 
 PyMTL is an open-source, Python-based framework for multi-level hardware
