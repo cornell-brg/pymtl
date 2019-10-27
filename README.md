@@ -1,7 +1,7 @@
  ![PyMTL](docs/pymtl_logo.png)
 ==========================================================================
 
-#### DEPRECATION NOTE: We have stopped maintaining this PyMTL version 2 repo and moved to the new PyMTL version 3 repo [pymtl3](https://github.com/cornell-brg/pymtl3). PyMTL3 overhauls the software architecture from the ground up to create a more collaborative community. While we still provide very limited support for PyMTL2, we encourage new users to try out PyMTL3. In addition, PyMTL2 only works in Python 2.7 (which will be soon dropped by the Python community), whereas PyMTL3 works in Python 3.5+.
+#### DEPRECATION NOTE: We will not be maintaining this PyMTL version 2 repo. We are instead working very hard on the new PyMTL3 version 3 repo [pymtl3](https://github.com/cornell-brg/pymtl3). PyMTLv3 has been significantly rewritten to improve both the performance and productivity of FL, CL, and RTL modeling. While we will still provide limited support for PyMTLv2, we encourage new users to start experimenting with PyMTLv3. Also note that PyMTLv2 only works with Python 2.7 (which will not be maintained past January 1, 2020). PyMTLv3 takes advantage of many new and exciting Python 3.6+ features.
 
 [![Build Status](https://travis-ci.org/cornell-brg/pymtl.svg?branch=master)](https://travis-ci.org/cornell-brg/pymtl)
 
