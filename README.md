@@ -1,19 +1,12 @@
  ![PyMTL](docs/pymtl_logo.png)
 ==========================================================================
 
-#### DEPRECATION NOTE: We will not be maintaining this PyMTL version 2 repo. We are instead working very hard on the new PyMTL3 version 3 repo [pymtl3](https://github.com/cornell-brg/pymtl3). PyMTLv3 has been significantly rewritten to improve both the performance and productivity of FL, CL, and RTL modeling. While we will still provide limited support for PyMTLv2, we encourage new users to start experimenting with PyMTLv3. Also note that PyMTLv2 only works with Python 2.7 (which will not be maintained past January 1, 2020). PyMTLv3 takes advantage of many new and exciting Python 3.6+ features.
-
 [![Build Status](https://travis-ci.org/cornell-brg/pymtl.svg?branch=master)](https://travis-ci.org/cornell-brg/pymtl)
 
 PyMTL is an open-source, Python-based framework for multi-level hardware
-modeling. It was introduced at MICRO-47 in December, 2014. Please note
-that PyMTL is currently **alpha** software that is under active
-development and documentation is currently quite sparse. We have recently
-received funding from the National Science Foundation under [Award #1512937][1]
-to improve PyMTL performance, documentation, and reference models. Please
-stay tuned over the next few months.
+modeling. It was introduced at MICRO-47 in December, 2014.
 
- [1]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=1512937
+#### DEPRECATION NOTE: We will not be maintaining this PyMTL version 2 repo. We are instead working very hard on the new PyMTL3 version 3 repo [pymtl3](https://github.com/cornell-brg/pymtl3). PyMTLv3 has been significantly rewritten to improve both the performance and productivity of FL, CL, and RTL modeling. While we will still provide limited support for PyMTLv2, we encourage new users to start experimenting with PyMTLv3. Also note that PyMTLv2 only works with Python 2.7 (which will not be maintained past January 1, 2020). PyMTLv3 takes advantage of many new and exciting Python 3.6+ features.
 
 Tutorials
 --------------------------------------------------------------------------
